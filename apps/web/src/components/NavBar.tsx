@@ -41,15 +41,19 @@ export function NavBar(): React.ReactElement {
       className="relative flex h-14 shrink-0 items-center gap-x-6 border-b border-border bg-surface px-4 sm:px-6"
     >
       {/*
-        The product's name, and the only place it appears in the chrome. `aria-hidden`
-        because the page's `h1` already names the screen.
+        The product's name, and the only place it appears in the chrome: "Lupin." with the
+        dot in the accent, the same mark as the site's footer. `aria-hidden` because the
+        page's `h1` already names the screen.
       */}
       <span
         data-testid="nav-wordmark"
         aria-hidden="true"
-        className="shrink-0 text-sm font-semibold uppercase tracking-widest"
+        className="shrink-0 text-lg font-semibold tracking-tight text-fg"
       >
-        Lupin
+        <span>Lupin</span>
+        <span data-wordmark-dot className="text-accent">
+          .
+        </span>
       </span>
       <ul className="hidden min-w-0 flex-1 items-center justify-center gap-x-1 lg:flex">
         {SECTIONS.map((section) => {

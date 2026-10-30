@@ -81,6 +81,15 @@ describe('NavBar', () => {
     expect(screen.getAllByText('Lupin')).toHaveLength(1);
   });
 
+  it('draws the wordmark as the site does: the name in sentence case, and a dot in the accent', async () => {
+    render(<RouterProvider router={makeRouter()} />);
+    const mark = await screen.findByTestId('nav-wordmark');
+    expect(mark.className).not.toMatch(/\buppercase\b/);
+    const dot = mark.querySelector('[data-wordmark-dot]');
+    expect(dot?.textContent).toBe('.');
+    expect(dot?.className).toMatch(/\btext-accent\b/);
+  });
+
   it.each([
     ['/dashboard', 'Overview'],
     ['/dashboard/runs/run-1', 'Runs'],
