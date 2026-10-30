@@ -18,8 +18,8 @@ import { compile } from 'tailwindcss';
  * assertion that can fail; asserting on a class name cannot.
  *
  * **Two more names were in that list and are not any more.** `text-success-500` and
- * `text-error-500` were aliases pointing at the same `--automate-success` and
- * `--automate-danger` variables as the plain names — a second name for one value. The
+ * `text-error-500` were aliases pointing at the same `--lupin-success` and
+ * `--lupin-danger` variables as the plain names — a second name for one value. The
  * redesign moved `StatCard` to `text-success` / `text-danger`, which left the aliases
  * referenced by nothing, so the tokens and the assertion naming them were removed
  * rather than left as a second authority nobody reads. They are recorded here because
@@ -637,7 +637,7 @@ describe('shipped theme class resolution', () => {
 
   it('generates the destructive variant, which is the "Cancel run" button', () => {
     expect(utilityIsGenerated(compiledAll, 'bg-error')).toBe(true);
-    expect(compiledAll).toContain('--automate-danger');
+    expect(compiledAll).toContain('--lupin-danger');
   });
 
   it('generates the error-state utilities used by Input and Select', () => {

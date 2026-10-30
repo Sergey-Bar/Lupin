@@ -89,7 +89,7 @@ export const ramps = {
 /**
  * The semantic token names that must exist in the shipped theme.
  *
- * The value is the `--automate-*` variable the CSS maps the name onto, so a
+ * The value is the `--lupin-*` variable the CSS maps the name onto, so a
  * name here with no mapping in `theme.css` is a drift the test catches.
  */
 export const semanticColorTokens = {
@@ -102,54 +102,54 @@ export const semanticColorTokens = {
    * there are four steps in `theme.css`, and a fifth surface would be a hand-
    * painted value with no token and no contrast case.
    */
-  'surface-sunken': '--automate-surface-sunken',
-  surface: '--automate-surface',
-  'surface-raised': '--automate-surface-raised',
-  'surface-muted': '--automate-surface-muted',
-  fg: '--automate-fg',
-  'fg-muted': '--automate-fg-muted',
-  border: '--automate-border',
+  'surface-sunken': '--lupin-surface-sunken',
+  surface: '--lupin-surface',
+  'surface-raised': '--lupin-surface-raised',
+  'surface-muted': '--lupin-surface-muted',
+  fg: '--lupin-fg',
+  'fg-muted': '--lupin-fg-muted',
+  border: '--lupin-border',
   /**
    * The border that delineates a control, as opposed to the one that decorates
    * one. WCAG 1.4.11's 3:1 applies to the first and not the second, and before
    * this token existed `Input`, `Select`, `Textarea` and `Toggle` drew their
    * only edge from the decorative token and measured 1.31:1.
    */
-  'border-strong': '--automate-border-strong',
-  accent: '--automate-accent',
-  primary: '--automate-accent',
-  success: '--automate-success',
-  warning: '--automate-warning',
-  danger: '--automate-danger',
-  info: '--automate-info',
+  'border-strong': '--lupin-border-strong',
+  accent: '--lupin-accent',
+  primary: '--lupin-accent',
+  success: '--lupin-success',
+  warning: '--lupin-warning',
+  danger: '--lupin-danger',
+  info: '--lupin-info',
   /**
    * `error` is the name the components use (`bg-error` is the destructive
    * "Cancel run" button). It is an alias of `danger`, kept because renaming
    * every call site would be churn without changing the rendered colour.
    */
-  error: '--automate-danger',
-  'text-primary': '--automate-fg',
-  'text-secondary': '--automate-fg-muted',
-  'text-muted': '--automate-fg-muted',
-  'bg-primary': '--automate-surface',
-  'bg-base': '--automate-surface',
-  'bg-sunken': '--automate-surface-sunken',
-  'bg-raised': '--automate-surface-raised',
-  'bg-elevated': '--automate-surface-muted',
-  'bg-secondary': '--automate-surface-muted',
-  'bg-muted': '--automate-surface-muted',
-  'border-default': '--automate-border',
-  'border-focus': '--automate-accent',
-  'brand-500': '--automate-accent',
-  'brand-50': '--automate-surface-muted',
-  'brand-700': '--automate-accent',
+  error: '--lupin-danger',
+  'text-primary': '--lupin-fg',
+  'text-secondary': '--lupin-fg-muted',
+  'text-muted': '--lupin-fg-muted',
+  'bg-primary': '--lupin-surface',
+  'bg-base': '--lupin-surface',
+  'bg-sunken': '--lupin-surface-sunken',
+  'bg-raised': '--lupin-surface-raised',
+  'bg-elevated': '--lupin-surface-muted',
+  'bg-secondary': '--lupin-surface-muted',
+  'bg-muted': '--lupin-surface-muted',
+  'border-default': '--lupin-border',
+  'border-focus': '--lupin-accent',
+  'brand-500': '--lupin-accent',
+  'brand-50': '--lupin-surface-muted',
+  'brand-700': '--lupin-accent',
   /**
    * The foreground for text on a saturated fill, which is why it is a token and
    * not `text-white`. The dark palette's fills are light and the light palette's
    * are dark, so the correct label colour inverts between themes; one hardcoded
    * value fails 4.5:1 in one of them. `Button` and `Badge` both use it.
    */
-  'on-fill': '--automate-on-fill',
+  'on-fill': '--lupin-on-fill',
   /*
    * The chart palette: four run states and a line, then a six-step categorical series.
    * Its own roles rather than the status colours at three opacities, because a chart is
@@ -157,18 +157,18 @@ export const semanticColorTokens = {
    * text on a tint. `theme.test.ts` measures each mark against every plane step and every
    * pair under a deuteranopia simulation.
    */
-  'chart-pass': '--automate-chart-pass',
-  'chart-fail': '--automate-chart-fail',
-  'chart-flaky': '--automate-chart-flaky',
-  'chart-skipped': '--automate-chart-skipped',
-  'chart-line': '--automate-chart-line',
-  'chart-grid': '--automate-chart-grid',
-  'chart-1': '--automate-chart-1',
-  'chart-2': '--automate-chart-2',
-  'chart-3': '--automate-chart-3',
-  'chart-4': '--automate-chart-4',
-  'chart-5': '--automate-chart-5',
-  'chart-6': '--automate-chart-6',
+  'chart-pass': '--lupin-chart-pass',
+  'chart-fail': '--lupin-chart-fail',
+  'chart-flaky': '--lupin-chart-flaky',
+  'chart-skipped': '--lupin-chart-skipped',
+  'chart-line': '--lupin-chart-line',
+  'chart-grid': '--lupin-chart-grid',
+  'chart-1': '--lupin-chart-1',
+  'chart-2': '--lupin-chart-2',
+  'chart-3': '--lupin-chart-3',
+  'chart-4': '--lupin-chart-4',
+  'chart-5': '--lupin-chart-5',
+  'chart-6': '--lupin-chart-6',
 } as const satisfies Record<string, string>;
 
 /** Colour names Tailwind resolves without a theme entry. */

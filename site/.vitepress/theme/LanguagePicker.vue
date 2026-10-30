@@ -85,22 +85,22 @@ watch(
   height: 20px;
 }
 .language-trigger:hover {
-  background: var(--automate-surface-muted);
+  background: var(--lupin-surface-muted);
 }
 .language-dialog {
   width: min(68rem, calc(100vw - 2rem));
   max-height: calc(100dvh - 2rem);
   margin: auto;
   padding: clamp(1.5rem, 4vw, 4rem);
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 12px;
-  color: var(--automate-fg);
-  background: var(--automate-surface);
+  color: var(--lupin-fg);
+  background: var(--lupin-surface);
   overflow: auto;
   overscroll-behavior: contain;
 }
 .language-dialog::backdrop {
-  background: var(--automate-surface-sunken);
+  background: var(--lupin-surface-sunken);
   opacity: 0.88;
 }
 .language-dialog__header {
@@ -111,9 +111,9 @@ watch(
   margin-bottom: 2.5rem;
 }
 .language-dialog__header p {
-  font: 0.65rem var(--automate-font-mono);
+  font: 0.65rem var(--lupin-font-mono);
   letter-spacing: 0.2em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   margin-bottom: 0.75rem;
 }
 h2 {
@@ -152,15 +152,15 @@ h2 {
 }
 .language-grid a:hover,
 .language-close:hover {
-  background: var(--automate-surface-muted);
+  background: var(--lupin-surface-muted);
 }
 .language-grid a[aria-current] {
-  border-color: var(--automate-border-strong);
-  background: var(--automate-surface-muted);
+  border-color: var(--lupin-border-strong);
+  background: var(--lupin-surface-muted);
 }
 a:focus-visible,
 button:focus-visible {
-  outline: 2px solid var(--automate-fg);
+  outline: 2px solid var(--lupin-fg);
   outline-offset: 3px;
 }
 @media (max-width: 900px) {

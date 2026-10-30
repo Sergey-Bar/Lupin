@@ -46,38 +46,92 @@ import test from 'node:test';
 const fromRoot = (relative) =>
   path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', relative);
 
-test('the former product name appears nowhere in the tree', () => {
-  // `git grep` over tracked files, case-insensitively. Untracked files are excluded on
-  // purpose: this asserts what is committed, which is what a reader gets.
+/**
+ * Every retired name, as a pattern with the reason it is retired.
+ *
+ * The product has been renamed twice. Each pattern is one layer of the second rename
+ * (to Lupin, 4.0.0), added in the commit that converted that layer, so a layer that has
+ * been converted cannot quietly come back while the others are still in flight.
+ *
+ * Patterns are POSIX extended regular expressions as `git grep -E` reads them, matched
+ * case-insensitively when `ignoreCase` is set. **Each is written so that it does not match
+ * its own spelling in this file** — `automat[e]` matches the name, and the text
+ * `automat[e]` does not — so the gate needs no exemption for the file that declares it.
+ *
+ * @type {ReadonlyArray<{ pattern: string, ignoreCase: boolean, reason: string }>}
+ */
+export const RETIRED_NAMES = [
+  {
+    pattern: 'q-?ace',
+    ignoreCase: true,
+    reason: 'the first product name; retired before 2.0.0',
+  },
+  {
+    pattern: '--automat[e]-',
+    ignoreCase: false,
+    reason: 'the design-token namespace of the second name; every token is `--lupin-*` since 4.0.0',
+  },
+];
+
+/**
+ * Tracked files that may keep a retired name, each with the reason.
+ *
+ * Empty on purpose. A file goes here only when changing it would falsify a record or
+ * break something outside this repository's control — never because the edit is tedious.
+ *
+ * @type {ReadonlyArray<{ path: string, reason: string }>}
+ */
+export const RETIRED_NAME_EXEMPTIONS = [];
+
+/**
+ * `git grep` over tracked files, as `path:line` hits. Untracked files are excluded on
+ * purpose: this asserts what is committed, which is what a reader gets.
+ *
+ * @param {{ pattern: string, ignoreCase: boolean }} retired
+ * @returns {string[]}
+ */
+function trackedHits(retired) {
+  const exclusions = RETIRED_NAME_EXEMPTIONS.map((entry) => `:(exclude)${entry.path}`);
+  const args = ['grep', '-n', '-E', ...(retired.ignoreCase ? ['-i'] : []), '-e', retired.pattern];
   let stdout = '';
-  let failed = false;
   try {
-    stdout = execFileSync('git', ['grep', '-in', '-E', 'q-?ace', '--', '.'], {
+    stdout = execFileSync('git', [...args, '--', '.', ...exclusions], {
       encoding: 'utf8',
-      maxBuffer: 32 * 1024 * 1024,
+      maxBuffer: 64 * 1024 * 1024,
     });
   } catch (error) {
     // git grep exits 1 when it matches nothing, which is the pass case here.
-    const status = /** @type {{ status?: number, stdout?: string }} */ (error).status;
-    if (status !== 1) {
-      failed = true;
-      stdout = String(/** @type {{ stdout?: string }} */ (error).stdout ?? '');
+    const failure = /** @type {{ status?: number, stdout?: string }} */ (error);
+    if (failure.status !== 1) {
+      throw new Error(`git grep could not run: ${String(failure.stdout ?? '').slice(0, 300)}`);
     }
   }
-  assert.equal(failed, false, `git grep could not run: ${stdout.slice(0, 300)}`);
-
-  const hits = stdout
+  return stdout
     .split('\n')
     .filter((line) => line.trim().length > 0)
     .map((line) => line.split(':').slice(0, 2).join(':'));
+}
 
-  assert.deepEqual(
-    hits,
-    [],
-    `the former product name is still present in:\n${hits.join('\n')}\n\n` +
-      'If a hit is a record that must keep the name — a forensic manifest, a historical ' +
-      'log — it needs a written reason here and an exemption, not a quiet re-add.',
-  );
+for (const retired of RETIRED_NAMES) {
+  test(`the retired name /${retired.pattern}/ appears nowhere in the tree`, () => {
+    const hits = trackedHits(retired);
+    assert.deepEqual(
+      hits,
+      [],
+      `/${retired.pattern}/ (${retired.reason}) is still present in:\n` +
+        `${hits.slice(0, 200).join('\n')}${hits.length > 200 ? `\n…and ${String(hits.length - 200)} more` : ''}\n\n` +
+        'If a hit is a record that must keep the name — a forensic manifest, a historical ' +
+        'log — it needs a written reason in RETIRED_NAME_EXEMPTIONS, not a quiet re-add.',
+    );
+  });
+}
+
+test('every retired-name exemption names a tracked file and a reason', () => {
+  for (const entry of RETIRED_NAME_EXEMPTIONS) {
+    assert.ok(entry.reason.trim().length > 0, `${entry.path} is exempt with no reason`);
+    const listed = execFileSync('git', ['ls-files', '--', entry.path], { encoding: 'utf8' });
+    assert.ok(listed.trim().length > 0, `${entry.path} is exempt but is not a tracked file`);
+  }
 });
 
 test('the drift gate no longer exempts a document that does not exist', () => {
@@ -113,9 +167,10 @@ test('the README names the product it actually is', () => {
   // described the repository as "planned" after `2.0.0` shipped. A README can pass every
   // other gate in this repository while describing a product that does not exist.
   const readme = readFileSync(fromRoot('README.md'), 'utf8');
+  assert.match(readme, /<h1>Lupin<\/h1>/, 'the README must open with the product name, Lupin');
   assert.match(
     readme,
-    /Automate is a local-first QA control plane\./,
+    /A self-hosted home for test runs, evidence, and release decisions\./,
     'the README opening paragraph must describe the shipped product',
   );
   assert.doesNotMatch(

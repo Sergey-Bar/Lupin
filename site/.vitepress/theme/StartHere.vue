@@ -152,7 +152,7 @@ const path = computed(() => paths[selected.value]);
 .start-here {
   padding: 6rem 0;
   scroll-margin-top: 5rem;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .start-here__heading {
   max-width: 40rem;
@@ -161,10 +161,10 @@ const path = computed(() => paths[selected.value]);
 .start-here__heading > span,
 .start-here__intro > span,
 .start-here__outcome > span {
-  font: 0.68rem var(--automate-font-mono);
+  font: 0.68rem var(--lupin-font-mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .start-here__heading h2 {
   border: 0;
@@ -177,7 +177,7 @@ const path = computed(() => paths[selected.value]);
 .start-here__heading p {
   font-size: 1.1rem;
   line-height: 1.6;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   margin: 0;
 }
 .start-here__choices {
@@ -188,33 +188,33 @@ const path = computed(() => paths[selected.value]);
 }
 .start-here__choices button {
   padding: 0.85rem 1.1rem;
-  border: 1px solid var(--automate-border-strong);
+  border: 1px solid var(--lupin-border-strong);
   border-radius: 0.3rem;
-  background: var(--automate-surface);
-  color: var(--automate-fg-muted);
+  background: var(--lupin-surface);
+  color: var(--lupin-fg-muted);
   font: inherit;
   font-size: 0.85rem;
   cursor: pointer;
   transition:
-    background-color var(--automate-duration-150),
-    color var(--automate-duration-150);
+    background-color var(--lupin-duration-150),
+    color var(--lupin-duration-150);
 }
 .start-here__choices button[aria-pressed='true'] {
-  background: var(--automate-accent);
-  border-color: var(--automate-accent);
-  color: var(--automate-on-fill);
+  background: var(--lupin-accent);
+  border-color: var(--lupin-accent);
+  color: var(--lupin-on-fill);
 }
 .start-here__path {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 0.4rem;
   overflow: hidden;
-  animation: path-enter 250ms var(--automate-ease-out);
+  animation: path-enter 250ms var(--lupin-ease-out);
 }
 .start-here__intro {
   padding: clamp(1.5rem, 4vw, 3rem);
-  background: var(--automate-surface);
+  background: var(--lupin-surface);
 }
 .start-here__intro h3 {
   margin: 1rem 0;
@@ -226,10 +226,10 @@ const path = computed(() => paths[selected.value]);
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.7;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .start-here__outcome {
-  border-top: 1px solid var(--automate-border);
+  border-top: 1px solid var(--lupin-border);
   padding-top: 1.5rem;
   margin-top: 2rem;
 }
@@ -243,7 +243,7 @@ const path = computed(() => paths[selected.value]);
 }
 .start-here__steps li {
   margin: 0;
-  border-bottom: 1px solid var(--automate-border);
+  border-bottom: 1px solid var(--lupin-border);
 }
 .start-here__steps li:last-child {
   border-bottom: 0;
@@ -253,16 +253,16 @@ const path = computed(() => paths[selected.value]);
   grid-template-columns: 2rem 1fr 1rem;
   gap: 1rem;
   padding: 1.75rem;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   text-decoration: none;
-  transition: background-color var(--automate-duration-100);
+  transition: background-color var(--lupin-duration-100);
 }
 .start-here__steps a:hover {
-  background: var(--automate-surface-raised);
+  background: var(--lupin-surface-raised);
 }
 .start-here__number {
-  font: 0.7rem var(--automate-font-mono);
-  color: var(--automate-fg-muted);
+  font: 0.7rem var(--lupin-font-mono);
+  color: var(--lupin-fg-muted);
   padding-top: 0.25rem;
 }
 .start-here__steps strong {
@@ -271,13 +271,13 @@ const path = computed(() => paths[selected.value]);
 }
 .start-here__steps p {
   margin: 0.45rem 0 0;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   font-size: 0.88rem;
   line-height: 1.6;
 }
 .start-here button:focus-visible,
 .start-here a:focus-visible {
-  outline: 2px solid var(--automate-accent);
+  outline: 2px solid var(--lupin-accent);
   outline-offset: -3px;
 }
 @keyframes path-enter {

@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Automate</h1>
+  <h1>Lupin</h1>
   <p><strong>Every test. One clear answer.</strong></p>
   <p>A self-hosted home for test runs, evidence, and release decisions.</p>
   <p>

@@ -26,7 +26,7 @@ onMounted(async () => {
   el.height = height * ratio;
   ctx.scale(ratio, ratio);
   const style = getComputedStyle(el);
-  const color = style.getPropertyValue('--automate-fg').trim();
+  const color = style.getPropertyValue('--lupin-fg').trim();
   const mask = document.createElement('canvas');
   mask.width = width;
   mask.height = height;
@@ -37,7 +37,7 @@ onMounted(async () => {
   }
   const size = Math.min(112, width * 0.105);
   viewport.value = { width, height, size };
-  ink.font = `700 ${size}px ${style.getPropertyValue('--automate-font-sans')}`;
+  ink.font = `700 ${size}px ${style.getPropertyValue('--lupin-font-sans')}`;
   ink.textBaseline = 'middle';
   ink.textAlign = 'center';
   ink.fillText('AUTOMATE', width / 2, height / 2);
@@ -141,7 +141,7 @@ onMounted(async () => {
 }
 .logo-assembly__final {
   fill: currentColor;
-  font-family: var(--automate-font-sans);
+  font-family: var(--lupin-font-sans);
   font-weight: 700;
 }
 </style>

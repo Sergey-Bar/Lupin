@@ -18,7 +18,7 @@
  *
  * 1. **Press** — 75 ms. The scale moves, nothing else. A press is a question asked and
  *    answered in the same breath; anything longer reads as latency on the input device.
- *    `--automate-press-scale` is a token because a scale typed into a class string
+ *    `--lupin-press-scale` is a token because a scale typed into a class string
  *    (`active:scale-[0.98]`) is a value no media query can reach, so the reduced-motion
  *    escape hatch below could not stop it.
  * 2. **Hover and colour** — 100 ms. Background and border. No transform: a row that grows
@@ -55,25 +55,25 @@
    * `animationend` a component waits on never fires; `motion.ts` says so at greater length
    * and `motion.test.ts` asserts the link in both directions.
    */
-  --automate-motion-scale: 1;
+  --lupin-motion-scale: 1;
 
   /*
    * The press scale, published as `scale-press` so `active:scale-press` is the press
    * feedback. Slightly less aggressive than Tailwind's `active:scale-95`, because a console
    * button is small and frequently pressed: 0.98 reads as a press, 0.95 reads as a bounce.
    */
-  --automate-press-scale: 0.98;
+  --lupin-press-scale: 0.98;
 
   /*
    * The durations, in milliseconds, each as `calc(value * scale)` rather than as a literal.
    * The multiplier is the whole mechanism, and it is what lets the media query at the foot
    * of this file reach a duration added later with no second edit anywhere.
    */
-  --automate-duration-75: calc(75ms * var(--automate-motion-scale));
-  --automate-duration-100: calc(100ms * var(--automate-motion-scale));
-  --automate-duration-150: calc(150ms * var(--automate-motion-scale));
-  --automate-duration-200: calc(200ms * var(--automate-motion-scale));
-  --automate-duration-300: calc(300ms * var(--automate-motion-scale));
+  --lupin-duration-75: calc(75ms * var(--lupin-motion-scale));
+  --lupin-duration-100: calc(100ms * var(--lupin-motion-scale));
+  --lupin-duration-150: calc(150ms * var(--lupin-motion-scale));
+  --lupin-duration-200: calc(200ms * var(--lupin-motion-scale));
+  --lupin-duration-300: calc(300ms * var(--lupin-motion-scale));
 
   /*
    * Four easings, and the choice is about where the value ends up.
@@ -85,10 +85,10 @@
    * `linear` is published because a `--animate-*` entry has to name a timing function, and an
    * easing nobody uses should say so by being the trivial one rather than by being absent.
    */
-  --automate-ease-linear: linear;
-  --automate-ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --automate-ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --automate-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --lupin-ease-linear: linear;
+  --lupin-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --lupin-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --lupin-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {
@@ -103,21 +103,21 @@
    *
    * The last two are the roles that had no name before, named after what they are.
    */
-  --animate-fade-in: automate-enter
-    calc(var(--automate-duration-150) * var(--automate-motion-scale)) var(--automate-ease-out);
-  --animate-fade-out: automate-exit
-    calc(var(--automate-duration-100) * var(--automate-motion-scale)) var(--automate-ease-in);
-  --animate-zoom-in-95: automate-zoom-in
-    calc(var(--automate-duration-150) * var(--automate-motion-scale)) var(--automate-ease-out);
+  --animate-fade-in: automate-enter calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
+    var(--lupin-ease-out);
+  --animate-fade-out: automate-exit calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
+    var(--lupin-ease-in);
+  --animate-zoom-in-95: automate-zoom-in calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
+    var(--lupin-ease-out);
   --animate-zoom-out-95: automate-zoom-out
-    calc(var(--automate-duration-100) * var(--automate-motion-scale)) var(--automate-ease-in);
+    calc(var(--lupin-duration-100) * var(--lupin-motion-scale)) var(--lupin-ease-in);
   --animate-automate-slide-in: automate-slide-in
-    calc(var(--automate-duration-300) * var(--automate-motion-scale)) var(--automate-ease-in-out);
+    calc(var(--lupin-duration-300) * var(--lupin-motion-scale)) var(--lupin-ease-in-out);
   --animate-automate-pulse: automate-pulse
-    calc(var(--automate-duration-150) * var(--automate-motion-scale)) var(--automate-ease-in-out);
+    calc(var(--lupin-duration-150) * var(--lupin-motion-scale)) var(--lupin-ease-in-out);
 
   /* The press scale, so `active:scale-press` is the press feedback. */
-  --scale-press: var(--automate-press-scale);
+  --scale-press: var(--lupin-press-scale);
 }
 
 /*
@@ -254,7 +254,7 @@
  */
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --automate-motion-scale: 0.01;
+    --lupin-motion-scale: 0.01;
   }
 
   /*
@@ -275,7 +275,7 @@
 }
 
 .motion-off {
-  --automate-motion-scale: 0.01;
+  --lupin-motion-scale: 0.01;
 }
 
 .motion-off *,

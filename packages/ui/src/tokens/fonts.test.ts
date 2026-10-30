@@ -171,9 +171,9 @@ describe('fonts.css declares each locked face', () => {
   it('publishes exactly two font stacks, as custom properties', () => {
     // Two families. A third face is a decision somebody makes in a component
     // and not in this file, so the count is asserted rather than trusted.
-    expect(fontsCss.match(/--automate-font-(?:sans|mono):/g)).toHaveLength(2);
-    expect(fontsCss).toContain("--automate-font-sans: 'Archivo', 'Archivo Fallback'");
-    expect(fontsCss).toContain("--automate-font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback'");
+    expect(fontsCss.match(/--lupin-font-(?:sans|mono):/g)).toHaveLength(2);
+    expect(fontsCss).toContain("--lupin-font-sans: 'Archivo', 'Archivo Fallback'");
+    expect(fontsCss).toContain("--lupin-font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback'");
   });
 });
 
@@ -226,8 +226,8 @@ describe('the stylesheet the app serves', () => {
   });
 
   it('sets the body font from the custom property rather than a literal stack', () => {
-    expect(indexCss).toContain('font-family: var(--automate-font-sans);');
-    expect(indexCss).toContain('font-family: var(--automate-font-mono);');
+    expect(indexCss).toContain('font-family: var(--lupin-font-sans);');
+    expect(indexCss).toContain('font-family: var(--lupin-font-mono);');
     // A second stack written here is the failure this replaces: `index.css` used
     // to name `Inter`, which nothing loaded, so the product rendered in the OS
     // face while the stylesheet claimed otherwise.

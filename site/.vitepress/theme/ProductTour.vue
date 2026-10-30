@@ -168,7 +168,7 @@ function select(view: View): void {
 .tour {
   scroll-margin-top: 5rem;
   padding: clamp(5rem, 9vw, 9rem) 0;
-  border-top: 1px solid var(--automate-border);
+  border-top: 1px solid var(--lupin-border);
 }
 .tour__heading {
   max-width: 42rem;
@@ -183,10 +183,10 @@ function select(view: View): void {
 .tour__table-head,
 .tour__artifact > span:last-child,
 .tour__panel-foot {
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.1em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .tour__eyebrow {
   margin: 0 0 1rem;
@@ -196,13 +196,13 @@ function select(view: View): void {
   font-size: clamp(2.25rem, 4.5vw, 4rem);
   line-height: 1.04;
   letter-spacing: -0.045em;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .tour__heading > p:last-child {
   margin: 1.25rem 0 0;
   font-size: 1.1rem;
   line-height: 1.6;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .tour__layout {
   display: grid;
@@ -213,7 +213,7 @@ function select(view: View): void {
 .tour__choices {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--automate-border);
+  border-top: 1px solid var(--lupin-border);
 }
 .tour__choice {
   position: relative;
@@ -224,14 +224,14 @@ function select(view: View): void {
   width: 100%;
   padding: 1.75rem 0;
   border: 0;
-  border-bottom: 1px solid var(--automate-border);
+  border-bottom: 1px solid var(--lupin-border);
   background: transparent;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   text-align: left;
   cursor: pointer;
   transition:
-    color var(--automate-duration-100) var(--automate-ease-out),
-    padding-left var(--automate-duration-150) var(--automate-ease-out);
+    color var(--lupin-duration-100) var(--lupin-ease-out),
+    padding-left var(--lupin-duration-150) var(--lupin-ease-out);
 }
 .tour__choice::before {
   content: '';
@@ -240,20 +240,20 @@ function select(view: View): void {
   top: 0.8rem;
   bottom: 0.8rem;
   width: 2px;
-  background: var(--automate-accent);
+  background: var(--lupin-accent);
   transform: scaleY(0);
   transform-origin: top;
-  transition: transform var(--automate-duration-150) var(--automate-ease-out);
+  transition: transform var(--lupin-duration-150) var(--lupin-ease-out);
 }
 .tour__choice--active {
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   padding-left: 0.75rem;
 }
 .tour__choice--active::before {
   transform: scaleY(1);
 }
 .tour__choice--active .tour__number {
-  color: var(--automate-accent);
+  color: var(--lupin-accent);
 }
 .tour__choice-copy {
   display: flex;
@@ -269,7 +269,7 @@ function select(view: View): void {
   max-width: 18rem;
   font-size: 0.9rem;
   line-height: 1.55;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .tour__arrow {
   justify-self: end;
@@ -281,27 +281,27 @@ function select(view: View): void {
   opacity: 1;
 }
 .tour__choice:focus-visible {
-  outline: 2px solid var(--automate-accent);
+  outline: 2px solid var(--lupin-accent);
   outline-offset: 3px;
 }
 .tour__stage {
   overflow: hidden;
   min-height: 31rem;
-  border: 1px solid var(--automate-border-strong);
+  border: 1px solid var(--lupin-border-strong);
   border-radius: 0.3rem;
-  background: var(--automate-surface);
+  background: var(--lupin-surface);
 }
 .tour__stage-bar {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.9rem 1.3rem;
-  border-bottom: 1px solid var(--automate-border);
-  background: var(--automate-surface-raised);
+  border-bottom: 1px solid var(--lupin-border);
+  background: var(--lupin-surface-raised);
 }
 .tour__panel {
   padding: clamp(1.25rem, 2.5vw, 2.5rem);
-  animation: tour-enter var(--automate-duration-150) var(--automate-ease-out);
+  animation: tour-enter var(--lupin-duration-150) var(--lupin-ease-out);
 }
 @keyframes tour-enter {
   from {
@@ -325,10 +325,10 @@ function select(view: View): void {
   font-size: 2rem;
   letter-spacing: -0.04em;
   line-height: 1.1;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .tour__panel-heading > span {
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 0.7rem;
   font-weight: 700;
   white-space: nowrap;
@@ -347,7 +347,7 @@ function select(view: View): void {
   background: currentColor;
 }
 .tour__live i {
-  color: var(--automate-success);
+  color: var(--lupin-success);
 }
 .tour__metrics {
   display: grid;
@@ -360,13 +360,13 @@ function select(view: View): void {
   flex-direction: column;
   gap: 0.7rem;
   padding: 1.2rem;
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
 }
 .tour__metrics strong {
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 2rem;
   line-height: 1;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .tour__table-head,
 .tour__table-row {
@@ -377,21 +377,21 @@ function select(view: View): void {
 }
 .tour__table-head {
   padding: 0.75rem 0.5rem;
-  border-bottom: 1px solid var(--automate-border-strong);
+  border-bottom: 1px solid var(--lupin-border-strong);
 }
 .tour__table-row {
   min-height: 3.5rem;
   padding: 0.75rem 0.5rem;
-  border-bottom: 1px solid var(--automate-border);
+  border-bottom: 1px solid var(--lupin-border);
   font-size: 0.82rem;
-  color: var(--automate-fg-muted);
-  transition: background-color var(--automate-duration-100) var(--automate-ease-out);
+  color: var(--lupin-fg-muted);
+  transition: background-color var(--lupin-duration-100) var(--lupin-ease-out);
 }
 .tour__table-row:hover {
-  background: var(--automate-surface-raised);
+  background: var(--lupin-surface-raised);
 }
 .tour__table-row strong {
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   font-weight: 600;
 }
 .tour__outcome {
@@ -402,17 +402,17 @@ function select(view: View): void {
 }
 .tone--pass,
 .tour__metrics strong.tone--pass {
-  color: var(--automate-success);
+  color: var(--lupin-success);
 }
 .tone--fail,
 .tour__metrics strong.tone--fail {
-  color: var(--automate-danger);
+  color: var(--lupin-danger);
 }
 .tone--flaky {
-  color: var(--automate-chart-flaky);
+  color: var(--lupin-chart-flaky);
 }
 .tone--unset {
-  color: var(--automate-warning);
+  color: var(--lupin-warning);
 }
 .tour__evidence-lede,
 .tour__gate-lede {
@@ -420,7 +420,7 @@ function select(view: View): void {
   margin: 0 0 2rem;
   font-size: 1rem;
   line-height: 1.6;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .tour__artifact {
   display: grid;
@@ -428,21 +428,21 @@ function select(view: View): void {
   align-items: center;
   gap: 1rem;
   min-height: 5rem;
-  border-top: 1px solid var(--automate-border);
-  transition: background-color var(--automate-duration-100) var(--automate-ease-out);
+  border-top: 1px solid var(--lupin-border);
+  transition: background-color var(--lupin-duration-100) var(--lupin-ease-out);
 }
 .tour__artifact:hover {
-  background: var(--automate-surface-raised);
+  background: var(--lupin-surface-raised);
 }
 .tour__artifact-icon {
   width: 2.25rem;
   height: 2.25rem;
   display: grid;
   place-items: center;
-  border: 1px solid var(--automate-border-strong);
-  font-family: var(--automate-font-mono);
+  border: 1px solid var(--lupin-border-strong);
+  font-family: var(--lupin-font-mono);
   font-size: 0.68rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .tour__artifact > div {
   display: flex;
@@ -452,12 +452,12 @@ function select(view: View): void {
 .tour__artifact strong,
 .tour__gate strong {
   font-size: 0.9rem;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   font-weight: 600;
 }
 .tour__artifact small {
   font-size: 0.75rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .tour__gate {
   display: flex;
@@ -465,11 +465,11 @@ function select(view: View): void {
   align-items: center;
   gap: 1rem;
   min-height: 4.4rem;
-  border-top: 1px solid var(--automate-border);
-  transition: background-color var(--automate-duration-100) var(--automate-ease-out);
+  border-top: 1px solid var(--lupin-border);
+  transition: background-color var(--lupin-duration-100) var(--lupin-ease-out);
 }
 .tour__gate:hover {
-  background: var(--automate-surface-raised);
+  background: var(--lupin-surface-raised);
 }
 .tour__gate > div {
   display: flex;
@@ -477,12 +477,12 @@ function select(view: View): void {
   gap: 1.25rem;
 }
 .tour__gate span {
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 0.7rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .tour__gate b {
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 0.68rem;
 }
 .tour__panel-foot {
@@ -501,7 +501,7 @@ function select(view: View): void {
     flex-direction: column;
     gap: 0.5rem;
     padding: 1rem;
-    border-right: 1px solid var(--automate-border);
+    border-right: 1px solid var(--lupin-border);
   }
   .tour__choice:last-child {
     border-right: 0;

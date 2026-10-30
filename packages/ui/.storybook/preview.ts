@@ -8,7 +8,7 @@ import '../src/storybook.css';
  * `src/storybook.css` is `@import 'tailwindcss'` plus the three token stylesheets,
  * in the same order as `apps/web/src/index.css`: fonts, then theme, then motion.
  * That order is not cosmetic — the `body` rule in the application reads
- * `--automate-font-sans`, so `fonts.css` has to be resolved first, and the three
+ * `--lupin-font-sans`, so `fonts.css` has to be resolved first, and the three
  * files are one design authority split by concern. Importing the three
  * stylesheets individually from here instead would work and would be worse: the
  * load order would live in a component file where nobody looks for it, and the
@@ -62,9 +62,9 @@ const preview: Preview = {
           // stated as such rather than worked around with a hardcoded colour,
           // because a hardcoded colour in a preview file is a second palette.
           style: {
-            background: 'var(--automate-surface)',
-            color: 'var(--automate-fg)',
-            fontFamily: 'var(--automate-font-sans)',
+            background: 'var(--lupin-surface)',
+            color: 'var(--lupin-fg)',
+            fontFamily: 'var(--lupin-font-sans)',
             colorScheme: theme,
             minHeight: '100vh',
             padding: '2rem',

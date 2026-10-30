@@ -41,10 +41,10 @@ function readPalette() {
   if (!canvas.value) return;
   const style = getComputedStyle(canvas.value);
   palette = {
-    foreground: style.getPropertyValue('--automate-fg').trim(),
-    muted: style.getPropertyValue('--automate-fg-muted').trim(),
-    edge: style.getPropertyValue('--automate-border-strong').trim(),
-    background: style.getPropertyValue('--automate-surface-sunken').trim(),
+    foreground: style.getPropertyValue('--lupin-fg').trim(),
+    muted: style.getPropertyValue('--lupin-fg-muted').trim(),
+    edge: style.getPropertyValue('--lupin-border-strong').trim(),
+    background: style.getPropertyValue('--lupin-surface-sunken').trim(),
   };
 }
 function draw(now: number) {

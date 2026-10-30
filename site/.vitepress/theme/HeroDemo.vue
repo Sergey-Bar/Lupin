@@ -133,7 +133,7 @@ onBeforeUnmount(() => {
           <path
             d="M2 2v20l5.8-5.5 4 8 3.2-1.6-4-8H20L2 2Z"
             fill="currentColor"
-            stroke="var(--automate-surface)"
+            stroke="var(--lupin-surface)"
             stroke-width="2"
             stroke-linejoin="round"
           />
@@ -182,10 +182,10 @@ onBeforeUnmount(() => {
 <style scoped>
 .product-frame {
   overflow: hidden;
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 0.3rem;
-  background: var(--automate-surface);
-  box-shadow: 0 1.5rem 4rem var(--automate-border);
+  background: var(--lupin-surface);
+  box-shadow: 0 1.5rem 4rem var(--lupin-border);
 }
 .product-frame__caption,
 .demo__controls {
@@ -194,14 +194,14 @@ onBeforeUnmount(() => {
   align-items: center;
   min-height: 2.75rem;
   padding: 0 1rem;
-  background: var(--automate-surface-raised);
-  font-family: var(--automate-font-mono);
+  background: var(--lupin-surface-raised);
+  font-family: var(--lupin-font-mono);
   font-size: 0.65rem;
   letter-spacing: 0.08em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .product-frame__caption {
-  border-bottom: 1px solid var(--automate-border);
+  border-bottom: 1px solid var(--lupin-border);
 }
 .demo__screen {
   position: relative;
@@ -217,13 +217,13 @@ onBeforeUnmount(() => {
   position: absolute;
   pointer-events: none;
   transition:
-    left 0.8s var(--automate-ease-out),
-    top 0.8s var(--automate-ease-out);
+    left 0.8s var(--lupin-ease-out),
+    top 0.8s var(--lupin-ease-out);
 }
 .demo__cursor {
   width: clamp(1rem, 2vw, 1.5rem);
-  color: var(--automate-fg);
-  filter: drop-shadow(0 1px 2px var(--automate-surface));
+  color: var(--lupin-fg);
+  filter: drop-shadow(0 1px 2px var(--lupin-surface));
 }
 .demo__cursor svg {
   display: block;
@@ -233,7 +233,7 @@ onBeforeUnmount(() => {
   width: 1.6rem;
   height: 1.6rem;
   margin: -0.65rem 0 0 -0.65rem;
-  border: 1px solid var(--automate-accent);
+  border: 1px solid var(--lupin-accent);
   border-radius: 50%;
   opacity: 0.85;
 }
@@ -241,7 +241,7 @@ onBeforeUnmount(() => {
   display: block;
   width: 100%;
   height: 100%;
-  border: 1px solid var(--automate-accent);
+  border: 1px solid var(--lupin-accent);
   border-radius: 50%;
   animation: demo-click 1.8s ease-out infinite;
 }
@@ -253,16 +253,16 @@ onBeforeUnmount(() => {
   gap: 0.25rem;
   max-width: 55%;
   padding: 0.65rem 0.85rem;
-  border: 1px solid var(--automate-border-strong);
+  border: 1px solid var(--lupin-border-strong);
   border-radius: 0.2rem;
-  background: var(--automate-surface);
-  box-shadow: 0 0.3rem 1.2rem var(--automate-border);
-  color: var(--automate-fg);
+  background: var(--lupin-surface);
+  box-shadow: 0 0.3rem 1.2rem var(--lupin-border);
+  color: var(--lupin-fg);
 }
 .demo__caption span {
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 0.58rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .demo__caption strong {
   font-size: clamp(0.65rem, 1vw, 0.85rem);
@@ -270,11 +270,11 @@ onBeforeUnmount(() => {
 .demo__caption small {
   font-size: clamp(0.55rem, 0.85vw, 0.7rem);
   line-height: 1.3;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .demo__controls {
   min-height: 2.5rem;
-  border-top: 1px solid var(--automate-border);
+  border-top: 1px solid var(--lupin-border);
 }
 .demo__progress {
   display: flex;
@@ -284,11 +284,11 @@ onBeforeUnmount(() => {
 .demo__progress span {
   height: 2px;
   flex: 1;
-  background: var(--automate-border-strong);
+  background: var(--lupin-border-strong);
   transition: background-color 0.15s;
 }
 .demo__progress .is-active {
-  background: var(--automate-accent);
+  background: var(--lupin-accent);
 }
 .demo__controls button {
   display: inline-flex;
@@ -297,16 +297,16 @@ onBeforeUnmount(() => {
   padding: 0.45rem 0;
   border: 0;
   background: none;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   font: inherit;
   letter-spacing: inherit;
   cursor: pointer;
 }
 .demo__controls button:hover {
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .demo__controls button:focus-visible {
-  outline: 2px solid var(--automate-accent);
+  outline: 2px solid var(--lupin-accent);
   outline-offset: 2px;
 }
 @keyframes demo-click {

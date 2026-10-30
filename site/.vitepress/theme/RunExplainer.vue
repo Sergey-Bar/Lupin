@@ -90,19 +90,19 @@ const scenario = computed(() => scenarios[selected.value]);
 <style scoped>
 .run-lab {
   margin: 1.5rem 0 2rem;
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 0.35rem;
   overflow: hidden;
-  background: var(--automate-surface);
+  background: var(--lupin-surface);
 }
 .run-lab__intro {
   padding: 1.5rem 1.5rem 1rem;
 }
 .run-lab__intro > span,
 .run-lab small {
-  font: 0.65rem var(--automate-font-mono);
+  font: 0.65rem var(--lupin-font-mono);
   letter-spacing: 0.08em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .run-lab__intro h3 {
   margin: 0.5rem 0;
@@ -112,7 +112,7 @@ const scenario = computed(() => scenarios[selected.value]);
 }
 .run-lab__intro p {
   margin: 0;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   font-size: 0.95rem;
 }
 .run-lab__choices {
@@ -123,27 +123,27 @@ const scenario = computed(() => scenarios[selected.value]);
 }
 .run-lab__choices button {
   padding: 0.6rem 0.8rem;
-  border: 1px solid var(--automate-border-strong);
+  border: 1px solid var(--lupin-border-strong);
   border-radius: 0.25rem;
-  background: var(--automate-surface);
-  color: var(--automate-fg);
+  background: var(--lupin-surface);
+  color: var(--lupin-fg);
   font-size: 0.8rem;
   cursor: pointer;
 }
 .run-lab__choices button[aria-pressed='true'] {
-  background: var(--automate-accent);
-  color: var(--automate-on-fill);
-  border-color: var(--automate-accent);
+  background: var(--lupin-accent);
+  color: var(--lupin-on-fill);
+  border-color: var(--lupin-accent);
 }
 .run-lab__choices button:focus-visible {
-  outline: 2px solid var(--automate-accent);
+  outline: 2px solid var(--lupin-accent);
   outline-offset: 3px;
 }
 .run-lab__canvas {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
-  border-top: 1px solid var(--automate-border);
-  animation: run-arrive 300ms var(--automate-ease-out);
+  border-top: 1px solid var(--lupin-border);
+  animation: run-arrive 300ms var(--lupin-ease-out);
 }
 .run-lab__timeline {
   display: flex;
@@ -151,7 +151,7 @@ const scenario = computed(() => scenarios[selected.value]);
   justify-content: center;
   gap: 0.75rem;
   padding: 2rem 1rem;
-  background: var(--automate-surface-sunken);
+  background: var(--lupin-surface-sunken);
 }
 .run-lab__attempt {
   display: flex;
@@ -174,11 +174,11 @@ const scenario = computed(() => scenarios[selected.value]);
 }
 .run-lab__arrow {
   font-size: 1.7rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .run-lab__verdict {
   padding: 2rem;
-  border-left: 1px solid var(--automate-border);
+  border-left: 1px solid var(--lupin-border);
 }
 .run-lab__verdict > strong {
   display: block;
@@ -191,27 +191,27 @@ const scenario = computed(() => scenarios[selected.value]);
   margin: 1rem 0 0;
   font-size: 0.95rem;
   line-height: 1.65;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .tone-pass {
-  color: var(--automate-success);
+  color: var(--lupin-success);
 }
 .tone-fail {
-  color: var(--automate-danger);
+  color: var(--lupin-danger);
 }
 .tone-flaky {
-  color: var(--automate-chart-flaky);
+  color: var(--lupin-chart-flaky);
 }
 .tone-unknown {
-  color: var(--automate-warning);
+  color: var(--lupin-warning);
 }
 .run-lab__note {
   margin: 0;
   padding: 0.9rem 1.5rem;
-  border-top: 1px solid var(--automate-border);
+  border-top: 1px solid var(--lupin-border);
   font-size: 0.75rem;
   line-height: 1.5;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 @keyframes run-arrive {
   from {
@@ -229,7 +229,7 @@ const scenario = computed(() => scenarios[selected.value]);
   }
   .run-lab__verdict {
     border-left: 0;
-    border-top: 1px solid var(--automate-border);
+    border-top: 1px solid var(--lupin-border);
   }
 }
 @media (prefers-reduced-motion: reduce) {

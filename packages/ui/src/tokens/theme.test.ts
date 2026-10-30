@@ -21,10 +21,10 @@ function declaredColorNames(css: string): Set<string> {
   return names;
 }
 
-/** `--automate-*` variables defined in a theme block. */
+/** `--lupin-*` variables defined in a theme block. */
 function definedVariableNames(css: string): Set<string> {
   const names = new Set<string>();
-  for (const match of css.matchAll(/(--automate-[a-z0-9-]+)\s*:/g)) {
+  for (const match of css.matchAll(/(--lupin-[a-z0-9-]+)\s*:/g)) {
     const name = match[1];
     if (name !== undefined) names.add(name);
   }
@@ -361,21 +361,21 @@ describe('the scales the product renders from', () => {
     // can only be reviewed, which is what happened: `theme.test.ts:278` asserted six
     // sizes in a table nobody rendered while the product's heading was a seventh value
     // no test could see.
-    const declared = themeScale('--automate-type-').get('--automate-type-ratio');
+    const declared = themeScale('--lupin-type-').get('--lupin-type-ratio');
     if (declared === undefined) {
       throw new Error(
-        'theme.css does not declare --automate-type-ratio, so the relationship between ' +
+        'theme.css does not declare --lupin-type-ratio, so the relationship between ' +
           'the sizes is implied rather than stated. That is the defect this assertion exists for.',
       );
     }
     const ratio = Number(declared);
-    expect(Number.isFinite(ratio), `--automate-type-ratio is "${declared}"`).toBe(true);
+    expect(Number.isFinite(ratio), `--lupin-type-ratio is "${declared}"`).toBe(true);
     expect(ratio).toBeGreaterThan(1.05);
     expect(ratio).toBeLessThan(1.35);
   });
 
   it.each(LADDER_STEPS)('puts %s one declared ratio above the step below it', (step) => {
-    const ratio = Number(themeScale('--automate-type-').get('--automate-type-ratio'));
+    const ratio = Number(themeScale('--lupin-type-').get('--lupin-type-ratio'));
     const base = rem('--text-base', text);
     const position = LADDER_STEPS.indexOf(step);
     const expected = base * Math.pow(ratio, position);
@@ -551,7 +551,7 @@ describe('the scales the product renders from', () => {
   });
 
   it('publishes the two families as Tailwind font utilities, not only as custom properties', () => {
-    // `--automate-font-sans` and `--automate-font-mono` were declared in `fonts.css`
+    // `--lupin-font-sans` and `--lupin-font-mono` were declared in `fonts.css`
     // and read by `body`, so nothing inherited the wrong face — but `font-mono` was
     // Tailwind's *default* mono stack, which on Windows resolves to Consolas. Every
     // `font-mono` in this product — the run id, the digest, the score — was therefore
@@ -563,8 +563,8 @@ describe('the scales the product renders from', () => {
     // rather than emitting a variable that points at another variable.
     const fontsCss = readFileSync(path.join(here, 'fonts.css'), 'utf8');
     for (const [utility, variable] of [
-      ['--font-sans', '--automate-font-sans'],
-      ['--font-mono', '--automate-font-mono'],
+      ['--font-sans', '--lupin-font-sans'],
+      ['--font-mono', '--lupin-font-mono'],
     ]) {
       expect(
         fontsCss,
@@ -573,7 +573,7 @@ describe('the scales the product renders from', () => {
       ).toMatch(new RegExp(`${utility}\\s*:\\s*var\\(${variable}\\)`));
     }
     // And the property they name has to exist, or the utility points at nothing.
-    for (const variable of ['--automate-font-sans', '--automate-font-mono']) {
+    for (const variable of ['--lupin-font-sans', '--lupin-font-mono']) {
       expect(
         new RegExp(`${variable.replace(/-/g, '\\-')}\\s*:\\s*[^;]+;`).test(fontsCss),
         `fonts.css does not define ${variable}`,
@@ -615,7 +615,7 @@ function mediaBody(atRule: string): string {
 }
 
 /**
- * The `--automate-*` a selector declares inside an at-rule.
+ * The `--lupin-*` a selector declares inside an at-rule.
  *
  * Found by selector rather than by source text, for the reason `themeBlock`
  * above gives: the stylesheet goes through Prettier, which collapses a
@@ -635,7 +635,7 @@ function declaredIn(atRule: string, selector: string): Map<string, string> {
     const each = selectors.split(',').map(normalise).filter(Boolean);
     if (!each.every((part) => wanted.includes(part))) continue;
     const declared = new Map<string, string>();
-    for (const entry of declarations.matchAll(/(--automate-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+    for (const entry of declarations.matchAll(/(--lupin-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
       const name = entry[1];
       const value = entry[2];
       if (name !== undefined && value !== undefined) declared.set(name, value.trim());
@@ -649,10 +649,10 @@ const TRANSPARENCY = '@media (prefers-reduced-transparency: reduce)';
 const MORE_CONTRAST = '@media (prefers-contrast: more)';
 const FORCED = '@media (forced-colors: active)';
 const PLANE = [
-  '--automate-surface-sunken',
-  '--automate-surface',
-  '--automate-surface-raised',
-  '--automate-surface-muted',
+  '--lupin-surface-sunken',
+  '--lupin-surface',
+  '--lupin-surface-raised',
+  '--lupin-surface-muted',
 ];
 
 describe('design token source', () => {
@@ -714,7 +714,7 @@ describe('design token source', () => {
   it('maps every declared colour name onto a variable the theme defines', () => {
     const defined = definedVariableNames(themeCss);
     for (const match of themeCss.matchAll(
-      /--color-[a-z0-9-]+\s*:\s*var\((--automate-[a-z0-9-]+)\)/g,
+      /--color-[a-z0-9-]+\s*:\s*var\((--lupin-[a-z0-9-]+)\)/g,
     )) {
       expect(defined, `theme.css maps onto the undefined ${match[1]}`).toContain(match[1]);
     }
@@ -753,8 +753,8 @@ describe('design token source', () => {
   describe('contrast in the theme that actually ships', () => {
     it.each(BOTH_SELECTORS)('meets 4.5:1 for foreground on surface in %s', (selector) => {
       const ratio = contrastRatio(
-        variableValue(selector, '--automate-fg'),
-        variableValue(selector, '--automate-surface'),
+        variableValue(selector, '--lupin-fg'),
+        variableValue(selector, '--lupin-surface'),
       );
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
@@ -763,8 +763,8 @@ describe('design token source', () => {
       'meets 3:1 for danger against surface in %s, because it backs the destructive button',
       (selector) => {
         const ratio = contrastRatio(
-          variableValue(selector, '--automate-danger'),
-          variableValue(selector, '--automate-surface'),
+          variableValue(selector, '--lupin-danger'),
+          variableValue(selector, '--lupin-surface'),
         );
         expect(ratio).toBeGreaterThanOrEqual(3);
       },
@@ -774,64 +774,64 @@ describe('design token source', () => {
      * The remaining text tokens, against the background each one is actually
      * painted on.
      *
-     * These four were the untested half of the palette. `--automate-fg-muted` is
+     * These four were the untested half of the palette. `--lupin-fg-muted` is
      * what `text-fg-muted` and `text-text-secondary`/`text-text-muted` resolve
      * to, and it backs the run id, the timestamps, the helper text and every
      * empty-state description in the product — all of them text, and therefore
      * held to 4.5:1, not the 3:1 that applies to large text and UI edges.
      *
-     * `--automate-accent` is the token behind `text-primary` (link and button
+     * `--lupin-accent` is the token behind `text-primary` (link and button
      * text) and `border-focus`. As *text* it needs 4.5:1; as a focus ring it
      * needs 3:1 against the adjacent colour, which is why it is checked against
      * both backgrounds rather than only the lighter one.
      */
     it.each(BOTH_SELECTORS)('meets 4.5:1 for muted text on both surfaces in %s', (selector) => {
-      for (const background of ['--automate-surface', '--automate-surface-muted']) {
+      for (const background of ['--lupin-surface', '--lupin-surface-muted']) {
         const ratio = contrastRatio(
-          variableValue(selector, '--automate-fg-muted'),
+          variableValue(selector, '--lupin-fg-muted'),
           variableValue(selector, background),
         );
         expect(
           ratio,
-          `--automate-fg-muted on ${background} in ${selector} is ${ratio.toFixed(2)}:1`,
+          `--lupin-fg-muted on ${background} in ${selector} is ${ratio.toFixed(2)}:1`,
         ).toBeGreaterThanOrEqual(4.5);
       }
     });
 
     /**
      * `text-secondary` and `text-muted` are not variables of their own — they are
-     * Tailwind colour names the theme maps onto `--automate-fg-muted`. Asserting
-     * that mapping exists is what stops `--automate-text-secondary` and
-     * `--automate-text-muted` from silently becoming untested names, since the
+     * Tailwind colour names the theme maps onto `--lupin-fg-muted`. Asserting
+     * that mapping exists is what stops `--lupin-text-secondary` and
+     * `--lupin-text-muted` from silently becoming untested names, since the
      * contrast numbers above are the only ones that cover them.
      */
     it('resolves the secondary and muted text names onto the tested token', () => {
-      expect(semanticColorTokens['text-secondary']).toBe('--automate-fg-muted');
-      expect(semanticColorTokens['text-muted']).toBe('--automate-fg-muted');
+      expect(semanticColorTokens['text-secondary']).toBe('--lupin-fg-muted');
+      expect(semanticColorTokens['text-muted']).toBe('--lupin-fg-muted');
     });
 
     it.each(BOTH_SELECTORS)(
       'meets 4.5:1 for accent text on surface in %s, because it backs link and button text',
       (selector) => {
         const ratio = contrastRatio(
-          variableValue(selector, '--automate-accent'),
-          variableValue(selector, '--automate-surface'),
+          variableValue(selector, '--lupin-accent'),
+          variableValue(selector, '--lupin-surface'),
         );
-        expect(ratio, `--automate-accent on surface in ${selector}`).toBeGreaterThanOrEqual(4.5);
+        expect(ratio, `--lupin-accent on surface in ${selector}`).toBeGreaterThanOrEqual(4.5);
       },
     );
 
     it.each(BOTH_SELECTORS)(
       'meets 3:1 for accent against both surfaces in %s, because it backs the focus ring',
       (selector) => {
-        for (const background of ['--automate-surface', '--automate-surface-muted']) {
+        for (const background of ['--lupin-surface', '--lupin-surface-muted']) {
           const ratio = contrastRatio(
-            variableValue(selector, '--automate-accent'),
+            variableValue(selector, '--lupin-accent'),
             variableValue(selector, background),
           );
           expect(
             ratio,
-            `--automate-accent on ${background} in ${selector} is ${ratio.toFixed(2)}:1`,
+            `--lupin-accent on ${background} in ${selector} is ${ratio.toFixed(2)}:1`,
           ).toBeGreaterThanOrEqual(3);
         }
       },
@@ -851,10 +851,10 @@ describe('design token source', () => {
     it.each(BOTH_SELECTORS)(
       'meets 3:1 for the status colours against surface in %s, because they back borders and swatches',
       (selector) => {
-        for (const token of ['--automate-success', '--automate-warning', '--automate-danger']) {
+        for (const token of ['--lupin-success', '--lupin-warning', '--lupin-danger']) {
           const ratio = contrastRatio(
             variableValue(selector, token),
-            variableValue(selector, '--automate-surface'),
+            variableValue(selector, '--lupin-surface'),
           );
           expect(
             ratio,
@@ -867,10 +867,10 @@ describe('design token source', () => {
     it.each(BOTH_SELECTORS)(
       'meets 4.5:1 for success and warning as text on surface in %s',
       (selector) => {
-        for (const token of ['--automate-success', '--automate-warning']) {
+        for (const token of ['--lupin-success', '--lupin-warning']) {
           const ratio = contrastRatio(
             variableValue(selector, token),
-            variableValue(selector, '--automate-surface'),
+            variableValue(selector, '--lupin-surface'),
           );
           expect(
             ratio,
@@ -890,10 +890,10 @@ describe('design token source', () => {
     it.each(BOTH_SELECTORS)(
       'meets 4.5:1 for a status colour on its own 10% tint in %s',
       (selector) => {
-        for (const token of ['--automate-success', '--automate-warning', '--automate-danger']) {
+        for (const token of ['--lupin-success', '--lupin-warning', '--lupin-danger']) {
           const tint = blend(
             variableValue(selector, token),
-            variableValue(selector, '--automate-surface'),
+            variableValue(selector, '--lupin-surface'),
             0.1,
           );
           const ratio = contrastRatio(variableValue(selector, token), tint);
@@ -909,10 +909,10 @@ describe('design token source', () => {
      * Text painted on a saturated fill: the primary button, the destructive
      * button, the filled badge.
      *
-     * This pairing is why `--automate-on-fill` exists. It cannot be expressed
-     * against `--automate-fg`, because the two palettes need opposite answers:
-     * the dark fills are light, so white on `--automate-accent` measures 3.68:1,
-     * and the light fills are dark, so `--automate-fg` on `--automate-success`
+     * This pairing is why `--lupin-on-fill` exists. It cannot be expressed
+     * against `--lupin-fg`, because the two palettes need opposite answers:
+     * the dark fills are light, so white on `--lupin-accent` measures 3.68:1,
+     * and the light fills are dark, so `--lupin-fg` on `--lupin-success`
      * measured 6.04:1 before the status tokens were darkened and 2.79:1 after.
      * One hardcoded value cannot be right for both.
      */
@@ -920,25 +920,25 @@ describe('design token source', () => {
       'meets 4.5:1 for the on-fill foreground on every filled surface in %s',
       (selector) => {
         for (const fill of [
-          '--automate-accent',
-          '--automate-success',
-          '--automate-warning',
-          '--automate-danger',
+          '--lupin-accent',
+          '--lupin-success',
+          '--lupin-warning',
+          '--lupin-danger',
         ]) {
           const ratio = contrastRatio(
-            variableValue(selector, '--automate-on-fill'),
+            variableValue(selector, '--lupin-on-fill'),
             variableValue(selector, fill),
           );
           expect(
             ratio,
-            `--automate-on-fill on ${fill} in ${selector} is ${ratio.toFixed(2)}:1`,
+            `--lupin-on-fill on ${fill} in ${selector} is ${ratio.toFixed(2)}:1`,
           ).toBeGreaterThanOrEqual(4.5);
         }
       },
     );
 
     /**
-     * `--automate-border` is deliberately *not* asserted here.
+     * `--lupin-border` is deliberately *not* asserted here.
      *
      * It measures 1.31:1 in dark and 1.27:1 in light, which is below the 3:1 of
      * WCAG 1.4.11 for "visual information required to identify a control". Most
@@ -952,8 +952,8 @@ describe('design token source', () => {
     it('records the border ratio in both themes, because it does not meet 3:1', () => {
       const measured = BOTH_SELECTORS.map((selector) =>
         contrastRatio(
-          variableValue(selector, '--automate-border'),
-          variableValue(selector, '--automate-surface'),
+          variableValue(selector, '--lupin-border'),
+          variableValue(selector, '--lupin-surface'),
         ),
       );
       // A reminder, not a gate: flip this assertion to `toBeGreaterThanOrEqual(3)`
@@ -999,35 +999,35 @@ describe('design token source', () => {
       for (const selector of BOTH_SELECTORS) {
         const luminance = (variable: string): number =>
           relativeLuminance(...hexChannels(variableValue(selector, variable)));
-        const sunken = luminance('--automate-surface-sunken');
-        const base = luminance('--automate-surface');
-        const raised = luminance('--automate-surface-raised');
-        const inset = luminance('--automate-surface-muted');
+        const sunken = luminance('--lupin-surface-sunken');
+        const base = luminance('--lupin-surface');
+        const raised = luminance('--lupin-surface-raised');
+        const inset = luminance('--lupin-surface-muted');
 
         for (const [name, value] of [
-          ['--automate-surface', base],
-          ['--automate-surface-raised', raised],
-          ['--automate-surface-muted', inset],
+          ['--lupin-surface', base],
+          ['--lupin-surface-raised', raised],
+          ['--lupin-surface-muted', inset],
         ] as const) {
           expect(
             value,
-            `${name} (${String(value)}) is not lighter than --automate-surface-sunken ` +
+            `${name} (${String(value)}) is not lighter than --lupin-surface-sunken ` +
               `(${String(sunken)}) in ${selector}, so the page is not behind the panels`,
           ).toBeGreaterThan(sunken);
         }
         const aboveBase = raised > base;
         expect(
           aboveBase ? inset > raised : inset < raised,
-          `--automate-surface-raised (${String(raised)}) is not between --automate-surface ` +
-            `(${String(base)}) and --automate-surface-muted (${String(inset)}) in ${selector}`,
+          `--lupin-surface-raised (${String(raised)}) is not between --lupin-surface ` +
+            `(${String(base)}) and --lupin-surface-muted (${String(inset)}) in ${selector}`,
         ).toBe(true);
       }
 
       // And the inversion itself, stated once across the pair so a single theme
       // passing its own direction cannot hide a plane copied into both.
       const direction = (selector: string): 'rising' | 'falling' =>
-        relativeLuminance(...hexChannels(variableValue(selector, '--automate-surface-muted'))) >
-        relativeLuminance(...hexChannels(variableValue(selector, '--automate-surface')))
+        relativeLuminance(...hexChannels(variableValue(selector, '--lupin-surface-muted'))) >
+        relativeLuminance(...hexChannels(variableValue(selector, '--lupin-surface')))
           ? 'rising'
           : 'falling';
       expect(direction(DARK_SELECTOR)).toBe('rising');
@@ -1054,10 +1054,10 @@ describe('design token source', () => {
      * The four plane steps, in the order they stack.
      */
     const PLANE = [
-      '--automate-surface-sunken',
-      '--automate-surface',
-      '--automate-surface-raised',
-      '--automate-surface-muted',
+      '--lupin-surface-sunken',
+      '--lupin-surface',
+      '--lupin-surface-raised',
+      '--lupin-surface-muted',
     ];
 
     /**
@@ -1072,27 +1072,27 @@ describe('design token source', () => {
      */
     const PAIRS: ReadonlyArray<readonly [string, number, string]> = [
       [
-        '--automate-fg',
+        '--lupin-fg',
         4.5,
         'body text: the app shell paints `bg-surface-sunken` behind content that carries it',
       ],
       [
-        '--automate-fg-muted',
+        '--lupin-fg-muted',
         4.5,
         'the run id, the timestamps and the helper text, and the evidence panel sets them on the sunken plane',
       ],
       [
-        '--automate-border-strong',
+        '--lupin-border-strong',
         3,
         'the only edge delineating an `Input`, a `Select`, a `Textarea` or a `Toggle` — WCAG 1.4.11',
       ],
       [
-        '--automate-info',
+        '--lupin-info',
         4.5,
         '`Alert` renders `text-info` the way it renders `text-success`, so decoupling info from the accent moved it from being measured as the accent to being measured as a status colour',
       ],
       [
-        '--automate-accent',
+        '--lupin-accent',
         4.5,
         'text-primary, so it is text on every step a link can appear on rather than only the one the first draft of this suite happened to name',
       ],
@@ -1121,14 +1121,9 @@ describe('design token source', () => {
         // ratio computed against the untinted surface passes while the shipped
         // rendering fails. Both steps are checked because an `Alert` on a `Card` is a
         // real pairing and a card's surface is the raised step.
-        const status = [
-          '--automate-success',
-          '--automate-warning',
-          '--automate-danger',
-          '--automate-info',
-        ];
+        const status = ['--lupin-success', '--lupin-warning', '--lupin-danger', '--lupin-info'];
         for (const token of status) {
-          for (const background of ['--automate-surface', '--automate-surface-raised']) {
+          for (const background of ['--lupin-surface', '--lupin-surface-raised']) {
             const tint = blend(
               variableValue(selector, token),
               variableValue(selector, background),
@@ -1152,10 +1147,10 @@ describe('design token source', () => {
      * should never have to ask whether a blue pixel is a verdict.
      */
     const HUES: ReadonlyArray<readonly [string, string, number]> = [
-      ['success', '--automate-success', 148],
-      ['warning', '--automate-warning', 72],
-      ['danger', '--automate-danger', 25],
-      ['info', '--automate-info', 258],
+      ['success', '--lupin-success', 148],
+      ['warning', '--lupin-warning', 72],
+      ['danger', '--lupin-danger', 25],
+      ['info', '--lupin-info', 258],
     ];
 
     /** The shortest way round the hue circle, so 253 and 3 are 10 apart. */
@@ -1181,7 +1176,7 @@ describe('design token source', () => {
 
     it.each(BOTH_SELECTORS)('keeps the accent achromatic in %s', (selector) => {
       // The monochrome rule as a number: an OKLCH chroma under 0.01 is a grey to the eye.
-      const accent = oklch(variableValue(selector, '--automate-accent'));
+      const accent = oklch(variableValue(selector, '--lupin-accent'));
       expect(
         accent.chroma,
         'the accent has a hue, so the one colour that is not a verdict looks like one',
@@ -1189,11 +1184,11 @@ describe('design token source', () => {
     });
 
     it.each(BOTH_SELECTORS)('keeps info quieter than every verdict in %s', (selector) => {
-      const info = oklch(variableValue(selector, '--automate-info'));
+      const info = oklch(variableValue(selector, '--lupin-info'));
       // Info is steel: a note, never a verdict. Every run state is at least half as
       // saturated again as info, so the two read as different kinds of thing.
       const quietest = Math.min(
-        ...['--automate-success', '--automate-warning', '--automate-danger'].map(
+        ...['--lupin-success', '--lupin-warning', '--lupin-danger'].map(
           (token) => oklch(variableValue(selector, token)).chroma,
         ),
       );
@@ -1264,7 +1259,7 @@ describe('design token source', () => {
       for (const selector of BOTH_SELECTORS) {
         const declared = declaredIn(TRANSPARENCY, selector);
         const backgrounds = planeUnder(TRANSPARENCY, selector);
-        for (const variable of ['--automate-border', '--automate-border-strong']) {
+        for (const variable of ['--lupin-border', '--lupin-border-strong']) {
           const value = declared.get(variable);
           if (value === undefined) {
             throw new Error(`${TRANSPARENCY} does not name ${variable} for ${selector}`);
@@ -1310,21 +1305,21 @@ describe('design token source', () => {
     it('raises muted text and both borders under prefers-contrast: more', () => {
       for (const selector of BOTH_SELECTORS) {
         const declared = declaredIn(MORE_CONTRAST, selector);
-        const base = variableValue(selector, '--automate-fg-muted');
-        const raised = requireToken(declared, '--automate-fg-muted', MORE_CONTRAST, selector);
+        const base = variableValue(selector, '--lupin-fg-muted');
+        const raised = requireToken(declared, '--lupin-fg-muted', MORE_CONTRAST, selector);
 
         // Toward the full foreground in both themes: up in dark, down in light.
-        // A `--automate-fg` comparison would be the wrong assertion, because the media
+        // A `--lupin-fg` comparison would be the wrong assertion, because the media
         // query deliberately stops short of it — the point is more contrast, not the
         // maximum.
         const towardFg =
           relativeLuminance(...hexChannels(raised)) - relativeLuminance(...hexChannels(base));
         const isDark =
-          relativeLuminance(...hexChannels(variableValue(selector, '--automate-fg'))) >
+          relativeLuminance(...hexChannels(variableValue(selector, '--lupin-fg'))) >
           relativeLuminance(...hexChannels(base));
         expect(
           isDark ? towardFg : -towardFg,
-          `--automate-fg-muted under prefers-contrast: more moved away from the foreground in ${selector}`,
+          `--lupin-fg-muted under prefers-contrast: more moved away from the foreground in ${selector}`,
         ).toBeGreaterThan(0);
 
         // And the raised value still has to clear 4.5:1, or the media query has traded a
@@ -1334,10 +1329,10 @@ describe('design token source', () => {
           expectAtLeast(
             contrastRatio(raised, value),
             4.5,
-            `--automate-fg-muted under prefers-contrast: more on ${background} in ${selector}`,
+            `--lupin-fg-muted under prefers-contrast: more on ${background} in ${selector}`,
           );
         }
-        for (const variable of ['--automate-border', '--automate-border-strong']) {
+        for (const variable of ['--lupin-border', '--lupin-border-strong']) {
           const value = requireToken(declared, variable, MORE_CONTRAST, selector);
           for (const background of PLANE) {
             expectAtLeast(
@@ -1349,14 +1344,14 @@ describe('design token source', () => {
         }
 
         // The status hues and the accent are deliberately untouched: they already clear
-        // 4.5:1, and pushing them further would put `--automate-on-fill` below it, which
+        // 4.5:1, and pushing them further would put `--lupin-on-fill` below it, which
         // fixes one contrast request by breaking a different one.
         for (const untouched of [
-          '--automate-success',
-          '--automate-warning',
-          '--automate-danger',
-          '--automate-info',
-          '--automate-accent',
+          '--lupin-success',
+          '--lupin-warning',
+          '--lupin-danger',
+          '--lupin-info',
+          '--lupin-accent',
         ]) {
           expect(
             declared.has(untouched),
@@ -1371,8 +1366,8 @@ describe('design token source', () => {
       // same screen, and keeping two values would be keeping a distinction the
       // user cannot see.
       const declared = declaredIn(FORCED, ":root, [data-theme='dark'], [data-theme='light']");
-      expect(declared.get('--automate-border')).toBe('CanvasText');
-      expect(declared.get('--automate-border-strong')).toBe('CanvasText');
+      expect(declared.get('--lupin-border')).toBe('CanvasText');
+      expect(declared.get('--lupin-border-strong')).toBe('CanvasText');
       for (const surface of PLANE) {
         expect(declared.get(surface), `${surface} is not handed to the OS`).toBe('Canvas');
       }
@@ -1404,7 +1399,7 @@ describe('the plane is flat', () => {
 
   it('declares no glass token, no glass utility and no glass shadow', () => {
     expect(declarations, 'theme.css declares a glass token again').not.toMatch(
-      /--automate-glass-[a-z-]+\s*:/,
+      /--lupin-glass-[a-z-]+\s*:/,
     );
     expect(declarations, 'theme.css publishes `bg-glass` again').not.toMatch(/--color-glass\s*:/);
     expect(declarations, 'theme.css publishes a backdrop utility again').not.toMatch(
@@ -1419,7 +1414,7 @@ describe('the plane is flat', () => {
   });
 
   it('declares no page wash', () => {
-    expect(declarations).not.toMatch(/--automate-page-wash\s*:/);
+    expect(declarations).not.toMatch(/--lupin-page-wash\s*:/);
     expect(declarations).not.toMatch(/@utility\s+bg-page-wash/);
   });
 
@@ -1436,7 +1431,7 @@ describe('the plane is flat', () => {
 
   it('keeps the plane neutral, so the only colour on screen is a verdict', () => {
     for (const selector of BOTH_SELECTORS) {
-      for (const token of [...PLANE, '--automate-fg', '--automate-fg-muted', '--automate-border']) {
+      for (const token of [...PLANE, '--lupin-fg', '--lupin-fg-muted', '--lupin-border']) {
         const { chroma } = oklch(variableValue(selector, token));
         expect(
           chroma,
@@ -1480,18 +1475,18 @@ describe('the plane is flat', () => {
  */
 describe('the chart palette', () => {
   const PLANE = [
-    '--automate-surface-sunken',
-    '--automate-surface',
-    '--automate-surface-raised',
-    '--automate-surface-muted',
+    '--lupin-surface-sunken',
+    '--lupin-surface',
+    '--lupin-surface-raised',
+    '--lupin-surface-muted',
   ];
   const STATES = [
-    '--automate-chart-pass',
-    '--automate-chart-fail',
-    '--automate-chart-flaky',
-    '--automate-chart-skipped',
+    '--lupin-chart-pass',
+    '--lupin-chart-fail',
+    '--lupin-chart-flaky',
+    '--lupin-chart-skipped',
   ];
-  const SERIES = [1, 2, 3, 4, 5, 6].map((step) => `--automate-chart-${String(step)}`);
+  const SERIES = [1, 2, 3, 4, 5, 6].map((step) => `--lupin-chart-${String(step)}`);
 
   /** Viénot, Brettel and Mollon's (1999) deuteranopia projection, in linear sRGB. */
   function deuteranopia([r, g, b]: [number, number, number]): [number, number, number] {
@@ -1521,7 +1516,7 @@ describe('the chart palette', () => {
   it.each(BOTH_SELECTORS)(
     'draws every mark at 3:1 or more on every plane step, in %s',
     (selector) => {
-      for (const token of [...STATES, '--automate-chart-line', ...SERIES]) {
+      for (const token of [...STATES, '--lupin-chart-line', ...SERIES]) {
         for (const plane of PLANE) {
           expectAtLeast(
             contrastRatio(variableValue(selector, token), variableValue(selector, plane)),
@@ -1536,8 +1531,8 @@ describe('the chart palette', () => {
   it.each(BOTH_SELECTORS)(
     'keeps the gridline quiet — a guide, never a mark — in %s',
     (selector) => {
-      const grid = variableValue(selector, '--automate-chart-grid');
-      const ratio = contrastRatio(grid, variableValue(selector, '--automate-surface-raised'));
+      const grid = variableValue(selector, '--lupin-chart-grid');
+      const ratio = contrastRatio(grid, variableValue(selector, '--lupin-surface-raised'));
       expect(ratio, `the grid on the panel in ${selector}`).toBeGreaterThan(1.05);
       expect(ratio, `the grid on the panel in ${selector}`).toBeLessThan(3);
     },
@@ -1587,16 +1582,16 @@ describe('the chart palette', () => {
 describe('the light plane has depth', () => {
   it('separates the panel from the page by at least 1.15:1', () => {
     const ratio = contrastRatio(
-      variableValue(LIGHT_SELECTOR, '--automate-surface-raised'),
-      variableValue(LIGHT_SELECTOR, '--automate-surface-sunken'),
+      variableValue(LIGHT_SELECTOR, '--lupin-surface-raised'),
+      variableValue(LIGHT_SELECTOR, '--lupin-surface-sunken'),
     );
     expect(ratio).toBeGreaterThanOrEqual(1.15);
   });
 
   it('draws the decorative edge visibly on white, and still below 3:1', () => {
     const ratio = contrastRatio(
-      variableValue(LIGHT_SELECTOR, '--automate-border'),
-      variableValue(LIGHT_SELECTOR, '--automate-surface'),
+      variableValue(LIGHT_SELECTOR, '--lupin-border'),
+      variableValue(LIGHT_SELECTOR, '--lupin-surface'),
     );
     expect(ratio).toBeGreaterThanOrEqual(1.3);
     expect(ratio).toBeLessThan(3);

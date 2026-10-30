@@ -360,7 +360,7 @@ describe('the application obeys the two rules the library sweep enforces', () =>
         (element) =>
           `${element.tagName.toLowerCase()}"${(element.textContent ?? '').trim().slice(0, 20)}" [${element.className}]`,
       );
-    expect(offenders, 'one focus idiom, on --automate-accent, drawn as an outline').toEqual([]);
+    expect(offenders, 'one focus idiom, on --lupin-accent, drawn as an outline').toEqual([]);
   });
 
   it.each(CHROME)('%s gives every icon-only control a 44Ã—44 target', async (_name, mount) => {

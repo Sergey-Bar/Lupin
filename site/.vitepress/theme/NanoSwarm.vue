@@ -77,7 +77,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0 -3%;
   pointer-events: none;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   z-index: 0;
 }
 .nano__field {
@@ -121,18 +121,18 @@ onBeforeUnmount(() => {
   gap: 0.5rem;
   min-height: 36px;
   padding: 0.4rem 0.6rem;
-  color: var(--automate-fg-muted);
-  background: var(--automate-surface-sunken);
-  border: 1px solid var(--automate-border);
+  color: var(--lupin-fg-muted);
+  background: var(--lupin-surface-sunken);
+  border: 1px solid var(--lupin-border);
   border-radius: 4px;
-  font: 0.6rem var(--automate-font-mono);
+  font: 0.6rem var(--lupin-font-mono);
   cursor: pointer;
 }
 .nano__control:hover {
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .nano__control:focus-visible {
-  outline: 2px solid var(--automate-fg);
+  outline: 2px solid var(--lupin-fg);
   outline-offset: 4px;
 }
 .nano--paused .nano__bot {

@@ -109,7 +109,7 @@ function TestEvidence({ tests }: { tests: Run['tests'] }) {
     /*
      * The evidence surfaces sit one step *below* the panels, not on them.
      *
-     * `--automate-surface-sunken` is the plane step for content that is being
+     * `--lupin-surface-sunken` is the plane step for content that is being
      * inspected rather than acted on: the test block and each timeline entry are
      * both things a reader is reading closely, and painting them on the same step as
      * the `Card` around them makes the page a field of identical rectangles with no

@@ -18,12 +18,12 @@ function contrast(a, b) {
 }
 test('Lupin text, links, and action labels meet AA in both themes', () => {
   const blocks = [
-    ...css.matchAll(/--lupin-canvas:\s*(#[a-f\d]+);([\s\S]*?)--lupin-on-accent:\s*(#[a-f\d]+);/gi),
+    ...css.matchAll(/--site-canvas:\s*(#[a-f\d]+);([\s\S]*?)--site-on-accent:\s*(#[a-f\d]+);/gi),
   ];
   assert.equal(blocks.length, 2);
   for (const block of blocks) {
     const tokens = Object.fromEntries(
-      [...block[0].matchAll(/--lupin-([\w-]+):\s*(#[a-f\d]+);/gi)].map((m) => [m[1], m[2]]),
+      [...block[0].matchAll(/--site-([\w-]+):\s*(#[a-f\d]+);/gi)].map((m) => [m[1], m[2]]),
     );
     for (const surface of ['canvas', 'surface'])
       for (const text of ['text', 'muted', 'accent'])

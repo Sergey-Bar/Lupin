@@ -6,7 +6,7 @@
  * outside this app.
  *
  * Order matters and is the reason these three are adjacent rather than appended:
- * `fonts.css` declares `--automate-font-sans` / `--automate-font-mono` and the
+ * `fonts.css` declares `--lupin-font-sans` / `--lupin-font-mono` and the
  * `@font-face` rules that need the committed binaries, `theme.css` declares the
  * colour plane and elevation, and `motion.css` declares the durations and the
  * enter/exit animations. `body` below reads the font variables, so `fonts.css`
@@ -21,23 +21,23 @@
 
 @layer base {
   * {
-    border-color: var(--automate-border);
+    border-color: var(--lupin-border);
   }
 
   body {
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
-    background: var(--automate-surface);
-    color: var(--automate-fg);
+    background: var(--lupin-surface);
+    color: var(--lupin-fg);
     /*
-     * `var(--automate-font-sans)`, not a literal stack. The same two custom
+     * `var(--lupin-font-sans)`, not a literal stack. The same two custom
      * properties are what `tokens/typography.ts` records and what the
      * documentation site resolves, so there is one list of families rather than
      * three — and the fallback faces carry the metrics overrides that keep the
      * swap from moving a line.
      */
-    font-family: var(--automate-font-sans);
+    font-family: var(--lupin-font-sans);
     /*
      * `font-synthesis` off, because Archivo is a variable face loaded from a
      * subset: with synthesis left on, a weight the subset did not ship is
@@ -58,7 +58,7 @@
   kbd,
   samp,
   pre {
-    font-family: var(--automate-font-mono);
+    font-family: var(--lupin-font-mono);
     font-variant-numeric: tabular-nums;
   }
 
@@ -81,7 +81,7 @@
  */
 @layer base {
   html[data-motion='reduced'] {
-    --automate-motion-scale: 0.01;
+    --lupin-motion-scale: 0.01;
   }
 
   html[data-density='compact'] {

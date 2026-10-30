@@ -119,8 +119,8 @@ describe('the enter and exit animations are declared, not assumed', () => {
     // operating system for it not to.
     for (const name of ANIMATIONS) {
       const declaration = new RegExp(`${name}:\\s*([^;]+);`).exec(motionCss)?.[1] ?? '';
-      expect(declaration, `${name} hard-codes a duration`).toContain('var(--automate-duration-');
-      expect(declaration, `${name} hard-codes a timing function`).toContain('var(--automate-ease-');
+      expect(declaration, `${name} hard-codes a duration`).toContain('var(--lupin-duration-');
+      expect(declaration, `${name} hard-codes a timing function`).toContain('var(--lupin-ease-');
     }
   });
 

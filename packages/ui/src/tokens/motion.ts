@@ -8,7 +8,7 @@
  * disorder is not a preference the product gets to ignore.
  *
  * The mechanism is one multiplier rather than a second copy of the scale:
- * `motion.css` defines every duration as `calc(<value> * var(--automate-motion-scale))`
+ * `motion.css` defines every duration as `calc(<value> * var(--lupin-motion-scale))`
  * and the reduced-motion media query sets that one variable. So the reduced
  * rule is a single declaration that reaches every duration *and every duration
  * added later*, with no list here to fall out of date. `motion.test.ts` asserts
@@ -32,7 +32,7 @@ export const motion = {
 };
 
 /** The custom property every duration is multiplied by. `1` is "no scaling". */
-export const MOTION_SCALE_VARIABLE = '--automate-motion-scale';
+export const MOTION_SCALE_VARIABLE = '--lupin-motion-scale';
 
 /**
  * The multiplier applied under `prefers-reduced-motion: reduce`.
@@ -49,12 +49,12 @@ export const REDUCED_MOTION_DURATION = `${REDUCED_MOTION_SCALE}ms`;
 
 /** The custom property a duration step is published under. */
 export function durationVariableName(step: number): string {
-  return `--automate-duration-${step}`;
+  return `--lupin-duration-${step}`;
 }
 
 /** The custom property an easing step is published under. */
 export function easingVariableName(step: string): string {
-  return `--automate-ease-${step}`;
+  return `--lupin-ease-${step}`;
 }
 
 /**

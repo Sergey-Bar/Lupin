@@ -158,7 +158,7 @@ header {
 }
 .eyebrow {
   font-size: 0.7rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   letter-spacing: 0.08em;
   line-height: 1.6;
 }
@@ -170,18 +170,18 @@ h2 {
   font-weight: 650;
 }
 header > p:last-child {
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   font-size: 1.125rem;
   line-height: 1.7;
 }
 .chapters {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-block-end: 1px solid var(--automate-border);
+  border-block-end: 1px solid var(--lupin-border);
 }
 .chapters button {
   padding: 1.25rem 0.5rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   border-block-end: 2px solid transparent;
   display: flex;
   justify-content: center;
@@ -189,18 +189,18 @@ header > p:last-child {
   cursor: pointer;
 }
 .chapters button[aria-pressed='true'] {
-  color: var(--automate-fg);
-  border-color: var(--automate-fg);
+  color: var(--lupin-fg);
+  border-color: var(--lupin-fg);
 }
 .chapters span {
-  font: 0.75rem var(--automate-font-mono);
+  font: 0.75rem var(--lupin-font-mono);
 }
 .stage {
   display: grid;
   grid-template-columns: 0.85fr 1.15fr;
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-block-start: 0;
-  background: var(--automate-surface);
+  background: var(--lupin-surface);
   border-radius: 0 0 16px 16px;
   overflow: hidden;
 }
@@ -209,8 +209,8 @@ header > p:last-child {
   align-self: center;
 }
 .number {
-  font: clamp(3rem, 6vw, 6rem) var(--automate-font-mono);
-  color: var(--automate-fg-muted);
+  font: clamp(3rem, 6vw, 6rem) var(--lupin-font-mono);
+  color: var(--lupin-fg-muted);
 }
 h3 {
   font-size: clamp(1.5rem, 2.5vw, 2.5rem);
@@ -219,7 +219,7 @@ h3 {
   margin-block: 1rem;
 }
 .narrative p {
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   line-height: 1.8;
   max-width: 34ch;
 }
@@ -232,8 +232,8 @@ h3 {
 .demo {
   min-width: 0;
   padding: clamp(1.25rem, 3vw, 3rem);
-  background: var(--automate-surface-raised);
-  border-inline-start: 1px solid var(--automate-border);
+  background: var(--lupin-surface-raised);
+  border-inline-start: 1px solid var(--lupin-border);
 }
 .scenarios {
   display: flex;
@@ -242,24 +242,24 @@ h3 {
   margin-block: 1.5rem;
 }
 .scenarios button {
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 6px;
   padding: 0.65rem 0.85rem;
   font-size: 0.85rem;
   cursor: pointer;
 }
 .scenarios button[aria-pressed='true'] {
-  background: var(--automate-fg);
-  color: var(--automate-surface);
+  background: var(--lupin-fg);
+  color: var(--lupin-surface);
 }
 .frame {
   min-height: 17rem;
 }
 .filename {
-  font: 0.8rem var(--automate-font-mono);
-  color: var(--automate-fg-muted);
+  font: 0.8rem var(--lupin-font-mono);
+  color: var(--lupin-fg-muted);
   padding-block: 1rem;
-  border-block-end: 1px solid var(--automate-border);
+  border-block-end: 1px solid var(--lupin-border);
 }
 .symbol {
   font-size: 3.5rem;
@@ -284,11 +284,11 @@ h4 {
   justify-content: space-between;
   gap: 1rem;
   padding-block: 1.5rem;
-  border-block-end: 1px solid var(--automate-border);
+  border-block-end: 1px solid var(--lupin-border);
 }
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--automate-fg);
+  outline: 2px solid var(--lupin-fg);
   outline-offset: 4px;
 }
 .frame-enter-active,
@@ -311,7 +311,7 @@ a:focus-visible {
   }
   .demo {
     border-inline-start: 0;
-    border-block-start: 1px solid var(--automate-border);
+    border-block-start: 1px solid var(--lupin-border);
   }
   .number {
     display: none;
@@ -332,13 +332,13 @@ a:focus-visible {
   }
 }
 .passed {
-  --signal-color: var(--automate-success);
+  --signal-color: var(--lupin-success);
 }
 .retry {
-  --signal-color: var(--automate-warning);
+  --signal-color: var(--lupin-warning);
 }
 .failed {
-  --signal-color: var(--automate-danger);
+  --signal-color: var(--lupin-danger);
 }
 .symbol,
 .attempts strong {
@@ -351,7 +351,7 @@ a:focus-visible {
   color: var(--signal-color);
 }
 .signal-track {
-  stroke: var(--automate-border);
+  stroke: var(--lupin-border);
   stroke-width: 1;
 }
 .signal-line {

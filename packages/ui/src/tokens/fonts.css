@@ -114,11 +114,11 @@
  * three of them — `index.css` on `body`, `typography.ts` for the token record,
  * and the documentation site's own stylesheet — and three copies of a font
  * stack is three chances to change one and forget another. A component that
- * needs the mono reaches for `var(--automate-font-mono)`.
+ * needs the mono reaches for `var(--lupin-font-mono)`.
  */
 :root {
-  --automate-font-sans: 'Archivo', 'Archivo Fallback', ui-sans-serif, system-ui, sans-serif;
-  --automate-font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, monospace;
+  --lupin-font-sans: 'Archivo', 'Archivo Fallback', ui-sans-serif, system-ui, sans-serif;
+  --lupin-font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, monospace;
 }
 
 /*
@@ -133,7 +133,7 @@
  *
  * `@theme inline`, not `@theme`, and the difference is the point: `inline` substitutes
  * the `var()` into the utility so `font-mono` compiles to
- * `font-family: var(--automate-font-mono)`. A plain `@theme` would emit a variable
+ * `font-family: var(--lupin-font-mono)`. A plain `@theme` would emit a variable
  * pointing at a variable, which is legal and one indirection more than this needs.
  *
  * `theme.test.ts` asserts both names resolve to these two variables rather than to a
@@ -141,6 +141,6 @@
  * second authority for the one decision this file exists to make.
  */
 @theme inline {
-  --font-sans: var(--automate-font-sans);
-  --font-mono: var(--automate-font-mono);
+  --font-sans: var(--lupin-font-sans);
+  --font-mono: var(--lupin-font-mono);
 }

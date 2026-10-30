@@ -272,8 +272,19 @@ test('no site navigation entry points at a page that does not exist', () => {
     // `/` is the home page, which is `site/index.md`.
     .filter((link) => link !== '/')
     .filter((link) => {
-      const page = link.replace(/^\//, '').replace(/\/$/, '');
-      if (page === '') return false;
+      const [pagePart = '', fragment] = link.split('#');
+      const page = pagePart.replace(/^\//, '').replace(/\/$/, '');
+      if (page === '') {
+        // `/#section` is an anchor on the home page, which `Home.vue` renders. The anchor
+        // has to exist there, or the link scrolls nowhere — the same dangling link in a
+        // different shape.
+        if (fragment === undefined) return false;
+        const home = readFileSync(
+          path.join(REPO_ROOT, 'site', '.vitepress', 'theme', 'Home.vue'),
+          'utf8',
+        );
+        return !home.includes(`id="${fragment}"`);
+      }
       // A section landing page is `index.md` inside the directory, which is what
       // `/guide/` means under `cleanUrls`. Resolving it to `guide.md` was correct
       // while every section had no index, and stopped being correct the moment one

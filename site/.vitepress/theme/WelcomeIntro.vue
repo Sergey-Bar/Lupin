@@ -99,8 +99,8 @@ onBeforeUnmount(() => {
   margin: 0;
   padding: 2rem;
   border: 0;
-  background: var(--automate-surface-sunken);
-  color: var(--automate-fg);
+  background: var(--lupin-surface-sunken);
+  color: var(--lupin-fg);
   overflow: hidden;
 }
 .welcome[open] {
@@ -108,14 +108,14 @@ onBeforeUnmount(() => {
   place-items: center;
 }
 .welcome::backdrop {
-  background: var(--automate-surface-sunken);
+  background: var(--lupin-surface-sunken);
 }
 .welcome__center {
   width: min(84vw, 52rem);
   text-align: center;
 }
 .welcome__logo {
-  font-family: var(--automate-font-sans);
+  font-family: var(--lupin-font-sans);
   font-size: clamp(2.5rem, 9vw, 7rem);
   font-weight: 700;
   line-height: 1.4;
@@ -123,9 +123,9 @@ onBeforeUnmount(() => {
 }
 .welcome__eyebrow,
 .welcome__caption {
-  font: 0.65rem var(--automate-font-mono);
+  font: 0.65rem var(--lupin-font-mono);
   letter-spacing: 0.18em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .welcome__eyebrow {
   margin-bottom: 2rem;
@@ -139,10 +139,10 @@ onBeforeUnmount(() => {
   bottom: 2rem;
   padding: 0.75rem;
   cursor: pointer;
-  font: 0.7rem var(--automate-font-mono);
+  font: 0.7rem var(--lupin-font-mono);
 }
 .welcome__skip:focus-visible {
-  outline: 2px solid var(--automate-fg);
+  outline: 2px solid var(--lupin-fg);
   outline-offset: 4px;
 }
 </style>

@@ -15,7 +15,7 @@ export const NavItem = forwardRef<HTMLAnchorElement, NavItemProps>(
         ref={ref}
         className={cn(
           'group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors',
-          // The canonical focus idiom, on `--automate-accent`. `NavItem` drew no focus
+          // The canonical focus idiom, on `--lupin-accent`. `NavItem` drew no focus
           // indicator at all, which is the worst of the three idioms this product had:
           // the sidebar is the first thing a keyboard user tabs into and the only one
           // where the position of the focus is not obvious from the element itself.

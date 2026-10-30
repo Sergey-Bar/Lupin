@@ -68,16 +68,16 @@ describe('motion is a stated vocabulary rather than a scattering of utilities', 
     // reach, so `prefers-reduced-motion` could not stop the press feedback. One number in
     // this file, multiplied by the same scale the durations are multiplied by.
     for (const variable of [
-      '--automate-press-scale',
-      '--automate-motion-scale',
-      '--automate-duration-75',
-      '--automate-duration-100',
-      '--automate-duration-150',
-      '--automate-duration-200',
-      '--automate-duration-300',
-      '--automate-ease-out',
-      '--automate-ease-in',
-      '--automate-ease-in-out',
+      '--lupin-press-scale',
+      '--lupin-motion-scale',
+      '--lupin-duration-75',
+      '--lupin-duration-100',
+      '--lupin-duration-150',
+      '--lupin-duration-200',
+      '--lupin-duration-300',
+      '--lupin-ease-out',
+      '--lupin-ease-in',
+      '--lupin-ease-in-out',
     ]) {
       expect(motionCss, `motion.css does not declare ${variable}`).toMatch(
         new RegExp(`${variable.replace(/-/g, '\\-')}\\s*:`),
@@ -93,7 +93,7 @@ describe('motion is a stated vocabulary rather than a scattering of utilities', 
       offenders,
       '`active:scale-[0.98]` is a number typed into a class string. It is one value that no ' +
         'media query can reach, so `prefers-reduced-motion` cannot stop the press feedback. ' +
-        '`motion.css` declares `--automate-press-scale`; a component should not.',
+        '`motion.css` declares `--lupin-press-scale`; a component should not.',
     ).toEqual([]);
   });
 

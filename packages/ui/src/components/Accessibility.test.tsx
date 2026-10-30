@@ -549,7 +549,7 @@ describe('one focus idiom, on one token', () => {
     unmount();
     expect(
       offenders,
-      `every element in the tab order must carry ${[...FOCUS_IDIOM, ...FOCUS_OFFSETS].join(' ')} — one idiom, on --automate-accent, drawn as an outline`,
+      `every element in the tab order must carry ${[...FOCUS_IDIOM, ...FOCUS_OFFSETS].join(' ')} — one idiom, on --lupin-accent, drawn as an outline`,
     ).toEqual([]);
   });
 

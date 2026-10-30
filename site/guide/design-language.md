@@ -30,12 +30,12 @@ verdict — pass, warn, fail, flaky — or a chart series. There is no glass and
 
 Four steps, and the names do not change between themes — the plane is what inverts.
 
-| Token                       | Dark      | Light     | What it is for                                                    |
-| --------------------------- | --------- | --------- | ----------------------------------------------------------------- |
-| `--automate-surface-sunken` | `#050505` | `#ebebed` | The page behind the panels, and the evidence surfaces inside them |
-| `--automate-surface`        | `#0a0a0a` | `#ffffff` | A panel. The base                                                 |
-| `--automate-surface-raised` | `#121212` | `#fcfcfc` | A control sitting on the base, and every overlay                  |
-| `--automate-surface-muted`  | `#171717` | `#f4f4f5` | The recessed fill inside a control                                |
+| Token                    | Dark      | Light     | What it is for                                                    |
+| ------------------------ | --------- | --------- | ----------------------------------------------------------------- |
+| `--lupin-surface-sunken` | `#050505` | `#ebebed` | The page behind the panels, and the evidence surfaces inside them |
+| `--lupin-surface`        | `#0a0a0a` | `#ffffff` | A panel. The base                                                 |
+| `--lupin-surface-raised` | `#121212` | `#fcfcfc` | A control sitting on the base, and every overlay                  |
+| `--lupin-surface-muted`  | `#171717` | `#f4f4f5` | The recessed fill inside a control                                |
 
 In dark mode the plane gets **lighter** as it rises; in light mode it gets **closer to
 white**. That inversion is asserted, not described: `theme.test.ts` checks that
@@ -85,7 +85,7 @@ first field `data-autofocus` instead.
 
 ## The accent
 
-`--automate-accent` is `#e5e5e5` in dark and `#171717` in light — the foreground tone, with
+`--lupin-accent` is `#e5e5e5` in dark and `#171717` in light — the foreground tone, with
 no hue. `theme.test.ts` holds it under 0.01 OKLCH chroma in both themes.
 
 It is allowed in three places:
@@ -100,14 +100,14 @@ green means passed is never asked whether a blue pixel is a result or the brand.
 
 ## Run state, and why `info` is quieter
 
-| Token                | Dark      | Light     | OKLCH hue         |
-| -------------------- | --------- | --------- | ----------------- |
-| `--automate-success` | `#66bb74` | `#206c32` | 148               |
-| `--automate-warning` | `#e4a247` | `#7e5415` | 72                |
-| `--automate-danger`  | `#d9716b` | `#9f3331` | 25                |
-| `--automate-info`    | `#7c8da6` | `#4d5f79` | 258, chroma 0.048 |
+| Token             | Dark      | Light     | OKLCH hue         |
+| ----------------- | --------- | --------- | ----------------- |
+| `--lupin-success` | `#66bb74` | `#206c32` | 148               |
+| `--lupin-warning` | `#e4a247` | `#7e5415` | 72                |
+| `--lupin-danger`  | `#d9716b` | `#9f3331` | 25                |
+| `--lupin-info`    | `#7c8da6` | `#4d5f79` | 258, chroma 0.048 |
 
-`--automate-info` is steel: a note, never a verdict. The test asserts it categorically —
+`--lupin-info` is steel: a note, never a verdict. The test asserts it categorically —
 every run state is at least half as saturated again as info — rather than picking a
 number, because the claim is about being visibly quieter.
 
@@ -128,21 +128,21 @@ shipped rendering failed. There is a test for that case per plane step.
 
 ## Two borders, because 1.4.11 is not about every border
 
-| Token                      | Dark      | Light     | Measured                                      |
-| -------------------------- | --------- | --------- | --------------------------------------------- |
-| `--automate-border`        | `#262626` | `#dcdcdf` | ~1.3:1 on the base — below 3:1 **on purpose** |
-| `--automate-border-strong` | `#6b6b6b` | `#76767c` | 3.2:1 or better against every plane step      |
+| Token                   | Dark      | Light     | Measured                                      |
+| ----------------------- | --------- | --------- | --------------------------------------------- |
+| `--lupin-border`        | `#262626` | `#dcdcdf` | ~1.3:1 on the base — below 3:1 **on purpose** |
+| `--lupin-border-strong` | `#6b6b6b` | `#76767c` | 3.2:1 or better against every plane step      |
 
-`--automate-border` is decoration: a card outline, a divider, a table rule. A card edge
+`--lupin-border` is decoration: a card outline, a divider, a table rule. A card edge
 at 3:1 on a plane this dark is a mid-grey line around every rectangle on the screen.
 
-`--automate-border-strong` is the edge that is the _only_ thing delineating a control,
+`--lupin-border-strong` is the edge that is the _only_ thing delineating a control,
 which is the case WCAG 1.4.11 does cover. `Input`, `Select`, `Textarea` and `Toggle` use
 it. Before it existed they drew their 1px edge from the decorative token and measured
 1.31:1, so a low-vision keyboard user had no way to see where the field ended.
 
 The test asserts the strong border against all four plane steps, not only the base,
-because a control painted on `--automate-surface-sunken` has to survive there too — and
+because a control painted on `--lupin-surface-sunken` has to survive there too — and
 in the dark theme the _muted_ step is the binding constraint, not the base.
 
 ## Type
@@ -206,7 +206,7 @@ strings intact, which is why every test asserting on the class name passed.
 A plugin would be one more dependency whose behaviour is versioned separately from this
 tree, for four keyframes.
 
-Every duration is `calc(<value> * var(--automate-motion-scale))`, so
+Every duration is `calc(<value> * var(--lupin-motion-scale))`, so
 `prefers-reduced-motion` has exactly one declaration to change. The components also write
 Tailwind's own `duration-*`, which compile to literal times and cannot be reached by a
 scale variable — so the media query clamps the properties themselves as well, or the
@@ -263,7 +263,7 @@ different requests:
 | `forced-colors: active`                | The borders and the plane are handed to `Canvas`/`CanvasText`, because in forced-colors the two themes are the same screen |
 
 The status hues are left alone in the contrast query for a reason worth stating: they
-already clear 4.5:1, and pushing them further would put `--automate-on-fill` below it,
+already clear 4.5:1, and pushing them further would put `--lupin-on-fill` below it,
 which fixes one contrast request by breaking a different one.
 
 `forced-color-adjust` is not set to `none` anywhere, and there is an assertion for that.

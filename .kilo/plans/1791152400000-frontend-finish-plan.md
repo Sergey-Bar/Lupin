@@ -125,7 +125,7 @@ spacing and radii. §2.1's fix removes this.
 ### 2.6 The glass is legible and nearly invisible
 
 Recorded in `GLASS-1` from the G4 screenshot review: at 72% over a flat
-`--automate-surface`, the fill contributes almost nothing and the fourth elevation step does
+`--lupin-surface`, the fill contributes almost nothing and the fourth elevation step does
 all the separating. The page plane has no gradient, so the only thing the blur ever samples
 is other panels. This is a **deliberate** consequence of the measured rules, and the plan
 below changes it with a token and a test rather than by raising the fill.
@@ -223,7 +223,7 @@ stylesheet, watched to fail for the stated reason.
 
 ### W2 — One focus idiom, on one token
 
-Replace the three idioms with the `outline-*` + `--automate-border-focus` one that six
+Replace the three idioms with the `outline-*` + `--lupin-border-focus` one that six
 components already use. Give `Popover` a focus style instead of `outline-none`. Change
 `Tabs`'s `ring-brand-500` to the token — and note that `ring-brand-500` compiles today only
 because Tailwind ships a `brand` scale; that is a **latent** second authority, not a passing
@@ -239,7 +239,7 @@ accessibility E2E project.
 
 ### W3 — Typography: the numbers stop moving
 
-1. `--automate-numeric: tabular-nums` as a Tailwind-exposed utility, applied to every place
+1. `--lupin-numeric: tabular-nums` as a Tailwind-exposed utility, applied to every place
    the product renders a figure: scores, pass rate, run and gap and quarantine counts,
    durations, coverage percentages, the pyramid's four figures, `Table`'s numeric cells.
    The site already does this; the product does not, and that asymmetry is the finding.
@@ -247,7 +247,7 @@ accessibility E2E project.
    `line-height: 1` is a bug, not a style.
 3. `text-balance` on headings, `text-pretty` on body prose — the two properties
    `better-typography` and the playbook both name, and both of which are one line each.
-4. A **measure**: `--automate-measure: 68ch` on prose blocks, and not on data.
+4. A **measure**: `--lupin-measure: 68ch` on prose blocks, and not on data.
 5. Re-derive the type scale under swiss rules and assert it: Archivo for UI, JetBrains Mono
    for anything a person compares down a column, one display size, and a step ratio the
    stylesheet states rather than implying.
@@ -263,7 +263,7 @@ From `animation-vocabulary` and `apple-design`, without a JS runtime:
 1. A **stated vocabulary** in `motion.css`: what each of the four existing keyframes is for,
    plus the press, hover, list and panel transitions the product does not have. Named, not
    scattered.
-2. `--automate-press-scale` as a token, replacing `Button`'s arbitrary `active:scale-[0.98]`,
+2. `--lupin-press-scale` as a token, replacing `Button`'s arbitrary `active:scale-[0.98]`,
    so the press feedback is one number and `prefers-reduced-motion` reaches it.
 3. `transition-all` → the two properties that move, on every component that writes it.
 4. **Panel transitions**: `Drawer` and `Dialog` slide; `Popover` and `CommandPalette` fade and
@@ -290,7 +290,7 @@ a rewrite of the contrast maths, which is the part that must not be hand-waved.
 1. A gamut check as a test, so a colour outside sRGB is a failure rather than a surprise on
    one monitor.
 2. Ramp steps in OKLCH at a fixed lightness delta, asserted rather than eyeballed.
-3. **The one real design change**: a page-plane gradient. `--automate-plane-wash`, a single
+3. **The one real design change**: a page-plane gradient. `--lupin-plane-wash`, a single
    very low-chroma radial, declared once per theme, composed from tokens, and — this is the
    part that matters — **excluded from the region `Table` and the evidence panes occupy**,
    because §2.6 exists precisely so that glass has something to sample, and the answer must
@@ -425,10 +425,10 @@ waves intended, this says what landed.
 | Wave | What is now in the tree | The gate that says so |
 | --- | --- | --- |
 | **W0** | Twelve design-craft skills vendored (four → sixteen in `.kilo/skills-lock.json`). `scripts/skill-scan.mjs` no longer holds a literal list of vendored names — it derives them from the lock, and `scripts/lib/skill-scan.test.mjs` fails if the two disagree in either direction. One new baseline row with a stated reason. | `pnpm skill-scan` green; the derived-list test was run red first against the four-name array. |
-| **W1** | The five dead token tables deleted, `tailwindPreset` and the `tokens` barrel with them. `theme.css` now declares the type ladder at a stated `--automate-type-ratio: 1.2`, the six-step line-height and letter-spacing scales, `--spacing`, the radius scale, six named stacking layers and `--max-w-measure`. `fonts.css` publishes `font-sans`/`font-mono` so they resolve to the committed binaries. | `theme.test.ts` 75 tests; 19 were red before the stylesheet was written. `pnpm docs:dead-exports` green. |
-| **W2** | One focus idiom on `--automate-accent`, on the rendered DOM. Eleven components changed, including `Tabs`' `ring-brand-500` (a Tailwind default) and four that drew no indicator. 44×44 on the icon-only controls and the named navigation targets. `z-10`/`z-50` replaced by `z-chrome`/`z-modal`/`z-popover`. | `Accessibility.test.tsx` 112 tests in `packages/ui`, 24 in `apps/web`, each with control arms; `theme-resolution.test.ts` fails on a bare `z-<number>`. |
+| **W1** | The five dead token tables deleted, `tailwindPreset` and the `tokens` barrel with them. `theme.css` now declares the type ladder at a stated `--lupin-type-ratio: 1.2`, the six-step line-height and letter-spacing scales, `--spacing`, the radius scale, six named stacking layers and `--max-w-measure`. `fonts.css` publishes `font-sans`/`font-mono` so they resolve to the committed binaries. | `theme.test.ts` 75 tests; 19 were red before the stylesheet was written. `pnpm docs:dead-exports` green. |
+| **W2** | One focus idiom on `--lupin-accent`, on the rendered DOM. Eleven components changed, including `Tabs`' `ring-brand-500` (a Tailwind default) and four that drew no indicator. 44×44 on the icon-only controls and the named navigation targets. `z-10`/`z-50` replaced by `z-chrome`/`z-modal`/`z-popover`. | `Accessibility.test.tsx` 112 tests in `packages/ui`, 24 in `apps/web`, each with control arms; `theme-resolution.test.ts` fails on a bare `z-<number>`. |
 | **W3** | `tabular-nums` on every figure; `leading-none` gone from five components; `text-balance`/`text-pretty`/`max-w-measure` on prose; a `numeric` prop on `TableCell`; the Cockpit's unmeasured cell redrawn as an outline rather than a solid bar. | Rendered-DOM assertions with named offenders; the `webSourceFiles()` reader was found walking three levels when it meant four and the control arm now exists. |
-| **W4** | `motion.css` rewritten as a stated vocabulary: five roles, five durations as `calc(value * scale)`, four easings, six named keyframes, `--automate-press-scale` as a token. `transition-all` gone; `active:scale-[0.98]` → `active:scale-press`; each overlay says which direction it moves. | `motion.vocabulary.test.ts` (7) and the pre-existing `motion.test.ts` (13), which holds `motion.ts` as the authority. |
+| **W4** | `motion.css` rewritten as a stated vocabulary: five roles, five durations as `calc(value * scale)`, four easings, six named keyframes, `--lupin-press-scale` as a token. `transition-all` gone; `active:scale-[0.98]` → `active:scale-press`; each overlay says which direction it moves. | `motion.vocabulary.test.ts` (7) and the pre-existing `motion.test.ts` (13), which holds `motion.ts` as the authority. |
 | **W5** | One low-amplitude wash on the page plane, interpolated `in oklab`, published as `bg-page-wash`. **The ramps stay hex**, deliberately: the argument for OKLCH is entirely about interpolation, and the contrast maths in `theme.test.ts` parses `#rrggbb`. | The exclusion is quantitative: every status hue as text recomputed over the wash's strongest point, the three planes above the page asserted opaque, and `bg-page-wash` allowed on two named shells and nowhere else. Control arm: mutating `Card` fails with the filename. |
 | **W6** | The app-level focus and hit-target sweep now reaches the route screens, and a source-level rule reaches the two that need a `QaClient` the fixtures do not carry. Nine hand-rolled controls across five files fixed. | The rule is one sweep rather than six reviews, and the failure message names the file and the element. |
 | **W7** | Three primitives — `DefinitionList`, `Meter`, `Sparkline` — each carrying a decision at the top of its own file. Registered in the axe sweep (28 → 31 components). | `Primitives.test.tsx` (12), including a control arm that removes the flat-series guard and produces `M 2 NaN L 48 NaN`. |

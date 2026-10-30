@@ -299,48 +299,48 @@ function next(): void {
 .story__example {
   width: 100%;
   padding: 1.2rem;
-  background: var(--automate-surface);
-  border: 1px solid var(--automate-border-strong);
-  animation: scene-enter 300ms var(--automate-ease-out);
+  background: var(--lupin-surface);
+  border: 1px solid var(--lupin-border-strong);
+  animation: scene-enter 300ms var(--lupin-ease-out);
 }
 .story__example-label {
   display: block;
-  font: 0.6rem var(--automate-font-mono);
+  font: 0.6rem var(--lupin-font-mono);
   letter-spacing: 0.08em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .story__example-icon {
   width: 4rem;
   height: 4rem;
   margin: 1rem 0;
-  stroke: var(--automate-fg);
+  stroke: var(--lupin-fg);
   stroke-width: 1.5;
 }
 .story__example-icon circle {
-  fill: var(--automate-surface);
+  fill: var(--lupin-surface);
 }
 .story__example > strong {
   display: block;
   margin-bottom: 1rem;
   font-size: 1.2rem;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .story__example-row {
   display: flex;
   gap: 0.7rem;
   padding: 0.65rem 0;
-  border-top: 1px solid var(--automate-border);
+  border-top: 1px solid var(--lupin-border);
   font-size: 0.8rem;
-  animation: scene-enter 300ms var(--automate-ease-out) both;
+  animation: scene-enter 300ms var(--lupin-ease-out) both;
 }
 .story__example-row > span {
-  color: var(--automate-fg-muted);
-  font: 0.65rem var(--automate-font-mono);
+  color: var(--lupin-fg-muted);
+  font: 0.65rem var(--lupin-font-mono);
 }
 .story__example > small {
   display: block;
   margin-top: 1rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   line-height: 1.5;
 }
 .story__image-wrap {
@@ -353,16 +353,16 @@ function next(): void {
   width: 2rem;
   height: 2rem;
   transform: translate(-50%, -50%);
-  border: 2px solid var(--automate-accent);
+  border: 2px solid var(--lupin-accent);
   border-radius: 50%;
-  background: var(--automate-surface);
-  color: var(--automate-fg);
+  background: var(--lupin-surface);
+  color: var(--lupin-fg);
   font-weight: 700;
   cursor: pointer;
 }
 .story__hotspot.is-selected {
-  background: var(--automate-accent);
-  color: var(--automate-on-fill);
+  background: var(--lupin-accent);
+  color: var(--lupin-on-fill);
 }
 .story__screenshot figcaption > div {
   max-width: 28rem;
@@ -374,13 +374,13 @@ function next(): void {
 }
 .story__screenshot figcaption strong {
   font-size: 1rem;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .story {
   margin: 2rem 0 3rem;
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 0.35rem;
-  background: var(--automate-surface);
+  background: var(--lupin-surface);
   overflow: hidden;
 }
 .story__header {
@@ -391,29 +391,29 @@ function next(): void {
 .story__destination span,
 .story__explanation > span,
 .story__screenshot figcaption span {
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 0.66rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .story__header h2 {
   margin: 0.55rem 0 0;
   font-size: clamp(1.5rem, 3vw, 2.25rem);
   line-height: 1.12;
   letter-spacing: -0.035em;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .story__header p {
   margin: 0.7rem 0 0;
   font-size: 0.9rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .story__rail {
   display: flex;
   overflow-x: auto;
-  border-top: 1px solid var(--automate-border);
-  border-bottom: 1px solid var(--automate-border);
+  border-top: 1px solid var(--lupin-border);
+  border-bottom: 1px solid var(--lupin-border);
   scrollbar-width: thin;
 }
 .story__rail button {
@@ -424,22 +424,22 @@ function next(): void {
   gap: 0.25rem;
   padding: 1rem 0.8rem;
   border: 0;
-  border-right: 1px solid var(--automate-border);
-  background: var(--automate-surface);
-  color: var(--automate-fg-muted);
+  border-right: 1px solid var(--lupin-border);
+  background: var(--lupin-surface);
+  color: var(--lupin-fg-muted);
   text-align: left;
   cursor: pointer;
   transition:
-    background-color var(--automate-duration-100) var(--automate-ease-out),
-    color var(--automate-duration-100) var(--automate-ease-out);
+    background-color var(--lupin-duration-100) var(--lupin-ease-out),
+    color var(--lupin-duration-100) var(--lupin-ease-out);
 }
 .story__rail button:last-child {
   border-right: 0;
 }
 .story__rail button:hover,
 .story__rail button.is-selected {
-  background: var(--automate-surface-raised);
-  color: var(--automate-fg);
+  background: var(--lupin-surface-raised);
+  color: var(--lupin-fg);
 }
 .story__rail button.is-selected::after {
   content: '';
@@ -448,10 +448,10 @@ function next(): void {
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--automate-accent);
+  background: var(--lupin-accent);
 }
 .story__rail button span {
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 0.65rem;
 }
 .story__rail button strong {
@@ -459,7 +459,7 @@ function next(): void {
   font-weight: 600;
 }
 .story button:focus-visible {
-  outline: 2px solid var(--automate-accent);
+  outline: 2px solid var(--lupin-accent);
   outline-offset: -3px;
 }
 .story__stage {
@@ -473,8 +473,8 @@ function next(): void {
   justify-content: center;
   gap: 1rem;
   padding: clamp(1rem, 3vw, 2rem);
-  border-right: 1px solid var(--automate-border);
-  background: var(--automate-surface-sunken);
+  border-right: 1px solid var(--lupin-border);
+  background: var(--lupin-surface-sunken);
 }
 .story__source,
 .story__destination {
@@ -482,33 +482,33 @@ function next(): void {
   gap: 0.45rem;
   min-width: 7rem;
   padding: 1.1rem;
-  border: 1px solid var(--automate-border-strong);
-  background: var(--automate-surface);
+  border: 1px solid var(--lupin-border-strong);
+  background: var(--lupin-surface);
 }
 .story__source strong,
 .story__destination strong {
   font-size: clamp(0.9rem, 1.5vw, 1.25rem);
   line-height: 1.15;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .story__destination strong {
-  animation: scene-enter var(--automate-duration-150) var(--automate-ease-out);
+  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-out);
 }
 .story__destination small {
   font-size: 0.7rem;
   line-height: 1.35;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .story__line {
   flex: 1;
   height: 2px;
-  background: var(--automate-border-strong);
+  background: var(--lupin-border-strong);
 }
 .story__line span {
   display: block;
   height: 100%;
-  background: var(--automate-accent);
-  transition: width 0.4s var(--automate-ease-out);
+  background: var(--lupin-accent);
+  transition: width 0.4s var(--lupin-ease-out);
 }
 .story__explanation {
   display: flex;
@@ -521,15 +521,15 @@ function next(): void {
   font-size: clamp(1.25rem, 2vw, 1.75rem);
   line-height: 1.2;
   letter-spacing: -0.025em;
-  color: var(--automate-fg);
-  animation: scene-enter var(--automate-duration-150) var(--automate-ease-out);
+  color: var(--lupin-fg);
+  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-out);
 }
 .story__explanation p {
   margin: 0.8rem 0 0;
   font-size: 0.95rem;
   line-height: 1.6;
-  color: var(--automate-fg-muted);
-  animation: scene-enter var(--automate-duration-150) var(--automate-ease-out);
+  color: var(--lupin-fg-muted);
+  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-out);
 }
 .story__explanation button {
   align-self: start;
@@ -539,7 +539,7 @@ function next(): void {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   font: inherit;
   font-weight: 650;
   cursor: pointer;
@@ -550,16 +550,16 @@ function next(): void {
   gap: 0.65rem;
   width: 100%;
   padding: 0.7rem 0.85rem;
-  border: 1px solid var(--automate-border);
-  color: var(--automate-fg-muted);
+  border: 1px solid var(--lupin-border);
+  color: var(--lupin-fg-muted);
   transition:
-    background-color var(--automate-duration-150) var(--automate-ease-out),
-    border-color var(--automate-duration-150) var(--automate-ease-out);
+    background-color var(--lupin-duration-150) var(--lupin-ease-out),
+    border-color var(--lupin-duration-150) var(--lupin-ease-out);
 }
 .story__signal.is-selected {
-  background: var(--automate-surface);
-  border-color: var(--automate-accent);
-  color: var(--automate-fg);
+  background: var(--lupin-surface);
+  border-color: var(--lupin-accent);
+  color: var(--lupin-fg);
 }
 .story__signal i {
   width: 0.5rem;
@@ -573,7 +573,7 @@ function next(): void {
 }
 .story__signal b {
   margin-left: auto;
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 0.57rem;
   font-weight: 600;
 }
@@ -583,7 +583,7 @@ function next(): void {
 }
 .story__screenshot {
   margin: 0;
-  border-top: 1px solid var(--automate-border);
+  border-top: 1px solid var(--lupin-border);
 }
 .story__screenshot img {
   display: block;
@@ -595,8 +595,8 @@ function next(): void {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.9rem 1.25rem;
-  border-top: 1px solid var(--automate-border);
-  color: var(--automate-fg-muted);
+  border-top: 1px solid var(--lupin-border);
+  color: var(--lupin-fg-muted);
   font-size: 0.75rem;
   line-height: 1.4;
 }
@@ -617,7 +617,7 @@ function next(): void {
   .story__visual {
     min-height: 12rem;
     border-right: 0;
-    border-bottom: 1px solid var(--automate-border);
+    border-bottom: 1px solid var(--lupin-border);
   }
   .story__screenshot figcaption {
     flex-direction: column;

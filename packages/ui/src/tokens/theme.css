@@ -16,7 +16,7 @@
  * Four steps, and the order is the property under test rather than a comment:
  * in dark mode the plane gets *lighter* as it rises, in light mode it gets
  * *closer to white*. Every elevation is one of these four, so there is no
- * hand-painted fifth surface. `--automate-surface` is the base; everything else
+ * hand-painted fifth surface. `--lupin-surface` is the base; everything else
  * is named for how far above or below it it sits.
  *
  * The values are neutral to within a rounding step. The dark plane is
@@ -43,7 +43,7 @@
  *
  * ## Info is not the accent (D6-3)
  *
- * `--automate-info` was literally `var(--automate-accent)`, which made the brand
+ * `--lupin-info` was literally `var(--lupin-accent)`, which made the brand
  * colour double as a verdict. A reader who has learned that blue means "this is
  * running" is being told something different by the same pixel. It is steel
  * now — hue 258, chroma 0.048, and visibly not the accent.
@@ -57,37 +57,37 @@
  * Measured hue and chroma for every value here are recorded in `theme.test.ts`.
  */
 @theme inline {
-  --color-surface-sunken: var(--automate-surface-sunken);
-  --color-surface: var(--automate-surface);
-  --color-surface-raised: var(--automate-surface-raised);
-  --color-surface-muted: var(--automate-surface-muted);
-  --color-fg: var(--automate-fg);
-  --color-fg-muted: var(--automate-fg-muted);
-  --color-border: var(--automate-border);
-  --color-border-strong: var(--automate-border-strong);
-  --color-accent: var(--automate-accent);
-  --color-primary: var(--automate-accent);
-  --color-success: var(--automate-success);
-  --color-warning: var(--automate-warning);
-  --color-danger: var(--automate-danger);
-  --color-info: var(--automate-info);
-  --color-error: var(--automate-danger);
-  --color-text-primary: var(--automate-fg);
-  --color-text-secondary: var(--automate-fg-muted);
-  --color-text-muted: var(--automate-fg-muted);
-  --color-bg-primary: var(--automate-surface);
-  --color-bg-base: var(--automate-surface);
-  --color-bg-elevated: var(--automate-surface-muted);
-  --color-bg-secondary: var(--automate-surface-muted);
-  --color-bg-muted: var(--automate-surface-muted);
-  --color-bg-sunken: var(--automate-surface-sunken);
-  --color-bg-raised: var(--automate-surface-raised);
-  --color-border-default: var(--automate-border);
-  --color-border-focus: var(--automate-accent);
-  --color-brand-500: var(--automate-accent);
-  --color-brand-50: var(--automate-surface-muted);
-  --color-brand-700: var(--automate-accent);
-  --color-on-fill: var(--automate-on-fill);
+  --color-surface-sunken: var(--lupin-surface-sunken);
+  --color-surface: var(--lupin-surface);
+  --color-surface-raised: var(--lupin-surface-raised);
+  --color-surface-muted: var(--lupin-surface-muted);
+  --color-fg: var(--lupin-fg);
+  --color-fg-muted: var(--lupin-fg-muted);
+  --color-border: var(--lupin-border);
+  --color-border-strong: var(--lupin-border-strong);
+  --color-accent: var(--lupin-accent);
+  --color-primary: var(--lupin-accent);
+  --color-success: var(--lupin-success);
+  --color-warning: var(--lupin-warning);
+  --color-danger: var(--lupin-danger);
+  --color-info: var(--lupin-info);
+  --color-error: var(--lupin-danger);
+  --color-text-primary: var(--lupin-fg);
+  --color-text-secondary: var(--lupin-fg-muted);
+  --color-text-muted: var(--lupin-fg-muted);
+  --color-bg-primary: var(--lupin-surface);
+  --color-bg-base: var(--lupin-surface);
+  --color-bg-elevated: var(--lupin-surface-muted);
+  --color-bg-secondary: var(--lupin-surface-muted);
+  --color-bg-muted: var(--lupin-surface-muted);
+  --color-bg-sunken: var(--lupin-surface-sunken);
+  --color-bg-raised: var(--lupin-surface-raised);
+  --color-border-default: var(--lupin-border);
+  --color-border-focus: var(--lupin-accent);
+  --color-brand-500: var(--lupin-accent);
+  --color-brand-50: var(--lupin-surface-muted);
+  --color-brand-700: var(--lupin-accent);
+  --color-on-fill: var(--lupin-on-fill);
 
   /*
    * The chart palette (Okabe–Ito, tuned per theme).
@@ -100,18 +100,18 @@
    * colour-universal palette, chosen because its members stay apart under the common
    * colour-vision deficiencies; `theme.test.ts` measures that rather than trusting it.
    */
-  --color-chart-pass: var(--automate-chart-pass);
-  --color-chart-fail: var(--automate-chart-fail);
-  --color-chart-flaky: var(--automate-chart-flaky);
-  --color-chart-skipped: var(--automate-chart-skipped);
-  --color-chart-line: var(--automate-chart-line);
-  --color-chart-grid: var(--automate-chart-grid);
-  --color-chart-1: var(--automate-chart-1);
-  --color-chart-2: var(--automate-chart-2);
-  --color-chart-3: var(--automate-chart-3);
-  --color-chart-4: var(--automate-chart-4);
-  --color-chart-5: var(--automate-chart-5);
-  --color-chart-6: var(--automate-chart-6);
+  --color-chart-pass: var(--lupin-chart-pass);
+  --color-chart-fail: var(--lupin-chart-fail);
+  --color-chart-flaky: var(--lupin-chart-flaky);
+  --color-chart-skipped: var(--lupin-chart-skipped);
+  --color-chart-line: var(--lupin-chart-line);
+  --color-chart-grid: var(--lupin-chart-grid);
+  --color-chart-1: var(--lupin-chart-1);
+  --color-chart-2: var(--lupin-chart-2);
+  --color-chart-3: var(--lupin-chart-3);
+  --color-chart-4: var(--lupin-chart-4);
+  --color-chart-5: var(--lupin-chart-5);
+  --color-chart-6: var(--lupin-chart-6);
 }
 
 /*
@@ -179,11 +179,11 @@
   /*
    * The ratio, as a number rather than as something the sizes imply.
    *
-   * `--automate-type-ratio` is read by `theme.test.ts` and checked against every step,
+   * `--lupin-type-ratio` is read by `theme.test.ts` and checked against every step,
    * so retuning a size without retuning the ladder is a failing assertion rather than a
    * reviewer's memory.
    */
-  --automate-type-ratio: 1.2;
+  --lupin-type-ratio: 1.2;
 
   --text-xs: 0.75rem;
   --text-xs--line-height: 1.4;
@@ -283,37 +283,37 @@
 :root,
 [data-theme='dark'] {
   /* The plane. Sunken is the page, surface is a panel, raised is a control. */
-  --automate-surface-sunken: #050505;
-  --automate-surface: #0a0a0a;
-  --automate-surface-raised: #121212;
-  --automate-surface-muted: #171717;
-  --automate-fg: #f5f5f5;
-  --automate-fg-muted: #a3a3a3;
+  --lupin-surface-sunken: #050505;
+  --lupin-surface: #0a0a0a;
+  --lupin-surface-raised: #121212;
+  --lupin-surface-muted: #171717;
+  --lupin-fg: #f5f5f5;
+  --lupin-fg-muted: #a3a3a3;
   /*
    * Two borders, because WCAG 1.4.11 applies to some of what this token draws
    * and not to the rest.
    *
-   * `--automate-border` is the decorative edge: a card outline, a divider, a
+   * `--lupin-border` is the decorative edge: a card outline, a divider, a
    * table rule. It sits below 3:1 on purpose, and `theme.test.ts` asserts that
    * it stays there — a card edge at 3:1 on this plane is a mid-grey line around
    * every rectangle on the screen.
    *
-   * `--automate-border-strong` is the edge that is the *only* thing delineating
+   * `--lupin-border-strong` is the edge that is the *only* thing delineating
    * a control, which is the case 1.4.11 does cover. `Input`, `Select`,
    * `Textarea` and `Toggle` use it; nothing else needs to. Before this token
    * existed they drew their 1px edge from the decorative border and measured
    * 1.31:1, so a low-vision keyboard user had no way to see where the field
    * ended.
    */
-  --automate-border: #262626;
-  --automate-border-strong: #6b6b6b;
-  /* The foreground tone, a step down from `--automate-fg`: focus, active, primary fill. */
-  --automate-accent: #e5e5e5;
+  --lupin-border: #262626;
+  --lupin-border-strong: #6b6b6b;
+  /* The foreground tone, a step down from `--lupin-fg`: focus, active, primary fill. */
+  --lupin-accent: #e5e5e5;
   /* Restated off the Tailwind 500 steps. Hues 148 / 72 / 25. */
-  --automate-success: #66bb74;
-  --automate-warning: #e4a247;
-  --automate-danger: #d9716b;
-  --automate-info: #7c8da6;
+  --lupin-success: #66bb74;
+  --lupin-warning: #e4a247;
+  --lupin-danger: #d9716b;
+  --lupin-info: #7c8da6;
   /*
    * The foreground for text sitting *on* a saturated fill — the primary button,
    * the destructive button, the filled badge. It is its own token because the
@@ -321,64 +321,64 @@
    * `text-white` or `text-fg` can be right for both. Dark here, because the
    * accent is near-white: the primary button is white with a black label.
    */
-  --automate-on-fill: #0b0b0c;
+  --lupin-on-fill: #0b0b0c;
   /* Okabe–Ito, lifted for a near-black plane: every mark is at least 3:1 on every step. */
-  --automate-chart-pass: #3cc59a;
-  --automate-chart-fail: #f0784a;
-  --automate-chart-flaky: #d98ac4;
-  --automate-chart-skipped: #8d919b;
-  --automate-chart-line: #5ab4f0;
-  --automate-chart-grid: #232323;
-  --automate-chart-1: #5aa9e6;
-  --automate-chart-2: #f2b33d;
-  --automate-chart-3: #3cc59a;
-  --automate-chart-4: #f0784a;
-  --automate-chart-5: #d98ac4;
-  --automate-chart-6: #ece05a;
+  --lupin-chart-pass: #3cc59a;
+  --lupin-chart-fail: #f0784a;
+  --lupin-chart-flaky: #d98ac4;
+  --lupin-chart-skipped: #8d919b;
+  --lupin-chart-line: #5ab4f0;
+  --lupin-chart-grid: #232323;
+  --lupin-chart-1: #5aa9e6;
+  --lupin-chart-2: #f2b33d;
+  --lupin-chart-3: #3cc59a;
+  --lupin-chart-4: #f0784a;
+  --lupin-chart-5: #d98ac4;
+  --lupin-chart-6: #ece05a;
   color-scheme: dark;
 }
 
 [data-theme='light'] {
   /* The plane, inverted: elevation moves towards white rather than away from
      black, so a raised surface in light mode is the *nearest* to the page. */
-  --automate-surface-sunken: #ebebed;
-  --automate-surface: #ffffff;
-  --automate-surface-raised: #fcfcfc;
-  --automate-surface-muted: #f4f4f5;
-  --automate-fg: #0a0a0a;
-  --automate-fg-muted: #5c5c62;
-  --automate-border: #dcdcdf;
+  --lupin-surface-sunken: #ebebed;
+  --lupin-surface: #ffffff;
+  --lupin-surface-raised: #fcfcfc;
+  --lupin-surface-muted: #f4f4f5;
+  --lupin-fg: #0a0a0a;
+  --lupin-fg-muted: #5c5c62;
+  --lupin-border: #dcdcdf;
   /* 3:1 has to be measured against the *darkest* plane step, not the base. */
-  --automate-border-strong: #76767c;
+  --lupin-border-strong: #76767c;
   /* Near-black: the primary button is black with a white label, and a link is ink. */
-  --automate-accent: #171717;
+  --lupin-accent: #171717;
   /*
    * The status colours are used as body text — `Alert` and `Toast` render
    * `text-success` over `bg-success/10`, and `StatCard` renders the trend in
-   * `--automate-success` — so they owe 4.5:1, not the 3:1 that would apply to a
+   * `--lupin-success` — so they owe 4.5:1, not the 3:1 that would apply to a
    * swatch, and a second 4.5:1 against their own 10% tint. The 10% tint raises
    * the background luminance and *lowers* the contrast, so a ratio computed
    * against the untinted surface would pass while the shipped rendering failed.
    */
-  --automate-success: #206c32;
-  --automate-warning: #7e5415;
-  --automate-danger: #9f3331;
+  --lupin-success: #206c32;
+  --lupin-warning: #7e5415;
+  --lupin-danger: #9f3331;
   /* The dark steel, one step down: `#7C8DA6` is 2.53:1 on white. */
-  --automate-info: #4d5f79;
-  --automate-on-fill: #ffffff;
+  --lupin-info: #4d5f79;
+  --lupin-on-fill: #ffffff;
   /* Okabe–Ito, deepened for white: every mark is at least 3:1 on every step. */
-  --automate-chart-pass: #00875a;
-  --automate-chart-fail: #c4450a;
-  --automate-chart-flaky: #8a2f78;
-  --automate-chart-skipped: #80848e;
-  --automate-chart-line: #005fb0;
-  --automate-chart-grid: #e4e4e7;
-  --automate-chart-1: #005fb0;
-  --automate-chart-2: #a36800;
-  --automate-chart-3: #00875a;
-  --automate-chart-4: #8e2a12;
-  --automate-chart-5: #a8458c;
-  --automate-chart-6: #1a8fc2;
+  --lupin-chart-pass: #00875a;
+  --lupin-chart-fail: #c4450a;
+  --lupin-chart-flaky: #8a2f78;
+  --lupin-chart-skipped: #80848e;
+  --lupin-chart-line: #005fb0;
+  --lupin-chart-grid: #e4e4e7;
+  --lupin-chart-1: #005fb0;
+  --lupin-chart-2: #a36800;
+  --lupin-chart-3: #00875a;
+  --lupin-chart-4: #8e2a12;
+  --lupin-chart-5: #a8458c;
+  --lupin-chart-6: #1a8fc2;
   /*
    * Elevation, softened for a white plane. The literal steps in `@theme` are tuned for a
    * near-black page, where a 32% black shadow is the only thing that separates two
@@ -412,26 +412,26 @@
 @media (prefers-reduced-transparency: reduce) {
   :root,
   [data-theme='dark'] {
-    --automate-surface-sunken: #050505;
-    --automate-surface: #0a0a0a;
-    --automate-surface-raised: #121212;
-    --automate-surface-muted: #171717;
+    --lupin-surface-sunken: #050505;
+    --lupin-surface: #0a0a0a;
+    --lupin-surface-raised: #121212;
+    --lupin-surface-muted: #171717;
     /* Measured 3.14:1 on the *lightest* step above, not the base: a border that
        clears 3:1 on `#0B0B0C` and misses it on `#17171B` identifies a control on
        a card and not on a panel. */
-    --automate-border: #66666d;
-    --automate-border-strong: #8b8b92;
+    --lupin-border: #66666d;
+    --lupin-border-strong: #8b8b92;
   }
 
   [data-theme='light'] {
-    --automate-surface-sunken: #ebebed;
-    --automate-surface: #ffffff;
-    --automate-surface-raised: #fcfcfc;
-    --automate-surface-muted: #f4f4f5;
-    /* At least 3:1 on `--automate-surface-sunken`, the darkest step, which is the
+    --lupin-surface-sunken: #ebebed;
+    --lupin-surface: #ffffff;
+    --lupin-surface-raised: #fcfcfc;
+    --lupin-surface-muted: #f4f4f5;
+    /* At least 3:1 on `--lupin-surface-sunken`, the darkest step, which is the
        binding constraint in this theme. */
-    --automate-border: #7e7e84;
-    --automate-border-strong: #6b6b72;
+    --lupin-border: #7e7e84;
+    --lupin-border-strong: #6b6b72;
   }
 }
 
@@ -440,29 +440,29 @@
  * each theme are pushed apart: the muted text moves toward the full foreground
  * and both borders go to the control border. The status hues are untouched on
  * purpose; they already carry 4.5:1 and pushing them further would put
- * `--automate-on-fill` below it, which would fix a contrast request by breaking a
+ * `--lupin-on-fill` below it, which would fix a contrast request by breaking a
  * different one.
  */
 @media (prefers-contrast: more) {
   :root,
   [data-theme='dark'] {
-    --automate-fg-muted: #e6e6ea;
-    --automate-border: #6e6e76;
-    --automate-border-strong: #9c9ca5;
+    --lupin-fg-muted: #e6e6ea;
+    --lupin-border: #6e6e76;
+    --lupin-border-strong: #9c9ca5;
   }
 
   [data-theme='light'] {
-    --automate-fg-muted: #3f3f47;
-    --automate-border: #7c7c84;
-    --automate-border-strong: #4a4a51;
+    --lupin-fg-muted: #3f3f47;
+    --lupin-border: #7c7c84;
+    --lupin-border-strong: #4a4a51;
   }
 }
 
 /*
  * `forced-colors: active` — Windows High Contrast replaces the palette with the
  * user's own, so the tokens that matter are the ones the OS will *not* paint:
- * `--automate-border`, which is how a control is identified when every other
- * colour has been substituted, and `--automate-border-strong` behind it. Both
+ * `--lupin-border`, which is how a control is identified when every other
+ * colour has been substituted, and `--lupin-border-strong` behind it. Both
  * themes collapse to `CanvasText`, because in forced-colors mode the two themes
  * are the same screen and keeping two values would be keeping a distinction the
  * user cannot see.
@@ -475,11 +475,11 @@
   :root,
   [data-theme='dark'],
   [data-theme='light'] {
-    --automate-border: CanvasText;
-    --automate-border-strong: CanvasText;
-    --automate-surface-sunken: Canvas;
-    --automate-surface: Canvas;
-    --automate-surface-raised: Canvas;
-    --automate-surface-muted: Canvas;
+    --lupin-border: CanvasText;
+    --lupin-border-strong: CanvasText;
+    --lupin-surface-sunken: Canvas;
+    --lupin-surface: Canvas;
+    --lupin-surface-raised: Canvas;
+    --lupin-surface-muted: Canvas;
   }
 }

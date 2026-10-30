@@ -291,7 +291,7 @@ function reportMeasurements(
  *
  * Counted from computed style rather than from a class name, so the number describes what
  * the browser is doing rather than what the source hopes it is doing: a token that stops
- * applying — `--automate-glass-blur: 0px` under `prefers-reduced-transparency`, or a
+ * applying — `--lupin-glass-blur: 0px` under `prefers-reduced-transparency`, or a
  * utility that compiles to nothing — stops being counted.
  */
 async function measureGlass(page: Page): Promise<{ surfaces: number; depth: number }> {
