@@ -127,8 +127,8 @@ describe('the workspaces a caller may enter', () => {
     // A revoked token's sign-in cookie, or a bearer nobody issued, beside Bo's session: the
     // caller resolver passes over either to Bo, and so does the switcher.
     for (const extra of [
-      { cookie: `automate_token=${stale.token}` },
-      { authorization: 'Bearer amt_unknown' },
+      { cookie: `lupin_token=${stale.token}` },
+      { authorization: 'Bearer lup_unknown' },
     ]) {
       const listed = await call('bo', 'GET', '/api/v1/workspaces', undefined, extra);
       expect(listed.status).toBe(200);
@@ -150,7 +150,7 @@ describe('choosing a workspace', () => {
     const { call } = await harness();
     const response = await call('bo', 'POST', '/api/v1/workspaces/select', { workspaceId: 'ws-2' });
     expect(response.status).toBe(200);
-    expect(response.headers.get('set-cookie')).toMatch(/automate_workspace=ws-2;.*HttpOnly/iu);
+    expect(response.headers.get('set-cookie')).toMatch(/lupin_workspace=ws-2;.*HttpOnly/iu);
   });
 
   it('refuses a workspace the person is not a member of, and a token’s attempt', async () => {
@@ -179,7 +179,7 @@ describe('choosing a workspace', () => {
       .values({ workspaceId: 'Acme_QA', userId: bo, role: 'viewer' });
     const back = await call('bo', 'POST', '/api/v1/workspaces/select', { workspaceId: 'Acme_QA' });
     expect(back.status).toBe(200);
-    expect(back.headers.get('set-cookie')).toMatch(/automate_workspace=Acme_QA;/u);
+    expect(back.headers.get('set-cookie')).toMatch(/lupin_workspace=Acme_QA;/u);
     // Only the default is let past the pattern.
     expect(
       (await call('bo', 'POST', '/api/v1/workspaces/select', { workspaceId: 'Other_QA' })).status,

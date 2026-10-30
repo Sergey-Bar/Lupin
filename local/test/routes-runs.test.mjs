@@ -17,8 +17,8 @@ const assertWellFormed = (html, name) => wellFormed(assert, html, name);
 const FIXTURE = path.resolve(import.meta.dirname, 'runner-fixture.mjs');
 
 async function withApp(body) {
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-rr-data-'));
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-rr-repo-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-rr-data-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-rr-repo-'));
   const engine = createEngine({ dataDir });
   const scanned = await engine.scan(root);
   const runner = createRunner({ engine, dataDir });

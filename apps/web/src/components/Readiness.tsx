@@ -108,7 +108,7 @@ export function FindingsColumns({ summary }: { summary: HealthSummary }): React.
         testId="findings-wrong"
         title="What’s wrong"
         items={summary.wrong}
-        empty="Nothing is wrong that Automate can see."
+        empty="Nothing is wrong that Lupin can see."
       />
       <FindingList
         testId="findings-good"

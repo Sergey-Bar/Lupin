@@ -10,9 +10,9 @@ const LENGTH_BYTES = 4;
 const MIN_SEALED_BYTES = IV_BYTES + TAG_BYTES;
 const MAX_SEALED_BYTES = 4 * 1024 * 1024;
 const KEY_ID_BYTES = 32;
-const SPOOL_MAGIC = Buffer.from('automate-runner-spool/v1\n', 'utf8');
+const SPOOL_MAGIC = Buffer.from('lupin-runner-spool/v1\n', 'utf8');
 const HEADER_BYTES = SPOOL_MAGIC.length + KEY_ID_BYTES;
-const DEFAULT_DIRECTORY = resolve(tmpdir(), 'automate-runner-spool');
+const DEFAULT_DIRECTORY = resolve(tmpdir(), 'lupin-runner-spool');
 const DEFAULT_NAME = 'events.spool';
 const DEFAULT_MAX_ENTRIES = 10_000;
 const DEFAULT_MAX_BYTES = 64 * 1024 * 1024;
@@ -244,7 +244,7 @@ export class EncryptedSpool {
    */
   static readonly KDF_VERSION = 1;
 
-  static deriveKey(secret: string, purpose = 'automate-runner-spool'): Buffer {
+  static deriveKey(secret: string, purpose = 'lupin-runner-spool'): Buffer {
     if (!secret) throw new SpoolError('Spool key secret must not be empty');
     // `purpose` is a domain separator, not a secret salt: two purposes sharing a secret
     // must not derive the same key, and that is exactly what varying the salt achieves.
@@ -496,7 +496,7 @@ export class DurableSpool implements SpoolQueue {
     } catch (cause) {
       // `recursive: true` throws EEXIST when the path exists and is not a directory.
       // The raw fs message names the operation, not the problem: an operator reading
-      // "EEXIST: file already exists, mkdir '/var/lib/automate/spool'" does not learn
+      // "EEXIST: file already exists, mkdir '/var/lib/lupin/spool'" does not learn
       // that a file is sitting where the spool belongs. This is a configuration fault
       // and is reported as one.
       if (isPathOccupiedByFile(cause)) {

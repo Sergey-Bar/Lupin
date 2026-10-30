@@ -103,7 +103,7 @@ graph and the legacy importer's own mappings:
 | `api_keys`    | the installation key    | the `migrate-cli` mapping; two constraints that 0006 and 0009 added and a test pinned |
 
 The migration refuses to drop a table that holds rows unless
-`automate.allow_drop_nonempty` is `on`. The two foreign keys are dropped and the
+`lupin.allow_drop_nonempty` is `on`. The two foreign keys are dropped and the
 columns kept, so `attachments.result_id` and `artifacts.result_id` are now unkeyed
 legacy pointers. `migrate-cli` no longer imports the three tables and reports a
 populated one as skipped.

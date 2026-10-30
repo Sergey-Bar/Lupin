@@ -2,7 +2,7 @@
  * legacy-upload.ts — the flat upload payload, parsed onto the canonical model.
  *
  * `POST /api/v1/reporter/upload` accepts two body shapes, and this is the one that is not
- * a producer's own report. A caller posting JSON is speaking Automate's upload wire
+ * a producer's own report. A caller posting JSON is speaking Lupin's upload wire
  * format — `{ runId, tests[], status?, branch?, commitSha?, … }` — rather than handing us
  * a Playwright or JUnit document, and the route used to parse it into `runs`/`tests` rows
  * with its own status mapping. That made it the second ingestion system: the same test,

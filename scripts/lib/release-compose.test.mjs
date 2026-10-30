@@ -18,7 +18,7 @@ const SOURCE = readFileSync(
 );
 
 test('an image reference is the registry, the service and an overridable version', () => {
-  assert.equal(imageReference('api', '2.5.0'), `${REGISTRY}/automate-api:\${LUPIN_VERSION:-2.5.0}`);
+  assert.equal(imageReference('api', '2.5.0'), `${REGISTRY}/lupin-api:\${LUPIN_VERSION:-2.5.0}`);
   assert.equal(REGISTRY, 'ghcr.io/sergey-bar');
 });
 

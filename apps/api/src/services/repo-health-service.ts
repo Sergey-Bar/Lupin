@@ -278,7 +278,7 @@ const ScannerRunListSchema = z.array(
 
 export { branchFor };
 
-/** The project's health policy (`automate.config.json`'s `health` key), when it parses. */
+/** The project's health policy (`lupin.config.json`'s `health` key), when it parses. */
 export function healthPolicyOf(project: Pick<ProjectRow, 'profile'>): HealthPolicy | undefined {
   const parsed = HealthPolicySchema.safeParse(project.profile['health']);
   return parsed.success ? parsed.data : undefined;
@@ -355,14 +355,14 @@ function readReport(
     case 'promptfoo-json':
     case 'deepeval-json':
     case 'inspect-eval-json':
-    case 'automate-eval-json': {
+    case 'lupin-eval-json': {
       const run = parseEvalUpload(format, bytes, storePrompts);
       return { tools: [], findings: null, metrics: evalMetrics(run), evalRun: run };
     }
-    case 'automate-agent-config':
+    case 'lupin-agent-config':
       throw new HealthReportError(
         'unsupported',
-        'automate-agent-config is written by the built-in agent-config scanner only; send the files to POST /health/agent-config',
+        'lupin-agent-config is written by the built-in agent-config scanner only; send the files to POST /health/agent-config',
       );
     case 'sarif': {
       const parsed = parseSarif(bytes, sourceRoot === undefined ? {} : { sourceRoot });
@@ -1188,7 +1188,7 @@ export async function qaTestsReading(
     metric: {
       dimension: 'tests',
       metric: 'qa score',
-      tool: { name: 'automate', version: null },
+      tool: { name: 'lupin', version: null },
       score: score.total,
       summary: `QA score ${score.total.toFixed(0)} / 100 over ${String(score.provenance.runsRead)} runs, limited by ${score.cappedBy}`,
     },

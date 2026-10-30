@@ -180,20 +180,20 @@ function client(overrides: Partial<HealthClient> = {}): HealthClient {
       deviceName: 'Phone',
       role: 'viewer' as const,
       expiresAt: '2026-10-23T00:10:00.000Z',
-      pairUrl: 'https://automate.local/dashboard/pair?code=042137',
+      pairUrl: 'https://lupin.local/dashboard/pair?code=042137',
     })),
     pair: vi.fn(async () => ({ role: 'viewer' as const, deviceName: 'Phone' })),
     signIn: vi.fn(async () => undefined),
     signOut: vi.fn(async () => undefined),
     listTokens: vi.fn(async () => []),
     createToken: vi.fn(async () => ({
-      token: 'amt_issued-once',
+      token: 'lup_issued-once',
       summary: {
         id: 't1',
         name: 'Ana',
         role: 'viewer' as const,
         projectId: null,
-        displayPrefix: 'amt_issue',
+        displayPrefix: 'lup_issue',
         createdBy: 'session',
         createdAt: '2026-10-23T00:00:00.000Z',
         lastUsedAt: null,
@@ -205,7 +205,7 @@ function client(overrides: Partial<HealthClient> = {}): HealthClient {
       name: 'Ana',
       role: 'viewer' as const,
       projectId: null,
-      displayPrefix: 'amt_issue',
+      displayPrefix: 'lup_issue',
       createdBy: 'session',
       createdAt: '2026-10-23T00:00:00.000Z',
       lastUsedAt: null,
@@ -441,10 +441,10 @@ describe('AccessGate and AccessPage', () => {
     });
     render(<AccessGate health={api}>{(who) => <p>inside as {who.role}</p>}</AccessGate>);
     await screen.findByTestId('sign-in');
-    await user.type(screen.getByLabelText('Token or key'), 'amt_abc');
+    await user.type(screen.getByLabelText('Token or key'), 'lup_abc');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('inside as viewer')).toBeInTheDocument();
-    expect(api.signIn).toHaveBeenCalledWith('amt_abc');
+    expect(api.signIn).toHaveBeenCalledWith('lup_abc');
   });
 
   it('shows the server’s refusal on a failed sign-in', async () => {
@@ -468,7 +468,7 @@ describe('AccessGate and AccessPage', () => {
       name: 'Ana',
       role: 'viewer' as const,
       projectId: null,
-      displayPrefix: 'amt_issue',
+      displayPrefix: 'lup_issue',
       createdBy: 'session',
       createdAt: '2026-10-23T00:00:00.000Z',
       lastUsedAt: null,
@@ -480,7 +480,7 @@ describe('AccessGate and AccessPage', () => {
     expect(screen.getByTestId('access-open')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Name'), 'Ana');
     await user.click(screen.getByRole('button', { name: 'Issue' }));
-    expect(await screen.findByTestId('issued-token')).toHaveTextContent('amt_issued-once');
+    expect(await screen.findByTestId('issued-token')).toHaveTextContent('lup_issued-once');
     expect(api.createToken).toHaveBeenCalledWith({ name: 'Ana', role: 'viewer' });
     await user.click(
       within(await screen.findByTestId('token-t1')).getByRole('button', { name: 'Revoke' }),
@@ -797,7 +797,7 @@ describe('Portfolio and Access, the edges', () => {
       name: 'old',
       role: 'admin' as const,
       projectId: null,
-      displayPrefix: 'amt_old',
+      displayPrefix: 'lup_old',
       createdBy: 's',
       createdAt: 'x',
       lastUsedAt: '2026-10-23T00:00:00.000Z',

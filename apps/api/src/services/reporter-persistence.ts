@@ -6,7 +6,7 @@
  *
  * Path-safety: attachment path fields (if present in payloads) are stripped of
  * path-traversal sequences before persistence, following the precedent in
- * Automate/apps/server/src/utils/safe-path.ts.
+ * Lupin/apps/server/src/utils/safe-path.ts.
  *
  * Duplicate-handling rule (deterministic):
  *   run:start with existing runId → upsert (overwrite) — idempotent, no partial state.

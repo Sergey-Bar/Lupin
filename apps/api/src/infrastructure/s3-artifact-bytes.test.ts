@@ -14,7 +14,7 @@ import {
 
 const SETTINGS: ObjectStoreSettings = {
   endpoint: 'https://objects.example.com',
-  bucket: 'automate-artifacts',
+  bucket: 'lupin-artifacts',
   region: 'eu-central-1',
   accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
   secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
@@ -257,9 +257,9 @@ describe('normalizeObjectStoreSettings', () => {
     expect(() =>
       normalizeObjectStoreSettings({ ...SETTINGS, endpoint: 'https://objects.example.com/?x=1' }),
     ).toThrow('OBJECT_STORE_ENDPOINT must not include a query string or fragment');
-    expect(() =>
-      normalizeObjectStoreSettings({ ...SETTINGS, bucket: 'Automate_Artifacts' }),
-    ).toThrow('OBJECT_STORE_BUCKET must be a lowercase S3 bucket name');
+    expect(() => normalizeObjectStoreSettings({ ...SETTINGS, bucket: 'Lupin_Artifacts' })).toThrow(
+      'OBJECT_STORE_BUCKET must be a lowercase S3 bucket name',
+    );
     expect(() => normalizeObjectStoreSettings({ ...SETTINGS, bucket: 'ab' })).toThrow(
       'OBJECT_STORE_BUCKET must be a lowercase S3 bucket name',
     );
@@ -320,7 +320,7 @@ describe('S3ArtifactBytesStore request construction', () => {
     expect(calls).toHaveLength(1);
     const [{ url, init }] = calls;
     expect(url).toBe(
-      'https://objects.example.com/automate-artifacts/runs/run%201/na%2Bme%20%281%29.txt',
+      'https://objects.example.com/lupin-artifacts/runs/run%201/na%2Bme%20%281%29.txt',
     );
     const headers = init.headers as Record<string, string>;
     expect(headers['x-amz-date']).toBe(FIXED_AMZ_DATE);
@@ -340,10 +340,10 @@ describe('S3ArtifactBytesStore request construction', () => {
     const { store, calls } = stubbedStore();
     await store.put('runs/run-1/report.json', bytes('{}'));
     expect(calls[0]?.url).toBe(
-      'https://automate-artifacts.objects.example.com/runs/run-1/report.json',
+      'https://lupin-artifacts.objects.example.com/runs/run-1/report.json',
     );
     expect((calls[0]?.init.headers as Record<string, string>)['host']).toBe(
-      'automate-artifacts.objects.example.com',
+      'lupin-artifacts.objects.example.com',
     );
   });
 
@@ -353,9 +353,7 @@ describe('S3ArtifactBytesStore request construction', () => {
       endpoint: 'https://gw.example.com/s3/',
     });
     await store.get('runs/run-1/report.json');
-    expect(calls[0]?.url).toBe(
-      'https://gw.example.com/s3/automate-artifacts/runs/run-1/report.json',
-    );
+    expect(calls[0]?.url).toBe('https://gw.example.com/s3/lupin-artifacts/runs/run-1/report.json');
   });
 
   it('rejects an oversized artifact before touching the network', async () => {
@@ -495,7 +493,7 @@ describe('S3ArtifactBytesStore against an S3-compatible server', () => {
     const key = 'runs/run-1/9f-report (1).json';
     const payload = bytes('{"passed":true}');
     await store.put(key, payload);
-    expect(fake.objects.get('/automate-artifacts/runs/run-1/9f-report%20%281%29.json')).toEqual(
+    expect(fake.objects.get('/lupin-artifacts/runs/run-1/9f-report%20%281%29.json')).toEqual(
       Buffer.from(payload),
     );
     await expect(store.get(key)).resolves.toEqual(payload);

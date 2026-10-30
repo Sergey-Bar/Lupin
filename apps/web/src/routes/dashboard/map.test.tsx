@@ -73,6 +73,6 @@ describe('the map page', () => {
 
   it('says it is reading while the scan is in flight', async () => {
     renderPage(makeQa({ getScan: vi.fn(() => new Promise<never>(() => undefined)) }));
-    expect(await screen.findByTestId('map-loading')).toHaveTextContent('Mapping Automate');
+    expect(await screen.findByTestId('map-loading')).toHaveTextContent('Mapping Lupin');
   });
 });

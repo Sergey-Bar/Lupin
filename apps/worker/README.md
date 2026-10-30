@@ -6,4 +6,4 @@ The background loop: it reaps expired leases (requeuing or ending the run), enqu
 pnpm --filter @lupin/worker test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

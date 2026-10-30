@@ -46,7 +46,7 @@ function select(view: View): void {
 <template>
   <section id="explore" class="tour" aria-labelledby="tour-title">
     <div class="tour__heading">
-      <p class="tour__eyebrow">INSIDE AUTOMATE</p>
+      <p class="tour__eyebrow">INSIDE LUPIN</p>
       <h2 id="tour-title">A clearer way to see quality.</h2>
       <p>Explore the path from a test run to the decision it supports.</p>
     </div>
@@ -74,7 +74,7 @@ function select(view: View): void {
 
       <div class="tour__stage" aria-live="polite">
         <div class="tour__stage-bar">
-          <span>AUTOMATE / {{ activeView.toUpperCase() }}</span>
+          <span>LUPIN / {{ activeView.toUpperCase() }}</span>
           <span>ILLUSTRATIVE PREVIEW</span>
         </div>
 

@@ -70,15 +70,15 @@ function fakeRegistry(statuses) {
 }
 
 test('a private image is a finding that says how to make it public', async () => {
-  const fetcher = fakeRegistry({ 'automate-api': 200, 'automate-web': 401 });
+  const fetcher = fakeRegistry({ 'lupin-api': 200, 'lupin-web': 401 });
   const checks = [
-    await anonymousPull('sergey-bar', 'automate-api', '2.5.0', fetcher),
-    await anonymousPull('sergey-bar', 'automate-web', '2.5.0', fetcher),
+    await anonymousPull('sergey-bar', 'lupin-api', '2.5.0', fetcher),
+    await anonymousPull('sergey-bar', 'lupin-web', '2.5.0', fetcher),
   ];
   const problems = visibilityProblems('sergey-bar', checks);
   assert.equal(problems.length, 1);
-  assert.match(problems[0] ?? '', /^automate-web: an anonymous pull answered 401/);
-  assert.ok((problems[0] ?? '').includes(packageSettingsUrl('sergey-bar', 'automate-web')));
+  assert.match(problems[0] ?? '', /^lupin-web: an anonymous pull answered 401/);
+  assert.ok((problems[0] ?? '').includes(packageSettingsUrl('sergey-bar', 'lupin-web')));
   assert.match(problems[0] ?? '', /Change visibility → Public/);
 });
 
@@ -88,6 +88,6 @@ test('an unreachable registry is a finding, not a pass', async () => {
       throw new Error('offline');
     }
   );
-  const check = await anonymousPull('sergey-bar', 'automate-api', '2.5.0', fetcher);
+  const check = await anonymousPull('sergey-bar', 'lupin-api', '2.5.0', fetcher);
   assert.equal(visibilityProblems('sergey-bar', [check]).length, 1);
 });

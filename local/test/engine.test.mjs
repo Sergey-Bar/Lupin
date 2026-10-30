@@ -21,7 +21,7 @@ const fixture = (name) => readFileSync(path.join(FILES_DIR, name));
  * @param {Record<string, string | Buffer>} files
  */
 function repository(files) {
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-engine-repo-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-engine-repo-'));
   for (const [relative, content] of Object.entries(files)) {
     const absolute = path.join(root, ...relative.split('/'));
     mkdirSync(path.dirname(absolute), { recursive: true });
@@ -47,7 +47,7 @@ function digest(root) {
 
 /** @param {(ctx: { engine: ReturnType<typeof createEngine>, dataDir: string }) => Promise<void>} body */
 async function withEngine(body) {
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-engine-data-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-engine-data-'));
   const engine = createEngine({ dataDir, now: () => new Date('2026-10-19T12:00:00Z') });
   try {
     await body({ engine, dataDir });
@@ -188,7 +188,7 @@ test('events carry increasing cursors and a reconnecting client receives what it
 
 test('a path that is not a repository fails with a reason and registers nothing', async () => {
   await withEngine(async ({ engine }) => {
-    const result = await engine.scan(path.join(tmpdir(), 'automate-no-such-directory'));
+    const result = await engine.scan(path.join(tmpdir(), 'lupin-no-such-directory'));
     assert.equal(result.status, 'failed');
     assert.equal(result.reason, 'not-a-directory');
     assert.deepEqual(engine.listRepositories(), []);

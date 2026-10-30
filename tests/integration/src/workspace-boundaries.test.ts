@@ -167,7 +167,7 @@ describe(TAG, () => {
   it('lets an operator name the workspace explicitly instead of failing', async () => {
     const client = await applyBefore();
     await seedLegacy(client);
-    await client.exec(`SET automate.backfill_workspace = 'team-a'`);
+    await client.exec(`SET lupin.backfill_workspace = 'team-a'`);
 
     await applyTarget(client);
 
@@ -181,7 +181,7 @@ describe(TAG, () => {
   it('refuses an explicit workspace that does not exist', async () => {
     const client = await applyBefore();
     await seedLegacy(client);
-    await client.exec(`SET automate.backfill_workspace = 'nobody'`);
+    await client.exec(`SET lupin.backfill_workspace = 'nobody'`);
     await expect(applyTarget(client)).rejects.toThrow(/nobody/);
   });
 
@@ -198,7 +198,7 @@ describe(TAG, () => {
     const client = await applyBefore();
     await applyTarget(client);
     const helpers = await client.query(
-      `SELECT 1 FROM pg_proc WHERE proname LIKE 'automate_backfill%'`,
+      `SELECT 1 FROM pg_proc WHERE proname LIKE 'lupin_backfill%'`,
     );
     expect(helpers.rows).toHaveLength(0);
     const tenant = await client.query(

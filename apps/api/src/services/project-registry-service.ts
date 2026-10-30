@@ -159,7 +159,7 @@ export async function registerGitProject(
 }
 
 /**
- * Reads `automate.config.json`, or `null` when there is none.
+ * Reads `lupin.config.json`, or `null` when there is none.
  *
  * `null` and `{}` are the same thing here on purpose: an operator who wrote a file
  * with nothing but `$schema` and `version` has overridden nothing, and reporting

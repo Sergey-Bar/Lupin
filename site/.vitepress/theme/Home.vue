@@ -91,15 +91,15 @@ const integrations = [
       <figure>
         <img
           :src="runsPreview"
-          alt="Existing AutoMate runs overview with run outcomes, release-readiness signals, and recent executions."
+          alt="Existing Lupin runs overview with run outcomes, release-readiness signals, and recent executions."
           width="1440"
           height="900"
           fetchpriority="high"
           decoding="async"
         />
         <figcaption>
-          Current application interface. The screenshot retains AutoMate branding; the Lupin
-          identity applies to this website.
+          Current application interface. The screenshot retains Lupin branding; the Lupin identity
+          applies to this website.
         </figcaption>
       </figure>
       <div class="lupin-showcase-notes">
@@ -188,7 +188,7 @@ const integrations = [
         </dl>
         <p class="lupin-technical-note">
           Requires Docker with Compose v2. Release files, packages, and commands still use the
-          <code>automate</code> name.
+          <code>lupin</code> name.
         </p>
       </div>
     </section>

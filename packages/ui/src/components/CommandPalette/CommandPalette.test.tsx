@@ -54,7 +54,7 @@ test('handles arrow keys, enter, and recent items', async () => {
   expect(actions[1].onSelect).toHaveBeenCalledTimes(1);
 
   // Local storage should have "2" as recent
-  const recent = JSON.parse(localStorage.getItem('automate-cmd-recent') || '[]');
+  const recent = JSON.parse(localStorage.getItem('lupin-cmd-recent') || '[]');
   expect(recent).toEqual(['2']);
 });
 

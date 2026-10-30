@@ -577,7 +577,7 @@ describe('shipped theme class resolution', () => {
     ).toEqual([]);
     // And the keyframes the product's own animations name are in the output, so a
     // generated `animation` is not an animation of nothing.
-    for (const keyframes of ['automate-enter', 'automate-exit', 'automate-zoom-in']) {
+    for (const keyframes of ['lupin-enter', 'lupin-exit', 'lupin-zoom-in']) {
       expect(
         compiledAll,
         `${keyframes} is missing from the compiled CSS, so the overlay animations are inert`,

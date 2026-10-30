@@ -1,4 +1,4 @@
-# AUTOMATE (local)
+# Lupin Local
 
 A local-first tool that finds the testing setup of a repository on this computer, reads the
 test reports it already has, shows what they do and do not say, and (with explicit consent)

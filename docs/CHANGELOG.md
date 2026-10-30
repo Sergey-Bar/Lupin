@@ -120,7 +120,7 @@ same key.
 
 - **Migration `0030` drops `results`, `blob_shards` and `api_keys`**, which were superseded
   and had no reader. It refuses to run, naming the table, if one still holds rows unless
-  `automate.allow_drop_nonempty` is set. Anything reading them directly must stop.
+  `lupin.allow_drop_nonempty` is set. Anything reading them directly must stop.
 - The runner advertises `playwright`, `chromium`, `api` and `k6` in the image
   (`RUNNER_CAPABILITIES`), and `playwright,chromium,api` by default elsewhere. Set it
   explicitly if you run a runner outside the image. `RUNNER_K6_SCRIPT_ROOT` and
@@ -145,18 +145,18 @@ same key.
 
 ## 2.5.0 — 2026-10-22 — download and run
 
-Automate can now be installed by downloading one zip from the release page and running
+Lupin can now be installed by downloading one zip from the release page and running
 `start`. Every release publishes amd64 and arm64 images, the bundle and its checksum from
 a `v*` tag. Getting there meant making the production stack boot at all.
 
 ### Added
 
-- **One-download install.** `automate-<version>.zip` holds the compose file, the start
+- **One-download install.** `lupin-<version>.zip` holds the compose file, the start
   scripts (`start.cmd`, `start.ps1`, `start.sh`), `.env.example` and a quick start. `start`
   creates the secrets once, pulls, starts, waits for ready, opens `http://localhost:8080`
   and prints the sign-in key; `stop`, `status`, `logs`, `update` and `uninstall [--purge]`
   do what they say. See [Install](../site/guide/install.md).
-- **Published images** on `ghcr.io/sergey-bar/automate-*`, multi-arch, with an SBOM and a
+- **Published images** on `ghcr.io/sergey-bar/lupin-*`, multi-arch, with an SBOM and a
   build-provenance attestation, from `.github/workflows/release.yml`
   ([ADR-013](./adr/013-published-images-and-a-release-bundle.md)). The release ends by
   installing itself from the release page on a clean runner.
@@ -330,7 +330,7 @@ and `SEM-4` were recorded `open` while their fixes were verifiably in the tree. 
 own standard is a run, so the number was taken from CI before the ledger was edited:
 `Static analysis passed: semgrep and gitleaks reported nothing.` — semgrep 1.178.0 against
 `.config/semgrep.yml` on `1129d26`, in the `Security and license audit` job of
-[run 36962862652](https://github.com/Sergey-Bar/AutoMate/actions/runs/36962862652).
+[run 36962862652](https://github.com/Sergey-Bar/Lupin/actions/runs/36962862652).
 **Zero findings.**
 
 - `SEM-2` — the row's condition was zero blocking findings. It had 22 (16 from `SEM-3`, 6

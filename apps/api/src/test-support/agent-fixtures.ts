@@ -1,6 +1,6 @@
 import * as schema from '@lupin/db';
 import type { AiGateway, CompletionChunk, CompletionInput } from '@lupin/automation';
-import type { AutomateEvalRun } from '@lupin/shared-contracts';
+import type { LupinEvalRun } from '@lupin/shared-contracts';
 import type { MigratedDb } from './migrated-database.js';
 
 /** A project in `ws-1` with a health policy, and its id. */
@@ -23,7 +23,7 @@ export async function agentProject(
   return (project as { id: string }).id;
 }
 
-/** One attempt in Automate's eval shape. */
+/** One attempt in Lupin's eval shape. */
 export function attempt(epoch: number, passed: boolean | null, score?: number) {
   return {
     epoch,
@@ -38,14 +38,10 @@ export function attempt(epoch: number, passed: boolean | null, score?: number) {
 }
 
 /**
- * An `automate-eval-json` run: `cases` maps a case id to how many of `attempts` pass. The
+ * An `lupin-eval-json` run: `cases` maps a case id to how many of `attempts` pass. The
  * prompt is set so a test can prove it is dropped without `storePrompts`.
  */
-export function evalRun(
-  suite: string,
-  cases: Record<string, number>,
-  attempts = 10,
-): AutomateEvalRun {
+export function evalRun(suite: string, cases: Record<string, number>, attempts = 10): LupinEvalRun {
   const rows = Object.entries(cases).map(([caseId, passes]) => ({
     caseId,
     label: caseId,

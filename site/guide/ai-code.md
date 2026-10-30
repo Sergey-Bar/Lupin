@@ -1,6 +1,6 @@
 ---
 title: AI-written code
-description: How AutoMate attributes pull requests to AI agents, what it measures about the change they write, and the pull-request rules a repository can put on it.
+description: How Lupin attributes pull requests to AI agents, what it measures about the change they write, and the pull-request rules a repository can put on it.
 outline: deep
 ---
 
@@ -117,7 +117,7 @@ weight.
 
 ## The governance gate
 
-Off unless the repository's health policy enables it. In `automate.config.json`:
+Off unless the repository's health policy enables it. In `lupin.config.json`:
 
 ```json
 {

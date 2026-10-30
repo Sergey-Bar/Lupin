@@ -46,7 +46,7 @@ describe('a repository no detector recognises', () => {
     expect(profile.commands[0]).toMatchObject({ argv: ['make', 'test'], category: 'unit' });
     // An operator statement is as certain as a confidence can be.
     expect(profile.commands[0]?.confidence).toBe(1);
-    expect(profile.commands[0]?.evidence).toBe('automate.config.json#commands.unit');
+    expect(profile.commands[0]?.evidence).toBe('lupin.config.json#commands.unit');
   });
 });
 

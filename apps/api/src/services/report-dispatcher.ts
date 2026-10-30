@@ -184,7 +184,7 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
       const { channel, secret } = await channelWithSecret(scoped, channelId);
       const model = composeReport(
         await loadReport(scoped, {
-          title: subscription?.name ?? 'Test report from Automate',
+          title: subscription?.name ?? 'Test report from Lupin',
           windowDays: subscription?.cadence === 'daily' ? 1 : 7,
           link: options.link,
         }),

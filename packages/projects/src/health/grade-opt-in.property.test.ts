@@ -147,7 +147,7 @@ describe('HEALTH-3: an opt-in dimension changes nothing until a policy weights i
         {
           dimension: 'delivery',
           metric: 'change-failure-rate',
-          tool: { name: 'automate', version: null },
+          tool: { name: 'lupin', version: null },
           score: 40,
           summary: 'Change failure rate 30%',
         },

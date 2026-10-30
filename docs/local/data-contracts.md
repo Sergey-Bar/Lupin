@@ -1,10 +1,10 @@
-# AUTOMATE (local) — data contracts
+# Lupin Local — data contracts
 
 **Status:** Draft
 **Owner:** maintainers
 **Last reviewed:** 2026-10-19
 
-The canonical data model for the first slice of AUTOMATE (local): what is stored, how it is
+The canonical data model for the first slice of Lupin Local: what is stored, how it is
 identified, how outcomes are named, and how it relates to the server platform's contract.
 Only the entities needed by the first slice (MVP-0) are specified. Everything else in the
 product brief is named in the last section and marked Planned.
@@ -81,7 +81,7 @@ that the tool runs.
 | TestRun    | `artifactId`   | digest          | The raw evidence this run was derived from.                                    |
 | TestRun    | `format`       | text            | As on the artifact.                                                            |
 | TestRun    | `startedAt`    | timestamp, null | From the report only.                                                          |
-| TestRun    | `observedAt`   | timestamp       | When AUTOMATE ingested it.                                                     |
+| TestRun    | `observedAt`   | timestamp       | When Lupin Local ingested it.                                                  |
 | TestRun    | `completeness` | text            | `complete`, `partial`, `unknown` or `rejected`. See below.                     |
 | TestRun    | `runStatus`    | text            | See below.                                                                     |
 | TestRun    | `runErrors`    | integer         | Errors reported by the run itself, as opposed to by a test.                    |
@@ -159,7 +159,7 @@ counted and reported beside the rate, so a denominator is never silently changed
 
 ## Mapping from the server contract
 
-The server platform's run contract (`automate.run@2`) cannot express every case the local
+The server platform's run contract (`lupin.run@2`) cannot express every case the local
 model needs, so the local model is separate and maps from the contract in one direction.
 The table below must list exactly the contract's status values;
 `scripts/lib/blueprint-consistency.test.mjs` derives the contract's list from

@@ -87,7 +87,7 @@ interface Harness {
 let sandbox: string;
 
 beforeEach(async () => {
-  sandbox = await mkdtemp(join(tmpdir(), 'automate-k6-'));
+  sandbox = await mkdtemp(join(tmpdir(), 'lupin-k6-'));
   await mkdir(join(sandbox, 'scripts', 'nested'), { recursive: true });
   await mkdir(join(sandbox, 'workspaces'), { recursive: true });
   await writeFile(join(sandbox, 'scripts', 'smoke.js'), '// fake script\n');

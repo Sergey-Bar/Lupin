@@ -1,4 +1,4 @@
-// Ported from Automate/apps/server/src/db/schema.ts
+// Ported from Lupin/apps/server/src/db/schema.ts
 // SQLite → PostgreSQL type adaptations:
 //   text(UUID) → uuid
 //   text(date/ISO) → timestamp with timezone
@@ -151,7 +151,7 @@ export const projects = pgTable(
     repoPath: text('repo_path'),
     // The last detection proposal, verbatim, as `ProjectProfile`.
     //
-    // A **proposal**, never the authority: a checked-in `automate.config.json`
+    // A **proposal**, never the authority: a checked-in `lupin.config.json`
     // overrides it, and the run records which one ran in `runs.configuration`, so
     // a run can always be explained. JSONB rather than columns because the shape
     // is the detector's, and the detector's shape is versioned beside it.

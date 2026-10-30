@@ -202,7 +202,7 @@ export function createAuditRoutes(options: AuditRouteOptions): Hono {
     return new Response(stream, {
       headers: {
         'content-type': format === 'csv' ? 'text/csv; charset=utf-8' : 'application/x-ndjson',
-        'content-disposition': `attachment; filename="automate-audit-${stamp}.${format === 'csv' ? 'csv' : 'ndjson'}"`,
+        'content-disposition': `attachment; filename="lupin-audit-${stamp}.${format === 'csv' ? 'csv' : 'ndjson'}"`,
       },
     });
   });

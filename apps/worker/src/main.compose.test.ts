@@ -12,7 +12,7 @@ import { PostgresExecutionStore } from './postgres-store.js';
  */
 
 const ENV = {
-  DATABASE_URL: 'postgres://worker@127.0.0.1:1/automate',
+  DATABASE_URL: 'postgres://worker@127.0.0.1:1/lupin',
   WORKER_HEALTH_HOST: '127.0.0.1',
   WORKER_HEALTH_PORT: '0',
   WORKER_POLL_INTERVAL_MS: '100',
@@ -47,7 +47,7 @@ async function started(): Promise<{
   const running = main(ENV);
   await vi.waitFor(() => expect(info).toHaveBeenCalled());
   const message = String(info.mock.calls[0]?.[0]);
-  const match = /^automate-worker listening on http:\/\/127\.0\.0\.1:(\d+)$/.exec(message);
+  const match = /^lupin-worker listening on http:\/\/127\.0\.0\.1:(\d+)$/.exec(message);
   if (!match?.[1]) throw new Error(`unexpected banner: ${message}`);
   const signal = (name: 'SIGINT' | 'SIGTERM'): void => {
     const added = process.listeners(name).filter((listener) => !before[name].has(listener));
@@ -95,7 +95,7 @@ describe('main', () => {
 
     const { running, port, signal } = await started();
     await vi.waitFor(() =>
-      expect(errors).toHaveBeenCalledWith('automate-worker poll failed (TypeError)'),
+      expect(errors).toHaveBeenCalledWith('lupin-worker poll failed (TypeError)'),
     );
     expect((await fetch(`http://127.0.0.1:${port}/ready`)).status).toBe(503);
     signal('SIGINT');
@@ -112,7 +112,7 @@ describe('main', () => {
 
     const { running, signal } = await started();
     await vi.waitFor(() =>
-      expect(errors).toHaveBeenCalledWith('automate-worker poll failed (WORKER_POLL_FAILED)'),
+      expect(errors).toHaveBeenCalledWith('lupin-worker poll failed (WORKER_POLL_FAILED)'),
     );
     signal('SIGTERM');
     await running;

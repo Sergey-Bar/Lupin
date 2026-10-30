@@ -11,7 +11,7 @@ import { readMigrations, type Migration } from './migrations.js';
  * NOT NULL, and replaces the index with one that leads with the tenancy boundary.
  *
  * **One rule in two languages.** The identity is `testIdentity` in TypeScript, and the
- * backfill and the fill-on-insert are `automate_test_identity` in SQL. The titles below are
+ * backfill and the fill-on-insert are `lupin_test_identity` in SQL. The titles below are
  * chosen to carry every character the rule escapes, so the two cannot disagree on a row
  * without this test failing.
  */

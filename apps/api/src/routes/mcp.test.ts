@@ -31,7 +31,7 @@ afterEach(async () => {
 });
 
 const NOW = new Date('2026-10-26T12:00:00.000Z');
-const ENDPOINT = 'http://automate.test/api/v1/mcp';
+const ENDPOINT = 'http://lupin.test/api/v1/mcp';
 
 async function harness(
   extra: Record<string, unknown> = {},
@@ -47,8 +47,8 @@ async function harness(
     .returning({ id: schema.projects.id });
   const theirsId = (theirs as { id: string }).id;
   const stubs: Record<string, Caller> = {
-    amt_uploader: { actor: 'token:uploader', role: null, uploaderFor: projectId },
-    amt_pinned_viewer: { actor: 'token:pinned', role: 'viewer', uploaderFor: projectId },
+    lup_uploader: { actor: 'token:uploader', role: null, uploaderFor: projectId },
+    lup_pinned_viewer: { actor: 'token:pinned', role: 'viewer', uploaderFor: projectId },
   };
   const options = { db: db as never, workspaceId: 'ws-1', now: () => NOW };
   const access: CallerResolver = {
@@ -125,7 +125,7 @@ describe('the MCP server at /api/v1/mcp', () => {
       expect(tool.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
       expect(tool.description?.length).toBeGreaterThan(20);
     }
-    expect(client.getServerVersion()).toMatchObject({ name: 'automate' });
+    expect(client.getServerVersion()).toMatchObject({ name: 'lupin' });
   });
 
   it('answers every tool with its contract, parsed, beside a summary line', async () => {
@@ -178,10 +178,10 @@ describe('the MCP server at /api/v1/mcp', () => {
     const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
     expect((await raw(null, { body })).status).toBe(401);
     // An uploader token sends reports; it reads nothing, here or on any read route.
-    expect((await raw('amt_uploader', { body })).status).toBe(403);
+    expect((await raw('lup_uploader', { body })).status).toBe(403);
     // A token minted in another workspace does not authenticate in this one.
     expect((await raw(foreign, { body })).status).toBe(401);
-    expect((await raw('amt_not_a_token', { body })).status).toBe(401);
+    expect((await raw('lup_not_a_token', { body })).status).toBe(401);
   });
 
   it('never reads another workspace’s project', async () => {
@@ -197,7 +197,7 @@ describe('the MCP server at /api/v1/mcp', () => {
 
   it('keeps a caller pinned to one project to that project', async () => {
     const { connect, projectId, otherId } = await harness();
-    const client = await connect('amt_pinned_viewer');
+    const client = await connect('lup_pinned_viewer');
     const own = answer(await client.callTool({ name: 'get_health', arguments: { projectId } }));
     expect(own.isError).toBe(false);
     const other = answer(
@@ -215,7 +215,7 @@ describe('the MCP server at /api/v1/mcp', () => {
 
   it('refuses a pinned caller every project tool on another project, before any read', async () => {
     const { connect, otherId } = await harness();
-    const client = await connect('amt_pinned_viewer');
+    const client = await connect('lup_pinned_viewer');
     const projectTools = MCP_TOOL_NAMES.filter((name) => name !== 'list_projects');
     expect(projectTools.length).toBe(MCP_TOOL_NAMES.length - 1);
     for (const name of projectTools) {

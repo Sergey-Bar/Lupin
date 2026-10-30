@@ -23,13 +23,13 @@
  *    escape hatch below could not stop it.
  * 2. **Hover and colour** — 100 ms. Background and border. No transform: a row that grows
  *    when the pointer passes over it moves the thing below it.
- * 3. **Enter** — 150 ms. `automate-enter` for a panel arriving, `automate-zoom-in` for one
+ * 3. **Enter** — 150 ms. `lupin-enter` for a panel arriving, `lupin-zoom-in` for one
  *    anchored to a control. Opacity and transform only; both are compositor properties, so
  *    the cost does not scale with how much is on the page.
- * 4. **Exit** — 100 ms, and the asymmetry with entering is the decision. `automate-exit`
+ * 4. **Exit** — 100 ms, and the asymmetry with entering is the decision. `lupin-exit`
  *    drops opacity with no translation, because something leaving does not need to be
  *    directed; a leaving element that travels draws the eye away from whatever replaced it.
- * 5. **Transition** — 300 ms. `automate-slide-in` is a drawer and a dialog crossing the
+ * 5. **Transition** — 300 ms. `lupin-slide-in` is a drawer and a dialog crossing the
  *    viewport, and it is the one case where a transform is the whole effect.
  *
  * ## The escape hatch, once
@@ -96,39 +96,39 @@
    * The published animations.
    *
    * The first four are the class names components already write, kept so that no component
-   * has to know which role a name maps to. `fade-*` is `automate-enter` / `automate-exit` —
+   * has to know which role a name maps to. `fade-*` is `lupin-enter` / `lupin-exit` —
    * an arrival with a 4% rise rather than a plain opacity fade, because an element that
    * arrives from the same pixel position reads as a new object rather than as this
    * control's panel opening.
    *
    * The last two are the roles that had no name before, named after what they are.
    */
-  --animate-fade-in: automate-enter calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
+  --animate-fade-in: lupin-enter calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
     var(--lupin-ease-out);
-  --animate-fade-out: automate-exit calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
+  --animate-fade-out: lupin-exit calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
     var(--lupin-ease-in);
-  --animate-zoom-in-95: automate-zoom-in calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
+  --animate-zoom-in-95: lupin-zoom-in calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
     var(--lupin-ease-out);
-  --animate-zoom-out-95: automate-zoom-out
-    calc(var(--lupin-duration-100) * var(--lupin-motion-scale)) var(--lupin-ease-in);
-  --animate-automate-slide-in: automate-slide-in
+  --animate-zoom-out-95: lupin-zoom-out calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
+    var(--lupin-ease-in);
+  --animate-lupin-slide-in: lupin-slide-in
     calc(var(--lupin-duration-300) * var(--lupin-motion-scale)) var(--lupin-ease-in-out);
-  --animate-automate-pulse: automate-pulse
-    calc(var(--lupin-duration-150) * var(--lupin-motion-scale)) var(--lupin-ease-in-out);
+  --animate-lupin-pulse: lupin-pulse calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
+    var(--lupin-ease-in-out);
 
   /* The press scale, so `active:scale-press` is the press feedback. */
   --scale-press: var(--lupin-press-scale);
 }
 
 /*
- * `automate-enter` — **role: enter.** A panel or a card arriving.
+ * `lupin-enter` — **role: enter.** A panel or a card arriving.
  *
  * Opacity from 0, translated up by 4%. Four percent rather than a slide from the edge,
  * because this is *arrival* and not *travel*: the element is coming into existence in place
  * and the reader's eye is somewhere else on the page. A translation large enough to read as
  * travel pulls the eye before the content does.
  */
-@keyframes automate-enter {
+@keyframes lupin-enter {
   from {
     opacity: 0;
     transform: translateY(4%);
@@ -140,14 +140,14 @@
 }
 
 /*
- * `automate-exit` — **role: exit.** The counterpart, and it is *not* symmetric.
+ * `lupin-exit` — **role: exit.** The counterpart, and it is *not* symmetric.
  *
  * Opacity to 0 and no translation, at the shorter duration and the accelerating easing.
  * Entering is a signal that something became available; leaving is a signal that something
  * stopped being; and a leaving element that travels draws the eye away from the thing that
  * replaced it.
  */
-@keyframes automate-exit {
+@keyframes lupin-exit {
   from {
     opacity: 1;
   }
@@ -157,7 +157,7 @@
 }
 
 /*
- * `automate-zoom-in` — **role: enter, anchored.** A popover, a tooltip, a palette, an
+ * `lupin-zoom-in` — **role: enter, anchored.** A popover, a tooltip, a palette, an
  * empty state.
  *
  * From 95%, not from 0: the element is anchored to a control the reader has just pressed,
@@ -168,7 +168,7 @@
  * anchor and only the component knows which edge it is on. A global origin would be wrong
  * for every panel that is not at the top.
  */
-@keyframes automate-zoom-in {
+@keyframes lupin-zoom-in {
   from {
     opacity: 0;
     transform: scale(0.95);
@@ -180,10 +180,10 @@
 }
 
 /*
- * `automate-zoom-out` — **role: exit, anchored.** The reverse of the above, at the exit
+ * `lupin-zoom-out` — **role: exit, anchored.** The reverse of the above, at the exit
  * duration and the exit easing.
  */
-@keyframes automate-zoom-out {
+@keyframes lupin-zoom-out {
   from {
     opacity: 1;
     transform: scale(1);
@@ -195,7 +195,7 @@
 }
 
 /*
- * `automate-slide-in` — **role: transition.** The one movement in the product: a drawer
+ * `lupin-slide-in` — **role: transition.** The one movement in the product: a drawer
  * and a dialog crossing the viewport.
  *
  * `translateY(8%)` over 300 ms, and both numbers are load-bearing. 8% is far enough to read
@@ -206,7 +206,7 @@
  * `transform`, never `height` or `top`: a transform on a composited layer is free per frame
  * and a box metric is a layout pass per frame, with the whole subtree behind it.
  */
-@keyframes automate-slide-in {
+@keyframes lupin-slide-in {
   from {
     opacity: 0;
     transform: translateY(8%);
@@ -218,14 +218,14 @@
 }
 
 /*
- * `automate-pulse` — **role: attention, and the only one allowed to repeat.** A skeleton
+ * `lupin-pulse` — **role: attention, and the only one allowed to repeat.** A skeleton
  * that has not resolved yet.
  *
  * An opacity ramp rather than a moving gradient, because a moving gradient repaints on every
  * frame and an opacity ramp does not. The skeleton is the one place in the product where
  * something is genuinely pending.
  */
-@keyframes automate-pulse {
+@keyframes lupin-pulse {
   0%,
   100% {
     opacity: 1;

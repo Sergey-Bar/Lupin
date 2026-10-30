@@ -37,7 +37,7 @@ const VALID_VAULT_SECRET = syntheticVaultSecret();
 const VALID_RUNNER_REGISTRATION_SECRET = syntheticRunnerRegistrationSecret();
 const VALID_OBJECT_STORE = {
   endpoint: 'https://objects.example.com',
-  bucket: 'automate-artifacts',
+  bucket: 'lupin-artifacts',
   region: 'eu-central-1',
   accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
   secretAccessKey: 'a-valid-object-store-secret',

@@ -21,7 +21,7 @@ function health(isReady: HealthServerOptions['isReady']): HealthServer {
   const server = new HealthServer({
     host: '127.0.0.1',
     port: 0,
-    service: 'automate-runner',
+    service: 'lupin-runner',
     version: '9.9.9',
     isReady,
   });
@@ -52,7 +52,7 @@ describe('HealthServer', () => {
     expect(response.type).toBe('application/json');
     expect(response.body).toMatchObject({
       status: 'healthy',
-      service: 'automate-runner',
+      service: 'lupin-runner',
       version: '9.9.9',
     });
     expect(Number.isNaN(Date.parse(String(response.body['timestamp'])))).toBe(false);
@@ -71,7 +71,7 @@ describe('HealthServer', () => {
 
     const before = await get(port, '/ready');
     expect(before.status).toBe(503);
-    expect(before.body).toMatchObject({ status: 'not_ready', service: 'automate-runner' });
+    expect(before.body).toMatchObject({ status: 'not_ready', service: 'lupin-runner' });
 
     ready = true;
     const after = await get(port, '/ready');
@@ -130,7 +130,7 @@ describe('HealthServer', () => {
     const server = new HealthServer({
       host: '127.0.0.1',
       port: taken,
-      service: 'automate-runner',
+      service: 'lupin-runner',
       version: '1.0.0',
       isReady: () => true,
     });

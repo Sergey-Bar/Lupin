@@ -53,7 +53,7 @@ import {
  * for machine decisions too, with a date that is renewed on every upload that re-applies the
  * statement behind it.
  */
-export const LICENCE_TOOL = 'automate-licence';
+export const LICENCE_TOOL = 'lupin-licence';
 const SBOM_TRIAGE_PREFIX = 'sbom:';
 const VEX_TRIAGE_PREFIX = 'vex:';
 

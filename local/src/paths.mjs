@@ -1,7 +1,7 @@
 /**
  * Path handling for report-supplied file names. Throwaway prototype code.
  *
- * A report can name any path. The rule here is the one `automate.run@2` already applies to
+ * A report can name any path. The rule here is the one `lupin.run@2` already applies to
  * evidence URIs, extended to the places Windows reports put their paths: a stored `file` is
  * either a repository-relative POSIX path or `null`, and the original text is kept
  * separately so nothing is discarded.

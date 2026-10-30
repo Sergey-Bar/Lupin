@@ -8,7 +8,7 @@ import { usage } from './errors.js';
  * - `LUPIN_URL` — the install's origin. `https://` anywhere; `http://` only to a loopback
  *   host (`localhost`, `127.0.0.0/8`, `::1`), because the token would cross the network in
  *   the clear.
- * - `LUPIN_TOKEN` — an `amt_` access token: `uploader` pinned to the project for CI.
+ * - `LUPIN_TOKEN` — an `lup_` access token: `uploader` pinned to the project for CI.
  * - `LUPIN_PROJECT` — the project id, unless `--project` names it.
  * - `LUPIN_CF_ACCESS_CLIENT_ID` and `LUPIN_CF_ACCESS_CLIENT_SECRET` — a Cloudflare
  *   Access service token, for an install reached through a tunnel (ADR-014). Both or neither:
@@ -50,9 +50,8 @@ export function resolveTarget(
   const raw = env['LUPIN_URL']?.trim() ?? '';
   const token = env['LUPIN_TOKEN']?.trim() ?? '';
   const project = (projectFlag ?? env['LUPIN_PROJECT'] ?? '').trim();
-  if (raw === '')
-    throw usage('Set LUPIN_URL to the AutoMate origin, e.g. https://automate.example.com');
-  if (!token.startsWith('amt_')) throw usage('Set LUPIN_TOKEN to an amt_ access token.');
+  if (raw === '') throw usage('Set LUPIN_URL to the Lupin origin, e.g. https://lupin.example.com');
+  if (!token.startsWith('lup_')) throw usage('Set LUPIN_TOKEN to an lup_ access token.');
   if (!PROJECT.test(project)) {
     throw usage('Name the project: --project <id> or LUPIN_PROJECT, its id from the dashboard.');
   }

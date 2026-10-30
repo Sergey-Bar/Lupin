@@ -30,33 +30,32 @@ test('SHA256SUMS is the sha256sum format', () => {
 });
 
 test('the bundle holds exactly the release files, start.sh executable, version stamped', () => {
-  const out = mkdtempSync(path.join(tmpdir(), 'automate-bundle-'));
+  const out = mkdtempSync(path.join(tmpdir(), 'lupin-bundle-'));
   try {
     const { zipPath, sumsPath, folder } = buildBundle({ root: REPO_ROOT, version: '2.5.0', out });
-    assert.equal(path.basename(zipPath), 'automate-2.5.0.zip');
-    assert.equal(folder, 'automate-2.5.0');
+    assert.equal(path.basename(zipPath), 'lupin-2.5.0.zip');
+    assert.equal(folder, 'lupin-2.5.0');
     const zip = readFileSync(zipPath);
     const entries = readZip(zip);
     assert.deepEqual(
       entries.map((entry) => entry.name).sort(),
-      BUNDLE_FILES.map((name) => `automate-2.5.0/${name}`).sort(),
+      BUNDLE_FILES.map((name) => `lupin-2.5.0/${name}`).sort(),
     );
     /** @param {string} name */
-    const entry = (name) =>
-      entries.find((candidate) => candidate.name === `automate-2.5.0/${name}`);
+    const entry = (name) => entries.find((candidate) => candidate.name === `lupin-2.5.0/${name}`);
     assert.equal(entry('start.sh')?.mode, 0o755);
     assert.equal(entry('start.ps1')?.mode, 0o644);
     const compose = entry('compose.yml')?.data.toString() ?? '';
-    assert.match(compose, /automate-api:\$\{LUPIN_VERSION:-2\.5\.0\}/);
+    assert.match(compose, /lupin-api:\$\{LUPIN_VERSION:-2\.5\.0\}/);
     assert.doesNotMatch(compose, /^\s+build:/m);
-    assert.match(entry('QUICKSTART.md')?.data.toString() ?? '', /Automate 2\.5\.0/);
+    assert.match(entry('QUICKSTART.md')?.data.toString() ?? '', /Lupin 2\.5\.0/);
     assert.doesNotMatch(entry('QUICKSTART.md')?.data.toString() ?? '', /\{\{VERSION\}\}/);
     assert.match(entry('LICENSE')?.data.toString() ?? '', /^MIT License/);
     // Windows files keep CRLF inside the zip, whatever the checkout did.
     assert.match(entry('start.cmd')?.data.toString() ?? '', /\r\n/);
     assert.doesNotMatch(entry('start.sh')?.data.toString() ?? '', /\r/);
     const digest = createHash('sha256').update(zip).digest('hex');
-    assert.equal(readFileSync(sumsPath, 'utf8'), `${digest}  automate-2.5.0.zip\n`);
+    assert.equal(readFileSync(sumsPath, 'utf8'), `${digest}  lupin-2.5.0.zip\n`);
   } finally {
     rmSync(out, { recursive: true, force: true });
   }

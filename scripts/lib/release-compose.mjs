@@ -14,7 +14,7 @@ export const REGISTRY = 'ghcr.io/sergey-bar';
 
 /**
  * The services the release workflow builds and publishes, one image each, named
- * `automate-<service>`. The workflow's matrix is checked against this list.
+ * `lupin-<service>`. The workflow's matrix is checked against this list.
  */
 export const PUBLISHED_IMAGES = ['migrate', 'api', 'worker', 'runner', 'web', 'edge'];
 
@@ -29,7 +29,7 @@ export const PUBLISHED_IMAGES = ['migrate', 'api', 'worker', 'runner', 'web', 'e
  * @returns {string}
  */
 export function imageReference(service, version) {
-  return `${REGISTRY}/automate-${service}:\${LUPIN_VERSION:-${version}}`;
+  return `${REGISTRY}/lupin-${service}:\${LUPIN_VERSION:-${version}}`;
 }
 
 /** @param {string} line @returns {number} */
@@ -101,7 +101,7 @@ export function envExample(compose) {
   ]
     .filter((name) => name !== '')
     .sort();
-  const fixed = { OBJECT_STORE_BUCKET: 'automate-artifacts', OBJECT_STORE_REGION: 'us-east-1' };
+  const fixed = { OBJECT_STORE_BUCKET: 'lupin-artifacts', OBJECT_STORE_REGION: 'us-east-1' };
   const body = required.map((name) =>
     name in fixed
       ? `${name}=${fixed[/** @type {keyof typeof fixed} */ (name)]}`
@@ -109,7 +109,7 @@ export function envExample(compose) {
   );
   const settings = RELEASE_SETTINGS.map(([name, note]) => `# ${note}\n# ${name}=`);
   return [
-    '# Automate — environment for the release compose file.',
+    '# Lupin — environment for the release compose file.',
     '# `start.sh` / `start.ps1` create `.env` with random values on first run; use this',
     '# only to write one by hand. Every secret needs at least 32 characters.',
     '',
@@ -130,7 +130,7 @@ export function envExample(compose) {
  */
 export function releaseComposeFile(source, version) {
   const header = [
-    `# Automate ${version} — generated from infra/compose/docker-compose.unified.yml by`,
+    `# Lupin ${version} — generated from infra/compose/docker-compose.unified.yml by`,
     '# `pnpm release:compose`. Do not edit: change the source file instead.',
     '',
   ].join('\n');

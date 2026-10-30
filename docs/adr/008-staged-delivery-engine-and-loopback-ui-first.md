@@ -6,7 +6,7 @@
 
 ## Context
 
-AUTOMATE (local) needs a user interface, a local engine that scans and ingests, and
+Lupin Local needs a user interface, a local engine that scans and ingests, and
 eventually a way to run test commands. A desktop shell (Tauri or Electron) gives a native
 install and window, but it adds packaging, code signing and updater work, and it ties the
 engine to one process model before the engine has been proven.

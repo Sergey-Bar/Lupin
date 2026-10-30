@@ -1,4 +1,4 @@
-# AUTOMATE (local) — source register
+# Lupin Local — source register
 
 **Status:** Draft
 **Owner:** maintainers

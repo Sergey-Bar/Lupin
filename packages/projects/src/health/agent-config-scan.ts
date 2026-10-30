@@ -55,7 +55,7 @@ import type {
  * than a crash or a silent pass — a config nobody could read was not checked.
  */
 
-export const AGENT_CONFIG_TOOL = 'automate-agent-config';
+export const AGENT_CONFIG_TOOL = 'lupin-agent-config';
 
 /**
  * Where coding agents read instructions and MCP configuration, as repository-relative

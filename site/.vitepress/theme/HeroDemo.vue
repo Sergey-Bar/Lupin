@@ -108,14 +108,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="demo" class="product-frame" aria-label="Automate product preview">
+  <div ref="demo" class="product-frame" aria-label="Lupin product preview">
     <div class="product-frame__caption">
       <span>01 / THE PRODUCT</span><span>RUNS OVERVIEW</span>
     </div>
     <div class="demo__screen">
       <img
         :src="runsPreview"
-        alt="Automate runs dashboard showing passed and failed test runs, release readiness and recent executions"
+        alt="Lupin runs dashboard showing passed and failed test runs, release readiness and recent executions"
       />
       <div
         class="demo__target"

@@ -6,4 +6,4 @@ The control-plane API, on Hono v4 with Drizzle and PostgreSQL. It ingests report
 pnpm --filter @lupin/api dev
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

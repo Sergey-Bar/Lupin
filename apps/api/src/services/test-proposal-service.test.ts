@@ -366,8 +366,8 @@ describe('the test proposal routes', () => {
     const { db, options, projectId } = await setup();
     const findingId = await mutant(db, 'ws-1', projectId);
     const tokens: Record<string, Caller> = {
-      amt_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
-      amt_operator: { actor: 'token:operator', role: 'operator', uploaderFor: null },
+      lup_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
+      lup_operator: { actor: 'token:operator', role: 'operator', uploaderFor: null },
     };
     const access: CallerResolver = {
       mode: 'enforced',
@@ -392,22 +392,22 @@ describe('the test proposal routes', () => {
         },
         body: JSON.stringify(body),
       });
-    expect((await post('amt_viewer', { kind: 'surviving-mutant', findingId })).status).toBe(403);
-    expect((await post('amt_operator', { kind: 'surviving-mutant', findingId: 'x' })).status).toBe(
+    expect((await post('lup_viewer', { kind: 'surviving-mutant', findingId })).status).toBe(403);
+    expect((await post('lup_operator', { kind: 'surviving-mutant', findingId: 'x' })).status).toBe(
       400,
     );
     expect(
       (
-        await post('amt_operator', {
+        await post('lup_operator', {
           kind: 'surviving-mutant',
           findingId,
           sourceSnippet: 'x'.repeat(20_001),
         })
       ).status,
     ).toBe(400);
-    const created = await post('amt_operator', { kind: 'surviving-mutant', findingId });
+    const created = await post('lup_operator', { kind: 'surviving-mutant', findingId });
     expect(created.status).toBe(201);
-    const list = await app.request(path, { headers: { authorization: 'Bearer amt_viewer' } });
+    const list = await app.request(path, { headers: { authorization: 'Bearer lup_viewer' } });
     expect(TestProposalListSchema.parse(await list.json()).proposals).toHaveLength(1);
     const trail = await db
       .select()

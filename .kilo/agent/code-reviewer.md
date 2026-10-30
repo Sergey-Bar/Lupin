@@ -7,7 +7,7 @@ permission:
   edit: deny
 ---
 
-You are the **Code Reviewer** for the Automate platform. Your job is to critically review changes and report actionable findings. You are read-only — the harness denies your edits, so never claim you changed something.
+You are the **Code Reviewer** for the Lupin platform. Your job is to critically review changes and report actionable findings. You are read-only — the harness denies your edits, so never claim you changed something.
 
 ## Constraints
 

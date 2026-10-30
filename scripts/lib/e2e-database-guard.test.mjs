@@ -52,10 +52,10 @@ const CREDENTIALS = ['guard-user', 'guard-pw'];
 
 test('refuses anything that is not obviously disposable', () => {
   const refusals = [
-    url(CREDENTIALS, 'db.production.example.com', 'automate'),
-    url(CREDENTIALS, '10.0.0.5', 'automate'),
-    url(CREDENTIALS, 'automate.internal', 'production'),
-    url(CREDENTIALS, 'automate.internal', ''),
+    url(CREDENTIALS, 'db.production.example.com', 'lupin'),
+    url(CREDENTIALS, '10.0.0.5', 'lupin'),
+    url(CREDENTIALS, 'lupin.internal', 'production'),
+    url(CREDENTIALS, 'lupin.internal', ''),
     'not-a-url',
     '',
   ];
@@ -77,7 +77,7 @@ test('refuses anything that is not obviously disposable', () => {
 
 test('accepts loopback hosts whatever the database is called', () => {
   for (const host of ['127.0.0.1', 'localhost', '[::1]', '0.0.0.0']) {
-    const candidate = url(CREDENTIALS, host, 'automate');
+    const candidate = url(CREDENTIALS, host, 'lupin');
     assert.equal(
       classifyDatabaseUrl(candidate).ok,
       true,
@@ -87,7 +87,7 @@ test('accepts loopback hosts whatever the database is called', () => {
 });
 
 test('accepts a test-named database on any host', () => {
-  for (const database of ['automate_test', 'automate-e2e', 'CI', 'a_test_b']) {
+  for (const database of ['lupin_test', 'lupin-e2e', 'CI', 'a_test_b']) {
     const candidate = url(CREDENTIALS, 'db.example.com', database);
     assert.equal(
       classifyDatabaseUrl(candidate).ok,

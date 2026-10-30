@@ -1,4 +1,4 @@
-# AUTOMATE (local) — toolbox, findings and AI (planning level)
+# Lupin Local — toolbox, findings and AI (planning level)
 
 **Status:** Draft
 **Owner:** maintainers

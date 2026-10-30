@@ -70,6 +70,6 @@ describe('isLoopbackBind', () => {
     expect(isLoopbackBind('[::1]')).toBe(true);
     expect(isLoopbackBind('0.0.0.0')).toBe(false);
     expect(isLoopbackBind('192.168.1.10')).toBe(false);
-    expect(isLoopbackBind('automate.local')).toBe(false);
+    expect(isLoopbackBind('lupin.local')).toBe(false);
   });
 });

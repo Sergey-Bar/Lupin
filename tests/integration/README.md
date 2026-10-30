@@ -6,4 +6,4 @@ Cross-package suites on PGlite with the real migration graph applied, including 
 pnpm --filter @lupin/integration-tests test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

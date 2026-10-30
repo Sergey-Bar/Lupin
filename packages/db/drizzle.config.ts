@@ -5,6 +5,6 @@ export default defineConfig({
   schema: './src/schema/index.ts',
   out: './drizzle',
   dbCredentials: {
-    url: process.env['DATABASE_URL'] ?? 'postgresql://localhost:5432/automate',
+    url: process.env['DATABASE_URL'] ?? 'postgresql://localhost:5432/lupin',
   },
 });

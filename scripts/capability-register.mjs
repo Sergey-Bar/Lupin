@@ -153,7 +153,7 @@ for (const line of source.split(/\r?\n/)) {
   for (const citation of cited) {
     // A citation is either a path in this repository, or an external reference
     // that a person can follow. Only the former can be checked.
-    if (/^(https?:|docs\/migration\/[^/]+\.json|AutoMate\/)/.test(citation)) continue;
+    if (/^(https?:|docs\/migration\/[^/]+\.json|Lupin\/)/.test(citation)) continue;
     if (citation.includes('*')) continue;
     if (!existsSync(path.join(root, citation))) {
       failures.push(`${id}: cites "${citation}", which does not exist`);

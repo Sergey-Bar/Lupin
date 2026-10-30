@@ -48,7 +48,7 @@ describe('auth routes', () => {
     });
     expect(login.status).toBe(200);
     const cookie = login.headers.get('set-cookie');
-    expect(cookie).toContain('automate_session=');
+    expect(cookie).toContain('lupin_session=');
     expect(cookie).toContain('HttpOnly');
     const session = await api.request('/api/v1/auth/session', {
       headers: { cookie: cookie ?? '' },

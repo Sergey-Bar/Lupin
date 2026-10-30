@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   AgentConfigUploadBodySchema,
-  AutomateEvalRunSchema,
+  LupinEvalRunSchema,
   EvalCheckSchema,
   EvalDatasetBodySchema,
   EvalDatasetRunBodySchema,
@@ -11,7 +11,7 @@ import {
 } from './agent-quality.js';
 
 const run = {
-  tool: { name: 'automate-eval-runner', version: '1' },
+  tool: { name: 'lupin-eval-runner', version: '1' },
   suite: 'capitals',
   model: 'model-a',
   provider: 'ollama',
@@ -51,9 +51,9 @@ const run = {
 };
 
 describe('the agent-quality contracts', () => {
-  it('reads Automate’s own eval run shape, and refuses one with no suite', () => {
-    expect(AutomateEvalRunSchema.safeParse(run).success).toBe(true);
-    expect(AutomateEvalRunSchema.safeParse({ ...run, suite: '' }).success).toBe(false);
+  it('reads Lupin’s own eval run shape, and refuses one with no suite', () => {
+    expect(LupinEvalRunSchema.safeParse(run).success).toBe(true);
+    expect(LupinEvalRunSchema.safeParse({ ...run, suite: '' }).success).toBe(false);
   });
 
   it('bounds dataset checks: a regex pattern length, its flags, and the three check types', () => {

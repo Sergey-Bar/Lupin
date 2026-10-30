@@ -62,7 +62,7 @@ its source, then run `pnpm site:generate`.
 | AI attribution of pull requests from their own signals and their commits'                           | `real`     |
 | Outcomes of AI-written change against human change, per project and portfolio                       | `real`     |
 | Pull-request rules for agent-written change in the health gate                                      | `real`     |
-| Eval runs uploaded from promptfoo, DeepEval, Inspect and Automate's own shape                       | `real`     |
+| Eval runs uploaded from promptfoo, DeepEval, Inspect and Lupin's own shape                          | `real`     |
 | Eval regression gate on pull requests                                                               | `real`     |
 | OTLP/HTTP JSON receiver for GenAI spans                                                             | `real`     |
 | Agent runtime analytics and budgets                                                                 | `real`     |

@@ -49,7 +49,7 @@ describe('synthetic installation secrets', () => {
       {
         NODE_ENV: 'production',
         ...INSTALLATION_SECRETS,
-        DATABASE_URL: 'postgresql://user:pass@127.0.0.1:5432/automate',
+        DATABASE_URL: 'postgresql://user:pass@127.0.0.1:5432/lupin',
       },
       { requireProductionSecrets: false },
     );

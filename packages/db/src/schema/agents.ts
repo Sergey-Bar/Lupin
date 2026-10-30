@@ -63,7 +63,7 @@ export const evalRuns = pgTable(
     check('eval_runs_source_check', sql`${table.source} IN ('ci', 'runner', 'manual')`),
     check(
       'eval_runs_format_check',
-      sql`${table.format} IN ('promptfoo-json', 'deepeval-json', 'inspect-eval-json', 'automate-eval-json')`,
+      sql`${table.format} IN ('promptfoo-json', 'deepeval-json', 'inspect-eval-json', 'lupin-eval-json')`,
     ),
   ],
 );

@@ -56,7 +56,7 @@ export type TestReportVerdict = z.infer<typeof TestReportVerdictSchema>;
  * - `off` — nothing, not even a suggestion on the pull request.
  * - `suggest` — the default: the insights page and the comment name it; a person decides.
  * - `auto` — a test with evidence a code change cannot explain (a retry pass, or two outcomes
- *   on one commit; FLAKE-4) is quarantined and approved by `automate`, and released after
+ *   on one commit; FLAKE-4) is quarantined and approved by `lupin`, and released after
  *   `releaseAfter` clean passes in a row.
  */
 export const QUARANTINE_MODES = ['off', 'suggest', 'auto'] as const;

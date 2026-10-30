@@ -38,9 +38,9 @@ async function harness(options: { reporterSecret?: string; require?: boolean } =
     .returning({ id: schema.projects.id });
   const projectId = (project as { id: string }).id;
   const tokens: Record<string, Caller> = {
-    amt_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
-    amt_operator: { actor: 'token:operator', role: 'operator', uploaderFor: null },
-    amt_uploader: { actor: 'token:uploader', role: null, uploaderFor: projectId },
+    lup_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
+    lup_operator: { actor: 'token:operator', role: 'operator', uploaderFor: null },
+    lup_uploader: { actor: 'token:uploader', role: null, uploaderFor: projectId },
   };
   const access: CallerResolver = {
     mode: 'enforced',
@@ -94,18 +94,18 @@ describe('the delivery source routes', () => {
     const { app, db, projectId } = await harness();
     const url = `/api/v1/projects/${projectId}/delivery/source`;
     expect((await send(app, 'GET', url, undefined)).status).toBe(401);
-    const read = await send(app, 'GET', url, 'amt_viewer');
+    const read = await send(app, 'GET', url, 'lup_viewer');
     expect(read.status).toBe(200);
     expect(DeliverySourceSchema.parse(await read.json()).configured).toBe(false);
     const body = { enabled: true, cadence: 'hourly', productionEnvironments: ['production'] };
-    expect((await send(app, 'PUT', url, 'amt_viewer', body)).status).toBe(403);
-    const saved = await send(app, 'PUT', url, 'amt_operator', body);
+    expect((await send(app, 'PUT', url, 'lup_viewer', body)).status).toBe(403);
+    const saved = await send(app, 'PUT', url, 'lup_operator', body);
     expect(saved.status).toBe(200);
     expect(DeliverySourceSchema.parse(await saved.json())).toMatchObject({
       enabled: true,
       cadence: 'hourly',
     });
-    expect((await send(app, 'PUT', url, 'amt_operator', { enabled: 'yes' })).status).toBe(400);
+    expect((await send(app, 'PUT', url, 'lup_operator', { enabled: 'yes' })).status).toBe(400);
     const audits = await db.select().from(schema.auditEvents);
     expect(audits.map((row) => [row.action, row.actorId])).toContainEqual([
       'delivery.source.set',
@@ -116,8 +116,8 @@ describe('the delivery source routes', () => {
   it('queues a sync for an operator, answers 202, and starts the syncer', async () => {
     const { app, db, projectId, syncNow } = await harness();
     const url = `/api/v1/projects/${projectId}/delivery/sync`;
-    expect((await send(app, 'POST', url, 'amt_viewer')).status).toBe(403);
-    const queued = await send(app, 'POST', url, 'amt_operator');
+    expect((await send(app, 'POST', url, 'lup_viewer')).status).toBe(403);
+    const queued = await send(app, 'POST', url, 'lup_operator');
     expect(queued.status).toBe(202);
     expect(DeliverySyncQueuedSchema.parse(await queued.json()).duplicate).toBe(false);
     expect(syncNow).toHaveBeenCalledTimes(1);
@@ -133,12 +133,12 @@ describe('the push door', () => {
     const url = `/api/v1/projects/${projectId}/delivery/deployments`;
     expect((await send(app, 'POST', url, undefined, deployment)).status).toBe(401);
     expect((await send(app, 'POST', url, 'wrong-secret', deployment)).status).toBe(403);
-    expect((await send(app, 'POST', url, 'amt_viewer', deployment)).status).toBe(403);
+    expect((await send(app, 'POST', url, 'lup_viewer', deployment)).status).toBe(403);
     const first = await send(app, 'POST', url, SECRET, deployment);
     expect(first.status).toBe(201);
     // The same external id again replaces the row: 200, not a second deployment.
-    expect((await send(app, 'POST', url, 'amt_uploader', deployment)).status).toBe(200);
-    expect((await send(app, 'POST', url, 'amt_operator', deployment)).status).toBe(200);
+    expect((await send(app, 'POST', url, 'lup_uploader', deployment)).status).toBe(200);
+    expect((await send(app, 'POST', url, 'lup_operator', deployment)).status).toBe(200);
     expect(await db.select().from(schema.deployments)).toHaveLength(1);
     const audits = await db.select().from(schema.auditEvents);
     expect(
@@ -153,7 +153,7 @@ describe('the push door', () => {
       .values({ workspaceId: 'ws-1', name: 'Other', slug: 'other' })
       .returning({ id: schema.projects.id });
     const url = `/api/v1/projects/${(other as { id: string }).id}/delivery/deployments`;
-    expect((await send(app, 'POST', url, 'amt_uploader', deployment)).status).toBe(403);
+    expect((await send(app, 'POST', url, 'lup_uploader', deployment)).status).toBe(403);
   });
 
   it('refuses a body it cannot read, and one over the push limit', async () => {
@@ -232,7 +232,7 @@ describe('the delivery reads', () => {
       app,
       'GET',
       `/api/v1/projects/${projectId}/delivery?days=30`,
-      'amt_viewer',
+      'lup_viewer',
     );
     expect(report.status).toBe(200);
     const parsed = DeliveryReportSchema.parse(await report.json());
@@ -240,16 +240,16 @@ describe('the delivery reads', () => {
     // One deployment is not evidence of anything.
     expect(parsed.dora.status).toBe('insufficient');
     expect(
-      (await send(app, 'GET', `/api/v1/projects/${projectId}/delivery?days=0`, 'amt_viewer'))
+      (await send(app, 'GET', `/api/v1/projects/${projectId}/delivery?days=0`, 'lup_viewer'))
         .status,
     ).toBe(400);
     expect(
       (await send(app, 'GET', `/api/v1/projects/${projectId}/delivery`, undefined)).status,
     ).toBe(401);
-    const portfolio = await send(app, 'GET', '/api/v1/portfolio/delivery?days=7', 'amt_viewer');
+    const portfolio = await send(app, 'GET', '/api/v1/portfolio/delivery?days=7', 'lup_viewer');
     expect(PortfolioDeliverySchema.parse(await portfolio.json()).projects).toHaveLength(1);
     expect(
-      (await send(app, 'GET', '/api/v1/portfolio/delivery?days=400', 'amt_viewer')).status,
+      (await send(app, 'GET', '/api/v1/portfolio/delivery?days=400', 'lup_viewer')).status,
     ).toBe(400);
   });
 });

@@ -45,7 +45,7 @@ import type { ParsedReport, UploadInput } from './repo-health-service.js';
  *
  * ## What is stored
  *
- * Findings under the tool key `automate-agent-config`, through the shared finding lifecycle
+ * Findings under the tool key `lupin-agent-config`, through the shared finding lifecycle
  * (`ingestParsedReport` → `syncFindings`), so a removed instruction is `fixed` by the next
  * scan exactly as a SARIF finding is. The MCP server inventory per (project, branch), replaced
  * by every scan, with environment variable **names** only and each server URL with its
@@ -172,7 +172,7 @@ export async function ingestAgentConfig(
   const result = await options.ingestParsed(
     {
       projectId: project.id,
-      format: 'automate-agent-config',
+      format: 'lupin-agent-config',
       branch,
       commitSha: input.commit,
       source: input.source,

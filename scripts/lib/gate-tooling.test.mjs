@@ -212,7 +212,7 @@ test('a postgres service satisfies the E2E database requirement', () => {
     '      postgres:',
     '        image: postgres:16-alpine',
     '        env:',
-    '          POSTGRES_PASSWORD: automate',
+    '          POSTGRES_PASSWORD: lupin',
     '    steps:',
     '      - run: pnpm install --frozen-lockfile',
     '      - run: pnpm test:e2e',
@@ -232,7 +232,7 @@ test('an explicit DATABASE_URL env satisfies it without a service', () => {
     '    runs-on: ubuntu-24.04',
     '    timeout-minutes: 20',
     '    env:',
-    '      DATABASE_URL: postgresql://user:pass@127.0.0.1:5432/automate',
+    '      DATABASE_URL: postgresql://user:pass@127.0.0.1:5432/lupin',
     '    steps:',
     '      - run: pnpm test:e2e',
   ].join('\n');

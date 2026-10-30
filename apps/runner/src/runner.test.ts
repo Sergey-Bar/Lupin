@@ -65,7 +65,7 @@ describe('runner configuration', () => {
     const base = { LUPIN_API_URL: 'http://localhost:3000', RUNNER_CREDENTIAL: 'token' };
     const first = parseRunnerConfig({ ...base, RUNNER_INSTANCE_ID: 'runner-1' });
     const second = parseRunnerConfig({ ...base, RUNNER_INSTANCE_ID: 'runner-2' });
-    expect(first.name).toBe('automate-playwright-runner-runner-1');
+    expect(first.name).toBe('lupin-playwright-runner-runner-1');
     expect(second.name).not.toBe(first.name);
     expect(
       parseRunnerConfig({ ...base, RUNNER_INSTANCE_ID: 'runner-1', RUNNER_NAME: 'ci-east-1' }).name,
@@ -96,19 +96,19 @@ describe('runner configuration', () => {
       spoolMaxBytes: 64_000_000,
       spoolKey: undefined,
     });
-    expect(config.spoolRoot).toContain('automate-runner-spool');
+    expect(config.spoolRoot).toContain('lupin-runner-spool');
 
     const tuned = parseRunnerConfig({
       LUPIN_API_URL: 'http://localhost:3000',
       RUNNER_INSTANCE_ID: 'runner-1',
       RUNNER_CREDENTIAL: 'token',
-      RUNNER_SPOOL_ROOT: '/var/lib/automate/spool',
+      RUNNER_SPOOL_ROOT: '/var/lib/lupin/spool',
       RUNNER_SPOOL_KEY: 'a-stable-spool-key',
       RUNNER_SPOOL_MAX_ENTRIES: '25',
       RUNNER_SPOOL_MAX_BYTES: '1048576',
     });
     expect(tuned).toMatchObject({
-      spoolRoot: '/var/lib/automate/spool',
+      spoolRoot: '/var/lib/lupin/spool',
       spoolKey: 'a-stable-spool-key',
       spoolMaxEntries: 25,
       spoolMaxBytes: 1_048_576,

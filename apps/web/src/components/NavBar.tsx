@@ -49,7 +49,7 @@ export function NavBar(): React.ReactElement {
         aria-hidden="true"
         className="shrink-0 text-sm font-semibold uppercase tracking-widest"
       >
-        Automate
+        Lupin
       </span>
       <ul className="hidden min-w-0 flex-1 items-center justify-center gap-x-1 lg:flex">
         {SECTIONS.map((section) => {

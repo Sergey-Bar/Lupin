@@ -119,4 +119,4 @@ export const RUNNER_REGISTRATION_HEADERS = {
 };
 
 /** The session cookie the API sets on a successful login. */
-export const SESSION_COOKIE = 'automate_session';
+export const SESSION_COOKIE = 'lupin_session';

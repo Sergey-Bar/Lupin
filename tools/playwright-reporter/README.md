@@ -1,6 +1,6 @@
 # @lupin/playwright-reporter
 
-A Playwright reporter that streams a run into AutoMate while it runs. Each test shows up on the run page as soon as it finishes. When an attempt fails, its trace, screenshot and video are uploaded too. The package has no runtime dependencies. MIT.
+A Playwright reporter that streams a run into Lupin while it runs. Each test shows up on the run page as soon as it finishes. When an attempt fails, its trace, screenshot and video are uploaded too. The package has no runtime dependencies. MIT.
 
 ```ts
 // playwright.config.ts
@@ -11,7 +11,7 @@ export default defineConfig({
 
 | Variable                | Meaning                                                                |
 | ----------------------- | ---------------------------------------------------------------------- |
-| `LUPIN_URL`             | The AutoMate origin. `https://`, or `http://` only to a loopback host. |
+| `LUPIN_URL`             | The Lupin origin. `https://`, or `http://` only to a loopback host.    |
 | `LUPIN_REPORTER_SECRET` | The install's `REPORTER_SECRET`. It is read from the environment only. |
 | `LUPIN_BRANCH`          | Optional. Falls back to `GITHUB_HEAD_REF`, then `GITHUB_REF_NAME`.     |
 | `LUPIN_COMMIT`          | Optional. Falls back to `GITHUB_SHA`.                                  |
@@ -24,7 +24,7 @@ Options, passed as `['@lupin/playwright-reporter', { … }]`:
 
 What it does:
 
-- **It never fails your run.** If AutoMate is down, a request is retried three times, the reporter prints one line to stderr, and the tests carry on.
+- **It never fails your run.** If Lupin is down, a request is retried three times, the reporter prints one line to stderr, and the tests carry on.
 - **One result per test.** A test that passes on a retry is reported as `flaky`. Outcomes are honoured, so a `test.fail()` that fails counts as a pass.
 - **Test identity matches uploaded reports.** Identity is built from the file (relative to `rootDir`, as Playwright's JSON reporter writes it), the `describe` path, the title and the project. A test therefore keeps one history whichever way its results arrive.
 

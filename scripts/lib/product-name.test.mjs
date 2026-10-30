@@ -88,17 +88,47 @@ export const RETIRED_NAMES = [
     reason:
       'the environment-variable prefix of the second name; every variable is `LUPIN_*` since 4.0.0',
   },
+  {
+    // Every other spelling, in any case. `automated` and `automates` are English and stay;
+    // `automation` and `automating` never contain the five letters in a row, so they need
+    // no carve-out. The bare verb is reworded wherever it appears, because a pattern
+    // cannot tell it apart from the name.
+    pattern: 'automat[e]([^ds]|$)',
+    ignoreCase: true,
+    reason: 'the second product name; the product is Lupin since 4.0.0',
+  },
+  {
+    pattern: '(^|[^a-z0-9])am[t]_',
+    ignoreCase: true,
+    reason: 'the access-token prefix abbreviated from the second name; tokens are `lup_…`',
+  },
 ];
 
 /**
  * Tracked files that may keep a retired name, each with the reason.
  *
- * Empty on purpose. A file goes here only when changing it would falsify a record or
- * break something outside this repository's control — never because the edit is tedious.
+ * A file goes here only when changing it would falsify a record or break something
+ * outside this repository's control — never because the edit is tedious.
  *
  * @type {ReadonlyArray<{ path: string, reason: string }>}
  */
-export const RETIRED_NAME_EXEMPTIONS = [];
+export const RETIRED_NAME_EXEMPTIONS = [
+  {
+    path: 'scripts/secret-scan-baseline.json',
+    reason:
+      'a forensic record of findings in git history, keyed on the path each historical blob had; renaming a path would make the row describe a file that never existed',
+  },
+  {
+    path: '.kilo/skills/vercel-react-best-practices/AGENTS.md',
+    reason:
+      'vendored from vercel-labs/agent-skills; its SVGO heading uses the English verb, and an edit would break its content hash in .kilo/skills-lock.json',
+  },
+  {
+    path: '.kilo/skills/vercel-react-best-practices/rules/rendering-svg-precision.md',
+    reason:
+      'vendored from vercel-labs/agent-skills; its SVGO heading uses the English verb, and an edit would break its content hash in .kilo/skills-lock.json',
+  },
+];
 
 /**
  * `git grep` over tracked files, as `path:line` hits. Untracked files are excluded on

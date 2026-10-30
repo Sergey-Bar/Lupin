@@ -6,4 +6,4 @@ Producer adapters that read Playwright JSON, JUnit XML, k6 summaries, OWASP ZAP 
 pnpm --filter @lupin/reporter test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

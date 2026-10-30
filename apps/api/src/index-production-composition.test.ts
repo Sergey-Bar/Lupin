@@ -95,7 +95,7 @@ const VALID_SECRETS = {
 
 const OBJECT_STORE = {
   OBJECT_STORE_ENDPOINT: 'https://objects.example.com',
-  OBJECT_STORE_BUCKET: 'automate-artifacts',
+  OBJECT_STORE_BUCKET: 'lupin-artifacts',
   OBJECT_STORE_REGION: 'eu-central-1',
   OBJECT_STORE_ACCESS_KEY_ID: syntheticAwsKeyId(),
   OBJECT_STORE_SECRET_ACCESS_KEY: 'object-store-secret-long-enough',
@@ -406,7 +406,7 @@ describe('a valid production configuration', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ apiKey: VALID_SECRETS.LUPIN_INSTALLATION_KEY }),
     });
-    const cookie = /automate_session=[^;]+/u.exec(login?.headers.get('set-cookie') ?? '')?.[0];
+    const cookie = /lupin_session=[^;]+/u.exec(login?.headers.get('set-cookie') ?? '')?.[0];
     expect(cookie, 'the login set no session cookie').toBeDefined();
     sessionReads = 0;
     const response = await composed?.app.request('/api/v1/access-tokens', {
@@ -436,7 +436,7 @@ describe('a valid production configuration', () => {
     expect(ready.status).toBe(200);
     expect(versionedReady.status).toBe(200);
     const readyBody = await ready.json();
-    expect(readyBody).toEqual({ status: 'ready', service: 'automate-api' });
+    expect(readyBody).toEqual({ status: 'ready', service: 'lupin-api' });
     // Both readiness paths, byte for byte: a container runtime and a load balancer
     // configured with different ones must not be reading different contracts.
     expect(await versionedReady.json()).toEqual(readyBody);

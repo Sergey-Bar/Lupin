@@ -120,7 +120,7 @@ declare global {
      * exactly the seam where a rendering reading silently becomes a number nobody
      * checked. The name is prefixed so it cannot collide with the application's own.
      */
-    __automateRenderBudget?: RenderMetrics;
+    __lupinRenderBudget?: RenderMetrics;
   }
 }
 
@@ -146,7 +146,7 @@ function isLayoutShift(
 async function installObservers(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const totals: RenderMetrics = { lcpMs: 0, inpMs: 0, cls: 0, longTasks: 0 };
-    window.__automateRenderBudget = totals;
+    window.__lupinRenderBudget = totals;
 
     // A route that paints no large element emits no LCP entry at all. The reading
     // stays 0 and `measurementProblems` reports it as unmeasured rather than as a
@@ -204,7 +204,7 @@ async function installObservers(page: Page): Promise<void> {
  * those two is the difference between a budget that measures and one that agrees.
  */
 async function readMetrics(page: Page): Promise<RenderMetrics> {
-  const totals = await page.evaluate(() => window.__automateRenderBudget);
+  const totals = await page.evaluate(() => window.__lupinRenderBudget);
   if (totals === undefined) {
     throw new Error(
       'The render observers were installed by addInitScript, so a missing accumulator ' +

@@ -1,6 +1,6 @@
-name: AutoMate repository health
+name: Lupin repository health
 description: >-
-  Sends a repository's scanner reports to an AutoMate install, then asks it for the
+  Sends a repository's scanner reports to an Lupin install, then asks it for the
   pull-request gate and fails the job when the gate fails.
 
   This action runs no scanner itself. Run the ones you want earlier in the job, writing
@@ -9,9 +9,9 @@ description: >-
   cobertura, jacoco-xml, go-coverprofile), or one of the evidence formats (cyclonedx-json,
   spdx-json, vex, slsa-provenance, stryker-mutation, axe-json, git-diff, skillspector-json),
   or one of the eval formats (promptfoo-json, deepeval-json, inspect-eval-json,
-  automate-eval-json), and list the files under `reports`.
+  lupin-eval-json), and list the files under `reports`.
 
-  The token is an AutoMate access token with the `uploader` role, pinned to this project,
+  The token is an Lupin access token with the `uploader` role, pinned to this project,
   stored as a repository secret. It can send reports to this one project and do nothing
   else. It is passed to curl through the environment and a header file, never argv, and only
   to an https:// origin or a loopback http:// one: the step refuses anything else before it
@@ -19,12 +19,12 @@ description: >-
 
   Optionally it also sends the repository's agent instruction and MCP configuration files
   (`agent-config: 'true'`), and records a deployment through the delivery push door
-  (`deployment-environment`). The same four calls are the `automate` CLI in
+  (`deployment-environment`). The same four calls are the `lupin` CLI in
   `tools/lupin-cli` for a pipeline that is not GitHub Actions.
 
 inputs:
   url:
-    description: The AutoMate API origin, e.g. https://automate.example.com
+    description: The Lupin API origin, e.g. https://lupin.example.com
     required: true
   project-id:
     description: The project's id, from its page in the dashboard.

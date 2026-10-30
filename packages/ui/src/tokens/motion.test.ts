@@ -129,7 +129,7 @@ describe('the enter and exit animations are declared, not assumed', () => {
     // exit half to be a real utility. A pair where only the entry side exists is
     // an overlay that arrives and never leaves.
     for (const direction of ['enter', 'exit'] as const) {
-      expect(motionCss).toContain(`@keyframes automate-${direction} {`);
+      expect(motionCss).toContain(`@keyframes lupin-${direction} {`);
     }
   });
 });

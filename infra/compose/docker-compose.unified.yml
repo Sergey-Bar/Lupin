@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: automate
-      POSTGRES_USER: automate
+      POSTGRES_DB: lupin
+      POSTGRES_USER: lupin
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
     # No published port. The database is reached on the compose network only; the dev
     # stack (`compose.dev.yml`) publishes it for a developer's tools.
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U automate -d automate']
+      test: ['CMD-SHELL', 'pg_isready -U lupin -d lupin']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -20,7 +20,7 @@ services:
       context: ../..
       dockerfile: infra/docker/migrate.Dockerfile
     environment:
-      DATABASE_URL: postgresql://automate:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/automate
+      DATABASE_URL: postgresql://lupin:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/lupin
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,7 +67,7 @@ services:
       # nginx sits in front and appends the peer it saw to X-Forwarded-For (MNT-7).
       TRUST_PROXY: 'true'
       PORT: '3000'
-      DATABASE_URL: postgresql://automate:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/automate
+      DATABASE_URL: postgresql://lupin:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/lupin
       COOKIE_SECRET: ${COOKIE_SECRET:?set COOKIE_SECRET}
       VAULT_SECRET: ${VAULT_SECRET:?set VAULT_SECRET}
       LUPIN_API_KEY: ${LUPIN_API_KEY:?set LUPIN_API_KEY}
@@ -76,7 +76,7 @@ services:
       # Required for a database-backed production boot (`NO_INSTALLATION_KEY`), and the
       # credential the installation is signed in with (ledger MNT-19, MNT-20).
       LUPIN_INSTALLATION_KEY: ${LUPIN_INSTALLATION_KEY:?set LUPIN_INSTALLATION_KEY}
-      ARTIFACT_ROOT: /var/lib/automate/artifacts
+      ARTIFACT_ROOT: /var/lib/lupin/artifacts
       # The five variables `startup-policy.ts` requires in production. `ARTIFACT_ROOT`
       # stays set for the local-filesystem fallback that development uses; in
       # production the object store is what holds artifact bytes.
@@ -133,7 +133,7 @@ services:
       objectstore:
         condition: service_healthy
     volumes:
-      - artifact_data:/var/lib/automate/artifacts
+      - artifact_data:/var/lib/lupin/artifacts
     healthcheck:
       test:
         [
@@ -154,8 +154,8 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: '3001'
-      DATABASE_URL: postgresql://automate:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/automate
-      ARTIFACT_ROOT: /var/lib/automate/artifacts
+      DATABASE_URL: postgresql://lupin:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/lupin
+      ARTIFACT_ROOT: /var/lib/lupin/artifacts
       WORKER_INSTANCE_ID: 00000000-0000-4000-8000-000000000001
       WORKER_CAPABILITIES: playwright
       WORKER_LABELS: reference
@@ -168,7 +168,7 @@ services:
       api:
         condition: service_healthy
     volumes:
-      - artifact_data:/var/lib/automate/artifacts
+      - artifact_data:/var/lib/lupin/artifacts
     healthcheck:
       test:
         [
@@ -192,12 +192,12 @@ services:
       RUNNER_REGISTRATION_SECRET: ${RUNNER_REGISTRATION_SECRET:?set RUNNER_REGISTRATION_SECRET}
       RUNNER_SLOTS: '1'
       RUNNER_ALLOWED_TARGET_URLS: 'http://api,http://web'
-      ARTIFACT_ROOT: /var/lib/automate/artifacts
+      ARTIFACT_ROOT: /var/lib/lupin/artifacts
     depends_on:
       api:
         condition: service_healthy
     volumes:
-      - artifact_data:/var/lib/automate/artifacts
+      - artifact_data:/var/lib/lupin/artifacts
     networks:
       - default
       - runner_egress
@@ -267,7 +267,7 @@ services:
     # The LAN certificate, issued by `start lan-cert`. Empty until then, and the edge serves
     # plain HTTP only (infra/nginx/40-lupin-tls.sh).
     volumes:
-      - ${LUPIN_CERT_DIR:-./certs}:/etc/automate/certs
+      - ${LUPIN_CERT_DIR:-./certs}:/etc/lupin/certs
     healthcheck:
       # `/edge-health` rather than `/`: with TLS on, every other plain-HTTP path redirects.
       test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:8080/edge-health || exit 1']

@@ -11,16 +11,16 @@ import {
   runMigrations,
 } from './migrate.js';
 
-const VALID_URL = 'postgresql://user:pass@db.internal:5432/automate';
+const VALID_URL = 'postgresql://user:pass@db.internal:5432/lupin';
 
 describe('a migration target is validated before anything is connected to', () => {
   it('accepts a Postgres URL and reports what it will change', () => {
     expect(assertMigrationDatabaseUrl(VALID_URL)).toEqual({
       host: 'db.internal',
-      database: 'automate',
+      database: 'lupin',
     });
-    expect(assertMigrationDatabaseUrl(`  ${VALID_URL}  `).database).toBe('automate');
-    expect(assertMigrationDatabaseUrl('postgres://localhost/automate').host).toBe('localhost');
+    expect(assertMigrationDatabaseUrl(`  ${VALID_URL}  `).database).toBe('lupin');
+    expect(assertMigrationDatabaseUrl('postgres://localhost/lupin').host).toBe('localhost');
   });
 
   it('refuses an absent URL rather than falling back to the PG* environment', () => {
@@ -36,7 +36,7 @@ describe('a migration target is validated before anything is connected to', () =
   });
 
   it('refuses a non-Postgres scheme and names the one it got', () => {
-    expect(() => assertMigrationDatabaseUrl('mysql://localhost/automate')).toThrow(/not mysql:/);
+    expect(() => assertMigrationDatabaseUrl('mysql://localhost/lupin')).toThrow(/not mysql:/);
   });
 
   it('refuses a URL that names no database', () => {

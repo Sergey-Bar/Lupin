@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDbClient, createDbResources } from './client.js';
 
-const URL = 'postgresql://user:pass@127.0.0.1:5432/automate';
+const URL = 'postgresql://user:pass@127.0.0.1:5432/lupin';
 
 describe('the database client', () => {
   it('builds a Drizzle client and a pool from one connection string', () => {

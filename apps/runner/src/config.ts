@@ -6,7 +6,7 @@ import { z } from 'zod/v4';
 const defaultProjectRoot = fileURLToPath(new URL('../fixtures/playwright-smoke/', import.meta.url));
 const defaultApiCollectionRoot = fileURLToPath(new URL('../fixtures/api-smoke/', import.meta.url));
 const defaultK6ScriptRoot = fileURLToPath(new URL('../fixtures/k6/', import.meta.url));
-const defaultSpoolRoot = join(tmpdir(), 'automate-runner-spool');
+const defaultSpoolRoot = join(tmpdir(), 'lupin-runner-spool');
 
 function csv(value: string): string[] {
   return [
@@ -142,7 +142,7 @@ const RunnerConfigSchema = z
   // with an opaque 23505 DUPLICATE, whatever its instance id.
   .transform((value) => ({
     ...value,
-    name: value.name ?? `automate-playwright-runner-${value.instanceId}`,
+    name: value.name ?? `lupin-playwright-runner-${value.instanceId}`,
   }));
 
 export type RunnerConfig = z.infer<typeof RunnerConfigSchema>;

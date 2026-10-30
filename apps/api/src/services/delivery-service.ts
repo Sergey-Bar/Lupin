@@ -831,7 +831,7 @@ function metricOf(dora: Scorecard): DimensionMetric | null {
   return {
     dimension: 'delivery',
     metric: 'dora',
-    tool: { name: 'automate-delivery', version: null },
+    tool: { name: 'lupin-delivery', version: null },
     score: dora.score,
     summary: `DORA ${String(dora.score)} / 100 over ${String(dora.windowDays)} days, limited by ${String(dora.cappedBy)}`,
   };

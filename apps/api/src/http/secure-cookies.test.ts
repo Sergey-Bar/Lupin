@@ -29,7 +29,7 @@ describe('secureCookiePolicy', () => {
   });
 
   it('is Secure for an https public URL whatever the request says', async () => {
-    expect(await decide(secureCookiePolicy({ publicAppUrl: 'https://automate.local' }))).toBe(true);
+    expect(await decide(secureCookiePolicy({ publicAppUrl: 'https://lupin.local' }))).toBe(true);
   });
 
   it('follows how the request arrived when the proxy is trusted', async () => {

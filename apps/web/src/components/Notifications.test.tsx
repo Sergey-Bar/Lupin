@@ -10,7 +10,7 @@ import { TOAST_MS, ToastProvider, useToast } from './Toasts.js';
 const INBOX = {
   id: 'c1',
   kind: 'inbox' as const,
-  name: 'Automate inbox',
+  name: 'Lupin inbox',
   settings: {},
   enabled: true,
   createdAt: '2026-10-25T00:00:00.000Z',
@@ -24,7 +24,7 @@ const SENT = {
   errorCode: null,
   scheduledFor: '2026-10-25T09:00:00.000Z',
   sentAt: '2026-10-25T09:00:05.000Z',
-  rendered: '🟢 Test report from Automate\n3 runs in this period.',
+  rendered: '🟢 Test report from Lupin\n3 runs in this period.',
 };
 
 function client(overrides: Partial<NotificationsClient> = {}): NotificationsClient {
@@ -115,7 +115,7 @@ describe('NotificationsPage', () => {
     page(api);
     await screen.findByText('Every day at 09:00');
     await user.type(screen.getByLabelText('Name'), 'Team inbox');
-    await user.click(screen.getByRole('button', { name: 'Add Automate inbox' }));
+    await user.click(screen.getByRole('button', { name: 'Add Lupin inbox' }));
     expect(api.createChannel).toHaveBeenCalledWith({
       kind: 'inbox',
       name: 'Team inbox',
@@ -139,13 +139,11 @@ describe('NotificationsPage', () => {
     const row = await screen.findByTestId('channel-c1');
     const send = within(row).getByRole('button', { name: 'Send a test' });
     await user.click(send);
-    expect(await screen.findByText('Test sent to Automate inbox')).toBeTruthy();
+    expect(await screen.findByText('Test sent to Lupin inbox')).toBeTruthy();
     await user.click(send);
     expect(await screen.findByText('telegram_rejected_401')).toBeTruthy();
     await user.click(send);
-    expect((await screen.findAllByText('Test queued for Automate inbox')).length).toBeGreaterThan(
-      0,
-    );
+    expect((await screen.findAllByText('Test queued for Lupin inbox')).length).toBeGreaterThan(0);
     await user.click(send);
     expect(await screen.findByText('This needs the admin role')).toBeTruthy();
   });
@@ -195,7 +193,7 @@ describe('NotificationsPage', () => {
     page(api);
     const row = await screen.findByTestId('channel-c1');
     await user.click(within(row).getByRole('button', { name: 'Remove' }));
-    expect(await screen.findByText('Automate inbox removed')).toBeTruthy();
+    expect(await screen.findByText('Lupin inbox removed')).toBeTruthy();
     await user.click(
       within(await screen.findByTestId('channel-c1')).getByRole('button', { name: 'Remove' }),
     );
@@ -204,7 +202,7 @@ describe('NotificationsPage', () => {
     await user.click(within(schedules).getByRole('button', { name: 'Remove' }));
     await user.click(screen.getByRole('button', { name: 'Schedule' }));
     expect(await screen.findByText('Could not schedule it')).toBeTruthy();
-    await user.click(screen.getByRole('button', { name: 'Add Automate inbox' }));
+    await user.click(screen.getByRole('button', { name: 'Add Lupin inbox' }));
     expect(await screen.findByText('Could not add the channel')).toBeTruthy();
   });
 
@@ -228,7 +226,7 @@ describe('NotificationsPage', () => {
     expect(await screen.findByText('Add a channel first.')).toBeTruthy();
     expect(await screen.findByText('No report has been sent yet.')).toBeTruthy();
     expect(await screen.findByText('Nothing scheduled.')).toBeTruthy();
-    expect(screen.getByText(/Start with the Automate inbox/u)).toBeTruthy();
+    expect(screen.getByText(/Start with the Lupin inbox/u)).toBeTruthy();
   });
 
   it('says so when any part cannot be read', async () => {

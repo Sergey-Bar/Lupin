@@ -54,12 +54,12 @@ async function upstreamApp() {
 
 describe('proxyConfig', () => {
   it('builds the endpoint from the origin and keeps the token', () => {
-    expect(
-      proxyConfig({ LUPIN_URL: 'https://automate.example/', LUPIN_TOKEN: ` ${TOKEN} ` }),
-    ).toEqual({
-      endpoint: new URL('https://automate.example/api/v1/mcp'),
-      token: TOKEN,
-    });
+    expect(proxyConfig({ LUPIN_URL: 'https://lupin.example/', LUPIN_TOKEN: ` ${TOKEN} ` })).toEqual(
+      {
+        endpoint: new URL('https://lupin.example/api/v1/mcp'),
+        token: TOKEN,
+      },
+    );
     expect(
       proxyConfig({ LUPIN_URL: 'http://127.0.0.1:3000', LUPIN_TOKEN: TOKEN }).endpoint.href,
     ).toBe('http://127.0.0.1:3000/api/v1/mcp');
@@ -74,7 +74,7 @@ describe('proxyConfig', () => {
   it.each([
     [{ LUPIN_TOKEN: TOKEN }, /Set LUPIN_URL/u],
     [{ LUPIN_URL: 'https://a.example' }, /Set LUPIN_TOKEN/u],
-    [{ LUPIN_URL: 'https://a.example', LUPIN_TOKEN: 'not-a-token' }, /amt_/u],
+    [{ LUPIN_URL: 'https://a.example', LUPIN_TOKEN: 'not-a-token' }, /lup_/u],
     [{ LUPIN_URL: 'not a url', LUPIN_TOKEN: TOKEN }, /not a URL/u],
     // The token would cross the network in the clear.
     [{ LUPIN_URL: 'http://192.168.1.10:3000', LUPIN_TOKEN: TOKEN }, /in the clear/u],

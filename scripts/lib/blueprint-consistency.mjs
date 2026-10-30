@@ -1,5 +1,5 @@
 /**
- * Consistency checks for the AUTOMATE (local) blueprint under `docs/local/`.
+ * Consistency checks for the Lupin Local blueprint under `docs/local/`.
  *
  * **What this is, and what it is not.** It checks that the blueprint documents agree
  * with each other and with the records they cite: that each has its header, that each

@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 **Do not open a public issue.** Use GitHub's private reporting on the Security tab
-(https://github.com/sergey-bar/AutoMate/security/advisories/new), or email the
+(https://github.com/sergey-bar/Lupin/security/advisories/new), or email the
 maintainer directly if that route is unavailable to you.
 
 Please include: what the affected version or commit is, what an attacker can do, the

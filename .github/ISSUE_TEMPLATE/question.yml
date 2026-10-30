@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Check the [documentation site](https://sergey-bar.github.io/AutoMate/) and
+        Check the [documentation site](https://sergey-bar.github.io/Lupin/) and
         `.github/SUPPORT.md` first — a question that the docs should have answered is worth asking
         anyway, because it means the docs are missing something.
   - type: textarea

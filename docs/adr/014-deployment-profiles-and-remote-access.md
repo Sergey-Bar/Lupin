@@ -41,7 +41,7 @@ control and both `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`, and `solo` refuses
 
 **The credential order** — one resolver, `callerOf` in `apps/api/src/http/roles.ts`:
 
-1. an access token (bearer or the `automate_token` cookie);
+1. an access token (bearer or the `lupin_token` cookie);
 2. a user session;
 3. the installation session (admin), which is break-glass only under enforced SSO;
 4. a verified `Cf-Access-Jwt-Assertion`, only with `LUPIN_REMOTE=cloudflare`;
@@ -50,7 +50,7 @@ control and both `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`, and `solo` refuses
 
 The installation session comes before Access (amended 2026-10-28): behind the tunnel every
 request carries an Access identity, so read after it a break-glass sign-in was never read.
-Under enforced SSO without break-glass, the `automate_token` cookie and the installation
+Under enforced SSO without break-glass, the `lupin_token` cookie and the installation
 session are not read at all; a bearer token is a pipeline's and still is.
 
 **Several workspaces per install.** The workspace comes from each request — a token's own

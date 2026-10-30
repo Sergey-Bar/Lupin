@@ -1,6 +1,6 @@
-# Send results from any CI (the `automate` CLI)
+# Send results from any CI (the `lupin` CLI)
 
-`tools/lupin-cli` is a small Node command, `automate`, with no dependencies of its own. It does
+`tools/lupin-cli` is a small Node command, `lupin`, with no dependencies of its own. It does
 the four things a pipeline needs: upload a scanner report, ask for the pull-request gate, record a
 deployment, and send the repository's agent configuration. On GitHub Actions the composite action
 in `.github/actions/lupin-health` does the same four things, and its inputs are below.
@@ -73,9 +73,9 @@ A refusal prints the server's own error code and sentence, never the token.
 ## The GitHub composite action
 
 ```yaml
-- uses: your-org/AutoMate/.github/actions/lupin-health@<pinned sha>
+- uses: your-org/Lupin/.github/actions/lupin-health@<pinned sha>
   with:
-    url: https://automate.example.com
+    url: https://lupin.example.com
     project-id: ${{ vars.LUPIN_PROJECT }}
     token: ${{ secrets.LUPIN_UPLOADER_TOKEN }}
     reports: |

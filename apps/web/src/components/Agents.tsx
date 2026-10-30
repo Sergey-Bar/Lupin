@@ -38,7 +38,7 @@ import { useToast } from './Toasts.js';
 
 /**
  * Agent quality: whether the repository's agents regress, what they cost to run, which tools
- * they are given — and the same runtime figures for Automate's own chat.
+ * they are given — and the same runtime figures for Lupin's own chat.
  *
  * Every verdict is the server's: a suite's comparison decides `pass`, `fail` or
  * `insufficient` with intervals, and only a `significant` regression is listed as one. A
@@ -478,7 +478,7 @@ function RuntimeView({ report }: { report: AgentRuntimeReport }): React.ReactEle
     return (
       <Quiet data-testid="runtime-empty">
         No agent run arrived in this window. Agents report runtime by exporting OTLP traces to
-        Automate.
+        Lupin.
       </Quiet>
     );
   }
@@ -705,7 +705,7 @@ function ChatRuntimePanel({
     [agents, days],
   );
   return (
-    <Panel title="Automate's own chat" data-testid="chat-runtime" data-chrome="secondary">
+    <Panel title="Lupin's own chat" data-testid="chat-runtime" data-chrome="secondary">
       <Loaded resource={runtime} label="the chat runtime" testId="chat-runtime">
         {(value) => <ChatRuntime report={value} />}
       </Loaded>

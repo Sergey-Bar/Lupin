@@ -59,7 +59,7 @@ test.describe('the full loop', () => {
     const databaseUrl = process.env['DATABASE_URL']?.trim() ?? '';
     expect(databaseUrl, 'this spec needs the same PostgreSQL the API is using').not.toBe('');
 
-    const scratch = mkdtempSync(path.join(tmpdir(), 'automate-full-loop-'));
+    const scratch = mkdtempSync(path.join(tmpdir(), 'lupin-full-loop-'));
     const services: ServiceHandle[] = [];
     let runId: string | undefined;
     try {
@@ -198,7 +198,7 @@ test.describe('the full loop', () => {
   test('browser.run through the agent route is claimed and completed by the real runner', async ({
     request,
   }) => {
-    const scratch = mkdtempSync(path.join(tmpdir(), 'automate-agent-browser-'));
+    const scratch = mkdtempSync(path.join(tmpdir(), 'lupin-agent-browser-'));
     let runner: ServiceHandle | undefined;
     let runId: string | undefined;
     try {
@@ -285,7 +285,7 @@ test.describe('the full loop', () => {
   test('api.run through the agent route is claimed and completed by the real runner', async ({
     request,
   }) => {
-    const scratch = mkdtempSync(path.join(tmpdir(), 'automate-agent-api-'));
+    const scratch = mkdtempSync(path.join(tmpdir(), 'lupin-agent-api-'));
     let runner: ServiceHandle | undefined;
     let runId: string | undefined;
     try {

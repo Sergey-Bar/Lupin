@@ -99,14 +99,14 @@ export function syntheticRunnerRegistrationSecret(): string {
 }
 
 /**
- * An `amt_` access token, which is the shape the MCP stdio proxy and the CI CLI accept.
+ * An `lup_` access token, which is the shape the MCP stdio proxy and the CI CLI accept.
  *
- * Written as a literal it was `const TOKEN = 'amt_…'`, which `no-hardcoded-secret-literal`
+ * Written as a literal it was `const TOKEN = 'lup_…'`, which `no-hardcoded-secret-literal`
  * reports on the name and gitleaks' `generic-api-key` can match: a credential-shaped
  * value committed for a scanner to be told to ignore.
  */
 export function syntheticAccessToken(): string {
-  return ['amt_', 'viewer', '_for_the_proxy'].join('');
+  return ['lup_', 'viewer', '_for_the_proxy'].join('');
 }
 
 /** A JWT with three dot-separated base64url segments. */

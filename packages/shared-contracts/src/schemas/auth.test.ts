@@ -40,8 +40,8 @@ describe('JwtClaimsSchema', () => {
   it('accepts a valid full JWT claims object', () => {
     const result = JwtClaimsSchema.safeParse({
       sub: 'user-1',
-      iss: 'https://auth.automate.dev',
-      aud: 'automate-platform',
+      iss: 'https://auth.lupin.dev',
+      aud: 'lupin-platform',
       iat: 1700000000,
       exp: 1700003600,
       permissions: ['runs:read', 'tests:read'],

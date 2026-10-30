@@ -27,8 +27,8 @@ function run(env) {
   return { status: result.status, stderr: String(result.stderr ?? '') };
 }
 
-const LOCAL = 'postgresql://automate:local@127.0.0.1:5432/automate';
-const RESTORE = 'postgresql://automate:local@127.0.0.1:5433/automate_restore';
+const LOCAL = 'postgresql://lupin:local@127.0.0.1:5432/lupin';
+const RESTORE = 'postgresql://lupin:local@127.0.0.1:5433/lupin_restore';
 
 /**
  * A vault secret, assembled rather than written.
@@ -51,7 +51,7 @@ test('refuses without REHEARSAL_MODE=local', () => {
 test('refuses a non-loopback source, before connecting to anything', () => {
   const result = run({
     REHEARSAL_MODE: 'local',
-    DATABASE_URL: 'postgresql://automate:pw@db.production.internal:5432/automate',
+    DATABASE_URL: 'postgresql://lupin:pw@db.production.internal:5432/lupin',
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /must be loopback/);
@@ -68,7 +68,7 @@ test('refuses a non-loopback restore target', () => {
   const result = run({
     REHEARSAL_MODE: 'local',
     DATABASE_URL: LOCAL,
-    REHEARSAL_RESTORE_URL: 'postgresql://automate:pw@restore.production.internal:5432/x',
+    REHEARSAL_RESTORE_URL: 'postgresql://lupin:pw@restore.production.internal:5432/x',
     VAULT_SECRET: LONG_SECRET,
   });
   assert.notEqual(result.status, 0);

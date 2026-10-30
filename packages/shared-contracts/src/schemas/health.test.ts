@@ -195,8 +195,8 @@ describe('the health report formats', () => {
       expect(isUploadReportFormat(format)).toBe(true);
     }
     expect(isEvalUploadFormat('sarif')).toBe(false);
-    expect(isUploadReportFormat('automate-agent-config')).toBe(false);
-    expect(isFindingReportFormat('automate-agent-config')).toBe(true);
+    expect(isUploadReportFormat('lupin-agent-config')).toBe(false);
+    expect(isFindingReportFormat('lupin-agent-config')).toBe(true);
   });
 
   it('bounds the agents policy: retention to 90 days, ratios to 0–1, prices to admin-set rows', () => {

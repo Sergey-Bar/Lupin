@@ -58,11 +58,11 @@ export const EvalTotalsSchema = z.object({
 });
 
 /**
- * `automate-eval-json`: Automate's own eval run shape — the one `parseEvalReport` produces for
+ * `lupin-eval-json`: Lupin's own eval run shape — the one `parseEvalReport` produces for
  * the three tools, written as a document. The built-in eval runner uploads its runs in it, and
  * any CI job may too.
  */
-export const AutomateEvalRunSchema = z.object({
+export const LupinEvalRunSchema = z.object({
   tool: EvalToolSchema,
   suite: z.string().min(1).max(200),
   model: z.string().max(200).nullable(),
@@ -72,7 +72,7 @@ export const AutomateEvalRunSchema = z.object({
   totals: EvalTotalsSchema,
   truncated: z.boolean(),
 });
-export type AutomateEvalRun = z.infer<typeof AutomateEvalRunSchema>;
+export type LupinEvalRun = z.infer<typeof LupinEvalRunSchema>;
 
 export const EvalRunSourceSchema = z.enum(['ci', 'runner', 'manual']);
 

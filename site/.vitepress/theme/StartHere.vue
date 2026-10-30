@@ -5,7 +5,7 @@ import { withBase } from 'vitepress';
 const paths = [
   {
     role: 'Explore the product',
-    label: 'New to Automate',
+    label: 'New to Lupin',
     title: 'Understand a result. Follow the evidence.',
     intro: 'Start with the visual tour. No installation or terminal needed to learn the basics.',
     outcome: 'You can explain a run, spot a retry and find the evidence behind a result.',
@@ -31,7 +31,7 @@ const paths = [
     role: 'QA & developers',
     label: 'Connect your tests',
     title: 'Your existing test suite. A clearer result.',
-    intro: 'Have a running Automate installation and a report from your test framework ready.',
+    intro: 'Have a running Lupin installation and a report from your test framework ready.',
     outcome: 'Your test report appears as a run, with statuses, retries and the original evidence.',
     steps: [
       {
@@ -81,10 +81,10 @@ const paths = [
     label: 'Run your installation',
     title: 'Your infrastructure. Your evidence.',
     intro: 'You will need Docker with Compose v2 and a machine for the self-hosted installation.',
-    outcome: 'Automate is running, and you know how to start, stop and update the installation.',
+    outcome: 'Lupin is running, and you know how to start, stop and update the installation.',
     steps: [
       {
-        title: 'Install Automate',
+        title: 'Install Lupin',
         detail: 'Download the release bundle and follow the instructions for your system.',
         link: '/guide/install',
       },

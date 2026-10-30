@@ -21,11 +21,11 @@ function option(flag) {
 
 const { version } = parseTag(option('--tag') ?? process.env['GITHUB_REF_NAME'] ?? '');
 const checks = await Promise.all(
-  PUBLISHED_IMAGES.map((service) => anonymousPull(OWNER, `automate-${service}`, version)),
+  PUBLISHED_IMAGES.map((service) => anonymousPull(OWNER, `lupin-${service}`, version)),
 );
 for (const check of checks)
   console.log(
-    `${check.status === 200 ? 'public ' : 'REFUSED'} automate image ${check.image}: ${String(check.status)}`,
+    `${check.status === 200 ? 'public ' : 'REFUSED'} lupin image ${check.image}: ${String(check.status)}`,
   );
 const problems = visibilityProblems(OWNER, checks);
 if (problems.length > 0) {

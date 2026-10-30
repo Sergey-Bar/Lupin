@@ -192,17 +192,17 @@
     "known_failures": {
       "scope": "workspace",
       "column": "not-null",
-      "reason": "Known-failure markers are tenant-owned. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `automate.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
+      "reason": "Known-failure markers are tenant-owned. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
     },
     "nl_query_history": {
       "scope": "workspace",
       "column": "not-null",
-      "reason": "Natural-language queries against tenant data. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `automate.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
+      "reason": "Natural-language queries against tenant data. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
     },
     "agent_sessions": {
       "scope": "workspace",
       "column": "not-null",
-      "reason": "Agent sessions operate on tenant-owned runs. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `automate.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
+      "reason": "Agent sessions operate on tenant-owned runs. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
     },
     "agent_session_runs": {
       "scope": "workspace",
@@ -227,7 +227,7 @@
     "agent_conflicts": {
       "scope": "workspace",
       "column": "not-null",
-      "reason": "Conflicts between agents working on one tenant-owned artifact. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `automate.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
+      "reason": "Conflicts between agents working on one tenant-owned artifact. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
     },
     "audit_events": {
       "scope": "workspace",
@@ -272,7 +272,7 @@
     "flow_templates": {
       "scope": "workspace",
       "column": "not-null",
-      "reason": "Tenant-owned automation templates. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `automate.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
+      "reason": "Tenant-owned automation templates. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
     },
     "execution_log": {
       "scope": "workspace",
@@ -282,12 +282,12 @@
     "model_config": {
       "scope": "workspace",
       "column": "not-null",
-      "reason": "Per-tenant model configuration, which typically embeds provider credentials. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `automate.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
+      "reason": "Per-tenant model configuration, which typically embeds provider credentials. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
     },
     "trace_links": {
       "scope": "workspace",
       "column": "not-null",
-      "reason": "Links between tenant-owned traces. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `automate.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
+      "reason": "Links between tenant-owned traces. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
     },
     "vault_entries": {
       "scope": "workspace",

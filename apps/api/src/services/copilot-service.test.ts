@@ -97,7 +97,7 @@ describe('"cannot prove" is a fact about presence, not a judgement', () => {
     expect(suggestion).toBeDefined();
     expect(suggestion?.why).toContain('presence 0');
     // The override is a **document**, not a shell line. A copilot offering
-    // `echo "commands": … >> automate.config.json` has handed back the raw-shell
+    // `echo "commands": … >> lupin.config.json` has handed back the raw-shell
     // passthrough the plan forbids, wearing a helpful tone.
     expect(suggestion?.overrides['version']).toBe(1);
   });
@@ -282,7 +282,7 @@ describe('the pyramid is locked, and it says which file locked it', () => {
     // The one suggestion where the honest impact is **positive**: reaching a target
     // the project itself declared raises the score.
     expect(suggestion?.impact).toBeGreaterThan(0);
-    expect(suggestion?.evidence[0]?.summary).toContain('automate.config.json');
+    expect(suggestion?.evidence[0]?.summary).toContain('lupin.config.json');
   });
 
   it('says nothing when the declared target is being met', () => {

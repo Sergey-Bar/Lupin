@@ -34,7 +34,7 @@ export const pageJourneys: Record<string, Journey> = {
     takeaway: 'Keep the generated .env file: it contains the secrets this installation needs.',
   },
   'guide/getting-started.md': {
-    audience: 'Developers working on Automate',
+    audience: 'Developers working on Lupin',
     goal: 'Run the source tree and know which checks to run before contributing.',
     stages: [
       [
@@ -44,7 +44,7 @@ export const pageJourneys: Record<string, Journey> = {
       ['Choose a stack', 'Follow the local development path or the full-stack setup below.'],
       ['Verify your change', 'Run the relevant checks before opening a pull request.'],
     ],
-    takeaway: 'Want to use Automate rather than develop it? Follow the Install guide.',
+    takeaway: 'Want to use Lupin rather than develop it? Follow the Install guide.',
   },
   'guide/profiles.md': {
     audience: 'Individuals · team owners · administrators',
@@ -122,7 +122,7 @@ export const pageJourneys: Record<string, Journey> = {
       ['Review the result', 'Read the issue context or proposed patch before acting on it.'],
     ],
     takeaway:
-      'A test proposal is a patch for a person to review. Automate does not apply it to the repository.',
+      'A test proposal is a patch for a person to review. Lupin does not apply it to the repository.',
   },
   'guide/cli.md': {
     audience: 'Developers · CI owners',
@@ -194,7 +194,7 @@ export const pageJourneys: Record<string, Journey> = {
     audience: 'Team leads · operators · administrators',
     goal: 'Deliver a short quality summary where your team reads it.',
     stages: [
-      ['Where', 'Start with the Automate inbox or configure a supported delivery channel.'],
+      ['Where', 'Start with the Lupin inbox or configure a supported delivery channel.'],
       ['When', 'Choose a schedule and verify its timezone.'],
       ['Did it arrive?', 'Send a test and inspect the delivery history for success or an error.'],
     ],
@@ -203,7 +203,7 @@ export const pageJourneys: Record<string, Journey> = {
   },
   'guide/compare.md': {
     audience: 'Evaluators · team leads',
-    goal: 'Decide whether Automate fits the workflow you need.',
+    goal: 'Decide whether Lupin fits the workflow you need.',
     stages: [
       ['Name your need', 'Start with the quality question you want the product to answer.'],
       ['Compare categories', 'Read the supported workflows and their stated boundaries.'],
@@ -244,7 +244,7 @@ export const pageJourneys: Record<string, Journey> = {
   },
   'guide/design-language.md': {
     audience: 'Designers · frontend contributors',
-    goal: 'Build a screen that speaks the same language as the rest of Automate.',
+    goal: 'Build a screen that speaks the same language as the rest of Lupin.',
     stages: [
       ['Use the plane', 'Choose shared surface and border tokens rather than inventing a palette.'],
       ['Explain state', 'Use type, labels and status colors to make meaning clear.'],

@@ -1,4 +1,4 @@
-# AUTOMATE (local) — roadmap
+# Lupin Local — roadmap
 
 **Status:** Draft
 **Owner:** maintainers

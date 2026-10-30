@@ -38,7 +38,7 @@ async function setup(agents: Record<string, unknown> = {}, weights = true) {
   const upload = (
     branch: string,
     run: unknown,
-    format = 'automate-eval-json' as const,
+    format = 'lupin-eval-json' as const,
     commitSha?: string,
   ) =>
     ingestHealthReport(health, {
@@ -59,7 +59,7 @@ describe('eval ingestion', () => {
   it('stores an uploaded run and its cases, keeps no prompt by default, and feeds agent-quality', async () => {
     const { db, projectId, options, upload } = await setup();
     const result = await upload('main', evalRun('support', MAIN));
-    expect(result.toolKey).toBe('automate-eval-json:support');
+    expect(result.toolKey).toBe('lupin-eval-json:support');
     expect(result.metrics).toBeGreaterThan(0);
     const [run] = await db.select().from(schema.evalRuns);
     expect(run).toMatchObject({ suite: 'support', branch: 'main', source: 'ci', truncated: false });
@@ -90,7 +90,7 @@ describe('eval ingestion', () => {
     const options = { db: db as never, workspaceId: 'ws-1', now: () => NOW };
     await ingestHealthReport(options, {
       projectId,
-      format: 'automate-eval-json',
+      format: 'lupin-eval-json',
       bytes: encode(evalRun('support', { paris: 1 }, 1)),
       branch: 'main',
       source: 'ci',
@@ -105,7 +105,7 @@ describe('eval ingestion', () => {
     await expect(
       ingestHealthReport(options, {
         projectId,
-        format: 'automate-eval-json',
+        format: 'lupin-eval-json',
         bytes,
         branch: 'main',
         source: 'ci',
@@ -155,7 +155,7 @@ describe('eval ingestion', () => {
     await expect(
       ingestHealthReport(health, {
         projectId,
-        format: 'automate-eval-json',
+        format: 'lupin-eval-json',
         bytes: new TextEncoder().encode('{not json'),
         source: 'ci',
       }),
@@ -180,7 +180,7 @@ describe('eval ingestion', () => {
         projectId,
         branch: 'main',
         commit: undefined,
-        format: 'automate-eval-json',
+        format: 'lupin-eval-json',
         source: 'ci',
         run: { ...run, suite: `s${String(index)}` },
         now: NOW,
@@ -300,8 +300,8 @@ describe('eval regression', () => {
   it('gates on the named commit\u2019s run when there is one, and says when it fell back', async () => {
     const { projectId, health, upload } = await setup({ gateOnEvals: true });
     await upload('main', evalRun('support', MAIN));
-    await upload('feature', evalRun('support', REGRESSED), 'automate-eval-json', 'aaaaaaa1');
-    await upload('feature', evalRun('support', MAIN), 'automate-eval-json', 'bbbbbbb2');
+    await upload('feature', evalRun('support', REGRESSED), 'lupin-eval-json', 'aaaaaaa1');
+    await upload('feature', evalRun('support', MAIN), 'lupin-eval-json', 'bbbbbbb2');
     const atOld = await healthGate(health, projectId, 'feature', 'aaaaaaa1');
     expect(atOld.evals?.suites[0]).toMatchObject({ verdict: 'fail', commitSha: 'aaaaaaa1' });
     expect(atOld.evals?.suites[0]?.fellBack).toBe(false);
@@ -348,7 +348,7 @@ describe('workspace isolation', () => {
     await expect(
       ingestHealthReport(other, {
         projectId,
-        format: 'automate-eval-json',
+        format: 'lupin-eval-json',
         bytes: encode(evalRun('x', { a: 1 }, 1)),
         source: 'ci',
       }),

@@ -38,7 +38,7 @@ export function bootEnvironment(names, random = randomBytes) {
   /** @type {Map<string, string>} */
   const values = new Map();
   for (const name of names) {
-    if (name === 'OBJECT_STORE_BUCKET') values.set(name, 'automate-artifacts');
+    if (name === 'OBJECT_STORE_BUCKET') values.set(name, 'lupin-artifacts');
     else if (name === 'OBJECT_STORE_REGION') values.set(name, 'us-east-1');
     else if (name === 'OBJECT_STORE_ACCESS_KEY_ID') {
       values.set(name, `AK${random(9).toString('hex').toUpperCase()}`);

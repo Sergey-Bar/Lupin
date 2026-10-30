@@ -150,7 +150,7 @@ describe('a folder name that cannot be a slug', () => {
   });
 
   it('leaves a slug that is already valid alone, so re-derivation is stable', () => {
-    expect(slugifyProjectName('automate')).toBe('automate');
+    expect(slugifyProjectName('lupin')).toBe('lupin');
     expect(slugifyProjectName('my.service_2')).toBe('my.service_2');
   });
 

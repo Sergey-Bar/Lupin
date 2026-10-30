@@ -1,9 +1,9 @@
 /**
  * The candidate local evidence model (spike S1). Throwaway prototype code.
  *
- * It exists to answer one question: can the formats AUTOMATE (local) must read be
+ * It exists to answer one question: can the formats Lupin Local must read be
  * represented without losing an outcome or inventing one? The vocabulary below is a
- * proposal. It is a superset of what `automate.run@2` can say, because that contract
+ * proposal. It is a superset of what `lupin.run@2` can say, because that contract
  * cannot express a run with zero tests, an errored test as distinct from a failed one, or
  * a test that was never run.
  */

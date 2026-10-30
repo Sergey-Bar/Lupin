@@ -1,4 +1,4 @@
-# AUTOMATE (local) — feasibility results
+# Lupin Local — feasibility results
 
 **Status:** Draft
 **Owner:** maintainers

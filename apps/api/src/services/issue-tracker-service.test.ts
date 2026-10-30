@@ -43,7 +43,7 @@ const NOW = new Date('2026-10-26T12:00:00.000Z');
 const ADAPTERS: IssueAdapters = {
   jira: jiraAdapter,
   github: githubAdapter,
-  detailsUrl: (projectId) => `https://automate.test/dashboard/repo/${projectId}`,
+  detailsUrl: (projectId) => `https://lupin.test/dashboard/repo/${projectId}`,
 };
 
 interface Sent {
@@ -291,7 +291,7 @@ describe('an issue from a finding', () => {
     expect(fields['project']).toEqual({ key: 'ACME' });
     const text = JSON.stringify(fields['description']);
     expect(text).toContain('Location: src/db.ts:42');
-    expect(text).toContain(`Open in Automate: https://automate.test/dashboard/repo/${projectId}`);
+    expect(text).toContain(`Open in Lupin: https://lupin.test/dashboard/repo/${projectId}`);
     const [row] = await db.select().from(schema.issueLinks);
     expect(row).toMatchObject({ state: 'created', issueKey: 'ACME-7', sourceKey: findingId });
   });
@@ -449,7 +449,7 @@ describe('an issue from a finding', () => {
     expect(link).toMatchObject({ key: '#31', url: 'https://github.com/acme/app/issues/31' });
     expect(sent[0]?.url).toBe('https://api.github.com/repos/acme/app/issues');
     expect(sent[0]?.authorization).toContain(token);
-    expect(sent[0]?.body).toMatchObject({ labels: ['automate'] });
+    expect(sent[0]?.body).toMatchObject({ labels: ['lupin'] });
   });
 
   it('refuses a GitHub issue for a project that is not on github.com, or has no token', async () => {
@@ -545,7 +545,7 @@ describe('an issue from a failure cluster', () => {
     const text = JSON.stringify((sent[1]?.body as { fields: Record<string, unknown> }).fields);
     expect(text).toContain('Location: none');
     expect(text).toContain('Reference: https://example.test/rule');
-    expect(text).not.toContain('Open in Automate');
+    expect(text).not.toContain('Open in Lupin');
     // A malformed id is "no such finding", not a uuid syntax error.
     expect(
       (await refusal(createFindingIssue(options, ADAPTERS, { ...input, findingId: 'nope' }, 'a')))
@@ -615,9 +615,9 @@ describe('the issue tracking routes', () => {
   async function routes() {
     const context = await setup();
     const tokens: Record<string, Caller> = {
-      amt_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
-      amt_operator: { actor: 'token:operator', role: 'operator', uploaderFor: null },
-      amt_admin: { actor: 'token:admin', role: 'admin', uploaderFor: null },
+      lup_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
+      lup_operator: { actor: 'token:operator', role: 'operator', uploaderFor: null },
+      lup_admin: { actor: 'token:admin', role: 'admin', uploaderFor: null },
     };
     const access: CallerResolver = {
       mode: 'enforced',
@@ -654,8 +654,8 @@ describe('the issue tracking routes', () => {
   it('updates a tracker with 200 and an update audit, and audits a cluster issue as one', async () => {
     const { db, projectId, call } = await routes();
     const path = `/api/v1/projects/${projectId}/issue-tracker`;
-    expect((await call('PUT', path, 'amt_admin', TRACKER)).status).toBe(201);
-    const updated = await call('PUT', path, 'amt_admin', { ...TRACKER, issueType: 'Task' });
+    expect((await call('PUT', path, 'lup_admin', TRACKER)).status).toBe(201);
+    const updated = await call('PUT', path, 'lup_admin', { ...TRACKER, issueType: 'Task' });
     expect(updated.status).toBe(200);
     expect(IssueTrackerReadingSchema.parse(await updated.json()).tracker?.issueType).toBe('Task');
     const [update] = await db
@@ -667,10 +667,10 @@ describe('the issue tracking routes', () => {
     expect(JSON.stringify(update)).not.toContain(JIRA_TOKEN);
 
     const issue = '/api/v1/dashboard/failure-clusters/issue';
-    expect((await call('POST', issue, 'amt_operator', { projectId })).status).toBe(400);
-    expect((await call('POST', issue, 'amt_operator')).status).toBe(400);
+    expect((await call('POST', issue, 'lup_operator', { projectId })).status).toBe(400);
+    expect((await call('POST', issue, 'lup_operator')).status).toBe(400);
     stubHttp([{ status: 201, body: { key: 'ACME-9' } }]);
-    const created = await call('POST', issue, 'amt_operator', { ...CLUSTER, projectId });
+    const created = await call('POST', issue, 'lup_operator', { ...CLUSTER, projectId });
     expect(created.status).toBe(201);
     expect(IssueLinkSchema.parse(await created.json())).toMatchObject({
       sourceKind: 'cluster',
@@ -687,19 +687,19 @@ describe('the issue tracking routes', () => {
   it('lets only an admin configure a tracker, audits it without the token, and never returns it', async () => {
     const { db, projectId, call } = await routes();
     const path = `/api/v1/projects/${projectId}/issue-tracker`;
-    expect(await (await call('DELETE', path, 'amt_admin')).json()).toEqual({
+    expect(await (await call('DELETE', path, 'lup_admin')).json()).toEqual({
       ok: true,
       removed: false,
     });
-    expect(await (await call('GET', path, 'amt_viewer')).json()).toEqual({ tracker: null });
-    expect((await call('PUT', path, 'amt_operator', TRACKER)).status).toBe(403);
+    expect(await (await call('GET', path, 'lup_viewer')).json()).toEqual({ tracker: null });
+    expect((await call('PUT', path, 'lup_operator', TRACKER)).status).toBe(403);
     expect((await call('PUT', path, undefined, TRACKER)).status).toBe(401);
-    expect((await call('PUT', path, 'amt_admin', { ...TRACKER, baseUrl: 'http://x' })).status).toBe(
+    expect((await call('PUT', path, 'lup_admin', { ...TRACKER, baseUrl: 'http://x' })).status).toBe(
       400,
     );
-    const created = await call('PUT', path, 'amt_admin', TRACKER);
+    const created = await call('PUT', path, 'lup_admin', TRACKER);
     expect(created.status).toBe(201);
-    const read = await call('GET', path, 'amt_viewer');
+    const read = await call('GET', path, 'lup_viewer');
     const text = await read.text();
     expect(text).not.toContain(JIRA_TOKEN);
     expect(IssueTrackerReadingSchema.parse(JSON.parse(text)).tracker?.hasCredential).toBe(true);
@@ -709,21 +709,21 @@ describe('the issue tracking routes', () => {
       .where(eq(schema.auditEvents.action, 'issue-tracker.create'));
     expect(trail[0]).toMatchObject({ actorId: 'token:admin', resourceId: projectId });
     expect(JSON.stringify(trail)).not.toContain(JIRA_TOKEN);
-    expect((await call('DELETE', path, 'amt_operator')).status).toBe(403);
-    const removed = await call('DELETE', path, 'amt_admin');
+    expect((await call('DELETE', path, 'lup_operator')).status).toBe(403);
+    const removed = await call('DELETE', path, 'lup_admin');
     expect(await removed.json()).toEqual({ ok: true, removed: true });
     expect(await db.select().from(schema.vaultEntries)).toHaveLength(0);
   });
 
   it('lets an operator, not a viewer, create an issue; 201 then 200, each audited', async () => {
     const { db, projectId, findingId, call } = await routes();
-    await call('PUT', `/api/v1/projects/${projectId}/issue-tracker`, 'amt_admin', TRACKER);
+    await call('PUT', `/api/v1/projects/${projectId}/issue-tracker`, 'lup_admin', TRACKER);
     const sent = stubHttp([{ status: 201, body: { key: 'ACME-7' } }]);
     const path = `/api/v1/projects/${projectId}/health/findings/${findingId}/issue`;
-    expect((await call('POST', path, 'amt_viewer', { target: 'jira' })).status).toBe(403);
-    expect((await call('POST', path, 'amt_operator', { target: 'linear' })).status).toBe(400);
-    expect((await call('POST', path, 'amt_operator', { target: 'jira' })).status).toBe(201);
-    expect((await call('POST', path, 'amt_operator', { target: 'jira' })).status).toBe(200);
+    expect((await call('POST', path, 'lup_viewer', { target: 'jira' })).status).toBe(403);
+    expect((await call('POST', path, 'lup_operator', { target: 'linear' })).status).toBe(400);
+    expect((await call('POST', path, 'lup_operator', { target: 'jira' })).status).toBe(201);
+    expect((await call('POST', path, 'lup_operator', { target: 'jira' })).status).toBe(200);
     expect(sent).toHaveLength(1);
     const actions = (
       await db
@@ -740,7 +740,7 @@ describe('the issue tracking routes', () => {
     const response = await call(
       'POST',
       '/api/v1/dashboard/failure-clusters/issue',
-      'amt_operator',
+      'lup_operator',
       {
         ...CLUSTER,
         projectId,
@@ -752,7 +752,7 @@ describe('the issue tracking routes', () => {
     );
     expect(
       (
-        await call('POST', '/api/v1/dashboard/failure-clusters/issue', 'amt_viewer', {
+        await call('POST', '/api/v1/dashboard/failure-clusters/issue', 'lup_viewer', {
           ...CLUSTER,
           projectId,
         })

@@ -157,7 +157,7 @@ function rank(suggestions: CopilotSuggestion[]): CopilotSuggestion[] {
  * fifteen times.
  *
  * The override is a **document, not a shell line**. A copilot that offered
- * `echo "commands": {...} >> automate.config.json` has handed back the raw-shell
+ * `echo "commands": {...} >> lupin.config.json` has handed back the raw-shell
  * passthrough D7 rules out, wearing a helpful tone.
  */
 function missingSuites(builder: Builder, score: QaScore, cells: readonly string[]): void {
@@ -495,7 +495,7 @@ function lockedPyramid(builder: Builder, score: QaScore, wanted: string | null):
       {
         kind: 'project',
         id: score.projectId,
-        summary: "The pyramid target is declared in this project's automate.config.json.",
+        summary: "The pyramid target is declared in this project's lupin.config.json.",
       },
     ],
     overrides: { version: 1, targets: { pyramid: score.pyramid.target } },

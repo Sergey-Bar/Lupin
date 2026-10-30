@@ -1,4 +1,4 @@
-// Ported from Automate/apps/server/src/db/schema.ts
+// Ported from Lupin/apps/server/src/db/schema.ts
 // SQLite → PostgreSQL type adaptations:
 //   text(UUID) → uuid
 //   text(date/ISO) → timestamp with timezone

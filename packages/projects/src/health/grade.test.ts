@@ -290,7 +290,7 @@ describe('grade', () => {
   });
 });
 
-describe('the health policy in automate.config.json', () => {
+describe('the health policy in lupin.config.json', () => {
   const base = {
     detectorVersion: 1,
     ecosystem: null,

@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS "eval_runs" (
   "received_at" timestamp with time zone DEFAULT now() NOT NULL,
   CONSTRAINT "eval_runs_source_check" CHECK ("source" IN ('ci', 'runner', 'manual')),
   CONSTRAINT "eval_runs_format_check"
-    CHECK ("format" IN ('promptfoo-json', 'deepeval-json', 'inspect-eval-json', 'automate-eval-json'))
+    CHECK ("format" IN ('promptfoo-json', 'deepeval-json', 'inspect-eval-json', 'lupin-eval-json'))
 );
 --> statement-breakpoint
 ALTER TABLE "eval_runs"

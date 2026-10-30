@@ -21,15 +21,15 @@ const CERT_SCRIPT = read('infra/nginx/lupin-lan-cert.sh');
 const DOCKERFILE = read('infra/docker/edge.Dockerfile');
 
 test('the main config reads the TLS includes from the tmpfs, and probes without a redirect', () => {
-  assert.match(EDGE_CONF, /include \/tmp\/automate\/tls-server\*\.conf;/);
-  assert.match(EDGE_CONF, /include \/tmp\/automate\/http-redirect\*\.conf;/);
+  assert.match(EDGE_CONF, /include \/tmp\/lupin\/tls-server\*\.conf;/);
+  assert.match(EDGE_CONF, /include \/tmp\/lupin\/http-redirect\*\.conf;/);
   // The healthcheck must still answer 2xx over plain HTTP once every other path redirects.
   assert.match(EDGE_CONF, /location = \/edge-health \{\s*return 204;/);
 });
 
 test('the entrypoint writes exactly the includes the config reads, and only with a certificate', () => {
-  assert.match(ENTRYPOINT, /\/tmp\/automate\/tls-server\.conf/);
-  assert.match(ENTRYPOINT, /\/tmp\/automate\/http-redirect\.conf/);
+  assert.match(ENTRYPOINT, /\/tmp\/lupin\/tls-server\.conf/);
+  assert.match(ENTRYPOINT, /\/tmp\/lupin\/http-redirect\.conf/);
   assert.match(ENTRYPOINT, /\[ -f "\$CERT_DIR\/server\.crt" \]/);
   assert.match(ENTRYPOINT, /listen 8443 ssl/);
   assert.match(ENTRYPOINT, /ssl_protocols TLSv1\.2 TLSv1\.3;/);
@@ -61,7 +61,7 @@ test('every API path an outside client calls is proxied to the API, over HTTP an
       assert.match(
         text,
         new RegExp(
-          `location ${prefix.replaceAll('/', '\\/')} \\{\\s*proxy_pass http:\\/\\/automate_api;`,
+          `location ${prefix.replaceAll('/', '\\/')} \\{\\s*proxy_pass http:\\/\\/lupin_api;`,
         ),
         `${name} does not proxy ${prefix} to the API`,
       );

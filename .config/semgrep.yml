@@ -605,7 +605,7 @@ rules:
       # `REPORTER_SECRET_NOT_CONFIGURED` is 31 characters in the pattern's class, and
       # a client branches on it.
       - pattern-not-regex: '[\x27"`][A-Z][A-Z0-9]*(_[A-Z0-9]+)+[\x27"`]'
-      # **A cookie *name* is not a cookie.** `SESSION_COOKIE = 'automate_session'` is a
+      # **A cookie *name* is not a cookie.** `SESSION_COOKIE = 'lupin_session'` is a
       # published constant in three files, and `COOKIE_SECRET` next to it is a real
       # credential. Matching on the name alone cannot tell them apart, and a rule that
       # reports the cookie name teaches a reader to ignore the rule — which is the same

@@ -25,13 +25,12 @@ const copy = computed(
     <figure>
       <img
         :src="preview"
-        alt="Current AutoMate interface showing test runs, outcomes, and release-readiness signals"
+        alt="Current Lupin interface showing test runs, outcomes, and release-readiness signals"
         width="1440"
         height="900"
       />
       <figcaption>
-        Current application interface — AutoMate branding. The Lupin identity applies to this
-        website.
+        Current application interface — Lupin branding. The Lupin identity applies to this website.
       </figcaption>
     </figure>
 

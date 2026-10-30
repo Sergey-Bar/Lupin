@@ -27,7 +27,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * process was killed mid-migration, which a lock table row would not be.
  *
  * The number is arbitrary but must not collide with another caller in this
- * database. The ASCII of "automate/migrate", as a signed 64-bit integer.
+ * database. The ASCII of "lupin/migrate", as a signed 64-bit integer.
  */
 export const MIGRATION_ADVISORY_LOCK_KEY = 8_103_517_082_377_401n;
 

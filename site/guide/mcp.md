@@ -1,6 +1,6 @@
 # Ask your editor about quality (MCP)
 
-AutoMate serves a read-only [Model Context Protocol](https://modelcontextprotocol.io) server, so
+Lupin serves a read-only [Model Context Protocol](https://modelcontextprotocol.io) server, so
 an assistant in your editor can answer "what is limiting this repository's grade?", "does this
 branch pass the gate?" or "which tests are flaky?" from the same numbers the dashboard shows.
 
@@ -62,15 +62,15 @@ one entry to add to it.
 ### Claude Code
 
 ```bash
-claude mcp add automate --env LUPIN_URL=https://automate.example.com \
-  --env LUPIN_TOKEN=amt_your_viewer_token -- node /path/to/AutoMate/apps/api/dist/mcp/stdio.js
+claude mcp add lupin --env LUPIN_URL=https://lupin.example.com \
+  --env LUPIN_TOKEN=lup_your_viewer_token -- node /path/to/Lupin/apps/api/dist/mcp/stdio.js
 ```
 
 Or, over HTTP:
 
 ```bash
-claude mcp add --transport http automate https://automate.example.com/api/v1/mcp \
-  --header "Authorization: Bearer amt_your_viewer_token"
+claude mcp add --transport http lupin https://lupin.example.com/api/v1/mcp \
+  --header "Authorization: Bearer lup_your_viewer_token"
 ```
 
 ### Cursor — `.cursor/mcp.json`
@@ -78,12 +78,12 @@ claude mcp add --transport http automate https://automate.example.com/api/v1/mcp
 ```json
 {
   "mcpServers": {
-    "automate": {
+    "lupin": {
       "command": "node",
-      "args": ["/path/to/AutoMate/apps/api/dist/mcp/stdio.js"],
+      "args": ["/path/to/Lupin/apps/api/dist/mcp/stdio.js"],
       "env": {
-        "LUPIN_URL": "https://automate.example.com",
-        "LUPIN_TOKEN": "amt_your_viewer_token"
+        "LUPIN_URL": "https://lupin.example.com",
+        "LUPIN_TOKEN": "lup_your_viewer_token"
       }
     }
   }
@@ -95,12 +95,12 @@ claude mcp add --transport http automate https://automate.example.com/api/v1/mcp
 ```json
 {
   "mcpServers": {
-    "automate": {
+    "lupin": {
       "command": "node",
-      "args": ["/path/to/AutoMate/apps/api/dist/mcp/stdio.js"],
+      "args": ["/path/to/Lupin/apps/api/dist/mcp/stdio.js"],
       "env": {
-        "LUPIN_URL": "https://automate.example.com",
-        "LUPIN_TOKEN": "amt_your_viewer_token"
+        "LUPIN_URL": "https://lupin.example.com",
+        "LUPIN_TOKEN": "lup_your_viewer_token"
       },
       "disabled": false,
       "autoApprove": ["list_projects", "get_health"]
@@ -116,16 +116,16 @@ claude mcp add --transport http automate https://automate.example.com/api/v1/mcp
   "inputs": [
     {
       "type": "promptString",
-      "id": "automate-token",
-      "description": "AutoMate viewer token",
+      "id": "lupin-token",
+      "description": "Lupin viewer token",
       "password": true
     }
   ],
   "servers": {
-    "automate": {
+    "lupin": {
       "type": "http",
-      "url": "https://automate.example.com/api/v1/mcp",
-      "headers": { "Authorization": "Bearer ${input:automate-token}" }
+      "url": "https://lupin.example.com/api/v1/mcp",
+      "headers": { "Authorization": "Bearer ${input:lupin-token}" }
     }
   }
 }
@@ -134,7 +134,7 @@ claude mcp add --transport http automate https://automate.example.com/api/v1/mcp
 VS Code prompts for the token once and keeps it in its secret storage, which is why this one uses
 the HTTP endpoint rather than an `env` block in a file you might commit.
 
-**An agent-config scan will notice a token in a committed MCP file.** AutoMate's own agent-config
+**An agent-config scan will notice a token in a committed MCP file.** Lupin's own agent-config
 scan reads `.cursor/mcp.json`, `.kiro/settings/mcp.json` and `.vscode/mcp.json`, and a credential
 in `args` or a literal in `env` is a finding — keep the real token in your user-level config.
 

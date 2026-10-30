@@ -55,7 +55,7 @@ const TOKEN = {
   name: 'n',
   role: 'viewer',
   projectId: null,
-  displayPrefix: 'amt_x',
+  displayPrefix: 'lup_x',
   createdBy: 's',
   createdAt: 'x',
   lastUsedAt: null,
@@ -158,12 +158,12 @@ describe('createHealthClient', () => {
       'POST /api/v1/auth/logout': { ok: true },
       'GET /api/v1/auth/whoami': { actor: 'session', role: 'admin', mode: 'enforced' },
     });
-    await client.signIn('  amt_abc ');
+    await client.signIn('  lup_abc ');
     await client.signIn('installation-key');
     await client.signOut();
     expect((await client.whoami()).role).toBe('admin');
     expect(calls.map((call) => [call.url.replace('https://api.test', ''), call.body])).toEqual([
-      ['/api/v1/auth/token-login', { token: 'amt_abc' }],
+      ['/api/v1/auth/token-login', { token: 'lup_abc' }],
       ['/api/v1/auth/login', { apiKey: 'installation-key' }],
       ['/api/v1/auth/token-logout', {}],
       ['/api/v1/auth/logout', {}],
@@ -196,11 +196,11 @@ describe('createHealthClient', () => {
   it('lists, issues and revokes access tokens', async () => {
     const { client, calls } = server({
       'GET /api/v1/access-tokens': { tokens: [TOKEN] },
-      'POST /api/v1/access-tokens': { token: 'amt_new', summary: TOKEN },
+      'POST /api/v1/access-tokens': { token: 'lup_new', summary: TOKEN },
       'DELETE /api/v1/access-tokens/t1': { ...TOKEN, revokedAt: '2026-10-24T00:00:00.000Z' },
     });
     expect(await client.listTokens()).toEqual([TOKEN]);
-    expect((await client.createToken({ name: 'n', role: 'viewer' })).token).toBe('amt_new');
+    expect((await client.createToken({ name: 'n', role: 'viewer' })).token).toBe('lup_new');
     expect((await client.revokeToken('t1')).revokedAt).not.toBeNull();
     expect(calls.map((call) => call.method)).toEqual(['GET', 'POST', 'DELETE']);
   });
@@ -224,7 +224,7 @@ describe('device pairing', () => {
       deviceName: 'Phone',
       role: 'viewer',
       expiresAt: '2026-10-25T12:10:00.000Z',
-      pairUrl: 'https://automate.local:8443/dashboard/pair?code=042137',
+      pairUrl: 'https://lupin.local:8443/dashboard/pair?code=042137',
     };
     const { client, calls } = server({
       'POST /api/v1/pairing-codes': issued,

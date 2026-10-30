@@ -253,7 +253,7 @@ describe('canonical reporting contracts', () => {
 
   it('names the run contract and keeps the runner protocol version independent', () => {
     expect(RUN_CONTRACT_VERSION).toBe('2');
-    expect(RUN_CONTRACT_ID).toBe('automate.run@2');
+    expect(RUN_CONTRACT_ID).toBe('lupin.run@2');
     expect(RUNNER_PROTOCOL_VERSION).toBe('1');
     expect(LEGACY_FLAT_V1_CONTRACT_ID).toBe('legacy-flat-v1');
     // The runner protocol stays on its own version instead of drifting with the run contract.

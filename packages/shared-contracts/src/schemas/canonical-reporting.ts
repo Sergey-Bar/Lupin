@@ -2,14 +2,14 @@ import { z } from 'zod/v4';
 import { ReportProducerSchema } from './report-formats.js';
 
 /**
- * Canonical run/event wire contract (`automate.run@2`).
+ * Canonical run/event wire contract (`lupin.run@2`).
  *
  * This version is the authority for RunResult, ReporterEvent and
  * RealtimeEnvelope. It is intentionally independent of the runner protocol
  * version so a protocol bump can never silently change run/event meaning.
  */
 export const RUN_CONTRACT_VERSION = '2' as const;
-export const RUN_CONTRACT_ID = `automate.run@${RUN_CONTRACT_VERSION}` as const;
+export const RUN_CONTRACT_ID = `lupin.run@${RUN_CONTRACT_VERSION}` as const;
 
 /** Runner protocol version — deliberately not the same number as the run contract. */
 export const RUNNER_PROTOCOL_VERSION = '1' as const;

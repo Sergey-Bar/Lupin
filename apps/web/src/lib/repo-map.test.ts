@@ -66,7 +66,7 @@ function cell(
 }
 
 const INPUT: MapInput = {
-  projectName: 'Automate',
+  projectName: 'Lupin',
   scan: {
     sourceFiles: 120,
     testFiles: 40,

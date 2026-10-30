@@ -34,7 +34,7 @@ const valid = {
   seedDemoRun: false,
   objectStore: {
     endpoint: 'https://objects.example.com',
-    bucket: 'automate-artifacts',
+    bucket: 'lupin-artifacts',
     region: 'eu-central-1',
     accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
     secretAccessKey: 'a-valid-object-store-secret',

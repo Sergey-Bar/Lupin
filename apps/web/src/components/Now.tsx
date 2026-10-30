@@ -22,7 +22,7 @@ export interface NowSources {
   deliveries: () => Promise<DeliverySummary[]>;
 }
 
-export const LAST_VISIT_KEY = 'automate-now-last-visit';
+export const LAST_VISIT_KEY = 'lupin-now-last-visit';
 
 interface Ready {
   status: 'ready';

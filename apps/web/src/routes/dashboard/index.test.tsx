@@ -27,7 +27,7 @@ function renderRunsPage(api: ApiClient): void {
 
 const passedRun = makeRun({
   id: 'run-abc12345',
-  projectId: 'automate',
+  projectId: 'lupin',
   phase: 'complete',
   outcome: 'passed',
   createdAt: '2026-05-26T10:00:00.000Z',

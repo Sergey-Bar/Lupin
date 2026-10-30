@@ -6,7 +6,7 @@
 
 ## Context
 
-AUTOMATE (local) must work offline with nothing to install beyond itself: no database
+Lupin Local must work offline with nothing to install beyond itself: no database
 server, no container runtime, no account. It stores two kinds of data. Raw report bytes
 are the source of truth and must come back byte-identical. Derived data (runs, results,
 coverage) is rebuildable from the raw bytes.

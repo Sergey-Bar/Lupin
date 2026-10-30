@@ -92,7 +92,7 @@ export function ProjectGate({
  * moving from the dashboard to the runner should stay on the repository they picked.
  * A stored id that is no longer registered falls back to the first project.
  */
-const CHOICE_KEY = 'automate-project';
+const CHOICE_KEY = 'lupin-project';
 
 function readChoice(): string | null {
   try {
@@ -116,7 +116,7 @@ function Onboarding({ title }: { title: string }): React.ReactElement {
       <PageHeader title={title} subtitle="No project is registered yet." />
       <div className="flex flex-1 items-center justify-center">
         <div className="max-w-measure space-y-3 rounded-xl border border-border bg-surface-raised p-8">
-          <h2 className="text-xl font-semibold">Point Automate at a repository</h2>
+          <h2 className="text-xl font-semibold">Point Lupin at a repository</h2>
           <p className="max-w-measure text-pretty text-sm text-fg-muted">
             Set <span className="font-mono">LUPIN_PROJECT_ROOT</span> to the checkout you want
             analysed and restart the API. It registers that folder at boot, scans every tool and

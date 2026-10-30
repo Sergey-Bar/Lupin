@@ -12,8 +12,8 @@ RUN pnpm --filter "@lupin/unified-web..." build
 FROM nginx:1.27-alpine AS runtime
 ARG LUPIN_VERSION=dev
 ARG LUPIN_REVISION=unknown
-LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
-  org.opencontainers.image.title="automate-web" \
+LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
+  org.opencontainers.image.title="lupin-web" \
   org.opencontainers.image.version="${LUPIN_VERSION}" \
   org.opencontainers.image.revision="${LUPIN_REVISION}"
 # Unprivileged nginx: the stock image runs as root and writes to

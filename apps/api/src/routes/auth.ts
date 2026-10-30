@@ -14,7 +14,7 @@ import { createRateLimiter } from '../middleware/rate-limit.js';
 import { isSecureFor, type SecureCookies } from '../http/secure-cookies.js';
 
 const LoginSchema = z.object({ apiKey: z.string().min(1) });
-const SESSION_COOKIE = 'automate_session';
+const SESSION_COOKIE = 'lupin_session';
 
 /**
  * Login is unauthenticated by definition, so it is the one endpoint where an

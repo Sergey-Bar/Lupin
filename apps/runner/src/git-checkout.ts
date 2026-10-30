@@ -37,7 +37,7 @@ export interface CheckoutRequest {
 }
 
 export interface CheckoutOptions {
-  /** Clones land under `<repoRoot>/.automate-checkouts`, inside the generic adapter's boundary. */
+  /** Clones land under `<repoRoot>/.lupin-checkouts`, inside the generic adapter's boundary. */
   repoRoot: string;
   /** Injected for tests; the real one spawns `git` with `shell: false`. */
   runGit?: (
@@ -54,7 +54,7 @@ export interface GitResult {
   stderr: string;
 }
 
-export const CHECKOUT_DIRECTORY = '.automate-checkouts';
+export const CHECKOUT_DIRECTORY = '.lupin-checkouts';
 
 const SAFE_REF = /^[A-Za-z0-9._/-]{1,255}$/u;
 

@@ -62,7 +62,7 @@ export async function waitFor(predicate, timeoutMs) {
  * @returns {{ directory: string, record: string, shim: string, cleanup: () => void }}
  */
 export function scratch(variant) {
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-tree-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-tree-'));
   const record = path.join(directory, 'pids.txt');
   const shim = path.join(directory, 'shim.cmd');
   writeFileSync(

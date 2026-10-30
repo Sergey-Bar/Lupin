@@ -40,7 +40,7 @@ onMounted(async () => {
   ink.font = `700 ${size}px ${style.getPropertyValue('--lupin-font-sans')}`;
   ink.textBaseline = 'middle';
   ink.textAlign = 'center';
-  ink.fillText('AUTOMATE', width / 2, height / 2);
+  ink.fillText('LUPIN', width / 2, height / 2);
   // Render the finished wordmark as real antialiased glyphs, using the exact
   // font and origin sampled by the particles rather than retaining their grid.
   ctx.font = ink.font;
@@ -107,7 +107,7 @@ onMounted(async () => {
 });
 </script>
 <template>
-  <div class="logo-assembly" role="img" aria-label="Automate">
+  <div class="logo-assembly" role="img" aria-label="Lupin">
     <canvas ref="canvas" aria-hidden="true" />
     <svg
       class="logo-assembly__final"
@@ -122,7 +122,7 @@ onMounted(async () => {
         text-anchor="middle"
         dominant-baseline="central"
       >
-        AUTOMATE
+        LUPIN
       </text>
     </svg>
   </div>

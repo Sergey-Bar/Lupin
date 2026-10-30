@@ -41,7 +41,7 @@ engine that exists (flake cost, failure clusters, quarantine, SSE, the CLI, the 
 10. A live Playwright reporter with failure artifacts.
 11. Duration-balanced sharding.
 12. An Allure-results importer.
-13. An honest comparison page, including where AutoMate loses.
+13. An honest comparison page, including where Lupin loses.
 
 ## Deferred on purpose
 

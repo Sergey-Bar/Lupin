@@ -16,8 +16,8 @@ RUN pnpm install --frozen-lockfile \
 FROM node:24.22.1-alpine AS runtime
 ARG LUPIN_VERSION=dev
 ARG LUPIN_REVISION=unknown
-LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
-  org.opencontainers.image.title="automate-migrate" \
+LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
+  org.opencontainers.image.title="lupin-migrate" \
   org.opencontainers.image.version="${LUPIN_VERSION}" \
   org.opencontainers.image.revision="${LUPIN_REVISION}"
 WORKDIR /app

@@ -1,6 +1,6 @@
 ---
 title: Agent quality
-description: How AutoMate stores eval runs and gates pull requests on regressions, receives OpenTelemetry GenAI traces, budgets agent runtime, scans agent configuration and MCP servers, and runs evals of its own.
+description: How Lupin stores eval runs and gates pull requests on regressions, receives OpenTelemetry GenAI traces, budgets agent runtime, scans agent configuration and MCP servers, and runs evals of its own.
 outline: deep
 ---
 
@@ -9,7 +9,7 @@ outline: deep
 Five things, each opt-in, each feeding the `agent-quality` dimension of the
 [health grade](repository-health.md) only when the policy gives that dimension a weight:
 
-- **Evals** — runs of promptfoo, DeepEval, Inspect or Automate's own runner, stored per suite and
+- **Evals** — runs of promptfoo, DeepEval, Inspect or Lupin's own runner, stored per suite and
   compared against the default branch.
 - **Traces** — OpenTelemetry GenAI spans, sent by your agents over OTLP/HTTP JSON.
 - **Runtime** — cost, tokens, latency, errors and tool failures per agent, against budgets you
@@ -25,7 +25,7 @@ on per project, and both say what that costs below.
 
 ## The policy
 
-Everything here is configured in the `health.agents` block of `automate.config.json`:
+Everything here is configured in the `health.agents` block of `lupin.config.json`:
 
 ```json
 {
@@ -81,20 +81,20 @@ describes; a changed price is a reviewed change, not a setting someone flipped.
 Eval reports go through **the** health upload door — the same token, the same body limit, the
 same action — as one of four formats:
 
-| Format               | Written by                                                                                   |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| `promptfoo-json`     | `promptfoo eval -o results.json` (output file versions 2 and 3; cases are `results.results`) |
-| `deepeval-json`      | A saved DeepEval `TestRun` (`testCases`, and conversational test cases)                      |
-| `inspect-eval-json`  | An Inspect AI eval log in JSON (`inspect eval … --log-format=json`; cases are `samples`)     |
-| `automate-eval-json` | Automate's own run shape: what the built-in runner writes, and what any script may write     |
+| Format              | Written by                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| `promptfoo-json`    | `promptfoo eval -o results.json` (output file versions 2 and 3; cases are `results.results`) |
+| `deepeval-json`     | A saved DeepEval `TestRun` (`testCases`, and conversational test cases)                      |
+| `inspect-eval-json` | An Inspect AI eval log in JSON (`inspect eval … --log-format=json`; cases are `samples`)     |
+| `lupin-eval-json`   | Lupin's own run shape: what the built-in runner writes, and what any script may write        |
 
 With the repository's action:
 
 ```yaml
 - run: npx promptfoo@0.120.1 eval --config promptfooconfig.yaml --output promptfoo.json
-- uses: Sergey-Bar/AutoMate/.github/actions/lupin-health@main
+- uses: Sergey-Bar/Lupin/.github/actions/lupin-health@main
   with:
-    url: https://automate.example.com
+    url: https://lupin.example.com
     project-id: ${{ vars.LUPIN_PROJECT_ID }}
     token: ${{ secrets.LUPIN_UPLOAD_TOKEN }}
     reports: |
@@ -169,7 +169,7 @@ refused with `415 UNSUPPORTED_MEDIA_TYPE`, so set the protocol explicitly:
 
 ```bash
 export OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/json
-export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://automate.example.com/api/v1/projects/$PROJECT/otlp/v1/traces"
+export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://lupin.example.com/api/v1/projects/$PROJECT/otlp/v1/traces"
 export OTEL_EXPORTER_OTLP_TRACES_HEADERS="Authorization=Bearer%20$LUPIN_UPLOAD_TOKEN"
 # optional: export OTEL_EXPORTER_OTLP_TRACES_COMPRESSION=gzip
 ```
@@ -227,19 +227,19 @@ that was met. Fewer than 10 runs with nothing breached is `insufficient`.
 
 Reads load at most 20 000 spans per window and say `truncated` when there were more.
 
-### AutoMate's own chat
+### Lupin's own chat
 
 When the installation has a model provider and a database, every chat completion it serves is
 recorded as one `chat` span — model, tokens when the provider reported them, duration, and
 whether it failed — and never its content. These spans belong to the installation, not to a
 project: they are stored under the installation's workspace with no project, as agent
-`automate-chat`, kept 14 days, and read at `GET /api/v1/chat/runtime` (viewer). No price is
+`lupin-chat`, kept 14 days, and read at `GET /api/v1/chat/runtime` (viewer). No price is
 configured for them, so their cost is reported as unknown.
 
 ## Agent configuration and MCP servers
 
 This is the product scanning **your** repository. It is not this repository's own
-`pnpm skill-scan` gate, which wraps SkillSpector over AutoMate's own skills.
+`pnpm skill-scan` gate, which wraps SkillSpector over Lupin's own skills.
 
 The scanner reads the files coding agents obey — `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, Cursor
 and Windsurf rules, Copilot instructions and prompts, Kiro steering, Kilo agents, every
@@ -277,7 +277,7 @@ curl --fail-with-body -H "Authorization: Bearer $LUPIN_UPLOAD_TOKEN" -H 'content
 A path that is not agent configuration, or that climbs out of the repository, is ignored and
 counted. A git-sourced project is not cloned for this scan: send its files from CI.
 
-Findings join the finding lifecycle under the tool `automate-agent-config` — a removed
+Findings join the finding lifecycle under the tool `lupin-agent-config` — a removed
 instruction is **fixed** by the next scan — and the **MCP inventory** of the branch is replaced
 by each scan: name, config file, transport, launch command, package, version, whether it is
 pinned, URL, and the **names** of the environment variables it is given. Never their values. A
@@ -341,7 +341,7 @@ asked after the checks pass, and the attempt passes only if the judge answers `P
 `POST /api/v1/projects/:id/evals/datasets/:datasetId/run` (operator — it spends the model
 budget, like chat) answers `202` and runs every case × repeat through the installation's
 gateway, at most 1000 attempts, one dataset run at a time. The run is written in
-`automate-eval-json` and stored through the same upload ingestion as CI, so it is graded and
+`lupin-eval-json` and stored through the same upload ingestion as CI, so it is graded and
 compared exactly like an uploaded promptfoo run. A provider failure is an undecided attempt,
 never a pass. With no model provider configured the run is refused with `503 NOT_CONFIGURED`
 before anything is stored.

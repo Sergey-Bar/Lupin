@@ -251,7 +251,7 @@ function next(): void {
             <span :style="{ width: `${((selected + 1) / story.scenes.length) * 100}%` }"></span>
           </div>
           <div class="story__destination">
-            <span>AUTOMATE</span><strong>{{ current.title }}</strong
+            <span>LUPIN</span><strong>{{ current.title }}</strong
             ><small>{{ current.summary }}</small>
           </div>
         </template>
@@ -268,7 +268,7 @@ function next(): void {
       <div class="story__image-wrap">
         <img
           :src="runsPreview"
-          alt="Automate runs screen with outcome badges, recent executions and release readiness shown together"
+          alt="Lupin runs screen with outcome badges, recent executions and release readiness shown together"
           loading="lazy"
         />
         <button

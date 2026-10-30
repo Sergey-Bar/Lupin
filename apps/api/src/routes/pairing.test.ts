@@ -25,18 +25,18 @@ async function setup(sso: Pick<CallerResolver, 'ssoEnforced' | 'breakGlass'> = {
     ...sso,
     authenticateToken: (token) => authenticateToken(options, token),
     hasSession: async (context) =>
-      context.req.header('cookie')?.includes('automate_session=valid') === true,
+      context.req.header('cookie')?.includes('lupin_session=valid') === true,
   };
   const app: Hono = withErrorBoundary(
     createPairingRoutes({
       ...options,
       access,
       pepper: PEPPER,
-      publicAppUrl: 'https://automate.local:8443',
+      publicAppUrl: 'https://lupin.local:8443',
       clientKey: (context) => context.req.header('x-test-client') ?? 'one-client',
     }),
   );
-  const admin = { cookie: 'automate_session=valid', 'content-type': 'application/json' };
+  const admin = { cookie: 'lupin_session=valid', 'content-type': 'application/json' };
   /** A live code, issued in a workspace as its admin would. */
   const issue = async (workspaceId = 'ws-1') =>
     (
@@ -73,7 +73,7 @@ describe('pairing routes', () => {
     });
     expect(issued.status).toBe(201);
     const body = (await issued.json()) as { code: string; pairUrl: string };
-    expect(body.pairUrl).toBe(`https://automate.local:8443/dashboard/pair?code=${body.code}`);
+    expect(body.pairUrl).toBe(`https://lupin.local:8443/dashboard/pair?code=${body.code}`);
   });
 
   it('a device redeems the code for an httpOnly sign-in cookie of the code’s role', async () => {
@@ -92,7 +92,7 @@ describe('pairing routes', () => {
     });
     expect(paired.status).toBe(200);
     expect(await paired.json()).toMatchObject({ role: 'operator', deviceName: 'Laptop' });
-    expect(paired.headers.get('set-cookie')).toMatch(/automate_token=amt_.*HttpOnly/iu);
+    expect(paired.headers.get('set-cookie')).toMatch(/lupin_token=lup_.*HttpOnly/iu);
   });
 
   it('pairs a device with a code another workspace issued, into that workspace', async () => {
@@ -100,7 +100,7 @@ describe('pairing routes', () => {
     const { db, options, issue, pair } = await setup();
     const paired = await pair(await issue('ws-2'));
     expect(paired.status).toBe(200);
-    const token = /automate_token=([^;]+)/u.exec(paired.headers.get('set-cookie') ?? '')?.[1];
+    const token = /lupin_token=([^;]+)/u.exec(paired.headers.get('set-cookie') ?? '')?.[1];
     expect(
       await authenticateToken({ ...options, workspaceId: 'ws-2' }, String(token)),
     ).toMatchObject({ role: 'viewer' });

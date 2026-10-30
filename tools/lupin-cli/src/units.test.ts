@@ -157,8 +157,8 @@ describe('isLoopbackHost', () => {
 describe('the request', () => {
   const target = resolveTarget(
     {
-      LUPIN_URL: 'https://automate.example',
-      LUPIN_TOKEN: 'amt_x',
+      LUPIN_URL: 'https://lupin.example',
+      LUPIN_TOKEN: 'lup_x',
       LUPIN_PROJECT: '11111111-1111-4111-8111-111111111111',
     },
     undefined,
@@ -169,7 +169,7 @@ describe('the request', () => {
       projectUrl(target, '/health/reports', { format: 'sarif', branch: '', commit: undefined })
         .href,
     ).toBe(
-      'https://automate.example/api/v1/projects/11111111-1111-4111-8111-111111111111/health/reports?format=sarif',
+      'https://lupin.example/api/v1/projects/11111111-1111-4111-8111-111111111111/health/reports?format=sarif',
     );
   });
 
@@ -197,15 +197,15 @@ describe('the request', () => {
       send(fetchImpl, target, projectUrl(target, '/x'), { method: 'GET' }),
     ).rejects.toMatchObject({
       exitCode: EXIT.refused,
-      message: 'Could not reach https://automate.example: socket closed',
+      message: 'Could not reach https://lupin.example: socket closed',
     });
   });
 });
 
 describe('an install behind Cloudflare Access', () => {
   const base = {
-    LUPIN_URL: 'https://automate.example',
-    LUPIN_TOKEN: 'amt_x',
+    LUPIN_URL: 'https://lupin.example',
+    LUPIN_TOKEN: 'lup_x',
     LUPIN_PROJECT: '11111111-1111-4111-8111-111111111111',
   };
   // Assembled at runtime: a service token secret is a credential.
@@ -227,7 +227,7 @@ describe('an install behind Cloudflare Access', () => {
     }) as unknown as typeof fetch;
     await send(fetchImpl, target, projectUrl(target, '/x'), { method: 'GET' });
     expect(calls[0]?.headers).toMatchObject({
-      authorization: 'Bearer amt_x',
+      authorization: 'Bearer lup_x',
       'cf-access-client-id': 'ci.access',
       'cf-access-client-secret': secret,
     });

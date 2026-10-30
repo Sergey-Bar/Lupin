@@ -33,13 +33,13 @@
       "runtimeArgs": ["--filter", "@lupin/api", "exec", "vitest", "--reporter=verbose"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "DATA_DIR": "/tmp/automate-test"
+        "DATA_DIR": "/tmp/lupin-test"
       },
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
     },
     {
-      "name": "Automate Server",
+      "name": "Lupin Server",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
@@ -52,7 +52,7 @@
       "skipFiles": ["<node_internals>/**"]
     },
     {
-      "name": "Automate Tests (Current File)",
+      "name": "Lupin Tests (Current File)",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",

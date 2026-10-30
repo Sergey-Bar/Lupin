@@ -220,7 +220,7 @@ describe('ingesting reports', () => {
         metric: {
           dimension: 'tests',
           metric: 'qa score',
-          tool: { name: 'automate', version: null },
+          tool: { name: 'lupin', version: null },
           score: 90,
           summary: 'QA score 90',
         },

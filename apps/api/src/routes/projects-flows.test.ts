@@ -52,7 +52,7 @@ async function harness(health: Record<string, unknown> = {}) {
     repositoryUrl: 'https://github.com/octo/service',
   });
   const tokens: Record<string, Caller> = {
-    amt_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
+    lup_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
   };
   const access: CallerResolver = {
     mode: 'enforced',
@@ -204,7 +204,7 @@ describe('diff coverage, in both orders', () => {
     const status = async (commit: string) =>
       DiffCoverageStatusSchema.parse(
         await (
-          await send('GET', `${base}/health/diff-coverage?commit=${commit}`, 'amt_viewer')
+          await send('GET', `${base}/health/diff-coverage?commit=${commit}`, 'lup_viewer')
         ).json(),
       );
     await upload('format=git-diff&branch=feature&commit=abc1234', DIFF);
@@ -245,7 +245,7 @@ describe('delivery: push, report, gate', () => {
       expect(response.status).toBe(201);
     }
     const report = DeliveryReportSchema.parse(
-      await (await send('GET', `${base}/delivery?days=30`, 'amt_viewer')).json(),
+      await (await send('GET', `${base}/delivery?days=30`, 'lup_viewer')).json(),
     );
     expect(report.counts.deployments).toBe(8);
     expect(report.dora.score).not.toBeNull();
@@ -313,7 +313,7 @@ describe('AI-code governance in the gate report', () => {
     const named = await send(
       'GET',
       `${base}/health/gate?branch=feature/3&pullRequest=3`,
-      'amt_viewer',
+      'lup_viewer',
     );
     expect(named.status).toBe(200);
     const body = (await named.json()) as {
@@ -324,7 +324,7 @@ describe('AI-code governance in the gate report', () => {
     expect(body.verdict).toBe('failed');
     expect(body.reasons.some((reason) => reason.startsWith('AI governance: '))).toBe(true);
     expect(body.aiGovernance).toMatchObject({ pullRequest: 3, verdict: { verdict: 'fail' } });
-    const unnamed = await send('GET', `${base}/health/gate?branch=feature/3`, 'amt_viewer');
+    const unnamed = await send('GET', `${base}/health/gate?branch=feature/3`, 'lup_viewer');
     expect(await unnamed.json()).toMatchObject({ verdict: 'passed', aiGovernance: null });
   });
 });
@@ -335,8 +335,8 @@ describe('evals: upload, then the regression gate', () => {
 
   it('fails the pull-request gate on a significant regression against the default branch', async () => {
     const { upload, gateReport, lastComment } = await harness({ agents: { gateOnEvals: true } });
-    await upload('format=automate-eval-json&branch=main', doc(evalRun('support', MAIN)));
-    await upload('format=automate-eval-json&branch=feature', doc(evalRun('support', REGRESSED)));
+    await upload('format=lupin-eval-json&branch=main', doc(evalRun('support', MAIN)));
+    await upload('format=lupin-eval-json&branch=feature', doc(evalRun('support', REGRESSED)));
     const body = await gateReport('feature', 'abc1234', 5);
     expect(body.verdict).toBe('failed');
     expect(body.reasons.some((reason) => reason.startsWith('Evals (support): '))).toBe(true);
@@ -346,8 +346,8 @@ describe('evals: upload, then the regression gate', () => {
 
   it('passes the same gate when the branch holds steady', async () => {
     const { upload, gateReport } = await harness({ agents: { gateOnEvals: true } });
-    await upload('format=automate-eval-json&branch=main', doc(evalRun('support', MAIN)));
-    await upload('format=automate-eval-json&branch=feature', doc(evalRun('support', MAIN)));
+    await upload('format=lupin-eval-json&branch=main', doc(evalRun('support', MAIN)));
+    await upload('format=lupin-eval-json&branch=feature', doc(evalRun('support', MAIN)));
     const body = await gateReport('feature', 'abc1234', 5);
     expect(body.reasons.some((reason) => reason.startsWith('Evals'))).toBe(false);
   });
@@ -382,7 +382,7 @@ describe('OTLP ingest, then the runtime scorecard', () => {
         await send(
           'POST',
           `${base}/otlp/v1/traces`,
-          'amt_viewer',
+          'lup_viewer',
           doc(exported),
           'application/json',
         )
@@ -397,7 +397,7 @@ describe('OTLP ingest, then the runtime scorecard', () => {
     );
     expect(ingested.status).toBe(200);
     const runtime = AgentRuntimeReportSchema.parse(
-      await (await send('GET', `${base}/agents/runtime?days=7`, 'amt_viewer')).json(),
+      await (await send('GET', `${base}/agents/runtime?days=7`, 'lup_viewer')).json(),
     );
     expect(runtime.runtime.overall.current.runs).toBe(2);
     const body = await gateReport('main', 'abc1234');
@@ -419,9 +419,9 @@ describe('MCP tools/call get_health', () => {
       app.request(String(input instanceof Request ? input.url : input), init);
     const client = new Client({ name: 'flows', version: '1.0.0' });
     await client.connect(
-      new StreamableHTTPClientTransport(new URL('http://automate.test/api/v1/mcp'), {
+      new StreamableHTTPClientTransport(new URL('http://lupin.test/api/v1/mcp'), {
         fetch: fetchApp as typeof fetch,
-        requestInit: { headers: { authorization: 'Bearer amt_viewer' } },
+        requestInit: { headers: { authorization: 'Bearer lup_viewer' } },
       }),
     );
     closers.push(() => client.close());
@@ -431,7 +431,7 @@ describe('MCP tools/call get_health', () => {
     expect(content[0]?.text).toMatch(/^Service on main: /u);
     const viaTool = ProjectHealthSchema.parse(JSON.parse(content[1]?.text ?? 'null'));
     const viaRoute = ProjectHealthSchema.parse(
-      await (await send('GET', `${base}/health`, 'amt_viewer')).json(),
+      await (await send('GET', `${base}/health`, 'lup_viewer')).json(),
     );
     expect(viaTool).toEqual(viaRoute);
     expect(viaTool.reports.length).toBeGreaterThan(0);

@@ -13,16 +13,16 @@ RUN pnpm install --frozen-lockfile \
 FROM node:24.22.1-alpine AS runtime
 ARG LUPIN_VERSION=dev
 ARG LUPIN_REVISION=unknown
-LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
-  org.opencontainers.image.title="automate-worker" \
+LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
+  org.opencontainers.image.title="lupin-worker" \
   org.opencontainers.image.version="${LUPIN_VERSION}" \
   org.opencontainers.image.revision="${LUPIN_REVISION}"
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 ENV NODE_ENV=production
 # The artifact volume mounts here and must be writable by `node`.
-RUN mkdir -p /var/lib/automate/artifacts \
-  && chown -R node:node /var/lib/automate
+RUN mkdir -p /var/lib/lupin/artifacts \
+  && chown -R node:node /var/lib/lupin
 USER node
 EXPOSE 3001
 HEALTHCHECK --interval=10s --timeout=5s --retries=12 CMD node -e "fetch('http://127.0.0.1:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"

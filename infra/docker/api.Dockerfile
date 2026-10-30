@@ -18,8 +18,8 @@ RUN pnpm install --frozen-lockfile \
 FROM node:24.22.1-alpine AS runtime
 ARG LUPIN_VERSION=dev
 ARG LUPIN_REVISION=unknown
-LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
-  org.opencontainers.image.title="automate-api" \
+LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
+  org.opencontainers.image.title="lupin-api" \
   org.opencontainers.image.version="${LUPIN_VERSION}" \
   org.opencontainers.image.revision="${LUPIN_REVISION}"
 WORKDIR /app
@@ -28,8 +28,8 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 # The artifact volume mounts here. It must be owned by `node` (uid 1000), or every artifact
 # write fails at runtime — the defect `runner.Dockerfile` had already fixed for itself.
-RUN mkdir -p /var/lib/automate/artifacts \
-  && chown -R node:node /var/lib/automate
+RUN mkdir -p /var/lib/lupin/artifacts \
+  && chown -R node:node /var/lib/lupin
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=5s --retries=12 CMD node -e "fetch('http://127.0.0.1:3000/api/v1/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"

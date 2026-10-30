@@ -10,7 +10,7 @@ import { runMigrationCli } from './migrate.js';
  * literal (AGENTS.md, Security).
  */
 
-const DATABASE_URL = ['postgresql://', 'user:pass', '@db.internal:5432/automate'].join('');
+const DATABASE_URL = ['postgresql://', 'user:pass', '@db.internal:5432/lupin'].join('');
 
 function io(result: Promise<MigrationApplyResult>) {
   return {
@@ -28,7 +28,7 @@ describe('runMigrationCli', () => {
     await runMigrationCli(deps);
     expect(deps.info).toHaveBeenCalledTimes(1);
     expect(deps.info.mock.calls[0]?.[0]).toBe(
-      'Migrations: already current (2 recorded, nothing to apply) on automate.',
+      'Migrations: already current (2 recorded, nothing to apply) on lupin.',
     );
     expect(deps.exit).not.toHaveBeenCalled();
   });
@@ -39,7 +39,7 @@ describe('runMigrationCli', () => {
     );
     await runMigrationCli(deps);
     expect(deps.info.mock.calls.map((call) => call[0])).toEqual([
-      'Migrations: applied 2 to automate in 13ms',
+      'Migrations: applied 2 to lupin in 13ms',
       '  applied h1',
       '  applied h2',
     ]);

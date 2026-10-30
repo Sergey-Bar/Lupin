@@ -1014,7 +1014,7 @@ function pointTwelve(ctx) {
     unchecked(
       'the site is live and passes its ten checks',
       '`pnpm --filter @lupin/docs build` then `SITE_DOCTOR_BUILT=1 pnpm site:doctor` decides it, and ' +
-        'https://sergey-bar.github.io/AutoMate/ is the address it would decide. Nothing here reaches ' +
+        'https://sergey-bar.github.io/Lupin/ is the address it would decide. Nothing here reaches ' +
         'the network — a check that needs one fails on a firewall and gets switched off — and three ' +
         'of the ten report `GAP` without that build rather than reporting clean.',
     ),

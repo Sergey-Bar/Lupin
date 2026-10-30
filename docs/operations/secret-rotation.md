@@ -8,7 +8,7 @@ Every installation secret is read by `@lupin/config` and validated at startup.
 This table is derived from that module, not from a product that existed before the
 unification — the previous version of this document named
 `LUPIN_DASHBOARD_API_KEY` and `VAULT_PASSWORD`, neither of which is read
-anywhere, and pointed at a `.automate/auth.json` and a "Settings > Access Control"
+anywhere, and pointed at a `.lupin/auth.json` and a "Settings > Access Control"
 screen that do not exist.
 
 | Secret                       | Protects                                             | Length floor | Rotate when                                          |

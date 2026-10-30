@@ -12,7 +12,7 @@ describe('the toolbox', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Toolbox' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        '2 recommended for Automate · 1 already in use · 4 that fit its stack · 4 free',
+        '2 recommended for Lupin · 1 already in use · 4 that fit its stack · 4 free',
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');

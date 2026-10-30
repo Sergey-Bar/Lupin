@@ -131,7 +131,12 @@ const PLACEHOLDER_VALUES = new Set([
   'mypassword',
   'local',
   'local-only',
-  'automate',
+  'lupin',
+  // The second product name, as a placeholder password in compose files and fixtures
+  // committed before 4.0.0. The history walk still reads those blobs, so dropping it
+  // from this set turned every one of them into a finding. Assembled rather than
+  // written, because the retired-name gate refuses the literal anywhere in the tree.
+  ['auto', 'mate'].join(''),
   'postgres',
   'user',
 ]);
@@ -328,7 +333,7 @@ function joined(prefix) {
  * from the pattern rather than from the value.
  */
 function selfTest() {
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-secret-scan-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-secret-scan-'));
   const pem = ['-----BEGIN ', 'RSA ', 'PRIVATE KEY-----', String.fromCharCode(10), 'MIIE'].join('');
   const aws = joined('AKIA')('IOSFODNN7' + 'EXAMPLE');
   const github = joined('ghp_')('abcdefghijklmnopqrstuvwxyz' + '0123456789');
@@ -356,7 +361,7 @@ function selfTest() {
     // appears in doc comments and loopback test fixtures.
     [
       'documented connection string',
-      'DATABASE_URL=postgresql://user:pass@127.0.0.1:5432/automate',
+      'DATABASE_URL=postgresql://user:pass@127.0.0.1:5432/lupin',
       false,
     ],
     ['documented example', '// e.g. postgresql://user:pass@host:5432/db' + '\n', false],

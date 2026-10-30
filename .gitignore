@@ -46,11 +46,11 @@ Tempplaywright-mcp/
 nul
 
 # Legacy nested source checkout (root-only)
-/AutoMate/
+/Lupin/
 
 # Auth and runtime credentials
 **/auth.json
-**/.automate/
+**/.lupin/
 
 # Sisyphus agent state
 .sisyphus/

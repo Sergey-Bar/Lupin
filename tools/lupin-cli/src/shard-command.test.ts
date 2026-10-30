@@ -12,7 +12,7 @@ import { EXIT } from './errors.js';
  * the work is a slow build, and a skipped file is a test that silently never ran.
  */
 const PROJECT = '11111111-1111-4111-8111-111111111111';
-const TOKEN = ['amt_', 'ci', '_uploader_token'].join('');
+const TOKEN = ['lup_', 'ci', '_uploader_token'].join('');
 const COMMIT_TIME = '2026-10-25T09:30:00+02:00';
 
 interface Sent {
@@ -61,7 +61,7 @@ async function invoke(
   const sent: Sent[] = [];
   const code = await run(['shard', ...argv], {
     env: {
-      LUPIN_URL: 'https://automate.example.com',
+      LUPIN_URL: 'https://lupin.example.com',
       LUPIN_TOKEN: TOKEN,
       LUPIN_PROJECT: PROJECT,
       ...options.env,
@@ -94,7 +94,7 @@ describe('lupin shard', () => {
     ]);
     expect(result.sent).toEqual([
       {
-        url: `https://automate.example.com/api/v1/projects/${PROJECT}/shards/plan`,
+        url: `https://lupin.example.com/api/v1/projects/${PROJECT}/shards/plan`,
         body: { total: 2, files: FILES, asOf: '2026-10-25T07:30:00.000Z' },
       },
     ]);
@@ -134,7 +134,7 @@ describe('lupin shard', () => {
   });
 
   it('reads the files from --files-from, one per line, ignoring blanks', async () => {
-    const dir = await mkdtemp(path.join(os.tmpdir(), 'automate-shard-'));
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'lupin-shard-'));
     temporary.push(dir);
     await writeFile(
       path.join(dir, 'files.txt'),
@@ -186,7 +186,7 @@ describe('lupin shard', () => {
   it('reads the commit time from git by default, and warns outside a repository', async () => {
     const inside = await invoke(['--total', '2', '--index', '1', '--', 'a'], { git: true });
     expect(String(inside.sent[0]?.body['asOf'])).toMatch(/^\d{4}-\d\d-\d\dT.*Z$/u);
-    const dir = await mkdtemp(path.join(os.tmpdir(), 'automate-shard-'));
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'lupin-shard-'));
     temporary.push(dir);
     const outside = await invoke(['--total', '2', '--index', '1', '--', 'a'], {
       git: true,
@@ -226,7 +226,7 @@ describe('lupin shard', () => {
     const { shard } = await import('./shard-command.js');
     await shard(argv, {
       env: {
-        LUPIN_URL: 'https://automate.example.com',
+        LUPIN_URL: 'https://lupin.example.com',
         LUPIN_TOKEN: TOKEN,
         LUPIN_PROJECT: PROJECT,
       },

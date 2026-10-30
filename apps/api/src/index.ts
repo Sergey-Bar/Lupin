@@ -229,7 +229,7 @@ const app = new Hono();
  * would be a second sink — and two sinks means two formats, so a deployment
  * reading the log has to know which of them produced the line it is looking at.
  */
-const logger = createLogger({ service: 'automate-api' });
+const logger = createLogger({ service: 'lupin-api' });
 const unknownExposure = exposureWarning(runtimeConfig);
 if (unknownExposure !== undefined) logger.warn(unknownExposure);
 const openIdentity = identityWarning(runtimeConfig);
@@ -272,9 +272,9 @@ if (gatewayResolution.kind === 'none') {
 /**
  * Self-instrumentation: with a database and a provider, every chat completion is recorded as
  * one GenAI `chat` span — model, tokens, duration, outcome; never content — with no project
- * (`source = 'self'`, agent `automate-chat`), read by `GET /api/v1/chat/runtime`. A test
+ * (`source = 'self'`, agent `lupin-chat`), read by `GET /api/v1/chat/runtime`. A test
  * proposal asks the same provider, instrumented the same way, under the agent name
- * `automate-test-proposals` so the runtime page tells them from chat. The adapters are
+ * `lupin-test-proposals` so the runtime page tells them from chat. The adapters are
  * unchanged: the decorator wraps whichever one was chosen.
  *
  * **Built per workspace** (ADR-014), so a workspace's spans are written in that workspace,
@@ -569,7 +569,7 @@ if (runtimeConfig.ssoEnforced === true && runtimeConfig.breakGlass === true) {
  * SELECT and a `last_used_at` write on the same row.
  */
 const sessionOf = perRequest(async (context: Context) => {
-  const token = getCookie(context, 'automate_session');
+  const token = getCookie(context, 'lupin_session');
   return token === undefined ? undefined : authRoutes.sessions.validate(token);
 });
 
@@ -1459,7 +1459,7 @@ if (runtimeConfig.nodeEnv !== 'test') {
   const server = serve(
     { fetch: app.fetch, port: runtimeConfig.port, hostname: runtimeConfig.host },
     (info) => {
-      console.info(`automate-api listening on http://${runtimeConfig.host}:${info.port}`);
+      console.info(`lupin-api listening on http://${runtimeConfig.host}:${info.port}`);
     },
   );
   // Closed in the reverse of this order: the server stops taking requests, then the sweep stops,

@@ -495,7 +495,7 @@ function metricOf(card: Scorecard): DimensionMetric | null {
   return {
     dimension: 'ai-governance',
     metric: 'ai-code',
-    tool: { name: 'automate-ai-code', version: AGENT_SIGNATURES.version },
+    tool: { name: 'lupin-ai-code', version: AGENT_SIGNATURES.version },
     score: card.score,
     summary: `AI-written code ${String(card.score)} / 100 over ${String(card.windowDays)} days, limited by ${String(card.cappedBy)}`,
   };

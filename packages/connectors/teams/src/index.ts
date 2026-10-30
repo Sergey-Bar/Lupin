@@ -14,7 +14,7 @@ import {
  * Microsoft Teams, through a Workflows webhook.
  *
  * Office 365 connectors (the old "Incoming Webhook") are retired; a Teams channel now takes
- * messages from a Power Automate *Workflows* webhook, whose URL is the whole credential. So
+ * messages from a Power Lupin *Workflows* webhook, whose URL is the whole credential. So
  * the secret this adapter is handed is that URL, and the one operation posts a message
  * carrying an Adaptive Card to it. A Workflows endpoint answers `202 Accepted` and does the
  * posting asynchronously, so 2xx is the delivery this adapter can see.

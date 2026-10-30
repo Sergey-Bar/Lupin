@@ -170,15 +170,15 @@ describe('running a dataset', () => {
       status: 'started',
     });
     const result = await prepared.execute();
-    expect(result.toolKey).toBe('automate-eval-json:capitals');
+    expect(result.toolKey).toBe('lupin-eval-json:capitals');
     expect(calls).toHaveLength(6);
     expect(calls[2]?.messages[0]).toEqual({ role: 'system', content: 'Be terse.' });
     const [run] = await db.select().from(schema.evalRuns);
     expect(run).toMatchObject({
       source: 'runner',
-      format: 'automate-eval-json',
+      format: 'lupin-eval-json',
       branch: 'feature',
-      toolName: 'automate-eval-runner',
+      toolName: 'lupin-eval-runner',
       provider: 'ollama',
     });
     expect(run?.totals).toMatchObject({

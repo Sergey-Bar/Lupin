@@ -32,7 +32,7 @@ function option(args, name) {
 
 function defaultDataDir() {
   if (process.platform === 'win32' && process.env.LOCALAPPDATA) {
-    return path.join(process.env.LOCALAPPDATA, 'AutomateLocal');
+    return path.join(process.env.LOCALAPPDATA, 'LupinLocal');
   }
   return path.join(os.homedir(), '.lupin-local');
 }
@@ -93,7 +93,7 @@ export async function main(argv) {
     } catch {
       // Windows ignores the mode; the file lives in the user's own profile.
     }
-    print(`AUTOMATE (local) is running at ${server.bootstrapUrl}`);
+    print(`Lupin Local is running at ${server.bootstrapUrl}`);
     print(`Token file (readable by you only): ${tokenFile}`);
     print('Nothing leaves this computer. Press Ctrl+C to stop.');
     const stop = async () => {

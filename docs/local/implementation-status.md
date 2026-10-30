@@ -1,4 +1,4 @@
-# AUTOMATE (local) — implementation status
+# Lupin Local — implementation status
 
 **Status:** Draft
 **Owner:** maintainers

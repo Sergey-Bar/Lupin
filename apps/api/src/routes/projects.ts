@@ -91,7 +91,7 @@ import { createRepoHealthRoutes, type RepoHealthRouteOptions } from './repo-heal
  * against the stored profile. There is deliberately no body field for an argv: a
  * body that could carry one would make the typed command registry advisory, because
  * a caller could send any executable and the registry would be consulted only to be
- * overridden. Correcting a detected command is a *profile edit* — `automate.config.json`
+ * overridden. Correcting a detected command is a *profile edit* — `lupin.config.json`
  * or `PATCH /projects/:id` — which is reviewable, version-controlled, and says why.
  *
  * ## Every number is served with its limiter

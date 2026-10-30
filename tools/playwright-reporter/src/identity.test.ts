@@ -2,7 +2,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { testIdentity } from '@lupin/shared-contracts';
 import { playwrightJsonAdapter, type ProducerContext } from '@lupin/reporter';
-import AutomateReporter from './index.js';
+import LupinReporter from './index.js';
 import type { PwSuite, PwTestCase } from './playwright-types.js';
 
 /**
@@ -55,7 +55,7 @@ describe('the streamed identity and the uploaded identity', () => {
       outcome: () => 'expected',
     };
     const sent: Array<Record<string, unknown>> = [];
-    const reporter = new AutomateReporter({
+    const reporter = new LupinReporter({
       env: { LUPIN_URL: 'http://localhost:3000' },
       log: () => undefined,
       fetch: (async (_url: string | URL | Request, init?: RequestInit) => {

@@ -102,7 +102,7 @@ process.exit(0);
  * @returns {{ dir: string, bin: string, log: string, cleanup: () => void }}
  */
 function install() {
-  const dir = mkdtempSync(path.join(tmpdir(), 'automate-start-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'lupin-start-'));
   const bin = path.join(dir, 'fake-bin');
   cpSync(path.join(REPO_ROOT, 'infra/release'), dir, { recursive: true });
   writeFileSync(path.join(dir, 'compose.yml'), RELEASE);
@@ -262,13 +262,13 @@ async function installWithBackup(kind, where, env) {
   assert.equal((await run(kind, where, [], env)).status, 0);
   assert.equal((await run(kind, where, ['backup'], env)).status, 0);
   const [name] = readdirSync(path.join(where.dir, 'backups'));
-  assert.ok(name?.startsWith('automate-'), 'no backup to restore');
+  assert.ok(name?.startsWith('lupin-'), 'no backup to restore');
   return path.join('backups', name ?? '');
 }
 
 /** @param {number} at milliseconds @returns {string} the folder name a backup started then gets */
 function backupName(at) {
-  return `automate-${new Date(at).toISOString().replace(/[-:]|\.\d{3}/gu, '')}`;
+  return `lupin-${new Date(at).toISOString().replace(/[-:]|\.\d{3}/gu, '')}`;
 }
 
 test('the cloudflare profile runs a tunnel that publishes nothing and is off by default', () => {
@@ -427,7 +427,7 @@ for (const [kind, shell] of /** @type {const} */ ([
           issued.at(-1) ?? '',
         ]);
         const names = (issued.at(-1) ?? '').split(',');
-        for (const name of ['automate.local', 'localhost', '127.0.0.1', 'qa.example.lan']) {
+        for (const name of ['lupin.local', 'localhost', '127.0.0.1', 'qa.example.lan']) {
           assert.ok(names.includes(name), `${name} missing from ${names.join(',')}`);
         }
         assert.ok(!names.includes(''), 'an empty name would be an empty subjectAltName');
@@ -582,13 +582,13 @@ for (const [kind, shell] of /** @type {const} */ ([
           FAKE_DOCKER_FAIL: 'SELECT count(*)',
         });
         assert.notEqual(down.status, 0, down.output);
-        assert.match(down.output, /Is Automate running\?/u);
+        assert.match(down.output, /Is Lupin running\?/u);
         assert.equal(existsSync(path.join(where.dir, 'backups')), false, 'wrote a folder anyway');
         const created = await run(kind, where, ['backup'], env);
         assert.equal(created.status, 0, created.output);
         const backups = path.join(where.dir, 'backups');
         const [name] = readdirSync(backups);
-        assert.ok(name?.startsWith('automate-'), `no backup directory in ${backups}`);
+        assert.ok(name?.startsWith('lupin-'), `no backup directory in ${backups}`);
         const folder = path.join(backups, name ?? '');
         const manifest = readEnv(path.join(folder, 'manifest.env'));
         assert.equal(manifest.get('format'), '1');
@@ -636,9 +636,9 @@ for (const [kind, shell] of /** @type {const} */ ([
         const backups = path.join(where.dir, 'backups');
         // Three older backups, and two things in the folder that are not backups.
         for (const name of [
-          'automate-20240101T000000Z',
-          'automate-20250101T000000Z',
-          'automate-20260101T000000Z',
+          'lupin-20240101T000000Z',
+          'lupin-20250101T000000Z',
+          'lupin-20260101T000000Z',
           'keep-me',
         ]) {
           mkdirSync(path.join(backups, name), { recursive: true });
@@ -656,10 +656,15 @@ for (const [kind, shell] of /** @type {const} */ ([
         assert.equal(kept.status, 0, kept.output);
         const left = readdirSync(backups).sort();
         assert.equal(left.length, 4, left.join(', '));
-        assert.equal(left[0], 'automate-20260101T000000Z');
-        assert.match(left[1] ?? '', /^automate-2\d{7}T\d{6}Z$/u);
-        assert.notEqual(left[1], left[0]);
-        assert.deepEqual(left.slice(2), ['keep-me', 'notes.txt']);
+        // Backups and non-backups are compared apart: a plain sort interleaves them by name.
+        const backupsLeft = left.filter((name) => /^lupin-/u.test(name));
+        assert.equal(backupsLeft[0], 'lupin-20260101T000000Z');
+        assert.match(backupsLeft[1] ?? '', /^lupin-2\d{7}T\d{6}Z$/u);
+        assert.notEqual(backupsLeft[1], backupsLeft[0]);
+        assert.deepEqual(
+          left.filter((name) => !/^lupin-/u.test(name)),
+          ['keep-me', 'notes.txt'],
+        );
         assert.match(kept.output, /Removed 2 older backup/u);
       } finally {
         await server.close();
@@ -682,7 +687,7 @@ for (const [kind, shell] of /** @type {const} */ ([
         };
         assert.equal((await run(kind, where, [], env)).status, 0);
         const backups = path.join(where.dir, 'backups');
-        const good = 'automate-20260101T000000Z';
+        const good = 'lupin-20260101T000000Z';
         mkdirSync(path.join(backups, good), { recursive: true });
         writeFileSync(path.join(backups, good, 'SHA256SUMS'), '');
         // The artifacts step fails after the database has been copied out.
@@ -714,7 +719,7 @@ for (const [kind, shell] of /** @type {const} */ ([
           assert.deepEqual(readdirSync(path.join(backups, name)), [], `${name} was written into`);
         }
         assert.deepEqual(
-          readdirSync(backups).filter((name) => !name.startsWith('automate-')),
+          readdirSync(backups).filter((name) => !name.startsWith('lupin-')),
           [],
           'a refused backup left something behind',
         );
@@ -805,23 +810,23 @@ for (const [kind, shell] of /** @type {const} */ ([
         // leaves this install's data as it was.
         const load = all.findIndex((argv) => argv.includes('pg_restore'));
         const loadArgv = all[load];
-        assert.equal(loadArgv[loadArgv.indexOf('-d') + 1], 'automate_restore', loadArgv.join(' '));
+        assert.equal(loadArgv[loadArgv.indexOf('-d') + 1], 'lupin_restore', loadArgv.join(' '));
         assert.ok(loadArgv.includes('--single-transaction'), loadArgv.join(' '));
         assert.equal(loadArgv.includes('--clean'), false, 'restored over the existing database');
-        const created = all.findIndex(sql('CREATE DATABASE automate_restore'));
+        const created = all.findIndex(sql('CREATE DATABASE lupin_restore'));
         assert.ok(created !== -1 && created < load, 'the database was not created fresh first');
         assert.ok(
-          all[created].includes('DROP DATABASE IF EXISTS automate_restore'),
+          all[created].includes('DROP DATABASE IF EXISTS lupin_restore'),
           'a copy left by an earlier restore is not dropped first',
         );
         // Swapped in by two renames in one statement, so one cannot happen without the other.
         const swap = all.findIndex(sql('RENAME TO'));
         assert.ok(swap > load, 'the restored database was not swapped in after it loaded');
-        assert.ok(all[swap].includes('DROP DATABASE IF EXISTS automate_previous'));
+        assert.ok(all[swap].includes('DROP DATABASE IF EXISTS lupin_previous'));
         assert.ok(
           all[swap].includes(
-            'ALTER DATABASE automate RENAME TO automate_previous; ' +
-              'ALTER DATABASE automate_restore RENAME TO automate',
+            'ALTER DATABASE lupin RENAME TO lupin_previous; ' +
+              'ALTER DATABASE lupin_restore RENAME TO lupin',
           ),
           all[swap].join(' '),
         );
@@ -829,8 +834,8 @@ for (const [kind, shell] of /** @type {const} */ ([
         const objects = all.findIndex(replacesObjects);
         assert.ok(objects > swap, 'the objects were not restored after the swap');
         assert.ok(lastCall(all, startsAgain) > objects, 'the install was not started again');
-        assert.match(good.output, /kept as automate_previous/u);
-        assert.match(good.output, /DROP DATABASE automate_previous/u);
+        assert.match(good.output, /kept as lupin_previous/u);
+        assert.match(good.output, /DROP DATABASE lupin_previous/u);
       } finally {
         await server.close();
         where.cleanup();
@@ -925,7 +930,7 @@ for (const [kind, shell] of /** @type {const} */ ([
           const after = all.slice(at + 1);
           assert.ok(after.some(startsAgain), `${step} failed and the install was left stopped`);
           assert.ok(
-            after.some(sql('DROP DATABASE IF EXISTS automate_restore')),
+            after.some(sql('DROP DATABASE IF EXISTS lupin_restore')),
             `${step} failed and the half-restored copy was kept`,
           );
           assert.equal(all.some(replacesObjects), false, `${step} failed, objects were replaced`);

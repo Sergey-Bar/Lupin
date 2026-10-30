@@ -1,5 +1,5 @@
 #!/bin/sh
-# Automate — start, stop and update a local install.
+# Lupin — start, stop and update a local install.
 #
 #   ./start.sh                     start (first run creates .env with random secrets)
 #   ./start.sh --profile NAME      start, recording the deployment profile in .env
@@ -23,12 +23,12 @@ set -eu
 cd "$(dirname "$0")"
 
 DOCKER="${LUPIN_DOCKER:-docker}"
-PROJECT="${LUPIN_PROJECT:-automate}"
-RELEASES_URL="${LUPIN_RELEASES_URL:-https://api.github.com/repos/Sergey-Bar/AutoMate/releases/latest}"
+PROJECT="${LUPIN_PROJECT:-lupin}"
+RELEASES_URL="${LUPIN_RELEASES_URL:-https://api.github.com/repos/Sergey-Bar/Lupin/releases/latest}"
 READY_TIMEOUT="${LUPIN_READY_TIMEOUT:-180}"
 
 say() { printf '%s\n' "$*"; }
-fail() { printf 'automate: %s\n' "$*" >&2; exit 1; }
+fail() { printf 'lupin: %s\n' "$*" >&2; exit 1; }
 
 usage() {
   say "Usage: ./start.sh [--profile solo|startup|team|enterprise] [--remote cloudflare] | stop|status|logs|update [--version X]|uninstall [--purge]|lan-cert|backup [--keep N]|restore FOLDER"
@@ -72,7 +72,7 @@ ensure_env() {
     say "LUPIN_INSTALLATION_KEY=$(secret)"
     say "REPORTER_SECRET=$(secret)"
     say "RUNNER_REGISTRATION_SECRET=$(secret)"
-    say "OBJECT_STORE_BUCKET=automate-artifacts"
+    say "OBJECT_STORE_BUCKET=lupin-artifacts"
     say "OBJECT_STORE_REGION=us-east-1"
     say "OBJECT_STORE_ACCESS_KEY_ID=$(access_key)"
     say "OBJECT_STORE_SECRET_ACCESS_KEY=$(secret)"
@@ -148,7 +148,7 @@ http_ok() {
 
 wait_ready() {
   url="$1/api/v1/ready"
-  say "Waiting for Automate to be ready (up to ${READY_TIMEOUT}s)..."
+  say "Waiting for Lupin to be ready (up to ${READY_TIMEOUT}s)..."
   elapsed=0
   while [ "$elapsed" -lt "$READY_TIMEOUT" ]; do
     if http_ok "$url"; then return 0; fi
@@ -156,7 +156,7 @@ wait_ready() {
     sleep 2
     elapsed=$((elapsed + 2))
   done
-  fail "Automate did not become ready in ${READY_TIMEOUT}s. Run './start.sh logs' to see why."
+  fail "Lupin did not become ready in ${READY_TIMEOUT}s. Run './start.sh logs' to see why."
 }
 
 open_browser() {
@@ -198,7 +198,7 @@ next_step() {
   case "$1" in
     startup) say "Next step: sign in with the key below, then pair devices or issue access tokens on the Access page." ;;
     team|enterprise) say "Next step: sign in with the key below, then open Map > Deployment to see what this profile turns on." ;;
-    *) say "Next step: open a project, or send test results from CI with the automate CLI." ;;
+    *) say "Next step: open a project, or send test results from CI with the lupin CLI." ;;
   esac
 }
 
@@ -218,21 +218,21 @@ check_exposure() {
   chosen="$(profile)"
   check_profile_name "$chosen"
   if [ "$chosen" = solo ] && lan_mode; then
-    fail "LUPIN_PROFILE=solo keeps Automate on this machine, and LUPIN_LAN_MODE is on. Set LUPIN_PROFILE=startup to serve other people with sign-in."
+    fail "LUPIN_PROFILE=solo keeps Lupin on this machine, and LUPIN_LAN_MODE is on. Set LUPIN_PROFILE=startup to serve other people with sign-in."
   fi
   is_loopback "$bind" && return 0
   if [ "$chosen" = solo ]; then
-    fail "LUPIN_PROFILE=solo keeps Automate on this machine, and LUPIN_BIND=$bind would make it reachable. Set LUPIN_PROFILE=startup to serve other people with sign-in, or unset LUPIN_BIND."
+    fail "LUPIN_PROFILE=solo keeps Lupin on this machine, and LUPIN_BIND=$bind would make it reachable. Set LUPIN_PROFILE=startup to serve other people with sign-in, or unset LUPIN_BIND."
   fi
   if ! lan_mode && [ -z "$chosen" ]; then
-    fail "LUPIN_BIND=$bind would make Automate reachable from other machines with no login. Set LUPIN_LAN_MODE=1 (or LUPIN_PROFILE=startup) to serve your network with sign-in and device pairing, or unset LUPIN_BIND to keep it on this machine."
+    fail "LUPIN_BIND=$bind would make Lupin reachable from other machines with no login. Set LUPIN_LAN_MODE=1 (or LUPIN_PROFILE=startup) to serve your network with sign-in and device pairing, or unset LUPIN_BIND to keep it on this machine."
   fi
   port="$(setting LUPIN_PORT 8080)"
   say ""
   if lan_mode; then
-    say "LAN mode: other machines on your network can reach Automate on port $port, after signing in."
+    say "LAN mode: other machines on your network can reach Lupin on port $port, after signing in."
   else
-    say "Profile $chosen: other machines can reach Automate on port $port, after signing in."
+    say "Profile $chosen: other machines can reach Lupin on port $port, after signing in."
   fi
   say "If they cannot connect, allow the port through this machine's firewall (not done for you):"
   say "  ufw:       sudo ufw allow $port/tcp"
@@ -255,7 +255,7 @@ start() {
   done
   # After the profile, so `--profile solo --remote cloudflare` is refused by name below.
   if [ -n "${remote_wanted:-}" ]; then
-    [ "$(profile)" = solo ] && fail "LUPIN_PROFILE=solo keeps Automate on this machine, and --remote cloudflare publishes it through a tunnel. Use --profile startup (or larger)."
+    [ "$(profile)" = solo ] && fail "LUPIN_PROFILE=solo keeps Lupin on this machine, and --remote cloudflare publishes it through a tunnel. Use --profile startup (or larger)."
     set_remote "$remote_wanted"
   fi
   check_exposure
@@ -266,14 +266,14 @@ start() {
   fi
   port="$(setting LUPIN_PORT 8080)"
   base="http://localhost:$port"
-  say "Downloading the Automate images (the first run takes a few minutes)..."
+  say "Downloading the Lupin images (the first run takes a few minutes)..."
   # Images already here keep working offline; a tag that is missing still fails in 'up'.
   compose pull --ignore-pull-failures
   compose up -d
   wait_ready "http://127.0.0.1:$port"
   chosen="$(profile)"
   say ""
-  say "Automate is running at $base"
+  say "Lupin is running at $base"
   say "Profile: ${chosen:-solo}"
   if [ "$(setting LUPIN_REMOTE '')" = cloudflare ]; then
     say "Remote: through Cloudflare Tunnel, at the public hostname you gave the tunnel. Cloudflare Access decides who reaches it."
@@ -304,7 +304,7 @@ update() {
   require_docker
   ensure_env
   set_version "$version"
-  say "Updating to Automate $version. Your data is kept; migrations run on start."
+  say "Updating to Lupin $version. Your data is kept; migrations run on start."
   start
 }
 
@@ -312,9 +312,9 @@ update() {
 # certificate's subjectAltName. LUPIN_TLS_NAMES adds more (a DNS name your router hands
 # out, a second interface).
 lan_names() {
-  host="$(hostname 2>/dev/null || printf 'automate')"
+  host="$(hostname 2>/dev/null || printf 'lupin')"
   ips="$( { hostname -I 2>/dev/null || ipconfig getifaddr en0 2>/dev/null || true; } | tr ' \n' ',,')"
-  printf '%s' "automate.local,$host,$host.local,localhost,127.0.0.1,$ips,$(setting LUPIN_TLS_NAMES '')" \
+  printf '%s' "lupin.local,$host,$host.local,localhost,127.0.0.1,$ips,$(setting LUPIN_TLS_NAMES '')" \
     | tr -s ',' | sed 's/^,//; s/,$//'
 }
 
@@ -326,7 +326,7 @@ lan_cert() {
   say "Issuing a LAN certificate for: $names"
   compose run --rm --no-deps --user 0 --entrypoint lupin-lan-cert edge "$names"
   say ""
-  say "Done. Trust certs/ca.crt once on each device that opens Automate, then restart:"
+  say "Done. Trust certs/ca.crt once on each device that opens Lupin, then restart:"
   say "  ./start.sh stop && ./start.sh"
   say "How to trust it on Windows, macOS, Linux, iPhone and Android: docs on LAN mode."
 }
@@ -350,7 +350,7 @@ sha256_text() {
 
 # How many migrations the database has applied: the schema a backup was taken at.
 migration_count() {
-  compose exec -T postgres psql -U automate -d automate -tAc \
+  compose exec -T postgres psql -U lupin -d lupin -tAc \
     'SELECT count(*) FROM drizzle.__drizzle_migrations' 2>/dev/null | tr -d '[:space:]'
 }
 
@@ -372,29 +372,29 @@ manifest_value() {
 # connected, so other sessions on the three a restore touches are ended first. Stops at the
 # first error.
 admin_sql() {
-  compose exec -T postgres psql -U automate -d postgres -v ON_ERROR_STOP=1 -tAq \
+  compose exec -T postgres psql -U lupin -d postgres -v ON_ERROR_STOP=1 -tAq \
     -c 'SET client_min_messages = warning' \
-    -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('automate', 'automate_restore', 'automate_previous') AND pid <> pg_backend_pid()" \
+    -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('lupin', 'lupin_restore', 'lupin_previous') AND pid <> pg_backend_pid()" \
     "$@" >/dev/null
 }
 
-# The backup's database, loaded into automate_restore: a new database beside this install's,
+# The backup's database, loaded into lupin_restore: a new database beside this install's,
 # so no table a newer release added here can block it. One transaction, so a load that fails
 # part-way leaves it empty.
 load_database() {
-  admin_sql -c 'DROP DATABASE IF EXISTS automate_restore' -c 'CREATE DATABASE automate_restore' \
-    && compose cp "$1/database.dump" postgres:/tmp/automate-restore.dump \
-    && compose exec -T postgres pg_restore -U automate -d automate_restore --no-owner \
-      --single-transaction /tmp/automate-restore.dump
+  admin_sql -c 'DROP DATABASE IF EXISTS lupin_restore' -c 'CREATE DATABASE lupin_restore' \
+    && compose cp "$1/database.dump" postgres:/tmp/lupin-restore.dump \
+    && compose exec -T postgres pg_restore -U lupin -d lupin_restore --no-owner \
+      --single-transaction /tmp/lupin-restore.dump
 }
 
 # A restore that stopped before the swap. This install's own database was never touched, so
-# the copy is dropped and Automate starts again on its own data rather than staying down.
+# the copy is dropped and Lupin starts again on its own data rather than staying down.
 restore_failed() {
-  compose exec -T postgres rm -f /tmp/automate-restore.dump >/dev/null 2>&1 || true
-  admin_sql -c 'DROP DATABASE IF EXISTS automate_restore' 2>/dev/null || true
-  compose up -d || fail "$1 Nothing was replaced, but Automate could not be started again: run ./start.sh."
-  fail "$1 Nothing was replaced: Automate is started again on its own data. The output above says why."
+  compose exec -T postgres rm -f /tmp/lupin-restore.dump >/dev/null 2>&1 || true
+  admin_sql -c 'DROP DATABASE IF EXISTS lupin_restore' 2>/dev/null || true
+  compose up -d || fail "$1 Nothing was replaced, but Lupin could not be started again: run ./start.sh."
+  fail "$1 Nothing was replaced: Lupin is started again on its own data. The output above says why."
 }
 
 # The database, the stored artifacts and .env, each with a digest, into backups/. The
@@ -419,27 +419,27 @@ backup() {
   require_docker
   count="$(migration_count)"
   case "$count" in
-    ''|*[!0-9]*) fail "Could not read the database's migrations. Is Automate running? (./start.sh status)" ;;
+    ''|*[!0-9]*) fail "Could not read the database's migrations. Is Lupin running? (./start.sh status)" ;;
   esac
   umask 077
   stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-  folder="backups/automate-$stamp"
+  folder="backups/lupin-$stamp"
   [ ! -e "$folder" ] || fail "$folder already exists. Run the backup again in a second."
   # Written under a hidden name and renamed once the manifest is in it, so a backup that fails
   # part-way never leaves a folder that --keep counts. A failed one is removed: it holds a
   # copy of the database.
-  work="backups/.automate-$stamp.partial"
+  work="backups/.lupin-$stamp.partial"
   rm -rf -- "$work"
   mkdir -p "$work"
   trap 'rm -rf -- "$work"' EXIT
   say "Backing up the database..."
-  compose exec -T postgres pg_dump -U automate -d automate -Fc -f /tmp/automate-backup.dump
-  compose cp postgres:/tmp/automate-backup.dump "$work/database.dump"
-  compose exec -T postgres rm -f /tmp/automate-backup.dump
+  compose exec -T postgres pg_dump -U lupin -d lupin -Fc -f /tmp/lupin-backup.dump
+  compose cp postgres:/tmp/lupin-backup.dump "$work/database.dump"
+  compose exec -T postgres rm -f /tmp/lupin-backup.dump
   say "Backing up stored artifacts..."
-  compose exec -T objectstore tar -C /data -cf /tmp/automate-objects.tar .
-  compose cp objectstore:/tmp/automate-objects.tar "$work/objects.tar"
-  compose exec -T objectstore rm -f /tmp/automate-objects.tar
+  compose exec -T objectstore tar -C /data -cf /tmp/lupin-objects.tar .
+  compose cp objectstore:/tmp/lupin-objects.tar "$work/objects.tar"
+  compose exec -T objectstore rm -f /tmp/lupin-objects.tar
   cp .env "$work/env"
   for part in database.dump objects.tar env; do
     printf '%s  %s\n' "$(sha256_of "$work/$part")" "$part"
@@ -464,7 +464,7 @@ backup() {
 # alone.
 prune_backups() {
   # The names sort by time, so the newest are last.
-  old="$(find backups -mindepth 1 -maxdepth 1 -type d -name 'automate-[0-9]*T[0-9]*Z' 2>/dev/null \
+  old="$(find backups -mindepth 1 -maxdepth 1 -type d -name 'lupin-[0-9]*T[0-9]*Z' 2>/dev/null \
     | sort | awk -v keep="$1" '{ names[NR] = $0 } END { for (i = 1; i <= NR - keep; i++) print names[i] }')"
   removed=0
   for stale in $old; do
@@ -482,7 +482,7 @@ prune_backups() {
 restore() {
   folder="${1:-}"
   { [ -n "$folder" ] && [ -f "$folder/manifest.env" ] && [ -f "$folder/SHA256SUMS" ]; } \
-    || fail "There is no backup at '$folder'. Pass the folder './start.sh backup' wrote, like backups/automate-20261027T120000Z."
+    || fail "There is no backup at '$folder'. Pass the folder './start.sh backup' wrote, like backups/lupin-20261027T120000Z."
   [ -f .env ] || fail "Restore into an install: copy $folder/env to .env before its first start, start it (./start.sh), then run this again."
   [ "$(manifest_value "$folder" format)" = 1 ] \
     || fail "$folder was written by a newer start script. Update first: ./start.sh update"
@@ -499,33 +499,33 @@ restore() {
   taken="$(manifest_value "$folder" version)"
   current="$(setting LUPIN_VERSION '')"
   if [ -n "$taken" ] && [ -n "$current" ] && version_newer "$taken" "$current"; then
-    fail "This backup is from Automate $taken, which is newer than this install ($current). Update first: ./start.sh update --version $taken"
+    fail "This backup is from Lupin $taken, which is newer than this install ($current). Update first: ./start.sh update --version $taken"
   fi
   require_docker
   wanted="$(manifest_value "$folder" migrations)"
   have="$(migration_count)"
   case "$wanted" in ''|*[!0-9]*) fail "$folder/manifest.env records no migration count. Nothing was restored." ;; esac
   case "$have" in
-    ''|*[!0-9]*) fail "Could not read this install's migrations. Start Automate first (./start.sh), then restore." ;;
+    ''|*[!0-9]*) fail "Could not read this install's migrations. Start Lupin first (./start.sh), then restore." ;;
   esac
   [ "$wanted" -le "$have" ] \
     || fail "This backup has $wanted migrations and this install has $have: its schema is newer. Update first: ./start.sh update"
-  say "Restoring $folder. Automate stops while it runs."
+  say "Restoring $folder. Lupin stops while it runs."
   compose stop api worker runner web edge objectstore \
-    || restore_failed "Automate could not be stopped for the restore."
+    || restore_failed "Lupin could not be stopped for the restore."
   load_database "$folder" || restore_failed "The database in $folder could not be restored."
-  compose exec -T postgres rm -f /tmp/automate-restore.dump >/dev/null 2>&1 || true
+  compose exec -T postgres rm -f /tmp/lupin-restore.dump >/dev/null 2>&1 || true
   # Both renames in one statement, so in one transaction: either the restored database is
-  # automate, or nothing moved.
-  admin_sql -c 'DROP DATABASE IF EXISTS automate_previous' \
-    -c 'ALTER DATABASE automate RENAME TO automate_previous; ALTER DATABASE automate_restore RENAME TO automate' \
+  # lupin, or nothing moved.
+  admin_sql -c 'DROP DATABASE IF EXISTS lupin_previous' \
+    -c 'ALTER DATABASE lupin RENAME TO lupin_previous; ALTER DATABASE lupin_restore RENAME TO lupin' \
     || restore_failed "The restored database could not be swapped in."
-  say "The database it replaced is kept as automate_previous, until the next restore. Once this one is right, drop it from this folder:"
-  say "  docker compose -p $PROJECT exec postgres psql -U automate -d postgres -c \"DROP DATABASE automate_previous\""
+  say "The database it replaced is kept as lupin_previous, until the next restore. Once this one is right, drop it from this folder:"
+  say "  docker compose -p $PROJECT exec postgres psql -U lupin -d postgres -c \"DROP DATABASE lupin_previous\""
   # The objects belong to the restored database, so they are replaced only once it is in.
   compose run --rm --no-deps -T -v "$(cd "$folder" && pwd):/backup:ro" --entrypoint sh objectstore \
     -c 'find /data -mindepth 1 -delete && tar -C /data -xf /backup/objects.tar' \
-    || fail "The database is restored from $folder, but its stored artifacts could not be put back, so Automate is left stopped. The output above says why."
+    || fail "The database is restored from $folder, but its stored artifacts could not be put back, so Lupin is left stopped. The output above says why."
   compose up -d
   port="$(setting LUPIN_PORT 8080)"
   wait_ready "http://127.0.0.1:$port"
@@ -538,10 +538,10 @@ uninstall() {
   if [ "${1:-}" = "--purge" ]; then
     compose_all down -v --remove-orphans
     rm -f .env
-    say "Automate is removed, with all of its data."
+    say "Lupin is removed, with all of its data."
   else
     compose_all down --remove-orphans
-    say "Automate is removed. Your data and .env are kept; run ./start.sh to start again."
+    say "Lupin is removed. Your data and .env are kept; run ./start.sh to start again."
   fi
 }
 

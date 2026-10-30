@@ -15,7 +15,7 @@
 -- the same bar as an edit. Behind it, two removals are not breaks the chain can see. A removed
 -- tail is not a gap, because the insert trigger numbers the next row after the highest position
 -- left, so it takes the freed position and links to the row before it; and a trail removed
--- whole leaves nothing to check. A head filed outside Automate covers both: the row at the filed
+-- whole leaves nothing to check. A head filed outside Lupin covers both: the row at the filed
 -- position no longer carries the filed hash, or is not there.
 
 CREATE OR REPLACE FUNCTION audit_events_refuse_removal() RETURNS trigger

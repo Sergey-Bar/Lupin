@@ -1,6 +1,6 @@
 # Serve your network (LAN mode)
 
-One machine runs Automate. Every other laptop, phone and tablet on the same Wi-Fi or
+One machine runs Lupin. Every other laptop, phone and tablet on the same Wi-Fi or
 wired network opens it in a browser, signs in or pairs, and uses it. Linux and Windows
 (Docker Desktop) are both supported servers.
 
@@ -57,27 +57,27 @@ own gateway in that range.
 
 `start lan-cert` creates a small certificate authority for your network in `certs/` and a
 server certificate for every name and address the machine answers to (`<hostname>`,
-`<hostname>.local`, `automate.local`, `localhost`, and its LAN addresses). Add more with
+`<hostname>.local`, `lupin.local`, `localhost`, and its LAN addresses). Add more with
 `LUPIN_TLS_NAMES`. Each device trusts `certs/ca.crt` once; reissuing the server
 certificate later (a new IP) keeps the same CA, so no device has to trust it again. Only
 `LUPIN_NEW_CA=1` replaces the CA.
 
 Copy `certs/ca.crt` to the device (a USB stick, a file share, or an email to yourself), then:
 
-| Device  | How                                                                                                                                                         |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Windows | Double-click `ca.crt` → **Install Certificate** → **Local Machine** → **Trusted Root Certification Authorities**.                                           |
-| macOS   | Double-click `ca.crt` (Keychain Access opens) → find "Automate local CA" → **Get Info** → **Trust** → **Always Trust**.                                     |
-| Linux   | `sudo cp ca.crt /usr/local/share/ca-certificates/automate.crt && sudo update-ca-certificates`. Firefox has its own store: Settings → Certificates → Import. |
-| iPhone  | AirDrop or mail `ca.crt` → Settings → **Profile Downloaded** → Install, then Settings → General → About → **Certificate Trust Settings** → turn it on.      |
-| Android | Settings → Security → **Encryption & credentials** → **Install a certificate** → **CA certificate** → pick `ca.crt`.                                        |
+| Device  | How                                                                                                                                                      |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Windows | Double-click `ca.crt` → **Install Certificate** → **Local Machine** → **Trusted Root Certification Authorities**.                                        |
+| macOS   | Double-click `ca.crt` (Keychain Access opens) → find "Lupin local CA" → **Get Info** → **Trust** → **Always Trust**.                                     |
+| Linux   | `sudo cp ca.crt /usr/local/share/ca-certificates/lupin.crt && sudo update-ca-certificates`. Firefox has its own store: Settings → Certificates → Import. |
+| iPhone  | AirDrop or mail `ca.crt` → Settings → **Profile Downloaded** → Install, then Settings → General → About → **Certificate Trust Settings** → turn it on.   |
+| Android | Settings → Security → **Encryption & credentials** → **Install a certificate** → **CA certificate** → pick `ca.crt`.                                     |
 
 ## The firewall
 
 The start scripts print the command; they never change your firewall.
 
 - **Windows:** in an elevated PowerShell,
-  `New-NetFirewallRule -DisplayName 'Automate' -Direction Inbound -Protocol TCP -LocalPort 8443 -Action Allow -Profile Private`
+  `New-NetFirewallRule -DisplayName 'Lupin' -Direction Inbound -Protocol TCP -LocalPort 8443 -Action Allow -Profile Private`
   (and once more for 8080 if you want the plain-HTTP redirect). Docker Desktop must be
   allowed on **Private** networks; mark your Wi-Fi as Private, not Public.
 - **Linux (ufw):** `sudo ufw allow 8443/tcp`. **firewalld:**
@@ -86,8 +86,8 @@ The start scripts print the command; they never change your firewall.
 ## Finding the server by name
 
 Windows, macOS and most Linux desktops already answer to `<hostname>.local` on the local
-network, and the certificate covers that name. `automate.local` is also in the certificate,
-for a network whose router can map that name to the server; Automate does not run its own
+network, and the certificate covers that name. `lupin.local` is also in the certificate,
+for a network whose router can map that name to the server; Lupin does not run its own
 name responder, because Docker Desktop cannot pass multicast from its VM to your network.
 The address the server's own browser uses is always shown on the Access page.
 

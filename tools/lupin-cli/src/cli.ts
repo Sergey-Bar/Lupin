@@ -21,7 +21,7 @@ write \`-- cmd /c npx playwright test\`.
 runs. It never drops a file: if the plan cannot be had, it prints them all.
 
 Every command takes --project <id>, or reads LUPIN_PROJECT.
-Environment: LUPIN_URL (https://, or http:// to loopback only), LUPIN_TOKEN (amt_…).
+Environment: LUPIN_URL (https://, or http:// to loopback only), LUPIN_TOKEN (lup_…).
 Exit codes: 0 done or gate passed, 1 gate failed, 2 usage, 3 refused or unreachable, 4 credential refused.
 \`test\` exits with its command's code instead, and 127 when the command could not start.`;
 

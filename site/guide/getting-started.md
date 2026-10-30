@@ -4,7 +4,7 @@ outline: deep
 
 # Getting started
 
-Automate runs checks as **jobs**: a run is a job with a lease, an attempt count, and
+Lupin runs checks as **jobs**: a run is a job with a lease, an attempt count, and
 an evidence bundle. This page gets you to a running dashboard. Everything it claims
 about the product's limits is recorded on [Capabilities](/pages/capabilities), which
 is generated from the repository's own register rather than written by hand.

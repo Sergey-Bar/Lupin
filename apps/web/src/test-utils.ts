@@ -240,9 +240,9 @@ export function makeApi(overrides: Partial<ApiClient> = {}): ApiClient {
 export const TEST_PROJECT: RegisteredProject = {
   id: 'project-1',
   workspaceId: 'ws-1',
-  name: 'Automate',
-  slug: 'automate',
-  repoPath: '/repos/automate',
+  name: 'Lupin',
+  slug: 'lupin',
+  repoPath: '/repos/lupin',
   detectorVersion: 1,
   createdAt: TEST_TIMESTAMP,
 };
@@ -1458,7 +1458,7 @@ export function makeFinding(overrides: Partial<HealthFinding> = {}): HealthFindi
   return HealthFindingSchema.parse({
     id: 'finding-1',
     fingerprint: 'fp-1',
-    tool: 'automate-licence',
+    tool: 'lupin-licence',
     ruleId: 'licence-denied:GPL-3.0-only',
     kind: 'issue',
     severity: 'high',

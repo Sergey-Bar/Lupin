@@ -32,7 +32,7 @@ Self-hosted Geist Sans and Geist Mono variable WOFF2 files are pinned to an upst
 
 ## Product imagery and claims
 
-`docs/assets/runs.png` is an authentic existing application screenshot. It is labelled as retaining AutoMate branding. Do not paint Lupin labels over it or fabricate new dashboard screens. A replacement screenshot is future work after a separate application-branding change. Only one screenshot is available; the site does not imply that invented screenshots exist for other views.
+`docs/assets/runs.png` is an authentic existing application screenshot. It is labelled as retaining Lupin branding. Do not paint Lupin labels over it or fabricate new dashboard screens. A replacement screenshot is future work after a separate application-branding change. Only one screenshot is available; the site does not imply that invented screenshots exist for other views.
 
 Integration types are explicit: Playwright live reporter and JSON import; JUnit XML import; k6 summary JSON; ZAP XML; Allure results import. Installation uses the actual release scripts (`./start.sh` and `.\start.cmd`) and existing repository links.
 
@@ -44,4 +44,4 @@ Semantic sections, one page h1, descriptive image alt, native links/buttons, exi
 
 Run the documentation typecheck/build, site doctor with `SITE_DOCTOR_BUILT=1`, `node --test site/tests/lupin-design.test.mjs`, and existing site-guidance tests. Site doctor still verifies the imported shared foundation; the Lupin-specific tests additionally validate the site palette, text contrast, and pinned font assets.
 
-Production Core Web Vitals and a full assistive-technology audit need measurements on a deployed site; a successful build is not evidence of those results. Remaining brand work outside this scope: application screenshots, application name, runtime/package/CLI names, and any legal attribution change. Localized landing pages retain their existing translations; the new complete marketing narrative is English-first. Technical instructions deliberately retain executable AutoMate identifiers.
+Production Core Web Vitals and a full assistive-technology audit need measurements on a deployed site; a successful build is not evidence of those results. Remaining brand work outside this scope: application screenshots, application name, runtime/package/CLI names, and any legal attribution change. Localized landing pages retain their existing translations; the new complete marketing narrative is English-first. Technical instructions deliberately retain executable Lupin identifiers.

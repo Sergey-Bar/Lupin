@@ -22,11 +22,11 @@ Every `v*` tag runs `.github/workflows/release.yml`, which:
    section, then runs `pnpm verify`;
 2. builds each image in `PUBLISHED_IMAGES` (`scripts/lib/release-compose.mjs`) natively on
    amd64 and arm64 runners and publishes one multi-arch image per service to
-   `ghcr.io/sergey-bar/automate-<service>`, tagged `X.Y.Z` — and `X.Y` and `latest` only for
+   `ghcr.io/sergey-bar/lupin-<service>`, tagged `X.Y.Z` — and `X.Y` and `latest` only for
    a final release — with an SBOM and a build-provenance attestation;
 3. stops if any image cannot be pulled anonymously (`pnpm release:visibility`);
 4. publishes a GitHub release whose notes are the changelog section and whose assets are
-   `automate-X.Y.Z.zip` and `SHA256SUMS` (`pnpm release:bundle`);
+   `lupin-X.Y.Z.zip` and `SHA256SUMS` (`pnpm release:bundle`);
 5. installs that zip from the release page on a clean runner, probes it, and removes it.
 
 The zip carries a compose file **derived** from `infra/compose/docker-compose.unified.yml`

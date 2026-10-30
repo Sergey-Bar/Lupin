@@ -6,4 +6,4 @@ Job and run state machines with fenced transitions, schedules, and the retry pol
 pnpm --filter @lupin/orchestration test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

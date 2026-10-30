@@ -11,7 +11,7 @@ import { isLoopbackBind } from '@lupin/config';
 import { MCP_SERVER_INFO } from './server.js';
 
 /**
- * The stdio MCP server an editor launches: a proxy to `POST /api/v1/mcp` on an AutoMate
+ * The stdio MCP server an editor launches: a proxy to `POST /api/v1/mcp` on an Lupin
  * install, so Claude Code, Cursor, Kiro or VS Code can reach a server they cannot speak
  * Streamable HTTP to with a header — or that a user prefers to configure as a command.
  *
@@ -21,7 +21,7 @@ import { MCP_SERVER_INFO } from './server.js';
  *
  * - `LUPIN_URL` — the install's origin. `https:` anywhere; `http:` only to a loopback
  *   host, because the token would cross the network in the clear.
- * - `LUPIN_TOKEN` — an `amt_` access token with the viewer role. It is sent as a bearer
+ * - `LUPIN_TOKEN` — an `lup_` access token with the viewer role. It is sent as a bearer
  *   header to that one origin and is never written to stdout, where the protocol is.
  */
 export interface ProxyConfig {
@@ -37,9 +37,9 @@ export class ProxyConfigError extends Error {
 export function proxyConfig(env: Readonly<Record<string, string | undefined>>): ProxyConfig {
   const raw = env['LUPIN_URL']?.trim() ?? '';
   const token = env['LUPIN_TOKEN']?.trim() ?? '';
-  if (raw === '') throw new ProxyConfigError('Set LUPIN_URL to the AutoMate origin.');
-  if (!token.startsWith('amt_')) {
-    throw new ProxyConfigError('Set LUPIN_TOKEN to an amt_ access token with the viewer role.');
+  if (raw === '') throw new ProxyConfigError('Set LUPIN_URL to the Lupin origin.');
+  if (!token.startsWith('lup_')) {
+    throw new ProxyConfigError('Set LUPIN_TOKEN to an lup_ access token with the viewer role.');
   }
   let url: URL;
   try {

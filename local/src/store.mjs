@@ -652,7 +652,7 @@ class Store {
     if (ids.length > 0) {
       this.db
         .prepare(
-          "update execution set state = 'crashed', reason = 'the previous AUTOMATE (local) process ended while this run was in progress', finished_at = ? where state = 'running'",
+          "update execution set state = 'crashed', reason = 'the previous Lupin Local process ended while this run was in progress', finished_at = ? where state = 'running'",
         )
         .run(now);
     }

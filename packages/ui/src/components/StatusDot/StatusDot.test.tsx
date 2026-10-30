@@ -32,7 +32,7 @@ describe('StatusDot', () => {
 
   it('can pulse for a live state, and stops under reduced motion', () => {
     const { container } = render(<StatusDot status="info" live />);
-    expect(container.firstElementChild).toHaveClass('animate-automate-pulse');
+    expect(container.firstElementChild).toHaveClass('animate-lupin-pulse');
     expect(container.firstElementChild).toHaveClass('motion-reduce:animate-none');
   });
 });

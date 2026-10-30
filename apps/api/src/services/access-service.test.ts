@@ -73,7 +73,7 @@ async function setup(
     ...(ssoEnforced ? { ssoEnforced } : {}),
     authenticateToken: (token) => authenticateToken(options, token),
     hasSession: async (context) =>
-      context.req.header('cookie')?.includes('automate_session=valid') === true,
+      context.req.header('cookie')?.includes('lupin_session=valid') === true,
   };
   const { onError } = createErrorBoundary({
     log: () => undefined,
@@ -112,7 +112,7 @@ describe('access tokens', () => {
       { name: 'ci', role: 'viewer' },
       'session',
     );
-    expect(token.startsWith('amt_')).toBe(true);
+    expect(token.startsWith('lup_')).toBe(true);
     const rows = await db.select().from(schema.accessTokens);
     expect(JSON.stringify(rows)).not.toContain(token);
     expect(await authenticateToken(options, token)).toEqual({
@@ -160,7 +160,7 @@ describe('the role guards, enforced', () => {
   it('refuses no credential with 401 and an unknown token with 401', async () => {
     const { app } = await setup();
     expect((await app.request('/api/v1/projects')).status).toBe(401);
-    expect((await app.request('/api/v1/portfolio', { headers: bearer('amt_nobody') })).status).toBe(
+    expect((await app.request('/api/v1/portfolio', { headers: bearer('lup_nobody') })).status).toBe(
       401,
     );
   });
@@ -217,7 +217,7 @@ describe('the role guards, enforced', () => {
 
   it('treats the installation session as admin: it issues and revokes tokens', async () => {
     const { app } = await setup();
-    const cookie = { cookie: 'automate_session=valid' };
+    const cookie = { cookie: 'lupin_session=valid' };
     const created = await app.request('/api/v1/access-tokens', {
       method: 'POST',
       headers: { ...cookie, 'content-type': 'application/json' },
@@ -280,7 +280,7 @@ describe('the role guards, enforced', () => {
     });
     expect(login.status).toBe(200);
     const cookie = login.headers.get('set-cookie') ?? '';
-    expect(cookie).toMatch(/automate_token=.*HttpOnly/iu);
+    expect(cookie).toMatch(/lupin_token=.*HttpOnly/iu);
     const who = await app.request('/api/v1/auth/whoami', {
       headers: { cookie: cookie.split(';')[0] ?? '' },
     });
@@ -313,7 +313,7 @@ describe('the role guards, open', () => {
           'content-type': 'application/json',
           'x-forwarded-for': `203.0.113.${String(attempt)}`,
         },
-        body: JSON.stringify({ token: `amt_wrong_${String(attempt)}` }),
+        body: JSON.stringify({ token: `lup_wrong_${String(attempt)}` }),
       });
       statuses.push(response.status);
     }
@@ -333,7 +333,7 @@ describe('the role guards, open', () => {
   it('reports the deployment profile, so the client can say what this install is for', async () => {
     const { app } = await setup('enforced', 'team');
     const who = await app.request('/api/v1/auth/whoami', {
-      headers: { cookie: 'automate_session=valid' },
+      headers: { cookie: 'lupin_session=valid' },
     });
     expect(await who.json()).toMatchObject({
       role: 'admin',

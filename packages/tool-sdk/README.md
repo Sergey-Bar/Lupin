@@ -40,4 +40,4 @@ accepted run and links to it), and `createExecutionBridgeAdapter` queues the run
 pnpm --filter @lupin/tool-sdk test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

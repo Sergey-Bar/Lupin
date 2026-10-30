@@ -6,4 +6,4 @@ The shared Tailwind 4 component library, design tokens (`src/tokens/theme.css`) 
 pnpm --filter @lupin/ui test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Reporter } from '@playwright/test/reporter';
 import { describe, expect, it } from 'vitest';
-import AutomateReporter, { type ReporterOptions } from './index.js';
+import LupinReporter, { type ReporterOptions } from './index.js';
 import type { PwFullConfig, PwSuite, PwTestCase, PwTestResult } from './playwright-types.js';
 
 /**
@@ -17,7 +17,7 @@ import type { PwFullConfig, PwSuite, PwTestCase, PwTestResult } from './playwrig
 
 // Compile-time: the reporter is a Playwright `Reporter`. A method whose signature drifted
 // from Playwright's is a type error here rather than a reporter Playwright never calls.
-const _compatible: Reporter = new AutomateReporter({ env: {} });
+const _compatible: Reporter = new LupinReporter({ env: {} });
 
 const ROOT = path.resolve('/repo/tests');
 const SHA = 'a'.repeat(40);
@@ -97,13 +97,13 @@ function reporter(
   fetch: typeof globalThis.fetch,
   env: Record<string, string | undefined> = {},
   extra: Partial<ReporterOptions> = {},
-): { reporter: AutomateReporter; log: string[] } {
+): { reporter: LupinReporter; log: string[] } {
   const log: string[] = [];
   return {
     log,
-    reporter: new AutomateReporter({
+    reporter: new LupinReporter({
       env: {
-        LUPIN_URL: 'https://automate.example.com',
+        LUPIN_URL: 'https://lupin.example.com',
         LUPIN_REPORTER_SECRET: 'reporter-secret-value',
         GITHUB_SHA: SHA,
         GITHUB_REF_NAME: 'main',
@@ -220,7 +220,7 @@ describe('streaming a run', () => {
 
 describe('retries and outcomes', () => {
   it('reports a test that passed on retry once, as flaky, with the failed attempt\u2019s trace', async () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'automate-reporter-'));
+    const dir = mkdtempSync(path.join(tmpdir(), 'lupin-reporter-'));
     const tracePath = path.join(dir, 'trace.zip');
     writeFileSync(tracePath, 'PK trace bytes');
     const { calls, fetch } = recorder();
@@ -259,7 +259,7 @@ describe('retries and outcomes', () => {
     expect(uploaded).toHaveLength(1);
     const runId = String(sent[0]?.body['runId']);
     expect(uploaded[0]?.url).toBe(
-      `https://automate.example.com/api/v1/reporter/runs/${runId}/artifacts`,
+      `https://lupin.example.com/api/v1/reporter/runs/${runId}/artifacts`,
     );
     expect(uploaded[0]?.body).toEqual({
       testId: test.id,
@@ -365,7 +365,7 @@ describe('retries and outcomes', () => {
   });
 
   it('does not read a trace larger than the server would accept', async () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'automate-reporter-'));
+    const dir = mkdtempSync(path.join(tmpdir(), 'lupin-reporter-'));
     const big = path.join(dir, 'trace.zip');
     writeFileSync(big, Buffer.alloc(16));
     const { calls, fetch } = recorder();
@@ -421,9 +421,7 @@ describe('never breaking the test run', () => {
     // about a run the server never heard of.
     expect(calls).toHaveLength(3);
     expect(log).toHaveLength(1);
-    expect(log[0]).toMatch(
-      /AutoMate reporter: run:start failed after 3 attempts \(fetch failed\)/u,
-    );
+    expect(log[0]).toMatch(/Lupin reporter: run:start failed after 3 attempts \(fetch failed\)/u);
   });
 
   it('stops at a refusal, without retrying it, and names the status', async () => {
@@ -471,7 +469,7 @@ describe('never breaking the test run', () => {
   });
 
   it('prints nothing to stdout of its own', () => {
-    expect(new AutomateReporter({ env: {} }).printsToStdio()).toBe(false);
+    expect(new LupinReporter({ env: {} }).printsToStdio()).toBe(false);
   });
 });
 
@@ -482,11 +480,11 @@ describe('where it sends, and with what', () => {
     r.onBegin(CONFIG, rootSuite(0));
     await r.onEnd({ status: 'passed', duration: 1 });
     expect(calls).toEqual([]);
-    expect(log).toEqual(['AutoMate reporter: LUPIN_URL is not set; nothing is sent.']);
+    expect(log).toEqual(['Lupin reporter: LUPIN_URL is not set; nothing is sent.']);
   });
 
   it.each([
-    ['http://automate.example.com', false],
+    ['http://lupin.example.com', false],
     ['http://127.evil.example', false],
     ['ftp://localhost', false],
     ['http://user:pass@localhost:3000', false],
@@ -494,7 +492,7 @@ describe('where it sends, and with what', () => {
     ['http://localhost:3000', true],
     ['http://127.0.0.1:3000', true],
     ['http://[::1]:3000', true],
-    ['https://automate.example.com/', true],
+    ['https://lupin.example.com/', true],
   ])('%s is allowed: %s', async (url, allowed) => {
     const { calls, fetch } = recorder();
     const { reporter: r, log } = reporter(fetch, { LUPIN_URL: url });

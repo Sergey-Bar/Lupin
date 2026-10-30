@@ -15,7 +15,7 @@ import { Transport } from './transport.js';
 export type * from './playwright-types.js';
 
 /**
- * `@lupin/playwright-reporter` — a Playwright run, streamed into AutoMate as it happens.
+ * `@lupin/playwright-reporter` — a Playwright run, streamed into Lupin as it happens.
  *
  * ```ts
  * // playwright.config.ts
@@ -41,7 +41,7 @@ export type * from './playwright-types.js';
  */
 
 export interface ReporterOptions {
-  /** The AutoMate origin. Defaults to `LUPIN_URL`. The secret is read from the environment only. */
+  /** The Lupin origin. Defaults to `LUPIN_URL`. The secret is read from the environment only. */
   url?: string;
   /** Upload the attachments of a failed attempt. Default `true`. */
   uploadArtifacts?: boolean;
@@ -70,7 +70,7 @@ const EXTENSIONS: Readonly<Record<string, string>> = {
 
 type ReportedStatus = 'passed' | 'failed' | 'flaky' | 'skipped' | 'timedOut';
 
-export default class AutomateReporter {
+export default class LupinReporter {
   private readonly env: Readonly<Record<string, string | undefined>>;
   private readonly log: (line: string) => void;
   private transport: Transport | undefined;
@@ -89,7 +89,7 @@ export default class AutomateReporter {
   onBegin(config: PwFullConfig, suite: PwSuite): void {
     const target = resolveOrigin(this.options.url ?? this.env['LUPIN_URL']);
     if ('refused' in target) {
-      this.log(`AutoMate reporter: ${target.refused}`);
+      this.log(`Lupin reporter: ${target.refused}`);
       return;
     }
     const secret = this.env['LUPIN_REPORTER_SECRET']?.trim();
@@ -197,7 +197,7 @@ export default class AutomateReporter {
   }
 }
 
-export { AutomateReporter };
+export { LupinReporter };
 
 function present(value: string | undefined): string | undefined {
   const trimmed = value?.trim() ?? '';

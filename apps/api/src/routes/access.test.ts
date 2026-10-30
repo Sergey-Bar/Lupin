@@ -52,7 +52,7 @@ describe('the token sign-in', () => {
     const response = await signIn(token);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ actor: `token:${summary.id}`, role: 'operator' });
-    expect(response.headers.get('set-cookie')).toMatch(/automate_token=amt_.*HttpOnly/iu);
+    expect(response.headers.get('set-cookie')).toMatch(/lupin_token=lup_.*HttpOnly/iu);
     // Authenticated where it lives: its last use is recorded there, and nothing is made here.
     expect((await listAccessTokens(elsewhere))[0]?.lastUsedAt).not.toBeNull();
     expect(await listAccessTokens(here)).toEqual([]);

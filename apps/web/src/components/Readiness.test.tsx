@@ -134,7 +134,7 @@ describe('what is wrong, and what is good', () => {
   it('says plainly when a column is empty, rather than drawing nothing', async () => {
     renderRouted(<FindingsColumns summary={summary(null)} />);
     expect(await screen.findByTestId('findings-wrong')).toHaveTextContent(
-      'Nothing is wrong that Automate can see.',
+      'Nothing is wrong that Lupin can see.',
     );
     expect(screen.getByTestId('findings-good')).toHaveTextContent('Nothing has passed yet.');
   });

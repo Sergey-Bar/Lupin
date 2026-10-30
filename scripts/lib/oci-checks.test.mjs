@@ -32,7 +32,7 @@ const DIGEST_B = `sha256:${'b'.repeat(64)}`;
 const GOOD_MANIFEST = {
   schemaVersion: 1,
   name: 'playwright',
-  imageRef: 'automate/playwright:local',
+  imageRef: 'lupin/playwright:local',
   imageDigest: null,
   buildStatus: 'unbuilt',
   user: 65532,

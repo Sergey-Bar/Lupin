@@ -56,7 +56,7 @@ import type { AgentRuntimeReading } from './repo-health-service.js';
 export type SpanOptions = EvalOptions;
 
 /** The agent name every installation chat span carries. */
-export const SELF_AGENT_NAME = 'automate-chat';
+export const SELF_AGENT_NAME = 'lupin-chat';
 /** The most spans one runtime read loads per window; the newest are kept. */
 export const RUNTIME_READ_LIMIT = 20_000;
 /** The window the grade and the gate read the runtime scorecard over. */
@@ -217,7 +217,7 @@ export async function pruneExpiredSpansEverywhere(
 }
 
 /** The agent name an installation test-proposal completion's span carries. */
-export const TEST_PROPOSAL_AGENT_NAME = 'automate-test-proposals';
+export const TEST_PROPOSAL_AGENT_NAME = 'lupin-test-proposals';
 
 /**
  * One installation completion, as a `self` span. Never content. `agentName` tells chat
@@ -251,7 +251,7 @@ export async function recordSelfSpan(
       durationMs: span.durationMs,
       status: span.status,
       errorType: clip(span.errorType),
-      serviceName: 'automate-api',
+      serviceName: 'lupin-api',
       content: null,
       receivedAt: now,
       expiresAt: new Date(now.getTime() + DEFAULT_TRACE_RETENTION_DAYS * DAY_MS),
@@ -391,7 +391,7 @@ function metricOf(card: Scorecard): DimensionMetric | null {
   return {
     dimension: 'agent-quality',
     metric: 'agent-runtime',
-    tool: { name: 'automate-agent-runtime', version: null },
+    tool: { name: 'lupin-agent-runtime', version: null },
     score: card.score,
     summary: `Agent runtime ${card.score.toFixed(0)} / 100 over ${String(card.windowDays)} days, limited by ${String(card.cappedBy)}`,
   };

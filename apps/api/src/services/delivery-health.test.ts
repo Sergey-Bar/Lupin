@@ -48,7 +48,7 @@ function reading(dora: Scorecard, gateOnDelivery = false): DeliveryReading {
         : {
             dimension: 'delivery',
             metric: 'dora',
-            tool: { name: 'automate-delivery', version: null },
+            tool: { name: 'lupin-delivery', version: null },
             score: dora.score,
             summary: `DORA ${String(dora.score)} / 100`,
           },
@@ -73,7 +73,7 @@ async function setup(health: Record<string, unknown>, delivery: DeliveryReading 
     metric: {
       dimension: 'tests' as const,
       metric: 'qa score',
-      tool: { name: 'automate', version: null },
+      tool: { name: 'lupin', version: null },
       score: 90,
       summary: 'QA score 90',
     },

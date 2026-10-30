@@ -141,7 +141,7 @@ approximation by merge time; CI that knows the exact list sends it as `shas`.
 
 ## Policy, the grade and the gate
 
-The `health` key of `automate.config.json` takes a `delivery` block:
+The `health` key of `lupin.config.json` takes a `delivery` block:
 
 ```json
 {

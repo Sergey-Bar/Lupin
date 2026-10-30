@@ -217,7 +217,7 @@ describe('parseConfig', () => {
   it('uses COOKIE_SECRET before the compatibility alias', () => {
     const config = parseConfig({
       NODE_ENV: 'production',
-      DATABASE_URL: 'postgresql://user:pass@localhost:5432/automate',
+      DATABASE_URL: 'postgresql://user:pass@localhost:5432/lupin',
       COOKIE_SECRET: long('c'),
       SESSION_SECRET: long('s'),
       VAULT_SECRET: long('v'),

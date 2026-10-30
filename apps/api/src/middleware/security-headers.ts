@@ -23,7 +23,7 @@ export interface SecurityHeadersOptions {
    * Exact origins allowed to make credentialed cross-origin requests.
    *
    * Matched exactly, including scheme and port. There is no wildcard and no
-   * suffix match: `https://automate.example.com.evil.test` is a different origin
+   * suffix match: `https://lupin.example.com.evil.test` is a different origin
    * and must not be allowed, and a naive `endsWith` check is how that ships.
    */
   allowedOrigins: readonly string[];

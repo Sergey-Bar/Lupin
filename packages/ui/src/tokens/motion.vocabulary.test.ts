@@ -39,8 +39,8 @@ describe('motion is a stated vocabulary rather than a scattering of utilities', 
   /**
    * Four keyframes is a vocabulary only if each one is *for* something.
    *
-   * `motion.css` declared `automate-enter`, `automate-exit`, `automate-zoom-in` and
-   * `automate-zoom-out` and named what they do â€” opacity in, opacity out â€” which is two
+   * `motion.css` declared `lupin-enter`, `lupin-exit`, `lupin-zoom-in` and
+   * `lupin-zoom-out` and named what they do â€” opacity in, opacity out â€” which is two
    * effects in four costumes. A keyframe with no stated purpose is a fourth thing a
    * component may reach for, and the answer to "what should this animate" becomes "whatever
    * compiles".

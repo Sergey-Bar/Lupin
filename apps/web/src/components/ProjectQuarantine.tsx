@@ -141,15 +141,13 @@ export function ProjectQuarantine({
                     </TableCell>
                     <TableCell>{`${String(entry.daysQuarantined)} d`}</TableCell>
                     <TableCell>
-                      {entry.status === 'approved' && entry.quarantinedBy === 'automate'
+                      {entry.status === 'approved' && entry.quarantinedBy === 'lupin'
                         ? `${String(entry.cleanStreak)} / ${String(view.value.policy.releaseAfter)}`
                         : '—'}
                     </TableCell>
                     <TableCell>
                       <Badge variant={STATUS_TONE[entry.status]}>
-                        {entry.quarantinedBy === 'automate'
-                          ? `${entry.status} · auto`
-                          : entry.status}
+                        {entry.quarantinedBy === 'lupin' ? `${entry.status} · auto` : entry.status}
                       </Badge>
                     </TableCell>
                   </TableRow>

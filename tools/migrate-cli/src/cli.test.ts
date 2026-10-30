@@ -19,7 +19,7 @@ const pgMock = vi.hoisted(() => {
 
 vi.mock('pg', () => ({ default: { Pool: pgMock.Pool }, Pool: pgMock.Pool }));
 
-const TARGET = 'postgres://user:pass@localhost:5432/automate';
+const TARGET = 'postgres://user:pass@localhost:5432/lupin';
 
 let directory: string;
 let savedExitCode: typeof process.exitCode;

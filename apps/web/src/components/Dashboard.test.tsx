@@ -203,7 +203,7 @@ describe('the dashboard', () => {
     renderDashboard(qaWithScore(), makeApi({ getQuarantine: vi.fn(async () => []) }));
     await waitFor(() => expect(screen.getByTestId('kpi-health')).toHaveTextContent('72'));
     expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toBeInTheDocument();
-    expect(screen.getByTestId('dashboard-subject')).toHaveTextContent('Automate · /repos/automate');
+    expect(screen.getByTestId('dashboard-subject')).toHaveTextContent('Lupin · /repos/lupin');
     expect(screen.getByTestId('kpi-health')).toHaveTextContent('limited by security at 0.00');
     // 80% → 90% is ten points better, and says so in words as well as colour.
     expect(screen.getByTestId('kpi-pass-rate')).toHaveTextContent('90.0%');
@@ -386,7 +386,7 @@ describe('the dashboard', () => {
   it('shows the loading state while the reads are in flight', async () => {
     renderDashboard(makeQa({ getScore: vi.fn(() => new Promise<never>(() => undefined)) }));
     await waitFor(() =>
-      expect(screen.getByTestId('dashboard-loading')).toHaveTextContent('Reading Automate'),
+      expect(screen.getByTestId('dashboard-loading')).toHaveTextContent('Reading Lupin'),
     );
   });
 

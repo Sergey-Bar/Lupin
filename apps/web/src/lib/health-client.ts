@@ -209,7 +209,7 @@ export function createHealthClient(baseUrl = '', fetchImpl: typeof fetch = fetch
     // installation key, which signs in as the admin through the existing login.
     signIn: async (credential) => {
       const trimmed = credential.trim();
-      if (trimmed.startsWith('amt_')) {
+      if (trimmed.startsWith('lup_')) {
         await post('/api/v1/auth/token-login', { token: trimmed }, z.object({}).passthrough());
       } else {
         await post('/api/v1/auth/login', { apiKey: trimmed }, z.object({}).passthrough());

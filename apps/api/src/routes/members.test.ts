@@ -24,10 +24,10 @@ const DEFAULT_WORKSPACE = 'ws-1';
 const INSTALLATION = '00000000-0000-4000-8000-000000000001';
 
 const CALLERS: Record<string, Caller> = {
-  amt_admin: { actor: 'token:admin', role: 'admin', uploaderFor: null },
-  amt_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
+  lup_admin: { actor: 'token:admin', role: 'admin', uploaderFor: null },
+  lup_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
   // The installation's own admin: what the installation session signs in.
-  amt_installation: { actor: 'session', role: 'admin', uploaderFor: null },
+  lup_installation: { actor: 'session', role: 'admin', uploaderFor: null },
 };
 
 async function person(db: MigratedDb, email: string, workspace: string, role: string) {
@@ -78,7 +78,7 @@ async function harness() {
   // Ana signed in: a person, and an admin of the default workspace.
   const callers: Record<string, Caller> = {
     ...CALLERS,
-    amt_ana: { actor: `user:${ana}`, role: 'admin', uploaderFor: null },
+    lup_ana: { actor: `user:${ana}`, role: 'admin', uploaderFor: null },
   };
   const access: CallerResolver = {
     mode: 'enforced',
@@ -101,7 +101,7 @@ async function harness() {
   /** Requests to one workspace's members routes, as its composition serves them. */
   const callIn =
     (workspaceId: string) =>
-    (method: string, path: string, body?: unknown, token = 'amt_admin') =>
+    (method: string, path: string, body?: unknown, token = 'lup_admin') =>
       (apps.get(workspaceId) as Hono).request(path, {
         method,
         headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
@@ -224,7 +224,7 @@ describe('members', () => {
 
   it('is the admin’s alone, and refuses a body it cannot read', async () => {
     const { call, bo } = await harness();
-    expect((await call('GET', '/api/v1/members', undefined, 'amt_viewer')).status).toBe(403);
+    expect((await call('GET', '/api/v1/members', undefined, 'lup_viewer')).status).toBe(403);
     expect((await call('PATCH', `/api/v1/members/${bo}`, { role: 'owner' })).status).toBe(400);
     expect((await call('PATCH', `/api/v1/members/${bo}`, {})).status).toBe(400);
   });
@@ -290,7 +290,7 @@ describe('a person another workspace shares', () => {
     expect(await sessions.findValid('h-bo', new Date())).toBeDefined();
     // Ana is an admin of the default workspace: she decides the account.
     expect(
-      (await call('PATCH', `/api/v1/members/${bo}`, { disabled: true }, 'amt_ana')).status,
+      (await call('PATCH', `/api/v1/members/${bo}`, { disabled: true }, 'lup_ana')).status,
     ).toBe(200);
     expect(await disabledAt(bo)).not.toBeNull();
     expect(await sessions.findValid('h-bo', new Date())).toBeUndefined();
@@ -301,7 +301,7 @@ describe('a person another workspace shares', () => {
           'PATCH',
           `/api/v1/members/${bo}`,
           { disabled: false },
-          'amt_installation',
+          'lup_installation',
         )
       ).status,
     ).toBe(200);
@@ -314,13 +314,13 @@ describe('a person another workspace shares', () => {
       (await call('POST', '/api/v1/members', { email: 'eve@example.com', role: 'viewer' })).status,
     ).toBe(201);
     // A viewer here, and the only admin of ws-2: disabling her would leave ws-2 with nobody.
-    const last = await call('PATCH', `/api/v1/members/${other}`, { disabled: true }, 'amt_ana');
+    const last = await call('PATCH', `/api/v1/members/${other}`, { disabled: true }, 'lup_ana');
     expect(last.status).toBe(409);
     expect(await codeOf(last)).toBe('LAST_ADMIN');
     expect(await disabledAt(other)).toBeNull();
     await person(db, 'dee@example.com', 'ws-2', 'admin');
     expect(
-      (await call('PATCH', `/api/v1/members/${other}`, { disabled: true }, 'amt_ana')).status,
+      (await call('PATCH', `/api/v1/members/${other}`, { disabled: true }, 'lup_ana')).status,
     ).toBe(200);
     expect(await disabledAt(other)).not.toBeNull();
   });

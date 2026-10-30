@@ -20,7 +20,7 @@ export function buildDiagnostics(engine, options = {}) {
   const scrub = (value) => JSON.parse(redactPersonal(JSON.stringify(value), { roots }));
   return scrub({
     generatedAt: now().toISOString(),
-    note: 'Review this file before sharing it. AUTOMATE (local) never sends it anywhere.',
+    note: 'Review this file before sharing it. Lupin Local never sends it anywhere.',
     versions: {
       engine: engine.version,
       node: process.version,

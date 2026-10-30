@@ -30,7 +30,7 @@ function install(report?: ProcessFailureReporter): {
     unhandledRejection: new Set(process.listeners('unhandledRejection')),
     uncaughtException: new Set(process.listeners('uncaughtException')),
   };
-  const dispose = installProcessFailureHandlers('automate-worker', report);
+  const dispose = installProcessFailureHandlers('lupin-worker', report);
   disposers.push(dispose);
   const added = (): number =>
     process.listeners('unhandledRejection').filter((l) => !before.unhandledRejection.has(l))
@@ -69,14 +69,14 @@ describe('worker process failure handlers', () => {
 
     expect(reports).toEqual([
       {
-        service: 'automate-worker',
+        service: 'lupin-worker',
         kind: 'unhandledRejection',
         code: 'Error',
         message: 'lease renewal exploded',
         stack: expect.any(String),
       },
       {
-        service: 'automate-worker',
+        service: 'lupin-worker',
         kind: 'uncaughtException',
         code: 'TypeError',
         message: 'undefined is not a function',
@@ -113,7 +113,7 @@ describe('worker process failure handlers', () => {
     installed.unhandledRejection[0](new Error('store is unavailable'), Promise.resolve());
 
     expect(errors).toHaveBeenCalledWith(
-      'automate-worker unhandledRejection (Error): store is unavailable',
+      'lupin-worker unhandledRejection (Error): store is unavailable',
     );
   });
 
@@ -128,7 +128,7 @@ describe('worker process failure handlers', () => {
       installed.unhandledRejection[0](new Error('store is unavailable'), Promise.resolve()),
     ).not.toThrow();
     expect(broken).toHaveBeenCalledTimes(1);
-    expect(errors).toHaveBeenCalledWith('automate-worker unhandledRejection (Error)');
+    expect(errors).toHaveBeenCalledWith('lupin-worker unhandledRejection (Error)');
   });
 
   it('does not throw when both the reporter and stderr are gone', () => {

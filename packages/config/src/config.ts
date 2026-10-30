@@ -592,7 +592,7 @@ function oidcSignIn(parsed: z.infer<typeof EnvironmentSchema>): Pick<AppConfig, 
   }
   if (parsed.OIDC_CLIENT_SECRET === undefined) {
     throw new Error(
-      'OIDC_CLIENT_SECRET is required with OIDC_CLIENT_ID: register Automate with your identity ' +
+      'OIDC_CLIENT_SECRET is required with OIDC_CLIENT_ID: register Lupin with your identity ' +
         'provider as a confidential web application and copy its client secret.',
     );
   }

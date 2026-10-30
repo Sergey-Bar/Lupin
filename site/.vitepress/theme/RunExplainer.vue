@@ -15,7 +15,7 @@ const scenarios = [
     tone: 'flaky',
     attempts: ['Failed', 'Passed'],
     explanation:
-      'The first attempt failed and the retry passed. Automate preserves both attempts and reports the test as flaky.',
+      'The first attempt failed and the retry passed. Lupin preserves both attempts and reports the test as flaky.',
   },
   {
     label: 'Fail again',

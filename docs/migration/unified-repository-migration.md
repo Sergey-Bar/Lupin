@@ -42,11 +42,11 @@ This specification uses the current unified repository as the target base and po
 | System                        | Immutable baseline                                                                                            | Provenance confidence                                                               |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Unified target                | `01cc19c8167e0e8365928862de463fd50caaee5c` plus the explicitly reviewed current working-tree changes          | High for inspected files; working tree is dirty                                     |
-| AutoMate source               | `https://github.com/Sergey-Bar/AutoMate.git` at `bce507ecc36e9f5cc33b3016741238b7fc834f0f`                    | High; exact commit inspected with `git show`                                        |
-| Automate-Dashboard source     | `https://github.com/Sergey-Bar/Automate-Dashboard.git` at `b5a068538e433e09d816292852dba2a0a87acf22`          | Commit existence confirmed; source not materialized in this plan-only session       |
+| Lupin source                  | `https://github.com/Sergey-Bar/Lupin.git` at `bce507ecc36e9f5cc33b3016741238b7fc834f0f`                       | High; exact commit inspected with `git show`                                        |
+| Lupin-Dashboard source        | `https://github.com/Sergey-Bar/Lupin-Dashboard.git` at `b5a068538e433e09d816292852dba2a0a87acf22`             | Commit existence confirmed; source not materialized in this plan-only session       |
 | QA-Doctor / Mjölnir reference | `https://github.com/Sergey-Bar/Mjolnir.git` at `d981ba356313ae8cea0538ca85c665e88b84c530`, clean local `main` | High; inspected as a read-only evidence/reporting reference, not a migration source |
 
-A full untracked Dashboard candidate exists at `AutoMate/dashboard/`, but it identifies a different upstream and is not byte-verified. It is evidence for investigation only, not an authoritative migration input.
+A full untracked Dashboard candidate exists at `Lupin/dashboard/`, but it identifies a different upstream and is not byte-verified. It is evidence for investigation only, not an authoritative migration input.
 
 ### Target outcome
 
@@ -62,14 +62,14 @@ A single-repository, single-tenant, workspace-ready **automation control plane**
 - framework-independent business logic in a small number of deep workspace packages;
 - one root toolchain and one executable governance command surface.
 
-The unified repository is the only active development codebase. The pinned Dashboard baseline is the primary product/UX reference, not a repository to merge wholesale. AutoMate is frozen as a temporary extraction source and archived only after capability, data, consumer, and rollback gates pass.
+The unified repository is the only active development codebase. The pinned Dashboard baseline is the primary product/UX reference, not a repository to merge wholesale. Lupin is frozen as a temporary extraction source and archived only after capability, data, consumer, and rollback gates pass.
 
 ## 2. Confirmed product decisions
 
 1. **Tenancy:** one installation owns one tenant; `workspace_id` is explicit in domain data so multiple workspaces can be added later without redesigning identifiers.
 2. **Runtime topology:** one control-plane monolith plus one separately deployable runner process. API, web, and runner are built from the monorepo, but the dashboard never executes customer automation code.
 3. **Product:** a unified automation control plane, KPI dashboard, and pluggable runner for browser, API, performance, security, mobile, and arbitrary containerized tools.
-4. **Repository authority:** develop only in the current unified repository. Use Dashboard as the UX reference and AutoMate as a frozen source archive.
+4. **Repository authority:** develop only in the current unified repository. Use Dashboard as the UX reference and Lupin as a frozen source archive.
 5. **Scope:** core-first parity. A capability ships only when it works end to end with persistence, UI, contracts, runner behavior, and tests. Mock and half-wired surfaces are not parity.
 6. **Identity:** installation-scoped credentials, revocable server-side sessions, scoped service credentials, and separately enrolled runner identities. Users, RBAC, SAML, and tenant administration are deferred.
 7. **Run identity:** internal UUID plus unique workspace-scoped external run ID.
@@ -77,7 +77,7 @@ The unified repository is the only active development codebase. The pinned Dashb
 9. **Artifacts:** S3-compatible object storage in hosted environments; filesystem adapter for local development.
 10. **Reporter compatibility:** accept the legacy flat v1 protocol through a time-boxed adapter; new clients use the canonical contract.
 11. **AI providers:** consume Kilo Gateway dynamically rather than embedding or freezing Kilo's provider catalog. Ollama remains an optional direct self-hosted adapter.
-12. **Market composition:** Automate owns the canonical control plane, runner protocol, normalized evidence model, and product dashboard. External repositories are standards, tool engines, optional execution backends, or design references—not competing systems of record.
+12. **Market composition:** Lupin owns the canonical control plane, runner protocol, normalized evidence model, and product dashboard. External repositories are standards, tool engines, optional execution backends, or design references—not competing systems of record.
 
 ## 3. Current-state assessment
 
@@ -99,7 +99,7 @@ The unified repository is the only active development codebase. The pinned Dashb
 - The target assumes UUID run IDs while the API and source reporter accept arbitrary strings: `packages/db/src/schema/dashboard.ts:27-30,74-80,89-94` versus `apps/api/src/routes/reporter.ts` and the provisional Dashboard reporter.
 - The migration tool is a prototype row copier. It lacks source-engine adapters, durable checkpoints, transactions across waves, target catalog validation, reconciliation, artifact transfer, vault conversion, and rollback: `tools/migrate-cli/src/migrate.ts:223-278,319-374`.
 - Production config is read in two places and directly bypasses the config facade: `apps/api/src/config.ts:15-27`, `apps/api/src/index.ts:34-55,80-111`.
-- The tracked router depends on ignored local `routes/automate/**` files because `.gitignore:34-37` unintentionally matches `automate` paths on case-insensitive filesystems.
+- The tracked router depends on ignored local `routes/lupin/**` files because `.gitignore:34-37` unintentionally matches `lupin` paths on case-insensitive filesystems.
 - Current Compose, nginx, CI, environment, and documentation files describe different systems.
 
 ### 3.3 Source parity summary
@@ -126,12 +126,12 @@ The unified repository is the only active development codebase. The pinned Dashb
 
 ### 3.4 Repository disposition
 
-| Repository               | Future state                                                 | Permitted use during migration                                                                                                                                    |
-| ------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current unified Automate | Sole active development repository and release source        | Implement all approved product behavior, runner, dashboard, governance, and deployment                                                                            |
-| Automate-Dashboard       | Primary UX/product reference and legacy data/protocol source | Port verified behavior and data semantics; do not merge its legacy server/migration architecture or continue feature development there                            |
-| AutoMate                 | Frozen extraction source and temporary rollback archive      | Preserve unique runner, protocol, connector, validation, and automation semantics until explicitly ported/replaced; then archive/delete after zero-consumer gates |
-| QA-Doctor / Mjölnir      | Read-only evidence/trust/ingestion reference                 | Copy or adapt approved ideas with tests; do not import its static-report CLI as the product architecture or track its generated artifacts                         |
+| Repository            | Future state                                                 | Permitted use during migration                                                                                                                                    |
+| --------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Current unified Lupin | Sole active development repository and release source        | Implement all approved product behavior, runner, dashboard, governance, and deployment                                                                            |
+| Lupin-Dashboard       | Primary UX/product reference and legacy data/protocol source | Port verified behavior and data semantics; do not merge its legacy server/migration architecture or continue feature development there                            |
+| Lupin                 | Frozen extraction source and temporary rollback archive      | Preserve unique runner, protocol, connector, validation, and automation semantics until explicitly ported/replaced; then archive/delete after zero-consumer gates |
+| QA-Doctor / Mjölnir   | Read-only evidence/trust/ingestion reference                 | Copy or adapt approved ideas with tests; do not import its static-report CLI as the product architecture or track its generated artifacts                         |
 
 ## 4. Target repository architecture
 
@@ -482,7 +482,7 @@ Reference: Kilo Gateway documents an OpenAI-compatible endpoint and live model c
 
 | Conflict                                                                    | Canonical resolution                                                                             |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| All three roots are named `automate`                                        | Keep only the unified root manifest/lockfile; source manifests are read-only inputs              |
+| All three roots are named `lupin`                                           | Keep only the unified root manifest/lockfile; source manifests are read-only inputs              |
 | Legacy `apps/web` collides with target `apps/web`                           | Port behavior into the target app; never overlay trees                                           |
 | Fastify source servers vs Hono target                                       | Reimplement source use cases behind Hono routes; do not retain Fastify runtime                   |
 | `@lupin/shared`, `@lupin/dashboard-shared`, and `@lupin/shared-contracts`   | Keep `@lupin/shared-contracts`; port and deduplicate schemas                                     |
@@ -551,7 +551,7 @@ Rules:
 - Occurrence identity (`workspace/run/attempt`) is separate from semantic check/evidence identity.
 - Duplicate report shards and parallel-worker ordering are contract-tested.
 - SARIF, Allure HTML, JUnit XML, and machine-contract exports are optional projections/artifacts, never competing sources of truth.
-- The canonical machine export is a versioned read projection such as `automate.run-export@<version>` containing completeness, proof, producer identity, checks, attempts, steps, evidence references, and artifact digests.
+- The canonical machine export is a versioned read projection such as `lupin.run-export@<version>` containing completeness, proof, producer identity, checks, attempts, steps, evidence references, and artifact digests.
 
 ### 6.6 QA-Doctor / Mjölnir integration boundary
 
@@ -570,7 +570,7 @@ Reimplement or reference these proven concepts:
 
 Do not copy these Mjölnir shapes or unwired features:
 
-- flat `ForensicsReport` or `EvidenceRecord` as the Automate system of record;
+- flat `ForensicsReport` or `EvidenceRecord` as the Lupin system of record;
 - boolean `verified` or `[UNPROVEN]` title sentinels;
 - retry inference from repeated IDs alone;
 - Playwright parsing that keeps only the first/last result and drops steps, attachments, stdout/stderr, and project identity;
@@ -588,7 +588,7 @@ Reference evidence in `C:\VS-Code-Projects\Github\QA-Doctor`:
 - `src/engine/run-identity.ts:13-73` — producer/config identity concepts, with canonical JSON to be corrected.
 - `docs/ARCHITECTURE.md:5-9,77-87` and `docs/research/verification-trust-ecosystem-2026.md:69-82,196-241,459-477` — local CLI boundaries, trust/completeness rules, runner, and KPI gaps.
 
-QA-Doctor supplies evidence and ingestion policy. Automate supplies scheduling, durable execution, distributed runners, product database, OCI images, KPI dashboards, and orchestration.
+QA-Doctor supplies evidence and ingestion policy. Lupin supplies scheduling, durable execution, distributed runners, product database, OCI images, KPI dashboards, and orchestration.
 
 ## 7. Rationalization and pruning specification
 
@@ -598,7 +598,7 @@ The static audit found approximately 16,000–24,000 removable source lines and 
 
 #### Legacy checkouts and generated state
 
-- `/AutoMate/`, including its nested `dashboard/` candidate, installed dependencies, SQLite/WAL/SHM files, logs, reports, and agent state.
+- `/Lupin/`, including its nested `dashboard/` candidate, installed dependencies, SQLite/WAL/SHM files, logs, reports, and agent state.
 - `.artifacts/`, tracked Playwright `test-results/`, tracked `__pycache__/*.pyc`, `*.log`, local DB/WAL/SHM files, `dist/`, `coverage/`, `.turbo/`, `.vite/`, and stale worktrees.
 
 Before deletion, archive both pinned source commits and produce checksums for any retained data/fixtures. Never delete the only local copy of an unmigrated database or vault.
@@ -628,7 +628,7 @@ After the canonical Compose/edge proxy passes smoke tests, delete:
 - `docker-compose.yml`, `infra/compose/docker-compose.unified.yml`, and `docker-compose.test.yml` after their valid behavior is moved under `infra/compose/`.
 - redundant root/docker/nginx configurations after consolidation under `infra/nginx/`.
 - `scripts/first-boot.sh`, `scripts/first-boot.ps1`, `docker/init-entrypoint.sh`.
-- obsolete `scripts/perf-smoke.ts` and legacy `perf/automate-smoke.js`, `perf/dashboard-smoke.js`, `perf/dashboard-load.js` after equivalent current scenarios are defined.
+- obsolete `scripts/perf-smoke.ts` and legacy `perf/lupin-smoke.js`, `perf/dashboard-smoke.js`, `perf/dashboard-load.js` after equivalent current scenarios are defined.
 - `scripts/automation-score.mjs`; use native Playwright exit status and optional JSON reporter output.
 - `scripts/unify-preflight.mjs` only after replacing it with a repository-boundary check for nested roots, duplicate lockfiles, forbidden env names, and generated artifacts.
 
@@ -660,7 +660,7 @@ Do not delete source contracts or tests before their canonical replacement passe
 
 ### 7.3 Repository-boundary repair
 
-Change legacy ignore rules from broad `Automate/`/`AutoMate/` patterns to a root-only `/AutoMate/` rule. The current rules at `.gitignore:34-37` can match `apps/web/src/routes/automate/**` on Windows and make a clean checkout differ from the local machine.
+Change legacy ignore rules from broad `Lupin/`/`Lupin/` patterns to a root-only `/Lupin/` rule. The current rules at `.gitignore:34-37` can match `apps/web/src/routes/lupin/**` on Windows and make a clean checkout differ from the local machine.
 
 The repository boundary check must fail when:
 
@@ -687,7 +687,7 @@ No qualifying repository supplies the entire target:
 - Playwright, API, load, security, mobile, and arbitrary OCI tools;
 - a complete permissive open-source license.
 
-Automate therefore owns the product core and composes the following layers.
+Lupin therefore owns the product core and composes the following layers.
 
 ### 8.2 Dashboarding and reporting shortlist
 
@@ -743,11 +743,11 @@ A repeated winner is intentional: roles need different depth of the same durable
 | QA Lead / Test Manager                   | ReportPortal (2,031) | Playwright (96,636) | Testkube (1,661), inventory/scheduling/product benchmark | Robot Framework (11,914), broad existing-suite compatibility            |
 | Automation Platform Engineer / Architect | ReportPortal (2,031) | Playwright (96,636) | Testkube (1,661), closest QA control-plane reference     | Robot Framework (11,914), language-neutral adapter layer                |
 
-The matrix is a curated market benchmark, not an instruction to embed all 32 choices. Automate implements the common control plane once and supplies role-specific views over the same normalized data.
+The matrix is a curated market benchmark, not an instruction to embed all 32 choices. Lupin implements the common control plane once and supplies role-specific views over the same normalized data.
 
 ### 8.6 Adoption tiers
 
-**Build and integrate in Automate:**
+**Build and integrate in Lupin:**
 
 - canonical contracts, database, scheduler, runner protocol, product dashboard, and KPI read models;
 - Playwright first;
@@ -956,7 +956,7 @@ Before implementation claims parity or imports data, materialize both pinned com
 - external config, artifact, blob, and vault locations;
 - active clients and reporter versions.
 
-If the pinned Dashboard commit differs materially from `AutoMate/dashboard/`, discard candidate-derived assumptions and regenerate the Dashboard parity/dependency map from the pinned tree.
+If the pinned Dashboard commit differs materially from `Lupin/dashboard/`, discard candidate-derived assumptions and regenerate the Dashboard parity/dependency map from the pinned tree.
 
 ### 10.2 Migration tool redesign
 
@@ -1039,7 +1039,7 @@ Each phase should be implemented as focused changes with its own gate. Do not co
 2. Record the current dirty-file inventory and classify each change: keep, discard, or reimplement.
 3. Materialize both pinned source commits in isolated worktrees.
 4. Verify Dashboard commit provenance against the local candidate and record it as the UX reference, not an overlay source.
-5. Freeze AutoMate development and record its active consumers, production traffic, background jobs, data, and unique capabilities.
+5. Freeze Lupin development and record its active consumers, production traffic, background jobs, data, and unique capabilities.
 6. Produce `source-manifest` inventories for code, databases, artifacts, credentials, and active clients.
 7. Pin QA-Doctor/Mjölnir at `d981ba3` in a traceability matrix and classify each concept as copy, adapt, cite, or reject.
 8. Replace stale parity claims with a capability register using: real, mock, missing, deferred, obsolete.
@@ -1067,7 +1067,7 @@ Each phase should be implemented as focused changes with its own gate. Do not co
 5. Implement bounded JUnit parsing and lossless Playwright JSON ingestion; add k6, ZAP, Robot, and generic CLI adapters.
 6. Define the runner enrollment, capability, lease, heartbeat, event, cancellation, and terminal-state protocol.
 7. Add deterministic ordering, duplicate-shard handling, recursive canonical fingerprints, and toolchain provenance.
-8. Implement `automate.run-export@<version>` and SARIF as output-only projections.
+8. Implement `lupin.run-export@<version>` and SARIF as output-only projections.
 9. Add fixture-driven producer/consumer and migration tests for every transformation.
 
 **Gate:** no production module defines a competing public schema; unknown/partial evidence is never a pass; v1/v2, runner protocol, and every producer fixture pass contract tests.
@@ -1159,7 +1159,7 @@ Each phase should be implemented as focused changes with its own gate. Do not co
 3. Delete generated reports, test results, caches, local databases, and nested checkout residue.
 4. Replace historical release/readiness documents with current ADRs/runbooks and a generated capability register.
 5. Revoke legacy credentials and remove legacy routes only after zero-active-consumer evidence.
-6. Archive the pinned AutoMate and Dashboard baselines; delete AutoMate only after retention and rollback requirements are signed off.
+6. Archive the pinned Lupin and Dashboard baselines; delete Lupin only after retention and rollback requirements are signed off.
 
 **Gate:** one active repository, one lockfile, one contract authority, three intentional deployables, no nested Git roots, no production mocks, and all governance checks green.
 
@@ -1183,9 +1183,9 @@ The migration is complete only when all of the following are true:
 - Product KPIs drill through to canonical affected runs/checks; Grafana remains optional and bounded-cardinality.
 - Kilo model discovery is dynamic and no static provider catalog is required.
 - Every enabled Playwright/k6/ZAP/additional tool path is real end to end; deferred capabilities are absent or explicitly feature-disabled without mock responses.
-- At most one external orchestration backend is enabled behind the execution-provider port; Automate remains the canonical control plane and product dashboard.
+- At most one external orchestration backend is enabled behind the execution-provider port; Lupin remains the canonical control plane and product dashboard.
 - Source/target row, aggregate, FK, path, and credential reconciliation has zero unexplained discrepancies.
-- Legacy traffic is zero, credentials are revoked, rollback has expired, source deployments are decommissioned, and AutoMate is archived/deleted under the approved retention decision.
+- Legacy traffic is zero, credentials are revoked, rollback has expired, source deployments are decommissioned, and Lupin is archived/deleted under the approved retention decision.
 
 ## 14. Explicitly out of scope
 
@@ -1193,14 +1193,14 @@ The migration is complete only when all of the following are true:
 - MCP, visual-diff baselines, predictive/advanced analytics, NL-to-SQL, code-generation UI, agent repair workflows, and i18n/RTL.
 - A long-lived Webwright service, desktop/Tauri applications, and the legacy setup/admin CLI.
 - Microservice decomposition beyond the single dedicated runner, Redis, Kafka, Kubernetes, Helm, Terraform, read replicas, and table partitioning.
-- Embedding a complete external control plane such as Testkube, Windmill, Trigger.dev, Kestra, or Woodpecker as the Automate system of record.
+- Embedding a complete external control plane such as Testkube, Windmill, Trigger.dev, Kestra, or Woodpecker as the Lupin system of record.
 - Branding changes or renaming the `@lupin` package namespace.
 
 Each deferred item requires a separate ADR, acceptance criteria, and migration slice; none should remain as a mock in the launch product.
 
 ## 15. Evidence index
 
-### Exact AutoMate baseline
+### Exact Lupin baseline
 
 - `bce507e:apps/server/src/db/schema.ts:20-40` — text primary/foreign keys and source table shape.
 - `bce507e:apps/server/src/db/vault/repository.ts:15-79` — separate vault schema and encryption round trip.
@@ -1215,16 +1215,16 @@ Each deferred item requires a separate ADR, acceptance criteria, and migration s
 
 ### Provisional Dashboard candidate, pending pinned-commit verification
 
-- `AutoMate/dashboard/apps/server/src/db/schema.ts` — `pgTable` source model.
-- `AutoMate/dashboard/apps/server/drizzle/meta/_journal.json:1-16` and `AutoMate/dashboard/apps/server/drizzle/0000_mighty_malcolm_colcord.sql:1-20` — SQLite metadata/SQL paired with PostgreSQL runtime.
-- `AutoMate/dashboard/apps/server/src/services/auth.ts:8,103-145` — legacy session cookie/token format.
-- `AutoMate/dashboard/apps/server/src/services/vault.ts:32-94` and `apps/server/src/vault/crypto.ts:1-38` — inconsistent vault envelopes and iteration counts.
-- `AutoMate/dashboard/apps/server/src/services/startup-policy.ts:25-70` — required environment and artifact/vault directories.
-- `AutoMate/dashboard/apps/server/src/services/connector-registry.ts:18-34,115-129` — durable/in-memory connector mode split.
-- `AutoMate/dashboard/apps/server/src/services/scheduler.ts:27-45` — candidate legacy scheduler semantics requiring verification, not an accepted scheduler implementation.
-- `AutoMate/dashboard/apps/server/src/services/feature-flags.ts:80-123` — post-MVP features enabled contrary to environment/docs.
-- `AutoMate/dashboard/packages/reporter/src/index.ts:26-55,100-184,266-301` — legacy flat reporter protocol and test IDs.
-- `AutoMate/dashboard/README.md:235-249` — candidate upstream differs from the confirmed private Dashboard baseline.
+- `Lupin/dashboard/apps/server/src/db/schema.ts` — `pgTable` source model.
+- `Lupin/dashboard/apps/server/drizzle/meta/_journal.json:1-16` and `Lupin/dashboard/apps/server/drizzle/0000_mighty_malcolm_colcord.sql:1-20` — SQLite metadata/SQL paired with PostgreSQL runtime.
+- `Lupin/dashboard/apps/server/src/services/auth.ts:8,103-145` — legacy session cookie/token format.
+- `Lupin/dashboard/apps/server/src/services/vault.ts:32-94` and `apps/server/src/vault/crypto.ts:1-38` — inconsistent vault envelopes and iteration counts.
+- `Lupin/dashboard/apps/server/src/services/startup-policy.ts:25-70` — required environment and artifact/vault directories.
+- `Lupin/dashboard/apps/server/src/services/connector-registry.ts:18-34,115-129` — durable/in-memory connector mode split.
+- `Lupin/dashboard/apps/server/src/services/scheduler.ts:27-45` — candidate legacy scheduler semantics requiring verification, not an accepted scheduler implementation.
+- `Lupin/dashboard/apps/server/src/services/feature-flags.ts:80-123` — post-MVP features enabled contrary to environment/docs.
+- `Lupin/dashboard/packages/reporter/src/index.ts:26-55,100-184,266-301` — legacy flat reporter protocol and test IDs.
+- `Lupin/dashboard/README.md:235-249` — candidate upstream differs from the confirmed private Dashboard baseline.
 
 ### QA-Doctor / Mjölnir reference
 

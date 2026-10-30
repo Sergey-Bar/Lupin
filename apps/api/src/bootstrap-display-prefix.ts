@@ -50,7 +50,7 @@ export function mayDeriveInstallationKey(config: Pick<AppConfig, 'nodeEnv'>): bo
  * for. This names the variable and says what deriving one would have cost.
  */
 export const NO_INSTALLATION_KEY =
-  'LUPIN_INSTALLATION_KEY is required in production. Automate will not derive one: a ' +
+  'LUPIN_INSTALLATION_KEY is required in production. Lupin will not derive one: a ' +
   'bootstrapped key is a credential nobody chose, derived from a default that is in the ' +
   'repository, and it is written to the installation_keys table on first boot. Set a ' +
   '32+ character value, or run with NODE_ENV=development for the local sample.';

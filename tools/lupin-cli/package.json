@@ -6,7 +6,7 @@
   "description": "A dependency-free CLI for CI: upload reports, ask for the gate, push a deployment, send agent-config files.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sergey-Bar/AutoMate.git",
+    "url": "git+https://github.com/Sergey-Bar/Lupin.git",
     "directory": "tools/lupin-cli"
   },
   "files": [

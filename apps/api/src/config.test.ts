@@ -13,7 +13,7 @@ afterEach(() => {
 
 const OBJECT_STORE_ENV = {
   OBJECT_STORE_ENDPOINT: 'https://objects.example.com',
-  OBJECT_STORE_BUCKET: 'automate-artifacts',
+  OBJECT_STORE_BUCKET: 'lupin-artifacts',
   OBJECT_STORE_REGION: 'eu-central-1',
   OBJECT_STORE_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
   OBJECT_STORE_SECRET_ACCESS_KEY: 'secret-access-key-value',
@@ -69,7 +69,7 @@ describe('getConfig', () => {
     for (const [key, value] of Object.entries(OBJECT_STORE_ENV)) process.env[key] = value;
     expect(getConfig().objectStore).toEqual({
       endpoint: 'https://objects.example.com',
-      bucket: 'automate-artifacts',
+      bucket: 'lupin-artifacts',
       region: 'eu-central-1',
       accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
       secretAccessKey: 'secret-access-key-value',
@@ -102,7 +102,7 @@ describe('readObjectStoreSettings', () => {
     expect(() =>
       readObjectStoreSettings({
         OBJECT_STORE_ENDPOINT: 'https://objects.example.com',
-        OBJECT_STORE_BUCKET: 'automate-artifacts',
+        OBJECT_STORE_BUCKET: 'lupin-artifacts',
       }),
     ).toThrow(
       'Object store configuration is incomplete; set OBJECT_STORE_REGION, OBJECT_STORE_ACCESS_KEY_ID, OBJECT_STORE_SECRET_ACCESS_KEY',
@@ -110,8 +110,8 @@ describe('readObjectStoreSettings', () => {
   });
 
   it('rejects an unusable endpoint, boolean, or bound', () => {
-    const complete = { ...OBJECT_STORE_ENV, OBJECT_STORE_BUCKET: 'Automate' };
-    expect(() => readObjectStoreSettings({ ...complete, OBJECT_STORE_BUCKET: 'Automate' })).toThrow(
+    const complete = { ...OBJECT_STORE_ENV, OBJECT_STORE_BUCKET: 'Lupin' };
+    expect(() => readObjectStoreSettings({ ...complete, OBJECT_STORE_BUCKET: 'Lupin' })).toThrow(
       'OBJECT_STORE_BUCKET must be a lowercase S3 bucket name',
     );
     expect(() =>

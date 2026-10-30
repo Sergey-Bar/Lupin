@@ -6,4 +6,4 @@ The runner's HTTP client, retry policy with capped jittered backoff, and an encr
 pnpm --filter @lupin/runner-sdk test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

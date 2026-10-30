@@ -1,4 +1,4 @@
-// Ported from Automate/apps/server/src/vault/schema.ts
+// Ported from Lupin/apps/server/src/vault/schema.ts
 // Original schema is a raw SQLite CREATE TABLE (not managed by Drizzle Kit).
 // When migrating to Postgres, this table is brought under Drizzle Kit migration management.
 // SQLite → PostgreSQL type adaptations:

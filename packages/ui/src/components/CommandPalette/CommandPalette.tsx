@@ -22,7 +22,7 @@ export interface CommandPaletteProps extends HTMLAttributes<HTMLDivElement> {
   onOpenChange?: (open: boolean) => void;
 }
 
-const RECENT_KEY = 'automate-cmd-recent';
+const RECENT_KEY = 'lupin-cmd-recent';
 const MAX_RECENT = 8;
 
 export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(

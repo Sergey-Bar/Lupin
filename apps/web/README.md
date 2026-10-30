@@ -6,4 +6,4 @@ The web console: React 19, TanStack Router file routes in `src/routes`, and Tail
 pnpm --filter @lupin/unified-web dev
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

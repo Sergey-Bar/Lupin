@@ -229,7 +229,7 @@ describe('Reporter routes — versioned format', () => {
     expect(body['version']).toBe('1');
   });
 
-  it('accepts a canonical automate.run@2 event and returns 202', async () => {
+  it('accepts a canonical lupin.run@2 event and returns 202', async () => {
     const app = buildApp();
     const res = await app.request('/api/v1/reporter/events', {
       method: 'POST',

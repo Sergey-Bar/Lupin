@@ -14,7 +14,7 @@ function client(overrides: Partial<HealthClient>): HealthClient {
 
 describe('QrCode', () => {
   it('draws one path of modules in the current colour, with no colour literal', () => {
-    render(<QrCode value="https://automate.local:8443/dashboard/pair?code=042137" label="link" />);
+    render(<QrCode value="https://lupin.local:8443/dashboard/pair?code=042137" label="link" />);
     const svg = screen.getByRole('img', { name: 'link' });
     const path = svg.querySelector('path');
     expect(path?.getAttribute('fill')).toBe('currentColor');
@@ -49,7 +49,7 @@ describe('PairDevicePanel', () => {
       deviceName: 'Phone',
       role: 'viewer' as const,
       expiresAt: '2026-10-25T12:10:00.000Z',
-      pairUrl: 'https://automate.local:8443/dashboard/pair?code=042137',
+      pairUrl: 'https://lupin.local:8443/dashboard/pair?code=042137',
     }));
     const { container } = render(<PairDevicePanel health={client({ issuePairingCode })} />);
     await user.type(screen.getByLabelText('Device name'), 'Phone');
@@ -114,7 +114,7 @@ describe('SessionGate', () => {
         <p>dashboard</p>
       </SessionGate>,
     );
-    await user.type(await screen.findByLabelText('Token or key'), 'amt_x');
+    await user.type(await screen.findByLabelText('Token or key'), 'lup_x');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByText('dashboard')).toBeTruthy();
   });

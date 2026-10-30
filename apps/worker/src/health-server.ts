@@ -20,7 +20,7 @@ export class WorkerHealthServer {
       if (path === '/health') {
         this.json(response, this.server ? 200 : 503, {
           status: this.server ? 'healthy' : 'starting',
-          service: 'automate-worker',
+          service: 'lupin-worker',
           version: this.options.version,
           timestamp: new Date().toISOString(),
         });
@@ -73,7 +73,7 @@ export class WorkerHealthServer {
     }
     this.json(response, ready ? 200 : 503, {
       status: ready ? 'ready' : 'not_ready',
-      service: 'automate-worker',
+      service: 'lupin-worker',
       version: this.options.version,
       timestamp: new Date().toISOString(),
     });

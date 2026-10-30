@@ -68,9 +68,9 @@ function walk(relativePath, onFile) {
 }
 
 for (const relativePath of [
-  'AutoMate',
-  'Automate',
-  'Automate-Dashboard',
+  'Lupin',
+  'Lupin',
+  'Lupin-Dashboard',
   'apps/shell',
   'docker',
   'nginx',
@@ -258,8 +258,8 @@ const ignoreLines = read('.gitignore')
   .map((line) => line.trim());
 add(
   'legacy ignore is root-anchored',
-  ignoreLines.includes('/AutoMate/') && !ignoreLines.includes('Automate/'),
-  ignoreLines.includes('/AutoMate/') ? 'root rule present' : 'root rule missing',
+  ignoreLines.includes('/Lupin/') && !ignoreLines.includes('Lupin/'),
+  ignoreLines.includes('/Lupin/') ? 'root rule present' : 'root rule missing',
 );
 
 add('root Playwright config exists', existsSync(abs('playwright.config.ts')), 'required');
@@ -272,16 +272,16 @@ add(
 const router = read('apps/web/src/router.ts');
 add(
   'web route graph has no ignored child imports',
-  !router.includes('routes/automate/'),
+  !router.includes('routes/lupin/'),
   'ignored child route imports are absent',
 );
 add(
-  'ignored automate child directory is absent',
-  !existsSync(abs('apps/web/src/routes/automate')),
+  'ignored lupin child directory is absent',
+  !existsSync(abs('apps/web/src/routes/lupin')),
   'no ignored source dependency is present',
 );
 
-const forbiddenScripts = ['automation:score', 'docker:smoke', 'automate:all', 'dashboard:all'];
+const forbiddenScripts = ['automation:score', 'docker:smoke', 'lupin:all', 'dashboard:all'];
 const presentForbiddenScripts = forbiddenScripts.filter((name) => name in scripts);
 add(
   'obsolete root scripts are absent',
@@ -296,7 +296,7 @@ for (const file of [
   '.github/workflows/unified-ci.yml',
 ]) {
   const text = read(file);
-  const hasLegacy = /(^|[^\w])AutoMate\//.test(text) || /Automate-Dashboard\//.test(text);
+  const hasLegacy = /(^|[^\w])Lupin\//.test(text) || /Lupin-Dashboard\//.test(text);
   add(`${file} has no legacy mount`, !hasLegacy, hasLegacy ? 'legacy mount found' : 'clean');
 }
 

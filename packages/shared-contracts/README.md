@@ -1,6 +1,6 @@
 # @lupin/shared-contracts
 
-Shared contract types and validation schemas for the Automate unified platform.
+Shared contract types and validation schemas for the Lupin unified platform.
 
 ## Overview
 

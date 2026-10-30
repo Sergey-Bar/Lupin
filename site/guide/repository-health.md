@@ -7,7 +7,7 @@ outline: deep
 # Repository health
 
 One letter per repository, the sentence that explains it, and the findings behind it. Every
-number comes from a scanner somebody else wrote and maintains. AutoMate reads their reports
+number comes from a scanner somebody else wrote and maintains. Lupin reads their reports
 and analyses no source code itself.
 
 ## The grade
@@ -19,7 +19,7 @@ Seven dimensions, each scored 0–100 and lettered:
 | Security     | Semgrep, gitleaks, Trivy (misconfiguration), CodeQL, Bandit, any SAST SARIF |
 | Dependencies | OSV-Scanner, Trivy (vulnerabilities and licences)                           |
 | Code quality | Any linter's SARIF (ESLint, Ruff, golangci-lint), jscpd duplication         |
-| Tests        | The QA score from the runs AutoMate already records                         |
+| Tests        | The QA score from the runs Lupin already records                            |
 | Coverage     | lcov, Cobertura, JaCoCo, Go coverprofile, an istanbul summary               |
 | Supply chain | OpenSSF Scorecard                                                           |
 | Runtime      | k6 thresholds, Lighthouse categories                                        |
@@ -42,7 +42,7 @@ unmeasured, or that has fewer than two measured dimensions, is **incomplete** an
 letter.
 
 Weights, disabled gates and the pull-request policy live under `health` in
-`automate.config.json`:
+`lupin.config.json`:
 
 ```json
 {
@@ -56,15 +56,15 @@ Weights, disabled gates and the pull-request policy live under `health` in
 
 ## Three ways to get reports in
 
-**From CI** (any host, nothing runs on the AutoMate server). Run your scanners, then send what
+**From CI** (any host, nothing runs on the Lupin server). Run your scanners, then send what
 they wrote with the action in this repository:
 
 ```yaml
 - run: semgrep scan --config p/default --sarif --output semgrep.sarif .
 - run: gitleaks dir . --report-format sarif --report-path gitleaks.sarif --exit-code 0
-- uses: Sergey-Bar/AutoMate/.github/actions/lupin-health@main
+- uses: Sergey-Bar/Lupin/.github/actions/lupin-health@main
   with:
-    url: https://automate.example.com
+    url: https://lupin.example.com
     project-id: ${{ vars.LUPIN_PROJECT_ID }}
     token: ${{ secrets.LUPIN_UPLOAD_TOKEN }}
     reports: |
@@ -93,7 +93,7 @@ Scheduled scans (**daily** or **weekly**) use the same jobs, enqueued by the wor
 ## Supply chain, accessibility, mutation and diff coverage
 
 These formats go through the same upload door, with the same token, as `format:path` lines
-for the action. None of them is run by AutoMate. Your CI writes the file, and AutoMate reads it.
+for the action. None of them is run by Lupin. Your CI writes the file, and Lupin reads it.
 
 | Format              | What it does                                                                                   |
 | ------------------- | ---------------------------------------------------------------------------------------------- |
@@ -136,7 +136,7 @@ admin role:
 
 Every component is judged as an SPDX expression. Denied licences, unlisted licences (when an
 allow list exists) and unknown licences (unless `failOnUnknown` is `false`) become
-`automate-licence` findings. They are fixed when the policy or the inventory changes. With no
+`lupin-licence` findings. They are fixed when the policy or the inventory changes. With no
 policy, nothing is judged. Provenance is verified against the trusted keys and roots at the
 server's clock, and the result is the SLSA level the evidence supports. With no trust
 configured, a signature is _not configured_, never verified. The Rekor transparency log is
@@ -175,7 +175,7 @@ that ships a matching component.
 the branch has that the default branch does not. A finding already on the default branch is
 not the pull request's to fix. With no policy configured, the gate fails only on a new
 critical finding. For a github.com repository with a token, the result is posted as an
-`automate/health` commit status and one comment that is updated on every push.
+`lupin/health` commit status and one comment that is updated on every push.
 
 ## Findings and triage
 
@@ -210,8 +210,8 @@ audit log. The run, dashboard and runner routes keep their existing access.
 
 ## Alerts
 
-When the default branch's grade falls or a new critical finding appears, AutoMate posts to a
+When the default branch's grade falls or a new critical finding appears, Lupin posts to a
 Slack channel (needs `SLACK_BOT_TOKEN`), to a webhook, or both. Webhooks must be `https`, may
 not point at a loopback or private address, and are signed. Each one carries an
-`x-automate-signature: t=<unix>,v1=<hex>` header, where `v1` is an HMAC-SHA256 of
+`x-lupin-signature: t=<unix>,v1=<hex>` header, where `v1` is an HMAC-SHA256 of
 `<unix>.<body>` under `HEALTH_WEBHOOK_SECRET`. No webhook is sent until that secret is set.

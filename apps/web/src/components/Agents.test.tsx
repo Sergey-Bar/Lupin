@@ -405,7 +405,7 @@ describe('the agents page', () => {
     expect(screen.queryByRole('button', { name: 'Run support answers' })).not.toBeInTheDocument();
   });
 
-  it('shows Automate’s own chat runtime as secondary chrome, or that it has not run', async () => {
+  it('shows Lupin’s own chat runtime as secondary chrome, or that it has not run', async () => {
     const agents = agentsDouble();
     const { unmount } = renderAgents(agents);
     const chat = await screen.findByTestId('chat-runtime');

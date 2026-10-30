@@ -499,7 +499,7 @@ describe('PlaywrightExecutionAdapter outcomes', () => {
         GITHUB_TOKEN: 'ghp-anything',
         DB_PASSWORD: 'pw',
         // Assembled, so the secret scan does not read a credential-shaped literal.
-        DATABASE_URL: ['postgres://user', 'super-secret@db/automate'].join(':'),
+        DATABASE_URL: ['postgres://user', 'super-secret@db/lupin'].join(':'),
         JOB_SECRET_VALUE_HOLDER: 'harmless',
         HOME: '/home/runner',
       },

@@ -108,7 +108,7 @@ describe('the quarantine policy', () => {
     await writeQuarantinePolicy(options, projectId, { mode: 'auto', releaseAfter: 20 });
     expect((await applyProjectQuarantinePolicy(deps, projectId)).quarantined).toEqual([KEY]);
     const [entry] = await store.list();
-    expect(entry).toMatchObject({ status: 'approved', quarantinedBy: 'automate', projectId });
+    expect(entry).toMatchObject({ status: 'approved', quarantinedBy: 'lupin', projectId });
   });
 });
 

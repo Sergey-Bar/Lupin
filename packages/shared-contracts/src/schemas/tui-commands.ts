@@ -11,7 +11,7 @@ import { QaScoreCategorySchema, QaScoreRowSchema } from './qa-score.js';
  * surface for whoever holds it. So this file enumerates **every action the TUI can
  * take**, and each one carries its own request schema. There is no `command: string`
  * and no `argv` field anywhere in it, and there is no "custom command" entry — a
- * command the operator wants to run is declared in their `automate.config.json`,
+ * command the operator wants to run is declared in their `lupin.config.json`,
  * where it is reviewable, version-controlled, and says which manifest line produced
  * it.
  *

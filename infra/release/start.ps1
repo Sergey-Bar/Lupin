@@ -1,4 +1,4 @@
-# Automate - start, stop and update a local install (Windows PowerShell 5.1 and PowerShell 7).
+# Lupin - start, stop and update a local install (Windows PowerShell 5.1 and PowerShell 7).
 #
 #   .\start.cmd                      start (first run creates .env with random secrets)
 #   .\start.cmd --profile NAME       start, recording the deployment profile in .env
@@ -25,8 +25,8 @@ $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
 
 $Docker = if ($env:LUPIN_DOCKER) { $env:LUPIN_DOCKER } else { 'docker' }
-$Project = if ($env:LUPIN_PROJECT) { $env:LUPIN_PROJECT } else { 'automate' }
-$ReleasesUrl = if ($env:LUPIN_RELEASES_URL) { $env:LUPIN_RELEASES_URL } else { 'https://api.github.com/repos/Sergey-Bar/AutoMate/releases/latest' }
+$Project = if ($env:LUPIN_PROJECT) { $env:LUPIN_PROJECT } else { 'lupin' }
+$ReleasesUrl = if ($env:LUPIN_RELEASES_URL) { $env:LUPIN_RELEASES_URL } else { 'https://api.github.com/repos/Sergey-Bar/Lupin/releases/latest' }
 $ReadyTimeout = if ($env:LUPIN_READY_TIMEOUT) { [int]$env:LUPIN_READY_TIMEOUT } else { 180 }
 $EnvFile = Join-Path $PSScriptRoot '.env'
 # .env is UTF-8 without a byte-order mark, read and written: Compose reads a BOM as part of the
@@ -34,7 +34,7 @@ $EnvFile = Join-Path $PSScriptRoot '.env'
 $EnvEncoding = New-Object System.Text.UTF8Encoding $false
 
 function Fail([string]$Message) {
-  [Console]::Error.WriteLine("automate: $Message")
+  [Console]::Error.WriteLine("lupin: $Message")
   exit 1
 }
 
@@ -77,7 +77,7 @@ function Initialize-EnvFile {
     "LUPIN_INSTALLATION_KEY=$(New-Secret)",
     "REPORTER_SECRET=$(New-Secret)",
     "RUNNER_REGISTRATION_SECRET=$(New-Secret)",
-    'OBJECT_STORE_BUCKET=automate-artifacts',
+    'OBJECT_STORE_BUCKET=lupin-artifacts',
     'OBJECT_STORE_REGION=us-east-1',
     "OBJECT_STORE_ACCESS_KEY_ID=$accessKey",
     "OBJECT_STORE_SECRET_ACCESS_KEY=$(New-Secret)"
@@ -145,9 +145,9 @@ function Invoke-ComposeQuietly {
 # creating, dropping and renaming databases. PostgreSQL refuses those while anyone else is
 # connected, so other sessions on the three a restore touches are ended first. Stops at the
 # first error.
-$AdminSql = @('exec', '-T', 'postgres', 'psql', '-U', 'automate', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-tAq',
+$AdminSql = @('exec', '-T', 'postgres', 'psql', '-U', 'lupin', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-tAq',
   '-c', 'SET client_min_messages = warning',
-  '-c', "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('automate', 'automate_restore', 'automate_previous') AND pid <> pg_backend_pid()")
+  '-c', "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('lupin', 'lupin_restore', 'lupin_previous') AND pid <> pg_backend_pid()")
 
 # $true when every statement ran.
 function Invoke-AdminSql {
@@ -182,7 +182,7 @@ function Set-Remote([string]$Mode) {
 }
 
 function Wait-Ready([string]$Base) {
-  Write-Output "Waiting for Automate to be ready (up to ${ReadyTimeout}s)..."
+  Write-Output "Waiting for Lupin to be ready (up to ${ReadyTimeout}s)..."
   $deadline = (Get-Date).AddSeconds($ReadyTimeout)
   while ((Get-Date) -lt $deadline) {
     try {
@@ -191,7 +191,7 @@ function Wait-Ready([string]$Base) {
     } catch { }
     Start-Sleep -Seconds 2
   }
-  Fail "Automate did not become ready in ${ReadyTimeout}s. Run '.\start.cmd logs' to see why."
+  Fail "Lupin did not become ready in ${ReadyTimeout}s. Run '.\start.cmd logs' to see why."
 }
 
 # A reachable install with no login is refused, not warned about. The API refuses the same
@@ -203,24 +203,24 @@ function Assert-Exposure {
   Assert-ProfileName $profileName
   $lan = @('1', 'true', 'yes') -contains (Get-Setting 'LUPIN_LAN_MODE' '')
   if ($profileName -eq 'solo' -and $lan) {
-    Fail 'LUPIN_PROFILE=solo keeps Automate on this machine, and LUPIN_LAN_MODE is on. Set LUPIN_PROFILE=startup to serve other people with sign-in.'
+    Fail 'LUPIN_PROFILE=solo keeps Lupin on this machine, and LUPIN_LAN_MODE is on. Set LUPIN_PROFILE=startup to serve other people with sign-in.'
   }
   if ($bind -like '127.*' -or $bind -eq 'localhost' -or $bind -eq '::1' -or $bind -eq '[::1]') { return }
   if ($profileName -eq 'solo') {
-    Fail "LUPIN_PROFILE=solo keeps Automate on this machine, and LUPIN_BIND=$bind would make it reachable. Set LUPIN_PROFILE=startup to serve other people with sign-in, or unset LUPIN_BIND."
+    Fail "LUPIN_PROFILE=solo keeps Lupin on this machine, and LUPIN_BIND=$bind would make it reachable. Set LUPIN_PROFILE=startup to serve other people with sign-in, or unset LUPIN_BIND."
   }
   if (-not $lan -and -not $profileName) {
-    Fail "LUPIN_BIND=$bind would make Automate reachable from other machines with no login. Set LUPIN_LAN_MODE=1 (or LUPIN_PROFILE=startup) to serve your network with sign-in and device pairing, or unset LUPIN_BIND to keep it on this machine."
+    Fail "LUPIN_BIND=$bind would make Lupin reachable from other machines with no login. Set LUPIN_LAN_MODE=1 (or LUPIN_PROFILE=startup) to serve your network with sign-in and device pairing, or unset LUPIN_BIND to keep it on this machine."
   }
   $port = Get-Setting 'LUPIN_PORT' '8080'
   Write-Output ''
   if ($lan) {
-    Write-Output "LAN mode: other machines on your network can reach Automate on port $port, after signing in."
+    Write-Output "LAN mode: other machines on your network can reach Lupin on port $port, after signing in."
   } else {
-    Write-Output "Profile ${profileName}: other machines can reach Automate on port $port, after signing in."
+    Write-Output "Profile ${profileName}: other machines can reach Lupin on port $port, after signing in."
   }
   Write-Output 'If they cannot connect, allow the port through Windows Firewall from an elevated PowerShell (not done for you):'
-  Write-Output "  New-NetFirewallRule -DisplayName 'Automate' -Direction Inbound -Protocol TCP -LocalPort $port -Action Allow -Profile Private"
+  Write-Output "  New-NetFirewallRule -DisplayName 'Lupin' -Direction Inbound -Protocol TCP -LocalPort $port -Action Allow -Profile Private"
   Write-Output ''
 }
 
@@ -245,11 +245,11 @@ function Write-NextStep([string]$Name) {
   switch ($Name) {
     'startup' { Write-Output 'Next step: sign in with the key below, then pair devices or issue access tokens on the Access page.' }
     { $_ -in 'team', 'enterprise' } { Write-Output 'Next step: sign in with the key below, then open Map > Deployment to see what this profile turns on.' }
-    default { Write-Output 'Next step: open a project, or send test results from CI with the automate CLI.' }
+    default { Write-Output 'Next step: open a project, or send test results from CI with the lupin CLI.' }
   }
 }
 
-function Start-Automate([string[]]$Options = @()) {
+function Start-Lupin([string[]]$Options = @()) {
   Assert-Docker
   Initialize-EnvFile
   $remoteWanted = ''
@@ -274,7 +274,7 @@ function Start-Automate([string[]]$Options = @()) {
   # After the profile, so `--profile solo --remote cloudflare` is refused by name.
   if ($remoteWanted) {
     if ((Get-Setting 'LUPIN_PROFILE' '') -eq 'solo') {
-      Fail 'LUPIN_PROFILE=solo keeps Automate on this machine, and --remote cloudflare publishes it through a tunnel. Use --profile startup (or larger).'
+      Fail 'LUPIN_PROFILE=solo keeps Lupin on this machine, and --remote cloudflare publishes it through a tunnel. Use --profile startup (or larger).'
     }
     Set-Remote $remoteWanted
   }
@@ -284,14 +284,14 @@ function Start-Automate([string[]]$Options = @()) {
   if ((Get-Setting 'LUPIN_REMOTE' '') -ne 'cloudflare') { Invoke-ComposeQuietly rm --stop --force cloudflared }
   $port = Get-Setting 'LUPIN_PORT' '8080'
   $base = "http://localhost:$port"
-  Write-Output 'Downloading the Automate images (the first run takes a few minutes)...'
+  Write-Output 'Downloading the Lupin images (the first run takes a few minutes)...'
   # Images already here keep working offline; a tag that is missing still fails in 'up'.
   Invoke-Compose pull --ignore-pull-failures
   Invoke-Compose up -d
   Wait-Ready "http://127.0.0.1:$port"
   $profileName = Get-Setting 'LUPIN_PROFILE' 'solo'
   Write-Output ''
-  Write-Output "Automate is running at $base"
+  Write-Output "Lupin is running at $base"
   Write-Output "Profile: $profileName"
   if ((Get-Setting 'LUPIN_REMOTE' '') -eq 'cloudflare') {
     Write-Output 'Remote: through Cloudflare Tunnel, at the public hostname you gave the tunnel. Cloudflare Access decides who reaches it.'
@@ -306,7 +306,7 @@ function Set-Version([string]$Version) {
   Set-EnvValue 'LUPIN_VERSION' $Version
 }
 
-function Update-Automate([string[]]$Rest) {
+function Update-Lupin([string[]]$Rest) {
   $version = $null
   if ($Rest.Count -ge 2 -and $Rest[0] -eq '--version') { $version = $Rest[1] }
   if (-not $version) {
@@ -319,8 +319,8 @@ function Update-Automate([string[]]$Rest) {
   Assert-Docker
   Initialize-EnvFile
   Set-Version $version
-  Write-Output "Updating to Automate $version. Your data is kept; migrations run on start."
-  Start-Automate
+  Write-Output "Updating to Lupin $version. Your data is kept; migrations run on start."
+  Start-Lupin
 }
 
 # Every name and address this machine answers to on the network, for the certificate's
@@ -339,7 +339,7 @@ function Get-LanNames {
         ForEach-Object { $_.ToString() })
   }
   $extra = @((Get-Setting 'LUPIN_TLS_NAMES' '') -split ',' | ForEach-Object { $_.Trim() })
-  $all = @('automate.local', $hostName, "$hostName.local", 'localhost', '127.0.0.1') + $ips + $extra
+  $all = @('lupin.local', $hostName, "$hostName.local", 'localhost', '127.0.0.1') + $ips + $extra
   return (@($all | Where-Object { $_ -ne '' } | Select-Object -Unique) -join ',')
 }
 
@@ -351,7 +351,7 @@ function New-LanCertificate {
   Write-Output "Issuing a LAN certificate for: $names"
   Invoke-Compose run --rm --no-deps --user 0 --entrypoint lupin-lan-cert edge $names
   Write-Output ''
-  Write-Output 'Done. Trust certs\ca.crt once on each device that opens Automate, then restart:'
+  Write-Output 'Done. Trust certs\ca.crt once on each device that opens Lupin, then restart:'
   Write-Output '  .\start.cmd stop; .\start.cmd'
   Write-Output 'How to trust it on Windows, macOS, Linux, iPhone and Android: docs on LAN mode.'
 }
@@ -388,7 +388,7 @@ function Get-TextSha256([string]$Text) {
 function Get-MigrationCount {
   $ErrorActionPreference = 'Continue'
   $composeArgs = Get-ComposeArgs
-  $out = & $Docker @composeArgs exec -T postgres psql -U automate -d automate -tAc 'SELECT count(*) FROM drizzle.__drizzle_migrations' 2>$null
+  $out = & $Docker @composeArgs exec -T postgres psql -U lupin -d lupin -tAc 'SELECT count(*) FROM drizzle.__drizzle_migrations' 2>$null
   if ($LASTEXITCODE -ne 0) { return '' }
   return ((@($out) -join '') -replace '\s', '')
 }
@@ -424,7 +424,7 @@ function Write-AsciiLines([string]$Path, [string[]]$Lines) {
 # changed, so a copy taken while the install runs is whole for every finished upload.
 # Files are copied out with 'compose cp' rather than redirected: PowerShell 5.1 re-encodes
 # a native command's redirected output, which would corrupt a binary dump.
-function Backup-Automate([string[]]$Rest) {
+function Backup-Lupin([string[]]$Rest) {
   $keep = $null
   for ($i = 0; $i -lt $Rest.Count; $i++) {
     $option = $Rest[$i]
@@ -443,28 +443,28 @@ function Backup-Automate([string[]]$Rest) {
   if (-not (Test-Path -LiteralPath $EnvFile)) { Fail 'There is nothing to back up yet: no .env here. Run .\start.cmd first.' }
   Assert-Docker
   $count = Get-MigrationCount
-  if ($count -notmatch '^\d+$') { Fail "Could not read the database's migrations. Is Automate running? (.\start.cmd status)" }
+  if ($count -notmatch '^\d+$') { Fail "Could not read the database's migrations. Is Lupin running? (.\start.cmd status)" }
   $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
-  $relative = "backups/automate-$stamp"
+  $relative = "backups/lupin-$stamp"
   $folder = Join-Path $PSScriptRoot $relative
   if (Test-Path -LiteralPath $folder) { Fail "$relative already exists. Run the backup again in a second." }
   # Written under a hidden name and renamed once the manifest is in it, so a backup that fails
   # part-way never leaves a folder that --keep counts. A failed one is removed: it holds a
   # copy of the database.
-  $work = "backups/.automate-$stamp.partial"
+  $work = "backups/.lupin-$stamp.partial"
   $workPath = Join-Path $PSScriptRoot $work
   if (Test-Path -LiteralPath $workPath) { Remove-Item -LiteralPath $workPath -Recurse -Force }
   New-Item -ItemType Directory -Force -Path $workPath | Out-Null
   $written = $false
   try {
     Write-Output 'Backing up the database...'
-    Invoke-Compose exec -T postgres pg_dump -U automate -d automate -Fc -f /tmp/automate-backup.dump
-    Invoke-Compose cp postgres:/tmp/automate-backup.dump "$work/database.dump"
-    Invoke-Compose exec -T postgres rm -f /tmp/automate-backup.dump
+    Invoke-Compose exec -T postgres pg_dump -U lupin -d lupin -Fc -f /tmp/lupin-backup.dump
+    Invoke-Compose cp postgres:/tmp/lupin-backup.dump "$work/database.dump"
+    Invoke-Compose exec -T postgres rm -f /tmp/lupin-backup.dump
     Write-Output 'Backing up stored artifacts...'
-    Invoke-Compose exec -T objectstore tar -C /data -cf /tmp/automate-objects.tar .
-    Invoke-Compose cp objectstore:/tmp/automate-objects.tar "$work/objects.tar"
-    Invoke-Compose exec -T objectstore rm -f /tmp/automate-objects.tar
+    Invoke-Compose exec -T objectstore tar -C /data -cf /tmp/lupin-objects.tar .
+    Invoke-Compose cp objectstore:/tmp/lupin-objects.tar "$work/objects.tar"
+    Invoke-Compose exec -T objectstore rm -f /tmp/lupin-objects.tar
     Copy-Item -LiteralPath $EnvFile -Destination (Join-Path $workPath 'env')
     $sums = foreach ($part in 'database.dump', 'objects.tar', 'env') {
       "$(Get-FileSha256 (Join-Path $workPath $part))  $part"
@@ -488,14 +488,14 @@ function Backup-Automate([string[]]$Rest) {
   if ($null -ne $keep) { Remove-OldBackups ([int]$keep) }
 }
 
-# Removes the oldest backups beyond the newest N. Only folders named the way Backup-Automate
+# Removes the oldest backups beyond the newest N. Only folders named the way Backup-Lupin
 # names them are counted or removed, never a hidden .partial one; anything else in backups\ is
 # left alone.
 function Remove-OldBackups([int]$Keep) {
   $root = Join-Path $PSScriptRoot 'backups'
   # The names sort by time, so the newest are last.
   $all = @(Get-ChildItem -LiteralPath $root -Directory |
-      Where-Object { $_.Name -cmatch '^automate-\d{8}T\d{6}Z$' } |
+      Where-Object { $_.Name -cmatch '^lupin-\d{8}T\d{6}Z$' } |
       Sort-Object Name)
   $stale = if ($all.Count -gt $Keep) { $all[0..($all.Count - $Keep - 1)] } else { @() }
   foreach ($folder in $stale) { Remove-Item -LiteralPath $folder.FullName -Recurse -Force }
@@ -505,23 +505,23 @@ function Remove-OldBackups([int]$Keep) {
 }
 
 # A restore that stopped before the swap. This install's own database was never touched, so the
-# copy is dropped and Automate starts again on its own data rather than staying down.
+# copy is dropped and Lupin starts again on its own data rather than staying down.
 function Restore-Failed([string]$Message) {
-  Invoke-ComposeQuietly exec -T postgres rm -f /tmp/automate-restore.dump
-  Invoke-ComposeQuietly @AdminSql -c 'DROP DATABASE IF EXISTS automate_restore'
-  if (-not (Test-Compose up -d)) { Fail "$Message Nothing was replaced, but Automate could not be started again: run .\start.cmd." }
-  Fail "$Message Nothing was replaced: Automate is started again on its own data. The output above says why."
+  Invoke-ComposeQuietly exec -T postgres rm -f /tmp/lupin-restore.dump
+  Invoke-ComposeQuietly @AdminSql -c 'DROP DATABASE IF EXISTS lupin_restore'
+  if (-not (Test-Compose up -d)) { Fail "$Message Nothing was replaced, but Lupin could not be started again: run .\start.cmd." }
+  Fail "$Message Nothing was replaced: Lupin is started again on its own data. The output above says why."
 }
 
 # Checks everything before it changes anything: every digest, the vault key, the release
 # and the schema. Then the install stops, the backup's database is loaded beside this one and
 # swapped in, the objects are replaced, and it starts again. An older backup is fine: the
 # newer release's migrations run forward on start.
-function Restore-Automate([string[]]$Rest) {
+function Restore-Lupin([string[]]$Rest) {
   $given = if ($Rest.Count -ge 1) { $Rest[0] } else { '' }
   $folder = if ($given -and [System.IO.Path]::IsPathRooted($given)) { $given } elseif ($given) { Join-Path $PSScriptRoot $given } else { '' }
   if (-not $folder -or -not (Test-Path -LiteralPath (Join-Path $folder 'manifest.env')) -or -not (Test-Path -LiteralPath (Join-Path $folder 'SHA256SUMS'))) {
-    Fail "There is no backup at '$given'. Pass the folder '.\start.cmd backup' wrote, like backups\automate-20261027T120000Z."
+    Fail "There is no backup at '$given'. Pass the folder '.\start.cmd backup' wrote, like backups\lupin-20261027T120000Z."
   }
   if (-not (Test-Path -LiteralPath $EnvFile)) { Fail "Restore into an install: copy $given\env to .env before its first start, start it (.\start.cmd), then run this again." }
   $manifest = Read-Manifest $folder
@@ -543,36 +543,36 @@ function Restore-Automate([string[]]$Rest) {
   $taken = [string]$manifest['version']
   $current = Get-Setting 'LUPIN_VERSION' ''
   if ($taken -and $current -and (Test-VersionNewer $taken $current)) {
-    Fail "This backup is from Automate $taken, which is newer than this install ($current). Update first: .\start.cmd update --version $taken"
+    Fail "This backup is from Lupin $taken, which is newer than this install ($current). Update first: .\start.cmd update --version $taken"
   }
   Assert-Docker
   $wanted = [string]$manifest['migrations']
   if ($wanted -notmatch '^\d+$') { Fail "$given\manifest.env records no migration count. Nothing was restored." }
   $have = Get-MigrationCount
-  if ($have -notmatch '^\d+$') { Fail "Could not read this install's migrations. Start Automate first (.\start.cmd), then restore." }
+  if ($have -notmatch '^\d+$') { Fail "Could not read this install's migrations. Start Lupin first (.\start.cmd), then restore." }
   if ([int]$wanted -gt [int]$have) {
     Fail "This backup has $wanted migrations and this install has ${have}: its schema is newer. Update first: .\start.cmd update"
   }
-  Write-Output "Restoring $given. Automate stops while it runs."
-  if (-not (Test-Compose stop api worker runner web edge objectstore)) { Restore-Failed 'Automate could not be stopped for the restore.' }
-  # Into automate_restore, a new database beside this install's, so no table a newer release
+  Write-Output "Restoring $given. Lupin stops while it runs."
+  if (-not (Test-Compose stop api worker runner web edge objectstore)) { Restore-Failed 'Lupin could not be stopped for the restore.' }
+  # Into lupin_restore, a new database beside this install's, so no table a newer release
   # added here can block it. One transaction, so a load that fails part-way leaves it empty.
-  $loaded = (Invoke-AdminSql 'DROP DATABASE IF EXISTS automate_restore' 'CREATE DATABASE automate_restore') -and
-    (Test-Compose cp (Join-Path $folder 'database.dump') postgres:/tmp/automate-restore.dump) -and
-    (Test-Compose exec -T postgres pg_restore -U automate -d automate_restore --no-owner --single-transaction /tmp/automate-restore.dump)
+  $loaded = (Invoke-AdminSql 'DROP DATABASE IF EXISTS lupin_restore' 'CREATE DATABASE lupin_restore') -and
+    (Test-Compose cp (Join-Path $folder 'database.dump') postgres:/tmp/lupin-restore.dump) -and
+    (Test-Compose exec -T postgres pg_restore -U lupin -d lupin_restore --no-owner --single-transaction /tmp/lupin-restore.dump)
   if (-not $loaded) { Restore-Failed "The database in $given could not be restored." }
-  Invoke-ComposeQuietly exec -T postgres rm -f /tmp/automate-restore.dump
+  Invoke-ComposeQuietly exec -T postgres rm -f /tmp/lupin-restore.dump
   # Both renames in one statement, so in one transaction: either the restored database is
-  # automate, or nothing moved.
-  if (-not (Invoke-AdminSql 'DROP DATABASE IF EXISTS automate_previous' 'ALTER DATABASE automate RENAME TO automate_previous; ALTER DATABASE automate_restore RENAME TO automate')) {
+  # lupin, or nothing moved.
+  if (-not (Invoke-AdminSql 'DROP DATABASE IF EXISTS lupin_previous' 'ALTER DATABASE lupin RENAME TO lupin_previous; ALTER DATABASE lupin_restore RENAME TO lupin')) {
     Restore-Failed 'The restored database could not be swapped in.'
   }
-  Write-Output 'The database it replaced is kept as automate_previous, until the next restore. Once this one is right, drop it from this folder:'
-  Write-Output "  docker compose -p $Project exec postgres psql -U automate -d postgres -c `"DROP DATABASE automate_previous`""
+  Write-Output 'The database it replaced is kept as lupin_previous, until the next restore. Once this one is right, drop it from this folder:'
+  Write-Output "  docker compose -p $Project exec postgres psql -U lupin -d postgres -c `"DROP DATABASE lupin_previous`""
   # The objects belong to the restored database, so they are replaced only once it is in.
   $mount = (Resolve-Path -LiteralPath $folder).Path + ':/backup:ro'
   if (-not (Test-Compose run --rm --no-deps -T -v $mount --entrypoint sh objectstore -c 'find /data -mindepth 1 -delete && tar -C /data -xf /backup/objects.tar')) {
-    Fail "The database is restored from $given, but its stored artifacts could not be put back, so Automate is left stopped. The output above says why."
+    Fail "The database is restored from $given, but its stored artifacts could not be put back, so Lupin is left stopped. The output above says why."
   }
   Invoke-Compose up -d
   $port = Get-Setting 'LUPIN_PORT' '8080'
@@ -580,32 +580,32 @@ function Restore-Automate([string[]]$Rest) {
   Write-Output "Restored $given. Migrations newer than the backup ran on start."
 }
 
-function Uninstall-Automate([string[]]$Rest) {
+function Uninstall-Lupin([string[]]$Rest) {
   Assert-Docker
   if (-not (Test-Path -LiteralPath $EnvFile)) { [System.IO.File]::WriteAllText($EnvFile, '') }
   if ($Rest.Count -ge 1 -and $Rest[0] -eq '--purge') {
     Invoke-ComposeAll down -v --remove-orphans
     Remove-Item -LiteralPath $EnvFile -Force
-    Write-Output 'Automate is removed, with all of its data.'
+    Write-Output 'Lupin is removed, with all of its data.'
   } else {
     Invoke-ComposeAll down --remove-orphans
-    Write-Output 'Automate is removed. Your data and .env are kept; run .\start.cmd to start again.'
+    Write-Output 'Lupin is removed. Your data and .env are kept; run .\start.cmd to start again.'
   }
 }
 
 $command = if ($args.Count -gt 0) { [string]$args[0] } else { 'start' }
 $rest = if ($args.Count -gt 1) { [string[]]$args[1..($args.Count - 1)] } else { [string[]]@() }
 switch ($command) {
-  'start' { Start-Automate $rest }
-  { $_ -like '--profile*' -or $_ -like '--remote*' } { Start-Automate (@($command) + $rest) }
+  'start' { Start-Lupin $rest }
+  { $_ -like '--profile*' -or $_ -like '--remote*' } { Start-Lupin (@($command) + $rest) }
   'stop' { Assert-Docker; Invoke-ComposeAll stop }
   'status' { Assert-Docker; Invoke-Compose ps }
   'logs' { Assert-Docker; Invoke-Compose logs --tail 200 -f }
-  'update' { Update-Automate $rest }
-  'uninstall' { Uninstall-Automate $rest }
+  'update' { Update-Lupin $rest }
+  'uninstall' { Uninstall-Lupin $rest }
   'lan-cert' { New-LanCertificate }
-  'backup' { Backup-Automate $rest }
-  'restore' { Restore-Automate $rest }
+  'backup' { Backup-Lupin $rest }
+  'restore' { Restore-Lupin $rest }
   { $_ -in 'help', '-h', '--help' } { Show-Usage }
   default { Show-Usage; exit 2 }
 }

@@ -27,7 +27,7 @@
 -- migration raises, naming each such table and its row count, and applies nothing. The
 -- operator who has reviewed those rows opts in for the session:
 --
---     SET automate.allow_drop_nonempty = 'on';
+--     SET lupin.allow_drop_nonempty = 'on';
 --
 -- and an empty table (every install that never used the table) needs no setting.
 
@@ -39,7 +39,7 @@ DECLARE
   found text := '';
   allowed boolean;
 BEGIN
-  allowed := lower(btrim(coalesce(current_setting('automate.allow_drop_nonempty', true), ''))) = 'on';
+  allowed := lower(btrim(coalesce(current_setting('lupin.allow_drop_nonempty', true), ''))) = 'on';
   FOREACH target IN ARRAY ARRAY['results', 'blob_shards', 'api_keys'] LOOP
     IF to_regclass(format('public.%I', target)) IS NULL THEN
       CONTINUE;
@@ -52,7 +52,7 @@ BEGIN
   IF found <> '' AND NOT allowed THEN
     RAISE EXCEPTION
       'Refusing to drop superseded tables that hold rows (%). Review the rows, then run '
-      'SET automate.allow_drop_nonempty = ''on'' in the migrating session to drop them anyway.',
+      'SET lupin.allow_drop_nonempty = ''on'' in the migrating session to drop them anyway.',
       found;
   END IF;
 END

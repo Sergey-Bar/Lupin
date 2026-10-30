@@ -1,17 +1,17 @@
 ---
 title: Issues and test proposals
-description: How AutoMate files a Jira or GitHub issue from a health finding or a failure cluster, and how it asks the configured model to propose a new test for a surviving mutant or uncovered lines — without ever changing your repository.
+description: How Lupin files a Jira or GitHub issue from a health finding or a failure cluster, and how it asks the configured model to propose a new test for a surviving mutant or uncovered lines — without ever changing your repository.
 outline: deep
 ---
 
 # Issues and test proposals
 
-Two ways to hand work to a person from what AutoMate already measured:
+Two ways to hand work to a person from what Lupin already measured:
 
 - **An issue** — from one [health finding](repository-health.md), or from one failure cluster on
   the insights page, in Jira or in the project's own GitHub repository.
 - **A test proposal** — a new test file the configured model writes for a surviving mutant or a
-  commit's uncovered changed lines. It is a patch you read; AutoMate never applies it.
+  commit's uncovered changed lines. It is a patch you read; Lupin never applies it.
 
 ## Issue tracker setup
 
@@ -19,7 +19,7 @@ A project's Jira tracker is one admin request. The token is sealed in the vault 
 (`VAULT_SECRET` must be set) and no response ever returns it:
 
 ```bash
-curl -X PUT "$AUTOMATE/api/v1/projects/$PROJECT/issue-tracker" \
+curl -X PUT "$LUPIN/api/v1/projects/$PROJECT/issue-tracker" \
   -H "authorization: Bearer $ADMIN_TOKEN" -H 'content-type: application/json' \
   -d '{"baseUrl":"https://acme.atlassian.net","projectKey":"ACME","issueType":"Bug","token":"…"}'
 ```
@@ -33,20 +33,20 @@ curl -X PUT "$AUTOMATE/api/v1/projects/$PROJECT/issue-tracker" \
   Issues already created stay linked.
 
 **GitHub needs no setup.** A project whose repository is on github.com files issues there with
-the project's own git token, labelled `automate`.
+the project's own git token, labelled `lupin`.
 
 ## Creating an issue
 
-An operator names the target — AutoMate never picks one:
+An operator names the target — Lupin never picks one:
 
 ```bash
 # From a finding
-curl -X POST "$AUTOMATE/api/v1/projects/$PROJECT/health/findings/$FINDING/issue" \
+curl -X POST "$LUPIN/api/v1/projects/$PROJECT/health/findings/$FINDING/issue" \
   -H "authorization: Bearer $OPERATOR_TOKEN" -H 'content-type: application/json' \
   -d '{"target":"jira"}'
 
 # From a failure cluster, as the insights page shows it
-curl -X POST "$AUTOMATE/api/v1/dashboard/failure-clusters/issue" \
+curl -X POST "$LUPIN/api/v1/dashboard/failure-clusters/issue" \
   -H "authorization: Bearer $OPERATOR_TOKEN" -H 'content-type: application/json' \
   -d '{"projectId":"…","target":"github","signature":"…","sampleMessage":"…","tests":["…"],"count":12,"runs":4}'
 ```
@@ -69,7 +69,7 @@ configuration change and every issue is an audit event.
 ## Test proposals
 
 ```bash
-curl -X POST "$AUTOMATE/api/v1/projects/$PROJECT/health/test-proposals" \
+curl -X POST "$LUPIN/api/v1/projects/$PROJECT/health/test-proposals" \
   -H "authorization: Bearer $OPERATOR_TOKEN" -H 'content-type: application/json' \
   -d '{"kind":"surviving-mutant","findingId":"…","sourceSnippet":"export function clamp…"}'
 ```
@@ -94,7 +94,7 @@ rationale, model and token counts. `GET` on the same path lists the newest 50.
 - No model provider configured (`KILO_GATEWAY_URL` and `KILO_API_KEY`, or `OLLAMA_BASE_URL`)
   answers `NOT_CONFIGURED`. An answer with no fenced code block is `MODEL_OUTPUT_UNUSABLE`.
 - Each proposal spends model budget, so it is an operator action, and it is recorded as a GenAI
-  span under the agent `automate-test-proposals` on the [agent runtime](agents.md) page.
+  span under the agent `lupin-test-proposals` on the [agent runtime](agents.md) page.
 
 ## Rotating the vault key
 

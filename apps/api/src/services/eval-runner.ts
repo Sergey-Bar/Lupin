@@ -5,7 +5,7 @@ import { evalDatasets, type EvalDatasetRow } from '@lupin/db';
 import type { AiGateway, CompletionInput } from '@lupin/automation';
 import {
   EvalDatasetCaseSchema,
-  type AutomateEvalRun,
+  type LupinEvalRun,
   type EvalAttemptRecord,
   type EvalCaseRecord,
   type EvalCheck,
@@ -36,7 +36,7 @@ import type { UploadInput } from './repo-health-service.js';
  *
  * ## One writer
  *
- * The finished run is written as an `automate-eval-json` document and handed to
+ * The finished run is written as an `lupin-eval-json` document and handed to
  * `ingestHealthReport`, so it is stored by `storeEvalRun`, graded through `evalMetrics`, and
  * compared by `compareEvalRuns` exactly as an uploaded promptfoo run is.
  *
@@ -64,7 +64,7 @@ export interface EvalRunnerOptions extends EvalOptions {
   completionTimeoutMs?: number;
 }
 
-export const EVAL_RUNNER_TOOL = { name: 'automate-eval-runner', version: '1' } as const;
+export const EVAL_RUNNER_TOOL = { name: 'lupin-eval-runner', version: '1' } as const;
 /** Cases × repeats of one dataset. A run past this would outspend any reasonable budget. */
 export const MAX_RUN_ATTEMPTS = 1000;
 export const MAX_CHECKED_OUTPUT_CHARS = 20_000;
@@ -451,7 +451,7 @@ function errorText(error: unknown): string {
 
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
 
-function totalsOf(cases: readonly EvalCaseRecord[]): AutomateEvalRun['totals'] {
+function totalsOf(cases: readonly EvalCaseRecord[]): LupinEvalRun['totals'] {
   const attempts = cases.flatMap((row) => row.attempts);
   const sum = (values: Array<number | null>) => {
     const known = values.filter((value): value is number => value !== null);
@@ -471,13 +471,13 @@ function totalsOf(cases: readonly EvalCaseRecord[]): AutomateEvalRun['totals'] {
   };
 }
 
-/** Every case × repeat, sequentially, as one run in Automate's own eval shape. */
+/** Every case × repeat, sequentially, as one run in Lupin's own eval shape. */
 export async function executeDataset(
   gateway: AiGateway,
   dataset: EvalDataset,
   provider: string | null,
   timeoutMs = DEFAULT_COMPLETION_TIMEOUT_MS,
-): Promise<AutomateEvalRun> {
+): Promise<LupinEvalRun> {
   const context: AttemptContext = { gateway, dataset, timeoutMs };
   const cases: EvalCaseRecord[] = [];
   for (const row of dataset.cases) {
@@ -578,7 +578,7 @@ export async function prepareDatasetRun(
         );
         return await options.ingest({
           projectId: project.id,
-          format: 'automate-eval-json',
+          format: 'lupin-eval-json',
           bytes: new TextEncoder().encode(JSON.stringify(run)),
           branch,
           commitSha: target.commit,

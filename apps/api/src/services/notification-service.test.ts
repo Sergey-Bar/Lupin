@@ -322,7 +322,7 @@ describe('the dispatcher', () => {
       db: db as never,
       vaultSecret: VAULT,
       adapters: {},
-      link: 'https://automate.local/dashboard/now',
+      link: 'https://lupin.local/dashboard/now',
       now: () => NOW,
     });
     expect(await dispatcher.runOnce()).toMatchObject([{ status: 'sent', errorCode: null }]);
@@ -331,7 +331,7 @@ describe('the dispatcher', () => {
     expect(delivery?.status).toBe('sent');
     expect(delivery?.rendered).toContain('🔴 Daily quality report');
     expect(delivery?.rendered).toContain('50% passed across 2 runs.');
-    expect(delivery?.rendered).toContain('https://automate.local/dashboard/now');
+    expect(delivery?.rendered).toContain('https://lupin.local/dashboard/now');
   });
 
   it('sends a test to Telegram with the opened token, as HTML', async () => {
@@ -354,7 +354,7 @@ describe('the dispatcher', () => {
     expect(await dispatcher.runOnce()).toMatchObject([{ status: 'sent' }]);
     expect(calls[0]).toMatchObject({ operation: 'sendMessage', secret: TOKEN });
     expect((calls[0]?.input as { text: string }).text).toMatch(
-      /^<b>🟢 Test report from Automate<\/b>/u,
+      /^<b>🟢 Test report from Lupin<\/b>/u,
     );
   });
 
@@ -572,7 +572,7 @@ describe('the notification routes', () => {
     const call = (method: string, path: string, body?: unknown) =>
       app.request(path, {
         method,
-        headers: { authorization: 'Bearer amt_x', 'content-type': 'application/json' },
+        headers: { authorization: 'Bearer lup_x', 'content-type': 'application/json' },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
     return { db, options, call, dispatchNow };

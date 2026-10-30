@@ -1,7 +1,7 @@
 /**
  * Agents domain schemas — Zod v4
  *
- * Contracts for the Automate AI Agent Framework (Product 3).
+ * Contracts for the Lupin AI Agent Framework (Product 3).
  * Covers the 5 agent domains (browser, api, load, security, mobile),
  * agent request/result, and the NotImplemented sentinel type.
  *

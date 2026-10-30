@@ -43,8 +43,8 @@ export interface OidcRouteOptions extends Partial<Pick<ProjectRegistryServiceOpt
 
 // The cookie holding a sign-in in progress, sealed. Named without `cookie`: the secret-literal
 // rule reads that word in a name as a credential held in source.
-const SIGN_IN_FLOW = 'automate_oidc';
-const SESSION_COOKIE = 'automate_session';
+const SIGN_IN_FLOW = 'lupin_oidc';
+const SESSION_COOKIE = 'lupin_session';
 /** A sign-in in progress outlives a slow provider page, not a lunch break. */
 const FLOW_TTL_MS = 10 * 60_000;
 

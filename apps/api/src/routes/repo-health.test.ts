@@ -235,7 +235,7 @@ describe('the pull-request gate', () => {
     const { app, db, projectId } = await harness({
       secret: SECRET,
       extra: {
-        detailsUrl: (id) => `https://automate.test/dashboard/repo/${id}`,
+        detailsUrl: (id) => `https://lupin.test/dashboard/repo/${id}`,
         github: {
           tokenFor: async () => 'synthetic-github-token',
           adapter: {
@@ -275,7 +275,7 @@ describe('the pull-request gate', () => {
       owner: 'example',
       repo: 'service',
       sha: 'abc1234',
-      target_url: `https://automate.test/dashboard/repo/${projectId}`,
+      target_url: `https://lupin.test/dashboard/repo/${projectId}`,
     });
   });
 

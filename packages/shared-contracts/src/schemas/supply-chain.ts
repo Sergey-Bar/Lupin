@@ -9,7 +9,7 @@ import { z } from 'zod/v4';
  * of the project's latest SBOM: `denied` is a violation, `unlisted` is one only when an allow
  * list exists, and `unknown` (no licence, `NOASSERTION`, `NONE`, an unreadable expression) is
  * one unless `failOnUnknown` is turned off — absence is not permission. Each violation is a
- * finding in Dependencies from the tool `automate-licence`.
+ * finding in Dependencies from the tool `lupin-licence`.
  *
  * `provenance` is the trust `verifyProvenance` in `@lupin/reporter` checks a
  * `slsa-provenance` upload against. With no keys and no roots a signature is

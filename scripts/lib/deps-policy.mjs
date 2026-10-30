@@ -285,7 +285,7 @@ export function parseLockfile(text) {
  * `<repo>/.kilo/worktrees/programme-a` put `.kilo` in the path, which made *every*
  * file in the tree configuration, which made the string rule apply everywhere, which
  * made `effect` — the one finding this gate exists for — disappear. The same failure
- * waits for anyone whose checkout sits under `~/.cache/automate` or `C:\src\.work`.
+ * waits for anyone whose checkout sits under `~/.cache/lupin` or `C:\src\.work`.
  * A gate whose verdict depends on where it was run is not a gate.
  *
  * **Both arguments are normalised to forward slashes before anything else,** which is

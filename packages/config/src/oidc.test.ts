@@ -17,12 +17,12 @@ describe('OIDC sign-in in the parsed configuration', () => {
   });
 
   it('reads the provider, the callback on the public URL, and viewer as the default role', () => {
-    const config = parseConfig({ ...OIDC, PUBLIC_APP_URL: 'https://automate.example.com/' });
+    const config = parseConfig({ ...OIDC, PUBLIC_APP_URL: 'https://lupin.example.com/' });
     expect(config.oidc).toEqual({
       issuer: 'https://idp.example.com',
       clientId: 'lupin',
       clientSecret: SECRET,
-      redirectUri: 'https://automate.example.com/api/v1/auth/oidc/callback',
+      redirectUri: 'https://lupin.example.com/api/v1/auth/oidc/callback',
       allowedDomains: [],
       roleMap: [],
       defaultRole: 'viewer',

@@ -103,7 +103,7 @@ export class Transport {
 
   private warn(message: string): void {
     const secret = this.options.secret;
-    const line = `AutoMate reporter: ${message}`;
+    const line = `Lupin reporter: ${message}`;
     this.options.log(secret === undefined ? line : line.replaceAll(secret, '[redacted]'));
   }
 }

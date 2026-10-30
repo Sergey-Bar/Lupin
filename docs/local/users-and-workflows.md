@@ -1,4 +1,4 @@
-# AUTOMATE (local) — users and workflows
+# Lupin Local — users and workflows
 
 **Status:** Draft
 **Owner:** maintainers

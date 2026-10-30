@@ -19,7 +19,7 @@ waits up to two minutes for the API, so the order the four start in does not mat
 ## First time
 
 1. `pnpm install`
-2. A PostgreSQL 16 on `localhost:55432` with database, user and password `automate` / `automate` /
+2. A PostgreSQL 16 on `localhost:55432` with database, user and password `lupin` / `lupin` /
    your choice. The compose file `infra/compose/compose.dev.yml` describes one; any PostgreSQL 16 works.
 3. `cp .env.example .env`, then replace the five `replace-with-…` secrets with random values of at
    least 32 characters (`COOKIE_SECRET`, `VAULT_SECRET`, `LUPIN_API_KEY`, `REPORTER_SECRET`,

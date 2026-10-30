@@ -1,9 +1,9 @@
-# AUTOMATE (local) — blueprint master plan
+# Lupin Local — blueprint master plan
 
 **Status:** blueprint written; a dependency-free implementation of Phases 1 to 5 exists in `local/` (see `docs/local/implementation-status.md`); the package-based Milestone 1 was not done.
 
 **What this plan is.** The one place that lists the decisions, the MVP-0 definition, the
-assumptions and the open questions for AUTOMATE (local), and links to the documents under
+assumptions and the open questions for Lupin Local, and links to the documents under
 `docs/local/`. It does not restate their content; a number or a table copied here would be a
 second authority.
 
@@ -82,7 +82,7 @@ Details and limits are in the feasibility document; in one line each:
 
 Labelled in the documents where they are made.
 
-- A1: the documents call the product AUTOMATE (local) and the existing one the server
+- A1: the documents call the product Lupin Local and the existing one the server
   platform, to avoid confusion with the repository's branding; final naming is open.
 - A2: Node 24 and TypeScript for the engine; no Rust core unless a spike shows a need.
 - A3: the SQLite driver is undecided between the module built into Node and

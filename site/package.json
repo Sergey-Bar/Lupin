@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "description": "The Automate documentation site. A single VitePress shell: one curated home page, and no other pages yet.",
+  "description": "The Lupin documentation site. A single VitePress shell: one curated home page, and no other pages yet.",
   "scripts": {
     "build": "vitepress build .",
     "dev": "vitepress dev .",

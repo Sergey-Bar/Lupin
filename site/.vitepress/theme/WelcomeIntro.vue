@@ -5,7 +5,7 @@ import LogoAssembly from './LogoAssembly.vue';
 const emit = defineEmits<{ complete: [skipped: boolean] }>();
 const dialog = ref<HTMLDialogElement | null>(null);
 const showing = ref(false);
-const storageKey = 'automate-welcome-seen';
+const storageKey = 'lupin-welcome-seen';
 let timer: ReturnType<typeof setTimeout> | undefined;
 let motion: MediaQueryList | undefined;
 let disposed = false;
@@ -71,12 +71,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <dialog
-    ref="dialog"
-    class="welcome"
-    aria-label="Welcome to Automate"
-    @cancel.prevent="finish(true)"
-  >
+  <dialog ref="dialog" class="welcome" aria-label="Welcome to Lupin" @cancel.prevent="finish(true)">
     <div class="welcome__center">
       <p class="welcome__eyebrow">CLARITY TAKES SHAPE</p>
       <LogoAssembly v-if="showing" @complete="assembled" />

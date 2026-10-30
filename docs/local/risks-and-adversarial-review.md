@@ -1,4 +1,4 @@
-# AUTOMATE (local) — risks and adversarial review
+# Lupin Local — risks and adversarial review
 
 **Status:** Draft
 **Owner:** maintainers

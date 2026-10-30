@@ -45,7 +45,7 @@ const OPERATOR_ACCEPTED = makeFinding({
 });
 
 function findingsFor(query: FindingQuery | undefined): HealthFindingsPage {
-  if (query?.tool === 'automate-licence') return makeFindingsPage([LICENCE]);
+  if (query?.tool === 'lupin-licence') return makeFindingsPage([LICENCE]);
   return makeFindingsPage([VEX, OPERATOR_ACCEPTED]);
 }
 
@@ -110,7 +110,7 @@ describe('the supply-chain page', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Supply chain' })).toBeInTheDocument();
     expect(await screen.findByTestId('licence-list')).toHaveTextContent('GPL-3.0-only');
     expect(health.getFindings).toHaveBeenCalledWith(TEST_PROJECT.id, {
-      tool: 'automate-licence',
+      tool: 'lupin-licence',
       state: 'open',
       limit: 100,
     });

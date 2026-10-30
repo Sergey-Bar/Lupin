@@ -5,15 +5,15 @@
 # The container's root filesystem is read-only, so this writes its two includes into the
 # /tmp tmpfs, where infra/nginx/edge.conf reads them:
 #
-#   /tmp/automate/tls-server.conf     the 8443 server, proxying exactly as the 8080 one
-#   /tmp/automate/http-redirect.conf  plain HTTP -> HTTPS, except the container healthcheck
+#   /tmp/lupin/tls-server.conf     the 8443 server, proxying exactly as the 8080 one
+#   /tmp/lupin/http-redirect.conf  plain HTTP -> HTTPS, except the container healthcheck
 #
 # With no certificate mounted neither file exists, edge.conf's includes match nothing, and
 # the edge is the plain-HTTP proxy it always was. `start lan-cert` creates the certificate.
 set -eu
 
-CERT_DIR="${LUPIN_CERT_DIR:-/etc/automate/certs}"
-OUT=/tmp/automate
+CERT_DIR="${LUPIN_CERT_DIR:-/etc/lupin/certs}"
+OUT=/tmp/lupin
 HTTPS_PORT="${LUPIN_HTTPS_PORT:-8443}"
 
 mkdir -p "$OUT"
@@ -36,7 +36,7 @@ server {
   ssl_certificate_key ${CERT_DIR}/server.key;
   ssl_protocols TLSv1.2 TLSv1.3;
   ssl_prefer_server_ciphers off;
-  ssl_session_cache shared:automate_tls:1m;
+  ssl_session_cache shared:lupin_tls:1m;
   ssl_session_timeout 1h;
 
   # One year, this host only. Not preload: a LAN name is not a public domain.
@@ -50,7 +50,7 @@ server {
   client_max_body_size 96m;
 
   location /api/ {
-    proxy_pass http://automate_api;
+    proxy_pass http://lupin_api;
     proxy_http_version 1.1;
     proxy_set_header Host \$host;
     proxy_set_header X-Forwarded-Proto https;
@@ -62,7 +62,7 @@ server {
   }
 
   location /scim/v2/ {
-    proxy_pass http://automate_api;
+    proxy_pass http://lupin_api;
     proxy_http_version 1.1;
     proxy_set_header Host \$host;
     proxy_set_header X-Forwarded-Proto https;
@@ -71,7 +71,7 @@ server {
   }
 
   location / {
-    proxy_pass http://automate_web;
+    proxy_pass http://lupin_web;
     proxy_http_version 1.1;
     proxy_set_header Host \$host;
     proxy_set_header X-Forwarded-Proto https;
@@ -80,7 +80,7 @@ server {
   }
 }
 EOF
-  echo "automate-edge: HTTPS on 8443 (published as ${HTTPS_PORT}); plain HTTP redirects to it"
+  echo "lupin-edge: HTTPS on 8443 (published as ${HTTPS_PORT}); plain HTTP redirects to it"
 else
-  echo "automate-edge: no LAN certificate in ${CERT_DIR}; serving plain HTTP only"
+  echo "lupin-edge: no LAN certificate in ${CERT_DIR}; serving plain HTTP only"
 fi

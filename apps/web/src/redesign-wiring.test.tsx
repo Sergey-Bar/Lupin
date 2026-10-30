@@ -52,7 +52,7 @@ afterEach(() => vi.unstubAllGlobals());
 describe('choosing a project', () => {
   it('offers no switcher for one project, because a choice of one is not a control', async () => {
     render(<Subject qa={makeQa()} />);
-    await waitFor(() => expect(screen.getByTestId('subject')).toHaveTextContent('Automate'));
+    await waitFor(() => expect(screen.getByTestId('subject')).toHaveTextContent('Lupin'));
     expect(screen.queryByTestId('project-switcher')).not.toBeInTheDocument();
   });
 
@@ -62,16 +62,16 @@ describe('choosing a project', () => {
     await waitFor(() => expect(screen.getByTestId('project-switcher')).toBeInTheDocument());
     fireEvent.change(screen.getByTestId('project-switcher'), { target: { value: 'project-2' } });
     expect(screen.getByTestId('subject')).toHaveTextContent('Shop');
-    expect(localStorage.getItem('automate-project')).toBe('project-2');
+    expect(localStorage.getItem('lupin-project')).toBe('project-2');
     unmount();
     render(<Subject qa={qa} />);
     await waitFor(() => expect(screen.getByTestId('subject')).toHaveTextContent('Shop'));
   });
 
   it('falls back to the first project when the remembered one is gone', async () => {
-    localStorage.setItem('automate-project', 'deleted');
+    localStorage.setItem('lupin-project', 'deleted');
     render(<Subject qa={makeQa({ listProjects: vi.fn(async () => [TEST_PROJECT, SECOND]) })} />);
-    await waitFor(() => expect(screen.getByTestId('subject')).toHaveTextContent('Automate'));
+    await waitFor(() => expect(screen.getByTestId('subject')).toHaveTextContent('Lupin'));
   });
 
   it('keeps working when storage refuses to be read or written', async () => {

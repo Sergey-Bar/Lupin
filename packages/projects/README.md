@@ -6,4 +6,4 @@ The project registry's pure half: ecosystem and test-tool detection over a repos
 pnpm --filter @lupin/projects test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

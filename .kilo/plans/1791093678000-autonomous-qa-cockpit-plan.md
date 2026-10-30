@@ -56,7 +56,7 @@ Everything else in the request lands as asked.
 
 Two questions were blocking and both are now answered.
 
-**D-1 — the brand.** `Cockpit` goes top-left; `Automate` stays the product wordmark. One brand per
+**D-1 — the brand.** `Cockpit` goes top-left; `Lupin` stays the product wordmark. One brand per
 slot, each answering a different question: *where am I* (left, the navigation target) and *what am I
 using* (right, the product). No rename, so `README.md`, `site/guide/design-language.md` and
 `scripts/lib/product-name.test.mjs` are untouched.
@@ -330,10 +330,10 @@ re-derivation is recorded in the row.
 ### W1 — Brand, states, and the axe spec
 
 - `apps/web/src/components/NavBar.tsx` — the left slot stops being a `text-sm font-semibold` nav
-  link and becomes a wordmark. `Cockpit` left, `Automate` right, one job each.
+  link and becomes a wordmark. `Cockpit` left, `Lupin` right, one job each.
 - `apps/web/src/components/NavBar.test.tsx` — **red first.** Asserts each name appears exactly once,
   and that the left one is the link to `/dashboard` with `aria-current="page"`. The existing test
-  asserts `Automate` appears once and that `Release Command Center` is absent; both survive.
+  asserts `Lupin` appears once and that `Release Command Center` is absent; both survive.
 - `docs/quality/state-matrix.md` — **generated, not hand-written.** `W11.4` condition (b) names a
   matrix, so one exists; but 13 routes × 4 states kept in step by hand is a document that drifts the
   week after it lands. The axe spec below already enumerates every route and every state it visits,

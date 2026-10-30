@@ -38,8 +38,8 @@ RUN set -eu; \
 FROM node:24.22.1-bookworm-slim AS runtime
 ARG LUPIN_VERSION=dev
 ARG LUPIN_REVISION=unknown
-LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
-  org.opencontainers.image.title="automate-runner" \
+LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
+  org.opencontainers.image.title="lupin-runner" \
   org.opencontainers.image.version="${LUPIN_VERSION}" \
   org.opencontainers.image.revision="${LUPIN_REVISION}"
 WORKDIR /app
@@ -49,8 +49,8 @@ COPY --from=k6 /usr/local/bin/k6 /usr/local/bin/k6
 # The browsers and their system libraries, from the deployed Playwright so the two versions
 # cannot disagree. Installed as root (`--with-deps` uses apt), then handed to `node`.
 RUN node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit \
-  && mkdir -p /var/lib/automate/artifacts \
-  && chown -R node:node /var/lib/automate /ms-playwright \
+  && mkdir -p /var/lib/lupin/artifacts \
+  && chown -R node:node /var/lib/lupin /ms-playwright \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 # This image carries Playwright's browsers, Bruno and k6, so it advertises all of them; a runner started

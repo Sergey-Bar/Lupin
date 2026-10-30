@@ -6,4 +6,4 @@ The execution boundary. A runner registers with the API, claims jobs by lease, r
 pnpm --filter @lupin/runner test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

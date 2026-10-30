@@ -22,7 +22,7 @@ const UNKNOWN_JOB = '00000000-0000-4000-8000-000000000000';
 function lookups(overrides: Partial<WorkspaceLookups> = {}): WorkspaceLookups {
   return {
     defaultWorkspace: DEFAULT,
-    tokenWorkspace: vi.fn(async (token: string) => (token === 'amt_b' ? 'ws-b' : null)),
+    tokenWorkspace: vi.fn(async (token: string) => (token === 'lup_b' ? 'ws-b' : null)),
     jobWorkspace: vi.fn(async (jobId: string) => (jobId === JOB_B ? 'ws-b' : null)),
     sessionUser: vi.fn(async () => null),
     memberships: vi.fn(async () => []),
@@ -50,14 +50,14 @@ describe('the request’s workspace', () => {
   });
 
   it('is a token’s own workspace, and a token cannot be pointed elsewhere', async () => {
-    expect(await resolve({ authorization: 'Bearer amt_b' })).toBe('ws-b');
+    expect(await resolve({ authorization: 'Bearer lup_b' })).toBe('ws-b');
     expect(
-      await resolve({ authorization: 'Bearer amt_b', cookie: `${WORKSPACE_CHOICE}=ws-c` }),
+      await resolve({ authorization: 'Bearer lup_b', cookie: `${WORKSPACE_CHOICE}=ws-c` }),
     ).toBe('ws-b');
-    expect(await resolve({ cookie: 'automate_token=amt_b' })).toBe('ws-b');
+    expect(await resolve({ cookie: 'lupin_token=lup_b' })).toBe('ws-b');
     // An unknown token is no credential: with nothing beside it the request is the default's,
     // where it is refused as unknown.
-    expect(await resolve({ authorization: 'Bearer amt_unknown' })).toBe(DEFAULT);
+    expect(await resolve({ authorization: 'Bearer lup_unknown' })).toBe(DEFAULT);
   });
 
   it('passes over a token nobody holds any more to the person who also signed in', async () => {
@@ -68,11 +68,11 @@ describe('the request’s workspace', () => {
       memberships: vi.fn(async () => ['ws-b', DEFAULT]),
     };
     expect(
-      await resolve({ cookie: `automate_token=amt_revoked; ${WORKSPACE_CHOICE}=ws-b` }, person),
+      await resolve({ cookie: `lupin_token=lup_revoked; ${WORKSPACE_CHOICE}=ws-b` }, person),
     ).toBe('ws-b');
     expect(
       await resolve(
-        { authorization: 'Bearer amt_revoked', cookie: `${WORKSPACE_CHOICE}=ws-b` },
+        { authorization: 'Bearer lup_revoked', cookie: `${WORKSPACE_CHOICE}=ws-b` },
         person,
       ),
     ).toBe('ws-b');
@@ -198,8 +198,8 @@ describe('the dispatch', () => {
     const ask = async (headers: Record<string, string>) =>
       (await app.request('/api/v1/runs', { headers })).text();
     expect(await ask({})).toBe('runs of the default');
-    expect(await ask({ authorization: 'Bearer amt_b' })).toBe('runs of ws-b');
-    expect(await ask({ authorization: 'Bearer amt_b' })).toBe('runs of ws-b');
+    expect(await ask({ authorization: 'Bearer lup_b' })).toBe('runs of ws-b');
+    expect(await ask({ authorization: 'Bearer lup_b' })).toBe('runs of ws-b');
     // One composition per workspace, built once, and never one for the default.
     expect(composed).toEqual(['ws-b']);
   });
@@ -220,10 +220,10 @@ describe('the dispatch', () => {
     app.use('*', createWorkspaceDispatch({ lookups: lookups(), compose }));
     const response = await app.request('/api/v1/x?q=1', {
       method: 'POST',
-      headers: { authorization: 'Bearer amt_b' },
+      headers: { authorization: 'Bearer lup_b' },
       body: 'payload',
     });
     expect(response.status).toBe(201);
-    expect(seen).toEqual([['POST', '1', 'Bearer amt_b', 'payload']]);
+    expect(seen).toEqual([['POST', '1', 'Bearer lup_b', 'payload']]);
   });
 });

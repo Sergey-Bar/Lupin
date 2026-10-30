@@ -51,7 +51,7 @@ export const CreateAccessTokenBodySchema = z
     path: ['projectId'],
   });
 
-export const TOKEN_PREFIX = 'amt_';
+export const TOKEN_PREFIX = 'lup_';
 
 export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');

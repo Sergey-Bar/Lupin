@@ -164,7 +164,7 @@ describe('NavBar keyboard operation', () => {
    */
   it('cycles the theme on Enter, from the theme the provider read out of storage', async () => {
     const user = userEvent.setup();
-    localStorage.setItem('automate-theme', 'light');
+    localStorage.setItem('lupin-theme', 'light');
     renderRouted(
       <ThemeProvider>
         <NavBar />
@@ -176,7 +176,7 @@ describe('NavBar keyboard operation', () => {
     await user.keyboard('{Enter}');
 
     // `light` advances to `system`, which is `THEMES[2]`.
-    expect(localStorage.getItem('automate-theme')).toBe('system');
+    expect(localStorage.getItem('lupin-theme')).toBe('system');
   });
 
   /**

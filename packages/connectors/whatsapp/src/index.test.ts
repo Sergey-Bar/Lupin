@@ -30,7 +30,7 @@ const send = {
   input: {
     phoneNumberId: '1234567890',
     to: '15551234567',
-    template: 'automate_report',
+    template: 'lupin_report',
     language: 'en',
     text: '🟢 Weekly quality report',
   },
@@ -50,7 +50,7 @@ describe('whatsapp adapter', () => {
       to: '15551234567',
       type: 'template',
       template: {
-        name: 'automate_report',
+        name: 'lupin_report',
         language: { code: 'en' },
         components: [
           { type: 'body', parameters: [{ type: 'text', text: '🟢 Weekly quality report' }] },

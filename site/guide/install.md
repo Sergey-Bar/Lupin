@@ -1,6 +1,6 @@
 # Install
 
-Automate runs as a set of containers on one machine. A release is one zip with everything
+Lupin runs as a set of containers on one machine. A release is one zip with everything
 needed to start it; the images are downloaded the first time.
 
 ## What you need
@@ -13,10 +13,10 @@ needed to start it; the images are downloaded the first time.
 
 ## Install and start
 
-1. Download `automate-<version>.zip` from the
-   [latest release](https://github.com/Sergey-Bar/AutoMate/releases/latest). The release
+1. Download `lupin-<version>.zip` from the
+   [latest release](https://github.com/Sergey-Bar/Lupin/releases/latest). The release
    also has `SHA256SUMS`, if you want to check the download.
-2. Unzip it anywhere. Everything lives in the `automate-<version>` folder.
+2. Unzip it anywhere. Everything lives in the `lupin-<version>` folder.
 3. Start Docker, then run the start script from that folder:
 
    | System            | Command                                                      |
@@ -71,12 +71,12 @@ Set these in `.env` (or in your shell) and start again.
 
 | Setting            | Default                   | Meaning                               |
 | ------------------ | ------------------------- | ------------------------------------- |
-| `LUPIN_PORT`       | `8080`                    | The one port Automate publishes       |
+| `LUPIN_PORT`       | `8080`                    | The one port Lupin publishes          |
 | `LUPIN_BIND`       | `127.0.0.1`               | The address it listens on             |
 | `LUPIN_PUBLIC_URL` | `http://localhost:<port>` | The URL users open, if it is not that |
 
 ::: warning Opening it to your network
-With the default `LUPIN_BIND=127.0.0.1`, only this machine can reach Automate.
+With the default `LUPIN_BIND=127.0.0.1`, only this machine can reach Lupin.
 The solo profile refuses settings that make it reachable from another machine.
 To share it, choose the appropriate [profile](profiles.md), then follow
 [LAN mode](lan-mode.md) or [remote access](remote-cloudflare.md). Changing the bind
@@ -105,8 +105,8 @@ original `.env` from your backup. A fresh installation does not recover those cr
 ## What is inside
 
 The zip's `compose.yml` is generated from `infra/compose/docker-compose.unified.yml` with
-every service pointing at its published image, `ghcr.io/sergey-bar/automate-<service>`.
+every service pointing at its published image, `ghcr.io/sergey-bar/lupin-<service>`.
 It runs PostgreSQL, an S3-compatible object store (SeaweedFS), the migrations, the API,
 the worker, the Playwright runner, the web UI and an edge proxy. Only the proxy publishes
 a port. How a release is built is described in
-[ADR-013](https://github.com/Sergey-Bar/AutoMate/blob/main/docs/adr/013-published-images-and-a-release-bundle.md).
+[ADR-013](https://github.com/Sergey-Bar/Lupin/blob/main/docs/adr/013-published-images-and-a-release-bundle.md).

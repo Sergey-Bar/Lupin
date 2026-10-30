@@ -11,8 +11,8 @@ import { satisfies } from '../services/access-service.js';
  * Who is calling, resolved once per request, and the guards that read it.
  *
  * Credentials, in order (ADR-014): an `Authorization: Bearer` access token, then the
- * `automate_token` cookie a browser sign-in with a token sets, then a person's session
- * (OIDC), then the `automate_session` cookie the installation key's sign-in sets (which is the
+ * `lupin_token` cookie a browser sign-in with a token sets, then a person's session
+ * (OIDC), then the `lupin_session` cookie the installation key's sign-in sets (which is the
  * admin), then a verified Cloudflare Access identity when the install is remote. The
  * installation session comes before Access because behind the tunnel every request carries an
  * Access identity: read after it, a break-glass sign-in would never be read at all. With
@@ -29,8 +29,8 @@ import { satisfies } from '../services/access-service.js';
  * at sign-in. Named without `cookie` or `token` because the secret-literal rule reads those
  * words in a name as a credential held in source.
  */
-export const BROWSER_SIGN_IN = 'automate_token';
-const CALLER = 'automate.caller';
+export const BROWSER_SIGN_IN = 'lupin_token';
+const CALLER = 'lupin.caller';
 
 export interface CallerResolver {
   mode: 'open' | 'enforced';

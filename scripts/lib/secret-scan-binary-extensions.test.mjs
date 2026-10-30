@@ -50,7 +50,7 @@ const hit = ['DATABASE_URL=', 'postgres', '://user', ':', 'swordfish', '@db:5432
  * @returns {{ status: number | null, stdout: string, stderr: string }}
  */
 function scan(files) {
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-secret-bin-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-secret-bin-'));
   try {
     execFileSync('git', ['init', '--quiet'], { cwd: directory, stdio: 'ignore' });
     for (const [relative, content] of Object.entries(files)) {

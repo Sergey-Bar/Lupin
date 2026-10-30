@@ -150,14 +150,14 @@ export function checkExposurePolicy(config: AppConfig): void {
   if (config.remote === 'cloudflare') checkTunnel(config);
   if (!isLoopbackBind(bind) && (config.accessControl ?? 'open') === 'open') {
     throw new Error(
-      `Automate would be reachable from other machines (${bind}) with no login in front of it. ` +
+      `Lupin would be reachable from other machines (${bind}) with no login in front of it. ` +
         'Set LUPIN_LAN_MODE=1 to serve your local network with sign-in, device pairing and ' +
         'a client allowlist, or bind to 127.0.0.1 to keep it on this machine.',
     );
   }
   if (config.profile === 'solo' && (config.lanMode === true || !isLoopbackBind(bind))) {
     throw new Error(
-      `LUPIN_PROFILE=solo keeps Automate on this machine, and ${
+      `LUPIN_PROFILE=solo keeps Lupin on this machine, and ${
         config.lanMode === true ? 'LUPIN_LAN_MODE is on' : `it would be reachable on ${bind}`
       }. Set LUPIN_PROFILE=startup to serve other people with sign-in, or bind to 127.0.0.1.`,
     );
@@ -212,13 +212,13 @@ function checkSsoSource(config: AppConfig): void {
 function checkTunnel(config: AppConfig): void {
   if (config.profile === 'solo') {
     throw new Error(
-      'LUPIN_PROFILE=solo keeps Automate on this machine, and LUPIN_REMOTE=cloudflare ' +
+      'LUPIN_PROFILE=solo keeps Lupin on this machine, and LUPIN_REMOTE=cloudflare ' +
         'publishes it through a tunnel. Set LUPIN_PROFILE=startup to serve other people.',
     );
   }
   if ((config.accessControl ?? 'open') === 'open') {
     throw new Error(
-      'LUPIN_REMOTE=cloudflare makes Automate reachable from the internet, and ' +
+      'LUPIN_REMOTE=cloudflare makes Lupin reachable from the internet, and ' +
         'ACCESS_CONTROL=open would let anyone who gets through act as the admin. Remove ' +
         'ACCESS_CONTROL (the tunnel turns it on) or set it to enforced.',
     );

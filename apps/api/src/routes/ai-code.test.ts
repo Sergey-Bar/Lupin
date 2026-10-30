@@ -54,7 +54,7 @@ async function harness() {
     .returning({ id: schema.projects.id });
   const projectId = (project as { id: string }).id;
   const tokens: Record<string, Caller> = {
-    amt_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
+    lup_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
   };
   const access: CallerResolver = {
     mode: 'enforced',
@@ -150,7 +150,7 @@ async function seed(db: MigratedDb, projectId: string) {
   });
 }
 
-const get = (app: Hono, url: string, token: string | null = 'amt_viewer') =>
+const get = (app: Hono, url: string, token: string | null = 'lup_viewer') =>
   app.request(url, { headers: token === null ? {} : { authorization: `Bearer ${token}` } });
 
 describe('the ai-code routes', () => {

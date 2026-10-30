@@ -30,7 +30,7 @@ fails_.
 
 ## Repository Overview
 
-This is a **pnpm workspace monorepo** containing the unified Automate platform.
+This is a **pnpm workspace monorepo** containing the unified Lupin platform.
 
 | Directory                   | Product                  | Stack                                           |
 | --------------------------- | ------------------------ | ----------------------------------------------- |
@@ -38,7 +38,7 @@ This is a **pnpm workspace monorepo** containing the unified Automate platform.
 | `apps/web`                  | Unified Web              | React 19, Vite, TanStack Router, Tailwind CSS 4 |
 | `apps/runner`               | Execution boundary       | Node, rootless process control                  |
 | `apps/worker`               | Lease and recovery loop  | Node, worker resilience                         |
-| `tools/lupin-cli`           | `automate`, the CI CLI   | Node, no runtime dependencies                   |
+| `tools/lupin-cli`           | `lupin`, the CI CLI      | Node, no runtime dependencies                   |
 | `tools/playwright-reporter` | Live Playwright reporter | Node, no runtime dependencies                   |
 | `site`                      | Documentation site       | VitePress                                       |
 
@@ -278,7 +278,7 @@ vanished rows. See `confirmationProblems` in `scripts/lib/findings-ledger.mjs`.
 pnpm --filter @lupin/api test          # API tests only
 pnpm --filter @lupin/unified-web test  # Web client tests only
 pnpm --filter @lupin/shared-contracts test # Contracts tests only
-pnpm --filter @lupin/cli test          # The `automate` CI CLI only
+pnpm --filter @lupin/cli test          # The `lupin` CI CLI only
 pnpm --filter @lupin/playwright-reporter test # The live Playwright reporter only
 pnpm --filter @lupin/api dev           # API dev only
 pnpm --filter @lupin/unified-web dev   # Web dev only
@@ -367,7 +367,7 @@ packages/
   tool-sdk/          Agent operation declaration, dispatch, result normalisation, error classes
   ui/                Shared Tailwind 4 component library
 tools/
-  lupin-cli/      `automate`, the dependency-free CI CLI (upload, gate, deploy, agent-config)
+  lupin-cli/      `lupin`, the dependency-free CI CLI (upload, gate, deploy, agent-config)
   migrate-cli/       Migration utilities
 tests/performance/         k6 scenarios and the recorded thresholds
 infra/runners/             k6 / playwright / zap runner images (manifests only)

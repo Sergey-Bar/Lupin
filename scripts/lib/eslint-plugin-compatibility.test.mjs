@@ -61,7 +61,7 @@ const PROBE_SOURCE = `export function Broken(): JSX.Element {
 export function Correct(): JSX.Element {
   return (
     <>
-      <img src="/logo.png" alt="Automate" />
+      <img src="/logo.png" alt="Lupin" />
       <button type="button" onClick={() => undefined}>
         Click me
       </button>

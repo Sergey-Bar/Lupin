@@ -109,7 +109,7 @@ describe('artifact bytes distinguish absent from unreadable', () => {
   let root: string;
 
   beforeAll(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'automate-artifact-bytes-'));
+    root = await mkdtemp(path.join(tmpdir(), 'lupin-artifact-bytes-'));
   });
 
   afterAll(async () => {

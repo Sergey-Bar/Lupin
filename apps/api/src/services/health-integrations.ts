@@ -37,7 +37,7 @@ export function githubRepository(url: string | null): { owner: string; repo: str
 
 /** The comment's first line, which is how the next report finds the comment to update. */
 export const COMMENT_MARKER = '<!-- lupin-health -->';
-export const STATUS_CONTEXT = 'automate/health';
+export const STATUS_CONTEXT = 'lupin/health';
 const COMMENT_FINDINGS = 10;
 
 export interface GateReport {
@@ -611,7 +611,7 @@ async function sendWebhook(
   event: AlertEvent,
 ): Promise<string> {
   const body = JSON.stringify({
-    type: 'automate.health.alert',
+    type: 'lupin.health.alert',
     projectId: event.projectId,
     project: event.project,
     branch: event.branch,
@@ -624,7 +624,7 @@ async function sendWebhook(
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-automate-signature': signWebhook(secret, body, unix),
+        'x-lupin-signature': signWebhook(secret, body, unix),
       },
       body,
       redirect: 'error',

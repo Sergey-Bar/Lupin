@@ -35,12 +35,12 @@ describe('buildBrowserSentryOptions', () => {
   it('reads the release, environment and sampling rate', () => {
     const options = buildBrowserSentryOptions(router, {
       dsn: DSN,
-      release: ' automate@1.4.2 ',
+      release: ' lupin@1.4.2 ',
       environment: 'staging',
       tracesSampleRate: '0.5',
     });
 
-    expect(options?.release).toBe('automate@1.4.2');
+    expect(options?.release).toBe('lupin@1.4.2');
     expect(options?.environment).toBe('staging');
     expect(options?.tracesSampleRate).toBe(0.5);
   });

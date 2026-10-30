@@ -5,7 +5,7 @@
  * regex over a *child process's stdout* being used to derive results, because
  * results must come from declared artifacts so that one parser exists. Detection
  * is reading a file the operator checked in, to decide what to *propose*; the
- * proposal is overridden by `automate.config.json` or rejected, so a miss costs
+ * proposal is overridden by `lupin.config.json` or rejected, so a miss costs
  * operator time rather than producing a wrong test result. The distinction is
  * worth the qualification, and a reader who cannot state which side of it a
  * piece of code is on should not add a third parser.

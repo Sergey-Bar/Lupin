@@ -7,7 +7,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { HELP, run } from './cli.js';
 import { EXIT } from './errors.js';
 
-/** A stub AutoMate: records each request and answers from `reply`. */
+/** A stub Lupin: records each request and answers from `reply`. */
 interface Seen {
   method: string;
   url: string;
@@ -62,7 +62,7 @@ const PROJECT = '11111111-1111-4111-8111-111111111111';
 // Assembled at runtime, the way `apps/api/src/test-support/synthetic-credentials.ts` builds
 // its fixtures (this package cannot import it): a credential-shaped literal is exactly what
 // `no-hardcoded-secret-literal` and gitleaks exist to find.
-const TOKEN = ['amt_', 'ci', '_uploader_token'].join('');
+const TOKEN = ['lup_', 'ci', '_uploader_token'].join('');
 const SHA = 'abcdef1234567';
 
 async function invoke(
@@ -325,7 +325,7 @@ describe('the command line and the environment', () => {
 
   it('refuses plain http to a host that is not this machine, before anything is sent', async () => {
     const result = await invoke(['gate', '--branch', 'main', '--commit', SHA], {
-      LUPIN_URL: 'http://automate.lan:3000',
+      LUPIN_URL: 'http://lupin.lan:3000',
     });
     expect(result.code).toBe(EXIT.usage);
     expect(result.err).toMatch(/in the clear/u);
@@ -502,7 +502,7 @@ describe('lupin test', () => {
   it('refuses a missing command, and reports one that cannot start', async () => {
     expect((await invoke([...args])).code).toBe(EXIT.usage);
     const dir = await withReport();
-    const result = await invoke([...args, '--', 'definitely-not-a-command-automate'], {}, dir);
+    const result = await invoke([...args, '--', 'definitely-not-a-command-lupin'], {}, dir);
     expect(result.code).toBe(127);
     expect(seen).toHaveLength(0);
   });

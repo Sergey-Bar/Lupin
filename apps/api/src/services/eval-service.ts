@@ -14,7 +14,7 @@ import {
   type EvalComparison,
 } from '@lupin/reporting';
 import {
-  AutomateEvalRunSchema,
+  LupinEvalRunSchema,
   EvalCaseSchema,
   EvalRunSummarySchema,
   HealthPolicySchema,
@@ -46,7 +46,7 @@ import {
  *
  * {@link storeEvalRun} is the only code that writes `eval_runs` and `eval_cases`. A CI upload
  * reaches it through `ingestHealthReport`; the built-in eval runner writes its run as an
- * `automate-eval-json` document and uploads it through the same `ingestHealthReport`, so a
+ * `lupin-eval-json` document and uploads it through the same `ingestHealthReport`, so a
  * built-in run and an uploaded one are stored, graded and compared by exactly the same code.
  *
  * ## Bounded
@@ -76,7 +76,7 @@ export function agentsPolicyOf(project: Pick<ProjectRow, 'profile'>): AgentsPoli
   return (parsed.success ? parsed.data.agents : undefined) ?? {};
 }
 
-function parseAutomateEval(bytes: Uint8Array, storePrompts: boolean): EvalRun {
+function parseLupinEval(bytes: Uint8Array, storePrompts: boolean): EvalRun {
   if (bytes.byteLength > MAX_HEALTH_REPORT_BYTES) {
     throw new HealthReportError('too_large', 'eval run is larger than the upload limit');
   }
@@ -84,14 +84,14 @@ function parseAutomateEval(bytes: Uint8Array, storePrompts: boolean): EvalRun {
   try {
     document = JSON.parse(new TextDecoder().decode(bytes));
   } catch {
-    throw new HealthReportError('malformed', 'automate-eval-json is not valid JSON');
+    throw new HealthReportError('malformed', 'lupin-eval-json is not valid JSON');
   }
-  const parsed = AutomateEvalRunSchema.safeParse(document);
+  const parsed = LupinEvalRunSchema.safeParse(document);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     throw new HealthReportError(
       'malformed',
-      `automate-eval-json does not match the run shape at ${issue?.path.join('.') ?? '(root)'}`,
+      `lupin-eval-json does not match the run shape at ${issue?.path.join('.') ?? '(root)'}`,
     );
   }
   const run = parsed.data;
@@ -107,8 +107,8 @@ export function parseEvalUpload(
   bytes: Uint8Array,
   storePrompts: boolean,
 ): EvalRun {
-  return format === 'automate-eval-json'
-    ? parseAutomateEval(bytes, storePrompts)
+  return format === 'lupin-eval-json'
+    ? parseLupinEval(bytes, storePrompts)
     : parseEvalReport(format, bytes, { storePrompts });
 }
 

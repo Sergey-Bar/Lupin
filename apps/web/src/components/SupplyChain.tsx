@@ -44,11 +44,11 @@ import { useToast } from './Toasts.js';
  * commit's tests touched.
  *
  * Every figure is read from the server — the SBOM inventory, the licence findings
- * `automate-licence` raised against the policy, the findings a VEX statement accepted, the
+ * `lupin-licence` raised against the policy, the findings a VEX statement accepted, the
  * Supply chain dimension of the grade (where SLSA provenance lands), and diff coverage.
  * Nothing is computed here but counts of what arrived.
  */
-export const LICENCE_TOOL = 'automate-licence';
+export const LICENCE_TOOL = 'lupin-licence';
 export const VEX_PREFIX = 'vex:';
 const PAGE = 25;
 

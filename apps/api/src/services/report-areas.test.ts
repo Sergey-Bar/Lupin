@@ -84,7 +84,7 @@ describe('loadReportAreas', () => {
     const { db } = await seed();
     const evalsProject = await agentProject(db, {}, { name: 'bot' });
     const options = { db: db as never, workspaceId: 'ws-1', now: () => NOW };
-    const ingest = (format: 'automate-eval-json' | 'sarif' | 'jscpd', body: unknown) =>
+    const ingest = (format: 'lupin-eval-json' | 'sarif' | 'jscpd', body: unknown) =>
       ingestHealthReport(options, {
         projectId: evalsProject,
         format,
@@ -92,7 +92,7 @@ describe('loadReportAreas', () => {
         branch: 'main',
         source: 'ci',
       });
-    await ingest('automate-eval-json', evalRun('support', { a: 9, b: 9 }));
+    await ingest('lupin-eval-json', evalRun('support', { a: 9, b: 9 }));
     await ingest('sarif', {
       version: '2.1.0',
       runs: [{ tool: { driver: { name: 'gitleaks' } }, results: [] }],

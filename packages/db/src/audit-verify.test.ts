@@ -81,7 +81,7 @@ describe('audit:verify', () => {
 });
 
 describe('the audit:verify command', () => {
-  const URL_OK = 'postgres://automate@localhost:5432/automate';
+  const URL_OK = 'postgres://lupin@localhost:5432/lupin';
   const log = () => {
     const lines: string[] = [];
     return {

@@ -20,7 +20,7 @@ import { memberElsewhere } from '../services/user-service.js';
  *   `POST /api/v1/scim-tokens`, shown once and stored as a sha256. Every SCIM request is scoped
  *   to the workspace of the token that made it, never to anything the request names.
  * - **Users** are the people with a role in that workspace. `userName` is the email.
- * - **Groups are the three roles**, `automate-viewer`, `automate-operator` and `automate-admin`
+ * - **Groups are the three roles**, `lupin-viewer`, `lupin-operator` and `lupin-admin`
  *   (ids `viewer`, `operator`, `admin`). Adding a person to one gives them that role; removing
  *   them returns them to the default role. Assign the groups in the identity provider's app.
  *   Their names are fixed, so a rename changes nothing, and `displayName eq` finds one.
@@ -206,7 +206,7 @@ function groupsFiltered(filter: string | undefined): AccessRole[] | null {
   const match = /^\s*displayName\s+eq\s+"([^"]*)"\s*$/iu.exec(filter);
   if (match === null) return null;
   const name = (match[1] ?? '').toLowerCase();
-  return ROLES.filter((role) => `automate-${role}` === name);
+  return ROLES.filter((role) => `lupin-${role}` === name);
 }
 
 const UserBodySchema = z.object({
@@ -263,7 +263,7 @@ function userResource(row: Row, base: string) {
     displayName: row.displayName,
     emails: [{ value: row.email, primary: true }],
     active: row.disabledAt === null,
-    groups: [{ value: row.role, display: `automate-${row.role}` }],
+    groups: [{ value: row.role, display: `lupin-${row.role}` }],
     meta: {
       resourceType: 'User',
       created: row.createdAt.toISOString(),
@@ -609,7 +609,7 @@ export function createScimRoutes(options: ScimRouteOptions): Hono {
     return {
       schemas: [GROUP],
       id: role,
-      displayName: `automate-${role}`,
+      displayName: `lupin-${role}`,
       members: members.map((member) => ({ value: member.id, display: member.email })),
       meta: { resourceType: 'Group', location: `${base(context)}/scim/v2/Groups/${role}` },
     };
@@ -618,7 +618,7 @@ export function createScimRoutes(options: ScimRouteOptions): Hono {
   app.get('/scim/v2/Groups', scim, async (context) => {
     const scope = scopeOf(context);
     // A provider looks a group up by name before it links or pushes it, and takes the first
-    // answer: every group for any filter would have linked automate-admin to the viewers.
+    // answer: every group for any filter would have linked lupin-admin to the viewers.
     const roles = groupsFiltered(context.req.query('filter'));
     if (roles === null) {
       return scimError(context, 400, 'Only displayName eq filters are supported', 'invalidFilter');

@@ -47,7 +47,7 @@ const gate = {
 
 const passedRun = makeRun({
   id: 'run-123',
-  projectId: 'automate',
+  projectId: 'lupin',
   phase: 'complete',
   outcome: 'failed',
   startedAt: TEST_TIMESTAMP,
@@ -346,7 +346,7 @@ describe('RunDetailPage', () => {
     await waitFor(() => expect(screen.getByTestId('run-detail-page')).toBeInTheDocument());
     expect(screen.getByTestId('run-phase')).toHaveTextContent('complete');
     expect(screen.getByTestId('run-status')).toHaveTextContent('FAILED');
-    expect(screen.getByTestId('run-project')).toHaveTextContent('automate');
+    expect(screen.getByTestId('run-project')).toHaveTextContent('lupin');
     expect(screen.getByTestId('run-total')).toHaveTextContent('1');
     expect(screen.getByTestId('test-test-result-1')).toHaveTextContent('loads the command center');
     expect(screen.getByTestId('test-error-test-result-1')).toHaveTextContent(

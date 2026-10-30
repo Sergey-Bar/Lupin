@@ -78,7 +78,7 @@ export const RUNNER_NAMES = ['playwright', 'k6', 'zap'];
  * @returns {string}
  */
 export function imageRefOf(name) {
-  return `automate/${name}:local`;
+  return `lupin/${name}:local`;
 }
 
 /**

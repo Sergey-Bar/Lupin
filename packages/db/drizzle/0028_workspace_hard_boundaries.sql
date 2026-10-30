@@ -22,7 +22,7 @@
 --   1. **From the parent**, where the row has one: a test, a result, an artifact, a shard
 --      or a classification takes its run's workspace; an attachment takes its result's; a
 --      message attachment takes its message's; a session file takes its session's.
---   2. **From an explicit operator choice**, `SET automate.backfill_workspace = '<id>'`
+--   2. **From an explicit operator choice**, `SET lupin.backfill_workspace = '<id>'`
 --      (or `ALTER DATABASE … SET`), which must name a workspace that exists.
 --   3. **From the only workspace**, when exactly one exists — the single-tenant install
 --      ADR-006 describes, which is every install today.
@@ -60,17 +60,17 @@
 
 -- Step 0 — the one place the fallback is decided. Created here and dropped at the end, so
 -- nothing outside this migration can call it.
-CREATE FUNCTION automate_backfill_workspace(target text) RETURNS text
+CREATE FUNCTION lupin_backfill_workspace(target text) RETURNS text
 LANGUAGE plpgsql AS $$
 DECLARE
   chosen text;
   candidates integer;
 BEGIN
-  chosen := nullif(btrim(coalesce(current_setting('automate.backfill_workspace', true), '')), '');
+  chosen := nullif(btrim(coalesce(current_setting('lupin.backfill_workspace', true), '')), '');
   IF chosen IS NOT NULL THEN
     IF NOT EXISTS (SELECT 1 FROM workspaces WHERE id = chosen) THEN
       RAISE EXCEPTION
-        '%.workspace_id: automate.backfill_workspace names "%", which is not a registered workspace. '
+        '%.workspace_id: lupin.backfill_workspace names "%", which is not a registered workspace. '
         'Name one of the ids in the workspaces table.', target, chosen;
     END IF;
     RETURN chosen;
@@ -83,8 +83,8 @@ BEGIN
   RAISE EXCEPTION
     '%.workspace_id is becoming NOT NULL, and % holds rows with no parent to take a workspace '
     'from while % workspaces exist. This migration will not choose one: run it with '
-    'automate.backfill_workspace set to the workspace those rows belong to '
-    '(SET automate.backfill_workspace = ''<id>''), or remove the rows first.',
+    'lupin.backfill_workspace set to the workspace those rows belong to '
+    '(SET lupin.backfill_workspace = ''<id>''), or remove the rows first.',
     target, target, candidates;
 END
 $$;
@@ -114,7 +114,7 @@ SELECT named.id, named.id, 'config', now()
 --> statement-breakpoint
 
 -- Step 3 — runs, the parent of most of what follows.
-UPDATE runs SET workspace_id = automate_backfill_workspace('runs') WHERE workspace_id IS NULL;
+UPDATE runs SET workspace_id = lupin_backfill_workspace('runs') WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE runs ALTER COLUMN workspace_id SET NOT NULL;
 --> statement-breakpoint
@@ -178,7 +178,7 @@ ALTER TABLE test_failure_correlations ADD COLUMN workspace_id text;
 UPDATE test_failure_correlations SET workspace_id = runs.workspace_id
   FROM runs WHERE runs.id = test_failure_correlations.last_updated_run_id;
 --> statement-breakpoint
-UPDATE test_failure_correlations SET workspace_id = automate_backfill_workspace('test_failure_correlations')
+UPDATE test_failure_correlations SET workspace_id = lupin_backfill_workspace('test_failure_correlations')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE execution_log ADD COLUMN workspace_id text;
@@ -186,7 +186,7 @@ ALTER TABLE execution_log ADD COLUMN workspace_id text;
 UPDATE execution_log SET workspace_id = conversations.workspace_id
   FROM conversations WHERE conversations.id = execution_log.conversation_id;
 --> statement-breakpoint
-UPDATE execution_log SET workspace_id = automate_backfill_workspace('execution_log')
+UPDATE execution_log SET workspace_id = lupin_backfill_workspace('execution_log')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 
@@ -216,14 +216,14 @@ ALTER TABLE failure_clusters ADD COLUMN workspace_id text;
 UPDATE failure_clusters SET workspace_id = runs.workspace_id
   FROM runs WHERE runs.id = coalesce(failure_clusters.last_seen_run_id, failure_clusters.first_seen_run_id);
 --> statement-breakpoint
-UPDATE failure_clusters SET workspace_id = automate_backfill_workspace('failure_clusters')
+UPDATE failure_clusters SET workspace_id = lupin_backfill_workspace('failure_clusters')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 
 -- Step 7 — the agent tables: a session has no parent, and its children take its workspace.
 ALTER TABLE agent_sessions ADD COLUMN workspace_id text;
 --> statement-breakpoint
-UPDATE agent_sessions SET workspace_id = automate_backfill_workspace('agent_sessions')
+UPDATE agent_sessions SET workspace_id = lupin_backfill_workspace('agent_sessions')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE agent_session_files ADD COLUMN workspace_id text;
@@ -246,47 +246,47 @@ UPDATE generated_test_suggestions SET workspace_id = agent_sessions.workspace_id
  WHERE generated_test_suggestions.workspace_id IS NULL
    AND agent_sessions.id = generated_test_suggestions.session_id;
 --> statement-breakpoint
-UPDATE generated_test_suggestions SET workspace_id = automate_backfill_workspace('generated_test_suggestions')
+UPDATE generated_test_suggestions SET workspace_id = lupin_backfill_workspace('generated_test_suggestions')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE agent_conflicts ADD COLUMN workspace_id text;
 --> statement-breakpoint
-UPDATE agent_conflicts SET workspace_id = automate_backfill_workspace('agent_conflicts')
+UPDATE agent_conflicts SET workspace_id = lupin_backfill_workspace('agent_conflicts')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 
 -- Step 8 — the tables with no parent at all.
 ALTER TABLE quarantine ADD COLUMN workspace_id text;
 --> statement-breakpoint
-UPDATE quarantine SET workspace_id = automate_backfill_workspace('quarantine') WHERE workspace_id IS NULL;
+UPDATE quarantine SET workspace_id = lupin_backfill_workspace('quarantine') WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE known_failures ADD COLUMN workspace_id text;
 --> statement-breakpoint
-UPDATE known_failures SET workspace_id = automate_backfill_workspace('known_failures')
+UPDATE known_failures SET workspace_id = lupin_backfill_workspace('known_failures')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE trends ADD COLUMN workspace_id text;
 --> statement-breakpoint
-UPDATE trends SET workspace_id = automate_backfill_workspace('trends') WHERE workspace_id IS NULL;
+UPDATE trends SET workspace_id = lupin_backfill_workspace('trends') WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE nl_query_history ADD COLUMN workspace_id text;
 --> statement-breakpoint
-UPDATE nl_query_history SET workspace_id = automate_backfill_workspace('nl_query_history')
+UPDATE nl_query_history SET workspace_id = lupin_backfill_workspace('nl_query_history')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE flow_templates ADD COLUMN workspace_id text;
 --> statement-breakpoint
-UPDATE flow_templates SET workspace_id = automate_backfill_workspace('flow_templates')
+UPDATE flow_templates SET workspace_id = lupin_backfill_workspace('flow_templates')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE model_config ADD COLUMN workspace_id text;
 --> statement-breakpoint
-UPDATE model_config SET workspace_id = automate_backfill_workspace('model_config')
+UPDATE model_config SET workspace_id = lupin_backfill_workspace('model_config')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE trace_links ADD COLUMN workspace_id text;
 --> statement-breakpoint
-UPDATE trace_links SET workspace_id = automate_backfill_workspace('trace_links')
+UPDATE trace_links SET workspace_id = lupin_backfill_workspace('trace_links')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 
@@ -319,7 +319,7 @@ $$;
 --> statement-breakpoint
 UPDATE audit_events SET workspace_id = tenant_id WHERE workspace_id IS NULL AND tenant_id IS NOT NULL;
 --> statement-breakpoint
-UPDATE audit_events SET workspace_id = automate_backfill_workspace('audit_events')
+UPDATE audit_events SET workspace_id = lupin_backfill_workspace('audit_events')
  WHERE workspace_id IS NULL;
 --> statement-breakpoint
 ALTER TABLE audit_events DROP COLUMN tenant_id;
@@ -520,4 +520,4 @@ CREATE INDEX trace_links_workspace_source_idx ON trace_links (workspace_id, sour
 --> statement-breakpoint
 
 -- Step 12 — nothing outside this migration may call the fallback.
-DROP FUNCTION automate_backfill_workspace(text);
+DROP FUNCTION lupin_backfill_workspace(text);

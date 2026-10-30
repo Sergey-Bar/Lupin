@@ -338,8 +338,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # 	rust, not a password. The service port is bound to the runner
           # only, and a password here would be a credential committed to the
           # repository — which pnpm security:secrets refuses, correctly. The
@@ -348,12 +348,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -425,8 +425,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # 	rust, not a password. The service port is bound to the runner
           # only, and a password here would be a credential committed to the
           # repository — which pnpm security:secrets refuses, correctly. The
@@ -435,12 +435,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -527,8 +527,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # 	rust, not a password. The service port is bound to the runner
           # only, and a password here would be a credential committed to the
           # repository — which pnpm security:secrets refuses, correctly. The
@@ -537,12 +537,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -606,8 +606,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # 	rust, not a password. The service port is bound to the runner
           # only, and a password here would be a credential committed to the
           # repository — which pnpm security:secrets refuses, correctly. The
@@ -616,12 +616,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

@@ -353,7 +353,7 @@ describe('the pull-request gate operations', () => {
           repo: 'r',
           sha: 'abc123',
           state: 'failure',
-          context: 'automate/health',
+          context: 'lupin/health',
           description: 'D',
         },
       },
@@ -364,7 +364,7 @@ describe('the pull-request gate operations', () => {
     expect(calls[0]?.init?.method).toBe('POST');
     expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
       state: 'failure',
-      context: 'automate/health',
+      context: 'lupin/health',
       description: 'D',
     });
   });

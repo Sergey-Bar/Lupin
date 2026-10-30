@@ -112,7 +112,7 @@ export function safeErrorCode(): string {
 
 /** SAFE: a published cookie *name*. */
 export function safeCookieName(): string {
-  const SESSION_COOKIE = 'automate_session';
+  const SESSION_COOKIE = 'lupin_session';
   return SESSION_COOKIE;
 }
 

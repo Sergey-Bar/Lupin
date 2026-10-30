@@ -33,7 +33,7 @@ describe('ConnectorConfigSchema', () => {
       connectorName: 'github',
       enabled: true,
       credentialRef: 'vault://github',
-      settings: { owner: 'automate-hq', repo: 'platform' },
+      settings: { owner: 'lupin-hq', repo: 'platform' },
       updatedAt: '2026-01-01T00:00:00.000Z',
     });
     expect(result.success).toBe(true);

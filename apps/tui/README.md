@@ -6,4 +6,4 @@ A read-only terminal client. It reads one command name from argv, sends it to th
 pnpm --filter @lupin/tui test
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

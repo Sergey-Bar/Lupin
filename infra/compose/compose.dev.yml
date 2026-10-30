@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: automate
-      POSTGRES_USER: automate
+      POSTGRES_DB: lupin
+      POSTGRES_USER: lupin
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
     ports:
       - '127.0.0.1:55432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U automate -d automate']
+      test: ['CMD-SHELL', 'pg_isready -U lupin -d lupin']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -26,7 +26,7 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: local-only
       AWS_SECRET_ACCESS_KEY: ${OBJECT_STORE_SECRET_ACCESS_KEY:?set OBJECT_STORE_SECRET_ACCESS_KEY}
-      S3_BUCKET: ${OBJECT_STORE_BUCKET:-automate-artifacts}
+      S3_BUCKET: ${OBJECT_STORE_BUCKET:-lupin-artifacts}
     ports:
       - '127.0.0.1:58333:8333'
     # A dependency of the API, so it needs a healthcheck a dependent can wait on.
@@ -41,7 +41,7 @@ services:
       context: ../..
       dockerfile: infra/docker/migrate.Dockerfile
     environment:
-      DATABASE_URL: postgresql://automate:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/automate
+      DATABASE_URL: postgresql://lupin:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/lupin
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,13 +55,13 @@ services:
       TRUST_PROXY: 'true'
       HOST: 0.0.0.0
       PORT: '3000'
-      DATABASE_URL: postgresql://automate:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/automate
+      DATABASE_URL: postgresql://lupin:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/lupin
       COOKIE_SECRET: ${COOKIE_SECRET:?set COOKIE_SECRET}
       VAULT_SECRET: ${VAULT_SECRET:?set VAULT_SECRET}
       LUPIN_API_KEY: ${LUPIN_API_KEY:?set LUPIN_API_KEY}
       REPORTER_SECRET: ${REPORTER_SECRET:?set REPORTER_SECRET}
       RUNNER_REGISTRATION_SECRET: ${RUNNER_REGISTRATION_SECRET:?set RUNNER_REGISTRATION_SECRET}
-      ARTIFACT_ROOT: /var/lib/automate/artifacts
+      ARTIFACT_ROOT: /var/lib/lupin/artifacts
       # The object store above was declared and referenced by nothing: no service
       # depended on it and no service pointed at it, so the dev stack ran a store
       # nothing used. Wiring it here is what makes that service load-bearing. The API is
@@ -70,7 +70,7 @@ services:
       # why nothing noticed. It is wired anyway, so that a developer exercising
       # artifact upload and download runs the same path production does.
       OBJECT_STORE_ENDPOINT: http://objectstore:8333
-      OBJECT_STORE_BUCKET: ${OBJECT_STORE_BUCKET:-automate-artifacts}
+      OBJECT_STORE_BUCKET: ${OBJECT_STORE_BUCKET:-lupin-artifacts}
       OBJECT_STORE_REGION: ${OBJECT_STORE_REGION:-us-east-1}
       OBJECT_STORE_ACCESS_KEY_ID: local-only
       OBJECT_STORE_SECRET_ACCESS_KEY: ${OBJECT_STORE_SECRET_ACCESS_KEY:?set OBJECT_STORE_SECRET_ACCESS_KEY}
@@ -103,7 +103,7 @@ services:
     ports:
       - '127.0.0.1:53000:3000'
     volumes:
-      - artifact_data:/var/lib/automate/artifacts
+      - artifact_data:/var/lib/lupin/artifacts
   web:
     build:
       context: ../..

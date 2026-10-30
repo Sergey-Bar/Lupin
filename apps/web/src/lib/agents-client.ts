@@ -26,7 +26,7 @@ export interface AgentsClient {
   getEvals(projectId: string, branch?: string): Promise<ProjectEvals>;
   getEvalRun(projectId: string, runId: string): Promise<EvalRunDetail>;
   getRuntime(projectId: string, days: number): Promise<AgentRuntimeReport>;
-  /** Automate's own chat telemetry, not a project's. */
+  /** Lupin's own chat telemetry, not a project's. */
   getChatRuntime(days: number): Promise<AgentRuntimeReport>;
   getMcpServers(projectId: string, branch?: string): Promise<McpServerList>;
   getDatasets(projectId: string): Promise<EvalDatasetList>;

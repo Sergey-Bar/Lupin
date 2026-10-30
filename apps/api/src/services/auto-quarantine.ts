@@ -12,7 +12,7 @@
  *
  * **It never overrides a person.** A test with any entry that is not `released` — pending,
  * approved or rejected, by anyone — is left alone. Only entries it wrote itself
- * (`quarantinedBy: 'automate'`) are ever released by it.
+ * (`quarantinedBy: 'lupin'`) are ever released by it.
  *
  * **Release is a streak, not a rate.** An automatic entry is released once its test has
  * passed `releaseAfter` times in a row with no retry. A retry pass is still a pass, and is
@@ -26,7 +26,7 @@ import type { ExecutionRun } from '../execution/types.js';
 import type { WriteContext } from '../modules/dashboard/audit-sink.js';
 import type { QuarantineStore } from '../modules/dashboard/quarantine.js';
 
-export const LUPIN_ACTOR: WriteContext = { actorId: 'automate', actorType: 'system' };
+export const LUPIN_ACTOR: WriteContext = { actorId: 'lupin', actorType: 'system' };
 
 export interface AutoQuarantineOutcome {
   /** Identities quarantined and approved by this pass. */
@@ -88,7 +88,7 @@ export async function applyQuarantinePolicy(input: {
         testFile: test.file,
         stableId: suggestion.testKey,
         projectId: input.projectId,
-        quarantinedBy: 'automate',
+        quarantinedBy: 'lupin',
         reason: suggestion.reason,
       },
       LUPIN_ACTOR,
@@ -110,7 +110,7 @@ export async function applyQuarantinePolicy(input: {
   for (const entry of entries) {
     if (
       entry.status !== 'approved' ||
-      entry.quarantinedBy !== 'automate' ||
+      entry.quarantinedBy !== 'lupin' ||
       entry.projectId !== input.projectId ||
       entry.stableId === null
     ) {

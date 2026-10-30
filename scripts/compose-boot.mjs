@@ -29,7 +29,7 @@ import {
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..');
 const COMPOSE_FILE = 'infra/compose/docker-compose.unified.yml';
-const PROJECT = 'automate-compose-boot';
+const PROJECT = 'lupin-compose-boot';
 
 /** @param {string} flag @returns {string | undefined} */
 function option(flag) {
@@ -119,7 +119,7 @@ async function main() {
   const values = bootEnvironment(
     requiredVariables(readFileSync(path.join(REPO_ROOT, COMPOSE_FILE), 'utf8')),
   );
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-boot-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-boot-'));
   const envFile = path.join(directory, 'boot.env');
   writeFileSync(envFile, envFileText(values), { mode: 0o600 });
   const base = option('--base') ?? 'http://127.0.0.1:8080';

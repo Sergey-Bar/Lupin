@@ -3,15 +3,15 @@
   <p><strong>Every test. One clear answer.</strong></p>
   <p>A self-hosted home for test runs, evidence, and release decisions.</p>
   <p>
-    <a href="https://github.com/Sergey-Bar/AutoMate/actions/workflows/unified-ci.yml"><img alt="CI" src="https://github.com/Sergey-Bar/AutoMate/actions/workflows/unified-ci.yml/badge.svg?branch=main"></a>
-    <a href="https://sergey-bar.github.io/AutoMate/"><img alt="Docs" src="https://img.shields.io/badge/docs-site-555555"></a>
+    <a href="https://github.com/Sergey-Bar/Lupin/actions/workflows/unified-ci.yml"><img alt="CI" src="https://github.com/Sergey-Bar/Lupin/actions/workflows/unified-ci.yml/badge.svg?branch=main"></a>
+    <a href="https://sergey-bar.github.io/Lupin/"><img alt="Docs" src="https://img.shields.io/badge/docs-site-555555"></a>
     <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-555555.svg"></a>
   </p>
 </div>
 
-<p align="center"><a href="site/guide/install.md"><strong>Get started</strong></a> &nbsp; · &nbsp; <a href="site/guide/concepts.md">Explore the concepts</a> &nbsp; · &nbsp; <a href="https://sergey-bar.github.io/AutoMate/">Documentation</a></p>
+<p align="center"><a href="site/guide/install.md"><strong>Get started</strong></a> &nbsp; · &nbsp; <a href="site/guide/concepts.md">Explore the concepts</a> &nbsp; · &nbsp; <a href="https://sergey-bar.github.io/Lupin/">Documentation</a></p>
 
-Send Automate the reports your test tools already produce — Playwright, JUnit, k6 or
+Send Lupin the reports your test tools already produce — Playwright, JUnit, k6 or
 OWASP ZAP. It keeps each run, retry and artifact together, then shows your team what
 passed, what needs attention and what was never measured.
 
@@ -28,7 +28,7 @@ passed, what needs attention and what was never measured.
 - **One result model for every producer.** Retries are recorded as `flaky`, not as passes.
 - **Quality gates** that answer `unknown` or `not_configured` instead of quietly passing.
 - **Quarantine** for flaky tests, with a required reason and an audit trail — set aside, never hidden. A quarantined failure excuses itself at the gate and in CI (`lupin test`), and an optional per-project policy quarantines on retry-pass evidence and releases after a clean streak.
-- **Live Playwright reporter and balanced CI shards.** `@lupin/playwright-reporter` streams a run with failure traces; `lupin shard` splits files by measured duration. An Allure results importer is on the upload door. See [how AutoMate compares](site/guide/compare.md), including what it does not do.
+- **Live Playwright reporter and balanced CI shards.** `@lupin/playwright-reporter` streams a run with failure traces; `lupin shard` splits files by measured duration. An Allure results importer is on the upload door. See [how Lupin compares](site/guide/compare.md), including what it does not do.
 - **Live run updates** over server-sent events, and a runner that executes declared commands outside the API process.
 - **A "Now" page** that answers "what needs me?" in five items or fewer, with focus mode, compact density, reduced motion and keyboard shortcuts (`?` lists them).
 - **Scheduled reports**, daily, weekly or custom, to Slack, Microsoft Teams, Telegram, WhatsApp, Signal or the built-in inbox — see [scheduled reports](site/guide/notifications.md).
@@ -47,8 +47,8 @@ confirmed defect is a row in a machine-checked
 
 You need [Docker](https://docs.docker.com/get-docker/) and nothing else.
 
-1. Download `automate-<version>.zip` from the
-   [latest release](https://github.com/Sergey-Bar/AutoMate/releases/latest) and unzip it.
+1. Download `lupin-<version>.zip` from the
+   [latest release](https://github.com/Sergey-Bar/Lupin/releases/latest) and unzip it.
 2. Start Docker.
 3. Run **`start.cmd`** on Windows (double-click it) or **`./start.sh`** on macOS and Linux.
 
@@ -98,4 +98,4 @@ through [`.github/SECURITY.md`](.github/SECURITY.md).
 
 ## License
 
-[MIT](LICENSE) © 2026 Automate Platform Contributors
+[MIT](LICENSE) © 2026 Lupin Platform Contributors

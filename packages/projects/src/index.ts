@@ -8,9 +8,9 @@
 
 export {
   LUPIN_CONFIG_FILENAME,
-  AutomateConfigSchema,
+  LupinConfigSchema,
   ProjectProfileSchema,
-  type AutomateConfig,
+  type LupinConfig,
   type ProjectProfile,
   type ResolvedProfile,
 } from './profile.js';
