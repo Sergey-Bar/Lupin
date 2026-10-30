@@ -2,6 +2,73 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
+## 4.0.0 - 2026-10-30 - the product is Lupin, with a redesigned console
+
+The product is renamed to **Lupin** everywhere, and the console takes the Lupin site's look.
+There is **no upgrade path from 3.x**: every name an install depended on has changed, so a
+3.x install is replaced by a fresh 4.0.0 install, not upgraded in place.
+
+### Changed — the rename
+
+- **Packages** are `@lupin/*`. The CI CLI is `lupin`; the TUI is
+  `lupin-tui`. `tools/lupin-cli`, the CI action `.github/actions/lupin-health`, and the
+  edge scripts carry the new name.
+- **Environment variables** are `LUPIN_*`, all 64 of them, in the API,
+  the CLI, the runner, the start scripts and the `.env` they write.
+- **Access tokens** start `lup_`. Tokens issued by 3.x are not accepted.
+- **Cookies** are `lupin_*`, so every browser signs in again. The webhook signature header is
+  `x-lupin-signature`, the MCP server is `lupin`, the API title is "Lupin API", and the
+  metric is `lupin_http_requests_total`.
+- **Database and infrastructure**: the Postgres database and role are `lupin`, the compose
+  project is `lupin`, images are `ghcr.io/sergey-bar/lupin-*`, and the artifact bucket is
+  `lupin-artifacts`.
+- **Repository URLs** point at `Sergey-Bar/Lupin`.
+- A retired-name gate (`scripts/lib/product-name.test.mjs`) fails on the old name in any
+  case, with three files exempt by path and stated reason.
+
+### Changed — the design system
+
+- **Colour.** The Lupin violet is the accent — focus, links, the active state and the one
+  primary fill — on a near-neutral plane with the violet's undertone in dark and warm paper
+  in light. Every colour is declared in OKLCH, and text tokens are held to an APCA floor
+  beside the WCAG 2 ratio.
+- **Type.** Geist and Geist Mono replace Archivo and JetBrains Mono, committed once and shared
+  with the site, with measured fallback metrics and per-step tracking in place of an optical
+  axis.
+- **Shape and depth.** Controls are 44px at a 6px radius; page surfaces use the 8px panel
+  radius and overlays keep 12px. Overlay shadows are layered neutral stacks.
+- **Motion.** Arrivals settle on a CSS `linear()` spring; every navigation is a view
+  transition, and a run's row morphs into its detail heading. Reduced motion — the OS
+  setting or the console's own — now also stops view transitions and literal durations.
+- **Translucency, narrowly.** One `surface-translucent` material for the palette, dialogs,
+  popovers and toasts, opaque by default and under reduced transparency, more contrast and
+  forced colours, legible over any backdrop. The four primary routes still composite nothing
+  at rest.
+- **The shell.** The "Lupin." wordmark and the site's favicon; sentence-case headings.
+
+### Fixed
+
+- `Input`, `Select` and `Textarea` drew their only edge in the decorative border, below the
+  3:1 WCAG 1.4.11 requires; they now use the strong border.
+- `site:doctor` check 8 read only `custom.css`, so sixteen literal colours in `lupin.css`
+  passed; it now reads every site stylesheet and catches colour functions as well as hex.
+- The in-app "reduce motion" setting only scaled the motion tokens, so literal durations kept
+  animating; it is now the same clamp as the operating-system setting.
+
+### Added
+
+- Adding a test to quarantine is optimistic: the row appears at once, marked "Saving…", and a
+  refusal takes it out again and reopens the form with the text kept.
+- Tests for the `now` and `gaps` routes, which had none.
+
+### Before you install 4.0.0
+
+- Remove the 3.x install (`.\start.cmd uninstall --purge` or `./start.sh uninstall --purge`)
+  after taking a backup you may want to keep for reference, then install 4.0.0 from the
+  release zip.
+- Move any CI configuration to the `LUPIN_*` variables, reissue access tokens, and call the
+  `lupin` CLI and the `lupin-health` action.
+
 ## 3.1.1 - 2026-10-27 - upgrades from 3.0.0 start again
 
 ### Fixed
