@@ -504,7 +504,7 @@ function RuntimeView({ report }: { report: AgentRuntimeReport }): React.ReactEle
 function Loops({ loops }: { loops: AgentRuntimeReport['runtime']['loops'] }): React.ReactElement {
   return (
     <div data-testid="runtime-loops">
-      <h3 className="text-xs font-medium uppercase tracking-wider text-fg-muted">Loops</h3>
+      <h3 className="text-xs font-medium text-fg-muted">Loops</h3>
       {loops.length === 0 ? (
         <p className="text-sm text-fg-muted">
           No agent called the same tool with the same arguments repeatedly.

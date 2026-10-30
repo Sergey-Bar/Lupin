@@ -91,15 +91,14 @@ const integrations = [
       <figure>
         <img
           :src="runsPreview"
-          alt="Existing Lupin runs overview with run outcomes, release-readiness signals, and recent executions."
+          alt="The Lupin runs view: five runs with their outcomes, test counts, release readiness and recent executions."
           width="1440"
           height="900"
           fetchpriority="high"
           decoding="async"
         />
         <figcaption>
-          Current application interface. The screenshot retains Lupin branding; the Lupin identity
-          applies to this website.
+          The Lupin console, captured from the product with demonstration runs.
         </figcaption>
       </figure>
       <div class="lupin-showcase-notes">

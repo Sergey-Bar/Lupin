@@ -117,3 +117,6 @@ var/
 # LAN certificates issued by `start lan-cert`. The CA key never belongs in git.
 infra/compose/certs/
 certs/
+
+# Local before/after screenshots and axe reports for design sign-off.
+.shots/

@@ -90,7 +90,7 @@ function PricingBadge({ pricing }: { pricing: ToolboxEntry['pricing'] }): React.
     <span
       data-testid="pricing-badge"
       className={cn(
-        'inline-flex rounded-full border px-1.5 text-[0.6875rem] font-medium leading-4',
+        'inline-flex rounded-full border px-1.5 text-xs font-medium leading-4',
         PRICING[pricing].className,
       )}
     >
@@ -393,7 +393,7 @@ function ToolDialog({
               </span>
               <div className="min-w-0">
                 <DialogTitle>{entry.name}</DialogTitle>
-                <div className="text-xs uppercase tracking-widest text-fg-muted">
+                <div className="text-xs font-medium text-fg-muted">
                   {CAPABILITY_LABELS[entry.capability]} · {entry.priority} priority
                 </div>
               </div>

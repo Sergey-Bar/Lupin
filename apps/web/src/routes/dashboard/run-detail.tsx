@@ -164,9 +164,7 @@ function TestEvidence({ tests }: { tests: Run['tests'] }) {
               * follows the one before it: an `h4` first satisfies "no level is skipped"
               * vacuously.
               */}
-            <h3 className="font-semibold uppercase tracking-widest text-fg-muted text-xs">
-              Attempts
-            </h3>
+            <h3 className="text-sm font-medium text-fg">Attempts</h3>
             {test.attempts.length > 0 ? (
               test.attempts.map((attempt) => (
                 <div key={attempt.attempt} className="rounded bg-surface-muted p-3 text-sm">
@@ -869,10 +867,7 @@ function Figure({
 }) {
   return (
     <div className="min-w-0 rounded-lg border border-border bg-surface-raised px-3 py-2 sm:px-4 sm:py-3">
-      <div
-        className="truncate text-[0.6875rem] font-medium uppercase tracking-widest text-fg-muted sm:text-xs"
-        title={label}
-      >
+      <div className="truncate text-xs font-medium text-fg-muted" title={label}>
         {label}
       </div>
       {/* A word ("UNKNOWN") steps down a size on a phone, so four figures share one row. */}

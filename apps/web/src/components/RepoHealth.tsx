@@ -258,7 +258,7 @@ function DimensionTile({ entry }: { entry: DimensionScore }): React.ReactElement
       className="flex min-w-0 flex-col gap-2 rounded-lg border border-border bg-surface px-4 py-3"
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-xs font-medium uppercase tracking-wider text-fg-muted">
+        <span className="truncate text-xs font-medium text-fg-muted">
           {dimensionLabel(entry.dimension)}
         </span>
         <span className={cn('text-2xl font-semibold tabular-nums', letterTone(entry.letter))}>

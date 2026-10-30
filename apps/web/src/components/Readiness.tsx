@@ -69,9 +69,7 @@ export function VerdictHero({
       data-testid="readiness-hero"
       className="shrink-0 rounded-lg border border-border bg-surface px-5 py-6 sm:px-8 sm:py-8"
     >
-      <p className="text-xs font-medium uppercase tracking-wider text-fg-muted">
-        Release readiness
-      </p>
+      <p className="text-xs font-medium text-fg-muted">Release readiness</p>
       {verdict === null || summary === null ? (
         <p data-testid="readiness-pending" className="mt-3 text-lg text-fg-muted">
           {failure === null ? 'Reading release readiness…' : `Readiness unread: ${failure}`}
@@ -142,7 +140,7 @@ function FindingList({
       className="flex min-w-0 flex-col rounded-lg border border-border bg-surface p-5"
     >
       <h2 id={id} className="flex items-baseline justify-between gap-2">
-        <span className="text-xs font-medium uppercase tracking-wider text-fg-muted">{title}</span>
+        <span className="text-xs font-medium text-fg-muted">{title}</span>
         <span className="text-2xl font-semibold tabular-nums text-fg">{items.length}</span>
       </h2>
       {items.length === 0 ? (

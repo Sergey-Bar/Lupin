@@ -29,9 +29,7 @@ const copy = computed(
         width="1440"
         height="900"
       />
-      <figcaption>
-        Current application interface — Lupin branding. The Lupin identity applies to this website.
-      </figcaption>
+      <figcaption>The Lupin console, captured from the product with demonstration runs.</figcaption>
     </figure>
 
     <a class="localized-home__docs" :href="withBase('/guide/')">{{ copy.docs }} →</a>

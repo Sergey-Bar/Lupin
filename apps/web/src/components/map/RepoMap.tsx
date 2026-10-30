@@ -259,7 +259,7 @@ export function RepoMap({
               <section key={map.columns[column]} aria-labelledby={`map-column-${String(column)}`}>
                 <h3
                   id={`map-column-${String(column)}`}
-                  className="mb-2 text-xs font-medium uppercase tracking-wider text-fg-muted"
+                  className="mb-2 text-xs font-medium text-fg-muted"
                 >
                   {map.columns[column]}
                 </h3>
@@ -367,7 +367,7 @@ function Canvas({
           <ul key={map.columns[column]} aria-label={map.columns[column]} className="contents">
             <li
               aria-hidden="true"
-              className="absolute top-0 text-xs font-medium uppercase tracking-wider text-fg-muted"
+              className="absolute top-0 text-xs font-medium text-fg-muted"
               style={{ left: layout.columnX[column] ?? 0, width: LAYOUT.nodeWidth }}
             >
               {map.columns[column]}
