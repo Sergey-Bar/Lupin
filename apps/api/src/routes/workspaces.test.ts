@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import type { Caller } from '../services/access-service.js';
 import { createAccessToken, revokeAccessToken } from '../services/access-service.js';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';

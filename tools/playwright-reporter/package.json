@@ -1,5 +1,5 @@
 {
-  "name": "@automate/playwright-reporter",
+  "name": "@lupin/playwright-reporter",
   "version": "1.0.0",
   "license": "MIT",
   "type": "module",
@@ -35,9 +35,9 @@
     "test": "vitest run --coverage && node ../../scripts/write-coverage-provenance.mjs"
   },
   "devDependencies": {
-    "@automate/config": "workspace:*",
-    "@automate/reporter": "workspace:*",
-    "@automate/shared-contracts": "workspace:*",
+    "@lupin/config": "workspace:*",
+    "@lupin/reporter": "workspace:*",
+    "@lupin/shared-contracts": "workspace:*",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
     "typescript": "catalog:",

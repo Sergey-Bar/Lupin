@@ -11,7 +11,7 @@ import {
   type DeploymentRow,
   type IncidentRow,
   type PullRequestRow,
-} from '@automate/db';
+} from '@lupin/db';
 import {
   computeDora,
   computeFlow,
@@ -25,7 +25,7 @@ import {
   type DoraPolicy,
   type FlowPullRequest,
   type ProductionCarrier,
-} from '@automate/reporting';
+} from '@lupin/reporting';
 import {
   DeliveryMarkersSchema,
   DeliveryStreamSchema,
@@ -42,7 +42,7 @@ import {
   type PushDeploymentBody,
   type PushIncidentBody,
   type Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { projectRow, type HealthStoreOptions, type ProjectRow } from './health-findings.js';

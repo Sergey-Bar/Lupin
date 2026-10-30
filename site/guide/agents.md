@@ -92,7 +92,7 @@ With the repository's action:
 
 ```yaml
 - run: npx promptfoo@0.120.1 eval --config promptfooconfig.yaml --output promptfoo.json
-- uses: Sergey-Bar/AutoMate/.github/actions/automate-health@main
+- uses: Sergey-Bar/AutoMate/.github/actions/lupin-health@main
   with:
     url: https://automate.example.com
     project-id: ${{ vars.AUTOMATE_PROJECT_ID }}

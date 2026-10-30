@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from 'node:crypto';
-import { storedTestIdentity, testIdentity } from '@automate/shared-contracts';
+import { storedTestIdentity, testIdentity } from '@lupin/shared-contracts';
 import type { QuarantineMatch } from './quarantine-excusal.js';
 import { digestOf, tokenMatches } from './digest.js';
 import { normalizeArtifactKind } from './artifact-kind.js';

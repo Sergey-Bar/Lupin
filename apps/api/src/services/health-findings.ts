@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { healthFindings, projects } from '@automate/db';
-import type { CanonicalFinding } from '@automate/shared-contracts';
+import { healthFindings, projects } from '@lupin/db';
+import type { CanonicalFinding } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 

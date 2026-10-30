@@ -84,12 +84,12 @@ async function invoke(
 }
 
 async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(path.join(os.tmpdir(), 'automate-cli-'));
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'lupin-cli-'));
   temporary.push(dir);
   return dir;
 }
 
-describe('automate upload', () => {
+describe('lupin upload', () => {
   it('posts the report bytes with the format, branch, commit and digest, and the token as a bearer', async () => {
     const dir = await tempDir();
     await writeFile(path.join(dir, 'semgrep.sarif'), '{"runs":[]}');
@@ -159,7 +159,7 @@ describe('automate upload', () => {
   });
 });
 
-describe('automate gate', () => {
+describe('lupin gate', () => {
   it('exits 0 on a passed gate and 1 on a failed one, printing every reason', async () => {
     reply = () => ({
       status: 200,
@@ -204,7 +204,7 @@ describe('automate gate', () => {
   });
 });
 
-describe('automate deploy', () => {
+describe('lupin deploy', () => {
   it('pushes one deployment through the push door', async () => {
     const result = await invoke(
       [
@@ -272,7 +272,7 @@ describe('automate deploy', () => {
   });
 });
 
-describe('automate agent-config', () => {
+describe('lupin agent-config', () => {
   it('collects the agent files under the directory and posts them, skipping dependencies and oversized files', async () => {
     const dir = await tempDir();
     await writeFile(path.join(dir, 'AGENTS.md'), '# rules');
@@ -387,7 +387,7 @@ describe('an unexpected failure', () => {
   });
 });
 
-describe('automate test', () => {
+describe('lupin test', () => {
   const REPORT =
     '<testsuite><testcase classname="Checkout" name="pays"><failure/></testcase></testsuite>';
   /** A command that exits with `code`, run by this very Node. */

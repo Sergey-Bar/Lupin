@@ -1,18 +1,18 @@
 import { createHash } from 'node:crypto';
 import { and, asc, desc, eq, notInArray } from 'drizzle-orm';
-import { evalCases, evalRuns, type EvalRunRow } from '@automate/db';
+import { evalCases, evalRuns, type EvalRunRow } from '@lupin/db';
 import {
   HealthReportError,
   MAX_HEALTH_REPORT_BYTES,
   parseEvalReport,
   type EvalRun,
-} from '@automate/reporter';
+} from '@lupin/reporter';
 import {
   compareEvalRuns,
   evalScorecard,
   type EvalCaseOutcomes,
   type EvalComparison,
-} from '@automate/reporting';
+} from '@lupin/reporting';
 import {
   AutomateEvalRunSchema,
   EvalCaseSchema,
@@ -26,9 +26,9 @@ import {
   type EvalUploadFormat,
   type ProjectEvals,
   type Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
-import type { GateEvalSuite } from '@automate/projects';
+import type { GateEvalSuite } from '@lupin/projects';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import {
   INSERT_CHUNK,

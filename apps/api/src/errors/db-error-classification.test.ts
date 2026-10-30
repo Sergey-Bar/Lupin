@@ -5,7 +5,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { Hono } from 'hono';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DrizzleExecutionStore } from '../execution/drizzle-execution-store.js';
 import { classifyDatabaseError, withClassifiedErrors } from './db-errors.js';
 import { DomainError, ErrorCode } from './domain-error.js';
@@ -60,7 +60,7 @@ function assertBuildIsFresh(): void {
   if (stale.length > 0) {
     throw new Error(
       `packages/db is not built: ${stale.length} source file(s) are newer than dist/. ` +
-        'Run pnpm --filter @automate/db build.',
+        'Run pnpm --filter @lupin/db build.',
     );
   }
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Badge, Button, Check, RefreshCw, X, cn } from '@automate/ui';
+import { Badge, Button, Check, RefreshCw, X, cn } from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
 import {
   Kpi,

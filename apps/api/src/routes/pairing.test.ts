@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import type { CallerResolver } from '../http/roles.js';
 import { authenticateToken, listAccessTokens } from '../services/access-service.js';
 import { issuePairingCode } from '../services/pairing-service.js';

@@ -3,6 +3,30 @@ export const ASSEMBLY_END = 4.15;
 export type SwarmPalette = { foreground: string; muted: string; edge: string; background: string };
 export type SwarmBounds = { width: number; height: number; contentWidth: number; inset: number };
 
+/**
+ * The part of a 2D canvas context the swarm draws with.
+ *
+ * Structural rather than `CanvasRenderingContext2D`, so the module type-checks under the
+ * scripts' `lib: ["ES2022"]` (where its tests run) as well as under the DOM, and so a test
+ * can hand it a recording stub without a cast.
+ */
+export type SwarmContext = {
+  globalAlpha: number;
+  fillStyle: string | CanvasGradientLike;
+  strokeStyle: string | CanvasGradientLike;
+  lineWidth: number;
+  clearRect(x: number, y: number, width: number, height: number): void;
+  beginPath(): void;
+  closePath(): void;
+  moveTo(x: number, y: number): void;
+  lineTo(x: number, y: number): void;
+  rect(x: number, y: number, width: number, height: number): void;
+  fill(): void;
+  stroke(): void;
+};
+/** A gradient or pattern a real context may hold; the swarm only ever assigns strings. */
+type CanvasGradientLike = object;
+
 // Independent seeded coordinates avoid the visible striping of correlated sequences.
 function seeds() {
   let state = 41729;
@@ -33,7 +57,7 @@ export function constructionEdge(v: number, progress: number, width: number): nu
 }
 
 export function paintSwarm(
-  ctx: CanvasRenderingContext2D,
+  ctx: SwarmContext,
   bounds: SwarmBounds,
   palette: SwarmPalette,
   elapsed: number,

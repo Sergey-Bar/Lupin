@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AGENT_SIGNATURES } from '@automate/reporting';
+import { AGENT_SIGNATURES } from '@lupin/reporting';
 import {
   attributionVersionOf,
   classifyPullRequest,

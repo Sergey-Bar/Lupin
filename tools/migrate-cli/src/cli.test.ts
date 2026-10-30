@@ -27,7 +27,7 @@ let stderr: MockInstance<typeof console.error>;
 let stdout: MockInstance<typeof console.info>;
 
 beforeEach(() => {
-  directory = mkdtempSync(path.join(tmpdir(), 'automate-cli-'));
+  directory = mkdtempSync(path.join(tmpdir(), 'lupin-cli-'));
   savedExitCode = process.exitCode;
   process.exitCode = undefined;
   stderr = vi.spyOn(console, 'error').mockImplementation(() => undefined);

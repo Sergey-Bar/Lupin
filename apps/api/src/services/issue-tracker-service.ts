@@ -6,15 +6,15 @@ import {
   issueTrackers,
   type IssueLinkRow,
   type IssueTrackerRow,
-} from '@automate/db';
-import type { ConnectorAdapter, ConnectorResult } from '@automate/connectors-sdk';
+} from '@lupin/db';
+import type { ConnectorAdapter, ConnectorResult } from '@lupin/connectors-sdk';
 import type {
   ClusterIssueBody,
   IssueLink,
   IssueTarget,
   IssueTracker,
   IssueTrackerBody,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { readGitToken } from './git-credential-service.js';
 import { githubRepository } from './health-integrations.js';

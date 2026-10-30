@@ -3,7 +3,7 @@ import {
   ConnectorInputError,
   executeWithRetry,
   isRetryableStatus,
-} from '@automate/connectors-sdk';
+} from '@lupin/connectors-sdk';
 import { raceAbort } from './abort.js';
 import {
   ToolCancelledError,

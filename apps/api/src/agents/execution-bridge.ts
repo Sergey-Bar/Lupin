@@ -24,7 +24,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import type { z } from 'zod/v4';
-import { AgentAcceptedRunSchema, type AgentAcceptedRun } from '@automate/shared-contracts';
+import { AgentAcceptedRunSchema, type AgentAcceptedRun } from '@lupin/shared-contracts';
 import {
   ToolFailureError,
   ToolInputError,
@@ -33,7 +33,7 @@ import {
   type AgentAdapter,
   type AgentDomain,
   type ToolOperation,
-} from '@automate/tool-sdk';
+} from '@lupin/tool-sdk';
 import { DomainError } from '../errors/domain-error.js';
 import { submitRun, type SubmittableRun } from '../execution/run-submission.js';
 import type { CreateRunResult, ExecutionStore } from '../execution/types.js';

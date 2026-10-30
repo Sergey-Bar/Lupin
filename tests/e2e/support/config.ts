@@ -53,7 +53,7 @@ export const WEB_BASE = `http://localhost:${String(WEB_PORT)}`;
  * The QA contract version a run event envelope must carry.
  *
  * `RunEventEnvelopeSchema.version` is `z.literal(QA_CONTRACT_VERSION)` in
- * `@automate/shared-contracts`, so this is a **copy**, not an import — the E2E tree
+ * `@lupin/shared-contracts`, so this is a **copy**, not an import — the E2E tree
  * deliberately depends on nothing but the API and the browser. The consequence is that a
  * bump to the contract fails an E2E spec with a 400 whose cause is one character in a
  * second package, and that is the price of the suite not pulling in the monorepo's

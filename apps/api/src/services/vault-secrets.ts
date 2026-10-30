@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq, max } from 'drizzle-orm';
-import { vaultEntries, type VaultEntry } from '@automate/db';
+import { vaultEntries, type VaultEntry } from '@lupin/db';
 import { openSecret, sealSecret, type VaultEnvelope } from '../infrastructure/vault-crypto.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { audit } from './access-service.js';

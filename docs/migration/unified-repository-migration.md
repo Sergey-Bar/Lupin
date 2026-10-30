@@ -480,20 +480,20 @@ Reference: Kilo Gateway documents an OpenAI-compatible endpoint and live model c
 
 ### 6.1 Namespace and ownership conflicts
 
-| Conflict                                                                           | Canonical resolution                                                                                      |
-| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| All three roots are named `automate`                                               | Keep only the unified root manifest/lockfile; source manifests are read-only inputs                       |
-| Legacy `apps/web` collides with target `apps/web`                                  | Port behavior into the target app; never overlay trees                                                    |
-| Fastify source servers vs Hono target                                              | Reimplement source use cases behind Hono routes; do not retain Fastify runtime                            |
-| `@automate/shared`, `@automate/dashboard-shared`, and `@automate/shared-contracts` | Keep `@automate/shared-contracts`; port and deduplicate schemas                                           |
-| `Permission` in auth and contracts                                                 | Contracts own wire values/types; auth consumes and re-exports only if needed                              |
-| `ReporterEventSchema`/`RealtimeEventSchema` in API, realtime, and contracts        | Contracts own event shape/version; realtime owns transport                                                |
-| Local web `RunSchema`, `TestSchema`, `MessageSchema`                               | Delete after web imports canonical contracts                                                              |
-| Source reporter/CLI names                                                          | Restore `@automate/reporter`; keep `@automate/migrate-cli` separate; assess `@automate/cli` independently |
-| `AUTOMATE_DASHBOARD_API_KEY` vs `AUTOMATE_API_KEY`                                 | Deployment maps the old secret to `AUTOMATE_API_KEY`; do not expose both in app config                    |
-| `SESSION_SECRET` vs `COOKIE_SECRET`                                                | `COOKIE_SECRET` is canonical; time-boxed parser alias only                                                |
-| Source port 4000/4001 vs target 3000/SSE                                           | Target ports/routes win; legacy reporter WS is adapter-only                                               |
-| Source SQLite migrations vs target PostgreSQL                                      | Target Drizzle migrations win; source SQL is never executed                                               |
+| Conflict                                                                    | Canonical resolution                                                                             |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| All three roots are named `automate`                                        | Keep only the unified root manifest/lockfile; source manifests are read-only inputs              |
+| Legacy `apps/web` collides with target `apps/web`                           | Port behavior into the target app; never overlay trees                                           |
+| Fastify source servers vs Hono target                                       | Reimplement source use cases behind Hono routes; do not retain Fastify runtime                   |
+| `@lupin/shared`, `@lupin/dashboard-shared`, and `@lupin/shared-contracts`   | Keep `@lupin/shared-contracts`; port and deduplicate schemas                                     |
+| `Permission` in auth and contracts                                          | Contracts own wire values/types; auth consumes and re-exports only if needed                     |
+| `ReporterEventSchema`/`RealtimeEventSchema` in API, realtime, and contracts | Contracts own event shape/version; realtime owns transport                                       |
+| Local web `RunSchema`, `TestSchema`, `MessageSchema`                        | Delete after web imports canonical contracts                                                     |
+| Source reporter/CLI names                                                   | Restore `@lupin/reporter`; keep `@lupin/migrate-cli` separate; assess `@lupin/cli` independently |
+| `AUTOMATE_DASHBOARD_API_KEY` vs `AUTOMATE_API_KEY`                          | Deployment maps the old secret to `AUTOMATE_API_KEY`; do not expose both in app config           |
+| `SESSION_SECRET` vs `COOKIE_SECRET`                                         | `COOKIE_SECRET` is canonical; time-boxed parser alias only                                       |
+| Source port 4000/4001 vs target 3000/SSE                                    | Target ports/routes win; legacy reporter WS is adapter-only                                      |
+| Source SQLite migrations vs target PostgreSQL                               | Target Drizzle migrations win; source SQL is never executed                                      |
 
 ### 6.2 Version conflicts
 
@@ -513,7 +513,7 @@ Reference: Kilo Gateway documents an OpenAI-compatible endpoint and live model c
 ### 6.3 Dependency hygiene procedure
 
 1. Add a pnpm catalog for TypeScript, ESLint, Vitest, Zod, Playwright, Node types, `pg`, and common test tools.
-2. Remove or correct confirmed unused direct dependencies: API `pg`, `pg-mem`, and stale direct `@types/pg`; web router devtools; UI `tslib`; root unused `jscpd`; migrate CLI unused `@automate/db`.
+2. Remove or correct confirmed unused direct dependencies: API `pg`, `pg-mem`, and stale direct `@types/pg`; web router devtools; UI `tslib`; root unused `jscpd`; migrate CLI unused `@lupin/db`.
 3. Use Effect only in `apps/api/src/bootstrap` for validated configuration, service lifecycle, and composition; keep framework-neutral domain packages in plain TypeScript. Remove direct `effect` declarations from packages that do not import it.
 4. Replace global major overrides with the narrowest verified parent selectors. Validate `minimatch`, `js-yaml`, UUID, Hono, and Vite consumers after each change.
 5. Declare pnpm lifecycle/native-build permissions explicitly; `better-sqlite3` remains isolated to offline migration tooling.
@@ -1060,7 +1060,7 @@ Each phase should be implemented as focused changes with its own gate. Do not co
 
 ### Phase 2 — Canonical contracts, evidence, and producer adapters
 
-1. Make API, web, auth, realtime, orchestration, reporting, reporter, and runner consume `@automate/shared-contracts`.
+1. Make API, web, auth, realtime, orchestration, reporting, reporter, and runner consume `@lupin/shared-contracts`.
 2. Define `Run > Check > Attempt > Step > Evidence/Artifact`, proof, completeness, and quality-gate contracts.
 3. Split contracts by bounded context and remove duplicate symbols.
 4. Define canonical v2 reporter events and the `legacy-flat-v1` adapter.
@@ -1194,7 +1194,7 @@ The migration is complete only when all of the following are true:
 - A long-lived Webwright service, desktop/Tauri applications, and the legacy setup/admin CLI.
 - Microservice decomposition beyond the single dedicated runner, Redis, Kafka, Kubernetes, Helm, Terraform, read replicas, and table partitioning.
 - Embedding a complete external control plane such as Testkube, Windmill, Trigger.dev, Kestra, or Woodpecker as the Automate system of record.
-- Branding changes or renaming the `@automate` package namespace.
+- Branding changes or renaming the `@lupin` package namespace.
 
 Each deferred item requires a separate ADR, acceptance criteria, and migration slice; none should remain as a mock in the launch product.
 

@@ -6,7 +6,7 @@ import {
   Permission,
   type Permission as ContractPermission,
 } from './permissions.js';
-import { isAdminPermission, PERMISSIONS, PermissionSchema } from '@automate/shared-contracts';
+import { isAdminPermission, PERMISSIONS, PermissionSchema } from '@lupin/shared-contracts';
 
 /**
  * `packages/auth` and `shared-contracts` used to declare two permission tables

@@ -8,7 +8,7 @@ import {
   InMemorySessionService,
   verifyCredential,
   type SessionRecord,
-} from '@automate/auth';
+} from '@lupin/auth';
 import type { AuthSessionBackend } from '../infrastructure/session-backend.js';
 import { createRateLimiter } from '../middleware/rate-limit.js';
 import { isSecureFor, type SecureCookies } from '../http/secure-cookies.js';

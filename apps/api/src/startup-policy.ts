@@ -3,7 +3,7 @@ import {
   isLoopbackBind,
   isSecretPlaceholder,
   type SecretVariable,
-} from '@automate/config';
+} from '@lupin/config';
 import type { AppConfig } from './config.js';
 
 /**
@@ -20,7 +20,7 @@ export const DEVELOPMENT_COOKIE_SECRET = 'development-only-cookie-secret-32-char
 export const DEVELOPMENT_INSTALLATION_KEY = 'development-installation-key';
 
 /**
- * One secret policy, and the numbers live in `@automate/config`.
+ * One secret policy, and the numbers live in `@lupin/config`.
  *
  * This file used to write `32` and `16` itself, in its own messages, while
  * `packages/config` wrote the same thresholds in a Zod schema. Two copies of one

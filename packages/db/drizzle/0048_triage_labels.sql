@@ -6,7 +6,7 @@
 -- workspace-scoped with the same hard boundary every such table has since 0028: NOT NULL,
 -- a `restrict` key onto `workspaces`, and a key leading with it.
 --
--- The fingerprint is `failureSignature` from `@automate/reporting`: what the insights page
+-- The fingerprint is `failureSignature` from `@lupin/reporting`: what the insights page
 -- clusters on and the per-test history groups by, so a label applies to every recurrence.
 --
 -- ## Data

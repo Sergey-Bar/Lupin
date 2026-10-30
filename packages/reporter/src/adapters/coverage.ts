@@ -1,4 +1,4 @@
-import type { ScoreSurface } from '@automate/shared-contracts';
+import type { ScoreSurface } from '@lupin/shared-contracts';
 
 /**
  * Coverage formats, ingested as **coverage** — deliberately not as run results.

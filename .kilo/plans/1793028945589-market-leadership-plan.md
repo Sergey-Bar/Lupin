@@ -12,7 +12,7 @@ engine that exists (flake cost, failure clusters, quarantine, SSE, the CLI, the 
   evidence a code change cannot explain: a retry that passed inside one run, or two outcomes on one
   commit. A flip across commits is a suggestion, never an action.
 - Quarantine excuses a failure at the gate; it never rewrites a result. The run stays `failed`.
-- `automate test` keeps the command's own exit code whenever the server's verdict is missing,
+- `lupin test` keeps the command's own exit code whenever the server's verdict is missing,
   unparsed, or the report carries an error outside a test.
 
 ## Defects found while planning
@@ -33,7 +33,7 @@ engine that exists (flake cost, failure clusters, quarantine, SSE, the CLI, the 
 3. Flake evidence split into retry, same-commit and cross-commit; only the first two are
    auto-eligible.
 4. Approved quarantine excuses failures in the gate.
-5. `automate test -- <command>`: the wrapper that makes an excused failure leave CI green.
+5. `lupin test -- <command>`: the wrapper that makes an excused failure leave CI green.
 6. Auto-quarantine policy (`off`, `suggest`, `auto`), released after 20 clean runs.
 7. Per-test history from an indexed query.
 8. Triage labels on failure signatures that recur.

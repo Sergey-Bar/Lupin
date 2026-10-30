@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import { healthGate, ingestHealthReport, type RepoHealthOptions } from './repo-health-service.js';
 import {

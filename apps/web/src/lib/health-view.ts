@@ -5,7 +5,7 @@ import {
   type FindingSeverity,
   type HealthGrade,
   type HealthLetter,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * How a health payload is read on screen, as pure functions.

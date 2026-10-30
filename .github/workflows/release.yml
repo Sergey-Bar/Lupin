@@ -310,7 +310,7 @@ jobs:
       - name: Logs, if it failed
         if: failure()
         working-directory: automate-${{ needs.prepare.outputs.version }}
-        run: ./start.sh status; docker compose -p automate --env-file .env -f compose.yml logs --no-color --tail 80
+        run: ./start.sh status; docker compose -p lupin --env-file .env -f compose.yml logs --no-color --tail 80
       - name: Remove it
         if: always()
         working-directory: automate-${{ needs.prepare.outputs.version }}
@@ -406,7 +406,7 @@ jobs:
           key="$(sed -n 's/^AUTOMATE_INSTALLATION_KEY=//p' .env)"
           curl -fsS -o /dev/null -X POST -H 'content-type: application/json' \
             -d "{\"apiKey\":\"$key\"}" http://127.0.0.1:8080/api/v1/auth/login
-          docker compose -p automate --env-file .env -f compose.yml ps --format '{{.Image}}' \
+          docker compose -p lupin --env-file .env -f compose.yml ps --format '{{.Image}}' \
             | grep -q "automate-api:$NEW_VERSION"
       - name: Logs, if it failed
         if: failure() && steps.previous.outputs.version != ''
@@ -414,7 +414,7 @@ jobs:
           OLD_VERSION: ${{ steps.previous.outputs.version }}
         run: |
           cd "automate-$OLD_VERSION"
-          docker compose -p automate --env-file .env -f compose.yml logs --no-color --tail 80
+          docker compose -p lupin --env-file .env -f compose.yml logs --no-color --tail 80
       - name: Remove it
         if: always() && steps.previous.outputs.version != ''
         env:

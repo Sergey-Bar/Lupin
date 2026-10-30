@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { DomainError } from '../errors/domain-error.js';
-import { calculateKpis, projectRunSummary } from '@automate/reporting';
+import { calculateKpis, projectRunSummary } from '@lupin/reporting';
 import type { ReporterResultStore } from '../services/reporter-ingestion.js';
 
 export function createReportingRoutes(service: ReporterResultStore) {

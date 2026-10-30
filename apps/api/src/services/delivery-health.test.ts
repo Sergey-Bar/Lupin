@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import type { Scorecard } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import type { Scorecard } from '@lupin/shared-contracts';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import {
   branchGrade,

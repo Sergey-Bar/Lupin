@@ -11,13 +11,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type {
   DeliveryReport,
   DeliverySource,
   DeliverySourceBody,
   MetricUnit,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { DeliveryClient } from '../lib/delivery-client.js';
 import type { HealthClient } from '../lib/health-client.js';

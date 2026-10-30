@@ -19,8 +19,8 @@ RUN apk add --no-cache openssl \
   && grep -q '^pid /tmp/nginx.pid;' /etc/nginx/nginx.conf
 COPY infra/nginx/edge.conf /etc/nginx/conf.d/default.conf
 # HTTPS when a LAN certificate is mounted (see the script), and the CLI that issues one.
-COPY infra/nginx/40-automate-tls.sh /docker-entrypoint.d/40-automate-tls.sh
-COPY infra/nginx/automate-lan-cert.sh /usr/local/bin/automate-lan-cert
-RUN chmod 0755 /docker-entrypoint.d/40-automate-tls.sh /usr/local/bin/automate-lan-cert
+COPY infra/nginx/40-lupin-tls.sh /docker-entrypoint.d/40-lupin-tls.sh
+COPY infra/nginx/lupin-lan-cert.sh /usr/local/bin/lupin-lan-cert
+RUN chmod 0755 /docker-entrypoint.d/40-lupin-tls.sh /usr/local/bin/lupin-lan-cert
 EXPOSE 8080 8443
 USER nginx

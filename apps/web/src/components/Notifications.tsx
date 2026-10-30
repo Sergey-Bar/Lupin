@@ -11,13 +11,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type {
   ChannelKind,
   ChannelSummary,
   CreateChannelBody,
   DeliverySummary,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { NotificationsClient } from '../lib/notifications-client.js';
 import { ago } from '../lib/health-view.js';

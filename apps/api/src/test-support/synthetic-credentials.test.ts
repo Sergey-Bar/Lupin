@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SECRET_MIN_LENGTH, isSecretPlaceholder, parseConfig } from '@automate/config';
+import { SECRET_MIN_LENGTH, isSecretPlaceholder, parseConfig } from '@lupin/config';
 import {
   syntheticApiKey,
   syntheticCookieSecret,

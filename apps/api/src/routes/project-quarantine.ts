@@ -9,7 +9,7 @@
  */
 
 import { Hono, type MiddlewareHandler } from 'hono';
-import { QuarantinePolicySchema } from '@automate/shared-contracts';
+import { QuarantinePolicySchema } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import type { ExecutionRun } from '../execution/types.js';
 import type { QuarantineStore } from '../modules/dashboard/quarantine.js';

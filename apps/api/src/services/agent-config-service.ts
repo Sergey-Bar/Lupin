@@ -2,7 +2,7 @@ import type { Dirent } from 'node:fs';
 import { lstat, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { and, asc, eq } from 'drizzle-orm';
-import { mcpServers } from '@automate/db';
+import { mcpServers } from '@lupin/db';
 import {
   AGENT_CONFIG_RULES,
   AGENT_CONFIG_TOOL,
@@ -11,7 +11,7 @@ import {
   redactServerUrl,
   scanAgentConfig,
   type AgentConfigFile,
-} from '@automate/projects';
+} from '@lupin/projects';
 import {
   MAX_AGENT_CONFIG_FILE_BYTES,
   MAX_AGENT_CONFIG_FILES,
@@ -19,14 +19,14 @@ import {
   type HealthDimension,
   type HealthUploadResult,
   type McpServerList,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { branchFor, projectRow } from './health-findings.js';
 import type { EvalOptions } from './eval-service.js';
 import type { ParsedReport, UploadInput } from './repo-health-service.js';
 
 /**
  * The built-in agent-config scanner: a project's agent instructions and MCP configuration,
- * scanned by `scanAgentConfig` (`@automate/projects`) and ingested as health findings.
+ * scanned by `scanAgentConfig` (`@lupin/projects`) and ingested as health findings.
  *
  * **This is the product scanning a user's repository. It is not this repository's own
  * `pnpm skill-scan` gate**, which wraps SkillSpector over `.kilo/skills/` and has its own

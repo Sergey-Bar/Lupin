@@ -1,7 +1,7 @@
 import type { QueryOptions, Results } from '@electric-sql/pglite';
 import { sql } from 'drizzle-orm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import type { CallerResolver } from '../http/roles.js';
 import { audit, type Caller } from '../services/access-service.js';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';

@@ -26,7 +26,7 @@ export function requiredVariables(text) {
 /**
  * A throwaway value for each required variable.
  *
- * Secrets are 48 hex characters — over the 32-character floor in `@automate/config`, and
+ * Secrets are 48 hex characters — over the 32-character floor in `@lupin/config`, and
  * random per run so nothing credential-shaped is committed. The bucket and region are the
  * only two that must be a particular shape rather than secret.
  *

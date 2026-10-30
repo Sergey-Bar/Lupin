@@ -124,7 +124,7 @@ describe('the OTLP/HTTP JSON body', () => {
           },
           scopeSpans: [
             {
-              scope: { name: '@automate/api' },
+              scope: { name: '@lupin/api' },
               spans: [
                 {
                   traceId: TRACE,

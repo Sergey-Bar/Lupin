@@ -6,7 +6,7 @@ import {
   type AiCodePullRequestList,
   type AiCodeReport,
   type PortfolioAiCode,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createJsonTransport, projectPath, queryString } from './json-transport.js';
 
 /** AI-written code: kinds of authorship and tools, never people (the API sends none). */

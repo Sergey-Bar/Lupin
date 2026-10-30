@@ -1,6 +1,6 @@
 import React from 'react';
-import { Badge, Button, EmptyState, Skeleton } from '@automate/ui';
-import type { DeliverySummary, Portfolio } from '@automate/shared-contracts';
+import { Badge, Button, EmptyState, Skeleton } from '@lupin/ui';
+import type { DeliverySummary, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from '../lib/api.js';
 import { isNew, rankAttention, type AttentionItem } from '../lib/attention.js';
 import { ago } from '../lib/health-view.js';

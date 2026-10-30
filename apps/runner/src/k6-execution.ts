@@ -2,13 +2,13 @@ import { type ChildProcessWithoutNullStreams, spawn, type SpawnOptions } from 'n
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
-import { K6_JSON_ADAPTER_VERSION, parseK6Summary } from '@automate/reporter';
+import { K6_JSON_ADAPTER_VERSION, parseK6Summary } from '@lupin/reporter';
 import {
   LoadJobConfigurationSchema,
   type CanonicalRunResult,
   type ExecutionEventLine,
   type LoadJobConfiguration,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { artifactKind } from './artifact-kind.js';
 import {
   CappedLog,
@@ -58,7 +58,7 @@ import { WINDOWS_ENV_ALLOWLIST } from './windows-command.js';
  *
  * ## Where the verdict comes from
  *
- * k6's thresholds are the verdict, and `@automate/reporter`'s `parseK6Summary` is the only
+ * k6's thresholds are the verdict, and `@lupin/reporter`'s `parseK6Summary` is the only
  * thing that reads the summary - this file does not interpret metrics. Its attempts become
  * `test.started` / `test.completed` events (the same stream the Playwright reporter feeds), so
  * the run's tests and score come out of the pipeline every other producer uses. Exit status

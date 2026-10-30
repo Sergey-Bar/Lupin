@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { DurableSpool, readOrCreateSpoolKey } from '@automate/runner-sdk';
+import { DurableSpool, readOrCreateSpoolKey } from '@lupin/runner-sdk';
 import { ApiExecutionAdapter } from './api-run.js';
 import { RunnerApiClient } from './client.js';
 import { parseRunnerConfig } from './config.js';

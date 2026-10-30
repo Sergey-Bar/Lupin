@@ -15,7 +15,7 @@
  * this one was in two files for the whole life of the product.
  */
 
-import { testIdentity, type CanonicalRunResult } from '@automate/shared-contracts';
+import { testIdentity, type CanonicalRunResult } from '@lupin/shared-contracts';
 import { deriveRunState } from '../execution/phase-outcome.js';
 import type { RunOutcome, RunPhase } from '../execution/types.js';
 import { normaliseFailure } from './reporter-persistence.js';

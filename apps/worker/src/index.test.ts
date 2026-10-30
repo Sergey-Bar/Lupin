@@ -11,7 +11,7 @@ import * as worker from './worker.js';
 describe('the package entry', () => {
   it('re-exports every runtime export of every module, as the same binding', () => {
     // A module dropped from the barrel, or shadowed by a same-named export from
-    // another module, is a break for every importer of `@automate/worker`.
+    // another module, is a break for every importer of `@lupin/worker`.
     const modules = [
       config,
       healthServer,

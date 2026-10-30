@@ -8,7 +8,7 @@ import {
   EvalDatasetRunBodySchema,
   type HealthUploadResult,
   type OtlpExportResponse,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { domainErrorResponse } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { invalidRequest } from '../http/invalid-request.js';

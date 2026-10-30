@@ -4,7 +4,7 @@ import {
   TuiCommandSchema,
   type TuiCommand,
   type TuiCommandName,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * The command line, as pure functions.
@@ -72,7 +72,7 @@ export function isKnownCommand(name: string): name is TuiCommandName {
  * answer before they look for the flag that would change it.
  */
 export function printUsage(): string[] {
-  const lines = ['automate-tui <command> [arguments]', '', 'Commands:'];
+  const lines = ['lupin-tui <command> [arguments]', '', 'Commands:'];
   for (const [name, requirement] of Object.entries(TUI_COMMAND_REQUIREMENTS)) {
     const args = requirement.fields.length > 0 ? ` (${requirement.fields.join(' ')})` : '';
     lines.push(`  ${name.padEnd(16)} ${requirement.label}${args}`);

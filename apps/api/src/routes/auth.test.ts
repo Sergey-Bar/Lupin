@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
-import { hashCredential } from '@automate/auth';
+import { hashCredential } from '@lupin/auth';
 import { createAuthRoutes, memoryBackend } from './auth.js';
 
 const cookieSecret = 'c'.repeat(32);

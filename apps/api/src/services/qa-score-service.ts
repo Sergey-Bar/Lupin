@@ -1,14 +1,14 @@
 import { and, eq } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
-import { runs } from '@automate/db';
-import { QaScoreSchema, type QaScore } from '@automate/shared-contracts';
+import { runs } from '@lupin/db';
+import { QaScoreSchema, type QaScore } from '@lupin/shared-contracts';
 import {
   parseCoverage,
   surfaceCoverage,
   type CoverageFormat,
   type CoverageReport,
-} from '@automate/reporter';
+} from '@lupin/reporter';
 import {
   DEFAULT_WEIGHTS,
   score,
@@ -17,7 +17,7 @@ import {
   type RunRecord,
   type ScoreInputs,
   type ScoreSurface,
-} from '@automate/projects';
+} from '@lupin/projects';
 import { readScoreInputs, type ProjectRegistryServiceOptions } from './project-registry-service.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 

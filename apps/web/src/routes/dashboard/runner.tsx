@@ -15,7 +15,7 @@ import {
   Search,
   Star,
   cn,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
 import {
   CopyButton,

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { DimensionMetric } from '@automate/shared-contracts';
+import type { DimensionMetric } from '@lupin/shared-contracts';
 import { HealthReportError, MAX_HEALTH_REPORT_BYTES } from './sarif.js';
 import { type Json, record, text, finite } from './json-fields.js';
 

@@ -2,8 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { PERSISTED_RUN_STATUS_VALUES } from '@automate/shared-contracts';
-import type { RunOutcome, RunPhase } from '@automate/shared-contracts';
+import { PERSISTED_RUN_STATUS_VALUES } from '@lupin/shared-contracts';
+import type { RunOutcome, RunPhase } from '@lupin/shared-contracts';
 import {
   COMPLETE_OUTCOMES,
   deriveRunState,

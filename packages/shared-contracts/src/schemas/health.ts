@@ -231,7 +231,7 @@ export type HealthGrade = z.infer<typeof HealthGradeSchema>;
 /**
  * The `aiGovernance` block of the health policy: the pull-request rules for change an AI agent
  * wrote, and the labels that mark it. Off unless `enabled` is `true`. Read by
- * `evaluateAiGovernance` in `@automate/reporting`; a human pull request is never subject to it.
+ * `evaluateAiGovernance` in `@lupin/reporting`; a human pull request is never subject to it.
  */
 export const AiGovernancePolicySchema = z.object({
   enabled: z.boolean().default(false),

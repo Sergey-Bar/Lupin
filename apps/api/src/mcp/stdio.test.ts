@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { MCP_TOOL_NAMES } from '@automate/shared-contracts';
+import { MCP_TOOL_NAMES } from '@lupin/shared-contracts';
 import type { CallerResolver } from '../http/roles.js';
 import type { Caller } from '../services/access-service.js';
 import { createMcpRoutes } from '../routes/mcp.js';

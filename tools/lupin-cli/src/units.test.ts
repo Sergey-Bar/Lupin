@@ -2,15 +2,15 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { isLoopbackBind } from '@automate/config';
+import { isLoopbackBind } from '@lupin/config';
 import {
   AGENT_CONFIG_PATHS as SERVER_PATHS,
   isAgentConfigPath as serverMatches,
-} from '@automate/projects';
+} from '@lupin/projects';
 import {
   MAX_AGENT_CONFIG_FILE_BYTES as SERVER_FILE_BYTES,
   MAX_AGENT_CONFIG_FILES as SERVER_FILES,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import {
   AGENT_CONFIG_PATHS,
   MAX_AGENT_CONFIG_FILE_BYTES,
@@ -50,7 +50,7 @@ describe('one list of agent-config paths, held twice', () => {
     const action = readFileSync(
       path.join(
         path.dirname(fileURLToPath(import.meta.url)),
-        '../../../.github/actions/automate-health/action.yml',
+        '../../../.github/actions/lupin-health/action.yml',
       ),
       'utf8',
     );
@@ -117,7 +117,7 @@ describe('isLoopbackHost', () => {
     '',
   ];
 
-  it('is the same answer as @automate/config isLoopbackBind, the MCP proxy\u2019s, on every host', () => {
+  it('is the same answer as @lupin/config isLoopbackBind, the MCP proxy\u2019s, on every host', () => {
     for (const host of HOSTS) {
       expect(isLoopbackHost(host), host).toBe(isLoopbackBind(host));
     }
@@ -128,7 +128,7 @@ describe('isLoopbackHost', () => {
     const action = readFileSync(
       path.join(
         path.dirname(fileURLToPath(import.meta.url)),
-        '../../../.github/actions/automate-health/action.yml',
+        '../../../.github/actions/lupin-health/action.yml',
       ),
       'utf8',
     );

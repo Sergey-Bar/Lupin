@@ -7,7 +7,7 @@ import {
   PERSISTED_RUN_STATUS_VALUES,
   RUN_STATUS_VALUES,
   RunStatusSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * One run-status vocabulary, and the column proven to be a subset of it.
@@ -58,7 +58,7 @@ beforeAll(async () => {
       const full = path.join(current, entry.name);
       if (entry.isDirectory()) stack.push(full);
       else if (entry.name.endsWith('.ts') && statSync(full).mtimeMs > buildTime)
-        throw new Error('packages/db is not built; run pnpm --filter @automate/db build');
+        throw new Error('packages/db is not built; run pnpm --filter @lupin/db build');
     }
   }
   client = new PGlite();

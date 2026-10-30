@@ -10,7 +10,7 @@ import {
   type NotificationChannelRow,
   type ReportDeliveryRow,
   type ReportSubscriptionRow,
-} from '@automate/db';
+} from '@lupin/db';
 import type {
   ChannelKind,
   ChannelSummary,
@@ -18,8 +18,8 @@ import type {
   CreateSubscriptionBody,
   DeliverySummary,
   SubscriptionSummary,
-} from '@automate/shared-contracts';
-import { buildDigest, type ReportInput } from '@automate/reporting';
+} from '@lupin/shared-contracts';
+import { buildDigest, type ReportInput } from '@lupin/reporting';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { isAllowedWebhook } from './health-integrations.js';
 import { loadReportAreas } from './report-areas.js';

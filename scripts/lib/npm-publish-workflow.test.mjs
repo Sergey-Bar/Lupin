@@ -45,11 +45,11 @@ test('the token is read in one step and a missing token is a recorded gap, not a
 test('the CLI is public, and every public package can be published', () => {
   const published = publicPackages(workspacePackages(REPO_ROOT));
   assert.ok(
-    published.some((pkg) => pkg.name === '@automate/cli'),
+    published.some((pkg) => pkg.name === '@lupin/cli'),
     'the CLI is what CI installs; it has to be public',
   );
   assert.ok(
-    published.some((pkg) => pkg.name === '@automate/playwright-reporter'),
+    published.some((pkg) => pkg.name === '@lupin/playwright-reporter'),
     'the live reporter is installed from a playwright.config.ts; it has to be public',
   );
   assert.deepEqual(published.flatMap(publishProblems), []);
@@ -58,14 +58,14 @@ test('the CLI is public, and every public package can be published', () => {
 test('the policy can fail: an unprepared public package is refused', () => {
   const problems = publishProblems({
     dir: 'tools/x',
-    name: '@automate/x',
-    manifest: { name: '@automate/x', dependencies: { '@automate/y': 'workspace:*' } },
+    name: '@lupin/x',
+    manifest: { name: '@lupin/x', dependencies: { '@lupin/y': 'workspace:*' } },
   });
   assert.equal(problems.length, 4);
   assert.match(problems.join('\n'), /files/);
   assert.match(problems.join('\n'), /repository/);
   assert.match(problems.join('\n'), /provenance/);
-  assert.match(problems.join('\n'), /workspace package @automate\/y/);
+  assert.match(problems.join('\n'), /workspace package @lupin\/y/);
 });
 
 test('a prerelease is never published as latest', () => {

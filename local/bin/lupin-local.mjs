@@ -2,9 +2,9 @@
 /**
  * The launcher.
  *
- *   automate-local serve [--data-dir <dir>] [--port <n>]
- *   automate-local scan <folder> [--data-dir <dir>]
- *   automate-local diagnostics [--data-dir <dir>]
+ *   lupin-local serve [--data-dir <dir>] [--port <n>]
+ *   lupin-local scan <folder> [--data-dir <dir>]
+ *   lupin-local diagnostics [--data-dir <dir>]
  *
  * `serve` starts the engine and the local interface and prints the address to open. The
  * address carries a one-time token after the `#`, which a browser never sends to the server.
@@ -34,7 +34,7 @@ function defaultDataDir() {
   if (process.platform === 'win32' && process.env.LOCALAPPDATA) {
     return path.join(process.env.LOCALAPPDATA, 'AutomateLocal');
   }
-  return path.join(os.homedir(), '.automate-local');
+  return path.join(os.homedir(), '.lupin-local');
 }
 
 /** @param {string} line */
@@ -50,7 +50,7 @@ export async function main(argv) {
   if (command === 'scan') {
     const target = rest.find((arg) => !arg.startsWith('--') && arg !== option(rest, '--data-dir'));
     if (target === undefined) {
-      process.stderr.write('usage: automate-local scan <folder>\n');
+      process.stderr.write('usage: lupin-local scan <folder>\n');
       engine.close();
       return 2;
     }
@@ -118,7 +118,7 @@ export async function main(argv) {
 
 if (
   import.meta.url === new URL(process.argv[1] ?? '', 'file://').href ||
-  process.argv[1]?.endsWith('automate-local.mjs')
+  process.argv[1]?.endsWith('lupin-local.mjs')
 ) {
   main(process.argv.slice(2)).then(
     (code) => {

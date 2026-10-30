@@ -156,7 +156,7 @@ describe('ServiceKeySchema', () => {
   it('accepts a valid service key', () => {
     const result = ServiceKeySchema.safeParse({
       serviceId: 'svc-reporter',
-      serviceName: '@automate/reporter',
+      serviceName: '@lupin/reporter',
       keyHash: 'sha256-xyz',
       permissions: ['runs:write'],
       createdAt: '2026-01-01T00:00:00.000Z',

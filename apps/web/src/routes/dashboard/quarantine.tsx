@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
   type BadgeProps,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type { ApiClient, QuarantineEntry } from '../../lib/api.js';
 import { formatDate } from '../../lib/format.js';
 import { Kpi, PageFrame, PageHeader, Paged, Panel, Quiet } from '../../components/kit.js';

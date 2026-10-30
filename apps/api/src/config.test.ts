@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, afterEach } from 'vitest';
-import { SECRET_MIN_LENGTH, isSecretPlaceholder, type SecretVariable } from '@automate/config';
+import { SECRET_MIN_LENGTH, isSecretPlaceholder, type SecretVariable } from '@lupin/config';
 import { getConfig, readObjectStoreSettings } from './config.js';
 import { checkProductionPolicy } from './startup-policy.js';
 

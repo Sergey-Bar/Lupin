@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-import { DrizzleInstallationKeyStore, DrizzleSessionStore } from '@automate/db';
-import * as schema from '@automate/db';
+import { DrizzleInstallationKeyStore, DrizzleSessionStore } from '@lupin/db';
+import * as schema from '@lupin/db';
 import { assertSchemaBuildIsFresh, createMigratedDatabase } from './migrations.js';
 
 type InstallationDatabase = ConstructorParameters<typeof DrizzleInstallationKeyStore>[0];

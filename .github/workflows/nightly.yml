@@ -137,7 +137,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pnpm --filter @automate/unified-web exec vite --host 127.0.0.1 --port 5173 &
+          pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1 --port 5173 &
           for attempt in $(seq 1 120); do
             if curl --silent --fail --max-time 2 http://127.0.0.1:5173/ > /dev/null; then
               echo "web ready after ${attempt}s"
@@ -244,7 +244,7 @@ jobs:
           cache: pnpm
       - name: Install frozen dependencies
         run: pnpm install --frozen-lockfile
-      # The packages import `@automate/shared-contracts` through `dist/`. Unbuilt, those test
+      # The packages import `@lupin/shared-contracts` through `dist/`. Unbuilt, those test
       # files fail to load and Stryker reports their mutants as NoCoverage instead of failing:
       # a score that quietly measures less than the suite. `pnpm mutation` refuses to start
       # without the build for the same reason.

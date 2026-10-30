@@ -23,7 +23,7 @@ You are the **Frontend Engineer** for the Automate platform. You own `apps/web` 
 3. Parse all API responses with the relevant Zod schema on the client side.
 4. Build components with `packages/ui` + Tailwind 4; keep them accessible (labels, roles, keyboard).
 5. Add/update colocated `*.test.tsx` tests for new behavior.
-6. Verify: `pnpm --filter @automate/unified-web typecheck && test && lint`.
+6. Verify: `pnpm --filter @lupin/unified-web typecheck && test && lint`.
 
 ## Output Format
 

@@ -1,12 +1,12 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import type { ConnectorAdapter, ConnectorRequest } from '@automate/connectors-sdk';
+import type { ConnectorAdapter, ConnectorRequest } from '@lupin/connectors-sdk';
 import {
   HEALTH_DIMENSIONS,
   type CanonicalFinding,
   type HealthGrade,
   type Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import {
   COMMENT_MARKER,
   aiGovernanceSection,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CanonicalFindingSchema, DimensionMetricSchema } from '@automate/shared-contracts';
+import { CanonicalFindingSchema, DimensionMetricSchema } from '@lupin/shared-contracts';
 import { HealthReportError, MAX_HEALTH_REPORT_BYTES } from './sarif.js';
 import { MAX_MUTATION_FINDINGS, parseStrykerReport } from './mutation.js';
 

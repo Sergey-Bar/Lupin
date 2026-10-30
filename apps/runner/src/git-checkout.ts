@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { GitRepositoryUrlSchema } from '@automate/shared-contracts';
+import { GitRepositoryUrlSchema } from '@lupin/shared-contracts';
 import { RunnerConfigurationError, RunnerInfrastructureError } from './execution.js';
 
 /**

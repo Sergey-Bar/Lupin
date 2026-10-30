@@ -1,18 +1,18 @@
 {
-  "name": "@automate/integration-tests",
+  "name": "@lupin/integration-tests",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "pretest": "pnpm --filter @automate/db build",
+    "pretest": "pnpm --filter @lupin/db build",
     "test": "vitest run --coverage && node ../../scripts/write-coverage-provenance.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --max-warnings=0 src/"
   },
   "dependencies": {
-    "@automate/db": "workspace:*",
-    "@automate/shared-contracts": "workspace:*",
+    "@lupin/db": "workspace:*",
+    "@lupin/shared-contracts": "workspace:*",
     "@electric-sql/pglite": "^0.5.11",
     "drizzle-orm": "catalog:"
   },

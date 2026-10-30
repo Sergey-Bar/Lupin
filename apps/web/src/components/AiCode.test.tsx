@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { AiCodePullRequestList, AiCodeReport } from '@automate/shared-contracts';
+import type { AiCodePullRequestList, AiCodeReport } from '@lupin/shared-contracts';
 import type { AiCodeClient } from '../lib/ai-code-client.js';
 import {
   makeAiCodeReport,

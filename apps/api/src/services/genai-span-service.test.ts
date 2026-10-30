@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import * as schema from '@automate/db';
-import type { CompletionChunk, CompletionSpan } from '@automate/automation';
-import { AgentRuntimeReportSchema } from '@automate/shared-contracts';
-import { REDACTED } from '@automate/reporter';
+import * as schema from '@lupin/db';
+import type { CompletionChunk, CompletionSpan } from '@lupin/automation';
+import { AgentRuntimeReportSchema } from '@lupin/shared-contracts';
+import { REDACTED } from '@lupin/reporter';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import {
   agentProject,

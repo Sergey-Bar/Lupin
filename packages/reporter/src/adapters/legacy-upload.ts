@@ -19,8 +19,8 @@
  * to be one.
  */
 
-import { ReporterUploadSchema, type ReporterUploadPayload } from '@automate/shared-contracts';
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import { ReporterUploadSchema, type ReporterUploadPayload } from '@lupin/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 import type { ProducerAdapter, ProducerContext } from '../adapter.js';
 import { canonicalRunResult } from '../canonical-run-result.js';
 import {

@@ -1,4 +1,4 @@
-# @automate/migrate-cli
+# @lupin/migrate-cli
 
 Migration planning, validation, rehearsal and reconciliation. `pnpm migrate:plan` reads only the repository; `migrate:apply` is never run by CI, because CI has no persistent database.
 

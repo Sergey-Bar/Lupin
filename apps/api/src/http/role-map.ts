@@ -1,4 +1,4 @@
-import type { AccessRole, RoleRule } from '@automate/config';
+import type { AccessRole, RoleRule } from '@lupin/config';
 
 /**
  * The role a role map gives an identity — one rule for every identity source, Cloudflare

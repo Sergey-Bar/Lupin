@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { AGENT_SIGNATURES } from '@automate/reporting';
-import { AiCodeReportSchema } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import { AGENT_SIGNATURES } from '@lupin/reporting';
+import { AiCodeReportSchema } from '@lupin/shared-contracts';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import {
   aiCodePullRequests,

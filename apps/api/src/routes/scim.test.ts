@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { DrizzleSessionStore } from '@automate/db';
+import * as schema from '@lupin/db';
+import { DrizzleSessionStore } from '@lupin/db';
 import type { CallerResolver } from '../http/roles.js';
 import type { Caller } from '../services/access-service.js';
 import { signInPerson } from '../services/user-service.js';

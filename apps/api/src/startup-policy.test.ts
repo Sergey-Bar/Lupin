@@ -10,7 +10,7 @@ import {
   isProduction,
   resolveAuthSecrets,
 } from './startup-policy.js';
-import { parseConfig } from '@automate/config';
+import { parseConfig } from '@lupin/config';
 import type { AppConfig } from './config.js';
 import {
   syntheticApiKey,

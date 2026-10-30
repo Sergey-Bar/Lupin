@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { hashCredential } from '@automate/auth';
-import * as schema from '@automate/db';
-import { DrizzleSessionStore } from '@automate/db';
+import { hashCredential } from '@lupin/auth';
+import * as schema from '@lupin/db';
+import { DrizzleSessionStore } from '@lupin/db';
 import { DrizzleAuthSessionBackend } from '../infrastructure/session-backend.js';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';

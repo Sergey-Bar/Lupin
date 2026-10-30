@@ -8,7 +8,7 @@ import { send } from './http.js';
 import { projectUrl } from './target.js';
 
 /**
- * `automate test --format junit|playwright-json --report <path> [--branch --commit] -- <command…>`
+ * `lupin test --format junit|playwright-json --report <path> [--branch --commit] -- <command…>`
  *
  * Runs the test command, sends its report, and exits with the command's own code — except
  * when the server says every failure is an approved quarantined test, when it exits 0.
@@ -129,7 +129,7 @@ function readOptions(argv: readonly string[], io: Io): TestOptions {
   const split = argv.indexOf('--');
   const [command, ...commandArgs] = split === -1 ? [] : argv.slice(split + 1);
   if (command === undefined)
-    throw usage('Give the test command after --: automate test … -- <command>');
+    throw usage('Give the test command after --: lupin test … -- <command>');
   const parsed = parseOptions(split === -1 ? argv : argv.slice(0, split), {
     values: ['project', 'format', 'report', 'branch', 'commit'],
   });

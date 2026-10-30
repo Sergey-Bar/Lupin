@@ -21,7 +21,7 @@ interface BoundaryBody {
 
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { describe, expect, it } from 'vitest';
-import { hashCredential, verifyCredential } from '@automate/auth';
+import { hashCredential, verifyCredential } from '@lupin/auth';
 import { createAuthRoutes } from './auth.js';
 import {
   syntheticCookieSecret,

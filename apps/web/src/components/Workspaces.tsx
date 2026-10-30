@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Input } from '@automate/ui';
+import { Button, Input } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import type { AdminClient, WorkspaceEntry } from '../lib/admin-client.js';
 import { Panel } from './kit.js';

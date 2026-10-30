@@ -1,5 +1,5 @@
-import { PERSISTED_RUN_STATUS_VALUES, RUN_STATUS_VALUES } from '@automate/shared-contracts';
-import type { RunOutcome, RunPhase } from '@automate/shared-contracts';
+import { PERSISTED_RUN_STATUS_VALUES, RUN_STATUS_VALUES } from '@lupin/shared-contracts';
+import type { RunOutcome, RunPhase } from '@lupin/shared-contracts';
 
 /**
  * The run's terminal state, derived as one value.

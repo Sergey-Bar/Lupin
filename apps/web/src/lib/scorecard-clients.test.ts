@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HEALTH_DIMENSIONS, SCORECARD_IDS } from '@automate/shared-contracts';
+import { HEALTH_DIMENSIONS, SCORECARD_IDS } from '@lupin/shared-contracts';
 import {
   makeAiCodeReport,
   makeAiPullRequests,

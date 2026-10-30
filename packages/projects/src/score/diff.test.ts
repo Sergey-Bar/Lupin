@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { QaScoreSchema, ScoreDeltaSchema } from '@automate/shared-contracts';
+import { QaScoreSchema, ScoreDeltaSchema } from '@lupin/shared-contracts';
 import { diffScores } from './diff.js';
 import { score, DEFAULT_WEIGHTS, type ScoreInputs } from '../index.js';
 

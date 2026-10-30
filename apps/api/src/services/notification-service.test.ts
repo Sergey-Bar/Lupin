@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import * as schema from '@automate/db';
-import type { ConnectorAdapter } from '@automate/connectors-sdk';
+import * as schema from '@lupin/db';
+import type { ConnectorAdapter } from '@lupin/connectors-sdk';
 import type { CallerResolver } from '../http/roles.js';
 import { createNotificationRoutes } from '../routes/notifications.js';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';

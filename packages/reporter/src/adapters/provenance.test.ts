@@ -1,6 +1,6 @@
 import { generateKeyPairSync, sign, X509Certificate, type KeyObject } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { DimensionMetricSchema } from '@automate/shared-contracts';
+import { DimensionMetricSchema } from '@lupin/shared-contracts';
 import { HealthReportError, MAX_HEALTH_REPORT_BYTES } from './sarif.js';
 import {
   dssePae,

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { QaScoreSchema, type QaScore } from '@automate/shared-contracts';
+import { QaScoreSchema, type QaScore } from '@lupin/shared-contracts';
 import type { QaClient } from '../../lib/qa-client.js';
 import { ScorePage, cappingCell, formatCell } from './score.js';
 import { FlakyPage, GapsPage, HollowPage, StructurePage } from './gaps.js';

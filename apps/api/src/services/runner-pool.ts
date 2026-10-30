@@ -1,5 +1,5 @@
 import { inArray } from 'drizzle-orm';
-import { runners } from '@automate/db';
+import { runners } from '@lupin/db';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 
 /**

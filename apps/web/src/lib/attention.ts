@@ -1,4 +1,4 @@
-import type { DeliverySummary, Portfolio } from '@automate/shared-contracts';
+import type { DeliverySummary, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from './api.js';
 
 /**

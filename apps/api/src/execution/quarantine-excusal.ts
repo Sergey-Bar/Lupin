@@ -21,7 +21,7 @@
  * title and file, in every project — the reading it had when it was approved.
  */
 
-import { storedTestIdentity } from '@automate/shared-contracts';
+import { storedTestIdentity } from '@lupin/shared-contracts';
 import type { ExecutionRun, ExecutionTestResult } from './types.js';
 
 export interface QuarantineMatch {

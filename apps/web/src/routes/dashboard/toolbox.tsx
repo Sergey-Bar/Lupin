@@ -10,7 +10,7 @@ import {
   ExternalLink,
   Search,
   cn,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
 import {
   CopyButton,

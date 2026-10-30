@@ -4,8 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-import * as schema from '@automate/db';
-import { literalView } from '@automate/projects';
+import * as schema from '@lupin/db';
+import { literalView } from '@lupin/projects';
 import {
   discoverProject,
   discoverProjectAtBoot,

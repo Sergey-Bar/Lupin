@@ -50,13 +50,13 @@ test('the analyser refutes a chain that repeats work', () => {
   const scripts = {
     verify: 'pnpm test && pnpm test:contract && pnpm meta && pnpm docs && pnpm lint && pnpm lint',
     test: 'turbo run test',
-    'test:contract': 'turbo run test --filter=@automate/contract-tests',
+    'test:contract': 'turbo run test --filter=@lupin/contract-tests',
     meta: 'node --test scripts/lib/*.test.mjs',
     docs: 'node --test scripts/lib/gate-duplication.test.mjs',
     lint: 'eslint .',
   };
   const findings = duplicatedWork('verify', scripts, REPO_ROOT);
-  assert.ok(findings.some((f) => f.includes('package-test:@automate/contract-tests')));
+  assert.ok(findings.some((f) => f.includes('package-test:@lupin/contract-tests')));
   assert.ok(findings.some((f) => f.includes('node-test:scripts/lib/gate-duplication.test.mjs')));
   assert.ok(findings.some((f) => f.includes('command:eslint .')));
 });

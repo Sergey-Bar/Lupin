@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { CanonicalFindingSchema } from '@automate/shared-contracts';
+import { CanonicalFindingSchema } from '@lupin/shared-contracts';
 import { describe, expect, it } from 'vitest';
 import { HealthReportError, MAX_HEALTH_REPORT_BYTES, MAX_SARIF_RESULTS } from './sarif.js';
 import { parseSkillSpector, SKILLSPECTOR_ADAPTER_VERSION } from './skillspector.js';

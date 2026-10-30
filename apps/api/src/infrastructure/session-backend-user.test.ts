@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { DrizzleSessionStore } from '@automate/db';
+import * as schema from '@lupin/db';
+import { DrizzleSessionStore } from '@lupin/db';
 import { memoryBackend } from '../routes/auth.js';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import { syntheticCookieSecret } from '../test-support/synthetic-credentials.js';

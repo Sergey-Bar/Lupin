@@ -21,7 +21,7 @@ import {
   TableRow,
   Textarea,
   cn,
-} from '@automate/ui';
+} from '@lupin/ui';
 import {
   FINDING_SEVERITIES,
   HEALTH_DIMENSIONS,
@@ -33,7 +33,7 @@ import {
   type HealthFinding,
   type HealthHistory,
   type ProjectHealth,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { HealthClient, HealthSettings } from '../lib/health-client.js';
 import {

@@ -212,7 +212,7 @@
     "migrate:plan": {
       "requires": [],
       "tier": 2,
-      "why": "Builds `@automate/migrate-cli` and prints the plan. Reads the repository, never a database, so it is safe on a PR."
+      "why": "Builds `@lupin/migrate-cli` and prints the plan. Reads the repository, never a database, so it is safe on a PR."
     },
     "migrate:validate": {
       "requires": [],

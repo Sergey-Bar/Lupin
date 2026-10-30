@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import {
   DeliveryReportSchema,
   DeliverySourceSchema,
   PortfolioDeliverySchema,
   type DeliveryMarkers,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import {
   DEDUPE_WINDOW_MS,

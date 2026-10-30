@@ -6,7 +6,7 @@ import { run } from './cli.js';
 import { EXIT } from './errors.js';
 
 /**
- * `automate shard --total N --index i -- <files…>` — prints the files shard `i` runs.
+ * `lupin shard --total N --index i -- <files…>` — prints the files shard `i` runs.
  *
  * **It never drops a file.** When the plan cannot be had, the shard runs every file: twice
  * the work is a slow build, and a skipped file is a test that silently never ran.
@@ -84,7 +84,7 @@ afterEach(async () => {
   await Promise.all(temporary.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
 
-describe('automate shard', () => {
+describe('lupin shard', () => {
   it("prints this shard's files, one per line, and the estimate on stderr", async () => {
     const result = await invoke(['--total', '2', '--index', '2', '--', ...FILES]);
     expect(result.code).toBe(EXIT.ok);

@@ -26,7 +26,7 @@ import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 import { DomainError } from '../errors/domain-error.js';
-import type { AiGateway, CompletionChunk } from '@automate/automation';
+import type { AiGateway, CompletionChunk } from '@lupin/automation';
 
 export interface ChatRoutesOptions {
   /** The configured gateway. Which one is the composition root's decision. */

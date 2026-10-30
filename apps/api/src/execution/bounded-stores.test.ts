@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 
 /**
  * The two maps this covers grew for the lifetime of the process:

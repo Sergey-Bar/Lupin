@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Hono, type MiddlewareHandler } from 'hono';
-import { ShardPlanSchema } from '@automate/shared-contracts';
+import { ShardPlanSchema } from '@lupin/shared-contracts';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import { agentProject } from '../test-support/agent-fixtures.js';

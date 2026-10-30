@@ -528,7 +528,7 @@ test('point 7 reads the register: a row that loses its command, or its test, fai
   const backed = intact?.clauses.find((clause) => clause.claim.includes('every row is backed'));
   assert.equal(backed?.verdict, 'pass', backed?.reason);
 
-  const command = '`pnpm --filter @automate/reporter exec vitest run src/junit.test.ts`';
+  const command = '`pnpm --filter @lupin/reporter exec vitest run src/junit.test.ts`';
   assert.ok(original.includes(command), 'the fixture row this test edits has moved');
   const unnamed = seven(original.replace(command, ''));
   const naming = unnamed?.clauses.find((clause) => clause.claim.includes('names a passing'));

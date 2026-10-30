@@ -26,7 +26,7 @@
  * longer has a rung to forget, because there is no ladder to edit.
  */
 
-import { CanonicalRunResultSchema, type CanonicalRunResult } from '@automate/shared-contracts';
+import { CanonicalRunResultSchema, type CanonicalRunResult } from '@lupin/shared-contracts';
 import type { ProducerContext } from './adapter.js';
 import type { CanonicalStatus } from './producer-status.js';
 

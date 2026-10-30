@@ -6,13 +6,13 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { Hono } from 'hono';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { createProjectsRoutes } from './projects.js';
 import { InMemoryExecutionStore } from '../execution/in-memory-execution-store.js';
 import { readHistory } from '../services/scan-history-service.js';
-import { literalView } from '@automate/projects';
-import type { RepositoryView } from '@automate/projects';
+import { literalView } from '@lupin/projects';
+import type { RepositoryView } from '@lupin/projects';
 import {
   CopilotAnswerSchema,
   ProjectHistorySchema,
@@ -20,7 +20,7 @@ import {
   ReleaseReadinessCardSchema,
   RepoScanSchema,
   ScoreDeltaSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * The registry and the score, over a real migrated database.

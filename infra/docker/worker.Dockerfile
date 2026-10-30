@@ -6,8 +6,8 @@ COPY . .
 # Build the worker and its workspace dependencies, then write only what it runs to /out
 # (`deploy --prod`; see api.Dockerfile).
 RUN pnpm install --frozen-lockfile \
-  && pnpm --filter "@automate/worker..." build \
-  && pnpm --filter "@automate/worker" --prod deploy --legacy /out
+  && pnpm --filter "@lupin/worker..." build \
+  && pnpm --filter "@lupin/worker" --prod deploy --legacy /out
 
 
 FROM node:24.22.1-alpine AS runtime

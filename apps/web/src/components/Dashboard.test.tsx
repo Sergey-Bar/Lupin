@@ -13,7 +13,7 @@ import {
   SCORE_SURFACES,
   type QaScore,
   type ScoreCell,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { Dashboard, read, summariseReports } from './Dashboard';
 import { makeApi, makeQa, makeScan, makeTrend } from '../test-utils';
 import type { QaClient } from '../lib/qa-client';

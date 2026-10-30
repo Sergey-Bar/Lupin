@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { createRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { Badge, Button } from '@automate/ui';
+import { Badge, Button } from '@lupin/ui';
 import { Route as rootRoute } from './__root.js';
-import type { CreateRunRequest, DomainReadinessStatus } from '@automate/shared-contracts';
+import type { CreateRunRequest, DomainReadinessStatus } from '@lupin/shared-contracts';
 import { useReleaseReadiness } from '../hooks/useDashboard.js';
 import { isRunActive } from '../hooks/useRuns.js';
 import { Dashboard } from '../components/Dashboard.js';

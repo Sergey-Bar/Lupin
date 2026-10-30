@@ -1,5 +1,5 @@
 /**
- * Schema unit tests for @automate/db
+ * Schema unit tests for @lupin/db
  *
  * Validates all schema tables are correctly defined and exported
  * without requiring a live PostgreSQL connection.
@@ -175,7 +175,7 @@ describe('dashboard schema — schedules', () => {
 
   it('carries the same gateStatus vocabulary as gate_evaluations, not a second copy', () => {
     // P-5. `runs.gate_status` was `['passed','failed','skipped']` while
-    // `gate_evaluations.status` — and the contract in `@automate/shared-contracts` —
+    // `gate_evaluations.status` — and the contract in `@lupin/shared-contracts` —
     // is `['passed','failed','warning','unknown','not_evaluated']`. The two disagreed in
     // both directions: three contract values were rejected by the database and one
     // non-contract value was accepted.

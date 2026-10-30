@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const drizzleDirectory = path.resolve(here, '../../../../packages/db/drizzle');

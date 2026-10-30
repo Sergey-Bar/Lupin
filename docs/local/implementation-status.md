@@ -125,7 +125,7 @@ worth having is still undecided.
 ## Running it
 
 ```text
-node local/bin/automate-local.mjs serve
+node local/bin/lupin-local.mjs serve
 node local/test/runner.test.mjs
 ```
 

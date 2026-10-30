@@ -2,7 +2,7 @@ import { generateKeyPairSync, randomUUID, type JsonWebKey } from 'node:crypto';
 import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
 import { describe, expect, it, vi } from 'vitest';
-import type { CloudflareAccessConfig } from '@automate/config';
+import type { CloudflareAccessConfig } from '@lupin/config';
 import {
   createCloudflareAccessVerifier,
   createCloudflareCallerSource,

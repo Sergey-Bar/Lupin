@@ -1,5 +1,5 @@
-import { scanRepository, type RepositoryView } from '@automate/projects';
-import type { RepoScan, RunCommand } from '@automate/shared-contracts';
+import { scanRepository, type RepositoryView } from '@lupin/projects';
+import type { RepoScan, RunCommand } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 
 /**

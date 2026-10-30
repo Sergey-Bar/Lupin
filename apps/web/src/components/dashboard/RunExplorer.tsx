@@ -1,5 +1,5 @@
 import { z } from 'zod/v4';
-import { CanonicalRunResultSchema } from '@automate/shared-contracts';
+import { CanonicalRunResultSchema } from '@lupin/shared-contracts';
 import { useResource } from '../../hooks/useResource.js';
 import { createJsonTransport } from '../../lib/json-transport.js';
 

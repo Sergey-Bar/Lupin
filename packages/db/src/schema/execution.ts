@@ -21,7 +21,7 @@ import { projects, runs, runners, workspaces } from './dashboard.js';
 // `dashboard.ts` needs `GATE_STATUSES` and importing it from this module would be a
 // cycle — this module imports `dashboard.ts`. `execution.ts` re-exports every name, so
 // `export * from './execution.js'` in the package index and every existing
-// `import { GATE_STATUSES } from '@automate/db'` keep working unchanged.
+// `import { GATE_STATUSES } from '@lupin/db'` keep working unchanged.
 export {
   ARTIFACT_KINDS,
   DOMAIN_STATUSES,
@@ -60,7 +60,7 @@ import {
 // each other — a cycle that resolves only because Drizzle defers every reference
 // to a callback, which is exactly the kind of thing that works until someone
 // reads one at module-evaluation time. It is re-exported below, so
-// `import { projects } from '@automate/db'` is unchanged.
+// `import { projects } from '@lupin/db'` is unchanged.
 export { projects } from './dashboard.js';
 
 export const environments = pgTable(

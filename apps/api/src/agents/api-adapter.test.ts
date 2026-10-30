@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AgentAcceptedRunSchema } from '@automate/shared-contracts';
-import { createToolRegistry, toAgentProblem, type ToolRegistry } from '@automate/tool-sdk';
+import { AgentAcceptedRunSchema } from '@lupin/shared-contracts';
+import { createToolRegistry, toAgentProblem, type ToolRegistry } from '@lupin/tool-sdk';
 import { InMemoryExecutionStore } from '../execution/in-memory-execution-store.js';
 import type { ExecutionStore } from '../execution/types.js';
 import { DomainError } from '../errors/domain-error.js';

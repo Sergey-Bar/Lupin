@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { createContext, runInContext } from 'node:vm';
 import { and, asc, eq } from 'drizzle-orm';
-import { evalDatasets, type EvalDatasetRow } from '@automate/db';
-import type { AiGateway, CompletionInput } from '@automate/automation';
+import { evalDatasets, type EvalDatasetRow } from '@lupin/db';
+import type { AiGateway, CompletionInput } from '@lupin/automation';
 import {
   EvalDatasetCaseSchema,
   type AutomateEvalRun,
@@ -14,7 +14,7 @@ import {
   type EvalDatasetCase,
   type EvalDatasetRunStarted,
   type HealthUploadResult,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { branchFor, projectRow } from './health-findings.js';

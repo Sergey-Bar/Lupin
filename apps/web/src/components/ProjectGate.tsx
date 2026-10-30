@@ -1,5 +1,5 @@
 import React from 'react';
-import { EmptyState } from '@automate/ui';
+import { EmptyState } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import type { QaClient } from '../lib/qa-client.js';
 import type { RegisteredProject } from '../lib/qa.js';

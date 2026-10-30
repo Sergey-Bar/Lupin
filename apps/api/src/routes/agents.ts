@@ -1,11 +1,11 @@
 import { Hono, type Context } from 'hono';
-import { AgentAcceptedRunSchema } from '@automate/shared-contracts';
+import { AgentAcceptedRunSchema } from '@lupin/shared-contracts';
 import {
   createToolRegistry,
   toAgentProblem,
   type ToolFailure,
   type ToolRegistry,
-} from '@automate/tool-sdk';
+} from '@lupin/tool-sdk';
 import { AGENT_DOMAINS, createAgentCatalog, type AgentCatalog } from './agent-registry.js';
 
 /**

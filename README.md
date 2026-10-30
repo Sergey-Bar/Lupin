@@ -27,8 +27,8 @@ passed, what needs attention and what was never measured.
 
 - **One result model for every producer.** Retries are recorded as `flaky`, not as passes.
 - **Quality gates** that answer `unknown` or `not_configured` instead of quietly passing.
-- **Quarantine** for flaky tests, with a required reason and an audit trail — set aside, never hidden. A quarantined failure excuses itself at the gate and in CI (`automate test`), and an optional per-project policy quarantines on retry-pass evidence and releases after a clean streak.
-- **Live Playwright reporter and balanced CI shards.** `@automate/playwright-reporter` streams a run with failure traces; `automate shard` splits files by measured duration. An Allure results importer is on the upload door. See [how AutoMate compares](site/guide/compare.md), including what it does not do.
+- **Quarantine** for flaky tests, with a required reason and an audit trail — set aside, never hidden. A quarantined failure excuses itself at the gate and in CI (`lupin test`), and an optional per-project policy quarantines on retry-pass evidence and releases after a clean streak.
+- **Live Playwright reporter and balanced CI shards.** `@lupin/playwright-reporter` streams a run with failure traces; `lupin shard` splits files by measured duration. An Allure results importer is on the upload door. See [how AutoMate compares](site/guide/compare.md), including what it does not do.
 - **Live run updates** over server-sent events, and a runner that executes declared commands outside the API process.
 - **A "Now" page** that answers "what needs me?" in five items or fewer, with focus mode, compact density, reduced motion and keyboard shortcuts (`?` lists them).
 - **Scheduled reports**, daily, weekly or custom, to Slack, Microsoft Teams, Telegram, WhatsApp, Signal or the built-in inbox — see [scheduled reports](site/guide/notifications.md).
@@ -69,10 +69,10 @@ NODE_ENV=development \
 AUTOMATE_API_KEY=local-installation-key-32-characters \
 COOKIE_SECRET=local-cookie-secret-32-characters-long \
 REPORTER_SECRET=local-reporter-secret-32-characters \
-pnpm --filter @automate/api dev
+pnpm --filter @lupin/api dev
 
 # Terminal 2: the console
-pnpm --filter @automate/unified-web dev
+pnpm --filter @lupin/unified-web dev
 ```
 
 Open `http://localhost:5173`. Sign in with `local-installation-key-32-characters` if asked.

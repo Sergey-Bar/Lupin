@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 import { calculateKpis } from './kpi.js';
 import { evaluateQualityGate } from './quality-gates.js';
 

@@ -7,8 +7,8 @@ COPY . .
 # (`deploy --prod`; see api.Dockerfile). `@playwright/test` is a production dependency of
 # the runner, so the deployed tree carries the CLI that installs the browsers below.
 RUN pnpm install --frozen-lockfile \
-  && pnpm --filter "@automate/runner..." build \
-  && pnpm --filter "@automate/runner" --prod deploy --legacy /out
+  && pnpm --filter "@lupin/runner..." build \
+  && pnpm --filter "@lupin/runner" --prod deploy --legacy /out
 
 
 FROM node:24.22.1-bookworm-slim AS k6

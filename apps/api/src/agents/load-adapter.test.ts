@@ -5,8 +5,8 @@ import {
   LOAD_DEFAULT_VUS,
   LOAD_MAX_DURATION_SECONDS,
   LOAD_MAX_VUS,
-} from '@automate/shared-contracts';
-import { createToolRegistry, toAgentProblem, type ToolRegistry } from '@automate/tool-sdk';
+} from '@lupin/shared-contracts';
+import { createToolRegistry, toAgentProblem, type ToolRegistry } from '@lupin/tool-sdk';
 import { InMemoryExecutionStore } from '../execution/in-memory-execution-store.js';
 import type { ExecutionStore } from '../execution/types.js';
 import { DomainError } from '../errors/domain-error.js';

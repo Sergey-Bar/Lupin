@@ -5,7 +5,7 @@ import {
   type ArtifactDescriptor,
   type JobCompletion,
   type RunEventEnvelope,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 
 const IdSchema = z.string().min(1);

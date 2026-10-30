@@ -1,8 +1,5 @@
 import { createHash } from 'node:crypto';
-import {
-  CanonicalReporterEventSchema,
-  type CanonicalReporterEvent,
-} from '@automate/shared-contracts';
+import { CanonicalReporterEventSchema, type CanonicalReporterEvent } from '@lupin/shared-contracts';
 
 const legacyTypes = new Set([
   'run:start',

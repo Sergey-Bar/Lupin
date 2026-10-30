@@ -95,7 +95,7 @@ export const HISTORICAL_DOCS = new Set(['docs/migration/unified-repository-migra
  *
  *   - `docs/architecture/unified-platform.md` — the design record of the unification,
  *     written against the pre-merge layout. It still describes `db:push` and
- *     `@automate/contracts`; the current boundaries are the capability register's.
+ *     `@lupin/contracts`; the current boundaries are the capability register's.
  *
  * **One used to be here that no longer is.** A draft PRD for the product's *former*
  * name was exempted as superseded. It has been **deleted**, on three grounds that the

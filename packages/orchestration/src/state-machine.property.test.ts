@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import type { JobState, RunOutcome, RunPhase } from '@automate/shared-contracts';
+import type { JobState, RunOutcome, RunPhase } from '@lupin/shared-contracts';
 import {
   canTransition,
   decideTransition,

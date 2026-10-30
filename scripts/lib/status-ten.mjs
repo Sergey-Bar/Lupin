@@ -1013,7 +1013,7 @@ function pointTwelve(ctx) {
         ),
     unchecked(
       'the site is live and passes its ten checks',
-      '`pnpm --filter @automate/docs build` then `SITE_DOCTOR_BUILT=1 pnpm site:doctor` decides it, and ' +
+      '`pnpm --filter @lupin/docs build` then `SITE_DOCTOR_BUILT=1 pnpm site:doctor` decides it, and ' +
         'https://sergey-bar.github.io/AutoMate/ is the address it would decide. Nothing here reaches ' +
         'the network — a check that needs one fails on a firewall and gets switched off — and three ' +
         'of the ten report `GAP` without that build rather than reporting clean.',
@@ -1083,7 +1083,7 @@ export const POINTS = /** @type {readonly Point[]} */ ([
   {
     number: 8,
     title: 'The evidence and audit chain is complete, and the vault binds to row identity',
-    decidedBy: 'pnpm --filter @automate/api test src/infrastructure/vault-crypto.test.ts',
+    decidedBy: 'pnpm --filter @lupin/api test src/infrastructure/vault-crypto.test.ts',
     deferral: '',
     probe: pointEight,
   },

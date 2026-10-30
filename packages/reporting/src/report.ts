@@ -1,4 +1,4 @@
-import type { DigestItem, ScorecardStatus } from '@automate/shared-contracts';
+import type { DigestItem, ScorecardStatus } from '@lupin/shared-contracts';
 
 /**
  * The scheduled report: one model, read in five seconds, rendered for five chat platforms.

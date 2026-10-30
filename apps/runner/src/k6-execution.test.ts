@@ -10,7 +10,7 @@ import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import type { ChildProcessWithoutNullStreams, SpawnOptions } from 'node:child_process';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { LOAD_MAX_DURATION_SECONDS, LOAD_MAX_VUS } from '@automate/shared-contracts';
+import { LOAD_MAX_DURATION_SECONDS, LOAD_MAX_VUS } from '@lupin/shared-contracts';
 import {
   RunnerConfigurationError,
   RunnerInfrastructureError,

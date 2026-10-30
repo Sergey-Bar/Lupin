@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 import * as Sentry from '@sentry/react';
-import { Alert, AlertDescription, AlertTitle, Button, Container, Stack } from '@automate/ui';
+import { Alert, AlertDescription, AlertTitle, Button, Container, Stack } from '@lupin/ui';
 import { router } from './router.js';
 import { buildBrowserSentryOptions } from './observability/sentry.js';
 import './index.css';

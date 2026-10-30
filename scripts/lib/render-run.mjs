@@ -60,7 +60,7 @@ export function runRenderBudget(extraEnv = {}) {
   const built = step(
     'render: web build',
     'pnpm',
-    ['--filter', '@automate/unified-web...', 'build'],
+    ['--filter', '@lupin/unified-web...', 'build'],
     env,
   );
   if (built !== 0) return built;

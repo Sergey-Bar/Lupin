@@ -8,7 +8,7 @@ import {
   StatusDot,
   cn,
   type DotStatus,
-} from '@automate/ui';
+} from '@lupin/ui';
 import {
   WRONG_SHOWN,
   type Finding,
@@ -26,7 +26,7 @@ import type { ReleaseReadinessCard } from '../lib/qa.js';
  * the verdict survives a monochrome display, a colour-vision deficiency and a screen
  * reader. On a monochrome plane it is also the largest colour on the screen, which is the
  * point: it is the one thing the reader came to learn. The verdict itself is computed by
- * `evaluateReadiness` in `@automate/reporting`; this file only draws it.
+ * `evaluateReadiness` in `@lupin/reporting`; this file only draws it.
  */
 const VERDICT = {
   go: { label: 'Go', Icon: CircleCheck, tone: 'text-success' },

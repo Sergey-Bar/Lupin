@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@automate/ui';
+import { Button } from '@lupin/ui';
 import type { ApiClient } from '../lib/api.js';
 import { formatDuration, shortDate } from '../lib/insights.js';
 import type { QaInsights } from '../lib/qa.js';
@@ -12,7 +12,7 @@ import { useToast } from './Toasts.js';
  * really are, and which flaky tests cost enough to quarantine.
  *
  * Both are computed by the server (`clusterFailures` and `suggestQuarantine` in
- * `@automate/reporting`) and both are optional on the wire, so an older API's answer says
+ * `@lupin/reporting`) and both are optional on the wire, so an older API's answer says
  * "not reported" rather than drawing an empty list that reads as "nothing failed".
  */
 type Clusters = NonNullable<QaInsights['failureClusters']>;

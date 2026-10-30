@@ -70,14 +70,14 @@ test('script references are separated from pnpm builtins and filtered invocation
   assert.deepEqual(referencedScripts('pnpm audit --audit-level=high'), []);
   assert.deepEqual(referencedScripts('pnpm exec playwright install --with-deps chromium'), []);
   // A filtered invocation names a package script, not a root one.
-  assert.deepEqual(referencedScripts('pnpm --filter @automate/worker test'), []);
-  assert.deepEqual(referencedScripts('pnpm --filter @automate/api run dev'), []);
+  assert.deepEqual(referencedScripts('pnpm --filter @lupin/worker test'), []);
+  assert.deepEqual(referencedScripts('pnpm --filter @lupin/api run dev'), []);
   // `exec` after a filter is pnpm's subcommand, and everything after it belongs to
   // the exec'd program. Reading to the next flag instead made the audit claim the
   // workflow ran a root script called `127.0.0.1` — a false positive, which is the
   // direction that trains people to ignore the gate.
   assert.deepEqual(
-    referencedScripts('pnpm --filter @automate/unified-web exec vite --host 127.0.0.1 --port 5173'),
+    referencedScripts('pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1 --port 5173'),
     [],
   );
   // A known limitation, pinned so it is a decision rather than an accident. A token
@@ -87,7 +87,7 @@ test('script references are separated from pnpm builtins and filtered invocation
   // a missed reference is caught by the ratchet and complexity gates, which run
   // unwrapped. Widening it means distinguishing a package script from a root one,
   // which needs the workspace manifest rather than the argv.
-  assert.deepEqual(referencedScripts('pnpm --filter @automate/worker lint'), []);
+  assert.deepEqual(referencedScripts('pnpm --filter @lupin/worker lint'), []);
   // A chained command contributes its own reference.
   assert.deepEqual(referencedScripts('pnpm verify && pnpm security:verify'), [
     'verify',

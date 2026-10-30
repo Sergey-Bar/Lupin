@@ -1,4 +1,4 @@
-import type { Scorecard, ScorecardMetric } from '@automate/shared-contracts';
+import type { Scorecard, ScorecardMetric } from '@lupin/shared-contracts';
 
 /**
  * The small pieces the supply-chain and test-effectiveness scorecards share, so the rules

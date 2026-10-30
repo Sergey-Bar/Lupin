@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DrizzleRealtimeFeed } from '../infrastructure/drizzle-realtime-feed.js';
 import { DurableRealtimeBus } from './durable-realtime-bus.js';
 

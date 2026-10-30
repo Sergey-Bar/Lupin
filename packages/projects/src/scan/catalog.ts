@@ -1,4 +1,4 @@
-import type { QaCapability, ToolPricing } from '@automate/shared-contracts';
+import type { QaCapability, ToolPricing } from '@lupin/shared-contracts';
 import { MORE_TOOLS } from './catalog-more.js';
 
 /**

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ScoreCell } from '@automate/shared-contracts';
+import type { ScoreCell } from '@lupin/shared-contracts';
 import {
   buildRepoMap,
   compactMapSearch,

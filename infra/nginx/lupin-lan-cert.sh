@@ -2,7 +2,7 @@
 # Issues the LAN certificate: a local certificate authority, once, and a server certificate
 # signed by it for every name and address this machine answers to.
 #
-#   automate-lan-cert <name-or-ip>[,<name-or-ip>...]
+#   lupin-lan-cert <name-or-ip>[,<name-or-ip>...]
 #
 # Run by `start lan-cert` inside the edge image, as root, with the host's certificate
 # directory mounted at $CERT_DIR. Each device trusts ca.crt once; the server certificate can
@@ -12,7 +12,7 @@ set -eu
 
 CERT_DIR="${AUTOMATE_CERT_DIR:-/etc/automate/certs}"
 NAMES="${1:-}"
-[ -n "$NAMES" ] || { echo "usage: automate-lan-cert <name-or-ip>[,...]" >&2; exit 2; }
+[ -n "$NAMES" ] || { echo "usage: lupin-lan-cert <name-or-ip>[,...]" >&2; exit 2; }
 
 mkdir -p "$CERT_DIR"
 cd "$CERT_DIR"

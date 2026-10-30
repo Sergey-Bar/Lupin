@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, cn } from '@automate/ui';
+import { Button, cn } from '@lupin/ui';
 
 /**
  * One big number, one sentence, one action.

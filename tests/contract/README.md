@@ -1,4 +1,4 @@
-# @automate/contract-tests
+# @lupin/contract-tests
 
 The contract suite: the API, web client, reporter and runner agree on every payload, and committed generated documents match their sources.
 

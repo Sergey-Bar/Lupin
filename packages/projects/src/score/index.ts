@@ -1,4 +1,4 @@
-import { QaScoreSchema, type QaScore } from '@automate/shared-contracts';
+import { QaScoreSchema, type QaScore } from '@lupin/shared-contracts';
 import { PYRAMID_ROW, SCORE_CATEGORIES, SCORE_SURFACES } from '../vocabulary.js';
 import type { PyramidLayer, ScoreCategory, ScoreSurface } from '../vocabulary.js';
 import { buildCell, depth, stability, type CellComponents } from './cell.js';
@@ -40,14 +40,14 @@ import {
  * The score, as the wire contract.
  *
  * **Re-exported rather than declared.** This file used to export its own `QaScore`,
- * which is a second authority for a shape `@automate/shared-contracts` already owns —
+ * which is a second authority for a shape `@lupin/shared-contracts` already owns —
  * and the two drifted: the contract said `readonly` arrays and a `string` `at`, this one said
  * mutable and an ISO string, so every consumer that passed a score straight through had to
  * cast. `score()` already returns `QaScoreSchema.parse(...)`, so the returned type and the
  * validated type are now the same declaration, and a drift between them is a compile error
  * rather than a runtime surprise.
  */
-export type { QaScore } from '@automate/shared-contracts';
+export type { QaScore } from '@lupin/shared-contracts';
 
 /** One missing thing, and what would close it. */
 export interface Gap {

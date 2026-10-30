@@ -9,7 +9,7 @@ afterEach(() => {
 
 describe('the bin', () => {
   it('runs the command line it was started with and sets the exit code', async () => {
-    process.argv = ['node', 'automate', '--help'];
+    process.argv = ['node', 'lupin', '--help'];
     const written: string[] = [];
     vi.spyOn(process.stdout, 'write').mockImplementation((chunk: string | Uint8Array) => {
       written.push(String(chunk));
@@ -17,7 +17,7 @@ describe('the bin', () => {
     });
     vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     await import('./index.js');
-    expect(written.join('')).toMatch(/^automate — send CI evidence/u);
+    expect(written.join('')).toMatch(/^lupin — send CI evidence/u);
     expect(process.exitCode).toBe(0);
   });
 });

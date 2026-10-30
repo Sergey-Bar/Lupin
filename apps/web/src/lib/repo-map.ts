@@ -5,7 +5,7 @@ import {
   type RepoScan,
   type ScoreCategory,
   type ScoreCell,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * The repository as an explorable map: two views of one set of facts.

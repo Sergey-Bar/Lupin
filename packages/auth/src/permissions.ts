@@ -15,7 +15,7 @@ import {
   isAdminPermission,
   PERMISSIONS,
   type Permission as ContractPermission,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 export const Permission = {
   RUNS_READ: 'runs:read',

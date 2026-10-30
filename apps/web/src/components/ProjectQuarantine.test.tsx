@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ProjectQuarantine as View } from '@automate/shared-contracts';
+import type { ProjectQuarantine as View } from '@lupin/shared-contracts';
 import { makeHealthDouble } from '../test-utils.js';
 import { ProjectQuarantine, seconds } from './ProjectQuarantine.js';
 

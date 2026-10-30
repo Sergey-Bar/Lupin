@@ -3,11 +3,11 @@
  *
  * The latest run of the project on the commit (`RunRepository.latestRunForCommit`), its
  * tests, and the workspace quarantine, read through `excusesRun` — the function the gate and
- * `automate test` use — so the comment, the gate and the CI job say the same thing.
+ * `lupin test` use — so the comment, the gate and the CI job say the same thing.
  */
 
-import { storedTestIdentity } from '@automate/shared-contracts';
-import { failureSignature } from '@automate/reporting';
+import { storedTestIdentity } from '@lupin/shared-contracts';
+import { failureSignature } from '@lupin/reporting';
 import {
   excusesRun,
   quarantineMatches,

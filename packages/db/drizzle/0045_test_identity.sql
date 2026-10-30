@@ -4,7 +4,7 @@
 -- quarantine were keyed on `file › title` computed at read time, which made one test run in
 -- two Playwright projects a single test that flipped on every run.
 --
--- `automate_test_identity` is `testIdentity` in `@automate/shared-contracts` for a row with no
+-- `automate_test_identity` is `testIdentity` in `@lupin/shared-contracts` for a row with no
 -- describe path and no project: each segment escapes `\`, `›`, `[` and `{`, and the segments
 -- are joined with ` › `. `tests/integration/src/test-identity.test.ts` holds the two to the
 -- same output over titles carrying every escaped character.

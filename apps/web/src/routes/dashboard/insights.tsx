@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Button, Flame, GitBranch, Sparkline, Timer, cn } from '@automate/ui';
+import { Button, Flame, GitBranch, Sparkline, Timer, cn } from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
 import {
   Kpi,

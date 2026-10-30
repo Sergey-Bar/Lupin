@@ -2,7 +2,7 @@
  * `POST /api/v1/projects/:id/tests/reports` — a CI job's test report, recorded as a run of the
  * project, and the quarantine verdict on it.
  *
- * `automate test -- <command>` posts here after the command exits non-zero, and keeps the
+ * `lupin test -- <command>` posts here after the command exits non-zero, and keeps the
  * command's exit code unless the answer is `quarantine.excused: true`. So this route is the
  * one place a CI job learns whether a failure is excused, and it answers from the same two
  * functions the gate reads: `parseUploadDocument` reads the report as
@@ -21,7 +21,7 @@ import {
   TestReportQuerySchema,
   storedTestIdentity,
   type TestReportVerdict,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { domainErrorResponse } from '../errors/boundary.js';
 import { excusesRun, type QuarantineMatch } from '../execution/quarantine-excusal.js';
@@ -123,7 +123,7 @@ export function createTestReportRoutes(options: TestReportRouteOptions): Hono {
             format: FORMAT_FIELD[query.data.format],
             runId: runIdFor(projectId, digest),
             projectId,
-            sourceUri: 'automate-cli/test',
+            sourceUri: 'lupin-cli/test',
             ...(query.data.branch === undefined ? {} : { branch: query.data.branch }),
             ...(query.data.commit === undefined ? {} : { commitSha: query.data.commit }),
             ...(query.data.startedAt === undefined ? {} : { startedAt: query.data.startedAt }),

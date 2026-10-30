@@ -6,8 +6,8 @@ COPY . .
 # The migration runner and the SQL it applies: `deploy --prod` keeps `packages/db/drizzle`
 # beside `dist/`, which is where `migrationsFolderFor` looks (`../drizzle` from `dist/`).
 RUN pnpm install --frozen-lockfile \
-  && pnpm --filter "@automate/db..." build \
-  && pnpm --filter "@automate/db" --prod deploy --legacy /out
+  && pnpm --filter "@lupin/db..." build \
+  && pnpm --filter "@lupin/db" --prod deploy --legacy /out
 
 
 # One migration image for both stacks. `db-migrate.Dockerfile` was this file with

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { Hono } from 'hono';
 import { DrizzleExecutionStore } from '../execution/drizzle-execution-store.js';
 import { InMemoryExecutionStore } from '../execution/in-memory-execution-store.js';
@@ -1357,7 +1357,7 @@ describe('the artifact hook', () => {
       method: 'POST',
       headers: { ...JSON_HEADERS, authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        name: 'automate-health-gitleaks.sarif',
+        name: 'lupin-health-gitleaks.sarif',
         contentBase64: Buffer.from('{"runs":[]}').toString('base64'),
         leaseId,
         fencingToken,
@@ -1367,7 +1367,7 @@ describe('the artifact hook', () => {
     // seed uploads one artifact of its own; the hook saw that one and then this one.
     expect(seen.at(-1)).toEqual({
       runId,
-      name: 'automate-health-gitleaks.sarif',
+      name: 'lupin-health-gitleaks.sarif',
       text: '{"runs":[]}',
     });
     expect(seen.every((entry) => entry.runId === runId)).toBe(true);

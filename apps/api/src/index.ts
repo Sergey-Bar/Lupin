@@ -19,7 +19,7 @@ import { createReporterRoutes } from './routes/reporter.js';
 import { createAuthRoutes, defaultClientKey } from './routes/auth.js';
 import { createOidcRoutes } from './routes/oidc.js';
 import { callerForUser } from './services/user-service.js';
-import { isLoopbackBind } from '@automate/config';
+import { isLoopbackBind } from '@lupin/config';
 import {
   browserCredentialsCount,
   callerOf,
@@ -37,7 +37,7 @@ import { applyRouteAccess } from './http/route-access.js';
 import { secureCookiePolicy, type SecureCookies } from './http/secure-cookies.js';
 import { createClientAllowlist } from './middleware/client-allowlist.js';
 import { createOriginCheck } from './middleware/origin-check.js';
-import { hashCredential } from '@automate/auth';
+import { hashCredential } from '@lupin/auth';
 import { createReporterResultsRoute } from './routes/reporter-results.js';
 import { createReportingRoutes } from './routes/reporting.js';
 import { createRunnerRoutes } from './routes/runner.js';
@@ -59,7 +59,7 @@ import { createAnalyticsTrendRoutes, readSince } from './execution/trend.js';
 import { createInsightsRoutes } from './execution/insights.js';
 import { createAgentRoutes } from './routes/agents.js';
 import { createAgentCatalog } from './routes/agent-registry.js';
-import { createToolRegistry } from '@automate/tool-sdk';
+import { createToolRegistry } from '@lupin/tool-sdk';
 import { registerApiAgent } from './agents/api-adapter.js';
 import { registerBrowserAgent } from './agents/browser-adapter.js';
 import { registerLoadAgent } from './agents/load-adapter.js';
@@ -78,7 +78,7 @@ import {
   DrizzleInstallationKeyStore,
   DrizzleSessionStore,
   workspaces,
-} from '@automate/db';
+} from '@lupin/db';
 import { ingestScanArtifact } from './services/repo-health-service.js';
 import { poolCapabilities } from './services/runner-pool.js';
 import { readGitToken } from './services/git-credential-service.js';
@@ -86,17 +86,17 @@ import { rotateVaultSecrets } from './services/vault-secrets.js';
 import { audit, authenticateToken } from './services/access-service.js';
 import { alertsFor, deliverAlerts } from './services/health-integrations.js';
 import type { ReportEvent } from './services/repo-health-service.js';
-import { githubAdapter } from '@automate/connectors-github';
-import { jiraAdapter } from '@automate/connectors-jira';
-import { slackAdapter } from '@automate/connectors-slack';
-import { signalAdapter } from '@automate/connectors-signal';
-import { teamsAdapter } from '@automate/connectors-teams';
-import { telegramAdapter } from '@automate/connectors-telegram';
-import { whatsappAdapter } from '@automate/connectors-whatsapp';
+import { githubAdapter } from '@lupin/connectors-github';
+import { jiraAdapter } from '@lupin/connectors-jira';
+import { slackAdapter } from '@lupin/connectors-slack';
+import { signalAdapter } from '@lupin/connectors-signal';
+import { teamsAdapter } from '@lupin/connectors-teams';
+import { telegramAdapter } from '@lupin/connectors-telegram';
+import { whatsappAdapter } from '@lupin/connectors-whatsapp';
 import { createReportDispatcher } from './services/report-dispatcher.js';
 import { createDeliverySyncer } from './services/delivery-syncer.js';
 import { getCookie } from 'hono/cookie';
-import { DEFAULT_IGNORED, fileSystemView } from '@automate/projects';
+import { DEFAULT_IGNORED, fileSystemView } from '@lupin/projects';
 import { createRepoScanner } from './services/repo-scan-service.js';
 import { createProjectsRoutes } from './routes/projects.js';
 import {
@@ -112,7 +112,7 @@ import type { RealtimeBus } from './realtime/realtime-bus.js';
 import { DurableRealtimeBus } from './realtime/durable-realtime-bus.js';
 import { DrizzleRealtimeFeed } from './infrastructure/drizzle-realtime-feed.js';
 import { startOutboxRetentionSweep } from './infrastructure/outbox-retention.js';
-import type { AiGateway } from '@automate/automation';
+import type { AiGateway } from '@lupin/automation';
 import {
   pruneExpiredSpansEverywhere,
   SELF_AGENT_NAME,
@@ -1022,7 +1022,7 @@ function buildWorkspace(workspaceId: string) {
             gateway: gateways.testProposals,
             provider: chatProvider,
           },
-          // The runs `automate test` records are the history a shard plan reads.
+          // The runs `lupin test` records are the history a shard plan reads.
           shardHistory: runRepository,
           // The same run repository, canonical store and bus the reporter upload door writes,
           // and the same quarantine every gate evaluation reads.
@@ -1044,7 +1044,7 @@ function buildWorkspace(workspaceId: string) {
             ...healthHooks,
             detailsUrl: dashboardUrl,
             // The commit's test run, read with the same quarantine and the same rule the gate and
-            // `automate test` use.
+            // `lupin test` use.
             commitTests: (projectId, commit) =>
               commitTests(
                 {
@@ -1483,7 +1483,7 @@ if (runtimeConfig.nodeEnv !== 'test') {
     lifecycle.add('report dispatcher', () => reportDispatcher.stop());
   }
   if (deliverySyncer) {
-    // Parsed and bounded (a whole number, 10 s or more) by `@automate/config`, so NaN cannot
+    // Parsed and bounded (a whole number, 10 s or more) by `@lupin/config`, so NaN cannot
     // reach the timer; `getConfig` always sets it, the `??` only satisfies the partial type.
     deliverySyncer.start(runtimeConfig.deliverySyncIntervalMs ?? 60_000);
     lifecycle.add('delivery syncer', () => deliverySyncer.stop());

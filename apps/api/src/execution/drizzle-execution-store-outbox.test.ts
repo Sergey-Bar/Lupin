@@ -2,8 +2,8 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { asc, eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { outboxEvents } from '@automate/db';
+import * as schema from '@lupin/db';
+import { outboxEvents } from '@lupin/db';
 import { DrizzleExecutionStore } from './drizzle-execution-store.js';
 
 const WORKSPACE = 'workspace-outbox';

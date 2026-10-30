@@ -36,7 +36,7 @@ reporter or runner and the API.
 - **Authorization.** `WORKSPACE_ID` is the only tenancy boundary in the system. Every
   workspace-scoped read or write needs a cross-workspace isolation test, and a change
   that adds one without a test is the reportable defect.
-- **Secrets.** Six installation secrets are read by `@automate/config` and validated at
+- **Secrets.** Six installation secrets are read by `@lupin/config` and validated at
   startup: `COOKIE_SECRET`, `SESSION_SECRET`, `VAULT_SECRET`, `AUTOMATE_API_KEY`,
   `REPORTER_SECRET` and `RUNNER_REGISTRATION_SECRET`. A placeholder is **refused** when
   `NODE_ENV=production` — `isSecretPlaceholder` matches documented development values

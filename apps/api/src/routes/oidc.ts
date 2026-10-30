@@ -1,8 +1,8 @@
 import { Hono, type Context } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import * as client from 'openid-client';
-import type { OidcConfig } from '@automate/config';
-import { hashCredential, verifyCredential } from '@automate/auth';
+import type { OidcConfig } from '@lupin/config';
+import { hashCredential, verifyCredential } from '@lupin/auth';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { isSecureFor, type SecureCookies } from '../http/secure-cookies.js';
 import type { AuthSessionBackend } from '../infrastructure/session-backend.js';

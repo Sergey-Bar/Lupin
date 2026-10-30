@@ -1,5 +1,5 @@
 {
-  "name": "@automate/auth",
+  "name": "@lupin/auth",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
@@ -27,6 +27,6 @@
     "vitest": "catalog:"
   },
   "dependencies": {
-    "@automate/shared-contracts": "workspace:*"
+    "@lupin/shared-contracts": "workspace:*"
   }
 }

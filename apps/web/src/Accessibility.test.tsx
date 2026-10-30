@@ -12,7 +12,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectNoBlockingAxeViolations } from './test-axe.js';
 import { RunExplorer } from './components/dashboard/RunExplorer.js';
-import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@automate/ui';
+import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@lupin/ui';
 import { RunList } from './components/RunList.js';
 import { ThemeToggle } from './components/ThemeToggle.js';
 import { NavBar } from './components/NavBar.js';

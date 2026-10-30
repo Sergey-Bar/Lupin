@@ -13,7 +13,7 @@ import {
   type RunEventSubscription,
 } from './api.js';
 import { abortError, makePhaseEvent, makeRun, TEST_TIMESTAMP } from '../test-utils.js';
-import type { CreateRunRequest } from '@automate/shared-contracts';
+import type { CreateRunRequest } from '@lupin/shared-contracts';
 
 class FakeEventSource {
   static instance: FakeEventSource | null = null;

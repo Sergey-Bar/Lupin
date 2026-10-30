@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QaInsightsSchema } from '@automate/shared-contracts';
+import { QaInsightsSchema } from '@lupin/shared-contracts';
 import { InMemoryExecutionStore } from './in-memory-execution-store.js';
 import { belongsTo, buildInsights, createInsightsRoutes } from './insights.js';
 import type { ExecutionRun, ExecutionTestResult } from './types.js';

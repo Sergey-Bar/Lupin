@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { DurableSpool, readOrCreateSpoolKey } from '@automate/runner-sdk';
+import { DurableSpool, readOrCreateSpoolKey } from '@lupin/runner-sdk';
 import { readStoredToken, writeStoredToken } from './token-store.js';
 
 describe('the runner credential kept between restarts', () => {

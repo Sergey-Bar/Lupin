@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HEALTH_DIMENSIONS, type HealthGrade } from '@automate/shared-contracts';
+import { HEALTH_DIMENSIONS, type HealthGrade } from '@lupin/shared-contracts';
 import { evaluateHealthGate } from './gate.js';
 import { CODEOWNERS_PATHS, ownerOf, parseCodeowners } from './codeowners.js';
 

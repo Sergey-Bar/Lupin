@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { and, eq } from 'drizzle-orm';
-import * as schema from '@automate/db';
-import { githubAdapter } from '@automate/connectors-github';
-import { AGENT_SIGNATURES } from '@automate/reporting';
+import * as schema from '@lupin/db';
+import { githubAdapter } from '@lupin/connectors-github';
+import { AGENT_SIGNATURES } from '@lupin/reporting';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import {
   claimBatchOf,

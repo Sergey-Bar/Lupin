@@ -24,7 +24,7 @@ fails_.
 | Colour is a token. A literal hex in a `.ts` or `.tsx` file is a build failure.                                                                                       | `apps/web/src/theme-resolution.test.ts` scans **both** `packages/ui/src` and `apps/web/src`, resolves each utility against a real Tailwind compile, and fails on any class that generates nothing     |
 | `backdrop-filter` is an error, with no allowlist. The plane is flat and monochrome: no glass, no page wash, and the accent has no hue.                               | `eslint.config.js` — `GLASS_SELECTOR`, spread into every block that sets `no-restricted-syntax`, because a standalone block silently replaced the double-assertion rule the first time it was written |
 | `animate-in`, `fade-in-*`, `zoom-in-*` and `slide-in-from-*` do not exist — no plugin is installed, and sixteen class names written against one compiled to nothing. | `PLUGIN_PROVIDED_UTILITIES` in `theme-resolution.test.ts`. Use `animate-fade-in`, `animate-fade-out`, `animate-zoom-in-95`, `animate-zoom-out-95`                                                     |
-| `lucide-react` is a dependency of `packages/ui` and **not** of `apps/web`, so an application component cannot import it                                              | pnpm's isolated `node_modules`. Import icons from `@automate/ui`; the list is `packages/ui/src/icons.ts`, and adding one is a line a reviewer reads                                                   |
+| `lucide-react` is a dependency of `packages/ui` and **not** of `apps/web`, so an application component cannot import it                                              | pnpm's isolated `node_modules`. Import icons from `@lupin/ui`; the list is `packages/ui/src/icons.ts`, and adding one is a line a reviewer reads                                                      |
 | The two font binaries are committed once, in `packages/ui/src/assets/fonts/`, each with a sha256 and an upstream beside it                                           | `packages/ui/src/tokens/fonts.test.ts`, in both directions — the recorded digest, and no binary in the directory without a row                                                                        |
 | The documentation site imports the product's `theme.css`; it does not copy it                                                                                        | `pnpm site:doctor` check 8, which runs without a build so a palette drift fails on every host rather than hiding behind a `GAP`                                                                       |
 
@@ -38,7 +38,7 @@ This is a **pnpm workspace monorepo** containing the unified Automate platform.
 | `apps/web`                  | Unified Web              | React 19, Vite, TanStack Router, Tailwind CSS 4 |
 | `apps/runner`               | Execution boundary       | Node, rootless process control                  |
 | `apps/worker`               | Lease and recovery loop  | Node, worker resilience                         |
-| `tools/automate-cli`        | `automate`, the CI CLI   | Node, no runtime dependencies                   |
+| `tools/lupin-cli`           | `automate`, the CI CLI   | Node, no runtime dependencies                   |
 | `tools/playwright-reporter` | Live Playwright reporter | Node, no runtime dependencies                   |
 | `site`                      | Documentation site       | VitePress                                       |
 
@@ -71,7 +71,7 @@ pnpm unify:preflight      # Pre-unification safety check
 check that says so):
 
 ```bash
-pnpm test:contract        # @automate/contract-tests only (also inside `pnpm test`)
+pnpm test:contract        # @lupin/contract-tests only (also inside `pnpm test`)
 pnpm test:integration     # node --test scripts/lib/*.test.mjs — the gate meta-tests. PGlite suites run in `pnpm test`
 pnpm test:runner          # runner, runner-sdk, worker only (also inside `pnpm test`)
 pnpm test:performance     # k6 thresholds. Exits non-zero as not_configured without k6
@@ -241,7 +241,7 @@ reintroduce the split.
 **`.omo/` and `.sisyphus/` are dead state and are not the planning system.** They are
 byte-identical to each other, both point at `C:\VScode\QA\.sisyphus\plans\` — a path
 from a different machine — and they name packages that no longer exist
-(`@automate/server`, `dashboard-server`, `packages/cli`). They are gitignored, so
+(`@lupin/server`, `dashboard-server`, `packages/cli`). They are gitignored, so
 nothing checks them, which is exactly why nothing noticed. **`.kilo/plans/` is the
 authority**; the other two can be deleted whenever nobody wants their session history.
 
@@ -275,20 +275,20 @@ vanished rows. See `confirmationProblems` in `scripts/lib/findings-ledger.mjs`.
 **Single package:**
 
 ```bash
-pnpm --filter @automate/api test          # API tests only
-pnpm --filter @automate/unified-web test  # Web client tests only
-pnpm --filter @automate/shared-contracts test # Contracts tests only
-pnpm --filter @automate/cli test          # The `automate` CI CLI only
-pnpm --filter @automate/playwright-reporter test # The live Playwright reporter only
-pnpm --filter @automate/api dev           # API dev only
-pnpm --filter @automate/unified-web dev   # Web dev only
+pnpm --filter @lupin/api test          # API tests only
+pnpm --filter @lupin/unified-web test  # Web client tests only
+pnpm --filter @lupin/shared-contracts test # Contracts tests only
+pnpm --filter @lupin/cli test          # The `automate` CI CLI only
+pnpm --filter @lupin/playwright-reporter test # The live Playwright reporter only
+pnpm --filter @lupin/api dev           # API dev only
+pnpm --filter @lupin/unified-web dev   # Web dev only
 ```
 
 **Single test file (Vitest):**
 
 ```bash
-pnpm --filter @automate/api exec vitest run src/routes/execution.test.ts
-pnpm --filter @automate/api exec vitest run src/routes/agents.test.ts -t "specific test name"
+pnpm --filter @lupin/api exec vitest run src/routes/execution.test.ts
+pnpm --filter @lupin/api exec vitest run src/routes/agents.test.ts -t "specific test name"
 ```
 
 **E2E tests (Playwright):**
@@ -367,7 +367,7 @@ packages/
   tool-sdk/          Agent operation declaration, dispatch, result normalisation, error classes
   ui/                Shared Tailwind 4 component library
 tools/
-  automate-cli/      `automate`, the dependency-free CI CLI (upload, gate, deploy, agent-config)
+  lupin-cli/      `automate`, the dependency-free CI CLI (upload, gate, deploy, agent-config)
   migrate-cli/       Migration utilities
 tests/performance/         k6 scenarios and the recorded thresholds
 infra/runners/             k6 / playwright / zap runner images (manifests only)
@@ -448,7 +448,7 @@ scripts/             Gate scripts, all `.mjs`, plus `scripts/lib/` node:test sui
 - **Routing**: TanStack Router with file-based routes in `src/routes/`.
 - **Validation**: Zod schemas parse API responses on the client side.
 - **UI components**: Tailwind CSS 4 + `packages/ui` library.
-- **Icons**: from `@automate/ui` (`packages/ui/src/icons.ts`). `lucide-react` is a
+- **Icons**: from `@lupin/ui` (`packages/ui/src/icons.ts`). `lucide-react` is a
   dependency of `packages/ui` only, so `apps/web` cannot import it directly.
 
 ### Testing

@@ -10,7 +10,7 @@ import {
   type HealthGrade,
   type PortfolioEntry,
   type ProjectHealth,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import type { HealthClient } from '../lib/health-client.js';
 import { ago, letterTone, meterVariant, notMeasured, whatIsGood } from '../lib/health-view.js';
 import { Portfolio, needsAttention, worstFirst } from './Portfolio.js';

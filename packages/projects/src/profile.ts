@@ -1,4 +1,4 @@
-import { HealthPolicySchema } from '@automate/shared-contracts';
+import { HealthPolicySchema } from '@lupin/shared-contracts';
 import { z } from 'zod';
 
 import { SCORE_CATEGORIES, SCORE_SURFACES } from './vocabulary.js';

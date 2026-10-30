@@ -4,7 +4,7 @@ import type {
   FindingKind,
   FindingSeverity,
   HealthDimension,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * The agent's instructions and MCP configuration, scanned as supply-chain input.

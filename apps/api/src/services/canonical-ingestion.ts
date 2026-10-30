@@ -13,12 +13,12 @@
  * fingerprinted, and a replay and a fresh post project identically.
  */
 
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 import { projectCanonicalRun, type CanonicalProjection } from './canonical-projection.js';
 import type { ReporterIngestionResult, ReporterResultStore } from './reporter-ingestion.js';
 import type { RunRepository } from '../repositories/run-repository.js';
 import type { RealtimeBus } from '../realtime/realtime-bus.js';
-import { RUN_UPDATED_EVENT_TYPE } from '@automate/shared-contracts';
+import { RUN_UPDATED_EVENT_TYPE } from '@lupin/shared-contracts';
 
 export interface CanonicalIngestOptions {
   store: ReporterResultStore;

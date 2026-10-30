@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import {
   TOKEN_ROLES,

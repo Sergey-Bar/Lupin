@@ -5,13 +5,13 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { Hono } from 'hono';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import type { Profile } from '@automate/config';
+import * as schema from '@lupin/db';
+import type { Profile } from '@lupin/config';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { recordClientAddress, runWithRequest } from '../observability/request-context.js';
 import type { CallerResolver } from '../http/roles.js';
 import { createProjectsRoutes } from '../routes/projects.js';
-import { literalView } from '@automate/projects';
+import { literalView } from '@lupin/projects';
 import {
   audit,
   authenticateToken,

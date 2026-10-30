@@ -5,8 +5,14 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { bespokeJourneyPages, pageJourneys } from '../../site/.vitepress/theme/page-journeys.ts';
 
-const site = fileURLToPath(new URL('../../site/', import.meta.url));
+const site = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'site') + path.sep;
 
+/**
+ * Every markdown page under a directory, relative to the site root.
+ *
+ * @param {string} directory
+ * @returns {string[]}
+ */
 function markdownFiles(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     if (entry.name.startsWith('.') || ['node_modules', 'dist'].includes(entry.name)) return [];

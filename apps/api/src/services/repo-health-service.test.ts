@@ -5,7 +5,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DomainError } from '../errors/domain-error.js';
 import {
   branchFor,
@@ -516,7 +516,7 @@ describe('scans this install runs', () => {
         projectId,
         scanner: 'gitleaks',
         format: 'sarif',
-        output: 'automate-health-gitleaks.sarif',
+        output: 'lupin-health-gitleaks.sarif',
         branch: 'main',
         sourceRoot: null,
       },
@@ -528,14 +528,14 @@ describe('scans this install runs', () => {
       await ingestScanArtifact(
         options,
         { command: {} },
-        'automate-health-gitleaks.sarif',
+        'lupin-health-gitleaks.sarif',
         gitleaksClean,
       ),
     ).toBeNull();
     const result = await ingestScanArtifact(
       options,
       configuration,
-      'automate-health-gitleaks.sarif',
+      'lupin-health-gitleaks.sarif',
       gitleaksClean,
     );
     expect(result?.toolKey).toBe('sarif:gitleaks');

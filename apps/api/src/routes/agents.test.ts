@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { AgentDomainSchema, AgentRequestSchema } from '@automate/shared-contracts';
+import { AgentDomainSchema, AgentRequestSchema } from '@lupin/shared-contracts';
 import { createAgentRoutes } from './agents.js';
 
 /** The two sets the route used to hand-write, taken from the schemas that define them. */

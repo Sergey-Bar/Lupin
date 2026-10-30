@@ -5,13 +5,13 @@ is a root script or a documented tool; nothing below is a step someone has to re
 
 ## What runs
 
-| Process | Started by                                | Listens on    | Needs                         |
-| ------- | ----------------------------------------- | ------------- | ----------------------------- |
-| API     | `pnpm dev:all`                            | `:3000`       | PostgreSQL, the secrets below |
-| Web     | `pnpm dev:all`                            | `:5173`       | the API for `/api`            |
-| Worker  | `pnpm dev:all`                            | `:3001`       | PostgreSQL                    |
-| Runner  | `pnpm dev:all`                            | `:3002`       | the API, a Chromium           |
-| Local   | `node local/bin/automate-local.mjs serve` | a random port | nothing; see `docs/local/`    |
+| Process | Started by                             | Listens on    | Needs                         |
+| ------- | -------------------------------------- | ------------- | ----------------------------- |
+| API     | `pnpm dev:all`                         | `:3000`       | PostgreSQL, the secrets below |
+| Web     | `pnpm dev:all`                         | `:5173`       | the API for `/api`            |
+| Worker  | `pnpm dev:all`                         | `:3001`       | PostgreSQL                    |
+| Runner  | `pnpm dev:all`                         | `:3002`       | the API, a Chromium           |
+| Local   | `node local/bin/lupin-local.mjs serve` | a random port | nothing; see `docs/local/`    |
 
 The worker and runner health ports bind to loopback by default in `.env.example`. The runner
 waits up to two minutes for the API, so the order the four start in does not matter.

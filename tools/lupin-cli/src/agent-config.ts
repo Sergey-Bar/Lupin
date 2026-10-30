@@ -6,7 +6,7 @@ import path from 'node:path';
  * `POST /health/agent-config`.
  *
  * **One list, held twice on purpose, and tested to agree.** The CLI ships with no dependency,
- * so it cannot import `AGENT_CONFIG_PATHS` from `@automate/projects`; `units.test.ts`
+ * so it cannot import `AGENT_CONFIG_PATHS` from `@lupin/projects`; `units.test.ts`
  * fails if the two lists, or the two size limits, ever differ. The server applies its own
  * list again and reports what it ignored, so a disagreement could only send a file the
  * server then drops — never scan one it would not.

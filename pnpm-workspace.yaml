@@ -146,7 +146,7 @@ overrides:
   # Since 2026-10-21 the catalog is on vite 8, so this override is now also what holds
   # VitePress 1 on the 6.x line its `^5.4.14` range was already being stretched to. A
   # VitePress 1 build on vite 8 is not a combination anybody has tested; `pnpm build`
-  # runs `@automate/docs:build` against the 6.x copy, and the lockfile resolves two vites.
+  # runs `@lupin/docs:build` against the 6.x copy, and the lockfile resolves two vites.
   'vitepress>vite': ^6.4.4
   # Added by `pnpm audit --fix` on 2026-10-20, one entry per advisory it reported. Drop each when
   # its parent takes the fix.

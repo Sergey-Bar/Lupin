@@ -123,7 +123,7 @@ export AUTOMATE_URL='https://automate.example.com'
 export AUTOMATE_TOKEN='amt_...'                       # an uploader token from the Access page
 export AUTOMATE_CF_ACCESS_CLIENT_ID='...access'
 export AUTOMATE_CF_ACCESS_CLIENT_SECRET='...'
-automate upload --format sarif --file semgrep.sarif
+lupin upload --format sarif --file semgrep.sarif
 ```
 
 The service token gets the request through Cloudflare; the access token still decides what

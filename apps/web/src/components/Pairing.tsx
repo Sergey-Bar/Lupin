@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Input, Select } from '@automate/ui';
+import { Button, Input, Select } from '@lupin/ui';
 import type { HealthClient, PairingCode } from '../lib/health-client.js';
 import { CopyButton, PageFrame, Panel, Quiet } from './kit.js';
 import { QrCode } from './QrCode.js';

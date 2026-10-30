@@ -26,13 +26,13 @@
  */
 
 import { createHash } from 'node:crypto';
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 import {
   canonicalRunResult,
   canonicalTestStatusFrom,
   flakinessFrom,
   type CanonicalAttemptInput,
-} from '@automate/reporter';
+} from '@lupin/reporter';
 import type { RunRepository, TestRecord, TestStatus } from '../repositories/run-repository.js';
 
 /** The adapter version recorded on results this module produces. */
@@ -41,7 +41,7 @@ const ADAPTER_VERSION = '2';
 /**
  * `tests.status` → the producer's own name for it.
  *
- * The ladder in `@automate/reporter` maps producer vocabulary to canonical status, and the
+ * The ladder in `@lupin/reporter` maps producer vocabulary to canonical status, and the
  * stream has already been through it once — `TestEndPayloadSchema` accepts `passed`,
  * `failed`, `flaky`, `skipped` and `timedOut`, and `toStoredTestStatus` collapses the two
  * timeout spellings on the way into the column. So the reverse mapping is a spelling

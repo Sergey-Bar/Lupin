@@ -19,8 +19,8 @@
  * exactly the evidence that quarantined it, so it resets the streak.
  */
 
-import { storedTestIdentity, type QuarantinePolicy } from '@automate/shared-contracts';
-import { flakeCost, suggestQuarantine } from '@automate/reporting';
+import { storedTestIdentity, type QuarantinePolicy } from '@lupin/shared-contracts';
+import { flakeCost, suggestQuarantine } from '@lupin/reporting';
 import { flakeObservationsOf, QUARANTINE_THRESHOLDS } from '../execution/insights.js';
 import type { ExecutionRun } from '../execution/types.js';
 import type { WriteContext } from '../modules/dashboard/audit-sink.js';

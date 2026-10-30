@@ -24,7 +24,7 @@ export interface Target {
 /**
  * Whether a host keeps the request on this machine.
  *
- * The same answer as `isLoopbackBind` (`@automate/config`), which the MCP stdio proxy uses:
+ * The same answer as `isLoopbackBind` (`@lupin/config`), which the MCP stdio proxy uses:
  * `localhost`, `127.0.0.0/8` (also as an IPv4-mapped `::ffff:127.x.x.x`), and `::1` in any
  * spelling. The CLI ships with no runtime dependency, so it cannot import that function;
  * `units.test.ts` holds the two to the same answer over a table of hosts instead.

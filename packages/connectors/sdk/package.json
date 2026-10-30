@@ -1,5 +1,5 @@
 {
-  "name": "@automate/connectors-sdk",
+  "name": "@lupin/connectors-sdk",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",

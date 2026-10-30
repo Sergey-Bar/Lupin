@@ -140,7 +140,7 @@ To check every workspace's chain against the database, run this in the install f
 project is `automate` unless you set `AUTOMATE_PROJECT`.
 
 ```sh
-docker compose -p automate --env-file .env -f compose.yml run --rm --no-deps --entrypoint node migrate dist/audit-verify.js
+docker compose -p lupin --env-file .env -f compose.yml run --rm --no-deps --entrypoint node migrate dist/audit-verify.js
 ```
 
 It exits 0 on an intact trail, 1 on a break, naming each broken row, and 2 when it cannot read

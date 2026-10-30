@@ -38,7 +38,7 @@ for (const name of NODE_IMAGES) {
     assert.ok(stages(text).length >= 2, `${file} must build in one stage and run in another`);
     assert.match(
       text,
-      /pnpm --filter "?@automate\/[a-z-]+"? --prod deploy --legacy \/out/,
+      /pnpm --filter "?@lupin\/[a-z-]+"? --prod deploy --legacy \/out/,
       `${file} must produce its runtime with \`pnpm deploy --prod\``,
     );
     const runtime = finalStage(text).body;

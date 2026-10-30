@@ -2,7 +2,7 @@ import {
   ConnectorHttpError,
   ConnectorInputError,
   ConnectorRejectionError,
-} from '@automate/connectors-sdk';
+} from '@lupin/connectors-sdk';
 
 /**
  * What a caller can do about a failure, which is the only reason to classify one.

@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { eq } from 'drizzle-orm';
-import { BootstrapKeyUnavailableError, DrizzleInstallationKeyStore } from '@automate/db';
-import { installationKeys } from '@automate/db';
+import { BootstrapKeyUnavailableError, DrizzleInstallationKeyStore } from '@lupin/db';
+import { installationKeys } from '@lupin/db';
 import { assertSchemaBuildIsFresh, createMigratedDatabase } from './migrations.js';
 
 /**
@@ -23,7 +23,7 @@ const HASH = 'a'.repeat(64);
 const PREFIX = 'am_live_';
 
 beforeEach(async () => {
-  // `@automate/db` resolves to `dist/`, and this test asserts against the migrated
+  // `@lupin/db` resolves to `dist/`, and this test asserts against the migrated
   // schema, so a stale build would compare against yesterday's tables.
   assertSchemaBuildIsFresh();
   client = await createMigratedDatabase();

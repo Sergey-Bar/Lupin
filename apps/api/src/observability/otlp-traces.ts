@@ -152,7 +152,7 @@ export function encodeTraces(
         },
         scopeSpans: [
           {
-            scope: { name: '@automate/api' },
+            scope: { name: '@lupin/api' },
             spans: spans.map((span) => ({
               traceId: span.traceId,
               spanId: span.spanId,

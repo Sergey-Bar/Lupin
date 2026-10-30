@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Build Storybook
-pnpm --filter @automate/ui storybook:build
+pnpm --filter @lupin/ui storybook:build
 
 # Initialize a temporary git repository in the build output directory
 cd packages/ui/storybook-static

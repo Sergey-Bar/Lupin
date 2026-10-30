@@ -13,8 +13,8 @@
  *   test:begin with existing (testId, runId) → upsert — idempotent.
  */
 import { z } from 'zod/v4';
-import { safeRelativePath } from '@automate/reporter';
-import { testIdentity } from '@automate/shared-contracts';
+import { safeRelativePath } from '@lupin/reporter';
+import { testIdentity } from '@lupin/shared-contracts';
 import type { NormalizedReporterEvent } from '../routes/reporter.js';
 import {
   DEFAULT_WORKSPACE_ID,
@@ -33,7 +33,7 @@ import {
  * directory escape even in persisted metadata.
  */
 function sanitizeAttachmentPath(rawPath: string): string {
-  // The rule lives in `@automate/reporter`'s `safe-path.ts`: the upload adapters reduce
+  // The rule lives in `@lupin/reporter`'s `safe-path.ts`: the upload adapters reduce
   // `specPath` with the same function on the way in, and two copies of it is how a fix
   // to one became invisible to the other.
   //

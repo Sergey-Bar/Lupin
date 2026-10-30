@@ -12,7 +12,7 @@ import {
 /**
  * The category and surface lists, restated here rather than imported.
  *
- * `@automate/projects` imports `@automate/shared-contracts`, so importing the
+ * `@lupin/projects` imports `@lupin/shared-contracts`, so importing the
  * other way would be a cycle between the contract and its first consumer — and a
  * cycle in this repository has already cost a schema test failing whenever one
  * of two copies of a list was edited without the other (`RUN_PHASES` in

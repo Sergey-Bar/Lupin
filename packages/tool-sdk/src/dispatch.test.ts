@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { ConnectorHttpError, ConnectorInputError } from '@automate/connectors-sdk';
-import { CanonicalRunResultSchema, type CanonicalRunResult } from '@automate/shared-contracts';
+import { ConnectorHttpError, ConnectorInputError } from '@lupin/connectors-sdk';
+import { CanonicalRunResultSchema, type CanonicalRunResult } from '@lupin/shared-contracts';
 import {
   AGENT_ACTIONS,
   AGENT_DOMAINS,

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod/v4';
-import { AiAttributionSchema } from '@automate/shared-contracts';
+import { AiAttributionSchema } from '@lupin/shared-contracts';
 import { invalidRequest } from '../http/invalid-request.js';
 import { requireRole, type CallerResolver } from '../http/roles.js';
 import {

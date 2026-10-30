@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { useResource, type Resource } from '../hooks/useResource.js';
 import type { AdminClient, AuditEvent, AuditVerification, Member } from '../lib/admin-client.js';
 import type { HealthClient } from '../lib/health-client.js';

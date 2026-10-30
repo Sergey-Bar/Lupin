@@ -8,7 +8,7 @@
  *   durationSeconds }` plus `configuration.targetUrl`; the runner (`apps/runner`
  *   `k6-execution.ts`) re-validates all of it against the same contract ceilings, the script
  *   root and `RUNNER_ALLOWED_TARGET_URLS`, builds the k6 argv itself, and turns the k6
- *   summary into the canonical result through `@automate/reporter`. The answer is the accepted
+ *   summary into the canonical result through `@lupin/reporter`. The answer is the accepted
  *   run (HTTP 202); status is read through the runs API.
  * - **`scan`** — *not supported.* The runner has no inventory of scripts or targets to scan;
  *   any "scan" result would be invented. Stays `501`, with the reason in the body.
@@ -25,8 +25,8 @@ import {
   LOAD_DEFAULT_VUS,
   LoadRunInputSchema,
   type LoadRunInput,
-} from '@automate/shared-contracts';
-import type { ToolRegistry } from '@automate/tool-sdk';
+} from '@lupin/shared-contracts';
+import type { ToolRegistry } from '@lupin/tool-sdk';
 import type { ExecutionStore } from '../execution/types.js';
 import type { SubmittableRun } from '../execution/run-submission.js';
 import { createExecutionBridgeAdapter, defineAcceptedRunOperation } from './execution-bridge.js';

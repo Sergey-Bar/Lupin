@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Hono, type MiddlewareHandler } from 'hono';
-import { TestReportVerdictSchema, testIdentity } from '@automate/shared-contracts';
+import { TestReportVerdictSchema, testIdentity } from '@lupin/shared-contracts';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
 import { ReporterIngestionService } from '../services/reporter-ingestion.js';
@@ -8,7 +8,7 @@ import { boundQuarantineSource, type QuarantineMatch } from '../execution/quaran
 import { createTestReportRoutes } from './test-reports.js';
 
 /**
- * `POST /api/v1/projects/:id/tests/reports` — what `automate test` asks when the test
+ * `POST /api/v1/projects/:id/tests/reports` — what `lupin test` asks when the test
  * command failed. The answer is the server's, from the report it parsed and the quarantine
  * it holds; these cases are the exit rules the CLI applies, seen from the server.
  */

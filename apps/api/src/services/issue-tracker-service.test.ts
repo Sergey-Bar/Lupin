@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { and, eq } from 'drizzle-orm';
-import * as schema from '@automate/db';
-import { githubAdapter } from '@automate/connectors-github';
-import { jiraAdapter } from '@automate/connectors-jira';
+import * as schema from '@lupin/db';
+import { githubAdapter } from '@lupin/connectors-github';
+import { jiraAdapter } from '@lupin/connectors-jira';
 import {
   IssueLinkSchema,
   IssueTrackerReadingSchema,
   type ClusterIssueBody,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import type { CallerResolver } from '../http/roles.js';

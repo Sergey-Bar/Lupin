@@ -71,6 +71,17 @@ export const RETIRED_NAMES = [
     ignoreCase: false,
     reason: 'the design-token namespace of the second name; every token is `--lupin-*` since 4.0.0',
   },
+  {
+    pattern: '@automat[e]',
+    ignoreCase: true,
+    reason: 'the package scope of the second name; every workspace package is `@lupin/*`',
+  },
+  {
+    pattern: 'automat[e]-(cli|health|tui|local|lan-cert|tls)',
+    ignoreCase: true,
+    reason:
+      'paths and binaries renamed to `lupin-*` (the CLI, the CI action, the TUI, the local tool, the edge scripts)',
+  },
 ];
 
 /**
@@ -103,7 +114,9 @@ function trackedHits(retired) {
     // git grep exits 1 when it matches nothing, which is the pass case here.
     const failure = /** @type {{ status?: number, stdout?: string }} */ (error);
     if (failure.status !== 1) {
-      throw new Error(`git grep could not run: ${String(failure.stdout ?? '').slice(0, 300)}`);
+      throw new Error(`git grep could not run: ${String(failure.stdout ?? '').slice(0, 300)}`, {
+        cause: error,
+      });
     }
   }
   return stdout

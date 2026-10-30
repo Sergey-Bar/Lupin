@@ -52,7 +52,7 @@ export type ExecutionTestStatus =
  * so importing the wrong one type-checks and then fails at runtime; `mapJob`'s
  * cast at `drizzle-execution-store.ts` is therefore not a mismatch, and
  * `fromStoredJobState` having no callers is correct rather than dead code.
- * `STORED_JOB_STATES` in `@automate/orchestration` is the machine-checked list.
+ * `STORED_JOB_STATES` in `@lupin/orchestration` is the machine-checked list.
  */
 export type JobState = 'queued' | 'leased' | 'completed' | 'failed' | 'cancelled' | 'requeued';
 

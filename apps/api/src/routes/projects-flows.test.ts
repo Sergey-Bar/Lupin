@@ -2,16 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import * as schema from '@automate/db';
-import type { ConnectorRequest } from '@automate/connectors-sdk';
-import { literalView } from '@automate/projects';
-import { AGENT_SIGNATURES } from '@automate/reporting';
+import * as schema from '@lupin/db';
+import type { ConnectorRequest } from '@lupin/connectors-sdk';
+import { literalView } from '@lupin/projects';
+import { AGENT_SIGNATURES } from '@lupin/reporting';
 import {
   AgentRuntimeReportSchema,
   DeliveryReportSchema,
   DiffCoverageStatusSchema,
   ProjectHealthSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import type { CallerResolver } from '../http/roles.js';
 import type { Caller } from '../services/access-service.js';

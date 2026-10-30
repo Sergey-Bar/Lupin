@@ -1,5 +1,5 @@
 import { and, asc, eq, isNull } from 'drizzle-orm';
-import { accessTokens, executionJobs, workspaceMembers, workspaces } from '@automate/db';
+import { accessTokens, executionJobs, workspaceMembers, workspaces } from '@lupin/db';
 import type { ProjectRegistryServiceOptions } from '../services/project-registry-service.js';
 import { hashToken } from '../services/access-service.js';
 import { JOB_ID_PATTERN, type WorkspaceLookups } from './workspace-dispatch.js';

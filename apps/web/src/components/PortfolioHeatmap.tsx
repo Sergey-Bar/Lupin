@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
   cn,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type {
   HealthLetter,
   HeatmapCell,
@@ -16,7 +16,7 @@ import type {
   PortfolioHeatmap as HeatmapPayload,
   ScorecardId,
   ScorecardStatus,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { HealthClient } from '../lib/health-client.js';
 import { dimensionLabel } from '../lib/health-view.js';

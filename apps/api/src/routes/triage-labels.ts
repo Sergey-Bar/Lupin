@@ -10,7 +10,7 @@
  */
 
 import { Hono, type MiddlewareHandler } from 'hono';
-import { TriageLabelBodySchema } from '@automate/shared-contracts';
+import { TriageLabelBodySchema } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { audit } from '../services/access-service.js';
 import type { ProjectRegistryServiceOptions } from '../services/project-registry-service.js';

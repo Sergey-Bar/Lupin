@@ -1,5 +1,5 @@
 /**
- * @automate/realtime
+ * @lupin/realtime
  *
  * Shared typed WebSocket event contracts and reconnection helpers for the
  * Automate unified platform.

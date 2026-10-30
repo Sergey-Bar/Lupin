@@ -6,7 +6,7 @@ WORKDIR /app
 RUN corepack enable
 COPY . .
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter "@automate/unified-web..." build
+RUN pnpm --filter "@lupin/unified-web..." build
 
 
 FROM nginx:1.27-alpine AS runtime

@@ -265,7 +265,7 @@ services:
       # The port a browser uses for HTTPS, so the plain-HTTP redirect names the right one.
       AUTOMATE_HTTPS_PORT: ${AUTOMATE_HTTPS_PORT:-8443}
     # The LAN certificate, issued by `start lan-cert`. Empty until then, and the edge serves
-    # plain HTTP only (infra/nginx/40-automate-tls.sh).
+    # plain HTTP only (infra/nginx/40-lupin-tls.sh).
     volumes:
       - ${AUTOMATE_CERT_DIR:-./certs}:/etc/automate/certs
     healthcheck:

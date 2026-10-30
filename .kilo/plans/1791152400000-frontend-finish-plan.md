@@ -217,7 +217,7 @@ This is the wave that makes every other wave verifiable.
    **line-height** and **letter-spacing**. `text-3xl` (Cockpit's `h1`) and `tracking-widest`
    (`Cockpit.tsx:306`) are both outside any declared scale today.
 
-**Gate.** `pnpm --filter @automate/ui test`, `pnpm docs:dead-exports`, `pnpm typecheck`.
+**Gate.** `pnpm --filter @lupin/ui test`, `pnpm docs:dead-exports`, `pnpm typecheck`.
 Red-first per the `evidence-test` skill: every assertion written, run against the unfixed
 stylesheet, watched to fail for the stated reason.
 
@@ -234,7 +234,7 @@ Then the hit targets: the `ui-skills` playbook's 44×44 minimum, applied to `Nav
 `packages/ui/src/components/Accessibility.test.tsx` — which already sweeps every component
 directory, so the assertion has a home.
 
-**Gate.** `pnpm --filter @automate/ui test`, `pnpm --filter @automate/unified-web test`, the
+**Gate.** `pnpm --filter @lupin/ui test`, `pnpm --filter @lupin/unified-web test`, the
 accessibility E2E project.
 
 ### W3 — Typography: the numbers stop moving
@@ -252,7 +252,7 @@ accessibility E2E project.
    for anything a person compares down a column, one display size, and a step ratio the
    stylesheet states rather than implying.
 
-**Gate.** `pnpm --filter @automate/ui test`, `pnpm --filter @automate/unified-web test`, and
+**Gate.** `pnpm --filter @lupin/ui test`, `pnpm --filter @lupin/unified-web test`, and
 the accessibility E2E in both themes — a type change is exactly the kind of thing a
 route-level run exists to catch.
 
@@ -274,7 +274,7 @@ From `animation-vocabulary` and `apple-design`, without a JS runtime:
    thrash, and the glass stack-depth ceiling from `tests/performance/rendering-budget.json`
    re-checked after every change that could deepen it.
 
-**Gate.** `pnpm --filter @automate/ui test src/tokens/motion.test.ts`, the rendering-budget
+**Gate.** `pnpm --filter @lupin/ui test src/tokens/motion.test.ts`, the rendering-budget
 project (`glassStackDepth` must stay at 1), and the accessibility project.
 
 ### W5 — Colour: OKLCH, measured, in place
@@ -299,7 +299,7 @@ a rewrite of the contrast maths, which is the part that must not be hand-waved.
    That exclusion is asserted, not intended: a test that fails if the wash reaches a data
    region.
 
-**Gate.** `pnpm --filter @automate/ui test src/tokens/theme.test.ts`, `pnpm docs:check`
+**Gate.** `pnpm --filter @lupin/ui test src/tokens/theme.test.ts`, `pnpm docs:check`
 (`site-doctor` check 8 imports `theme.css` rather than copying it, so a token change is a site
 change), and the accessibility project in both themes.
 
@@ -322,7 +322,7 @@ Each screen is its own step with its own before-and-after screenshots in
    `build-primitive` for the states that are currently a line of grey text. A console whose
    empty state is a sentence has one state too many.
 
-**Gate.** `pnpm --filter @automate/unified-web test`, the accessibility project (66 generated
+**Gate.** `pnpm --filter @lupin/unified-web test`, the accessibility project (66 generated
 tests, both themes, four forced states), the rendering-budget project, and a screenshot
 reviewed as a diff per screen.
 
@@ -337,7 +337,7 @@ Each one: `build-primitive`'s ARIA, keyboard, focus and state handling; a test t
 fail; and `Accessibility.test.tsx` coverage, because that sweep is already directory-wide and
 a new component that misses it is a hole.
 
-**Gate.** the axe sweep, `pnpm --filter @automate/ui test`, and the E2E route sweep.
+**Gate.** the axe sweep, `pnpm --filter @lupin/ui test`, and the E2E route sweep.
 
 ### W8 — The documentation site
 
@@ -558,7 +558,7 @@ that is cheaper than three test files sharing a fate.
    composition — the hierarchy *within* a screen rather than the rules its controls obey — is
    unreviewed. The score, gaps and analytics screens in particular have had their controls
    fixed and nothing else.
-5. **`pnpm test` flaked once** in a parallel `turbo` run (`@automate/unified-web`, one
+5. **`pnpm test` flaked once** in a parallel `turbo` run (`@lupin/unified-web`, one
    failed suite, not reproducible in isolation or on a re-run of the full chain). Recorded
    rather than smoothed over; it was not investigated.
 6. **`GLASS-1` is untouched and stays open**, as §8 requires. `render:baseline` is not

@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { and, desc, eq, isNull } from 'drizzle-orm';
-import { accessTokens, auditEvents, projects } from '@automate/db';
+import { accessTokens, auditEvents, projects } from '@lupin/db';
 import { z } from 'zod/v4';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { requestAuditFields } from '../observability/request-context.js';

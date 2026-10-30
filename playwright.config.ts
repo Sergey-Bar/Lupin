@@ -171,8 +171,8 @@ const durablePathSpecFiles = specFiles.filter((file) => file.endsWith('durable-p
  */
 const renderServe = process.env['AUTOMATE_RENDER_SERVE'] === 'preview';
 const webServerCommand = renderServe
-  ? `pnpm --filter @automate/unified-web exec vite preview --host 127.0.0.1 --port ${String(WEB_PORT)} --strictPort`
-  : 'pnpm --filter @automate/unified-web exec vite --host 127.0.0.1';
+  ? `pnpm --filter @lupin/unified-web exec vite preview --host 127.0.0.1 --port ${String(WEB_PORT)} --strictPort`
+  : 'pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1';
 
 const RENDER_PROJECT = 'rendering-budget';
 
@@ -228,8 +228,8 @@ export default defineConfig({
       // *after* the server can prepare the database for it.
       //
       // So both live here. The build, because the API's `dev` script imports
-      // `@automate/db` and `@automate/shared-contracts` through `node_modules` to their
-      // `dist`s, which `pnpm install` does not produce; `--filter @automate/api...` is
+      // `@lupin/db` and `@lupin/shared-contracts` through `node_modules` to their
+      // `dist`s, which `pnpm install` does not produce; `--filter @lupin/api...` is
       // pnpm's own answer on that — the package *and its dependencies*, read from the
       // graph rather than from a list to keep in step with it. The migration, because a
       // server that boots against an unmigrated database does not start at all.
@@ -238,11 +238,11 @@ export default defineConfig({
       // migration is idempotent, so a second run applies nothing and says so.
       command: [
         // The worker and runner too: `full-loop.spec.ts` starts both from source, and the
-        // runner imports `@automate/runner-sdk`, which is not an API dependency and so is not
-        // built by `@automate/api...`. Locally an earlier `pnpm build` hid that; CI has none.
-        'pnpm --filter @automate/api... --filter @automate/worker... --filter @automate/runner... build',
+        // runner imports `@lupin/runner-sdk`, which is not an API dependency and so is not
+        // built by `@lupin/api...`. Locally an earlier `pnpm build` hid that; CI has none.
+        'pnpm --filter @lupin/api... --filter @lupin/worker... --filter @lupin/runner... build',
         'pnpm db:migrate',
-        'pnpm --filter @automate/api run dev',
+        'pnpm --filter @lupin/api run dev',
       ].join(' && '),
       url: `${apiUrl}/api/v1/health`,
       env: {

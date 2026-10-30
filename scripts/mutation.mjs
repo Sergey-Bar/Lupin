@@ -26,7 +26,7 @@ if (unknown.length > 0) {
 }
 const targets = requested.length > 0 ? requested : [...MUTATION_PACKAGES];
 const stryker = path.join(root, 'node_modules', '@stryker-mutator', 'core', 'bin', 'stryker.js');
-// Packages import `@automate/shared-contracts` through its `dist/` entry. Without a build
+// Packages import `@lupin/shared-contracts` through its `dist/` entry. Without a build
 // those test files fail to load and Stryker reports their mutants as NoCoverage instead of
 // failing - a score that quietly measures less than the suite. Refuse to run unbuilt.
 const builtEntry = path.join(root, 'packages', 'shared-contracts', 'dist', 'index.js');

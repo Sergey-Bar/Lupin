@@ -1,5 +1,5 @@
 {
-  "name": "@automate/orchestration",
+  "name": "@lupin/orchestration",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
@@ -19,7 +19,7 @@
     "lint": "eslint --max-warnings=0 src/"
   },
   "dependencies": {
-    "@automate/shared-contracts": "workspace:*"
+    "@lupin/shared-contracts": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

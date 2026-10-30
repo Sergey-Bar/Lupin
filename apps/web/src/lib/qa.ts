@@ -5,28 +5,28 @@ import {
   ScoreCellSchema,
   StructuralFindingSchema,
   type QaScore,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * Every QA shape the command center uses, re-exported through one module.
  *
  * Copilot included, so a screen imports every shape from here rather than reaching
- * into `@automate/shared-contracts` directly and learning a second convention. The
+ * into `@lupin/shared-contracts` directly and learning a second convention. The
  * schemas are the **server's** contracts, imported rather than re-declared: a copy is
  * a second authority that disagrees the first time a field is added, which is the
  * defect `RUN_PHASES` was.
  */
 export { CopilotAnswerSchema, QaScoreSchema, ScoreCellSchema, StructuralFindingSchema };
 export type { QaScore };
-export { CopilotQuestionSchema } from '@automate/shared-contracts';
-export type { CopilotAnswer } from '@automate/shared-contracts';
+export { CopilotQuestionSchema } from '@lupin/shared-contracts';
+export type { CopilotAnswer } from '@lupin/shared-contracts';
 export {
   AnalyticsTrendSchema,
   ProjectHistorySchema,
   QaInsightsSchema,
   ReleaseReadinessCardSchema,
   RepoScanSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 export type {
   AnalyticsTrend,
   DigestItem,
@@ -48,7 +48,7 @@ export type {
   ToolboxEntry,
   TrendBucket,
   TrendWindow,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * The gap queue, as the web client sees it.

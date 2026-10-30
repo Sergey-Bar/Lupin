@@ -27,7 +27,7 @@
  * failure".
  */
 
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 
 export type CanonicalStatus = CanonicalRunResult['status'];
 

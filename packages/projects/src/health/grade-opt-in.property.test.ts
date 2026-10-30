@@ -9,7 +9,7 @@ import {
   OPT_IN_HEALTH_DIMENSIONS,
   type DimensionMetric,
   type HealthDimension,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import {
   DEFAULT_HEALTH_WEIGHTS,
   grade,

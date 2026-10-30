@@ -14,9 +14,9 @@ before relying on anything here.
 ## Run it
 
 ```text
-node local/bin/automate-local.mjs serve
-node local/bin/automate-local.mjs scan <folder>
-node local/bin/automate-local.mjs diagnostics
+node local/bin/lupin-local.mjs serve
+node local/bin/lupin-local.mjs scan <folder>
+node local/bin/lupin-local.mjs diagnostics
 ```
 
 `serve` prints an address with a one-time token after the `#`. It listens on the loopback

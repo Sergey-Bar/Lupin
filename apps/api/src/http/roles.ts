@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
-import type { Profile } from '@automate/config';
+import type { Profile } from '@lupin/config';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { guard } from './access.js';
 import { bearerToken } from './bearer-token.js';

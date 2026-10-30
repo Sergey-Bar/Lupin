@@ -4,7 +4,7 @@ How to rotate each installation secret in this product, and what stops when you 
 
 ## The seven secrets, and where they are declared
 
-Every installation secret is read by `@automate/config` and validated at startup.
+Every installation secret is read by `@lupin/config` and validated at startup.
 This table is derived from that module, not from a product that existed before the
 unification — the previous version of this document named
 `AUTOMATE_DASHBOARD_API_KEY` and `VAULT_PASSWORD`, neither of which is read

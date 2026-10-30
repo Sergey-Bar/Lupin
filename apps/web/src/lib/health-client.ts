@@ -24,7 +24,7 @@ import {
   type TriageFindingBody,
   type PortfolioHeatmap,
   type Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { parse } from './qa-client.js';
 
 /**

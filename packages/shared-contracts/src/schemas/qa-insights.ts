@@ -118,7 +118,7 @@ export const QuarantineSuggestionSchema = z.object({
   blockedRuns: z.number().int().min(0),
   /**
    * Whether automation may act on it: retry or same-commit evidence, while the test is
-   * passing (`FlakeCost.autoEligible` in `@automate/reporting`, invariant FLAKE-4). A test
+   * passing (`FlakeCost.autoEligible` in `@lupin/reporting`, invariant FLAKE-4). A test
    * whose only disagreement is across commits is a suggestion for a person, never an action.
    * Optional so an older server's answer still parses.
    */
@@ -153,7 +153,7 @@ export const QaInsightsSchema = z.object({
   truncated: z.boolean(),
   /**
    * The window's failed results grouped by root cause (`clusterFailures` in
-   * `@automate/reporting`). Optional so an older server's answer still parses.
+   * `@lupin/reporting`). Optional so an older server's answer still parses.
    */
   failureClusters: z
     .object({

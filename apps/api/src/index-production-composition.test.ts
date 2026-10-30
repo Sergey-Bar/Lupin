@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as dbSchema from '@automate/db';
+import * as dbSchema from '@lupin/db';
 import {
   syntheticApiKey,
   syntheticAwsKeyId,
@@ -332,8 +332,8 @@ describe('a valid production configuration', () => {
     // Registered before the import below, which is the whole point: `doMock` is
     // hoisted per-call, so it must run inside the hook rather than at file scope.
     vi.doMock('@hono/node-server', () => ({ serve: () => undefined }));
-    vi.doMock('@automate/db', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@automate/db')>();
+    vi.doMock('@lupin/db', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@lupin/db')>();
       // The real store, counted: each read is a SELECT and a `last_used_at` write.
       class CountedSessionStore extends actual.DrizzleSessionStore {
         override async findValid(tokenHash: string, now: Date) {
@@ -365,7 +365,7 @@ describe('a valid production configuration', () => {
   }, COMPOSITION_IMPORT_TIMEOUT_MS);
 
   afterAll(async () => {
-    vi.doUnmock('@automate/db');
+    vi.doUnmock('@lupin/db');
     vi.doUnmock('@hono/node-server');
     await client?.close();
     client = undefined;

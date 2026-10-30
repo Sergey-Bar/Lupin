@@ -1,5 +1,5 @@
-import type { CanonicalRunResult as RunResult } from '@automate/shared-contracts';
-import { CanonicalStatusSchema } from '@automate/shared-contracts';
+import type { CanonicalRunResult as RunResult } from '@lupin/shared-contracts';
+import { CanonicalStatusSchema } from '@lupin/shared-contracts';
 import { countIndeterminate, fingerprint, NON_PRODUCT_STATUSES } from './policy.js';
 
 export interface RunSummary {

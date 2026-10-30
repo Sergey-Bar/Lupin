@@ -40,7 +40,7 @@ A read-only pre-audit first: count the rows in the blast radius and map old valu
 
 1. Read the current schema and any affected migrations before editing.
 2. Update the Drizzle schema definitions. Keep controlled vocabularies in `schema/vocabularies.ts`, which is a leaf module importing nothing — that is what lets `dashboard.ts` and `execution.ts` share one definition without an import cycle.
-3. Generate: `pnpm --filter @automate/db db:generate`.
+3. Generate: `pnpm --filter @lupin/db db:generate`.
 4. Validate the graph: `pnpm db:check`, plus `pnpm migrate:validate`.
 5. Verify against the real migration graph through the PGlite suite in `tests/integration`, which is the only place a race or a revoked-row defect can be seen at all.
 

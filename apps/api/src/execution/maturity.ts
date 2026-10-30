@@ -3,7 +3,7 @@ import {
   type IntegrationMaturity,
   type IntegrationMaturityLevel,
   type IntegrationEvidenceStatus,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 export type { IntegrationMaturity, IntegrationMaturityLevel, IntegrationEvidenceStatus };
 

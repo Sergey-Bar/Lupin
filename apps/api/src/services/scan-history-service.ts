@@ -1,6 +1,6 @@
 import { and, asc, eq, gte } from 'drizzle-orm';
-import { qualityGateConfig, scanSnapshots } from '@automate/db';
-import type { RepoScan, ScanSnapshot } from '@automate/shared-contracts';
+import { qualityGateConfig, scanSnapshots } from '@lupin/db';
+import type { RepoScan, ScanSnapshot } from '@lupin/shared-contracts';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 
 /**

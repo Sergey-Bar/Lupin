@@ -2,7 +2,7 @@ import { and, eq, inArray, lte, sql } from 'drizzle-orm';
 import path from 'node:path';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
-import { canonicalRunResults, projects, runs, workspaces } from '@automate/db';
+import { canonicalRunResults, projects, runs, workspaces } from '@lupin/db';
 import {
   AUTOMATE_CONFIG_FILENAME,
   detectProject,
@@ -11,8 +11,8 @@ import {
   ProjectProfileSchema,
   type ProjectProfile,
   type RepositoryView,
-} from '@automate/projects';
-import { RunCommandSchema, type RunCommand } from '@automate/shared-contracts';
+} from '@lupin/projects';
+import { RunCommandSchema, type RunCommand } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 
 type AnyPgDb =

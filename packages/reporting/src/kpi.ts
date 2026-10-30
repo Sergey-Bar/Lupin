@@ -1,4 +1,4 @@
-import type { CanonicalProof, CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalProof, CanonicalRunResult } from '@lupin/shared-contracts';
 import { countIndeterminate, isNonProductStatus, isProductOutcome } from './policy.js';
 
 export type ProofCeiling = CanonicalProof['state'] | 'unknown' | 'rejected';

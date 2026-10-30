@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { composeReport, renderPlain } from '@automate/reporting';
+import * as schema from '@lupin/db';
+import { composeReport, renderPlain } from '@lupin/reporting';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import { agentProject, encode, evalRun } from '../test-support/agent-fixtures.js';
 import { loadReport } from './notification-service.js';

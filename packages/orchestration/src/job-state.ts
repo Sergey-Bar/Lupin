@@ -16,7 +16,7 @@
  * `job-state.test.ts` reads the real CHECK out of the migration and proves every
  * value this mapping can produce satisfies it, so the two cannot drift.
  */
-import type { JobState } from '@automate/shared-contracts';
+import type { JobState } from '@lupin/shared-contracts';
 
 /**
  * The states the `execution_jobs.state` column accepts. This mirrors

@@ -13,25 +13,45 @@ const palette = {
   background: 'background',
 };
 
+/**
+ * A context that records every call, typed as the swarm's own context.
+ *
+ * @returns {{ context: import('../../site/.vitepress/theme/nano-field.ts').SwarmContext, calls: Array<{ method: string, args?: number[], color?: unknown, opacity?: number, lineWidth?: number }> }}
+ */
 function recordingContext() {
+  /** @type {Array<{ method: string, args?: number[], color?: unknown, opacity?: number, lineWidth?: number }>} */
   const calls = [];
-  const context = { globalAlpha: 1, fillStyle: '', strokeStyle: '', lineWidth: 1 };
-  for (const method of ['clearRect', 'beginPath', 'moveTo', 'lineTo', 'closePath', 'rect']) {
-    context[method] = (...args) => calls.push({ method, args });
-  }
-  context.fill = () =>
-    calls.push({
-      method: 'fill',
-      color: context.fillStyle,
-      opacity: context.globalAlpha,
-    });
-  context.stroke = () =>
-    calls.push({
-      method: 'stroke',
-      color: context.strokeStyle,
-      opacity: context.globalAlpha,
-      lineWidth: context.lineWidth,
-    });
+  /** @param {string} method */
+  const record =
+    (method) =>
+    /** @param {number[]} args */
+    (...args) => {
+      calls.push({ method, args });
+    };
+  /** @type {import('../../site/.vitepress/theme/nano-field.ts').SwarmContext} */
+  const context = {
+    globalAlpha: 1,
+    fillStyle: '',
+    strokeStyle: '',
+    lineWidth: 1,
+    clearRect: record('clearRect'),
+    beginPath: record('beginPath'),
+    moveTo: record('moveTo'),
+    lineTo: record('lineTo'),
+    closePath: record('closePath'),
+    rect: record('rect'),
+    fill: () => {
+      calls.push({ method: 'fill', color: context.fillStyle, opacity: context.globalAlpha });
+    },
+    stroke: () => {
+      calls.push({
+        method: 'stroke',
+        color: context.strokeStyle,
+        opacity: context.globalAlpha,
+        lineWidth: context.lineWidth,
+      });
+    },
+  };
   return { context, calls };
 }
 
@@ -68,8 +88,9 @@ test('the delay masks only the content and emits no particles', () => {
   assert.equal(calls.filter(({ method }) => method === 'rect').length, 0);
   const fills = calls.filter(({ method }) => method === 'fill');
   assert.deepEqual(fills, [{ method: 'fill', color: palette.background, opacity: 1 }]);
-  for (const { args } of calls.filter(({ method }) => ['moveTo', 'lineTo'].includes(method))) {
-    assert.ok(args[0] >= bounds.inset && args[0] <= bounds.inset + bounds.contentWidth);
+  for (const { args = [] } of calls.filter(({ method }) => ['moveTo', 'lineTo'].includes(method))) {
+    const [x = Number.NaN] = args;
+    assert.ok(x >= bounds.inset && x <= bounds.inset + bounds.contentWidth);
   }
 });
 
@@ -95,8 +116,8 @@ test('dense and reduced swarms use a bounded draw batch with finite geometry', (
     if (stride === 1) fullParticleCount = rectangles.length;
     else
       assert.ok(rectangles.length < fullParticleCount, 'slower devices receive less drawing work');
-    for (const { args } of rectangles) assert.ok(args.every(Number.isFinite));
-    for (const { opacity } of fills) assert.ok(opacity >= 0 && opacity <= 1);
+    for (const { args = [] } of rectangles) assert.ok(args.every(Number.isFinite));
+    for (const { opacity = Number.NaN } of fills) assert.ok(opacity >= 0 && opacity <= 1);
     assert.equal(context.globalAlpha, 1, 'drawing restores the caller opacity');
   }
 });

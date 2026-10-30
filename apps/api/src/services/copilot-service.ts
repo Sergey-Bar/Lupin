@@ -3,8 +3,8 @@ import {
   type CopilotAnswer,
   type CopilotEvidence,
   type CopilotSuggestion,
-} from '@automate/shared-contracts';
-import type { QaScore } from '@automate/projects';
+} from '@lupin/shared-contracts';
+import type { QaScore } from '@lupin/projects';
 
 /**
  * The copilot, as a pure derivation over a score.

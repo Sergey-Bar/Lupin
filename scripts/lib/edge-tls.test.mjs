@@ -16,8 +16,8 @@ const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const read = (/** @type {string} */ file) => readFileSync(path.join(REPO_ROOT, file), 'utf8');
 
 const EDGE_CONF = read('infra/nginx/edge.conf');
-const ENTRYPOINT = read('infra/nginx/40-automate-tls.sh');
-const CERT_SCRIPT = read('infra/nginx/automate-lan-cert.sh');
+const ENTRYPOINT = read('infra/nginx/40-lupin-tls.sh');
+const CERT_SCRIPT = read('infra/nginx/lupin-lan-cert.sh');
 const DOCKERFILE = read('infra/docker/edge.Dockerfile');
 
 test('the main config reads the TLS includes from the tmpfs, and probes without a redirect', () => {
@@ -55,7 +55,7 @@ test('every API path an outside client calls is proxied to the API, over HTTP an
   assert.deepEqual(prefixes, ['/scim/v2/']);
   for (const [name, text] of [
     ['edge.conf', EDGE_CONF],
-    ['40-automate-tls.sh', ENTRYPOINT],
+    ['40-lupin-tls.sh', ENTRYPOINT],
   ]) {
     for (const prefix of prefixes) {
       assert.match(
@@ -87,11 +87,11 @@ test('the image ships both scripts where they run, and the CLI that creates the 
   assert.match(DOCKERFILE, /apk add --no-cache openssl/);
   assert.match(
     DOCKERFILE,
-    /COPY infra\/nginx\/40-automate-tls\.sh \/docker-entrypoint\.d\/40-automate-tls\.sh/,
+    /COPY infra\/nginx\/40-lupin-tls\.sh \/docker-entrypoint\.d\/40-lupin-tls\.sh/,
   );
   assert.match(
     DOCKERFILE,
-    /COPY infra\/nginx\/automate-lan-cert\.sh \/usr\/local\/bin\/automate-lan-cert/,
+    /COPY infra\/nginx\/lupin-lan-cert\.sh \/usr\/local\/bin\/lupin-lan-cert/,
   );
   assert.match(DOCKERFILE, /EXPOSE 8080 8443/);
 });

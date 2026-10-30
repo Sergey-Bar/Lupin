@@ -4,8 +4,8 @@ import {
   AgentDomainSchema,
   LOAD_MAX_DURATION_SECONDS,
   LOAD_MAX_VUS,
-} from '@automate/shared-contracts';
-import { createToolRegistry } from '@automate/tool-sdk';
+} from '@lupin/shared-contracts';
+import { createToolRegistry } from '@lupin/tool-sdk';
 import { registerBrowserAgent } from '../agents/browser-adapter.js';
 import { registerLoadAgent } from '../agents/load-adapter.js';
 import { InMemoryExecutionStore } from '../execution/in-memory-execution-store.js';

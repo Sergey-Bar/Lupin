@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, cn } from '@automate/ui';
+import { ArrowRight, cn } from '@lupin/ui';
 import type {
   AgentRuntimeReport,
   AiCodeReport,
@@ -7,7 +7,7 @@ import type {
   ProjectEvals,
   ProjectHealth,
   Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource, type Resource } from '../hooks/useResource.js';
 import type { AgentsClient } from '../lib/agents-client.js';
 import type { AiCodeClient } from '../lib/ai-code-client.js';

@@ -6,13 +6,13 @@ WORKDIR /src
 RUN corepack enable
 COPY . .
 # `<package>...` builds the package and everything it depends on, in dependency order, so the
-# list cannot fall behind the code. A hand-written list did: it omitted @automate/projects and the
+# list cannot fall behind the code. A hand-written list did: it omitted @lupin/projects and the
 # image never built. `deploy --prod` then writes the package, its built workspace dependencies and
 # its production `node_modules` to /out — no Vitest, no ESLint, no TypeScript, no sources of other
 # packages. `--legacy` is pnpm 11's deploy without `inject-workspace-packages`.
 RUN pnpm install --frozen-lockfile \
-  && pnpm --filter "@automate/api..." build \
-  && pnpm --filter "@automate/api" --prod deploy --legacy /out
+  && pnpm --filter "@lupin/api..." build \
+  && pnpm --filter "@lupin/api" --prod deploy --legacy /out
 
 
 FROM node:24.22.1-alpine AS runtime

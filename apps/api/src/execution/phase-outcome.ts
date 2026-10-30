@@ -1,5 +1,5 @@
 /**
- * Re-exported from `@automate/orchestration`, where it now lives.
+ * Re-exported from `@lupin/orchestration`, where it now lives.
  *
  * It was here alone until `apps/worker`'s `completeJob` was found writing
  * `runs.phase`, `runs.outcome` and `runs.status` from a hand-written table while
@@ -20,4 +20,4 @@ export {
   type ContractRunStatus,
   type DerivedRunState,
   type RunStatus,
-} from '@automate/orchestration';
+} from '@lupin/orchestration';

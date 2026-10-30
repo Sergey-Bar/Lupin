@@ -1,6 +1,6 @@
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { and, eq, gt, isNull } from 'drizzle-orm';
-import { pairingCodes } from '@automate/db';
+import { pairingCodes } from '@lupin/db';
 import { z } from 'zod/v4';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { createAccessToken } from './access-service.js';

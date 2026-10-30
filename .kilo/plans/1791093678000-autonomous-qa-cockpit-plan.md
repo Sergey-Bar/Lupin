@@ -388,7 +388,7 @@ red-first, and the runner step is the one that must not be skipped.
 - `apps/web/src/components/Cockpit.tsx` — re-read on `run.completed` for the visible project only.
 - `apps/web/src/lib/api.ts` — subscribe on the **existing** shared connection. A second
   `EventSource` is exactly the leak the previous plan closed.
-- **Gate:** `pnpm --filter @automate/unified-web test` — and the coverage floor holds at **96/88/96/98**
+- **Gate:** `pnpm --filter @lupin/unified-web test` — and the coverage floor holds at **96/88/96/98**
   without lowering it. One new web file here, so one real test.
 - **Ledger:** `AUTO-1`, **Blocker**, and the title says what it is: *autonomy stops at the runner
   image*.

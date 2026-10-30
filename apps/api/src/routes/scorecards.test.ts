@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import {
   HEALTH_DIMENSIONS,
   PortfolioHeatmapSchema,
   SCORECARD_IDS,
   ScorecardSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import type { CallerResolver } from '../http/roles.js';
 import type { Caller } from '../services/access-service.js';

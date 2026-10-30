@@ -1,6 +1,6 @@
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import type { GitHubWebhookAck } from '@automate/shared-contracts';
+import type { GitHubWebhookAck } from '@lupin/shared-contracts';
 import { domainErrorResponse } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { createRateLimiter } from '../middleware/rate-limit.js';

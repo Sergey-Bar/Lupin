@@ -19,7 +19,7 @@
  */
 
 import { z } from 'zod';
-import { PERSISTED_RUN_STATUS_VALUES } from '@automate/shared-contracts';
+import { PERSISTED_RUN_STATUS_VALUES } from '@lupin/shared-contracts';
 
 export const CreateQualityGateBodySchema = z
   .object({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { JobState } from '@automate/shared-contracts';
+import type { JobState } from '@lupin/shared-contracts';
 import { canTransition, isTerminal, transition } from './state-machine.js';
 
 /**

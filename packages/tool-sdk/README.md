@@ -1,4 +1,4 @@
-# @automate/tool-sdk
+# @lupin/tool-sdk
 
 The contract between the agent routes and whatever executes work for them: operation
 declaration, adapter dispatch, result normalisation, and error classification.
@@ -37,7 +37,7 @@ accepted run and links to it), and `createExecutionBridgeAdapter` queues the run
 `submitRun` that `POST /api/v1/runs` uses.
 
 ```bash
-pnpm --filter @automate/tool-sdk test
+pnpm --filter @lupin/tool-sdk test
 ```
 
 Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.

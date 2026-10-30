@@ -4,7 +4,7 @@ import {
   TuiViewSchema,
   type TuiCommand,
   type TuiView,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * The API client, as a port.

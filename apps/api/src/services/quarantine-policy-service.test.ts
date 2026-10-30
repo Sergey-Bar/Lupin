@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { Hono, type MiddlewareHandler } from 'hono';
 import { and, eq } from 'drizzle-orm';
-import * as schema from '@automate/db';
-import { ProjectQuarantineSchema } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import { ProjectQuarantineSchema } from '@lupin/shared-contracts';
 import { DrizzleQuarantineStore } from '../modules/dashboard/drizzle-stores.js';
 import type { ExecutionRun, ExecutionTestResult } from '../execution/types.js';
 import { createProjectQuarantineRoutes } from '../routes/project-quarantine.js';

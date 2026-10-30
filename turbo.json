@@ -41,7 +41,7 @@
       "cache": false,
       "persistent": true
     },
-    "@automate/ui#build": {
+    "@lupin/ui#build": {
       "dependsOn": ["^build"],
       "outputs": []
     }

@@ -1,6 +1,6 @@
-import * as schema from '@automate/db';
-import type { AiGateway, CompletionChunk, CompletionInput } from '@automate/automation';
-import type { AutomateEvalRun } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import type { AiGateway, CompletionChunk, CompletionInput } from '@lupin/automation';
+import type { AutomateEvalRun } from '@lupin/shared-contracts';
 import type { MigratedDb } from './migrated-database.js';
 
 /** A project in `ws-1` with a health policy, and its id. */

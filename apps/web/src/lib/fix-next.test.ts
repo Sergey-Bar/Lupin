@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { FixNext } from '@automate/shared-contracts';
+import type { FixNext } from '@lupin/shared-contracts';
 import { makeScorecard } from '../test-utils.js';
 import { rankFixNext } from './fix-next.js';
 

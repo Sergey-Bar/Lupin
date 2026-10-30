@@ -7,7 +7,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { isLoopbackBind } from '@automate/config';
+import { isLoopbackBind } from '@lupin/config';
 import { MCP_SERVER_INFO } from './server.js';
 
 /**
@@ -123,9 +123,7 @@ if (isEntryPoint(import.meta.url, process.argv[1])) {
       AUTOMATE_TOKEN: process.env['AUTOMATE_TOKEN'],
     },
   }).catch((error: unknown) => {
-    process.stderr.write(
-      `automate mcp: ${error instanceof Error ? error.message : String(error)}\n`,
-    );
+    process.stderr.write(`lupin mcp: ${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;
   });
 }

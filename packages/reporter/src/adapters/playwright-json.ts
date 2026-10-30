@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { testIdentity, testRowKey, type CanonicalRunResult } from '@automate/shared-contracts';
+import { testIdentity, testRowKey, type CanonicalRunResult } from '@lupin/shared-contracts';
 import type { ProducerAdapter } from '../adapter.js';
 import { canonicalRunResult } from '../canonical-run-result.js';
 import { canonicalTestStatusFrom, outcomesWithDeclaredRunStatus } from '../producer-status.js';

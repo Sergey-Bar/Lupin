@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { Hono } from 'hono';
 import { accessOf } from '../http/access.js';
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 import {
   ReporterIngestionService,
   type ReporterIngestionResult,

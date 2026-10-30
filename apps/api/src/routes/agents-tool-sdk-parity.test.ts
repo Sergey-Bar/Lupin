@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  AGENT_ACTIONS,
-  AGENT_DOMAINS,
-  createToolRegistry,
-  toAgentProblem,
-} from '@automate/tool-sdk';
+import { AGENT_ACTIONS, AGENT_DOMAINS, createToolRegistry, toAgentProblem } from '@lupin/tool-sdk';
 import { createAgentRoutes } from './agents.js';
 
 /**
@@ -18,7 +13,7 @@ import { createAgentRoutes } from './agents.js';
  * the intended differences (`browser.run` and `api.run` are served; the unserved browser and api
  * actions add a `reason`).
  */
-describe('agents.ts and @automate/tool-sdk agree', () => {
+describe('agents.ts and @lupin/tool-sdk agree', () => {
   const app = createAgentRoutes();
   const registry = createToolRegistry();
 

@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { Hono } from 'hono';
 import { guard } from '../http/access.js';
-import { CanonicalRunResultSchema } from '@automate/shared-contracts';
+import { CanonicalRunResultSchema } from '@lupin/shared-contracts';
 import type { ReporterResultStore } from '../services/reporter-ingestion.js';
 import { bearerToken } from '../http/bearer-token.js';
 

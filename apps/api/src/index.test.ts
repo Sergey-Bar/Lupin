@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { withErrorBoundary } from './test-support/error-boundary-app.js';
 import { Hono } from 'hono';
-import { SECRET_MIN_LENGTH } from '@automate/config';
+import { SECRET_MIN_LENGTH } from '@lupin/config';
 import { app } from './index.js';
 import { createReporterRoutes } from './routes/reporter.js';
 import {

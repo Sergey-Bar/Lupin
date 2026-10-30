@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CopilotAnswerSchema, CopilotSuggestionSchema } from '@automate/shared-contracts';
-import { score, DEFAULT_WEIGHTS, type ScoreInputs } from '@automate/projects';
+import { CopilotAnswerSchema, CopilotSuggestionSchema } from '@lupin/shared-contracts';
+import { score, DEFAULT_WEIGHTS, type ScoreInputs } from '@lupin/projects';
 import { answer } from './copilot-service.js';
 
 /**

@@ -13,7 +13,7 @@ import {
   ScorecardSchema,
   type McpToolName,
   type Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { aiCodeReport } from '../services/ai-code-service.js';
 import { deliveryReport } from '../services/delivery-service.js';

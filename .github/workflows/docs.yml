@@ -84,7 +84,7 @@ jobs:
         run: pnpm site:generate
 
       - name: Build
-        run: pnpm --filter @automate/docs build
+        run: pnpm --filter @lupin/docs build
 
       - name: Check the built site
         # SITE-1's removal condition: `site:doctor` against the **built** output. Without

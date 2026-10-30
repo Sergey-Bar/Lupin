@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CanonicalRunResult as RunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult as RunResult } from '@lupin/shared-contracts';
 import {
   ALL_RUN_STATUSES,
   canonicalJson,

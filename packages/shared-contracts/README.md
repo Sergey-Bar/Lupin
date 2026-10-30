@@ -1,4 +1,4 @@
-# @automate/shared-contracts
+# @lupin/shared-contracts
 
 Shared contract types and validation schemas for the Automate unified platform.
 
@@ -17,7 +17,7 @@ This package exports:
 ### TypeScript / Zod validation
 
 ```ts
-import { TriggerRunRequestSchema } from '@automate/shared-contracts';
+import { TriggerRunRequestSchema } from '@lupin/shared-contracts';
 
 const result = TriggerRunRequestSchema.safeParse(body);
 if (!result.success) {
@@ -29,14 +29,14 @@ const payload = result.data; // typed as TriggerRunRequest
 ### Type-only imports
 
 ```ts
-import type { TriggerRunRequest, RunResultCallback } from '@automate/shared-contracts';
+import type { TriggerRunRequest, RunResultCallback } from '@lupin/shared-contracts';
 ```
 
 ### AJV / JSON Schema consumers
 
 ```ts
 import Ajv from 'ajv';
-import { triggerRunRequestSchema } from '@automate/shared-contracts';
+import { triggerRunRequestSchema } from '@lupin/shared-contracts';
 
 const ajv = new Ajv();
 const validate = ajv.compile(triggerRunRequestSchema);
@@ -120,11 +120,11 @@ is worse than having no artefact at all: it reads as a specification and is not 
 
 ```bash
 # Run tests
-pnpm --filter @automate/shared-contracts test
+pnpm --filter @lupin/shared-contracts test
 
 # Build
-pnpm --filter @automate/shared-contracts build
+pnpm --filter @lupin/shared-contracts build
 
 # Type-check
-pnpm --filter @automate/shared-contracts exec tsc --noEmit
+pnpm --filter @lupin/shared-contracts exec tsc --noEmit
 ```

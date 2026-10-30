@@ -1,4 +1,4 @@
-// @automate/projects — the project registry's pure half: ecosystem detection,
+// @lupin/projects — the project registry's pure half: ecosystem detection,
 // the declared-override merge, and (later) the derived QA Health Score.
 //
 // Nothing here holds a database handle or a filesystem handle. `detectProject`

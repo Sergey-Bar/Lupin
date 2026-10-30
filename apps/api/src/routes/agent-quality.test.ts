@@ -1,7 +1,7 @@
 import { gzipSync } from 'node:zlib';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { sql } from 'drizzle-orm';
 import {
   AgentConfigScanResultSchema,
@@ -13,7 +13,7 @@ import {
   McpServerListSchema,
   OtlpExportResponseSchema,
   ProjectEvalsSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import type { CallerResolver } from '../http/roles.js';
 import { uploaderGuard } from '../http/uploader.js';

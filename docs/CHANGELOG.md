@@ -30,15 +30,15 @@ If you ran `update` to 3.1.0 and the stack is down, run `./start.sh update --ver
 - **Test intelligence.** One test identity (`file › describe › title [project]`) across every
   producer, so one test in two Playwright projects is no longer one flaky test. Quarantine now
   gates: a quarantined failure excuses itself (`ready_with_warnings`, `quarantine:EXCUSED`)
-  without rewriting the run, and `automate test` exits 0 only when the server confirms it. An
+  without rewriting the run, and `lupin test` exits 0 only when the server confirms it. An
   optional per-project policy (`off`, `suggest`, `auto`) quarantines on retry-pass or
   same-commit evidence and releases after 20 clean passes. Per-test history
   (`GET /api/v1/dashboard/tests/history`, `/dashboard/test`) and triage labels on failure causes.
-- **`@automate/playwright-reporter`** streams a run and uploads failure traces, screenshots and
+- **`@lupin/playwright-reporter`** streams a run and uploads failure traces, screenshots and
   videos (`POST /api/v1/reporter/runs/:runId/artifacts`; artifacts need database mode).
-- **`automate shard`** and `POST /api/v1/projects/:id/shards/plan`: duration-balanced CI shards.
+- **`lupin shard`** and `POST /api/v1/projects/:id/shards/plan`: duration-balanced CI shards.
 - **Allure importer**: `format=allure-results` on the upload door.
-- Every workspace package is now MIT; `@automate/cli` and the reporter are publishable
+- Every workspace package is now MIT; `@lupin/cli` and the reporter are publishable
   (`npm-publish.yml`; the publish step needs an `NPM_TOKEN` secret and has not been run).
 - **LAN mode** (`AUTOMATE_LAN_MODE=1`). One machine serves every laptop, phone and tablet on
   the network, Linux or Windows Docker Desktop: sign-in on every route, HTTPS from a local
@@ -543,7 +543,7 @@ took `phase`, `outcome` and `status` from a hand-written table while `apps/api` 
 derivation that makes `runs_phase_outcome_check` unreachable. Its fallthrough produced
 `{phase: 'requeue', outcome: 'requeue'}` — a non-terminal phase carrying an outcome, which
 PostgreSQL refuses. It survived because `main.ts` passes no handler, so the path is dormant
-in production. `deriveRunState` now lives in `@automate/orchestration` and both stores
+in production. `deriveRunState` now lives in `@lupin/orchestration` and both stores
 derive from it.
 
 **An API that accepted completions under an expired lease.** The store fenced on `leaseId`
@@ -672,7 +672,7 @@ one outstanding is the named `durable-path.spec.ts` artefact, tracked as `E2E-3`
 
 Gates at this release: `lint`, `typecheck`, `format:check`, `complexity`,
 `security:secrets`, `docs:check` and `findings:check` clean. `test:integration`
-267/267, `@automate/api` 1159/1159, `@automate/unified-web` 242/242, `test:e2e` 19/19
+267/267, `@lupin/api` 1159/1159, `@lupin/unified-web` 242/242, `test:e2e` 19/19
 against a real PostgreSQL.
 
 ### 2.0.0 addendum — the migration

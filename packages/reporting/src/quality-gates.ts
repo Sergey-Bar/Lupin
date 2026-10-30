@@ -1,4 +1,4 @@
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 
 export interface GatePolicy {
   requiredProof: 'verified';

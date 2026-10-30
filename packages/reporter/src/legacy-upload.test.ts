@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { CanonicalRunResultSchema } from '@automate/shared-contracts';
+import { CanonicalRunResultSchema } from '@lupin/shared-contracts';
 import { legacyUploadAdapter, parseReporterUploadPayload } from './adapters/legacy-upload.js';
 
 const context = {

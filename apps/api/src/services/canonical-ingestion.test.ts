@@ -11,8 +11,8 @@ import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.
 import { ReporterIngestionService } from './reporter-ingestion.js';
 import { ingestCanonicalResult } from './canonical-ingestion.js';
 import { InMemoryRealtimeBus } from '../realtime/realtime-bus.js';
-import type { CanonicalRunResult } from '@automate/shared-contracts';
-import { legacyUploadAdapter } from '@automate/reporter';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
+import { legacyUploadAdapter } from '@lupin/reporter';
 import { DEFAULT_WORKSPACE_ID } from '../repositories/run-repository.js';
 
 const result = (overrides: Partial<Record<string, unknown>> = {}): CanonicalRunResult => {

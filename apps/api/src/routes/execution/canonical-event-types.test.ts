@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RunEventTypeSchema } from '@automate/shared-contracts';
+import { RunEventTypeSchema } from '@lupin/shared-contracts';
 import { CANONICAL_EVENT_TYPES } from './schemas.js';
 import type { CanonicalRealtimeEvent } from '../../realtime/realtime-bus.js';
 

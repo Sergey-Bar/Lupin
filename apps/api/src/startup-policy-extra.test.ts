@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SECRET_MIN_LENGTH } from '@automate/config';
+import { SECRET_MIN_LENGTH } from '@lupin/config';
 import { checkProductionPolicy } from './startup-policy.js';
 
 // Repeated characters rather than a word, so nothing here can accidentally be read as

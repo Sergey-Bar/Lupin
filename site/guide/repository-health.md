@@ -62,7 +62,7 @@ they wrote with the action in this repository:
 ```yaml
 - run: semgrep scan --config p/default --sarif --output semgrep.sarif .
 - run: gitleaks dir . --report-format sarif --report-path gitleaks.sarif --exit-code 0
-- uses: Sergey-Bar/AutoMate/.github/actions/automate-health@main
+- uses: Sergey-Bar/AutoMate/.github/actions/lupin-health@main
   with:
     url: https://automate.example.com
     project-id: ${{ vars.AUTOMATE_PROJECT_ID }}

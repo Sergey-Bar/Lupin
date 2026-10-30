@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import type { CompletionInput } from '@automate/automation';
-import { EvalDatasetBodySchema, type EvalDatasetBody } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import type { CompletionInput } from '@lupin/automation';
+import { EvalDatasetBodySchema, type EvalDatasetBody } from '@lupin/shared-contracts';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import { agentProject, stubGateway } from '../test-support/agent-fixtures.js';
 import {

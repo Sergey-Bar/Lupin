@@ -7,7 +7,7 @@ import {
   type SpoolEntry,
   type SpoolQueue,
   type SpoolRetryPolicy,
-} from '@automate/runner-sdk';
+} from '@lupin/runner-sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   RunnerConfigurationError,

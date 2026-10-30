@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gte, inArray, isNull, ne, sql, type SQL, count } from 'drizzle-orm';
-import { healthFindings, healthReports, healthSnapshots, projects, schedules } from '@automate/db';
+import { healthFindings, healthReports, healthSnapshots, projects, schedules } from '@lupin/db';
 import {
   CODEOWNERS_PATHS,
   evaluateHealthGate,
@@ -14,7 +14,7 @@ import {
   type FindingToolRun,
   type HealthScanner,
   type RepositorySource,
-} from '@automate/projects';
+} from '@lupin/projects';
 import {
   HealthReportError,
   MAX_HEALTH_REPORT_BYTES,
@@ -37,13 +37,13 @@ import {
   type ScannerRun,
   type VexDocument,
   type EvalRun,
-} from '@automate/reporter';
+} from '@lupin/reporter';
 import {
   parseUnifiedDiff,
   type AiGovernanceVerdict,
   type Attribution,
   type AttributionSignal,
-} from '@automate/reporting';
+} from '@lupin/reporting';
 import {
   DimensionMetricSchema,
   HEALTH_DIMENSIONS,
@@ -75,7 +75,7 @@ import {
   type SupplyChainPolicyRecord,
   type TriageFindingBody,
   SBOM_REPORT_FORMATS,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';

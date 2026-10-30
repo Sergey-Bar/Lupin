@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import {
@@ -14,7 +14,7 @@ import {
   PortfolioSchema,
   ProjectHealthSchema,
   ScorecardSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import type { CallerResolver } from '../http/roles.js';

@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm';
-import { reportDeliveries, reportSubscriptions, type ReportDeliveryRow } from '@automate/db';
-import type { ConnectorAdapter, ConnectorRequest } from '@automate/connectors-sdk';
-import type { ChannelKind, ChannelSummary } from '@automate/shared-contracts';
+import { reportDeliveries, reportSubscriptions, type ReportDeliveryRow } from '@lupin/db';
+import type { ConnectorAdapter, ConnectorRequest } from '@lupin/connectors-sdk';
+import type { ChannelKind, ChannelSummary } from '@lupin/shared-contracts';
 import {
   composeReport,
   renderPlain,
@@ -9,7 +9,7 @@ import {
   renderTeams,
   renderTelegram,
   type ReportModel,
-} from '@automate/reporting';
+} from '@lupin/reporting';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 import { channelWithSecret, loadReport } from './notification-service.js';
 

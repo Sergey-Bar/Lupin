@@ -19,7 +19,7 @@ The root workspace contains the authoritative platform, while the ignored nested
 - Treat the root pnpm/Turborepo workspace as the only buildable source. The nested `AutoMate` checkout is excluded from workspace discovery, dependency analysis, and deployment images.
 - Keep the Hono API as a modular monolith and place execution in separately startable `apps/worker` and `apps/runner` processes.
 - Use PostgreSQL as the durable queue and source of truth for runs, jobs, leases, events, and artifact metadata. Use a local filesystem adapter for artifact bytes in this slice.
-- Use `@automate/shared-contracts` as the versioned wire-contract authority. Legacy reporter event names are decoded only at the compatibility adapter boundary.
+- Use `@lupin/shared-contracts` as the versioned wire-contract authority. Legacy reporter event names are decoded only at the compatibility adapter boundary.
 - Represent execution phase separately from quality outcome. Infrastructure, configuration, cancellation, and timeout states must not be counted as product test failures.
 - Register Playwright as the reference execution integration only after its live event and evidence path is verified. JUnit and Playwright JSON imports are ingestion integrations. Other domains remain catalogued and not configured.
 - Keep the existing single-admin installation API-key model for this slice. Runner registration and short-lived runner credentials use a separate registration secret; reporter credentials remain separate.

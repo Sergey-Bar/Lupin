@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CLIENT_CIDRS } from '@automate/config';
+import { DEFAULT_CLIENT_CIDRS } from '@lupin/config';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { createClientAllowlist } from './client-allowlist.js';
 import { createOriginCheck } from './origin-check.js';

@@ -2,9 +2,9 @@ import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { AGENT_CONFIG_TOOL } from '@automate/projects';
-import { MAX_AGENT_CONFIG_FILE_BYTES, McpServerListSchema } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import { AGENT_CONFIG_TOOL } from '@lupin/projects';
+import { MAX_AGENT_CONFIG_FILE_BYTES, McpServerListSchema } from '@lupin/shared-contracts';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import { agentProject } from '../test-support/agent-fixtures.js';
 import {

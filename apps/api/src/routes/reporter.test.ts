@@ -5,9 +5,9 @@ import {
   LEGACY_FLAT_V1_CONTRACT_ID,
   REPORTER_EVENT_VERSION,
   RUN_CONTRACT_VERSION,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createReporterRoutes, adaptLegacyEvent, type ReporterRouteOptions } from './reporter.js';
-import { junitXmlAdapter } from '@automate/reporter';
+import { junitXmlAdapter } from '@lupin/reporter';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
 import { DEFAULT_WORKSPACE_ID } from '../repositories/run-repository.js';
 import { ReporterIngestionService } from '../services/reporter-ingestion.js';

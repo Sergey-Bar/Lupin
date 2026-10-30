@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { sql } from 'drizzle-orm';
-import { createDbResources } from '@automate/db';
-import type { Profile } from '@automate/config';
+import { createDbResources } from '@lupin/db';
+import type { Profile } from '@lupin/config';
 import { AGENT_DOMAINS } from './agent-registry.js';
 import { PROMETHEUS_CONTENT_TYPE, collect, renderExposition } from '../observability/metrics.js';
 

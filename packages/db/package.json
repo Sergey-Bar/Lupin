@@ -1,5 +1,5 @@
 {
-  "name": "@automate/db",
+  "name": "@lupin/db",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",

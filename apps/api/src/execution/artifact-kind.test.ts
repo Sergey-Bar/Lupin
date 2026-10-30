@@ -1,4 +1,4 @@
-import { ARTIFACT_KINDS } from '@automate/db';
+import { ARTIFACT_KINDS } from '@lupin/db';
 import { describe, expect, it } from 'vitest';
 import { normalizeArtifactKind } from './artifact-kind.js';
 

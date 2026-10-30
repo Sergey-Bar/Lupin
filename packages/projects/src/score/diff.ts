@@ -1,4 +1,4 @@
-import { ScoreDeltaSchema, type QaScore, type ScoreDelta } from '@automate/shared-contracts';
+import { ScoreDeltaSchema, type QaScore, type ScoreDelta } from '@lupin/shared-contracts';
 
 /**
  * The provenance diff — **what moved, and what moved it**.

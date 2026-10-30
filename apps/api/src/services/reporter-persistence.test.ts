@@ -19,7 +19,7 @@ import { DEFAULT_WORKSPACE_ID } from '../repositories/run-repository.js';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
 import { DrizzleRunRepository } from '../repositories/drizzle-run-repository.js';
 import type { RunRecord, TestRecord } from '../repositories/run-repository.js';

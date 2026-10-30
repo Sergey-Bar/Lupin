@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import type { AgentRuntimeReport, ProjectEvals } from '@automate/shared-contracts';
+import type { AgentRuntimeReport, ProjectEvals } from '@lupin/shared-contracts';
 import type { AgentsClient } from '../lib/agents-client.js';
 import {
   makeDatasets,

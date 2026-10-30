@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Activity, LayoutGrid, ListChecks, Network, cn } from '@automate/ui';
+import { Activity, LayoutGrid, ListChecks, Network, cn } from '@lupin/ui';
 import { SECTIONS, routeFor, sectionOf, tabsOf, type SectionId } from '../route-manifest.js';
 import { ThemeToggle } from './ThemeToggle.js';
 

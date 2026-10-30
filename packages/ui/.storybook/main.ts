@@ -6,7 +6,7 @@ import type { StorybookConfig } from '@storybook/react-vite';
  *
  * These files were missing. `packages/ui/package.json` has carried `storybook` and
  * `storybook:build` scripts and four Storybook dependencies for as long as it has
- * had stories, so `pnpm --filter @automate/ui storybook` resolved a binary that then
+ * had stories, so `pnpm --filter @lupin/ui storybook` resolved a binary that then
  * failed with "no configuration files found" — and twenty-nine component stories
  * were unreachable. The failure mode is the repository's own: a declared capability
  * with nothing behind it.

@@ -20,7 +20,7 @@ description: >-
   Optionally it also sends the repository's agent instruction and MCP configuration files
   (`agent-config: 'true'`), and records a deployment through the delivery push door
   (`deployment-environment`). The same four calls are the `automate` CLI in
-  `tools/automate-cli` for a pipeline that is not GitHub Actions.
+  `tools/lupin-cli` for a pipeline that is not GitHub Actions.
 
 inputs:
   url:
@@ -88,7 +88,7 @@ runs:
         host="${host,,}"
         if [ "$scheme" = "https" ]; then exit 0; fi
         # Plain http only to a loopback host: localhost, ::1, or a numeric 127.d.d.d with each
-        # part 0-255. `units.test.ts` in tools/automate-cli holds this pattern to the CLI's
+        # part 0-255. `units.test.ts` in tools/lupin-cli holds this pattern to the CLI's
         # isLoopbackHost, so it can never admit a host (127.evil.example) the CLI refuses.
         # loopback-pattern:begin
         octet='(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])'
@@ -158,9 +158,9 @@ runs:
         trap 'rm -f "$headers" "$files"' EXIT
         printf 'Authorization: Bearer %s\n' "$AUTOMATE_TOKEN" > "$headers"
         shopt -s nocasematch
-        # The agent-config scan's paths (AGENT_CONFIG_PATHS in @automate/projects), as bash
+        # The agent-config scan's paths (AGENT_CONFIG_PATHS in @lupin/projects), as bash
         # patterns. In [[ ]] a * also matches /, so **/X is X or */X; the server
-        # applies its own list again. tools/automate-cli/src/units.test.ts holds the two together.
+        # applies its own list again. tools/lupin-cli/src/units.test.ts holds the two together.
         # agent-config-patterns:begin
         patterns=(
           'AGENTS.md' '*/AGENTS.md' 'CLAUDE.md' '*/CLAUDE.md' 'CLAUDE.local.md' '*/CLAUDE.local.md'

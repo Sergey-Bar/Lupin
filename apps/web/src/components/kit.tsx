@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  ArrowDown,
-  ArrowUp,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Copy,
-  Minus,
-  cn,
-} from '@automate/ui';
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Copy, Minus, cn } from '@lupin/ui';
 import type { Verdict } from '../lib/insights.js';
 
 /**
@@ -383,7 +374,7 @@ export function Segmented<T extends string>({
 }
 
 /** A coloured dot, always beside a word that says the same thing. One copy, in the library. */
-export { StatusDot } from '@automate/ui';
+export { StatusDot } from '@lupin/ui';
 
 /** A loading or failed state that keeps the page's shape rather than collapsing it. */
 export function Quiet({

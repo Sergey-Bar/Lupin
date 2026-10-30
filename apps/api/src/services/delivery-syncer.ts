@@ -7,9 +7,9 @@ import {
   pullRequests,
   type DeliverySourceRow,
   type DeliverySyncRow,
-} from '@automate/db';
-import type { ConnectorAdapter } from '@automate/connectors-sdk';
-import { DeliveryStreamSchema } from '@automate/shared-contracts';
+} from '@lupin/db';
+import type { ConnectorAdapter } from '@lupin/connectors-sdk';
+import { DeliveryStreamSchema } from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import { inChunksOf, withinBound } from './bounded-list.js';
 import { readGitToken } from './git-credential-service.js';
@@ -45,7 +45,7 @@ import {
   attributionVersionOf,
   classifyPullRequest,
 } from './ai-code-attribution.js';
-import type { AttributionOptions } from '@automate/reporting';
+import type { AttributionOptions } from '@lupin/reporting';
 
 /**
  * Runs the delivery syncs the worker, an operator or a webhook queued.

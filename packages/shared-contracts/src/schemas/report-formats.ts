@@ -26,7 +26,7 @@ import { z } from 'zod/v4';
  *
  * It owns the **vocabulary**: the canonical id, the producer a result is attributed to,
  * the document encoding, the spellings callers use, and whether the format is one a
- * project scan can detect. It does **not** own parsing — `@automate/reporter` owns the
+ * project scan can detect. It does **not** own parsing — `@lupin/reporter` owns the
  * adapters and maps an id onto one. The dependency runs leaf-ward for that reason: this
  * package is imported by the reporter, not the other way round.
  */

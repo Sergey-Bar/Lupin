@@ -79,14 +79,14 @@ if (databaseUrl === '') {
 }
 
 rmSync(readyFile, { force: true });
-run('apply migrations', ['--filter', '@automate/db', 'db:migrate']);
+run('apply migrations', ['--filter', '@lupin/db', 'db:migrate']);
 
 // The key the scenario sends as a bearer token. The load profile has to
 // authenticate the way a real reporter does, or it measures the 401 path and
 // calls it a fast endpoint.
 const api = spawn(
   'pnpm',
-  ['--filter', '@automate/api', 'exec', 'tsx', '--import', './src/instrument.ts', 'src/index.ts'],
+  ['--filter', '@lupin/api', 'exec', 'tsx', '--import', './src/instrument.ts', 'src/index.ts'],
   {
     cwd: root,
     stdio: 'inherit',

@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { access, copyFile, readFile, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
-import { junitXmlAdapter } from '@automate/reporter';
-import { ApiRunInputSchema } from '@automate/shared-contracts';
+import { junitXmlAdapter } from '@lupin/reporter';
+import { ApiRunInputSchema } from '@lupin/shared-contracts';
 import {
   RunnerConfigurationError,
   type ExecutionArtifact,
@@ -54,7 +54,7 @@ export interface ApiExecutionOptions {
  *
  * `bru` exits 0 when every request, assertion and test passed and 1 when one did not; the
  * delegate maps that to `passed` / `failed`, and a clean exit with no report is
- * `infra_failed`. The report is then read by `@automate/reporter`'s JUnit adapter and turned
+ * `infra_failed`. The report is then read by `@lupin/reporter`'s JUnit adapter and turned
  * into the `test.started` / `test.completed` events a Playwright run emits, which is what the
  * rest of the pipeline already projects into tests. An unreadable report is `infra_failed`:
  * the run asserted something nobody can read.

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { MAX_HEALTH_REPORT_BYTES } from '@automate/reporter';
-import { ProjectEvalsSchema, EvalRunDetailSchema } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import { MAX_HEALTH_REPORT_BYTES } from '@lupin/reporter';
+import { ProjectEvalsSchema, EvalRunDetailSchema } from '@lupin/shared-contracts';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import { agentProject, encode, evalRun } from '../test-support/agent-fixtures.js';
 import {

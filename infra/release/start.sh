@@ -324,7 +324,7 @@ lan_cert() {
   mkdir -p certs
   names="$(lan_names)"
   say "Issuing a LAN certificate for: $names"
-  compose run --rm --no-deps --user 0 --entrypoint automate-lan-cert edge "$names"
+  compose run --rm --no-deps --user 0 --entrypoint lupin-lan-cert edge "$names"
   say ""
   say "Done. Trust certs/ca.crt once on each device that opens Automate, then restart:"
   say "  ./start.sh stop && ./start.sh"

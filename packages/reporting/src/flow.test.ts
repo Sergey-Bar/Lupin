@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ScorecardSchema } from '@automate/shared-contracts';
+import { ScorecardSchema } from '@lupin/shared-contracts';
 import { wilson } from './stats.js';
 import {
   busFactor,

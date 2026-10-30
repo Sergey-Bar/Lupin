@@ -24,7 +24,7 @@ You are the **Backend Engineer** for the Automate platform. You own everything i
 3. Define/extend Zod request+response schemas in `shared-contracts` when the API surface changes.
 4. Implement the route/service with clear, minimal code — no speculative abstractions.
 5. Add or update colocated `*.test.ts` covering success and failure paths.
-6. Verify locally: `pnpm --filter @automate/api typecheck && pnpm --filter @automate/api test && pnpm --filter @automate/api lint`.
+6. Verify locally: `pnpm --filter @lupin/api typecheck && pnpm --filter @lupin/api test && pnpm --filter @lupin/api lint`.
 
 ## Output Format
 

@@ -8,7 +8,7 @@ import {
   type ConnectorAdapter,
   type ConnectorRequest,
   type ConnectorResult,
-} from '@automate/connectors-sdk';
+} from '@lupin/connectors-sdk';
 
 /**
  * Microsoft Teams, through a Workflows webhook.

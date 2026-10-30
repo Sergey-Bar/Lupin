@@ -635,7 +635,7 @@ export function tierRegisterProblems(manifest, rootScripts) {
  * The argv index of the token a `pnpm` invocation is really about.
  *
  * Skips flags, and — crucially — the package selectors that follow
- * `pnpm --filter`. `pnpm --filter @automate/worker test` names a package script,
+ * `pnpm --filter`. `pnpm --filter @lupin/worker test` names a package script,
  * not a root one, and reading `test` as a root script would report a missing
  * script that does not exist.
  *
@@ -654,7 +654,7 @@ function scriptArgvIndex(argv, from) {
         // ended and the line names no root script at all.
         //
         // The loop used to run to the next *flag* only, so
-        // `pnpm --filter @automate/unified-web exec vite --host 127.0.0.1` swallowed
+        // `pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1` swallowed
         // `exec` and `vite` as selectors, walked past `--host`, and reported the
         // audit as running a root script called `127.0.0.1`. `run` and `run-script`
         // are excluded because `pnpm --filter <pkg> run <script>` is a *package*

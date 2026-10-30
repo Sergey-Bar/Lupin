@@ -12,7 +12,7 @@ import {
   type EvalRunDetail,
   type McpServerList,
   type ProjectEvals,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createJsonTransport, projectPath, queryString } from './json-transport.js';
 
 /**

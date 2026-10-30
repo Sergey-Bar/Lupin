@@ -43,11 +43,11 @@ measuring nothing while printing a number.
 These were proposed and refused. Recording the refusal is the point: the next
 person to have the same idea should find the reasoning rather than repeat it.
 
-| Glob                                            | Where it was proposed                        | Why it was refused                                                                                                                                                 |
-| ----------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/**/index.ts`                               | `packages/shared-contracts/vitest.config.ts` | Contradicted the stated policy in `.config/vitest.shared.ts`, and the config is now on `standardCoverage` like every other package. `index.ts` is measured.        |
-| `src/routeTree.gen.ts`                          | `apps/web/vitest.config.ts`                  | The file does not exist. Excluding a path that is not there is indistinguishable from excluding one that is, which is how a real exclusion gets lost in the noise. |
-| The 19 `@automate/*#test` `outputs: []` entries | `turbo.json`                                 | These are not coverage exclusions, they are cache declarations, and they cancelled the `coverage/**` output the ratchet reads. Removed.                            |
+| Glob                                         | Where it was proposed                        | Why it was refused                                                                                                                                                 |
+| -------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/**/index.ts`                            | `packages/shared-contracts/vitest.config.ts` | Contradicted the stated policy in `.config/vitest.shared.ts`, and the config is now on `standardCoverage` like every other package. `index.ts` is measured.        |
+| `src/routeTree.gen.ts`                       | `apps/web/vitest.config.ts`                  | The file does not exist. Excluding a path that is not there is indistinguishable from excluding one that is, which is how a real exclusion gets lost in the noise. |
+| The 19 `@lupin/*#test` `outputs: []` entries | `turbo.json`                                 | These are not coverage exclusions, they are cache declarations, and they cancelled the `coverage/**` output the ratchet reads. Removed.                            |
 
 ## Adding a row
 

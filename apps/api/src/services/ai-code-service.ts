@@ -7,7 +7,7 @@ import {
   pullRequestGateFindings,
   pullRequests,
   type PullRequestRow,
-} from '@automate/db';
+} from '@lupin/db';
 import {
   AGENT_SIGNATURES,
   aiCodeScorecard,
@@ -15,7 +15,7 @@ import {
   evaluateAiGovernance,
   type AiOutcomeChange,
   type AttributionOptions,
-} from '@automate/reporting';
+} from '@lupin/reporting';
 import type {
   AiAttribution,
   AiCodePullRequestList,
@@ -24,7 +24,7 @@ import type {
   DimensionMetric,
   PortfolioAiCode,
   Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import {
   attributionOptionsOf,
   attributionVersionOf,

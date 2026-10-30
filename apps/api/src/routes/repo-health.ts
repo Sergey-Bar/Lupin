@@ -9,9 +9,9 @@ import {
   isUploadReportFormat,
   SupplyChainPolicySchema,
   TriageFindingBodySchema,
-} from '@automate/shared-contracts';
-import { MAX_HEALTH_REPORT_BYTES } from '@automate/reporter';
-import type { ConnectorAdapter } from '@automate/connectors-sdk';
+} from '@lupin/shared-contracts';
+import { MAX_HEALTH_REPORT_BYTES } from '@lupin/reporter';
+import type { ConnectorAdapter } from '@lupin/connectors-sdk';
 import {
   AlertSettingsSchema,
   githubRepository,

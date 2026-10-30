@@ -1,5 +1,5 @@
-import type { AppendOutboxEvent, OutboxEvent } from '@automate/db';
-import { EVENT_VERSION, RUN_UPDATED_EVENT_TYPE } from '@automate/shared-contracts';
+import type { AppendOutboxEvent, OutboxEvent } from '@lupin/db';
+import { EVENT_VERSION, RUN_UPDATED_EVENT_TYPE } from '@lupin/shared-contracts';
 import type { RealtimeBus, RealtimeBusEvent, RunUpdatedPayload } from './realtime-bus.js';
 import { sanitizeOutboxNested } from '../infrastructure/outbox-sanitizer.js';
 

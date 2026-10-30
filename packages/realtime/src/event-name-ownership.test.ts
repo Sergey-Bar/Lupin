@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 /**
  * One declaration per canonical name.
  *
- * `@automate/shared-contracts` exported a reporter-event schema named
+ * `@lupin/shared-contracts` exported a reporter-event schema named
  * `ReporterEventSchema`, and `packages/realtime` exported a *different* one under
  * the same bare name: one an envelope with `contractVersion`/`eventId`/
  * `occurredAt` and a `data` payload, the other flat with colon-separated event

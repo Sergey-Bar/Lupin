@@ -1,4 +1,4 @@
-import type { CanonicalRealtimeEnvelope } from '@automate/shared-contracts';
+import type { CanonicalRealtimeEnvelope } from '@lupin/shared-contracts';
 
 export interface RealtimeEventInput {
   eventType: string;

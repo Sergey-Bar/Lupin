@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@automate/ui';
+import { cn } from '@lupin/ui';
 import type { TrendBucket } from '../lib/qa.js';
 import { formatDuration, formatPercent, orDash, shortDate } from '../lib/insights.js';
 

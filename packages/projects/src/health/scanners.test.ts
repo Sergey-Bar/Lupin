@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HEALTH_REPORT_FORMATS } from '@automate/shared-contracts';
+import { HEALTH_REPORT_FORMATS } from '@lupin/shared-contracts';
 import { HEALTH_OUTPUT_PREFIX, HEALTH_SCANNERS, healthScannersFor } from './scanners.js';
 
 const ids = (list: readonly { id: string }[]) => list.map((scanner) => scanner.id);

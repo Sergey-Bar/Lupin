@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DrizzleQualityGateStore, DrizzleQuarantineStore } from './drizzle-stores.js';
 import { ResolveQuarantineBodySchema } from './schemas.js';
 import { DEFAULT_WORKSPACE_ID } from '../../repositories/run-repository.js';
@@ -49,7 +49,7 @@ function migrationSql(): string {
 }
 
 /**
- * Fails when `@automate/db` has not been rebuilt, because the schema this file
+ * Fails when `@lupin/db` has not been rebuilt, because the schema this file
  * compares against would otherwise be whatever was last built — a drift test that
  * silently checks yesterday passes without checking anything.
  */

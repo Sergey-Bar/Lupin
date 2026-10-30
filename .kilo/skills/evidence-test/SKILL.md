@@ -75,7 +75,7 @@ Four tables each needed a tenancy migration for exactly this reason, and the mig
 Run one file scoped:
 
 ```bash
-pnpm --filter @automate/api exec vitest run src/routes/execution.test.ts
+pnpm --filter @lupin/api exec vitest run src/routes/execution.test.ts
 node --test scripts/lib/findings-ledger.test.mjs
 npx playwright test e2e/your-file.spec.ts
 ```

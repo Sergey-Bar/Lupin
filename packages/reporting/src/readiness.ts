@@ -1,4 +1,4 @@
-import type { DigestItem, ReadinessReason, ReleaseReadinessCard } from '@automate/shared-contracts';
+import type { DigestItem, ReadinessReason, ReleaseReadinessCard } from '@lupin/shared-contracts';
 
 /**
  * Release readiness: one go / caution / no-go answer per project, and every reason for it.

@@ -41,7 +41,7 @@ $env:NODE_ENV='development'
 $env:AUTOMATE_API_KEY='local-installation-key-32-characters'
 $env:COOKIE_SECRET='local-cookie-secret-32-characters-long'
 $env:REPORTER_SECRET='local-reporter-secret-32-characters'
-pnpm --filter @automate/api dev
+pnpm --filter @lupin/api dev
 ```
 
 **Terminal 1 — API (macOS/Linux)**
@@ -51,7 +51,7 @@ NODE_ENV=development \
 AUTOMATE_API_KEY=local-installation-key-32-characters \
 COOKIE_SECRET=local-cookie-secret-32-characters-long \
 REPORTER_SECRET=local-reporter-secret-32-characters \
-pnpm --filter @automate/api dev
+pnpm --filter @lupin/api dev
 ```
 
 The API listens on `127.0.0.1:3000` by default. Set `PORT` in **both** terminals if
@@ -62,7 +62,7 @@ nowhere with no error.
 **Terminal 2 — Web**
 
 ```bash
-pnpm --filter @automate/unified-web dev
+pnpm --filter @lupin/unified-web dev
 ```
 
 Then open `http://localhost:5173` and sign in with

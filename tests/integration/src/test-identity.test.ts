@@ -1,6 +1,6 @@
 import { PGlite } from '@electric-sql/pglite';
 import { afterEach, describe, expect, it } from 'vitest';
-import { testIdentity } from '@automate/shared-contracts';
+import { testIdentity } from '@lupin/shared-contracts';
 import { readMigrations, type Migration } from './migrations.js';
 
 /**

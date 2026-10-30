@@ -9,7 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { createQaClient, type QaClient } from '../../lib/qa-client.js';
 import type { QaScore } from '../../lib/qa.js';

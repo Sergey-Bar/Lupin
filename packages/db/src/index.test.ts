@@ -10,7 +10,7 @@ import { DrizzleOutboxRepository } from './repositories/outbox-repository.js';
 import { DrizzleSessionStore } from './repositories/session-repository.js';
 import * as schema from './schema/index.js';
 
-describe('@automate/db package entry', () => {
+describe('@lupin/db package entry', () => {
   it('re-exports the client factories and repositories as the same bindings, not copies', () => {
     expect(entry.createDbClient).toBe(createDbClient);
     expect(entry.createDbResources).toBe(createDbResources);

@@ -422,7 +422,7 @@ for (const [kind, shell] of /** @type {const} */ ([
           '--user',
           '0',
           '--entrypoint',
-          'automate-lan-cert',
+          'lupin-lan-cert',
           'edge',
           issued.at(-1) ?? '',
         ]);

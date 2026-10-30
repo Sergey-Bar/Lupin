@@ -41,7 +41,7 @@ import {
   type Scorecard,
   type ScorecardMetric,
   type SupplyChainPolicyRecord,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import type { EvalDatasetList } from './lib/agents-client.js';
 import type { HealthClient } from './lib/health-client.js';
 import type { ApiClient, QuarantineEntry, Run } from './lib/api.js';

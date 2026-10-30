@@ -6,7 +6,7 @@ import {
   suggestQuarantine,
   type FailureInput,
   type FlakeObservation,
-} from '@automate/reporting';
+} from '@lupin/reporting';
 import {
   storedTestIdentity,
   type BranchPassRate,
@@ -16,7 +16,7 @@ import {
   type QaInsights,
   type SlowTest,
   type TriageLabel,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { labelClusters } from '../services/triage-label-service.js';
 import { dayKey, passRate, readSince, startOfDay } from './trend.js';
 import type { ExecutionRun, ExecutionStore, ExecutionTestResult } from './types.js';

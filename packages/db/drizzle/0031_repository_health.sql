@@ -1,7 +1,7 @@
 -- Repository health: the scanner reports, the findings carried across them, and the grade's
 -- history.
 --
--- **No grade is stored as an authority.** `grade()` in `@automate/projects` computes it live
+-- **No grade is stored as an authority.** `grade()` in `@lupin/projects` computes it live
 -- from the open findings and the latest metrics; `health_snapshots` is the trend line's past
 -- points and nothing reads it to decide anything — the rule `scan_snapshots` (0025) follows.
 --

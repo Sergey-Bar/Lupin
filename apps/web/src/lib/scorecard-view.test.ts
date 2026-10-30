@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { METRIC_UNITS, type MetricUnit } from '@automate/shared-contracts';
+import { METRIC_UNITS, type MetricUnit } from '@lupin/shared-contracts';
 import {
   formatMetricChange,
   formatMetricValue,

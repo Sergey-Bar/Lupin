@@ -5,7 +5,7 @@ import type {
   HealthFindingsPage,
   ProjectHealth,
   SbomComponentsPage,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import type { FindingQuery, HealthClient } from '../lib/health-client.js';
 import type { SupplyChainClient } from '../lib/supply-chain-client.js';
 import {

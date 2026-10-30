@@ -7,7 +7,7 @@ import {
   UnknownCommandError,
   MissingArgumentError,
 } from './command-line.js';
-import type { TuiView } from '@automate/shared-contracts';
+import type { TuiView } from '@lupin/shared-contracts';
 
 /**
  * The entry point.

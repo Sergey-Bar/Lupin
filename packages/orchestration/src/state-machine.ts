@@ -1,4 +1,4 @@
-import type { JobState } from '@automate/shared-contracts';
+import type { JobState } from '@lupin/shared-contracts';
 
 const transitions: Record<JobState, readonly JobState[]> = {
   queued: ['leased', 'cancelled', 'expired'],

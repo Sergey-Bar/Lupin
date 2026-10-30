@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { createChatRoutes, MAX_CHAT_BODY_BYTES } from './chat.js';
-import type { AiGateway, CompletionChunk } from '@automate/automation';
+import type { AiGateway, CompletionChunk } from '@lupin/automation';
 
 /**
  * The chat route is the only consumer `packages/automation` has.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ScorecardSchema } from '@automate/shared-contracts';
+import { ScorecardSchema } from '@lupin/shared-contracts';
 import { supplyChainScorecard, type SupplyChainScorecardInput } from './supply-chain-scorecard.js';
 
 const NOW = new Date('2026-10-26T12:00:00.000Z');

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseConfig } from '@automate/config';
+import { parseConfig } from '@lupin/config';
 import { bootstrapDisplayPrefix } from './bootstrap-display-prefix.js';
 
 /**

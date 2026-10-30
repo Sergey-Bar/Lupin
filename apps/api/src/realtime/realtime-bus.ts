@@ -17,10 +17,10 @@
  */
 
 // ---------------------------------------------------------------------------
-// Event payload type (mirrors RunUpdatedEventSchema from @automate/realtime)
+// Event payload type (mirrors RunUpdatedEventSchema from @lupin/realtime)
 // ---------------------------------------------------------------------------
 
-import { RUN_UPDATED_EVENT_TYPE, type RunEventType } from '@automate/shared-contracts';
+import { RUN_UPDATED_EVENT_TYPE, type RunEventType } from '@lupin/shared-contracts';
 
 export interface RunUpdatedPayload {
   type: typeof RUN_UPDATED_EVENT_TYPE;

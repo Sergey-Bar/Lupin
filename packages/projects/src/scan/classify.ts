@@ -1,4 +1,4 @@
-import type { ToolKind } from '@automate/shared-contracts';
+import type { ToolKind } from '@lupin/shared-contracts';
 
 /**
  * Which kind of tool a script is, read from its name and then its body.

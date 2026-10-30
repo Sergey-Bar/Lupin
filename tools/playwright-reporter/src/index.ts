@@ -15,11 +15,11 @@ import { Transport } from './transport.js';
 export type * from './playwright-types.js';
 
 /**
- * `@automate/playwright-reporter` — a Playwright run, streamed into AutoMate as it happens.
+ * `@lupin/playwright-reporter` — a Playwright run, streamed into AutoMate as it happens.
  *
  * ```ts
  * // playwright.config.ts
- * reporter: [['list'], ['@automate/playwright-reporter']],
+ * reporter: [['list'], ['@lupin/playwright-reporter']],
  * ```
  *
  * with `AUTOMATE_URL` and `AUTOMATE_REPORTER_SECRET` in the environment. Each test lands on
@@ -34,7 +34,7 @@ export type * from './playwright-types.js';
  * Playwright's JSON reporter writes, so a test's history does not split between this
  * reporter and an uploaded report.
  *
- * **For the CI gate, use `automate test`.** It uploads the finished report against a
+ * **For the CI gate, use `lupin test`.** It uploads the finished report against a
  * project and answers with the verdict, which a streaming reporter cannot: the gate is a
  * statement about the whole run, and the process exits before a reporter could ask for it.
  * Sending one run through both doors records it twice.

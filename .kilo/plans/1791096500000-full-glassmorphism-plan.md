@@ -220,7 +220,7 @@ hand-maintained. This also discharges `W11.4` conditions (a) and (b).
   trees, and a new list asserting **no `backdrop-*` class exists that no component declares**, so a
   blur radius cannot be invented per component.
 
-**Gate:** `pnpm --filter @automate/ui test`, token-resolution green in both themes.
+**Gate:** `pnpm --filter @lupin/ui test`, token-resolution green in both themes.
 
 ### G3 — Open the lint, replace the review rule
 

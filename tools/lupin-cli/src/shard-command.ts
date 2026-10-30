@@ -8,13 +8,13 @@ import { send } from './http.js';
 import { projectUrl } from './target.js';
 
 /**
- * `automate shard --total N --index i [--as-of <time>] -- <files…>` (or `--files-from <path>`)
+ * `lupin shard --total N --index i [--as-of <time>] -- <files…>` (or `--files-from <path>`)
  *
  * Prints the files shard `i` of `N` should run, one per line, balanced by how long each took
  * in the project's recent runs:
  *
  * ```sh
- * npx playwright test $(automate shard --total 4 --index 2 -- $(git ls-files 'e2e/*.spec.ts'))
+ * npx playwright test $(lupin shard --total 4 --index 2 -- $(git ls-files 'e2e/*.spec.ts'))
  * ```
  *
  * **It never drops a file.** If the plan cannot be had — the server is down, refuses, answers
@@ -118,7 +118,7 @@ async function filesOf(
     ...new Set([...listed, ...read].map((file) => file.trim()).filter((file) => file !== '')),
   ];
   if (files.length === 0) {
-    throw usage('Name the files to plan: automate shard … -- <files…>, or --files-from <path>.');
+    throw usage('Name the files to plan: lupin shard … -- <files…>, or --files-from <path>.');
   }
   return files;
 }

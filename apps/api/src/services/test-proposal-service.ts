@@ -1,7 +1,7 @@
 import { and, desc, eq, notInArray } from 'drizzle-orm';
-import { healthFindings, testProposals, type TestProposalRow } from '@automate/db';
-import type { AiGateway, CompletionInput } from '@automate/automation';
-import type { TestProposal, TestProposalBody } from '@automate/shared-contracts';
+import { healthFindings, testProposals, type TestProposalRow } from '@lupin/db';
+import type { AiGateway, CompletionInput } from '@lupin/automation';
+import type { TestProposal, TestProposalBody } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { diffCoverageStatus } from './diff-coverage-service.js';
 import { lineRanges } from './health-integrations.js';

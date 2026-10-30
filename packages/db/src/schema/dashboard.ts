@@ -301,7 +301,7 @@ export const runs = pgTable(
     metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
     // The contract's five values, from the shared vocabulary rather than a
     // hand-written list here. This used to be `['passed','failed','skipped']`, which
-    // disagreed with `GateStatusSchema` in `@automate/shared-contracts` in both
+    // disagreed with `GateStatusSchema` in `@lupin/shared-contracts` in both
     // directions: it accepted `skipped`, which the contract does not define, and it
     // rejected `warning`, `unknown` and `not_evaluated`, which it does. The two lists
     // could not be compared by the compiler — `execution.ts` imports from this module,
@@ -433,7 +433,7 @@ export const tests = pgTable(
     file: text('file').notNull(),
     line: integer('line'),
     column: integer('column'),
-    // The test's identity across runs — `testIdentity` in `@automate/shared-contracts`.
+    // The test's identity across runs — `testIdentity` in `@lupin/shared-contracts`.
     // NOT NULL since 0045, which backfilled it and fills it on insert for a writer that
     // does not send it.
     stableId: text('stable_id').notNull(),
@@ -747,7 +747,7 @@ export const fingerprintCategories = pgTable(
     workspaceId: text('workspace_id')
       .notNull()
       .references(() => workspaces.id, { onDelete: 'restrict' }),
-    /** `failureSignature` from `@automate/reporting`. */
+    /** `failureSignature` from `@lupin/reporting`. */
     fingerprint: text('fingerprint').notNull(),
     categoryId: text('category_id')
       .notNull()

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { hashCredential } from '@automate/auth';
+import { hashCredential } from '@lupin/auth';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import {
   syntheticCookieSecret,

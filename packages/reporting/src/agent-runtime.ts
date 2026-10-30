@@ -1,4 +1,4 @@
-import type { Scorecard, ScorecardMetric } from '@automate/shared-contracts';
+import type { Scorecard, ScorecardMetric } from '@lupin/shared-contracts';
 import { percentile, wilson, type Interval } from './stats.js';
 
 /**
@@ -6,7 +6,7 @@ import { percentile, wilson, type Interval } from './stats.js';
  *
  * ## The input is structural
  *
- * The span shape is stated here rather than imported from `@automate/reporter`, so the
+ * The span shape is stated here rather than imported from `@lupin/reporter`, so the
  * analytics depend on the fields they read and not on the adapter that produced them. The
  * OTLP GenAI adapter's spans have this shape; so would any other producer's.
  *

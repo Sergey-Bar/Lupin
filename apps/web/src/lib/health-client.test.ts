@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HEALTH_DIMENSIONS } from '@automate/shared-contracts';
+import { HEALTH_DIMENSIONS } from '@lupin/shared-contracts';
 import { createHealthClient } from './health-client.js';
 import { QaApiError } from './qa-client.js';
 

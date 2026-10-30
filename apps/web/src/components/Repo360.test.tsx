@@ -8,7 +8,7 @@ import type {
   ProjectEvals,
   ProjectHealth,
   Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import type { AgentsClient } from '../lib/agents-client.js';
 import type { AiCodeClient } from '../lib/ai-code-client.js';
 import type { DeliveryClient } from '../lib/delivery-client.js';

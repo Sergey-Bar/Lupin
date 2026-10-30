@@ -13,7 +13,7 @@
  * would need, never a silent pass"*, because a gate that always passes is this
  * repository's existing disease. So there are three outcomes — `pass`, `fail`, `GAP` —
  * and a `GAP` names the artefact it needs. Five of the ten need the **built** HTML, which
- * does not exist until `pnpm --filter @automate/docs build` has run; on a host where it
+ * does not exist until `pnpm --filter @lupin/docs build` has run; on a host where it
  * does not, those five say so rather than reporting clean.
  *
  * **What the blocking set is, and what is not.** The roadmap's risk table also says
@@ -78,7 +78,7 @@ function sitePages() {
  * happened to be lying on the developer's disk — a stale build passes or fails on
  * yesterday's markup and nobody can tell. So the DOM checks run only when
  * `SITE_DOCTOR_BUILT=1` is set, which the docs workflow sets immediately after
- * `pnpm --filter @automate/docs build` and nobody sets by hand. Without it they report
+ * `pnpm --filter @lupin/docs build` and nobody sets by hand. Without it they report
  * `GAP` and name the build, which is the honest answer and the rule the roadmap's own
  * risk table gives: an unimplemented check reports `GAP` with what it would need, never
  * a silent pass.
@@ -639,7 +639,7 @@ function domGap(number, name, needs) {
     outcome: 'GAP',
     problems: [],
     note:
-      `needs \`${needs}\` — run \`pnpm --filter @automate/docs build\` first. A check that ` +
+      `needs \`${needs}\` — run \`pnpm --filter @lupin/docs build\` first. A check that ` +
       'cannot run reports GAP, never a pass.',
   };
 }

@@ -3,15 +3,15 @@ import { CliError, EXIT } from './errors.js';
 import { shard } from './shard-command.js';
 import { test } from './test-command.js';
 
-export const HELP = `automate — send CI evidence to an AutoMate install.
+export const HELP = `lupin — send CI evidence to a Lupin install.
 
 Usage:
-  automate upload --format <format> --file <path> [--branch <b>] [--commit <sha>] [--digest sha256:<hex>]
-  automate test --format junit|playwright-json --report <path> [--branch <b>] [--commit <sha>] -- <command…>
-  automate shard --total <n> --index <i> [--as-of <time>] (-- <files…> | --files-from <path>)
-  automate gate --branch <b> --commit <sha> [--pr <number>]
-  automate deploy --environment <name> --status success|failure [--sha <sha>] [--id <id>] [--url <url>]
-  automate agent-config [--branch <b>] [--commit <sha>] [--dir <path>]
+  lupin upload --format <format> --file <path> [--branch <b>] [--commit <sha>] [--digest sha256:<hex>]
+  lupin test --format junit|playwright-json --report <path> [--branch <b>] [--commit <sha>] -- <command…>
+  lupin shard --total <n> --index <i> [--as-of <time>] (-- <files…> | --files-from <path>)
+  lupin gate --branch <b> --commit <sha> [--pr <number>]
+  lupin deploy --environment <name> --status success|failure [--sha <sha>] [--id <id>] [--url <url>]
+  lupin agent-config [--branch <b>] [--commit <sha>] [--dir <path>]
 
 \`test\` runs the command, sends its report, and exits with the command's own code, or 0 when
 every failure is an approved quarantined test. The command runs without a shell; on Windows,

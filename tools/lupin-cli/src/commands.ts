@@ -39,7 +39,7 @@ export function target(io: Io, parsed: { values: Map<string, string> }): Target 
   return resolveTarget(io.env, parsed.values.get('project'));
 }
 
-/** `automate upload --format <f> --file <path> [--branch --commit --digest --source-root]` */
+/** `lupin upload --format <f> --file <path> [--branch --commit --digest --source-root]` */
 export async function upload(argv: readonly string[], io: Io): Promise<ExitCode> {
   const parsed = parseOptions(argv, {
     values: ['project', 'format', 'file', 'branch', 'commit', 'digest', 'source-root'],
@@ -80,7 +80,7 @@ interface GateAnswer {
   grade?: { letter?: string | null };
 }
 
-/** `automate gate --branch <b> --commit <sha> [--pr <n>]` — exits 1 when the gate fails. */
+/** `lupin gate --branch <b> --commit <sha> [--pr <n>]` — exits 1 when the gate fails. */
 export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
   const parsed = parseOptions(argv, { values: ['project', 'branch', 'commit', 'pr'] });
   const branch = branchOf(io, optional(parsed, 'branch'));
@@ -116,7 +116,7 @@ export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
   return answer.verdict === 'passed' ? EXIT.ok : EXIT.gateFailed;
 }
 
-/** `automate deploy --environment <e> --status success|failure [--sha --id --url --created-at --rollback --hotfix]` */
+/** `lupin deploy --environment <e> --status success|failure [--sha --id --url --created-at --rollback --hotfix]` */
 export async function deploy(argv: readonly string[], io: Io): Promise<ExitCode> {
   const parsed = parseOptions(argv, {
     values: ['project', 'environment', 'status', 'sha', 'id', 'url', 'created-at'],
@@ -153,7 +153,7 @@ export async function deploy(argv: readonly string[], io: Io): Promise<ExitCode>
   return EXIT.ok;
 }
 
-/** `automate agent-config [--branch --commit --dir]` — sends the agent files under the directory. */
+/** `lupin agent-config [--branch --commit --dir]` — sends the agent files under the directory. */
 export async function agentConfig(argv: readonly string[], io: Io): Promise<ExitCode> {
   const parsed = parseOptions(argv, { values: ['project', 'branch', 'commit', 'dir'] });
   const branch = branchOf(io, optional(parsed, 'branch'));

@@ -349,7 +349,7 @@ function New-LanCertificate {
   New-Item -ItemType Directory -Force -Path (Join-Path $PSScriptRoot 'certs') | Out-Null
   $names = Get-LanNames
   Write-Output "Issuing a LAN certificate for: $names"
-  Invoke-Compose run --rm --no-deps --user 0 --entrypoint automate-lan-cert edge $names
+  Invoke-Compose run --rm --no-deps --user 0 --entrypoint lupin-lan-cert edge $names
   Write-Output ''
   Write-Output 'Done. Trust certs\ca.crt once on each device that opens Automate, then restart:'
   Write-Output '  .\start.cmd stop; .\start.cmd'

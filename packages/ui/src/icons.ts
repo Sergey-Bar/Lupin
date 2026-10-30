@@ -2,7 +2,7 @@
  * The icon set, and why it is a list rather than a re-export.
  *
  * **The dependency has to live in exactly one package.** `lucide-react` is a
- * dependency of `@automate/ui` and not of `apps/web`, which pnpm's isolated
+ * dependency of `@lupin/ui` and not of `apps/web`, which pnpm's isolated
  * `node_modules` means an application component *cannot* import it — the first
  * version of `ThemeToggle` did exactly that and failed to resolve. Rather than add
  * a second dependency edge so a handful of files could draw a triangle, the icons

@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { configure } from '@testing-library/dom';
-import { QaScoreSchema } from '@automate/shared-contracts';
+import { QaScoreSchema } from '@lupin/shared-contracts';
 import { MemoryRouter } from './router.js';
 
 /**

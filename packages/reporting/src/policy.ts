@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { CanonicalRunResult as RunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult as RunResult } from '@lupin/shared-contracts';
 
 /**
  * How every canonical run status is classified.

@@ -2,7 +2,7 @@ import {
   ArtifactDescriptorSchema,
   NormalizedRunSchema,
   type NormalizedRun,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import type {
   ArtifactDescriptor,

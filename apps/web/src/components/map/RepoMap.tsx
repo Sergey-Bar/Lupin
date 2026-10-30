@@ -11,7 +11,7 @@ import {
   StatusDot,
   cn,
   type DotStatus,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { LAYOUT, layoutMap } from '../../lib/map-layout.js';
 import {
   traceOf,

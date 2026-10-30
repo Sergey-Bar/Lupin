@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { AnalyticsTrend, TrendBucket, TrendWindow } from '@automate/shared-contracts';
+import type { AnalyticsTrend, TrendBucket, TrendWindow } from '@lupin/shared-contracts';
 import { encodeRunCursor } from './run-paging.js';
 import type { ExecutionRun, ExecutionStore } from './types.js';
 

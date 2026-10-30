@@ -1,6 +1,6 @@
 import React from 'react';
-import { ArrowRight, StatusDot, cn } from '@automate/ui';
-import type { Scorecard, ScorecardMetric } from '@automate/shared-contracts';
+import { ArrowRight, StatusDot, cn } from '@lupin/ui';
+import type { Scorecard, ScorecardMetric } from '@lupin/shared-contracts';
 import {
   METRIC_STATUS_DOT,
   METRIC_STATUS_TONE,

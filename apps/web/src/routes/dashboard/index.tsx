@@ -14,7 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { LaunchRunForm, RecentRuns, ReleaseReadinessCard } from '../dashboard.js';
 import {

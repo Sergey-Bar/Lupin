@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import {
   DeliveryReportSchema,
   DeliverySourceSchema,
   DeliverySyncQueuedSchema,
   PortfolioDeliverySchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { uploaderGuard } from '../http/uploader.js';
 import type { CallerResolver } from '../http/roles.js';

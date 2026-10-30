@@ -1,5 +1,5 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import { isAddressAllowed } from '@automate/config';
+import { isAddressAllowed } from '@lupin/config';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 
 export interface ClientAllowlistOptions {

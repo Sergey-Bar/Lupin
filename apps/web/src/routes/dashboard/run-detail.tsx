@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Badge, Button, EmptyState, StatusDot } from '@automate/ui';
-import type { RunPhase } from '@automate/shared-contracts';
+import { Badge, Button, EmptyState, StatusDot } from '@lupin/ui';
+import type { RunPhase } from '@lupin/shared-contracts';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { useRunDetail } from '../../hooks/useDashboard.js';
 import { isRunActive } from '../../hooks/useRuns.js';

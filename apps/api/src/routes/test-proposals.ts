@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { TestProposalBodySchema } from '@automate/shared-contracts';
+import { TestProposalBodySchema } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { callerOf, requireRole, type CallerResolver } from '../http/roles.js';
 import { audit } from '../services/access-service.js';

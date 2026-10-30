@@ -17,4 +17,4 @@ export {
   type TuiCommandName,
   type TuiRow,
   type TuiView,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';

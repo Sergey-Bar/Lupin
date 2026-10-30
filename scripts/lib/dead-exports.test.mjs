@@ -63,7 +63,7 @@ test('the dead runner-sdk client is gone', () => {
   // `packages/runner-sdk/src/client.ts` targeted
   // `/api/v1/runner/v1/enroll` and `/sync`, which `apps/api/src/routes/runner.ts`
   // serves — so the two agreed on paper. But the runner binary uses its own client
-  // at `apps/runner/src/client.ts`, and every import of `@automate/runner-sdk` in
+  // at `apps/runner/src/client.ts`, and every import of `@lupin/runner-sdk` in
   // the workspace names only a `spool` symbol. So the file was compiled, shipped,
   // and never called, against routes a second and separate client also talks to.
   //

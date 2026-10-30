@@ -1,5 +1,5 @@
-import { CanonicalRunResultSchema, type CanonicalRunResult } from '@automate/shared-contracts';
-import { fingerprint } from '@automate/reporting';
+import { CanonicalRunResultSchema, type CanonicalRunResult } from '@lupin/shared-contracts';
+import { fingerprint } from '@lupin/reporting';
 
 export interface ReporterIngestionResult {
   status: 'accepted' | 'duplicate' | 'conflict';

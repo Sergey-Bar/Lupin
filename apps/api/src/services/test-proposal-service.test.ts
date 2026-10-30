@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
-import * as schema from '@automate/db';
-import { instrumentedGateway, type CompletionInput } from '@automate/automation';
+import * as schema from '@lupin/db';
+import { instrumentedGateway, type CompletionInput } from '@lupin/automation';
 import {
   TestProposalListSchema,
   TestProposalSchema,
   type TestProposalBody,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import type { CallerResolver } from '../http/roles.js';

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DrizzleExecutionStore } from './drizzle-execution-store.js';
 import { InMemoryExecutionStore } from './in-memory-execution-store.js';
 import { normalizeEventLimit } from './run-paging.js';

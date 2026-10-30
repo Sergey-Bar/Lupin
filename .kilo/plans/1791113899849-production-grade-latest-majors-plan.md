@@ -113,7 +113,7 @@ this phase, not a surprise in Phase 5.
 less than a day ago will not resolve — record the value and why.
 2.4 `pnpm audit` is GHSA-based in v11. If any `auditConfig.ignoreCves` exists, migrate to
 `ignoreGhsas`; `security:verify`'s `--audit-level=high` is unaffected.
-2.5 Prove the native build approval survived: `pnpm --filter @automate/migrate-cli test` must
+2.5 Prove the native build approval survived: `pnpm --filter @lupin/migrate-cli test` must
 actually open a `better-sqlite3` database (`tools/migrate-cli/src/catalog.ts:1`). A silently
 unbuilt native module fails at runtime, not at install.
 2.6 CI keeps the SHA-pinned `pnpm/action-setup`; confirm `cache: pnpm` still keys correctly under
@@ -215,7 +215,7 @@ proof. If `@effect/vitest` misbehaves, run those tests on Vitest and record the 
 `database-engineer`, `principal-architect`, `docs/architecture/unified-platform.md:35`, and the
 `.kilo/agent/` copies (the two trees are synced by hand).
 
-*Stop:* `pnpm --filter @automate/api test` green; `pnpm verify` green; no `effect` import outside
+*Stop:* `pnpm --filter @lupin/api test` green; `pnpm verify` green; no `effect` import outside
 `bootstrap/`.
 
 ### Phase 8 — Hono 4.13 and the two Hono CVEs
@@ -240,7 +240,7 @@ against the unfixed route first and watch it reach the handler and return 200.
 `packages/shared-contracts/src/openapi.ts`. If it does not, that is `RF-11`'s real blocker and it
 gets a row.
 
-*Stop:* `pnpm --filter @automate/api test` green with the 413 test; `pnpm security:verify` green.
+*Stop:* `pnpm --filter @lupin/api test` green with the 413 test; `pnpm security:verify` green.
 
 ### Phase 9 — PostgreSQL 16 → 18 *(after RF-5 clears — D6)*
 
@@ -327,7 +327,7 @@ pnpm verify                      # every phase
 pnpm deps:policy                 # Phase 1 onward
 pnpm lint --max-warnings=0       # Phase 3 onward
 pnpm typecheck                   # Phase 4 onward, both binaries
-pnpm --filter @automate/api test # Phase 7, 8
+pnpm --filter @lupin/api test # Phase 7, 8
 pnpm test:e2e                    # Phases 6, 9, 10   (real PostgreSQL, no E2E_ALLOW_IN_MEMORY)
 pnpm migrate:rehearse            # Phase 9, 10       (never-in-ci; on the installation)
 pnpm oci:build && pnpm oci:verify# Phase 10

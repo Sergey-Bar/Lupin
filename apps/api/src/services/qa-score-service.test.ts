@@ -7,8 +7,8 @@ import {
   projectRunRecord,
   projectTestResult,
 } from './qa-score-service.js';
-import type { CoverageReport } from '@automate/reporter';
-import { parseCoverage } from '@automate/reporter';
+import type { CoverageReport } from '@lupin/reporter';
+import { parseCoverage } from '@lupin/reporter';
 
 /** The window every assertion in this file describes. */
 const NOW = '2026-10-02T00:00:00.000Z';
@@ -282,10 +282,10 @@ describe('a real score over a real database, with a coverage document attached',
     const { fileURLToPath } = await import('node:url');
     const { PGlite } = await import('@electric-sql/pglite');
     const { drizzle } = await import('drizzle-orm/pglite');
-    const schema = await import('@automate/db');
-    const { literalView } = await import('@automate/projects');
+    const schema = await import('@lupin/db');
+    const { literalView } = await import('@lupin/projects');
     const { createProjectsRoutes } = await import('../routes/projects.js');
-    const { QaScoreSchema } = await import('@automate/shared-contracts');
+    const { QaScoreSchema } = await import('@lupin/shared-contracts');
 
     const drizzleDirectory = resolve(
       dirname(fileURLToPath(import.meta.url)),
@@ -366,10 +366,10 @@ describe('a real score over a real database, with a coverage document attached',
     const { fileURLToPath } = await import('node:url');
     const { PGlite } = await import('@electric-sql/pglite');
     const { drizzle } = await import('drizzle-orm/pglite');
-    const schema = await import('@automate/db');
-    const { literalView } = await import('@automate/projects');
+    const schema = await import('@lupin/db');
+    const { literalView } = await import('@lupin/projects');
     const { createProjectsRoutes } = await import('../routes/projects.js');
-    const { QaScoreSchema } = await import('@automate/shared-contracts');
+    const { QaScoreSchema } = await import('@lupin/shared-contracts');
 
     const drizzleDirectory = resolve(
       dirname(fileURLToPath(import.meta.url)),

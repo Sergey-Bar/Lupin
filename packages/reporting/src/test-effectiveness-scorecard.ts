@@ -1,4 +1,4 @@
-import type { Scorecard } from '@automate/shared-contracts';
+import type { Scorecard } from '@lupin/shared-contracts';
 import {
   absent,
   assemble,
