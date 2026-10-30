@@ -8,7 +8,7 @@ const emptyStateVariants = cva(
     variants: {
       variant: {
         default: 'bg-transparent',
-        card: 'bg-bg-elevated rounded-xl border border-border-default',
+        card: 'bg-bg-elevated rounded-lg border border-border-default',
       },
     },
     defaultVariants: {

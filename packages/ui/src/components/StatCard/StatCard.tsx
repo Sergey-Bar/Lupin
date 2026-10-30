@@ -29,7 +29,7 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
       <div
         ref={ref}
         className={cn(
-          'flex flex-col gap-2 rounded-xl border border-border bg-surface p-5',
+          'flex flex-col gap-2 rounded-lg border border-border bg-surface p-5',
           className,
         )}
         {...props}

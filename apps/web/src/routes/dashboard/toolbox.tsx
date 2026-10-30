@@ -338,11 +338,11 @@ function ToolTile({
         type="button"
         onClick={onOpen}
         title={`${entry.name} — ${CAPABILITY_LABELS[entry.capability]}`}
-        className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-xl px-2 text-center transition-colors hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+        className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-lg px-2 text-center transition-colors hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
       >
         <span
           className={cn(
-            'relative flex h-12 w-12 items-center justify-center rounded-xl border bg-surface-raised text-fg transition-transform group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0',
+            'relative flex h-12 w-12 items-center justify-center rounded-lg border bg-surface-raised text-fg transition-transform group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0',
             entry.status === 'recommended' ? 'border-warning' : 'border-border',
           )}
         >
@@ -388,7 +388,7 @@ function ToolDialog({
         <DialogContent>
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-muted">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-muted">
                 <KindIcon kind={entry.capability} size={22} />
               </span>
               <div className="min-w-0">

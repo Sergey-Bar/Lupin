@@ -219,7 +219,7 @@ function CapabilityTile({ entry }: { entry: CapabilityEntry }): React.ReactEleme
       data-testid={`capability-${entry.capability}`}
       data-covered={entry.covered}
       className={cn(
-        'flex min-h-0 min-w-0 flex-col justify-center gap-0.5 overflow-hidden rounded-xl border px-2.5 py-1.5 sm:gap-1 sm:p-3',
+        'flex min-h-0 min-w-0 flex-col justify-center gap-0.5 overflow-hidden rounded-lg border px-2.5 py-1.5 sm:gap-1 sm:p-3',
         state === 'missing' ? 'border-dashed border-warning' : 'border-border',
       )}
     >

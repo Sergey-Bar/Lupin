@@ -50,7 +50,7 @@ export function ScorecardCard({
       aria-labelledby={id}
       data-testid={`scorecard-${scorecard.id}`}
       data-status={scorecard.status}
-      className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:p-5"
+      className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-surface p-4 sm:p-5"
     >
       <div className="flex items-start justify-between gap-2">
         <Heading id={id} className="text-xs font-medium uppercase tracking-wider text-fg-muted">

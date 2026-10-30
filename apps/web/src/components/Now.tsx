@@ -158,7 +158,7 @@ function AttentionList({
         <li
           key={item.id}
           data-testid={`now-item-${item.id}`}
-          className="flex animate-fade-in items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4"
+          className="flex animate-fade-in items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4"
         >
           <div className="min-w-0">
             <p className="flex items-center gap-2 font-medium">

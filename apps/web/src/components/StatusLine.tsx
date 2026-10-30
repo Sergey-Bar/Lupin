@@ -28,7 +28,7 @@ export function StatusLine({
     <section
       aria-label="Status"
       data-testid={testId}
-      className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+      className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
     >
       <div className="flex items-baseline gap-4">
         <span

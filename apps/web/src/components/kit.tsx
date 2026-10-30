@@ -78,13 +78,13 @@ export function Panel({
     <section
       aria-labelledby={id}
       className={cn(
-        'flex min-h-0 min-w-0 flex-col rounded-xl border border-border bg-surface p-4 sm:p-5',
+        'flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-surface p-4 sm:p-5',
         className,
       )}
       {...props}
     >
       <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
-        <h2 id={id} className="text-xs font-medium uppercase tracking-wider text-fg-muted">
+        <h2 id={id} className="text-sm font-medium text-fg">
           {title}
         </h2>
         {action}
@@ -164,16 +164,13 @@ export function Kpi({
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-col justify-between rounded-xl border bg-surface px-4 py-3 sm:px-5 sm:py-4',
+        'flex min-w-0 flex-col justify-between rounded-lg border bg-surface px-4 py-3 sm:px-5 sm:py-4',
         hero ? 'border-border-strong' : 'border-border',
       )}
       data-hero={hero ? '' : undefined}
       {...props}
     >
-      <div
-        className="truncate text-xs font-medium uppercase tracking-wider text-fg-muted"
-        title={label}
-      >
+      <div className="truncate text-xs font-medium text-fg-muted" title={label}>
         {label}
       </div>
       <div className="mt-0.5 flex items-end justify-between gap-2 sm:mt-1">

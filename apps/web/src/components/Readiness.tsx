@@ -67,7 +67,7 @@ export function VerdictHero({
     <section
       aria-label="Release readiness"
       data-testid="readiness-hero"
-      className="shrink-0 rounded-xl border border-border bg-surface px-5 py-6 sm:px-8 sm:py-8"
+      className="shrink-0 rounded-lg border border-border bg-surface px-5 py-6 sm:px-8 sm:py-8"
     >
       <p className="text-xs font-medium uppercase tracking-wider text-fg-muted">
         Release readiness
@@ -139,7 +139,7 @@ function FindingList({
     <section
       aria-labelledby={id}
       data-testid={testId}
-      className="flex min-w-0 flex-col rounded-xl border border-border bg-surface p-5"
+      className="flex min-w-0 flex-col rounded-lg border border-border bg-surface p-5"
     >
       <h2 id={id} className="flex items-baseline justify-between gap-2">
         <span className="text-xs font-medium uppercase tracking-wider text-fg-muted">{title}</span>

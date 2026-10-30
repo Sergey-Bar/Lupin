@@ -114,8 +114,8 @@ function Onboarding({ title }: { title: string }): React.ReactElement {
   return (
     <PageFrame data-testid="onboarding">
       <PageHeader title={title} subtitle="No project is registered yet." />
-      <div className="flex flex-1 items-center justify-center rounded-xl bg-ambient">
-        <div className="max-w-measure space-y-3 rounded-xl border border-border bg-surface-raised p-8">
+      <div className="flex flex-1 items-center justify-center rounded-lg bg-ambient">
+        <div className="max-w-measure space-y-3 rounded-lg border border-border bg-surface-raised p-8">
           <h2 className="text-xl font-semibold">Point Lupin at a repository</h2>
           <p className="max-w-measure text-pretty text-sm text-fg-muted">
             Set <span className="font-mono">LUPIN_PROJECT_ROOT</span> to the checkout you want

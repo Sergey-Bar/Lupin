@@ -311,7 +311,7 @@ function RunVerdict({
     <section
       aria-label="What failed"
       data-testid="run-what-failed"
-      className="shrink-0 rounded-xl border border-border bg-surface px-5 py-4"
+      className="shrink-0 rounded-lg border border-border bg-surface px-5 py-4"
     >
       <h2 className="inline-flex items-center gap-2 text-lg font-semibold text-danger">
         <StatusDot status="bad" />
@@ -620,7 +620,7 @@ function readinessTone(decision: string): 'success' | 'danger' | 'warning' {
 function SummaryPanels({ run }: { run: Run }) {
   return (
     <>
-      <div className="shrink-0 rounded-xl border border-border bg-surface-raised px-4 py-3">
+      <div className="shrink-0 rounded-lg border border-border bg-surface-raised px-4 py-3">
         <PhaseTimeline phase={run.phase} />
       </div>
 
@@ -647,7 +647,7 @@ function SummaryPanels({ run }: { run: Run }) {
       </section>
       <section
         aria-label="Run context"
-        className="shrink-0 rounded-xl border border-border bg-surface-raised px-4 py-3"
+        className="shrink-0 rounded-lg border border-border bg-surface-raised px-4 py-3"
       >
         <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3 xl:grid-cols-9">
           {/*
@@ -676,7 +676,7 @@ function SummaryPanels({ run }: { run: Run }) {
       {run.error ? (
         <div
           data-testid="run-error-context"
-          className="shrink-0 rounded-xl border border-danger px-4 py-2 text-sm"
+          className="shrink-0 rounded-lg border border-danger px-4 py-2 text-sm"
         >
           <span className="font-semibold text-danger">{run.error.code}</span>{' '}
           <span>{run.error.message}</span>
@@ -868,7 +868,7 @@ function Figure({
   hint?: string;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-border bg-surface-raised px-3 py-2 sm:px-4 sm:py-3">
+    <div className="min-w-0 rounded-lg border border-border bg-surface-raised px-3 py-2 sm:px-4 sm:py-3">
       <div
         className="truncate text-[0.6875rem] font-medium uppercase tracking-widest text-fg-muted sm:text-xs"
         title={label}

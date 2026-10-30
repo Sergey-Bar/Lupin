@@ -653,6 +653,28 @@ describe('shipped theme class resolution', () => {
     }
   });
 
+  /**
+   * Two radii for two kinds of surface.
+   *
+   * A panel, a card and a figure sit *on* the page and take the 8px panel radius
+   * (`rounded-lg`), the radius the Lupin site uses. The 12px cap (`rounded-xl`) belongs to
+   * the overlays that float above it — the palette and the dialog — so the difference in
+   * corner is one of the cues that a surface is floating. A page panel at 12px reads as a
+   * dialog that failed to open.
+   */
+  it('keeps the overlay radius on the overlays, and gives every page surface the panel radius', () => {
+    const OVERLAYS = new Set([
+      'packages/ui/src/components/CommandPalette/CommandPalette.tsx',
+      'packages/ui/src/components/Dialog/Dialog.tsx',
+    ]);
+    const offenders = listComponentFiles()
+      .map((file) => ({ file, rel: path.relative(repoRoot, file).replaceAll('\\', '/') }))
+      .filter(({ rel }) => !OVERLAYS.has(rel))
+      .filter(({ file }) => /\brounded-(?:xl|2xl|3xl)\b/.test(readFileSync(file, 'utf8')))
+      .map(({ rel }) => rel);
+    expect(offenders, 'a page surface uses the overlay radius').toEqual([]);
+  });
+
   it('writes no backdrop utility and no retired glass or wash class', () => {
     expect(
       allCandidates.filter(

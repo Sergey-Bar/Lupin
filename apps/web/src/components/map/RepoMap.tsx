@@ -331,7 +331,7 @@ function Canvas({
       data-testid="map-canvas"
       role="group"
       aria-label={`Repository map, ${map.view} view`}
-      className="min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-surface-sunken p-6"
+      className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-surface-sunken p-6"
     >
       <div className="relative" style={{ width: layout.width, height: layout.height + HEADER }}>
         <svg
