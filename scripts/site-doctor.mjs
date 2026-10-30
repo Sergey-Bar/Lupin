@@ -27,7 +27,7 @@
  * not be a stale copy of a machine-checked source. The five DOM checks are the ones
  * that need a browser to be worth anything.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { collectDriftEnvironment, driftFindings, ASSERTIONS } from './lib/docs-drift.mjs';
 import { twelvePage } from './lib/site-ten-page.mjs';
@@ -419,6 +419,8 @@ function checkHeadings(pages) {
  * and the comparison cannot disagree about which files they are.
  */
 const SITE_THEME_CSS = 'site/.vitepress/theme/custom.css';
+/** Every stylesheet in the site's theme, of which `custom.css` is the one that imports. */
+const SITE_THEME_DIR = 'site/.vitepress/theme';
 const PRODUCT_ENTRY_CSS = 'apps/web/src/index.css';
 
 /** The name both halves of check 8 report under, so a dropped half is visible. */
@@ -460,10 +462,14 @@ const tokenNames = (paths) => [...new Set(paths.map((p) => p.split('/').pop() ??
  * @returns {string[]}
  */
 function literalColours(css, label) {
+  // A hex, or a colour function whose first argument is a number. `color-mix(in oklab,
+  // var(--lupin-accent) 12%, …)` and `oklch(from var(--x) …)` start with a word and are
+  // derived from a token; `oklch(50% 0.13 290)` starts with a number and is a palette.
+  const literal = /#[0-9a-f]{3,8}\b|\b(?:oklch|oklab|lch|lab|rgba?|hsla?|hwb)\(\s*[-+.\d]/i;
   return css
     .split(/\r?\n/)
     .map((line, index) => ({ line, number: index + 1 }))
-    .filter(({ line }) => /#[0-9a-f]{3,8}\b/i.test(line))
+    .filter(({ line }) => literal.test(line))
     .filter(({ line }) => !line.trim().startsWith('*'))
     .map(
       ({ line, number }) => `\`${label}:${String(number)}\` has a literal colour: ${line.trim()}`,
@@ -516,12 +522,31 @@ function checkSitePalette() {
     }
   }
 
-  // A literal hex in the site's stylesheet is a colour that does not come from a token.
-  // One exception and it is spelled out: the `Canvas` and `CanvasText` values inside
-  // `forced-colors` are the *operating system's* palette by name, and a hex there
-  // would be the one place the user has explicitly overridden us.
-  problems.push(...literalColours(themeCss, SITE_THEME_CSS));
+  // A literal colour in any of the site's stylesheets is a colour that does not come from
+  // a token. **Every** stylesheet, not only the one that imports: the site's identity once
+  // lived in `lupin.css` with sixteen literal colours overriding the product palette, and
+  // this check passed throughout because it read `custom.css` alone. One exception and it
+  // is spelled out: the `Canvas` and `CanvasText` values inside `forced-colors` are the
+  // *operating system's* palette by name, and a hex there would be the one place the user
+  // has explicitly overridden us.
+  for (const file of siteStylesheets()) {
+    problems.push(...literalColours(read(file), file));
+  }
   return problems;
+}
+
+/**
+ * The site theme's stylesheets, sorted so a failure message reads the same twice.
+ *
+ * @returns {string[]}
+ */
+function siteStylesheets() {
+  const directory = path.join(ROOT, SITE_THEME_DIR);
+  if (!existsSync(directory)) return [SITE_THEME_CSS];
+  return readdirSync(directory)
+    .filter((name) => name.endsWith('.css'))
+    .sort()
+    .map((name) => `${SITE_THEME_DIR}/${name}`);
 }
 
 /**

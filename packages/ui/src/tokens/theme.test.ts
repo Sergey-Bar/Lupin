@@ -31,7 +31,40 @@ function definedVariableNames(css: string): Set<string> {
   return names;
 }
 
-function hexChannels(hex: string): [number, number, number] {
+/**
+ * A declared colour as 8-bit sRGB channels: `#rrggbb`, or an opaque `oklch(L% C H)`.
+ *
+ * The palette is declared in OKLCH since 4.0.0, because that is the space its decisions
+ * are made in — a hue, a chroma, a lightness — and a hex literal hides all three. The
+ * contrast arithmetic below is WCAG's, which is defined on sRGB, so the literal is
+ * converted the way a browser converts it (OKLab → linear sRGB → gamma, clamped) and
+ * rounded to the 8-bit value it renders as.
+ */
+function hexChannels(colour: string): [number, number, number] {
+  const declared = /^oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)\s*\)$/i.exec(colour.trim());
+  if (declared) {
+    const [lightness, chroma, hue] = [
+      Number(declared[1]) / 100,
+      Number(declared[2]),
+      Number(declared[3]),
+    ];
+    const a = chroma * Math.cos((hue * Math.PI) / 180);
+    const b = chroma * Math.sin((hue * Math.PI) / 180);
+    const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+    const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+    const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
+    const linear = [
+      4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+      -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+    ];
+    return linear.map((channel) => {
+      const clamped = Math.min(1, Math.max(0, channel));
+      const encoded = clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * clamped ** (1 / 2.4) - 0.055;
+      return Math.round(encoded * 255);
+    }) as [number, number, number];
+  }
+  const hex = colour;
   const value = hex.replace('#', '');
   const full =
     value.length === 3
@@ -81,6 +114,38 @@ function expectAtLeast(ratio: number, minimum: number, what: string): void {
     ratio,
     `${what} is ${ratio.toFixed(2)}:1, and owes ${minimum.toFixed(2)}:1`,
   ).toBeGreaterThanOrEqual(minimum);
+}
+
+/**
+ * APCA lightness contrast (Lc), APCA-W3 0.0.98G-4g — the model WCAG 3 drafts adopt.
+ *
+ * WCAG 2's ratio is symmetric and over-rates dark-on-dark: a violet link on a near-black
+ * panel clears 4.5:1 while reading noticeably dimmer than the same ratio on white. APCA is
+ * polarity-aware, so the dark theme is held to what a reader sees rather than to a number
+ * that flatters it. Both are asserted; neither replaces the other, because WCAG 2 is
+ * still the conformance target and APCA is the perceptual check behind it.
+ *
+ * Returns a signed Lc: positive for dark text on light, negative for light on dark.
+ */
+function apcaContrast(text: string, background: string): number {
+  const screenLuminance = (value: string): number => {
+    const [r, g, b] = hexChannels(value).map((channel) => (channel / 255) ** 2.4) as [
+      number,
+      number,
+      number,
+    ];
+    const y = 0.2126729 * r + 0.7151522 * g + 0.072175 * b;
+    return y > 0.022 ? y : y + (0.022 - y) ** 1.414;
+  };
+  const textY = screenLuminance(text);
+  const backgroundY = screenLuminance(background);
+  if (Math.abs(backgroundY - textY) < 0.0005) return 0;
+  if (backgroundY > textY) {
+    const contrast = (backgroundY ** 0.56 - textY ** 0.57) * 1.14;
+    return contrast < 0.1 ? 0 : (contrast - 0.027) * 100;
+  }
+  const contrast = (backgroundY ** 0.65 - textY ** 0.62) * 1.14;
+  return contrast > -0.1 ? 0 : (contrast + 0.027) * 100;
 }
 
 /** `#rrggbb` → linear-light sRGB, for the OKLab conversion below. */
@@ -731,7 +796,7 @@ describe('design token source', () => {
     for (const selector of BOTH_SELECTORS) {
       for (const variable of new Set(Object.values(semanticColorTokens))) {
         expect(variableValue(selector, variable), `${variable} in ${selector}`).toMatch(
-          /^#[0-9a-f]{6}$/i,
+          /^oklch\(\s*[\d.]+%\s+[\d.]+\s+[\d.]+\s*\)$/i,
         );
       }
     }
@@ -1138,13 +1203,53 @@ describe('design token source', () => {
         }
       },
     );
+    /**
+     * The perceptual floor behind the WCAG ratio, for the three tokens that carry text.
+     *
+     * Lc 90 is APCA's "preferred for body text", Lc 60 its minimum for content text (the
+     * accent is link and button text), and Lc 50 the floor this palette sets for muted
+     * helper text — the run id, the timestamp — which is short, never body copy, and
+     * already owes 4.5:1 under WCAG 2 above.
+     */
+    const APCA_FLOORS: ReadonlyArray<readonly [string, number]> = [
+      ['--lupin-fg', 90],
+      ['--lupin-accent', 60],
+      ['--lupin-fg-muted', 50],
+    ];
+
+    it.each(BOTH_SELECTORS)(
+      'meets the APCA floor for every text token on every plane step, in %s',
+      (selector) => {
+        for (const [variable, floor] of APCA_FLOORS) {
+          for (const background of PLANE) {
+            const lc = Math.abs(
+              apcaContrast(variableValue(selector, variable), variableValue(selector, background)),
+            );
+            expect(
+              lc,
+              `${variable} on ${background} in ${selector} is Lc ${lc.toFixed(1)}, and owes Lc ${String(floor)}`,
+            ).toBeGreaterThanOrEqual(floor);
+          }
+        }
+        const label = Math.abs(
+          apcaContrast(
+            variableValue(selector, '--lupin-on-fill'),
+            variableValue(selector, '--lupin-accent'),
+          ),
+        );
+        expect(
+          label,
+          `the primary button label is Lc ${label.toFixed(1)} on the accent in ${selector}`,
+        ).toBeGreaterThanOrEqual(60);
+      },
+    );
   });
 
   describe('the hues are the ones the decision names', () => {
     /**
-     * Colour is meaning. The accent is not in this table because it has no hue: it is the
-     * foreground tone used for focus, the active state and the primary fill, and a reader
-     * should never have to ask whether a blue pixel is a verdict.
+     * Colour is meaning. The accent is not in this table because it is not a verdict: it
+     * is the brand violet, used for focus, the active state, links and the primary fill,
+     * and the case below holds it at least 20 degrees from info so it is never read as one.
      */
     const HUES: ReadonlyArray<readonly [string, string, number]> = [
       ['success', '--lupin-success', 148],
@@ -1174,14 +1279,37 @@ describe('design token source', () => {
       },
     );
 
-    it.each(BOTH_SELECTORS)('keeps the accent achromatic in %s', (selector) => {
-      // The monochrome rule as a number: an OKLCH chroma under 0.01 is a grey to the eye.
+    it.each(BOTH_SELECTORS)('keeps the accent the Lupin violet in %s', (selector) => {
+      // The accent is the brand: violet, the colour of the site's wordmark dot and primary
+      // action. Held to a hue band rather than one number, because each theme tunes its
+      // lightness and a few degrees of hue move with it.
       const accent = oklch(variableValue(selector, '--lupin-accent'));
       expect(
+        accent.hue,
+        `the accent is at hue ${accent.hue.toFixed(1)} in ${selector}, outside the violet band 280–300`,
+      ).toBeGreaterThanOrEqual(280);
+      expect(accent.hue).toBeLessThanOrEqual(300);
+      expect(
         accent.chroma,
-        'the accent has a hue, so the one colour that is not a verdict looks like one',
-      ).toBeLessThan(0.01);
+        `the accent has chroma ${accent.chroma.toFixed(3)} in ${selector}, so it reads as a grey`,
+      ).toBeGreaterThanOrEqual(0.08);
     });
+
+    it.each(BOTH_SELECTORS)(
+      'keeps the accent visibly apart from info, so the brand is never read as a note, in %s',
+      (selector) => {
+        // Info is steel at 258 and the accent violet at about 290. Twenty degrees is the
+        // same separation the run states are held to below, for the same reason.
+        const distance = hueDistance(
+          oklch(variableValue(selector, '--lupin-accent')).hue,
+          oklch(variableValue(selector, '--lupin-info')).hue,
+        );
+        expect(
+          distance,
+          `accent and info are ${distance.toFixed(1)} degrees apart`,
+        ).toBeGreaterThanOrEqual(20);
+      },
+    );
 
     it.each(BOTH_SELECTORS)('keeps info quieter than every verdict in %s', (selector) => {
       const info = oklch(variableValue(selector, '--lupin-info'));
@@ -1422,8 +1550,11 @@ describe('the plane is flat', () => {
     for (const selector of BOTH_SELECTORS) {
       for (const step of PLANE) {
         const declared = variableValue(selector, step);
+        // An OKLCH literal with no alpha, or a hex one: either way a value the stylesheet
+        // owns outright, rather than a `var()` or a translucent fill composited over
+        // whatever is behind it.
         expect(declared, `${step} in ${selector} is not an opaque colour`).toMatch(
-          /^#[0-9a-f]{6}$/i,
+          /^(#[0-9a-f]{6}|oklch\(\s*[\d.]+%\s+[\d.]+\s+[\d.]+\s*\))$/i,
         );
       }
     }

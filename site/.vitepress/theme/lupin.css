@@ -14,15 +14,25 @@
   font-display: swap;
   src: url('/fonts/GeistMono-Variable.woff2') format('woff2');
 }
+/*
+ * The site's names for the product palette. Every colour is a `var()` into
+ * `packages/ui/src/tokens/theme.css` — the one place the palette is declared — and
+ * `pnpm site:doctor` check 8 fails on a literal colour in any stylesheet here.
+ *
+ * The site's page is light where the console's is recessed: the console sets panels on
+ * a sunken page, the site sets prose on an open one. So the canvas is the step nearest
+ * the page in each theme — `raised` on white, `sunken` on the dark plane — rather than
+ * one fixed step, and that choice is the only design decision this block makes.
+ */
 :root {
-  --site-canvas: #fafaf9;
-  --site-surface: #ffffff;
-  --site-text: #15161a;
-  --site-muted: #6b6d76;
-  --site-border: #e7e7e8;
-  --site-accent: #6754ae;
-  --site-soft: #f0ecf8;
-  --site-on-accent: #ffffff;
+  --site-canvas: var(--lupin-surface-raised);
+  --site-surface: var(--lupin-surface);
+  --site-text: var(--lupin-fg);
+  --site-muted: var(--lupin-fg-muted);
+  --site-border: var(--lupin-border);
+  --site-accent: var(--lupin-accent);
+  --site-soft: color-mix(in oklab, var(--lupin-accent) 12%, var(--lupin-surface));
+  --site-on-accent: var(--lupin-on-fill);
   --site-sans: 'Geist', Arial, sans-serif;
   --site-mono: 'Geist Mono', Consolas, monospace;
   --site-width: 1248px;
@@ -31,30 +41,13 @@
 }
 html.dark,
 html[data-theme='dark'] {
-  --site-canvas: #101114;
-  --site-surface: #191a1f;
-  --site-text: #f4f4f6;
-  --site-muted: #a0a2ac;
-  --site-border: #2d2f36;
-  --site-accent: #b0a1ea;
-  --site-soft: #242030;
-  --site-on-accent: #101114;
+  --site-canvas: var(--lupin-surface-sunken);
 }
 html,
 html[data-theme],
 html:not([data-theme='light']) {
   --lupin-font-sans: var(--site-sans);
   --lupin-font-mono: var(--site-mono);
-  --lupin-surface-sunken: var(--site-canvas);
-  --lupin-surface: var(--site-surface);
-  --lupin-surface-muted: var(--site-canvas);
-  --lupin-surface-raised: var(--site-surface);
-  --lupin-fg: var(--site-text);
-  --lupin-fg-muted: var(--site-muted);
-  --lupin-border: var(--site-border);
-  --lupin-border-strong: var(--site-muted);
-  --lupin-accent: var(--site-accent);
-  --lupin-on-fill: var(--site-on-accent);
   --vp-font-family-base: var(--site-sans);
   --vp-font-family-mono: var(--site-mono);
   --vp-c-bg: var(--site-canvas);

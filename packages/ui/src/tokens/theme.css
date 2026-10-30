@@ -19,20 +19,27 @@
  * hand-painted fifth surface. `--lupin-surface` is the base; everything else
  * is named for how far above or below it it sits.
  *
- * The values are neutral to within a rounding step. The dark plane is
- * `#0B0B0C`, not Tailwind's `neutral-950` `#0A0A0A` — a blue cast on a plane
- * this dark is invisible as a colour and very visible as a *temperature*, and a
- * console that is going to spend its life at 0–2% luminance is the last place
- * to let one.
+ * The values are near-neutral, and the near is a decision. The dark plane carries the
+ * violet's undertone — hue about 276, chroma under 0.01 — so the brand reads as part of
+ * the room rather than a sticker on a grey one; the light plane is warm paper, hue about
+ * 106, chroma under 0.005. `theme.test.ts` holds every plane step, both foregrounds and
+ * the decorative border under 0.012 chroma, which is a temperature and never a colour.
  *
- * ## The accent (D6-2, revised: monochrome)
+ * ## The accent (D6-2, revised for 4.0.0: the Lupin violet)
  *
- * The accent has no hue. It is the foreground tone — near-white on the dark plane,
- * near-black on the light one — and it is allowed in three places only: the focus ring,
- * the active state, and the one solid primary fill. Colour on this screen is meaning:
- * pass, warn, fail, flaky and the chart series. A blue pixel that was "only the brand"
- * was a pixel a reader had to decide was not a verdict, so it is gone. `theme.test.ts`
- * holds the accent under 0.01 OKLCH chroma in both themes.
+ * The accent is the brand violet: `oklch(50.9% 0.138 290)` on the light plane and a lifted
+ * `oklch(79.3% 0.089 293)` on the dark one, the colour of the wordmark's dot. It is allowed
+ * in four places: the focus ring, the active state, a link, and the one solid primary
+ * fill. It is never a large plane. Colour elsewhere is still meaning — pass, warn, fail,
+ * flaky and the chart series — and the violet is held at least 20 degrees from info so the
+ * brand is never read as a note. `theme.test.ts` holds the hue band, the chroma floor, the
+ * WCAG ratio and the APCA floor in both themes.
+ *
+ * ## Declared in OKLCH
+ *
+ * Every colour is an `oklch()` literal, because its three numbers are the three decisions
+ * — lightness, chroma, hue — and a hex literal hides them. Each literal round-trips to one
+ * 8-bit sRGB value, which is what the contrast arithmetic in `theme.test.ts` measures.
  *
  * ## Flat, with no glass and no wash
  *
@@ -283,12 +290,12 @@
 :root,
 [data-theme='dark'] {
   /* The plane. Sunken is the page, surface is a panel, raised is a control. */
-  --lupin-surface-sunken: #050505;
-  --lupin-surface: #0a0a0a;
-  --lupin-surface-raised: #121212;
-  --lupin-surface-muted: #171717;
-  --lupin-fg: #f5f5f5;
-  --lupin-fg-muted: #a3a3a3;
+  --lupin-surface-sunken: oklch(17.79% 0.0064 271.04);
+  --lupin-surface: oklch(21.46% 0.0099 276.58);
+  --lupin-surface-raised: oklch(23.61% 0.0097 276.66);
+  --lupin-surface-muted: oklch(25.72% 0.0095 276.72);
+  --lupin-fg: oklch(96.77% 0.0027 286.35);
+  --lupin-fg-muted: oklch(72.33% 0.0101 279.62);
   /*
    * Two borders, because WCAG 1.4.11 applies to some of what this token draws
    * and not to the rest.
@@ -305,53 +312,53 @@
    * 1.31:1, so a low-vision keyboard user had no way to see where the field
    * ended.
    */
-  --lupin-border: #262626;
-  --lupin-border-strong: #6b6b6b;
-  /* The foreground tone, a step down from `--lupin-fg`: focus, active, primary fill. */
-  --lupin-accent: #e5e5e5;
+  --lupin-border: oklch(30.56% 0.0111 271.04);
+  --lupin-border-strong: oklch(55.34% 0.0141 275.92);
+  /* The Lupin violet, lifted for the dark plane: focus, active, links, the primary fill. */
+  --lupin-accent: oklch(79.25% 0.0891 292.99);
   /* Restated off the Tailwind 500 steps. Hues 148 / 72 / 25. */
-  --lupin-success: #66bb74;
-  --lupin-warning: #e4a247;
-  --lupin-danger: #d9716b;
-  --lupin-info: #7c8da6;
+  --lupin-success: oklch(72.03% 0.1317 147.83);
+  --lupin-warning: oklch(75.94% 0.1314 71.99);
+  --lupin-danger: oklch(66.66% 0.1313 24.63);
+  --lupin-info: oklch(66.18% 0.0421 257.93);
   /*
    * The foreground for text sitting *on* a saturated fill — the primary button,
    * the destructive button, the filled badge. It is its own token because the
    * fills are light in dark mode and dark in light mode, so no single
    * `text-white` or `text-fg` can be right for both. Dark here, because the
-   * accent is near-white: the primary button is white with a black label.
+   * accent is a light violet: the primary button is lavender with a near-black label.
    */
-  --lupin-on-fill: #0b0b0c;
+  --lupin-on-fill: oklch(17.79% 0.0064 271.04);
   /* Okabe–Ito, lifted for a near-black plane: every mark is at least 3:1 on every step. */
-  --lupin-chart-pass: #3cc59a;
-  --lupin-chart-fail: #f0784a;
-  --lupin-chart-flaky: #d98ac4;
-  --lupin-chart-skipped: #8d919b;
-  --lupin-chart-line: #5ab4f0;
-  --lupin-chart-grid: #232323;
-  --lupin-chart-1: #5aa9e6;
-  --lupin-chart-2: #f2b33d;
-  --lupin-chart-3: #3cc59a;
-  --lupin-chart-4: #f0784a;
-  --lupin-chart-5: #d98ac4;
-  --lupin-chart-6: #ece05a;
+  --lupin-chart-pass: oklch(73.96% 0.1327 167.66);
+  --lupin-chart-fail: oklch(70.33% 0.16 40.91);
+  --lupin-chart-flaky: oklch(73.27% 0.121 337.17);
+  --lupin-chart-skipped: oklch(65.66% 0.0155 268.42);
+  --lupin-chart-line: oklch(73.92% 0.1225 240.43);
+  --lupin-chart-grid: oklch(29.05% 0.011 278.18);
+  --lupin-chart-1: oklch(70.99% 0.1188 243.93);
+  --lupin-chart-2: oklch(80.59% 0.1471 78.99);
+  --lupin-chart-3: oklch(73.96% 0.1327 167.66);
+  --lupin-chart-4: oklch(70.33% 0.16 40.91);
+  --lupin-chart-5: oklch(73.27% 0.121 337.17);
+  --lupin-chart-6: oklch(89.18% 0.1529 104.2);
   color-scheme: dark;
 }
 
 [data-theme='light'] {
   /* The plane, inverted: elevation moves towards white rather than away from
      black, so a raised surface in light mode is the *nearest* to the page. */
-  --lupin-surface-sunken: #ebebed;
-  --lupin-surface: #ffffff;
-  --lupin-surface-raised: #fcfcfc;
-  --lupin-surface-muted: #f4f4f5;
-  --lupin-fg: #0a0a0a;
-  --lupin-fg-muted: #5c5c62;
-  --lupin-border: #dcdcdf;
+  --lupin-surface-sunken: oklch(93.62% 0.004 106.48);
+  --lupin-surface: oklch(100% 0 0);
+  --lupin-surface-raised: oklch(99.08% 0.0013 106.42);
+  --lupin-surface-muted: oklch(96.66% 0.0026 106.45);
+  --lupin-fg: oklch(20.09% 0.0081 274.5);
+  --lupin-fg-muted: oklch(49.02% 0.0096 278.47);
+  --lupin-border: oklch(89.39% 0.0027 106.45);
   /* 3:1 has to be measured against the *darkest* plane step, not the base. */
-  --lupin-border-strong: #76767c;
-  /* Near-black: the primary button is black with a white label, and a link is ink. */
-  --lupin-accent: #171717;
+  --lupin-border-strong: oklch(57.7% 0.0124 274.76);
+  /* The Lupin violet: the primary button is violet with a white label, and a link is violet. */
+  --lupin-accent: oklch(50.92% 0.1381 290.35);
   /*
    * The status colours are used as body text — `Alert` and `Toast` render
    * `text-success` over `bg-success/10`, and `StatCard` renders the trend in
@@ -360,25 +367,25 @@
    * the background luminance and *lowers* the contrast, so a ratio computed
    * against the untinted surface would pass while the shipped rendering failed.
    */
-  --lupin-success: #206c32;
-  --lupin-warning: #7e5415;
-  --lupin-danger: #9f3331;
-  /* The dark steel, one step down: `#7C8DA6` is 2.53:1 on white. */
-  --lupin-info: #4d5f79;
-  --lupin-on-fill: #ffffff;
+  --lupin-success: oklch(47.06% 0.1167 147.84);
+  --lupin-warning: oklch(48.1% 0.0934 71.99);
+  --lupin-danger: oklch(48.07% 0.1437 25.25);
+  /* The dark steel, one step down: the dark theme's steel is 2.5:1 on white. */
+  --lupin-info: oklch(48.1% 0.0476 257.53);
+  --lupin-on-fill: oklch(100% 0 0);
   /* Okabe–Ito, deepened for white: every mark is at least 3:1 on every step. */
-  --lupin-chart-pass: #00875a;
-  --lupin-chart-fail: #c4450a;
-  --lupin-chart-flaky: #8a2f78;
-  --lupin-chart-skipped: #80848e;
-  --lupin-chart-line: #005fb0;
-  --lupin-chart-grid: #e4e4e7;
-  --lupin-chart-1: #005fb0;
-  --lupin-chart-2: #a36800;
-  --lupin-chart-3: #00875a;
-  --lupin-chart-4: #8e2a12;
-  --lupin-chart-5: #a8458c;
-  --lupin-chart-6: #1a8fc2;
+  --lupin-chart-pass: oklch(55.06% 0.1223 161.18);
+  --lupin-chart-fail: oklch(56.15% 0.1727 39.73);
+  --lupin-chart-flaky: oklch(46.44% 0.1507 336.43);
+  --lupin-chart-skipped: oklch(61.33% 0.0158 268.4);
+  --lupin-chart-line: oklch(48.56% 0.1492 252.88);
+  --lupin-chart-grid: oklch(91.97% 0.004 286.32);
+  --lupin-chart-1: oklch(48.56% 0.1492 252.88);
+  --lupin-chart-2: oklch(56.76% 0.1223 70.84);
+  --lupin-chart-3: oklch(55.06% 0.1223 161.18);
+  --lupin-chart-4: oklch(43.65% 0.1392 34.38);
+  --lupin-chart-5: oklch(54.52% 0.1546 340);
+  --lupin-chart-6: oklch(61.36% 0.1221 234.1);
   /*
    * Elevation, softened for a white plane. The literal steps in `@theme` are tuned for a
    * near-black page, where a 32% black shadow is the only thing that separates two
@@ -412,26 +419,26 @@
 @media (prefers-reduced-transparency: reduce) {
   :root,
   [data-theme='dark'] {
-    --lupin-surface-sunken: #050505;
-    --lupin-surface: #0a0a0a;
-    --lupin-surface-raised: #121212;
-    --lupin-surface-muted: #171717;
-    /* Measured 3.14:1 on the *lightest* step above, not the base: a border that
-       clears 3:1 on `#0B0B0C` and misses it on `#17171B` identifies a control on
-       a card and not on a panel. */
-    --lupin-border: #66666d;
-    --lupin-border-strong: #8b8b92;
+    --lupin-surface-sunken: oklch(17.79% 0.0064 271.04);
+    --lupin-surface: oklch(21.46% 0.0099 276.58);
+    --lupin-surface-raised: oklch(23.61% 0.0097 276.66);
+    --lupin-surface-muted: oklch(25.72% 0.0095 276.72);
+    /* Measured on the *lightest* step above, not the base: a border that clears 3:1
+       on the page and misses it on the muted step identifies a control on a card and
+       not on a panel. */
+    --lupin-border: oklch(53.96% 0.0142 275.91);
+    --lupin-border-strong: oklch(65.13% 0.0135 275.99);
   }
 
   [data-theme='light'] {
-    --lupin-surface-sunken: #ebebed;
-    --lupin-surface: #ffffff;
-    --lupin-surface-raised: #fcfcfc;
-    --lupin-surface-muted: #f4f4f5;
+    --lupin-surface-sunken: oklch(93.62% 0.004 106.48);
+    --lupin-surface: oklch(100% 0 0);
+    --lupin-surface-raised: oklch(99.08% 0.0013 106.42);
+    --lupin-surface-muted: oklch(96.66% 0.0026 106.45);
     /* At least 3:1 on `--lupin-surface-sunken`, the darkest step, which is the
        binding constraint in this theme. */
-    --lupin-border: #7e7e84;
-    --lupin-border-strong: #6b6b72;
+    --lupin-border: oklch(59.4% 0.0123 274.77);
+    --lupin-border-strong: oklch(53.23% 0.0127 274.73);
   }
 }
 
@@ -446,15 +453,15 @@
 @media (prefers-contrast: more) {
   :root,
   [data-theme='dark'] {
-    --lupin-fg-muted: #e6e6ea;
-    --lupin-border: #6e6e76;
-    --lupin-border-strong: #9c9ca5;
+    --lupin-fg-muted: oklch(92.61% 0.0054 286.29);
+    --lupin-border: oklch(56.71% 0.014 275.93);
+    --lupin-border-strong: oklch(70.05% 0.0132 276.01);
   }
 
   [data-theme='light'] {
-    --lupin-fg-muted: #3f3f47;
-    --lupin-border: #7c7c84;
-    --lupin-border-strong: #4a4a51;
+    --lupin-fg-muted: oklch(37.32% 0.012 279.33);
+    --lupin-border: oklch(58.72% 0.0124 274.77);
+    --lupin-border-strong: oklch(41.45% 0.0116 279.39);
   }
 }
 

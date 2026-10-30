@@ -140,3 +140,26 @@ test('check 8 catches a literal colour in the site stylesheet', () => {
   }
   assert.equal(readFileSync(siteTheme, 'utf8'), original);
 });
+
+test('check 8 reads every stylesheet in the site theme, not only custom.css', () => {
+  // **The hole this closes.** Check 8 read one file, and the site's identity lived in a
+  // second one: `lupin.css` declared sixteen literal colours and overrode the product's
+  // palette, and the check passed throughout because it never opened the file. A copied
+  // palette is as likely to be written in OKLCH as in hex now that the product's is, so
+  // both are planted.
+  const lupinTheme = path.join(sitePackage, '.vitepress', 'theme', 'lupin.css');
+  const original = readFileSync(lupinTheme, 'utf8');
+  for (const rogue of ['.rogue { color: #6754ae; }', '.rogue { color: oklch(50% 0.13 290); }']) {
+    try {
+      writeFileSync(lupinTheme, `${original}\n${rogue}\n`, 'utf8');
+      assert.match(
+        runDoctor(),
+        /lupin\.css:\d+` has a literal colour/,
+        `a literal colour in lupin.css passed check 8: ${rogue}`,
+      );
+    } finally {
+      writeFileSync(lupinTheme, original, 'utf8');
+    }
+  }
+  assert.equal(readFileSync(lupinTheme, 'utf8'), original, 'lupin.css was not restored');
+});
