@@ -35,7 +35,7 @@ const patterns = [
  * A file that must never be scanned for content: it is data, not source.
  *
  * The web-font extensions are here for a measured reason rather than a general
- * one. `archivo-latin-var.woff2` and `jetbrains-mono-latin-var.woff2` are
+ * one. `geist-var.woff2` and `geist-mono-var.woff2` are
  * committed binaries, and reading either as UTF-8 hands the pattern list ~130KB
  * of mojibake per file. The connection-string pattern is the one that matters:
  * `[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:[^\s/@]{3,}@` needs a run of printable

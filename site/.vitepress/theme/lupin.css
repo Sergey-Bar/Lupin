@@ -1,19 +1,5 @@
-/* Lupin public-site identity. Product tokens remain imported as the semantic foundation.
-   These overrides are intentionally website-only; no console styles are changed. */
-@font-face {
-  font-family: 'Geist';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('/fonts/Geist-Variable.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Geist Mono';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('/fonts/GeistMono-Variable.woff2') format('woff2');
-}
+/* The Lupin site's layout: the home page, the hero, the sections and the footer. The palette
+   and the type are the product's, imported by custom.css; this file adds layout only. */
 /*
  * The site's names for the product palette. Every colour is a `var()` into
  * `packages/ui/src/tokens/theme.css` — the one place the palette is declared — and
@@ -33,8 +19,8 @@
   --site-accent: var(--lupin-accent);
   --site-soft: color-mix(in oklab, var(--lupin-accent) 12%, var(--lupin-surface));
   --site-on-accent: var(--lupin-on-fill);
-  --site-sans: 'Geist', Arial, sans-serif;
-  --site-mono: 'Geist Mono', Consolas, monospace;
+  --site-sans: var(--lupin-font-sans);
+  --site-mono: var(--lupin-font-mono);
   --site-width: 1248px;
   --site-radius: 8px;
   --site-space: 8px;
@@ -46,8 +32,6 @@ html[data-theme='dark'] {
 html,
 html[data-theme],
 html:not([data-theme='light']) {
-  --lupin-font-sans: var(--site-sans);
-  --lupin-font-mono: var(--site-mono);
   --vp-font-family-base: var(--site-sans);
   --vp-font-family-mono: var(--site-mono);
   --vp-c-bg: var(--site-canvas);

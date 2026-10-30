@@ -557,6 +557,48 @@ describe('the scales the product renders from', () => {
     }
   });
 
+  it('gives every size its own tracking, closing up as it grows, in place of an optical axis', () => {
+    // Geist has a weight axis and no `opsz`, so the optical correction a display face
+    // would make for itself is made here: each step on the ladder carries its own
+    // letter-spacing, and the relation is the rule — never looser than the step below
+    // it. A 48px heading at the tracking of 14px body reads as loose type set large.
+    const spacing = TYPE_STEPS.map((step) => {
+      const raw = text.get(`--text-${step}--letter-spacing`);
+      const match = /^(-?[\d.]+)em$/.exec(raw ?? '');
+      if (match?.[1] === undefined) {
+        throw new Error(`--text-${step}--letter-spacing is "${String(raw)}", not an em length`);
+      }
+      return { step, em: Number(match[1]) };
+    });
+    for (const [index, entry] of spacing.entries()) {
+      const next = spacing[index + 1];
+      if (next === undefined) continue;
+      expect(
+        next.em,
+        `--text-${next.step} tracks at ${String(next.em)}em, looser than --text-${entry.step} at ${String(entry.em)}em`,
+      ).toBeLessThanOrEqual(entry.em);
+    }
+    const at = (step: string): number => spacing.find((entry) => entry.step === step)?.em ?? NaN;
+    expect(at('xs'), 'a 12px caption is crowded at negative tracking').toBeGreaterThanOrEqual(0);
+    expect(at('3xl'), 'a display size is not closed up').toBeLessThanOrEqual(-0.02);
+  });
+
+  it('sets the display sizes at a heading weight, and no heavier than 650', () => {
+    // The weight half of the optical correction: at 24px and above a stroke at body
+    // weight reads thin, and past 650 the console starts shouting. Below `2xl` the
+    // weight is the component's decision (a label, a figure), so nothing is declared.
+    for (const step of TYPE_STEPS) {
+      const raw = text.get(`--text-${step}--font-weight`);
+      if (rem(`--text-${step}`, text) < rem('--text-2xl', text)) {
+        expect(raw, `--text-${step} declares a weight a component should own`).toBeUndefined();
+        continue;
+      }
+      const weight = Number(raw);
+      expect(weight, `--text-${step}--font-weight is "${String(raw)}"`).toBeGreaterThanOrEqual(550);
+      expect(weight).toBeLessThanOrEqual(650);
+    }
+  });
+
   it('declares the spacing base unit, and declares it in rem', () => {
     // 0.25rem is a 4px base with the 8px rhythm living in the even multiples. A bare
     // number here is not a unit and cannot be asserted.
@@ -621,7 +663,7 @@ describe('the scales the product renders from', () => {
     // Tailwind's *default* mono stack, which on Windows resolves to Consolas. Every
     // `font-mono` in this product — the run id, the digest, the score — was therefore
     // rendering in the operating system's face rather than the committed one, in a
-    // product whose thesis is that evidence is set in JetBrains Mono.
+    // product whose thesis is that evidence is set in Geist Mono.
     //
     // The two `@theme inline` declarations are what make the utility name the same
     // decision `body` makes, and `inline` is required: it substitutes the `var()`
