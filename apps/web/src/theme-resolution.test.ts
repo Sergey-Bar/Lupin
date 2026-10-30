@@ -615,6 +615,44 @@ describe('shipped theme class resolution', () => {
    * the retired glass or wash utilities. `theme.css` no longer declares them, so they
    * would compile to nothing — this names the offender instead of rendering it unstyled.
    */
+  /**
+   * The translucent material is for the layers that float, and only those.
+   *
+   * `surface-translucent` is the one way to get a `backdrop-filter` in this product. The
+   * files below are the overlays — the only layers content actually passes behind, because
+   * the page scrolls in its own container under the nav rather than beneath it; a table, a chart or a card that adopts
+   * it puts evidence behind glass, which is the thing the material exists not to do. Adding
+   * a file here is a design decision a reviewer reads.
+   */
+  const TRANSLUCENT_LAYERS = [
+    'packages/ui/src/components/CommandPalette/CommandPalette.tsx',
+    'packages/ui/src/components/Dialog/Dialog.tsx',
+    'packages/ui/src/components/Popover/Popover.tsx',
+    'packages/ui/src/components/Toast/Toast.tsx',
+  ];
+
+  it('uses the translucent material on the floating layers and nowhere else', () => {
+    const adopters = listComponentFiles()
+      .filter((file) => /\bsurface-translucent\b/.test(readFileSync(file, 'utf8')))
+      .map((file) => path.relative(repoRoot, file).replaceAll('\\', '/'))
+      .sort();
+    expect(adopters, 'the translucent material is used outside the floating layers').toEqual(
+      [...TRANSLUCENT_LAYERS].sort(),
+    );
+  });
+
+  it('puts the ambient gradient only on the entry surfaces', () => {
+    const adopters = listComponentFiles()
+      .filter((file) => /\bbg-ambient\b/.test(readFileSync(file, 'utf8')))
+      .map((file) => path.relative(repoRoot, file).replaceAll('\\', '/'));
+    for (const file of adopters) {
+      expect(
+        /EmptyState|SignIn|Onboarding|Welcome|ProjectGate/.test(file),
+        `${file} draws the ambient gradient behind something that is not an entry surface`,
+      ).toBe(true);
+    }
+  });
+
   it('writes no backdrop utility and no retired glass or wash class', () => {
     expect(
       allCandidates.filter(

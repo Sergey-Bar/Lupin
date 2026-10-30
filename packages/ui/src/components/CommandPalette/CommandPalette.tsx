@@ -149,7 +149,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
           aria-label="Command palette"
           className={cn(
             'w-full max-w-xl overflow-hidden rounded-xl border border-border-default animate-zoom-in-95 duration-200',
-            'bg-surface-raised shadow-elevation-3',
+            'surface-translucent shadow-elevation-3',
             className,
           )}
           {...props}

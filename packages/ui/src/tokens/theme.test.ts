@@ -1567,6 +1567,29 @@ describe('the plane is flat', () => {
   // Declarations only: the prose in theme.css may name what was removed and why.
   const declarations = themeCss.replace(/\/\*[\s\S]*?\*\//g, '');
 
+  /** The whole `@utility <name> { … }` block, brace-matched, or '' when absent. */
+  function utilityBlock(name: string): string {
+    const start = declarations.indexOf(`@utility ${name} {`);
+    if (start === -1) return '';
+    const open = declarations.indexOf('{', start);
+    const close = closingBrace(declarations, open);
+    return close === -1 ? '' : declarations.slice(start, close + 1);
+  }
+
+  /** The body of that block. */
+  function utilityBody(name: string): string {
+    const block = utilityBlock(name);
+    return block === '' ? '' : block.slice(block.indexOf('{') + 1, -1);
+  }
+
+  /** A declaration's value wherever it is declared, read to its semicolon. */
+  function themeValueAnywhere(variable: string): string {
+    const match = new RegExp(`${variable.replace(/-/g, '\\-')}\\s*:\\s*([^;]+);`).exec(
+      declarations,
+    );
+    return match?.[1]?.replace(/\s+/g, ' ').trim() ?? '';
+  }
+
   it('declares no glass token, no glass utility and no glass shadow', () => {
     expect(declarations, 'theme.css declares a glass token again').not.toMatch(
       /--lupin-glass-[a-z-]+\s*:/,
@@ -1578,9 +1601,77 @@ describe('the plane is flat', () => {
     expect(declarations, 'theme.css declares `shadow-glass` again').not.toMatch(
       /--shadow-glass\s*:/,
     );
-    expect(declarations, 'theme.css sets the backdrop filter property directly').not.toMatch(
-      /backdrop-filter\s*:/,
-    );
+  });
+
+  it('sets the backdrop filter in one utility only, and nowhere else in the stylesheet', () => {
+    // 4.0.0 admits translucency, narrowly: one `surface-translucent` utility, for the
+    // floating layers (the sticky bar, the palette, dialogs, popovers, toasts). A
+    // `backdrop-filter` anywhere else in the stylesheet is a second, unreviewed glass.
+    const utility = utilityBody('surface-translucent');
+    expect(utility, 'theme.css declares no surface-translucent utility').not.toBe('');
+    expect(utility).toMatch(/backdrop-filter\s*:/);
+    expect(
+      declarations.replace(utilityBlock('surface-translucent'), ''),
+      'the backdrop filter is set outside the surface-translucent utility',
+    ).not.toMatch(/backdrop-filter\s*:/);
+  });
+
+  it('starts the translucent surface opaque, and turns it translucent only where blur exists', () => {
+    // The first declaration is the fallback a browser without backdrop-filter keeps: an
+    // opaque plane step. The translucent fill is inside `@supports`, so no browser ever
+    // shows a see-through panel with nothing blurring what is behind it.
+    const utility = utilityBody('surface-translucent');
+    expect(utility.trimStart()).toMatch(/^background-color:\s*var\(--lupin-surface-raised\)/);
+    expect(utility).toMatch(/@supports \(backdrop-filter: blur\(1px\)\)/);
+  });
+
+  it.each([
+    '@media (prefers-reduced-transparency: reduce)',
+    '@media (prefers-contrast: more)',
+    '@media (forced-colors: active)',
+  ])('goes fully opaque, with no backdrop filter, under %s', (query) => {
+    const utility = utilityBody('surface-translucent');
+    const at = utility.indexOf(query);
+    expect(at, `surface-translucent has no ${query} block`).toBeGreaterThan(-1);
+    const block = utility.slice(at, utility.indexOf('}', at));
+    expect(block).toMatch(/backdrop-filter:\s*none/);
+    expect(block).toMatch(/background-color:\s*var\(--lupin-surface-raised\)/);
+  });
+
+  it.each(BOTH_SELECTORS)(
+    'keeps every text token at 4.5:1 on the tint, whatever is behind it, in %s',
+    (selector) => {
+      // Legibility on glass cannot depend on what happens to scroll underneath, so the
+      // tint is measured composited over the two extremes — pure black and pure white.
+      // Anything real behind it sits between them, so it cannot do worse.
+      const opacity = Number.parseFloat(themeValueAnywhere('--lupin-translucent-opacity')) / 100;
+      expect(opacity, 'no --lupin-translucent-opacity').toBeGreaterThan(0);
+      const fill = variableValue(selector, '--lupin-surface-raised');
+      for (const behind of ['#000000', '#ffffff']) {
+        const tint = blend(
+          `#${hexChannels(fill)
+            .map((c) => c.toString(16).padStart(2, '0'))
+            .join('')}`,
+          behind,
+          opacity,
+        );
+        for (const text of ['--lupin-fg', '--lupin-fg-muted', '--lupin-accent']) {
+          expectAtLeast(
+            contrastRatio(variableValue(selector, text), tint),
+            4.5,
+            `${text} on the translucent surface over ${behind} in ${selector}`,
+          );
+        }
+      }
+    },
+  );
+
+  it('publishes one ambient gradient, and only as a token', () => {
+    expect(declarations).toMatch(/--lupin-gradient-ambient\s*:/);
+    // The gradient is drawn from the accent and the plane, never from a literal colour.
+    const value = themeValueAnywhere('--lupin-gradient-ambient');
+    expect(value).toContain('var(--lupin-accent)');
+    expect(value).not.toMatch(/#[0-9a-f]{3,8}\b|oklch\(\s*\d/i);
   });
 
   it('declares no page wash', () => {

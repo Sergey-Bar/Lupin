@@ -41,12 +41,14 @@
  * — lightness, chroma, hue — and a hex literal hides them. Each literal round-trips to one
  * 8-bit sRGB value, which is what the contrast arithmetic in `theme.test.ts` measures.
  *
- * ## Flat, with no glass and no wash
+ * ## Flat, with one material for what floats
  *
- * Every surface is one of the four opaque plane steps. There is no translucent fill, no
- * `backdrop-filter`, and no gradient on the page: a figure is always read against the
- * colour this file declares for the surface it sits on. Depth comes from the plane step
- * and from a hairline, and a shadow belongs to an overlay only.
+ * Every surface on the page is one of the four opaque plane steps, and a figure is always
+ * read against the colour this file declares for the surface it sits on. Depth comes from
+ * the plane step and from a hairline, and a shadow belongs to an overlay only. The one
+ * exception is the overlays themselves — palette, dialog, popover, toast — which use the
+ * `surface-translucent` utility at the foot of this file, and one ambient gradient token
+ * for entry screens. Neither ever sits behind evidence; both are described there.
  *
  * ## Info is not the accent (D6-3)
  *
@@ -428,9 +430,9 @@
 /*
  * The three escape hatches, and they are Phase 1 rather than Phase 2.
  *
- * The plane is flat and ships no `backdrop-filter`, so these cannot be "degrade
- * the glass". They are the other things the same media queries are for, and they
- * do apply to a plane this dark: a user who has asked the operating system for
+ * The plane itself is flat, so these are not "degrade the glass" — the one translucent
+ * material turns itself opaque under the same queries, in its own utility below. These
+ * blocks are the other things the queries are for, and they apply to the whole plane: a user who has asked the operating system for
  * more contrast or for a transparency-free display is asking about every pixel.
  *
  * Each is its own block rather than one selector list, because they are three
@@ -517,4 +519,74 @@
     --lupin-surface-raised: Canvas;
     --lupin-surface-muted: Canvas;
   }
+}
+
+/*
+ * Translucency, narrowly (4.0.0).
+ *
+ * The plane stays flat. What is admitted is one material for the layers that float over
+ * it — the sticky bar, the command palette, dialogs, popovers and toasts — so that content
+ * scrolling beneath them stays faintly present instead of being cut off by a slab. It is
+ * one utility, `surface-translucent`, because a second glass recipe in a component would be
+ * a second thing nobody measures; `theme.test.ts` fails on `backdrop-filter` anywhere else.
+ *
+ * Four rules, each of them a test:
+ *
+ *  - **Opaque first.** The first declaration is the raised plane step, so a browser with no
+ *    `backdrop-filter` shows a solid panel, never a see-through one with nothing blurring
+ *    what is behind it. The translucent fill is inside `@supports`.
+ *  - **Legible whatever is behind it.** The tint is the raised step at 90%, and every text
+ *    token clears 4.5:1 on it composited over pure black *and* pure white — the extremes
+ *    any real backdrop lies between.
+ *  - **Never behind evidence.** A table, a chart or a figure is never inside a translucent
+ *    layer; this is for chrome and overlays. The render budget's `glassStackDepth` counts
+ *    nesting per route in a real browser, and its ceiling is the structural half of that.
+ *  - **Off when asked.** Reduced transparency, more contrast and forced colours each return
+ *    the opaque step with no filter.
+ */
+:root {
+  --lupin-translucent-opacity: 90%;
+  --lupin-translucent-blur: 16px;
+  /*
+   * The one ambient gradient: a faint violet light from the top of the page, for the
+   * sign-in screen, first-run and empty states only. Drawn from the accent and the page,
+   * so it follows the theme, and faint enough that nothing printed on it changes contrast.
+   */
+  --lupin-gradient-ambient: radial-gradient(
+    120% 60% at 50% 0%,
+    color-mix(in oklab, var(--lupin-accent) 10%, transparent),
+    transparent 70%
+  );
+}
+
+@utility surface-translucent {
+  background-color: var(--lupin-surface-raised);
+
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: color-mix(
+      in srgb,
+      var(--lupin-surface-raised) var(--lupin-translucent-opacity),
+      transparent
+    );
+    backdrop-filter: blur(var(--lupin-translucent-blur)) saturate(140%);
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--lupin-surface-raised);
+    backdrop-filter: none;
+  }
+
+  @media (prefers-contrast: more) {
+    background-color: var(--lupin-surface-raised);
+    backdrop-filter: none;
+  }
+
+  @media (forced-colors: active) {
+    background-color: var(--lupin-surface-raised);
+    backdrop-filter: none;
+  }
+}
+
+@utility bg-ambient {
+  background-image: var(--lupin-gradient-ambient);
 }

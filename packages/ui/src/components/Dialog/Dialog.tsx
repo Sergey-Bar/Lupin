@@ -216,7 +216,7 @@ export const Dialog = forwardRef<HTMLDialogElement, DialogProps>(
           // `m-auto` because preflight zeroes a dialog's margin, which pinned a tall dialog to the
           // top-left corner on a phone and left no backdrop to tap. The height cap keeps a
           // margin of backdrop on every side, and the dialog scrolls inside it instead.
-          'backdrop:bg-surface/50 open:animate-lupin-slide-in m-auto max-h-[calc(100dvh-2rem)] overflow-y-auto p-0 rounded-2xl shadow-elevation-3 border border-border bg-surface-raised text-fg max-w-lg w-[calc(100%-2rem)]',
+          'backdrop:bg-surface/50 open:animate-lupin-slide-in m-auto max-h-[calc(100dvh-2rem)] overflow-y-auto p-0 rounded-xl shadow-elevation-3 border border-border bg-surface-raised open:surface-translucent text-fg max-w-lg w-[calc(100%-2rem)]',
           className,
         )}
         onKeyDown={handleKeyDown}

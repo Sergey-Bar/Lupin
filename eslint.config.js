@@ -46,16 +46,16 @@ export const GLASS_ALLOWLIST = [];
 export const GLASS_SELECTOR = {
   selector: `Literal[value=/(^|[\\s"'\`])backdrop-(blur|filter|saturate|brightness|contrast|grayscale|invert|sepia|hue-rotate|opacity)\\b/]`,
   message:
-    'No `backdrop-filter`: the plane is flat. Use an opaque plane step (`bg-surface`, ' +
-    '`bg-surface-raised`) and, for an overlay, a `shadow-elevation-*` step.',
+    'No `backdrop-*` utility: the plane is flat. An overlay that floats uses the one ' +
+    'translucent material, `surface-translucent` from theme.css, with a `shadow-elevation-*` step.',
 };
 
 /** The same ban for a value written in code rather than in a class string. */
 export const GLASS_PROPERTY_SELECTOR = {
   selector: "Property[key.name='backdropFilter'], Property[key.name='webkitBackdropFilter']",
   message:
-    'No inline backdrop-filter: the plane is flat. Use an opaque plane step and, for an ' +
-    'overlay, a shadow-elevation step.',
+    'No inline backdrop-filter: the plane is flat. An overlay uses the `surface-translucent` ' +
+    'utility from theme.css, which is the only place a backdrop filter is written.',
 };
 
 export default tseslint.config(
