@@ -105,7 +105,7 @@ export function LaunchRunForm({ api, onCreated }: { api: ApiClient; onCreated: (
   };
 
   const inputClass =
-    'mt-1 w-full rounded-md border border-border-default bg-surface px-3 py-2 text-sm outline-none focus:border-accent';
+    'mt-1 min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-sm outline-none hover:border-fg-muted focus:border-accent';
 
   return (
     <div>
