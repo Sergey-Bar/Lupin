@@ -46,7 +46,7 @@ export const GLASS_ALLOWLIST = [];
 export const GLASS_SELECTOR = {
   selector: `Literal[value=/(^|[\\s"'\`])backdrop-(blur|filter|saturate|brightness|contrast|grayscale|invert|sepia|hue-rotate|opacity)\\b/]`,
   message:
-    'No `backdrop-*` utility: the plane is flat. An overlay that floats uses the one ' +
+    'No `backdrop-filter` utility class: the plane is flat. An overlay that floats uses the one ' +
     'translucent material, `surface-translucent` from theme.css, with a `shadow-elevation-*` step.',
 };
 
