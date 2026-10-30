@@ -53,7 +53,14 @@ export const TableHeader = forwardRef<
   HTMLTableSectionElement,
   HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('[&_tr]:border-b border-border-default', className)} {...props} />
+  <thead
+    ref={ref}
+    className={cn(
+      'sticky top-0 z-chrome bg-surface [&_tr]:border-b [&_tr]:border-border',
+      className,
+    )}
+    {...props}
+  />
 ));
 TableHeader.displayName = 'TableHeader';
 
@@ -70,7 +77,7 @@ export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTable
     <tr
       ref={ref}
       className={cn(
-        'border-b border-border-default transition-colors hover:bg-bg-muted/50 data-[state=selected]:bg-bg-muted',
+        'border-b border-border transition-colors hover:bg-surface-muted focus-visible:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-focus data-[state=selected]:bg-surface-muted',
         className,
       )}
       {...props}
