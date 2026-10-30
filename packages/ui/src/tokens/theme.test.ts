@@ -1770,6 +1770,48 @@ describe('the light plane has depth', () => {
     expect(ratio).toBeLessThan(3);
   });
 
+  it('layers each elevation step, deepening with the step, and keeps every layer neutral', () => {
+    // A single blurred shadow is what makes a popover look pasted on. Light from above
+    // casts a tight contact shadow and a wide soft one at once, so each step is a stack
+    // of layers, and a higher step adds layers rather than only darkening one. The
+    // offsets grow with the step so a dialog sits visibly above a popover, and every
+    // layer is black at some alpha — a tinted shadow is a glow, and this plane has none.
+    const layers = (value: string): Array<{ y: number; alpha: number }> =>
+      value.split(/,(?![^(]*\))/).map((layer) => {
+        const match =
+          /^\s*(-?[\d.]+)(?:px)?\s+(-?[\d.]+)(?:px)?\s.*rgb\(0 0 0 \/ ([\d.]+)\)\s*$/.exec(layer);
+        if (match === null) throw new Error(`"${layer.trim()}" is not a neutral shadow layer`);
+        return { y: Number(match[2]), alpha: Number(match[3]) };
+      });
+    const readings = {
+      // Read to the semicolon, not the line: a layered value is wrapped across lines.
+      dark: [1, 2, 3].map(
+        (step) =>
+          new RegExp(`--shadow-elevation-${String(step)}\\s*:\\s*([^;]+);`).exec(
+            themeBlocks(),
+          )?.[1] ?? '',
+      ),
+      light: [1, 2, 3].map((step) =>
+        variableValue(LIGHT_SELECTOR, `--shadow-elevation-${String(step)}`),
+      ),
+    };
+    for (const [theme, values] of Object.entries(readings)) {
+      const steps = values.map(layers);
+      for (const [index, step] of steps.entries()) {
+        expect(
+          step.length,
+          `--shadow-elevation-${String(index + 1)} in ${theme} has ${String(step.length)} layer(s)`,
+        ).toBeGreaterThanOrEqual(index + 2);
+        const next = steps[index + 1];
+        if (next === undefined) continue;
+        expect(
+          Math.max(...next.map((layer) => layer.y)),
+          `elevation ${String(index + 2)} in ${theme} reaches no further than ${String(index + 1)}`,
+        ).toBeGreaterThan(Math.max(...step.map((layer) => layer.y)));
+      }
+    }
+  });
+
   it('softens the three elevation steps for the white plane, and only there', () => {
     const light = themeBlock(LIGHT_SELECTOR);
     for (const step of [1, 2, 3]) {

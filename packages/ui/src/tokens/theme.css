@@ -130,17 +130,23 @@
  * surface is painted on, and the shadow follows the plane rather than leading
  * it.
  *
- * The blur and the y-offset grow together with the step. `--shadow-elevation-3`
- * is for a dialog or a palette; it is not for a card.
+ * Each step is a stack of neutral layers — a tight contact shadow and a wide soft one,
+ * the way light from above falls — and a higher step adds a layer and reaches further.
+ * `--shadow-elevation-3` is for a dialog or a palette; it is not for a card. A shadow
+ * belongs to an overlay: a panel on the page is separated by its plane step and its edge.
  *
  * This is a `@theme` block rather than `@theme inline` because the values are
  * literals — there is no per-theme variable behind them, and a shadow that
  * changed with the colour scheme would be a second thing to keep in agreement.
  */
 @theme {
-  --shadow-elevation-1: 0 1px 2px rgb(0 0 0 / 0.32);
-  --shadow-elevation-2: 0 4px 12px -2px rgb(0 0 0 / 0.44), 0 1px 3px rgb(0 0 0 / 0.28);
-  --shadow-elevation-3: 0 18px 48px -12px rgb(0 0 0 / 0.62), 0 4px 12px rgb(0 0 0 / 0.36);
+  --shadow-elevation-1: 0 1px 1px rgb(0 0 0 / 0.24), 0 2px 4px -1px rgb(0 0 0 / 0.28);
+  --shadow-elevation-2:
+    0 1px 1px rgb(0 0 0 / 0.2), 0 3px 3px -1.5px rgb(0 0 0 / 0.24),
+    0 8px 12px -4px rgb(0 0 0 / 0.32);
+  --shadow-elevation-3:
+    0 1px 1px rgb(0 0 0 / 0.2), 0 4px 4px -2px rgb(0 0 0 / 0.24),
+    0 12px 16px -6px rgb(0 0 0 / 0.32), 0 28px 48px -12px rgb(0 0 0 / 0.5);
 }
 
 /*
@@ -409,9 +415,13 @@
    * near-black page, where a 32% black shadow is the only thing that separates two
    * planes; on white the same shadow is a smudge. A neutral, low-alpha pair reads as a lift.
    */
-  --shadow-elevation-1: 0 1px 2px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.08);
-  --shadow-elevation-2: 0 4px 12px -2px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.06);
-  --shadow-elevation-3: 0 20px 48px -12px rgb(0 0 0 / 0.22), 0 6px 16px -6px rgb(0 0 0 / 0.1);
+  --shadow-elevation-1: 0 1px 1px rgb(0 0 0 / 0.04), 0 2px 3px -1px rgb(0 0 0 / 0.08);
+  --shadow-elevation-2:
+    0 1px 1px -0.5px rgb(0 0 0 / 0.06), 0 3px 3px -1.5px rgb(0 0 0 / 0.06),
+    0 8px 12px -4px rgb(0 0 0 / 0.08);
+  --shadow-elevation-3:
+    0 1px 1px -0.5px rgb(0 0 0 / 0.06), 0 4px 4px -2px rgb(0 0 0 / 0.06),
+    0 12px 16px -6px rgb(0 0 0 / 0.08), 0 28px 48px -12px rgb(0 0 0 / 0.16);
   color-scheme: light;
 }
 
