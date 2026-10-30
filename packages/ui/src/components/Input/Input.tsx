@@ -7,7 +7,7 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-border-default text-text-primary',
+        default: 'border-border-strong text-text-primary hover:border-fg-muted',
         /*
          * The error variant changes the *border* and stops there.
          *

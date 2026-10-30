@@ -7,7 +7,7 @@ const selectVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-border-default text-text-primary',
+        default: 'border-border-strong text-text-primary hover:border-fg-muted',
         error: 'border-error text-error',
       },
     },
