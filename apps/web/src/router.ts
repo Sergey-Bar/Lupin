@@ -86,7 +86,7 @@ const dashboardTree = dashboardRoute.addChildren([
  */
 export const routeTree = rootRoute.addChildren([dashboardTree]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({ routeTree, defaultViewTransition: true });
 
 export function MemoryRouter({
   initialEntries = ['/'],

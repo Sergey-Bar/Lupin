@@ -3,7 +3,7 @@ import path from 'node:path';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { configure } from '@testing-library/dom';
-import { MemoryRouter } from './router.js';
+import { MemoryRouter, router } from './router.js';
 
 /**
  * A render assertion with a 15s budget, on a machine also running 160 test files.
@@ -160,5 +160,19 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
       timeout: RENDER_TIMEOUT_MS,
     });
     expect(screen.queryByTestId('onboarding')).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * Every navigation is a view transition.
+ *
+ * The router hands each route change to `document.startViewTransition`, which is what
+ * `motion.css`'s `::view-transition-*` rules animate. Set once, on the router, rather than on
+ * each `<Link>`, so a link added later transitions without anyone remembering to ask; a
+ * browser without the API navigates instantly, and reduced motion clamps it in `motion.css`.
+ */
+describe('the application router', () => {
+  it('runs every navigation as a view transition', () => {
+    expect(router.options.defaultViewTransition).toBe(true);
   });
 });

@@ -5,7 +5,7 @@
  *
  * Every UI library ships a spring. Motion here is a set of **named durations, four named
  * easings, six keyframes and one press scale**, and the reason to say that is the criterion:
- * motion here is only decoration. Nothing in this repository moves to be looked at. There is
+ * motion here is never only decoration. Nothing in this repository moves to be looked at. There is
  * no animation that is not reporting a state change — a panel opening, a row changing, a
  * button being pressed, a number updating — and a duration is spent drawing attention to
  * information that just arrived.
@@ -37,15 +37,14 @@
  * Two selectors, one value, and no component has to know either of them exists.
  * `prefers-reduced-motion: reduce` is the one that matters.
  *
- * ## Why there is no spring here
+ * ## The spring, and why it is admissible now
  *
- * A spring is the right answer to "how does this feel on a 120 Hz display with a variable
- * frame budget". This is a QA console that runs on the hardware an installation gave it, is
- * read in sessions rather than used in bursts, and whose rendering budget is *recorded*
- * rather than assumed — `tests/performance/rendering-budget.json`, where `PERF-1` in the ledger is
- * still open because nobody has run it on the reference hardware. A spring is the one
- * animation whose cost depends on the frame budget, and adding it while that number is
- * unrecorded would be adding the part that cannot be measured yet.
+ * Arrivals settle on a spring: `--lupin-ease-spring`, a damped curve sampled into a CSS
+ * `linear()` easing that overshoots by 2%. Earlier this file refused a spring because a
+ * physics loop's cost depends on the frame budget, and that budget was unrecorded. A
+ * `linear()` easing is not a loop — the browser interpolates it on the compositor exactly
+ * as it does a cubic-bezier — so it adds feel without adding a per-frame cost. Exits never
+ * spring: something leaving accelerates away.
  */
 
 :root {
@@ -89,6 +88,30 @@
   --lupin-ease-in: cubic-bezier(0.4, 0, 1, 1);
   --lupin-ease-out: cubic-bezier(0, 0, 0.2, 1);
   --lupin-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  /*
+   * `spring` for anything arriving that should feel physical: a panel, a popover, a palette.
+   * A damped spring sampled into `linear()` stops, overshooting by 2% and settling; see
+   * `motion.ts` for the parameters and `motion.test.ts` for the shape it is held to.
+   */
+  --lupin-ease-spring: linear(
+    0,
+    0.102,
+    0.309,
+    0.526,
+    0.708,
+    0.842,
+    0.93,
+    0.982,
+    1.008,
+    1.018,
+    1.02,
+    1.017,
+    1.012,
+    1.008,
+    1.005,
+    1.003,
+    1
+  );
 }
 
 @theme inline {
@@ -103,12 +126,12 @@
    *
    * The last two are the roles that had no name before, named after what they are.
    */
-  --animate-fade-in: lupin-enter calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
-    var(--lupin-ease-out);
+  --animate-fade-in: lupin-enter calc(var(--lupin-duration-200) * var(--lupin-motion-scale))
+    var(--lupin-ease-spring);
   --animate-fade-out: lupin-exit calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
     var(--lupin-ease-in);
-  --animate-zoom-in-95: lupin-zoom-in calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
-    var(--lupin-ease-out);
+  --animate-zoom-in-95: lupin-zoom-in calc(var(--lupin-duration-200) * var(--lupin-motion-scale))
+    var(--lupin-ease-spring);
   --animate-zoom-out-95: lupin-zoom-out calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
     var(--lupin-ease-in);
   --animate-lupin-slide-in: lupin-slide-in
@@ -236,6 +259,29 @@
 }
 
 /*
+ * Route changes, as view transitions.
+ *
+ * The router calls `document.startViewTransition` on every navigation, and the browser
+ * cross-fades a snapshot of the old page into the new one. `::view-transition-group(*)`
+ * is every pair the browser animates — the page, and any element given a shared
+ * `view-transition-name` (a run row and the run-detail header it opens) — so one rule sets
+ * the duration and the easing for all of them, from the same tokens the components use.
+ * A browser without the API navigates instantly, which is the right fallback.
+ */
+::view-transition-group(*) {
+  animation-duration: var(--lupin-duration-200);
+  animation-timing-function: var(--lupin-ease-spring);
+}
+
+::view-transition-old(root) {
+  animation: lupin-exit var(--lupin-duration-100) var(--lupin-ease-in) both;
+}
+
+::view-transition-new(root) {
+  animation: lupin-enter var(--lupin-duration-200) var(--lupin-ease-spring) both;
+}
+
+/*
  * The escape hatch.
  *
  * Two selectors, one value, and no component has to know either of them exists.
@@ -272,16 +318,40 @@
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
+
+  /* `*` matches elements, and these are pseudo-elements of the document. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.01ms !important;
+  }
 }
 
-.motion-off {
+/*
+ * The same clamp, for the product's own "reduce motion" setting: `theme/preferences.tsx`
+ * sets `data-motion="reduced"` on `<html>`. It is here rather than in `index.css` so the
+ * operating-system request and the in-app one are one policy in one file, and the in-app
+ * one reaches the literal `duration-*` utilities and the view transitions as the OS one
+ * does, rather than only the scaled tokens.
+ */
+.motion-off,
+html[data-motion='reduced'] {
   --lupin-motion-scale: 0.01;
 }
 
 .motion-off *,
 .motion-off *::before,
-.motion-off *::after {
+.motion-off *::after,
+html[data-motion='reduced'] *,
+html[data-motion='reduced'] *::before,
+html[data-motion='reduced'] *::after {
   transition-duration: 0.01ms !important;
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
+}
+
+html[data-motion='reduced']::view-transition-group(*),
+html[data-motion='reduced']::view-transition-old(*),
+html[data-motion='reduced']::view-transition-new(*) {
+  animation-duration: 0.01ms !important;
 }

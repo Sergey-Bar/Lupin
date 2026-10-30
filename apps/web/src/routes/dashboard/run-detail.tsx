@@ -6,6 +6,7 @@ import { Route as dashboardRoute } from '../dashboard.js';
 import { useRunDetail } from '../../hooks/useDashboard.js';
 import { isRunActive } from '../../hooks/useRuns.js';
 import { ApiError, getArtifactUrl, type ApiClient, type Run } from '../../lib/api.js';
+import { runTransitionName } from '../../lib/view-transition.js';
 import { formatDate as formatDateWithFallback } from '../../lib/format.js';
 import { formatDuration } from '../../lib/insights.js';
 import { describeGateReason } from '../../lib/gate-reason.js';
@@ -532,7 +533,10 @@ function RunHeader({
           ← Runs
         </a>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">Run detail</h1>
-        <div className="mt-1 flex min-w-0 items-center gap-2 text-sm text-fg-muted">
+        <div
+          className="mt-1 flex min-w-0 items-center gap-2 text-sm text-fg-muted"
+          style={{ viewTransitionName: runTransitionName(run.id) }}
+        >
           {run.suite ? <span className="truncate font-mono text-fg">{run.suite}</span> : null}
           <span data-testid="run-id" className="truncate font-mono">
             {run.id}

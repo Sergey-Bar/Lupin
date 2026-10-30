@@ -44,7 +44,7 @@ const reduced = reducedMotionBlock(motionCss);
 describe('motion tokens', () => {
   it('still ships the durations and easings it always did', () => {
     expect(Object.keys(motion.duration)).toEqual(['75', '100', '150', '200', '300']);
-    expect(Object.keys(motion.easing)).toEqual(['linear', 'in', 'out', 'in-out']);
+    expect(Object.keys(motion.easing)).toEqual(['linear', 'in', 'out', 'in-out', 'spring']);
   });
 
   it('publishes every easing, so the animation shorthand names one', () => {
@@ -54,14 +54,19 @@ describe('motion tokens', () => {
     // this table already owns — or to leave the animation at its default curve,
     // which is why every overlay in this product used to arrive with the same
     // unconsidered easing.
+    // Compared with whitespace collapsed, because Prettier wraps the long `linear()` spring
+    // over several lines and the value is the same value either way.
+    const flat = (css: string): string =>
+      css.replace(/\s+/g, ' ').replace(/\(\s+/g, '(').replace(/\s+\)/g, ')');
+    const published = flat(motionCss);
     for (const declaration of motionEasingDeclarations().split('\n')) {
-      expect(motionCss, `${declaration.trim()} is not published by motion.css`).toContain(
-        declaration.trim(),
+      expect(published, `${declaration.trim()} is not published by motion.css`).toContain(
+        flat(declaration.trim()),
       );
     }
     for (const step of Object.keys(motion.easing)) {
-      expect(motionCss).toContain(
-        `${easingVariableName(step)}: ${motion.easing[step as keyof typeof motion.easing]};`,
+      expect(published).toContain(
+        flat(`${easingVariableName(step)}: ${motion.easing[step as keyof typeof motion.easing]};`),
       );
     }
   });
@@ -205,5 +210,99 @@ describe('the shipped stylesheet honours prefers-reduced-motion', () => {
     const indexCss = readFileSync(path.join(webRoot, 'apps/web/src/index.css'), 'utf8');
     // A rule in a file nothing imports is a rule that does not exist.
     expect(indexCss).toMatch(/@import\s+['"][^'"]*tokens\/motion\.css['"];/);
+  });
+});
+
+/**
+ * The spring, as a CSS `linear()` easing rather than a JavaScript physics loop.
+ *
+ * `linear()` samples a curve the browser interpolates on the compositor, so a spring costs
+ * what a cubic-bezier costs — nothing per frame on the main thread — which is what made it
+ * admissible beside a recorded rendering budget. The assertions are on the shape: it has to
+ * start at rest, settle exactly on the target, and overshoot only a little, because a
+ * console panel that bounces 20% past its edge reads as a toy.
+ */
+describe('the spring easing', () => {
+  // Whitespace is collapsed: Prettier wraps a long `linear()` across lines.
+  const declared = (/--lupin-ease-spring:\s*linear\(([^;]+)\);/.exec(motionCss)?.[1] ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const stops = declared
+    .split(',')
+    .map((stop) => Number(stop.trim().split(/\s+/)[0]))
+    .filter((value) => Number.isFinite(value));
+
+  it('is published, and is the same value the token table owns', () => {
+    expect(declared, 'motion.css publishes no --lupin-ease-spring').not.toBe('');
+    const owned = /^linear\((.*)\)$/.exec(motion.easing.spring)?.[1]?.replace(/\s+/g, ' ').trim();
+    expect(owned).toBe(declared);
+  });
+
+  it('starts at rest, settles exactly on its target, and is sampled finely enough to be smooth', () => {
+    expect(stops.length).toBeGreaterThanOrEqual(12);
+    expect(stops[0]).toBe(0);
+    expect(stops.at(-1)).toBe(1);
+  });
+
+  it('overshoots by no more than 4%', () => {
+    expect(Math.max(...stops)).toBeGreaterThan(1);
+    expect(Math.max(...stops)).toBeLessThanOrEqual(1.04);
+  });
+
+  it('is what an anchored panel and an arriving panel enter on', () => {
+    for (const name of ['--animate-fade-in', '--animate-zoom-in-95']) {
+      const declaration = new RegExp(`${name}:\\s*([^;]+);`).exec(motionCss)?.[1] ?? '';
+      expect(declaration, `${name} does not enter on the spring`).toContain(
+        'var(--lupin-ease-spring)',
+      );
+    }
+  });
+
+  it('is never an exit: something leaving accelerates away and does not bounce', () => {
+    for (const name of ['--animate-fade-out', '--animate-zoom-out-95']) {
+      const declaration = new RegExp(`${name}:\\s*([^;]+);`).exec(motionCss)?.[1] ?? '';
+      expect(declaration).not.toContain('spring');
+    }
+  });
+});
+
+/** The body of the rule whose selector list is exactly `selector`. */
+function ruleBody(css: string, selector: string): string {
+  const start = css.indexOf(`${selector} {`);
+  if (start === -1) return '';
+  const open = css.indexOf('{', start);
+  return css.slice(open + 1, css.indexOf('}', open));
+}
+
+describe('route changes are view transitions, and stop when motion is reduced', () => {
+  it('cross-fades the old and new page on the motion tokens', () => {
+    expect(motionCss).toMatch(/::view-transition-old\(root\)/);
+    expect(motionCss).toMatch(/::view-transition-new\(root\)/);
+    const group = ruleBody(motionCss, '::view-transition-group(*)');
+    expect(group, 'the view transition takes a literal duration').toContain(
+      'var(--lupin-duration-',
+    );
+  });
+
+  it('clamps the view-transition pseudo-elements, which the universal selector does not reach', () => {
+    // `*` matches elements, and `::view-transition-*` are pseudo-elements of the document,
+    // so the global 0.01ms clamp above says nothing about them. A reader who asked for no
+    // motion would still get every route change cross-faded.
+    expect(reduced).toMatch(/::view-transition-group\(\*\)[\s\S]*animation-duration: 0\.01ms/);
+  });
+});
+
+describe('the in-app reduce-motion preference is as strong as the operating-system one', () => {
+  it('clamps literal durations and view transitions, not only the scaled tokens', () => {
+    // `html[data-motion='reduced']` used to set only the multiplier, so `duration-150` on a
+    // component — a literal the multiplier cannot reach — kept animating for a person who
+    // had pressed "reduce motion" in this product's own settings.
+    expect(motionCss).toMatch(/html\[data-motion='reduced'\]\s*\{[^}]*--lupin-motion-scale: 0\.01/);
+    expect(motionCss).toMatch(
+      /html\[data-motion='reduced'\] \*,[\s\S]*?transition-duration: 0\.01ms !important/,
+    );
+    expect(motionCss).toMatch(
+      /html\[data-motion='reduced'\]::view-transition-group\(\*\)[\s\S]*?animation-duration: 0\.01ms/,
+    );
   });
 });

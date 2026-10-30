@@ -76,14 +76,11 @@
 
 /*
  * The three quiet-mode preferences, as attributes `theme/preferences.tsx` sets on `<html>`.
- * Each reaches a token rather than restyling a component: motion through the one multiplier
- * `motion.css` already reads, density through the rem every spacing and type step is in.
+ * Each reaches a token rather than restyling a component: density through the rem every spacing
+ * and type step is in. Motion is `motion.css`'s: it reads `data-motion` itself, beside the
+ * operating-system request, so the two are one policy.
  */
 @layer base {
-  html[data-motion='reduced'] {
-    --lupin-motion-scale: 0.01;
-  }
-
   html[data-density='compact'] {
     font-size: 93.75%;
   }

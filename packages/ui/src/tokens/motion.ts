@@ -28,6 +28,13 @@ export const motion = {
     in: 'cubic-bezier(0.4, 0, 1, 1)',
     out: 'cubic-bezier(0, 0, 0.2, 1)',
     'in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
+    /**
+     * A damped spring (damping ratio 0.78) sampled into 17 stops: it overshoots by 2% and
+     * settles. `linear()` is interpolated by the browser like any other easing, so it costs
+     * nothing per frame on the main thread. For arrivals only — an exit never bounces.
+     */
+    spring:
+      'linear(0, 0.102, 0.309, 0.526, 0.708, 0.842, 0.93, 0.982, 1.008, 1.018, 1.02, 1.017, 1.012, 1.008, 1.005, 1.003, 1)',
   },
 };
 
