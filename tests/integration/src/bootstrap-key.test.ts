@@ -183,7 +183,7 @@ describe('ensureConfigured: the configured key is the authority', () => {
   /**
    * Found in a live demo: the first boot against a database stored a key, and from then on
    * `ensureBootstrap` returned that stored hash whatever the operator configured. So setting a
-   * new `AUTOMATE_API_KEY` and restarting, which is what `docs/operations/secret-rotation.md`
+   * new `LUPIN_API_KEY` and restarting, which is what `docs/operations/secret-rotation.md`
    * says to do, left login answering 401 to the new key and 200 to the old one.
    */
   const configured = (keyHash: string) =>

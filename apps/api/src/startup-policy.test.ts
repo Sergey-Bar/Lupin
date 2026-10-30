@@ -71,7 +71,7 @@ describe('isProduction', () => {
 });
 
 describe('checkExposurePolicy', () => {
-  it('starts an install upgraded from 3.0.0: its compose file lists HOST and never AUTOMATE_BIND', () => {
+  it('starts an install upgraded from 3.0.0: its compose file lists HOST and never LUPIN_BIND', () => {
     // The environment the 3.0.0 compose file gives the api container, through the real config
     // parser. `start update` keeps the old compose file and only changes the image, so this
     // is what the 3.1.x API sees on every upgraded install; v3.1.0 refused it and the
@@ -81,12 +81,12 @@ describe('checkExposurePolicy', () => {
       { requireProductionSecrets: false },
     );
     expect(() => checkExposurePolicy(upgraded as AppConfig)).not.toThrow();
-    expect(exposureWarning(upgraded as AppConfig)).toMatch(/AUTOMATE_BIND/u);
+    expect(exposureWarning(upgraded as AppConfig)).toMatch(/LUPIN_BIND/u);
   });
 
   it('still refuses a wildcard the operator declared as the published bind', () => {
     const declared = parseConfig(
-      { NODE_ENV: 'development', HOST: '0.0.0.0', AUTOMATE_BIND: '0.0.0.0' },
+      { NODE_ENV: 'development', HOST: '0.0.0.0', LUPIN_BIND: '0.0.0.0' },
       { requireProductionSecrets: false },
     );
     expect(() => checkExposurePolicy(declared as AppConfig)).toThrow(/reachable from other/u);
@@ -102,7 +102,7 @@ describe('checkExposurePolicy', () => {
   });
 
   it('says nothing when the bind is declared or the install is on loopback', () => {
-    for (const env of [{ AUTOMATE_BIND: '127.0.0.1', HOST: '0.0.0.0' }, {}]) {
+    for (const env of [{ LUPIN_BIND: '127.0.0.1', HOST: '0.0.0.0' }, {}]) {
       const parsed = parseConfig(
         { NODE_ENV: 'development', ...env },
         { requireProductionSecrets: false },
@@ -128,7 +128,7 @@ describe('checkExposurePolicy', () => {
         checkExposurePolicy(
           config({ nodeEnv, exposedBind: '0.0.0.0', accessControl: 'open', lanMode: false }),
         ),
-      ).toThrow(/AUTOMATE_LAN_MODE=1/);
+      ).toThrow(/LUPIN_LAN_MODE=1/);
     }
   });
 
@@ -161,40 +161,40 @@ describe('checkExposurePolicy and the deployment profile (ADR-014)', () => {
   it('refuses team and enterprise with access control opened, naming both settings', () => {
     for (const profile of ['team', 'enterprise']) {
       expect(() =>
-        checkExposurePolicy(parsed({ AUTOMATE_PROFILE: profile, ACCESS_CONTROL: 'open' })),
-      ).toThrow(new RegExp(`AUTOMATE_PROFILE=${profile}.*ACCESS_CONTROL=open`, 'u'));
+        checkExposurePolicy(parsed({ LUPIN_PROFILE: profile, ACCESS_CONTROL: 'open' })),
+      ).toThrow(new RegExp(`LUPIN_PROFILE=${profile}.*ACCESS_CONTROL=open`, 'u'));
     }
   });
 
   it('refuses solo on a reachable bind, even with a login, and names the profile that fits', () => {
     expect(() =>
       checkExposurePolicy(
-        parsed({ AUTOMATE_PROFILE: 'solo', AUTOMATE_BIND: '0.0.0.0', ACCESS_CONTROL: 'enforced' }),
+        parsed({ LUPIN_PROFILE: 'solo', LUPIN_BIND: '0.0.0.0', ACCESS_CONTROL: 'enforced' }),
       ),
-    ).toThrow(/AUTOMATE_PROFILE=startup/u);
+    ).toThrow(/LUPIN_PROFILE=startup/u);
   });
 
   it('refuses solo beside LAN mode', () => {
     expect(() =>
-      checkExposurePolicy(parsed({ AUTOMATE_PROFILE: 'solo', AUTOMATE_LAN_MODE: '1' })),
-    ).toThrow(/AUTOMATE_PROFILE=solo/u);
+      checkExposurePolicy(parsed({ LUPIN_PROFILE: 'solo', LUPIN_LAN_MODE: '1' })),
+    ).toThrow(/LUPIN_PROFILE=solo/u);
   });
 
   it('starts every profile in its own default shape', () => {
     expect(() => checkExposurePolicy(parsed({}))).not.toThrow();
-    expect(() => checkExposurePolicy(parsed({ AUTOMATE_PROFILE: 'solo' }))).not.toThrow();
+    expect(() => checkExposurePolicy(parsed({ LUPIN_PROFILE: 'solo' }))).not.toThrow();
     // Enterprise needs a single sign-on to enforce: the SSO block below covers it.
     for (const profile of ['startup', 'team']) {
-      expect(() => checkExposurePolicy(parsed({ AUTOMATE_PROFILE: profile }))).not.toThrow();
+      expect(() => checkExposurePolicy(parsed({ LUPIN_PROFILE: profile }))).not.toThrow();
       expect(() =>
-        checkExposurePolicy(parsed({ AUTOMATE_PROFILE: profile, AUTOMATE_BIND: '0.0.0.0' })),
+        checkExposurePolicy(parsed({ LUPIN_PROFILE: profile, LUPIN_BIND: '0.0.0.0' })),
       ).not.toThrow();
     }
   });
 
   it('keeps an install from before profiles starting: LAN mode with no profile is startup', () => {
     expect(() =>
-      checkExposurePolicy(parsed({ AUTOMATE_LAN_MODE: '1', AUTOMATE_BIND: '0.0.0.0' })),
+      checkExposurePolicy(parsed({ LUPIN_LAN_MODE: '1', LUPIN_BIND: '0.0.0.0' })),
     ).not.toThrow();
   });
 });
@@ -203,37 +203,35 @@ describe('checkExposurePolicy and a Cloudflare tunnel (ADR-014)', () => {
   const parsed = (env: Record<string, string>): AppConfig =>
     parseConfig({ NODE_ENV: 'development', ...env }, { requireProductionSecrets: false });
   const remote = {
-    AUTOMATE_REMOTE: 'cloudflare',
+    LUPIN_REMOTE: 'cloudflare',
     CF_ACCESS_TEAM_DOMAIN: 'acme',
     CF_ACCESS_AUD: 'aud-1',
   };
 
   it('starts a tunnel with both Access settings and a login', () => {
     expect(() => checkExposurePolicy(parsed(remote))).not.toThrow();
-    expect(() =>
-      checkExposurePolicy(parsed({ ...remote, AUTOMATE_PROFILE: 'team' })),
-    ).not.toThrow();
+    expect(() => checkExposurePolicy(parsed({ ...remote, LUPIN_PROFILE: 'team' }))).not.toThrow();
   });
 
   it('refuses a tunnel with access control opened, though the bind is loopback', () => {
     // The bind check cannot see a tunnel: it dials out, and the bind stays 127.0.0.1.
     expect(() => checkExposurePolicy(parsed({ ...remote, ACCESS_CONTROL: 'open' }))).toThrow(
-      /AUTOMATE_REMOTE=cloudflare.*ACCESS_CONTROL=open/u,
+      /LUPIN_REMOTE=cloudflare.*ACCESS_CONTROL=open/u,
     );
   });
 
   it('refuses a tunnel that cannot verify who Cloudflare let in, naming what is missing', () => {
     expect(() =>
-      checkExposurePolicy(parsed({ AUTOMATE_REMOTE: 'cloudflare', CF_ACCESS_TEAM_DOMAIN: 'acme' })),
+      checkExposurePolicy(parsed({ LUPIN_REMOTE: 'cloudflare', CF_ACCESS_TEAM_DOMAIN: 'acme' })),
     ).toThrow(/CF_ACCESS_AUD/u);
     expect(() =>
-      checkExposurePolicy(parsed({ AUTOMATE_REMOTE: 'cloudflare', CF_ACCESS_AUD: 'aud-1' })),
+      checkExposurePolicy(parsed({ LUPIN_REMOTE: 'cloudflare', CF_ACCESS_AUD: 'aud-1' })),
     ).toThrow(/CF_ACCESS_TEAM_DOMAIN/u);
   });
 
   it('refuses a solo install behind a tunnel', () => {
-    expect(() => checkExposurePolicy(parsed({ ...remote, AUTOMATE_PROFILE: 'solo' }))).toThrow(
-      /AUTOMATE_PROFILE=solo.*AUTOMATE_REMOTE/u,
+    expect(() => checkExposurePolicy(parsed({ ...remote, LUPIN_PROFILE: 'solo' }))).toThrow(
+      /LUPIN_PROFILE=solo.*LUPIN_REMOTE/u,
     );
   });
 });
@@ -244,32 +242,32 @@ describe('checkExposurePolicy and enforced single sign-on (ADR-014)', () => {
 
   it('refuses enforced SSO with no single sign-on to enforce, naming both ways to add one', () => {
     // Otherwise the only browser sign-in left would be break-glass.
-    expect(() => checkExposurePolicy(parsed({ AUTOMATE_PROFILE: 'enterprise' }))).toThrow(
-      /AUTH_SSO_ENFORCED.*OIDC_ISSUER.*AUTOMATE_REMOTE=cloudflare/u,
+    expect(() => checkExposurePolicy(parsed({ LUPIN_PROFILE: 'enterprise' }))).toThrow(
+      /AUTH_SSO_ENFORCED.*OIDC_ISSUER.*LUPIN_REMOTE=cloudflare/u,
     );
   });
 
   it('starts enterprise with OIDC, or with Cloudflare Access, or with SSO turned off', () => {
     const oidc = {
       OIDC_ISSUER: 'https://idp.example.com',
-      OIDC_CLIENT_ID: 'automate',
+      OIDC_CLIENT_ID: 'lupin',
       OIDC_CLIENT_SECRET: ['s', 'e', 'c', 'r', 'e', 't'].join(''),
     };
     expect(() =>
-      checkExposurePolicy(parsed({ AUTOMATE_PROFILE: 'enterprise', ...oidc })),
+      checkExposurePolicy(parsed({ LUPIN_PROFILE: 'enterprise', ...oidc })),
     ).not.toThrow();
     expect(() =>
       checkExposurePolicy(
         parsed({
-          AUTOMATE_PROFILE: 'enterprise',
-          AUTOMATE_REMOTE: 'cloudflare',
+          LUPIN_PROFILE: 'enterprise',
+          LUPIN_REMOTE: 'cloudflare',
           CF_ACCESS_TEAM_DOMAIN: 'acme',
           CF_ACCESS_AUD: 'aud-1',
         }),
       ),
     ).not.toThrow();
     expect(() =>
-      checkExposurePolicy(parsed({ AUTOMATE_PROFILE: 'enterprise', AUTH_SSO_ENFORCED: '0' })),
+      checkExposurePolicy(parsed({ LUPIN_PROFILE: 'enterprise', AUTH_SSO_ENFORCED: '0' })),
     ).not.toThrow();
   });
 });
@@ -396,16 +394,16 @@ describe('checkProductionPolicy', () => {
 });
 
 describe('resolveAuthSecrets', () => {
-  it('signs the installation credential with AUTOMATE_INSTALLATION_KEY when it is set (MNT-20)', () => {
-    // Production refuses to boot without AUTOMATE_INSTALLATION_KEY and then never read it:
-    // the credential was derived from AUTOMATE_API_KEY, so an operator who set the key the
+  it('signs the installation credential with LUPIN_INSTALLATION_KEY when it is set (MNT-20)', () => {
+    // Production refuses to boot without LUPIN_INSTALLATION_KEY and then never read it:
+    // the credential was derived from LUPIN_API_KEY, so an operator who set the key the
     // boot error asked for could not sign in with it.
     const presented = 'i'.repeat(40);
     expect(
-      resolveAuthSecrets(config(), { AUTOMATE_INSTALLATION_KEY: presented }).installationKey,
+      resolveAuthSecrets(config(), { LUPIN_INSTALLATION_KEY: presented }).installationKey,
     ).toBe(presented);
     // Blank is absent, so the configured API key is still the fallback.
-    expect(resolveAuthSecrets(config(), { AUTOMATE_INSTALLATION_KEY: '  ' }).installationKey).toBe(
+    expect(resolveAuthSecrets(config(), { LUPIN_INSTALLATION_KEY: '  ' }).installationKey).toBe(
       VALID_API_KEY,
     );
   });
@@ -431,15 +429,15 @@ describe('resolveAuthSecrets', () => {
     // secret silently became the published literal, on any `nodeEnv` that was
     // not the exact string `production`.
     expect(() => resolveAuthSecrets(bare('development'), {})).toThrow(/COOKIE_SECRET is required/);
-    expect(resolveAuthSecrets(bare('development'), { AUTOMATE_ALLOW_DEV_SECRETS: '1' })).toEqual({
+    expect(resolveAuthSecrets(bare('development'), { LUPIN_ALLOW_DEV_SECRETS: '1' })).toEqual({
       cookieSecret: DEVELOPMENT_COOKIE_SECRET,
       installationKey: DEVELOPMENT_INSTALLATION_KEY,
     });
 
     // And production refuses them even with the opt-in set.
-    expect(() =>
-      resolveAuthSecrets(bare('production'), { AUTOMATE_ALLOW_DEV_SECRETS: '1' }),
-    ).toThrow(/required in production/);
+    expect(() => resolveAuthSecrets(bare('production'), { LUPIN_ALLOW_DEV_SECRETS: '1' })).toThrow(
+      /required in production/,
+    );
   });
 
   it('never returns a placeholder secret in production, whatever the env allows', () => {
@@ -458,7 +456,7 @@ describe('identityWarning (ADR-014)', () => {
       {
         NODE_ENV: 'development',
         OIDC_ISSUER: 'https://idp.example.com',
-        OIDC_CLIENT_ID: 'automate',
+        OIDC_CLIENT_ID: 'lupin',
         OIDC_CLIENT_SECRET: ['s', 'e', 'c', 'r', 'e', 't'].join(''),
         ...env,
       },

@@ -92,11 +92,11 @@ A GitHub Actions step, run even when the tests failed:
   if: always()
   run: |
     curl --fail-with-body \
-      -H "Authorization: Bearer ${{ secrets.AUTOMATE_REPORTER_SECRET }}" \
+      -H "Authorization: Bearer ${{ secrets.LUPIN_REPORTER_SECRET }}" \
       -F file=@results.json -F format=playwright \
       -F runId="${{ github.run_id }}-${{ github.run_attempt }}" \
       -F branch="${{ github.ref_name }}" -F commitSha="${{ github.sha }}" \
-      "${{ vars.AUTOMATE_URL }}/api/v1/reporter/upload"
+      "${{ vars.LUPIN_URL }}/api/v1/reporter/upload"
 ```
 
 `if: always()` matters: the run you most need to see is the one that failed.

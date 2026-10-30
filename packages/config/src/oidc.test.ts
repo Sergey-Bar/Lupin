@@ -6,7 +6,7 @@ const SECRET = ['oidc', 'client', 'secret', 'for', 'this', 'test', 'only'].join(
 
 const OIDC = {
   OIDC_ISSUER: 'https://idp.example.com',
-  OIDC_CLIENT_ID: 'automate',
+  OIDC_CLIENT_ID: 'lupin',
   OIDC_CLIENT_SECRET: SECRET,
 };
 
@@ -20,7 +20,7 @@ describe('OIDC sign-in in the parsed configuration', () => {
     const config = parseConfig({ ...OIDC, PUBLIC_APP_URL: 'https://automate.example.com/' });
     expect(config.oidc).toEqual({
       issuer: 'https://idp.example.com',
-      clientId: 'automate',
+      clientId: 'lupin',
       clientSecret: SECRET,
       redirectUri: 'https://automate.example.com/api/v1/auth/oidc/callback',
       allowedDomains: [],
@@ -59,7 +59,7 @@ describe('OIDC sign-in in the parsed configuration', () => {
 
   it('refuses a client id with no secret, rather than signing in as a public client', () => {
     expect(() =>
-      parseConfig({ OIDC_ISSUER: 'https://idp.example.com', OIDC_CLIENT_ID: 'automate' }),
+      parseConfig({ OIDC_ISSUER: 'https://idp.example.com', OIDC_CLIENT_ID: 'lupin' }),
     ).toThrow(/OIDC_CLIENT_SECRET/u);
   });
 });

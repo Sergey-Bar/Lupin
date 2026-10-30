@@ -28,14 +28,14 @@ and what to do next.
 ## Solo
 
 Nothing to configure. `./start.sh` binds to `127.0.0.1`, and anything that tries to make the
-install reachable from another machine — `AUTOMATE_BIND=0.0.0.0`, LAN mode, a tunnel — is
+install reachable from another machine — `LUPIN_BIND=0.0.0.0`, LAN mode, a tunnel — is
 refused with the profile to use instead.
 
 ## Startup
 
 Turns sign-in on. Then pick how people reach it:
 
-- **Same network:** [LAN mode](/guide/lan-mode) — `AUTOMATE_BIND=0.0.0.0`, a LAN certificate,
+- **Same network:** [LAN mode](/guide/lan-mode) — `LUPIN_BIND=0.0.0.0`, a LAN certificate,
   and device pairing from the Access page.
 - **Anywhere:** [Cloudflare Tunnel and Access](/guide/remote-cloudflare) —
   `./start.sh --profile startup --remote cloudflare`. No router port is opened.
@@ -56,7 +56,7 @@ OIDC_CLIENT_SECRET=...
 OIDC_ALLOWED_DOMAINS=example.com
 OIDC_ROLE_MAP=admin:ana@example.com,operator:group:qa
 OIDC_DEFAULT_ROLE=viewer          # or none, to admit only the people the map names
-AUTOMATE_PUBLIC_URL=https://automate.example.com
+LUPIN_PUBLIC_URL=https://automate.example.com
 ```
 
 The sign-in screen then shows _Sign in with single sign-on_. A person's role is per
@@ -88,7 +88,7 @@ Everything in `team`, plus:
   token Cloudflare signs, so there is no XML signature handling in the app. The people Access
   lets in are accounts, so SCIM, Members and per-workspace roles apply to them as they do to
   OIDC sign-ins ([how](/guide/remote-cloudflare#on-team-and-enterprise-people-are-accounts)).
-- **Break-glass.** If single sign-on is down, set `AUTOMATE_BREAK_GLASS=1` and restart: the
+- **Break-glass.** If single sign-on is down, set `LUPIN_BREAK_GLASS=1` and restart: the
   installation key works again, behind Cloudflare Access too, every use is logged and written
   to the audit trail, and the start-up log says it is on. Turn it off once you are back in, and
   the sessions it signed in stop counting.

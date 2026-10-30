@@ -38,7 +38,7 @@ The matching rule for baseline writers: `*:baseline` scripts are `never-in-ci`. 
 
 ## The one permitted way around a scanner
 
-On a host where `semgrep` or `gitleaks` cannot run, `AUTOMATE_HOST_SCANNERS=unavailable` (set for you by `pnpm verify:local`) records `not_configured` and exits 0. The boundary is narrow and machine-checked: a scanner that *ran* and reported something still fails; a scanner killed at the ceiling counts as unavailable, never as clean, so a ten-minute stall cannot become a green security gate; and **no file anywhere under `.github/` may set it**, which `auditRepository` reports as a finding.
+On a host where `semgrep` or `gitleaks` cannot run, `LUPIN_HOST_SCANNERS=unavailable` (set for you by `pnpm verify:local`) records `not_configured` and exits 0. The boundary is narrow and machine-checked: a scanner that *ran* and reported something still fails; a scanner killed at the ceiling counts as unavailable, never as clean, so a ten-minute stall cannot become a green security gate; and **no file anywhere under `.github/` may set it**, which `auditRepository` reports as a finding.
 
 ## Approach
 

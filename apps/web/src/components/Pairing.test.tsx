@@ -94,7 +94,7 @@ describe('PairPage', () => {
 describe('ConnectRunnerPanel', () => {
   it('names the address this browser used, and warns when it is plain HTTP', () => {
     const { rerender } = render(<ConnectRunnerPanel origin="http://192.168.1.10:8080" />);
-    expect(screen.getByText(/AUTOMATE_API_URL=http:\/\/192\.168\.1\.10:8080/u)).toBeTruthy();
+    expect(screen.getByText(/LUPIN_API_URL=http:\/\/192\.168\.1\.10:8080/u)).toBeTruthy();
     expect(screen.getByText(/runner refuses it/u)).toBeTruthy();
     rerender(<ConnectRunnerPanel origin="https://192.168.1.10:8443" />);
     expect(screen.queryByText(/runner refuses it/u)).toBeNull();

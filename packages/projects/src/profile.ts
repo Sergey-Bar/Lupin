@@ -150,7 +150,7 @@ export const AutomateConfigSchema = z.object({
 export type AutomateConfig = z.infer<typeof AutomateConfigSchema>;
 
 /** The filename the override is looked for under, at the repository root. */
-export const AUTOMATE_CONFIG_FILENAME = 'automate.config.json';
+export const LUPIN_CONFIG_FILENAME = 'automate.config.json';
 
 /** A detected proposal plus whatever the operator declared, and which won. */
 export interface ResolvedProfile {

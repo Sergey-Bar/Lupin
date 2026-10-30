@@ -103,8 +103,8 @@ function reporter(
     log,
     reporter: new AutomateReporter({
       env: {
-        AUTOMATE_URL: 'https://automate.example.com',
-        AUTOMATE_REPORTER_SECRET: 'reporter-secret-value',
+        LUPIN_URL: 'https://automate.example.com',
+        LUPIN_REPORTER_SECRET: 'reporter-secret-value',
         GITHUB_SHA: SHA,
         GITHUB_REF_NAME: 'main',
         ...env,
@@ -187,11 +187,11 @@ describe('streaming a run', () => {
     });
   });
 
-  it('prefers AUTOMATE_BRANCH and AUTOMATE_COMMIT, and drops a commit that is not a sha', async () => {
+  it('prefers LUPIN_BRANCH and LUPIN_COMMIT, and drops a commit that is not a sha', async () => {
     const { calls, fetch } = recorder();
     const { reporter: r } = reporter(fetch, {
-      AUTOMATE_BRANCH: 'feature/x',
-      AUTOMATE_COMMIT: 'not a sha',
+      LUPIN_BRANCH: 'feature/x',
+      LUPIN_COMMIT: 'not a sha',
       GITHUB_HEAD_REF: 'pr-branch',
     });
     r.onBegin(CONFIG, rootSuite(0));
@@ -476,13 +476,13 @@ describe('never breaking the test run', () => {
 });
 
 describe('where it sends, and with what', () => {
-  it('is off, with one line saying so, when AUTOMATE_URL is not set', async () => {
+  it('is off, with one line saying so, when LUPIN_URL is not set', async () => {
     const { calls, fetch } = recorder();
-    const { reporter: r, log } = reporter(fetch, { AUTOMATE_URL: undefined });
+    const { reporter: r, log } = reporter(fetch, { LUPIN_URL: undefined });
     r.onBegin(CONFIG, rootSuite(0));
     await r.onEnd({ status: 'passed', duration: 1 });
     expect(calls).toEqual([]);
-    expect(log).toEqual(['AutoMate reporter: AUTOMATE_URL is not set; nothing is sent.']);
+    expect(log).toEqual(['AutoMate reporter: LUPIN_URL is not set; nothing is sent.']);
   });
 
   it.each([
@@ -497,7 +497,7 @@ describe('where it sends, and with what', () => {
     ['https://automate.example.com/', true],
   ])('%s is allowed: %s', async (url, allowed) => {
     const { calls, fetch } = recorder();
-    const { reporter: r, log } = reporter(fetch, { AUTOMATE_URL: url });
+    const { reporter: r, log } = reporter(fetch, { LUPIN_URL: url });
     r.onBegin(CONFIG, rootSuite(0));
     await r.onEnd({ status: 'passed', duration: 1 });
     expect(calls.length > 0).toBe(allowed);
@@ -514,7 +514,7 @@ describe('where it sends, and with what', () => {
 
   it('sends no authorization header when no secret is set', async () => {
     const { calls, fetch } = recorder();
-    const { reporter: r } = reporter(fetch, { AUTOMATE_REPORTER_SECRET: undefined });
+    const { reporter: r } = reporter(fetch, { LUPIN_REPORTER_SECRET: undefined });
     r.onBegin(CONFIG, rootSuite(0));
     await r.onEnd({ status: 'passed', duration: 1 });
     expect(calls[0]?.authorization).toBeNull();

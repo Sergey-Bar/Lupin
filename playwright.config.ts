@@ -169,7 +169,7 @@ const durablePathSpecFiles = specFiles.filter((file) => file.endsWith('durable-p
  * server and compared with ceilings recorded against the bundle would fail on the
  * difference between the two servers rather than on the product.
  */
-const renderServe = process.env['AUTOMATE_RENDER_SERVE'] === 'preview';
+const renderServe = process.env['LUPIN_RENDER_SERVE'] === 'preview';
 const webServerCommand = renderServe
   ? `pnpm --filter @lupin/unified-web exec vite preview --host 127.0.0.1 --port ${String(WEB_PORT)} --strictPort`
   : 'pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1';
@@ -250,7 +250,7 @@ export default defineConfig({
         NODE_ENV: 'development',
         DATABASE_URL: databaseUrl,
         COOKIE_SECRET: 'e2e-cookie-secret-32-characters-long',
-        AUTOMATE_API_KEY: INSTALLATION_KEY,
+        LUPIN_API_KEY: INSTALLATION_KEY,
         // The lane enrols a runner, and enrolling is a separate act from reading runs.
         // Without this the register route answered `RUNNER_REGISTRATION_UNAUTHORIZED`:
         // it treats a *missing* secret as a misconfiguration outside `NODE_ENV=test`, and
@@ -266,7 +266,7 @@ export default defineConfig({
         // the list was broken.
         //
         // This is the mechanism the product itself documents. The onboarding screen says
-        // "Set AUTOMATE_PROJECT_ROOT to the checkout you want analysed and restart the
+        // "Set LUPIN_PROJECT_ROOT to the checkout you want analysed and restart the
         // API", and `discoverProjectAtBoot` registers it at boot with no default — in
         // compose the working directory is `/app`, so a default would register the
         // container as the user's project. Setting it here is that instruction, followed,
@@ -274,7 +274,7 @@ export default defineConfig({
         //
         // `configDir` is the repository root, which has the `package.json` and the
         // workspace file the detectors read.
-        AUTOMATE_PROJECT_ROOT: configDir,
+        LUPIN_PROJECT_ROOT: configDir,
       },
       reuseExistingServer: !process.env['CI'],
       timeout: 60_000,

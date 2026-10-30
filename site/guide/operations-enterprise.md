@@ -31,7 +31,7 @@ backed up, watched and auditable, and that you can rebuild from a backup.
 4. Create a workspace per team on _Map → Deployment_. Each team's CI gets an `uploader` token
    issued inside its own workspace.
 
-**Break-glass.** If the identity provider is down, set `AUTOMATE_BREAK_GLASS=1` in `.env` and
+**Break-glass.** If the identity provider is down, set `LUPIN_BREAK_GLASS=1` in `.env` and
 run `./start.sh` again. The installation key then signs a browser in, and every use is
 logged and written to the audit trail. Remove the setting and restart once single sign-on
 is back. Keep the installation key somewhere that does not depend on the identity provider.
@@ -97,7 +97,7 @@ restore, and the restore prints the command that drops it.
 it. Copying the whole file over would also bring the backup's `POSTGRES_PASSWORD`, which this
 install's database does not follow, and the install would be locked out of it. The other
 differences are harmless: people sign in again if `COOKIE_SECRET` differs, sign-in keeps using
-this install's `AUTOMATE_INSTALLATION_KEY`, and access tokens and SCIM tokens keep working. If
+this install's `LUPIN_INSTALLATION_KEY`, and access tokens and SCIM tokens keep working. If
 the restore stops before it replaces anything, put your own `VAULT_SECRET` back: the install is
 running on its own data again.
 
@@ -137,7 +137,7 @@ must still be the one you filed. That is what proves the trail was not rewritten
 point, even by someone who can switch the database's guards off.
 
 To check every workspace's chain against the database, run this in the install folder. The
-project is `automate` unless you set `AUTOMATE_PROJECT`.
+project is `automate` unless you set `LUPIN_PROJECT`.
 
 ```sh
 docker compose -p lupin --env-file .env -f compose.yml run --rm --no-deps --entrypoint node migrate dist/audit-verify.js

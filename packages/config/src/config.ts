@@ -41,7 +41,7 @@ export type SecretVariable =
   | 'COOKIE_SECRET'
   | 'SESSION_SECRET'
   | 'VAULT_SECRET'
-  | 'AUTOMATE_API_KEY'
+  | 'LUPIN_API_KEY'
   | 'REPORTER_SECRET'
   | 'RUNNER_REGISTRATION_SECRET'
   | 'KILO_API_KEY'
@@ -58,13 +58,13 @@ export type SecretVariable =
  * check.
  */
 const EXACT_PLACEHOLDERS: Record<SecretVariable, readonly string[]> = {
-  COOKIE_SECRET: ['automate'],
-  SESSION_SECRET: ['automate'],
+  COOKIE_SECRET: ['lupin'],
+  SESSION_SECRET: ['lupin'],
   VAULT_SECRET: ['change-me'],
-  AUTOMATE_API_KEY: ['change-me', 'automate'],
+  LUPIN_API_KEY: ['change-me', 'lupin'],
   REPORTER_SECRET: ['change-me', 'reporter-secret'],
   RUNNER_REGISTRATION_SECRET: ['change-me', 'runner-registration-secret'],
-  KILO_API_KEY: ['change-me', 'automate'],
+  KILO_API_KEY: ['change-me', 'lupin'],
   GITHUB_WEBHOOK_SECRET: ['change-me', 'github-webhook-secret'],
 };
 
@@ -128,7 +128,7 @@ function secretSchema(variable: SecretVariable) {
  * authority. Unvalidated, `HOST=127.0.0.1:3000@evil.example.com` produces a
  * target that reads as loopback in a log and whose real host is
  * `evil.example.com` — so every `/api` request, including the login body
- * carrying `AUTOMATE_API_KEY`, is proxied off-box. `EnvironmentSchema` accepts any
+ * carrying `LUPIN_API_KEY`, is proxied off-box. `EnvironmentSchema` accepts any
  * non-empty string for `HOST`, so nothing upstream catches it either.
  *
  * Not `parseConfig`: this is called from `vite.config.ts`, which runs before the
@@ -230,7 +230,7 @@ const EnvironmentSchema = z.object({
   VAULT_SECRET: secretSchema('VAULT_SECRET').optional(),
   PUBLIC_APP_URL: z.string().url().default('http://localhost:5173'),
   WORKSPACE_ID: z.string().min(1).default('default-workspace'),
-  AUTOMATE_API_KEY: secretSchema('AUTOMATE_API_KEY').optional(),
+  LUPIN_API_KEY: secretSchema('LUPIN_API_KEY').optional(),
   REPORTER_SECRET: secretSchema('REPORTER_SECRET').optional(),
   RUNNER_REGISTRATION_SECRET: secretSchema('RUNNER_REGISTRATION_SECRET').optional(),
   ARTIFACT_ROOT: z.string().min(1).default('./var/artifacts'),
@@ -253,7 +253,7 @@ const EnvironmentSchema = z.object({
    * requires a session or an access token on every `/api/v1` route that is not a probe or a
    * sign-in, with viewer, operator and admin roles.
    *
-   * **No default in the schema.** Unset, it is `open` — unless `AUTOMATE_LAN_MODE` is on, in
+   * **No default in the schema.** Unset, it is `open` — unless `LUPIN_LAN_MODE` is on, in
    * which case it is `enforced`. An explicit `open` beside LAN mode is kept as written so the
    * startup policy can refuse the contradiction by name instead of silently resolving it.
    */
@@ -263,13 +263,13 @@ const EnvironmentSchema = z.object({
    * `ACCESS_CONTROL=enforced` says the install already serves other people, which is
    * `startup`. A profile sets defaults only; an explicit variable beside it wins.
    */
-  AUTOMATE_PROFILE: z.enum(PROFILES).optional(),
+  LUPIN_PROFILE: z.enum(PROFILES).optional(),
   /**
    * `cloudflare`: the install is reached through Cloudflare Tunnel, and a verified Cloudflare
    * Access identity is a credential (ADR-014). A tunnel is exposure even on a loopback bind,
    * so the startup policy requires enforced access control and both settings below.
    */
-  AUTOMATE_REMOTE: z.enum(REMOTE_MODES).optional(),
+  LUPIN_REMOTE: z.enum(REMOTE_MODES).optional(),
   /** The Access team: `acme`, `acme.cloudflareaccess.com`, or its URL. */
   CF_ACCESS_TEAM_DOMAIN: z.string().min(1).optional(),
   /** The Access application's audience (AUD) tag. */
@@ -286,7 +286,7 @@ const EnvironmentSchema = z.object({
       value === undefined ? undefined : value === '1' || value === 'true' || value === 'yes',
     ),
   /** Lets the installation key sign a browser in while SSO is enforced. Audited every time. */
-  AUTOMATE_BREAK_GLASS: z
+  LUPIN_BREAK_GLASS: z
     .enum(['1', 'true', 'yes', '0', 'false', 'no'])
     .optional()
     .transform((value) => value === '1' || value === 'true' || value === 'yes'),
@@ -303,16 +303,16 @@ const EnvironmentSchema = z.object({
    * The one switch for serving other machines on the local network: access control on, the
    * client allowlist applied, and the start scripts allowed to publish beyond loopback.
    */
-  AUTOMATE_LAN_MODE: z
+  LUPIN_LAN_MODE: z
     .enum(['1', 'true', 'yes', '0', 'false', 'no'])
     .optional()
     .transform((value) => value === '1' || value === 'true' || value === 'yes'),
   /**
    * The address the front door is published on. The compose stack passes the edge's own
-   * `AUTOMATE_BIND` through, because the API listens on `0.0.0.0` *inside* the compose
+   * `LUPIN_BIND` through, because the API listens on `0.0.0.0` *inside* the compose
    * network and that says nothing about whether another machine can reach it.
    */
-  AUTOMATE_BIND: z.string().min(1).optional(),
+  LUPIN_BIND: z.string().min(1).optional(),
   /** Comma-separated client ranges admitted. Unset: {@link DEFAULT_CLIENT_CIDRS}. */
   ALLOWED_CLIENT_CIDRS: z
     .string()
@@ -334,7 +334,7 @@ const EnvironmentSchema = z.object({
   HEALTH_WEBHOOK_SECRET: z.string().min(32).optional(),
   /**
    * Verifies GitHub's `X-Hub-Signature-256` on `POST /api/v1/webhooks/github`. The receiver
-   * answers only with this set **and** `AUTOMATE_LAN_MODE` on; otherwise it is a 404.
+   * answers only with this set **and** `LUPIN_LAN_MODE` on; otherwise it is a 404.
    */
   GITHUB_WEBHOOK_SECRET: secretSchema('GITHUB_WEBHOOK_SECRET').optional(),
   /** A Slack bot token for repository-health alerts. Unset: Slack alerts are not sent. */
@@ -359,7 +359,7 @@ const EnvironmentSchema = z.object({
    * confidence. An empty value is absence rather than an empty path, because
    * `parseConfig` filters empty strings out before the schema sees them.
    */
-  AUTOMATE_PROJECT_ROOT: z.string().min(1).optional(),
+  LUPIN_PROJECT_ROOT: z.string().min(1).optional(),
 });
 
 export type AppConfig = {
@@ -400,9 +400,9 @@ export type AppConfig = {
   trustProxy: boolean;
   /** `ACCESS_CONTROL`: whether the role guards refuse a caller with no credential. */
   accessControl: 'open' | 'enforced';
-  /** `AUTOMATE_PROFILE`, or the profile the other settings imply. */
+  /** `LUPIN_PROFILE`, or the profile the other settings imply. */
   profile: Profile;
-  /** `AUTOMATE_REMOTE`: how the install is reached from outside its network, if it is. */
+  /** `LUPIN_REMOTE`: how the install is reached from outside its network, if it is. */
   remote?: RemoteMode;
   /** Present when both `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` are set. */
   cloudflareAccess?: CloudflareAccessConfig;
@@ -410,18 +410,18 @@ export type AppConfig = {
   oidc?: OidcConfig;
   /** `AUTH_SSO_ENFORCED`, or the profile's default: browsers sign in through SSO only. */
   ssoEnforced: boolean;
-  /** `AUTOMATE_BREAK_GLASS`: the installation key may sign a browser in under enforced SSO. */
+  /** `LUPIN_BREAK_GLASS`: the installation key may sign a browser in under enforced SSO. */
   breakGlass: boolean;
-  /** `AUTOMATE_LAN_MODE`: serve other machines on the local network. */
+  /** `LUPIN_LAN_MODE`: serve other machines on the local network. */
   lanMode: boolean;
   /**
-   * Where the install is reachable from: `AUTOMATE_BIND` when set. Otherwise `HOST`, unless
+   * Where the install is reachable from: `LUPIN_BIND` when set. Otherwise `HOST`, unless
    * `HOST` is a wildcard (`0.0.0.0`, `::`), which names no machine: it is how every container
-   * listens, and the 3.0.0 compose file sets it without `AUTOMATE_BIND`. That case reads as
+   * listens, and the 3.0.0 compose file sets it without `LUPIN_BIND`. That case reads as
    * loopback, with {@link bindUndeclared} saying the exposure is unknown rather than safe.
    */
   exposedBind: string;
-  /** No `AUTOMATE_BIND`, and a wildcard `HOST`: the install cannot tell who can reach it. */
+  /** No `LUPIN_BIND`, and a wildcard `HOST`: the install cannot tell who can reach it. */
   bindUndeclared: boolean;
   /** `ALLOWED_CLIENT_CIDRS`, or {@link DEFAULT_CLIENT_CIDRS}. */
   allowedClientCidrs: string[];
@@ -472,7 +472,7 @@ export function parseConfig(
     vaultSecret: parsed.VAULT_SECRET,
     publicAppUrl: parsed.PUBLIC_APP_URL,
     workspaceId: parsed.WORKSPACE_ID,
-    installationApiKey: parsed.AUTOMATE_API_KEY,
+    installationApiKey: parsed.LUPIN_API_KEY,
     reporterSecret: parsed.REPORTER_SECRET,
     runnerRegistrationSecret: parsed.RUNNER_REGISTRATION_SECRET,
     artifactRoot: parsed.ARTIFACT_ROOT,
@@ -487,9 +487,9 @@ export function parseConfig(
     ...profileAndAccess(parsed),
     ...remoteAccess(parsed),
     ...oidcSignIn(parsed),
-    lanMode: parsed.AUTOMATE_LAN_MODE,
-    exposedBind: parsed.AUTOMATE_BIND ?? (isWildcardBind(parsed.HOST) ? DEFAULT_HOST : parsed.HOST),
-    bindUndeclared: parsed.AUTOMATE_BIND === undefined && isWildcardBind(parsed.HOST),
+    lanMode: parsed.LUPIN_LAN_MODE,
+    exposedBind: parsed.LUPIN_BIND ?? (isWildcardBind(parsed.HOST) ? DEFAULT_HOST : parsed.HOST),
+    bindUndeclared: parsed.LUPIN_BIND === undefined && isWildcardBind(parsed.HOST),
     allowedClientCidrs:
       parsed.ALLOWED_CLIENT_CIDRS === undefined
         ? [...DEFAULT_CLIENT_CIDRS]
@@ -500,7 +500,7 @@ export function parseConfig(
     auditRetentionDays: parsed.AUDIT_RETENTION_DAYS,
     retentionSweepIntervalSeconds: parsed.RETENTION_SWEEP_INTERVAL_SECONDS,
     deliverySyncIntervalMs: parsed.DELIVERY_SYNC_INTERVAL_MS,
-    projectRoot: parsed.AUTOMATE_PROJECT_ROOT,
+    projectRoot: parsed.LUPIN_PROJECT_ROOT,
   };
 }
 
@@ -516,33 +516,33 @@ function profileAndAccess(
 ): Pick<AppConfig, 'profile' | 'accessControl' | 'ssoEnforced' | 'breakGlass'> {
   // An install that already serves other people: LAN mode, a tunnel, or a login turned on.
   const serves =
-    parsed.AUTOMATE_LAN_MODE ||
-    parsed.AUTOMATE_REMOTE !== undefined ||
+    parsed.LUPIN_LAN_MODE ||
+    parsed.LUPIN_REMOTE !== undefined ||
     parsed.ACCESS_CONTROL === 'enforced';
-  const profile: Profile = parsed.AUTOMATE_PROFILE ?? (serves ? 'startup' : 'solo');
+  const profile: Profile = parsed.LUPIN_PROFILE ?? (serves ? 'startup' : 'solo');
   const defaults = resolveProfileDefaults(profile);
   return {
     profile,
     accessControl:
       parsed.ACCESS_CONTROL ??
-      (parsed.AUTOMATE_LAN_MODE || parsed.AUTOMATE_REMOTE !== undefined
+      (parsed.LUPIN_LAN_MODE || parsed.LUPIN_REMOTE !== undefined
         ? 'enforced'
         : defaults.accessControl),
     ssoEnforced: parsed.AUTH_SSO_ENFORCED ?? defaults.ssoEnforced,
-    breakGlass: parsed.AUTOMATE_BREAK_GLASS,
+    breakGlass: parsed.LUPIN_BREAK_GLASS,
   };
 }
 
 /**
  * Remote access settings. The team domain and role map are validated here so a malformed
  * value stops the process at startup; a missing half leaves `cloudflareAccess` out, and the
- * startup policy names what is missing when `AUTOMATE_REMOTE` asks for it.
+ * startup policy names what is missing when `LUPIN_REMOTE` asks for it.
  */
 function remoteAccess(
   parsed: z.infer<typeof EnvironmentSchema>,
 ): Pick<AppConfig, 'remote' | 'cloudflareAccess'> {
   const remote: Pick<AppConfig, 'remote' | 'cloudflareAccess'> = {};
-  if (parsed.AUTOMATE_REMOTE !== undefined) remote.remote = parsed.AUTOMATE_REMOTE;
+  if (parsed.LUPIN_REMOTE !== undefined) remote.remote = parsed.LUPIN_REMOTE;
   const teamDomain =
     parsed.CF_ACCESS_TEAM_DOMAIN === undefined
       ? undefined

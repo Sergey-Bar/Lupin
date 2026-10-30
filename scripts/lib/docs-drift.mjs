@@ -860,7 +860,7 @@ function derivePorts(read) {
       ports.add(match[1] ?? '');
       ports.add(match[2] ?? '');
     }
-    // The production front door is interpolated — `${AUTOMATE_PORT:-8080}:8080` — so its
+    // The production front door is interpolated — `${LUPIN_PORT:-8080}:8080` — so its
     // default is the port a document names, and the plain pattern above cannot see it.
     for (const match of source.matchAll(/:-(\d{2,5})\}:(\d{2,5})\b/g)) {
       ports.add(match[1] ?? '');
@@ -929,7 +929,7 @@ function deriveEnvVars(read, files) {
   )) {
     names.add(match[1] ?? '');
   }
-  // And every variable the compose file interpolates: `${AUTOMATE_PORT:-8080}` is a setting
+  // And every variable the compose file interpolates: `${LUPIN_PORT:-8080}` is a setting
   // an operator sets, though no service declares it under that name.
   for (const match of read('infra/compose/docker-compose.unified.yml').matchAll(
     /\$\{([A-Z][A-Z0-9_]*)/g,

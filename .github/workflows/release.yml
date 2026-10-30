@@ -131,8 +131,8 @@ jobs:
           file: infra/docker/${{ matrix.image }}.Dockerfile
           platforms: linux/${{ matrix.platform.arch }}
           build-args: |
-            AUTOMATE_VERSION=${{ needs.prepare.outputs.version }}
-            AUTOMATE_REVISION=${{ github.sha }}
+            LUPIN_VERSION=${{ needs.prepare.outputs.version }}
+            LUPIN_REVISION=${{ github.sha }}
           outputs: type=image,name=${{ env.IMAGE_PREFIX }}-${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
           provenance: mode=max
           sbom: true
@@ -296,7 +296,7 @@ jobs:
       - name: Start it
         working-directory: automate-${{ needs.prepare.outputs.version }}
         env:
-          AUTOMATE_NO_BROWSER: '1'
+          LUPIN_NO_BROWSER: '1'
         run: ./start.sh
       - name: Probe it as a user
         working-directory: automate-${{ needs.prepare.outputs.version }}
@@ -304,7 +304,7 @@ jobs:
           set -euo pipefail
           curl -fsS http://127.0.0.1:8080/api/v1/ready
           curl -fsS -o /dev/null http://127.0.0.1:8080/
-          key="$(sed -n 's/^AUTOMATE_INSTALLATION_KEY=//p' .env)"
+          key="$(sed -n 's/^LUPIN_INSTALLATION_KEY=//p' .env)"
           curl -fsS -o /dev/null -X POST -H 'content-type: application/json' \
             -d "{\"apiKey\":\"$key\"}" http://127.0.0.1:8080/api/v1/auth/login
       - name: Logs, if it failed
@@ -342,7 +342,7 @@ jobs:
     # **Two starting points, because one is not enough.** `previous` is the latest final release
     # before this one. `3.0.0` is pinned: `update` keeps the old install's compose file and only
     # changes the image, so this is the one run that hands a current API the environment a
-    # pre-LAN-mode compose file gives it (HOST=0.0.0.0, no AUTOMATE_BIND). With `previous`
+    # pre-LAN-mode compose file gives it (HOST=0.0.0.0, no LUPIN_BIND). With `previous`
     # alone, the 3.1.0 release shipped an API that refused to start on every 3.0.0 install,
     # and the next release would have stopped looking for it. When the pinned release is also
     # the previous one the second run skips itself rather than repeat the first.
@@ -377,7 +377,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           OLD_VERSION: ${{ steps.previous.outputs.version }}
-          AUTOMATE_NO_BROWSER: '1'
+          LUPIN_NO_BROWSER: '1'
         run: |
           set -euo pipefail
           gh release download "v$OLD_VERSION" -R "$GITHUB_REPOSITORY" -p "automate-$OLD_VERSION.zip" -p SHA256SUMS
@@ -389,7 +389,7 @@ jobs:
         if: steps.previous.outputs.version != ''
         env:
           OLD_VERSION: ${{ steps.previous.outputs.version }}
-          AUTOMATE_NO_BROWSER: '1'
+          LUPIN_NO_BROWSER: '1'
         run: |
           set -euo pipefail
           cd "automate-$OLD_VERSION"
@@ -401,9 +401,9 @@ jobs:
         run: |
           set -euo pipefail
           cd "automate-$OLD_VERSION"
-          grep -qx "AUTOMATE_VERSION=$NEW_VERSION" .env
+          grep -qx "LUPIN_VERSION=$NEW_VERSION" .env
           curl -fsS http://127.0.0.1:8080/api/v1/ready
-          key="$(sed -n 's/^AUTOMATE_INSTALLATION_KEY=//p' .env)"
+          key="$(sed -n 's/^LUPIN_INSTALLATION_KEY=//p' .env)"
           curl -fsS -o /dev/null -X POST -H 'content-type: application/json' \
             -d "{\"apiKey\":\"$key\"}" http://127.0.0.1:8080/api/v1/auth/login
           docker compose -p lupin --env-file .env -f compose.yml ps --format '{{.Image}}' \

@@ -201,7 +201,7 @@ export function createWorkspacesRoutes(options: WorkspacesRouteOptions): Hono {
     if (options.profile !== 'team' && options.profile !== 'enterprise') {
       throw new DomainError(
         'WORKSPACES_NEED_TEAM',
-        'Several workspaces need AUTOMATE_PROFILE=team or enterprise',
+        'Several workspaces need LUPIN_PROFILE=team or enterprise',
       );
     }
     const parsed = CreateSchema.safeParse(await context.req.json().catch(() => null));

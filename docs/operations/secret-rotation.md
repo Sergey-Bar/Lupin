@@ -7,7 +7,7 @@ How to rotate each installation secret in this product, and what stops when you 
 Every installation secret is read by `@lupin/config` and validated at startup.
 This table is derived from that module, not from a product that existed before the
 unification — the previous version of this document named
-`AUTOMATE_DASHBOARD_API_KEY` and `VAULT_PASSWORD`, neither of which is read
+`LUPIN_DASHBOARD_API_KEY` and `VAULT_PASSWORD`, neither of which is read
 anywhere, and pointed at a `.automate/auth.json` and a "Settings > Access Control"
 screen that do not exist.
 
@@ -16,7 +16,7 @@ screen that do not exist.
 | `COOKIE_SECRET`              | The session cookie's signing key                     | 32           | On suspicion, or on operator offboarding             |
 | `SESSION_SECRET`             | Session token hashing                                | 32           | With `COOKIE_SECRET`                                 |
 | `VAULT_SECRET`               | PBKDF2 key material for sealed connector credentials | 32           | Quarterly, and immediately on any suspected exposure |
-| `AUTOMATE_API_KEY`           | Bearer access to the API                             | 32           | Quarterly                                            |
+| `LUPIN_API_KEY`              | Bearer access to the API                             | 32           | Quarterly                                            |
 | `REPORTER_SECRET`            | Producer ingestion on the reporter routes            | 32           | Quarterly, and when a producer is decommissioned     |
 | `RUNNER_REGISTRATION_SECRET` | Runner enrollment                                    | 32           | When a runner is decommissioned                      |
 | `KILO_API_KEY`               | The Kilo model gateway                               | 32           | Per the provider's own schedule                      |
@@ -64,7 +64,7 @@ row with the new key, then rotate.
 zero rows verified is a failure, not a pass — an empty table and a query that
 matched the wrong shape look identical from the outside.
 
-### `AUTOMATE_API_KEY`
+### `LUPIN_API_KEY`
 
 1. Set the new value and restart the API.
 2. Update every client: CI jobs, runner configuration, scripts.
@@ -73,7 +73,7 @@ matched the wrong shape look identical from the outside.
 cookie, this is a single credential with no per-client state, so the transition is
 as long as you want it to be.
 
-**Verify:** `curl -H "authorization: Bearer $AUTOMATE_API_KEY" /api/v1/features`
+**Verify:** `curl -H "authorization: Bearer $LUPIN_API_KEY" /api/v1/features`
 answers 200, and the old value answers 401.
 
 ### `REPORTER_SECRET`

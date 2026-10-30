@@ -132,7 +132,7 @@ export class DrizzleInstallationKeyStore {
    *
    * `ensureBootstrap` answers "is there a key, and if not create one", and then returns the
    * stored hash forever. That made the first boot's key permanent: an operator who set a new
-   * `AUTOMATE_API_KEY` and restarted, as the rotation guide says, found login refusing the new
+   * `LUPIN_API_KEY` and restarted, as the rotation guide says, found login refusing the new
    * key and still accepting the old one. Here the configuration is the authority: a usable
    * stored key with a different hash is replaced in place, so the old key stops working the
    * moment the API restarts with the new one.

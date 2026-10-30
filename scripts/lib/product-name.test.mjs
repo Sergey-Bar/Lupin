@@ -82,6 +82,12 @@ export const RETIRED_NAMES = [
     reason:
       'paths and binaries renamed to `lupin-*` (the CLI, the CI action, the TUI, the local tool, the edge scripts)',
   },
+  {
+    pattern: 'AUTOMAT[E]_',
+    ignoreCase: false,
+    reason:
+      'the environment-variable prefix of the second name; every variable is `LUPIN_*` since 4.0.0',
+  },
 ];
 
 /**

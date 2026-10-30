@@ -47,10 +47,10 @@ JSON; a `GET` answers 405, because the server pushes nothing.
 `apps/api/dist/mcp/stdio.js` in a checkout of this repository, and forwards every request to the
 HTTP endpoint unchanged. It reads two variables:
 
-- `AUTOMATE_URL` — your install's origin. `https://` anywhere; `http://` only to a loopback host
+- `LUPIN_URL` — your install's origin. `https://` anywhere; `http://` only to a loopback host
   (`localhost`, `127.0.0.0/8` or `::1`), because the token would otherwise cross the network in the clear. The proxy
   refuses anything else before it sends a byte.
-- `AUTOMATE_TOKEN` — the viewer token.
+- `LUPIN_TOKEN` — the viewer token.
 
 The proxy writes the protocol to stdout and its own errors to stderr, and never prints the token.
 
@@ -62,8 +62,8 @@ one entry to add to it.
 ### Claude Code
 
 ```bash
-claude mcp add automate --env AUTOMATE_URL=https://automate.example.com \
-  --env AUTOMATE_TOKEN=amt_your_viewer_token -- node /path/to/AutoMate/apps/api/dist/mcp/stdio.js
+claude mcp add automate --env LUPIN_URL=https://automate.example.com \
+  --env LUPIN_TOKEN=amt_your_viewer_token -- node /path/to/AutoMate/apps/api/dist/mcp/stdio.js
 ```
 
 Or, over HTTP:
@@ -82,8 +82,8 @@ claude mcp add --transport http automate https://automate.example.com/api/v1/mcp
       "command": "node",
       "args": ["/path/to/AutoMate/apps/api/dist/mcp/stdio.js"],
       "env": {
-        "AUTOMATE_URL": "https://automate.example.com",
-        "AUTOMATE_TOKEN": "amt_your_viewer_token"
+        "LUPIN_URL": "https://automate.example.com",
+        "LUPIN_TOKEN": "amt_your_viewer_token"
       }
     }
   }
@@ -99,8 +99,8 @@ claude mcp add --transport http automate https://automate.example.com/api/v1/mcp
       "command": "node",
       "args": ["/path/to/AutoMate/apps/api/dist/mcp/stdio.js"],
       "env": {
-        "AUTOMATE_URL": "https://automate.example.com",
-        "AUTOMATE_TOKEN": "amt_your_viewer_token"
+        "LUPIN_URL": "https://automate.example.com",
+        "LUPIN_TOKEN": "amt_your_viewer_token"
       },
       "disabled": false,
       "autoApprove": ["list_projects", "get_health"]

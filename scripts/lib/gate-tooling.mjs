@@ -1103,7 +1103,7 @@ export function auditRepository() {
 /**
  * The security gate must not be switched off in CI.
  *
- * `AUTOMATE_HOST_SCANNERS=unavailable` turns a scanner that cannot produce a scan
+ * `LUPIN_HOST_SCANNERS=unavailable` turns a scanner that cannot produce a scan
  * into a recorded pass. That is a legitimate trade on a developer laptop and a
  * defect in a pull request: CI is the only place the security scan is enforced, so
  * a job that sets it reports green for a scan that never ran.

@@ -84,7 +84,7 @@ Every item below was read in the tree on 2026-10-04. Re-deriving any of it would
 | Event storage with replay | `run_events` with `sequence`, `hash`, `version`, `receivedAt` | `packages/db/src/schema/execution.ts:222` |
 | One shared SSE connection | `subscribeToRunEvents`, reference-counted | `apps/web/src/lib/api.ts:418` |
 | Where glass is decided | the token authority, the lint ban and the readability floor | `packages/ui/src/tokens/theme.css`; `eslint.config.js:30`; `1791096500000-full-glassmorphism-plan.md` |
-| Register a folder at boot | `discoverProject` + `discoverProjectAtBoot`, opt-in via `AUTOMATE_PROJECT_ROOT` | `apps/api/src/services/project-registry-service.ts:319` |
+| Register a folder at boot | `discoverProject` + `discoverProjectAtBoot`, opt-in via `LUPIN_PROJECT_ROOT` | `apps/api/src/services/project-registry-service.ts:319` |
 
 **The one that matters most for §4:** the detector already knows which tools the repository uses, and
 it already knows it **per ecosystem**. Onboarding's "scan the repository to identify existing tools"

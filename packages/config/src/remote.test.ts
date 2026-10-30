@@ -58,7 +58,7 @@ describe('remote access in the parsed configuration', () => {
   // `CF_ACCESS_` reads to gitleaks as a credential; a short word does not.
   const AUDIENCE = 'aud-test';
   const remote = {
-    AUTOMATE_REMOTE: 'cloudflare',
+    LUPIN_REMOTE: 'cloudflare',
     CF_ACCESS_TEAM_DOMAIN: 'acme',
     CF_ACCESS_AUD: AUDIENCE,
   };
@@ -95,7 +95,7 @@ describe('remote access in the parsed configuration', () => {
 
   it('leaves the settings out when either half is missing, so the policy can name it', () => {
     expect(
-      parseConfig({ AUTOMATE_REMOTE: 'cloudflare', CF_ACCESS_AUD: 'x' }).cloudflareAccess,
+      parseConfig({ LUPIN_REMOTE: 'cloudflare', CF_ACCESS_AUD: 'x' }).cloudflareAccess,
     ).toBeUndefined();
   });
 
@@ -106,6 +106,6 @@ describe('remote access in the parsed configuration', () => {
     expect(() => parseConfig({ ...remote, CF_ACCESS_ROLE_MAP: 'root:ana@example.com' })).toThrow(
       /CF_ACCESS_ROLE_MAP/u,
     );
-    expect(() => parseConfig({ AUTOMATE_REMOTE: 'ngrok' })).toThrow(/AUTOMATE_REMOTE/u);
+    expect(() => parseConfig({ LUPIN_REMOTE: 'ngrok' })).toThrow(/LUPIN_REMOTE/u);
   });
 });

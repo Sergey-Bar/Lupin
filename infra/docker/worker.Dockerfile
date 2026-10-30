@@ -11,12 +11,12 @@ RUN pnpm install --frozen-lockfile \
 
 
 FROM node:24.22.1-alpine AS runtime
-ARG AUTOMATE_VERSION=dev
-ARG AUTOMATE_REVISION=unknown
+ARG LUPIN_VERSION=dev
+ARG LUPIN_REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
   org.opencontainers.image.title="automate-worker" \
-  org.opencontainers.image.version="${AUTOMATE_VERSION}" \
-  org.opencontainers.image.revision="${AUTOMATE_REVISION}"
+  org.opencontainers.image.version="${LUPIN_VERSION}" \
+  org.opencontainers.image.revision="${LUPIN_REVISION}"
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 ENV NODE_ENV=production

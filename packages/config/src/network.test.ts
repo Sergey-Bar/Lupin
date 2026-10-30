@@ -12,15 +12,7 @@ describe('isWildcardBind', () => {
     for (const bind of ['0.0.0.0', '::', '[::]', '0:0:0:0:0:0:0:0', ' 0.0.0.0 ', '::0']) {
       expect(isWildcardBind(bind), bind).toBe(true);
     }
-    for (const bind of [
-      '127.0.0.1',
-      '::1',
-      '192.168.1.5',
-      'localhost',
-      '0.0.0.1',
-      'automate',
-      '',
-    ]) {
+    for (const bind of ['127.0.0.1', '::1', '192.168.1.5', 'localhost', '0.0.0.1', 'lupin', '']) {
       expect(isWildcardBind(bind), bind).toBe(false);
     }
   });

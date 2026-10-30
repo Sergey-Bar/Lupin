@@ -43,7 +43,7 @@ export interface CallerResolver {
    */
   ssoEnforced?: boolean;
   /**
-   * Break-glass (`AUTOMATE_BREAK_GLASS=1`): under enforced single sign-on, the installation
+   * Break-glass (`LUPIN_BREAK_GLASS=1`): under enforced single sign-on, the installation
    * session and a browser's token cookie count again, so the installation key can get an admin
    * in while the identity provider is down.
    */
@@ -55,7 +55,7 @@ export interface CallerResolver {
    */
   authenticateSession?: (context: Context) => Promise<Caller | null>;
   /**
-   * A verified remote identity — Cloudflare Access with `AUTOMATE_REMOTE=cloudflare` — or
+   * A verified remote identity — Cloudflare Access with `LUPIN_REMOTE=cloudflare` — or
    * `null`. Absent means the install has no remote credential source.
    */
   authenticateRemote?: (context: Context) => Promise<Caller | null>;

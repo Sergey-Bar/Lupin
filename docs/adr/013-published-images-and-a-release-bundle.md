@@ -42,7 +42,7 @@ secrets once, keep them, and bind to loopback unless told otherwise.
 - **A first release needs one manual step:** GHCR creates each package private and only
   the owner can make it public. The workflow detects it and names each settings page.
 - **The install is open by default** (no login, ADR-006), which is why the published port
-  binds `127.0.0.1` and the start scripts warn when `AUTOMATE_BIND` is anything else.
+  binds `127.0.0.1` and the start scripts warn when `LUPIN_BIND` is anything else.
 - **The acceptance job covers Linux amd64 only.** GitHub's Windows runners run Windows
   containers and its macOS runners have no Docker; the job summary records both as GAPs,
   and `start.ps1` / `start.cmd` are tested against a fake `docker` on a Windows runner.

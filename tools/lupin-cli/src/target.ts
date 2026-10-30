@@ -5,12 +5,12 @@ import { usage } from './errors.js';
  * Where the CLI talks to, and with what. Read from the environment so a token never appears
  * in a command line, a shell history or a process listing:
  *
- * - `AUTOMATE_URL` — the install's origin. `https://` anywhere; `http://` only to a loopback
+ * - `LUPIN_URL` — the install's origin. `https://` anywhere; `http://` only to a loopback
  *   host (`localhost`, `127.0.0.0/8`, `::1`), because the token would cross the network in
  *   the clear.
- * - `AUTOMATE_TOKEN` — an `amt_` access token: `uploader` pinned to the project for CI.
- * - `AUTOMATE_PROJECT` — the project id, unless `--project` names it.
- * - `AUTOMATE_CF_ACCESS_CLIENT_ID` and `AUTOMATE_CF_ACCESS_CLIENT_SECRET` — a Cloudflare
+ * - `LUPIN_TOKEN` — an `amt_` access token: `uploader` pinned to the project for CI.
+ * - `LUPIN_PROJECT` — the project id, unless `--project` names it.
+ * - `LUPIN_CF_ACCESS_CLIENT_ID` and `LUPIN_CF_ACCESS_CLIENT_SECRET` — a Cloudflare
  *   Access service token, for an install reached through a tunnel (ADR-014). Both or neither:
  *   Access lets the request through, and the access token still decides what it may do.
  */
@@ -47,23 +47,23 @@ export function resolveTarget(
   env: Readonly<Record<string, string | undefined>>,
   projectFlag: string | undefined,
 ): Target {
-  const raw = env['AUTOMATE_URL']?.trim() ?? '';
-  const token = env['AUTOMATE_TOKEN']?.trim() ?? '';
-  const project = (projectFlag ?? env['AUTOMATE_PROJECT'] ?? '').trim();
+  const raw = env['LUPIN_URL']?.trim() ?? '';
+  const token = env['LUPIN_TOKEN']?.trim() ?? '';
+  const project = (projectFlag ?? env['LUPIN_PROJECT'] ?? '').trim();
   if (raw === '')
-    throw usage('Set AUTOMATE_URL to the AutoMate origin, e.g. https://automate.example.com');
-  if (!token.startsWith('amt_')) throw usage('Set AUTOMATE_TOKEN to an amt_ access token.');
+    throw usage('Set LUPIN_URL to the AutoMate origin, e.g. https://automate.example.com');
+  if (!token.startsWith('amt_')) throw usage('Set LUPIN_TOKEN to an amt_ access token.');
   if (!PROJECT.test(project)) {
-    throw usage('Name the project: --project <id> or AUTOMATE_PROJECT, its id from the dashboard.');
+    throw usage('Name the project: --project <id> or LUPIN_PROJECT, its id from the dashboard.');
   }
   let origin: URL;
   try {
     origin = new URL(raw);
   } catch {
-    throw usage(`AUTOMATE_URL is not a URL: ${raw}`);
+    throw usage(`LUPIN_URL is not a URL: ${raw}`);
   }
   if (origin.username !== '' || origin.password !== '') {
-    throw usage('AUTOMATE_URL must not carry credentials; the token goes in AUTOMATE_TOKEN.');
+    throw usage('LUPIN_URL must not carry credentials; the token goes in LUPIN_TOKEN.');
   }
   const plainAllowed = origin.protocol === 'http:' && isLoopbackHost(origin.hostname);
   if (origin.protocol !== 'https:' && !plainAllowed) {
@@ -71,12 +71,12 @@ export function resolveTarget(
       `Refusing ${origin.protocol}//${origin.host}: use https://, or http:// only to a loopback host, because the token would cross the network in the clear.`,
     );
   }
-  const clientId = env['AUTOMATE_CF_ACCESS_CLIENT_ID']?.trim() ?? '';
-  const clientSecret = env['AUTOMATE_CF_ACCESS_CLIENT_SECRET']?.trim() ?? '';
+  const clientId = env['LUPIN_CF_ACCESS_CLIENT_ID']?.trim() ?? '';
+  const clientSecret = env['LUPIN_CF_ACCESS_CLIENT_SECRET']?.trim() ?? '';
   if ((clientId === '') !== (clientSecret === '')) {
     throw usage(
       `A Cloudflare Access service token has two halves; set ${
-        clientId === '' ? 'AUTOMATE_CF_ACCESS_CLIENT_ID' : 'AUTOMATE_CF_ACCESS_CLIENT_SECRET'
+        clientId === '' ? 'LUPIN_CF_ACCESS_CLIENT_ID' : 'LUPIN_CF_ACCESS_CLIENT_SECRET'
       } too, or neither.`,
     );
   }

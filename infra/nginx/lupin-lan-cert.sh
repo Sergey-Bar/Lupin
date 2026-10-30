@@ -7,17 +7,17 @@
 # Run by `start lan-cert` inside the edge image, as root, with the host's certificate
 # directory mounted at $CERT_DIR. Each device trusts ca.crt once; the server certificate can
 # then be reissued (a new IP, a new hostname) without touching any device again, which is
-# why an existing CA is kept unless AUTOMATE_NEW_CA=1.
+# why an existing CA is kept unless LUPIN_NEW_CA=1.
 set -eu
 
-CERT_DIR="${AUTOMATE_CERT_DIR:-/etc/automate/certs}"
+CERT_DIR="${LUPIN_CERT_DIR:-/etc/automate/certs}"
 NAMES="${1:-}"
 [ -n "$NAMES" ] || { echo "usage: lupin-lan-cert <name-or-ip>[,...]" >&2; exit 2; }
 
 mkdir -p "$CERT_DIR"
 cd "$CERT_DIR"
 
-if [ ! -f "$CERT_DIR/ca.key" ] || [ "${AUTOMATE_NEW_CA:-}" = "1" ]; then
+if [ ! -f "$CERT_DIR/ca.key" ] || [ "${LUPIN_NEW_CA:-}" = "1" ]; then
   openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -sha256 \
     -days 3650 -subj "/CN=Automate local CA ($(hostname))" \
     -addext "basicConstraints=critical,CA:TRUE,pathlen:0" \

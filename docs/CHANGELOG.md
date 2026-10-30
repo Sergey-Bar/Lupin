@@ -8,15 +8,15 @@
 
 - **An install upgraded from 3.0.0 with `./start.sh update` did not start (3.1.0).** `update`
   keeps the old install's compose file and changes only the image. The 3.0.0 compose file sets
-  `HOST=0.0.0.0` and does not pass `AUTOMATE_BIND`, and the 3.1.0 API read that wildcard as
+  `HOST=0.0.0.0` and does not pass `LUPIN_BIND`, and the 3.1.0 API read that wildcard as
   "reachable from other machines with no login" and refused to start. A wildcard `HOST` names no
-  machine (it is how every container listens), so with no `AUTOMATE_BIND` it now reads as
-  loopback and the API logs a warning that the exposure is unknown. An explicit `AUTOMATE_BIND`,
+  machine (it is how every container listens), so with no `LUPIN_BIND` it now reads as
+  loopback and the API logs a warning that the exposure is unknown. An explicit `LUPIN_BIND`,
   and a concrete `HOST` such as `192.168.1.5`, are enforced exactly as before. The start scripts
   still refuse an exposed bind before anything starts, and the 3.1 compose file passes the real
   one. **Given up:** an API image run on its own with only `HOST=0.0.0.0` now starts with a
   warning, as it did in 3.0.0, instead of refusing. If you were relying on that refusal, set
-  `AUTOMATE_BIND`.
+  `LUPIN_BIND`.
 - The release workflow's upgrade job now also starts from 3.0.0, not only the previous release,
   so a compose file older than the API can no longer slip through unexercised.
 
@@ -40,7 +40,7 @@ If you ran `update` to 3.1.0 and the stack is down, run `./start.sh update --ver
 - **Allure importer**: `format=allure-results` on the upload door.
 - Every workspace package is now MIT; `@lupin/cli` and the reporter are publishable
   (`npm-publish.yml`; the publish step needs an `NPM_TOKEN` secret and has not been run).
-- **LAN mode** (`AUTOMATE_LAN_MODE=1`). One machine serves every laptop, phone and tablet on
+- **LAN mode** (`LUPIN_LAN_MODE=1`). One machine serves every laptop, phone and tablet on
   the network, Linux or Windows Docker Desktop: sign-in on every route, HTTPS from a local
   certificate authority (`start lan-cert`), device pairing with a six-digit code or QR, a
   client allowlist (`ALLOWED_CLIENT_CIDRS`), a cross-site request check, and remote runners
@@ -58,8 +58,8 @@ If you ran `update` to 3.1.0 and the stack is down, run `./start.sh update --ver
 ### Changed
 
 - A non-loopback bind with no sign-in **refuses to start**; it used to print a warning. This
-  includes running the API image on its own (`HOST=0.0.0.0`): set `AUTOMATE_BIND` to the
-  address the container is published on, or `AUTOMATE_LAN_MODE=1`.
+  includes running the API image on its own (`HOST=0.0.0.0`): set `LUPIN_BIND` to the
+  address the container is published on, or `LUPIN_LAN_MODE=1`.
 - `pnpm verify` runs each check once: 13 steps instead of 17, and about 27% faster on the
   reference host (474 s to 345 s). `scripts/lib/gate-duplication.mjs` fails if work is
   repeated again.
@@ -167,8 +167,8 @@ a `v*` tag. Getting there meant making the production stack boot at all.
 ### Fixed
 
 - **MNT-19 (Critical)** — the production stack could not boot: the API refuses to start
-  without `AUTOMATE_INSTALLATION_KEY` and compose never set it.
-- **MNT-20** — that key was never read; sign-in used `AUTOMATE_API_KEY` instead.
+  without `LUPIN_INSTALLATION_KEY` and compose never set it.
+- **MNT-20** — that key was never read; sign-in used `LUPIN_API_KEY` instead.
 - **MNT-21 (Critical)** — `minio/minio` no longer exists on Docker Hub, and
   `pull_policy: never` hid it. SeaweedFS replaces it and creates the bucket on start.
 - **MNT-22** — the edge proxy sent `/` to a port nothing listened on.
@@ -180,13 +180,13 @@ a `v*` tag. Getting there meant making the production stack boot at all.
 ### Changed
 
 - The production stack publishes **one port**, `127.0.0.1:8080`, through the edge proxy.
-  `AUTOMATE_PORT` and `AUTOMATE_BIND` change it; the start scripts warn when it is opened
+  `LUPIN_PORT` and `LUPIN_BIND` change it; the start scripts warn when it is opened
   beyond the machine, because the install has no login.
 - Images are production-only: the API image went from 2.32 GB to 454 MB, the worker from
   2.74 GB to 242 MB. `db-migrate.Dockerfile` is merged into `migrate.Dockerfile`.
 - `.env.compose.example` replaces the two MinIO root-credential variables with
   `OBJECT_STORE_ACCESS_KEY_ID` / `OBJECT_STORE_SECRET_ACCESS_KEY` and adds
-  `AUTOMATE_INSTALLATION_KEY`.
+  `LUPIN_INSTALLATION_KEY`.
 
 ## 2.4.0 — 2026-10-22 — open items from 2.3.0 closed
 
@@ -620,7 +620,7 @@ must be reachable from anywhere else.
 - `createAuthMiddleware` is no longer mounted. A credential that **is** presented is
   still accepted, so an existing script or CI job holding a stale key keeps working; a
   caller with none is served.
-- `AUTOMATE_API_KEY` no longer fails a production start. `COOKIE_SECRET` still is
+- `LUPIN_API_KEY` no longer fails a production start. `COOKIE_SECRET` still is
   required — sessions are still minted, and signing one with a published literal is a
   real defect even when nothing requires a session.
 - **Still enforced, deliberately:** the reporter secret, the runner token, lease

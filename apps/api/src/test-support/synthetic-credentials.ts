@@ -48,7 +48,7 @@ export function syntheticStripeKey(): string {
 /**
  * A self-hosted installation's own secrets, which have no provider prefix.
  *
- * gitleaks's `generic-api-key` rule matches `AUTOMATE_API_KEY = '…'` and
+ * gitleaks's `generic-api-key` rule matches `LUPIN_API_KEY = '…'` and
  * `VAULT_SECRET = '…'` on the *name* alone, so these two had to be assembled too
  * even though they are not provider tokens. The same reasoning as every function
  * above: the value exists only at runtime, so the repository contains nothing a

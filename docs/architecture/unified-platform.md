@@ -70,7 +70,7 @@ Migration will proceed in five waves to minimize risk:
 ## Guardrails
 
 - **Production Safety**: `db:push` is forbidden for production. All production schema changes MUST use the `db:generate` + `db:migrate` flow.
-- **Secret Enforcement**: Production deployments require `AUTOMATE_SERVICE_SECRET`, `AUTOMATE_DASHBOARD_API_KEY`, `COOKIE_SECRET`, and `REPORTER_SECRET`.
+- **Secret Enforcement**: Production deployments require `LUPIN_SERVICE_SECRET`, `LUPIN_DASHBOARD_API_KEY`, `COOKIE_SECRET`, and `REPORTER_SECRET`.
 - **Reporter Compatibility**: The existing `@lupin/reporter` npm package must maintain compatibility. The unified platform must support its WebSocket protocol without requiring configuration changes.
 - **Iframe Shell Integration**: The `apps/web` will serve as a temporary integration layer, hosting legacy apps in iframes while the unified dashboard is built. Decommission criteria: all functional modules moved to `apps/web`.
 

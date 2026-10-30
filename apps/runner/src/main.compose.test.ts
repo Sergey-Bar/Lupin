@@ -84,7 +84,7 @@ afterEach(async () => {
 
 function env(overrides: Record<string, string | undefined> = {}): Record<string, string> {
   const base: Record<string, string | undefined> = {
-    AUTOMATE_API_URL: 'http://127.0.0.1:9/',
+    LUPIN_API_URL: 'http://127.0.0.1:9/',
     RUNNER_INSTANCE_ID: 'runner-a',
     RUNNER_REGISTRATION_SECRET: 'registration-secret-value',
     RUNNER_SPOOL_ROOT: spoolRoot,

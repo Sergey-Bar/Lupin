@@ -157,9 +157,9 @@ describe('isLoopbackHost', () => {
 describe('the request', () => {
   const target = resolveTarget(
     {
-      AUTOMATE_URL: 'https://automate.example',
-      AUTOMATE_TOKEN: 'amt_x',
-      AUTOMATE_PROJECT: '11111111-1111-4111-8111-111111111111',
+      LUPIN_URL: 'https://automate.example',
+      LUPIN_TOKEN: 'amt_x',
+      LUPIN_PROJECT: '11111111-1111-4111-8111-111111111111',
     },
     undefined,
   );
@@ -204,9 +204,9 @@ describe('the request', () => {
 
 describe('an install behind Cloudflare Access', () => {
   const base = {
-    AUTOMATE_URL: 'https://automate.example',
-    AUTOMATE_TOKEN: 'amt_x',
-    AUTOMATE_PROJECT: '11111111-1111-4111-8111-111111111111',
+    LUPIN_URL: 'https://automate.example',
+    LUPIN_TOKEN: 'amt_x',
+    LUPIN_PROJECT: '11111111-1111-4111-8111-111111111111',
   };
   // Assembled at runtime: a service token secret is a credential.
   const secret = ['cf', 'secret', String(Date.now())].join('-');
@@ -215,8 +215,8 @@ describe('an install behind Cloudflare Access', () => {
     const target = resolveTarget(
       {
         ...base,
-        AUTOMATE_CF_ACCESS_CLIENT_ID: 'ci.access',
-        AUTOMATE_CF_ACCESS_CLIENT_SECRET: secret,
+        LUPIN_CF_ACCESS_CLIENT_ID: 'ci.access',
+        LUPIN_CF_ACCESS_CLIENT_SECRET: secret,
       },
       undefined,
     );
@@ -245,11 +245,11 @@ describe('an install behind Cloudflare Access', () => {
   });
 
   it('refuses half a service token, naming the missing half', () => {
-    expect(() => resolveTarget({ ...base, AUTOMATE_CF_ACCESS_CLIENT_ID: 'ci' }, undefined)).toThrow(
-      /AUTOMATE_CF_ACCESS_CLIENT_SECRET/u,
+    expect(() => resolveTarget({ ...base, LUPIN_CF_ACCESS_CLIENT_ID: 'ci' }, undefined)).toThrow(
+      /LUPIN_CF_ACCESS_CLIENT_SECRET/u,
     );
     expect(() =>
-      resolveTarget({ ...base, AUTOMATE_CF_ACCESS_CLIENT_SECRET: secret }, undefined),
-    ).toThrow(/AUTOMATE_CF_ACCESS_CLIENT_ID/u);
+      resolveTarget({ ...base, LUPIN_CF_ACCESS_CLIENT_SECRET: secret }, undefined),
+    ).toThrow(/LUPIN_CF_ACCESS_CLIENT_ID/u);
   });
 });

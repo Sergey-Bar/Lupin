@@ -23,7 +23,7 @@
  *
  * An unrun scan is not a pass, but a developer who cannot run it is worse off
  * than one who can. So the same narrow boundary that governs `semgrep` and
- * `gitleaks` governs this: `AUTOMATE_HOST_SCANNERS=unavailable` records
+ * `gitleaks` governs this: `LUPIN_HOST_SCANNERS=unavailable` records
  * `not_configured` and exits 0, and no file under `.github/` may set it — a
  * scanner that *ran* and reported something still fails either way, and a
  * scanner killed at the ceiling counts as unavailable rather than clean.
@@ -339,7 +339,7 @@ function unavailableExitCode(status) {
 function runScanner() {
   const result = spawnSync('skillspector', ['scan', SKILL_ROOT, '--no-llm', '--format', 'json'], {
     encoding: 'utf8',
-    timeout: scanTimeoutMs(process.env.AUTOMATE_SCAN_TIMEOUT_MS),
+    timeout: scanTimeoutMs(process.env.LUPIN_SCAN_TIMEOUT_MS),
   });
 
   if (result.error) {
@@ -351,10 +351,10 @@ function runScanner() {
   // A killed scanner is unavailable, never clean. Counting a ten-minute stall as
   // a pass is the exact outcome the host-scanners boundary exists to prevent.
   if (result.signal !== null) {
-    const timeout = scanTimeoutMs(process.env.AUTOMATE_SCAN_TIMEOUT_MS);
+    const timeout = scanTimeoutMs(process.env.LUPIN_SCAN_TIMEOUT_MS);
     console.error(
       `skill-scan: the scanner was killed at the ${Math.round(timeout / 1000)}s ceiling. ` +
-        'That is unavailable, not clean — raise AUTOMATE_SCAN_TIMEOUT_MS if the scan is genuinely this slow.',
+        'That is unavailable, not clean — raise LUPIN_SCAN_TIMEOUT_MS if the scan is genuinely this slow.',
     );
     return { exitCode: 2 };
   }
@@ -452,7 +452,7 @@ export function main() {
   const status = probeScanner((command, args) => {
     const result = spawnSync(command, args, {
       encoding: 'utf8',
-      timeout: scanTimeoutMs(process.env.AUTOMATE_SCAN_TIMEOUT_MS),
+      timeout: scanTimeoutMs(process.env.LUPIN_SCAN_TIMEOUT_MS),
     });
     return { status: result.status, stderr: result.stderr ?? '' };
   });

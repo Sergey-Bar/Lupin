@@ -131,13 +131,13 @@ security scan is not a pass. On a host where `semgrep` is pip-installed, answers
 `--version`, and never returns from `scan`, that makes `verify` unrunnable — and a
 developer who cannot run the other twelve steps is worse off than one who can.
 
-**`AUTOMATE_HOST_SCANNERS=unavailable`** (set for you by `pnpm verify:local`) records
+**`LUPIN_HOST_SCANNERS=unavailable`** (set for you by `pnpm verify:local`) records
 that as `not_configured` and exits 0. The boundary is narrow and machine-checked:
 
 - a scanner that **ran** and reported something still fails, with or without it;
 - a scanner **killed at the ceiling** counts as unavailable, never as clean — so a
   ten-minute stall cannot become a green security gate;
-- `AUTOMATE_SCAN_TIMEOUT_MS` is clamped to [1 min, 1 h], because a ceiling small
+- `LUPIN_SCAN_TIMEOUT_MS` is clamped to [1 min, 1 h], because a ceiling small
   enough to guarantee a kill is the same defect by another route;
 - **no file anywhere under `.github/` may set it**, composite actions included —
   `auditRepository` reports it as a finding.
@@ -509,9 +509,9 @@ scripts/             Gate scripts, all `.mjs`, plus `scripts/lib/` node:test sui
 ### Security
 
 - **LAN mode is the only way off loopback.** `checkExposurePolicy` (`apps/api/src/startup-policy.ts`)
-  refuses a non-loopback `AUTOMATE_BIND`/`HOST` with `ACCESS_CONTROL=open`, in every environment,
+  refuses a non-loopback `LUPIN_BIND`/`HOST` with `ACCESS_CONTROL=open`, in every environment,
   and the start scripts refuse it before anything starts (`scripts/lib/start-scripts.test.mjs`).
-  `AUTOMATE_LAN_MODE=1` turns enforcement on. Every route is guarded where it is declared or in
+  `LUPIN_LAN_MODE=1` turns enforcement on. Every route is guarded where it is declared or in
   `apps/api/src/http/route-access.ts`; only the probes and the credential exchanges in
   `PUBLIC_ROUTES` are open, and `authz-matrix.test.ts` fails on any other `open` row. A new route
   needs a guard or a row there.

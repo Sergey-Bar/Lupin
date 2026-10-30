@@ -4,7 +4,7 @@ import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
 import { canonicalRunResults, projects, runs, workspaces } from '@lupin/db';
 import {
-  AUTOMATE_CONFIG_FILENAME,
+  LUPIN_CONFIG_FILENAME,
   detectProject,
   mergeConfig,
   profileFromDetection,
@@ -167,14 +167,14 @@ export async function registerGitProject(
  * detection that ran unimpeded.
  */
 async function readOverride(view: RepositoryView): Promise<unknown | null> {
-  const text = await view.read(AUTOMATE_CONFIG_FILENAME);
+  const text = await view.read(LUPIN_CONFIG_FILENAME);
   if (text === null) return null;
   try {
     return JSON.parse(text) as unknown;
   } catch {
     throw new DomainError(
       ErrorCode.INVALID_REQUEST_BODY,
-      `${AUTOMATE_CONFIG_FILENAME} is not valid JSON, so it cannot override the detector`,
+      `${LUPIN_CONFIG_FILENAME} is not valid JSON, so it cannot override the detector`,
     );
   }
 }
@@ -545,7 +545,7 @@ export async function discoverProject(
  *
  * ## No default root
  *
- * `AUTOMATE_PROJECT_ROOT` is opt-in with **no fallback to the working directory**.
+ * `LUPIN_PROJECT_ROOT` is opt-in with **no fallback to the working directory**.
  * In compose the cwd is `/app`, which has a `package.json` — so a default would
  * register the container as the user's project, and the cockpit would confidently
  * analyse the wrong tree. Silence beats confident nonsense, and one environment
@@ -563,7 +563,7 @@ export async function discoverProjectAtBoot(
   log: ProjectDiscoveryLog,
 ): Promise<void> {
   if (projectRoot === undefined || projectRoot.trim() === '') {
-    log.info('project discovery is off; set AUTOMATE_PROJECT_ROOT to a folder to analyse');
+    log.info('project discovery is off; set LUPIN_PROJECT_ROOT to a folder to analyse');
     return;
   }
   try {

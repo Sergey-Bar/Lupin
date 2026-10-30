@@ -65,8 +65,8 @@ they wrote with the action in this repository:
 - uses: Sergey-Bar/AutoMate/.github/actions/lupin-health@main
   with:
     url: https://automate.example.com
-    project-id: ${{ vars.AUTOMATE_PROJECT_ID }}
-    token: ${{ secrets.AUTOMATE_UPLOAD_TOKEN }}
+    project-id: ${{ vars.LUPIN_PROJECT_ID }}
+    token: ${{ secrets.LUPIN_UPLOAD_TOKEN }}
     reports: |
       sarif:semgrep.sarif
       sarif:gitleaks.sarif

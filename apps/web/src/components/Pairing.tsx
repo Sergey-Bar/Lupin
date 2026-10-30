@@ -100,7 +100,7 @@ export function PairDevicePanel({ health }: { health: HealthClient }): React.Rea
  */
 export function ConnectRunnerPanel({ origin }: { origin: string }): React.ReactElement {
   const snippet = [
-    `AUTOMATE_API_URL=${origin}`,
+    `LUPIN_API_URL=${origin}`,
     'RUNNER_REGISTRATION_SECRET=<RUNNER_REGISTRATION_SECRET from the server .env>',
     'RUNNER_INSTANCE_ID=<a new UUID for this machine>',
   ].join('\n');

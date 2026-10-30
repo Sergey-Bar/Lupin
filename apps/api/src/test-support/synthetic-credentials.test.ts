@@ -23,7 +23,7 @@ import {
 const INSTALLATION_SECRETS = {
   COOKIE_SECRET: syntheticCookieSecret(),
   VAULT_SECRET: syntheticVaultSecret(),
-  AUTOMATE_API_KEY: syntheticApiKey(),
+  LUPIN_API_KEY: syntheticApiKey(),
   REPORTER_SECRET: syntheticReporterSecret(),
   RUNNER_REGISTRATION_SECRET: syntheticRunnerRegistrationSecret(),
 } as const;
@@ -53,7 +53,7 @@ describe('synthetic installation secrets', () => {
       },
       { requireProductionSecrets: false },
     );
-    expect(parsed.installationApiKey).toBe(INSTALLATION_SECRETS.AUTOMATE_API_KEY);
+    expect(parsed.installationApiKey).toBe(INSTALLATION_SECRETS.LUPIN_API_KEY);
     expect(parsed.reporterSecret).toBe(INSTALLATION_SECRETS.REPORTER_SECRET);
     expect(parsed.runnerRegistrationSecret).toBe(INSTALLATION_SECRETS.RUNNER_REGISTRATION_SECRET);
     expect(parsed.vaultSecret).toBe(INSTALLATION_SECRETS.VAULT_SECRET);

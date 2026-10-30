@@ -73,7 +73,7 @@ async function invoke(
   const out: string[] = [];
   const err: string[] = [];
   const code = await run(argv, {
-    env: { AUTOMATE_URL: origin, AUTOMATE_TOKEN: TOKEN, AUTOMATE_PROJECT: PROJECT, ...env },
+    env: { LUPIN_URL: origin, LUPIN_TOKEN: TOKEN, LUPIN_PROJECT: PROJECT, ...env },
     cwd,
     fetch: globalThis.fetch,
     now: () => new Date('2026-10-26T12:00:00.000Z'),
@@ -325,7 +325,7 @@ describe('the command line and the environment', () => {
 
   it('refuses plain http to a host that is not this machine, before anything is sent', async () => {
     const result = await invoke(['gate', '--branch', 'main', '--commit', SHA], {
-      AUTOMATE_URL: 'http://automate.lan:3000',
+      LUPIN_URL: 'http://automate.lan:3000',
     });
     expect(result.code).toBe(EXIT.usage);
     expect(result.err).toMatch(/in the clear/u);
@@ -334,23 +334,23 @@ describe('the command line and the environment', () => {
 
   it('says what is missing from the environment', async () => {
     const gateArgs = ['gate', '--branch', 'main', '--commit', SHA];
-    expect((await invoke(gateArgs, { AUTOMATE_URL: undefined })).err).toMatch(/Set AUTOMATE_URL/u);
-    expect((await invoke(gateArgs, { AUTOMATE_TOKEN: 'secret' })).err).toMatch(/AUTOMATE_TOKEN/u);
-    expect((await invoke(gateArgs, { AUTOMATE_PROJECT: 'checkout' })).err).toMatch(
+    expect((await invoke(gateArgs, { LUPIN_URL: undefined })).err).toMatch(/Set LUPIN_URL/u);
+    expect((await invoke(gateArgs, { LUPIN_TOKEN: 'secret' })).err).toMatch(/LUPIN_TOKEN/u);
+    expect((await invoke(gateArgs, { LUPIN_PROJECT: 'checkout' })).err).toMatch(
       /Name the project/u,
     );
     expect(
-      (await invoke([...gateArgs, '--project', PROJECT], { AUTOMATE_PROJECT: undefined })).code,
+      (await invoke([...gateArgs, '--project', PROJECT], { LUPIN_PROJECT: undefined })).code,
     ).not.toBe(EXIT.usage);
-    expect((await invoke(gateArgs, { AUTOMATE_URL: 'not a url' })).err).toMatch(/not a URL/u);
-    expect((await invoke(gateArgs, { AUTOMATE_URL: 'https://user:pw@a.example' })).err).toMatch(
+    expect((await invoke(gateArgs, { LUPIN_URL: 'not a url' })).err).toMatch(/not a URL/u);
+    expect((await invoke(gateArgs, { LUPIN_URL: 'https://user:pw@a.example' })).err).toMatch(
       /credentials/u,
     );
   });
 
   it('reports an unreachable install as refused', async () => {
     const result = await invoke(['gate', '--branch', 'main', '--commit', SHA], {
-      AUTOMATE_URL: 'http://127.0.0.1:1',
+      LUPIN_URL: 'http://127.0.0.1:1',
     });
     expect(result.code).toBe(EXIT.refused);
     expect(result.err).toMatch(/^Could not reach http:\/\/127\.0\.0\.1:1/u);
@@ -373,7 +373,7 @@ describe('an unexpected failure', () => {
           text: () => Promise.reject(failure),
         }) as unknown as Response) as typeof fetch;
       const code = await run(['gate', '--branch', 'main', '--commit', SHA], {
-        env: { AUTOMATE_URL: origin, AUTOMATE_TOKEN: TOKEN, AUTOMATE_PROJECT: PROJECT },
+        env: { LUPIN_URL: origin, LUPIN_TOKEN: TOKEN, LUPIN_PROJECT: PROJECT },
         cwd: process.cwd(),
         fetch: broken,
         now: () => new Date('2026-10-26T12:00:00.000Z'),
@@ -443,11 +443,7 @@ describe('lupin test', () => {
 
   it("keeps the command's exit code when the server cannot be reached", async () => {
     const dir = await withReport();
-    const result = await invoke(
-      [...args, ...exiting(1)],
-      { AUTOMATE_URL: 'http://127.0.0.1:9' },
-      dir,
-    );
+    const result = await invoke([...args, ...exiting(1)], { LUPIN_URL: 'http://127.0.0.1:9' }, dir);
     expect(result.code).toBe(1);
     expect(result.err).toMatch(/keeping exit code 1/u);
   });

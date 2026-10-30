@@ -424,7 +424,7 @@
   ],
   "credentialSources": [
     {
-      "name": "AUTOMATE_API_KEY",
+      "name": "LUPIN_API_KEY",
       "valueIncluded": false,
       "purpose": "installation bootstrap",
       "status": "owner-confirmation-required"

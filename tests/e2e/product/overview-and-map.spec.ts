@@ -5,7 +5,7 @@ import { observedSummary, saveEvidence, saveEvidenceText } from '../support/evid
 /**
  * The Overview and the repo map, against the real stack.
  *
- * The stack registers this repository at boot (`AUTOMATE_PROJECT_ROOT` in
+ * The stack registers this repository at boot (`LUPIN_PROJECT_ROOT` in
  * `playwright.config.ts`), so the map drawn here is a map of this tree — real packages,
  * real reports, real tools — and the Overview's verdict is the API's own readiness card.
  * What is asserted is what a QA lead relies on: a verdict in words, findings that open a

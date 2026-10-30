@@ -16,18 +16,18 @@
 # running scripts is disabled; running start.ps1 directly needs scripts to be allowed.
 #
 # Settings, read from the environment or from .env:
-#   AUTOMATE_PROFILE   solo (default: this machine, no login), startup, team or enterprise
-#   AUTOMATE_PORT      the port to open (default 8080)
-#   AUTOMATE_BIND      the address to listen on (default 127.0.0.1, this machine only)
-#   AUTOMATE_LAN_MODE  1 to serve other machines on your network, with sign-in required
+#   LUPIN_PROFILE   solo (default: this machine, no login), startup, team or enterprise
+#   LUPIN_PORT      the port to open (default 8080)
+#   LUPIN_BIND      the address to listen on (default 127.0.0.1, this machine only)
+#   LUPIN_LAN_MODE  1 to serve other machines on your network, with sign-in required
 
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
 
-$Docker = if ($env:AUTOMATE_DOCKER) { $env:AUTOMATE_DOCKER } else { 'docker' }
-$Project = if ($env:AUTOMATE_PROJECT) { $env:AUTOMATE_PROJECT } else { 'automate' }
-$ReleasesUrl = if ($env:AUTOMATE_RELEASES_URL) { $env:AUTOMATE_RELEASES_URL } else { 'https://api.github.com/repos/Sergey-Bar/AutoMate/releases/latest' }
-$ReadyTimeout = if ($env:AUTOMATE_READY_TIMEOUT) { [int]$env:AUTOMATE_READY_TIMEOUT } else { 180 }
+$Docker = if ($env:LUPIN_DOCKER) { $env:LUPIN_DOCKER } else { 'docker' }
+$Project = if ($env:LUPIN_PROJECT) { $env:LUPIN_PROJECT } else { 'automate' }
+$ReleasesUrl = if ($env:LUPIN_RELEASES_URL) { $env:LUPIN_RELEASES_URL } else { 'https://api.github.com/repos/Sergey-Bar/AutoMate/releases/latest' }
+$ReadyTimeout = if ($env:LUPIN_READY_TIMEOUT) { [int]$env:LUPIN_READY_TIMEOUT } else { 180 }
 $EnvFile = Join-Path $PSScriptRoot '.env'
 # .env is UTF-8 without a byte-order mark, read and written: Compose reads a BOM as part of the
 # first name, and a comment or a value in another language has to survive a rewrite.
@@ -73,8 +73,8 @@ function Initialize-EnvFile {
     "POSTGRES_PASSWORD=$(New-Secret)",
     "COOKIE_SECRET=$(New-Secret)",
     "VAULT_SECRET=$(New-Secret)",
-    "AUTOMATE_API_KEY=$(New-Secret)",
-    "AUTOMATE_INSTALLATION_KEY=$(New-Secret)",
+    "LUPIN_API_KEY=$(New-Secret)",
+    "LUPIN_INSTALLATION_KEY=$(New-Secret)",
     "REPORTER_SECRET=$(New-Secret)",
     "RUNNER_REGISTRATION_SECRET=$(New-Secret)",
     'OBJECT_STORE_BUCKET=automate-artifacts',
@@ -109,7 +109,7 @@ function Get-Setting([string]$Name, [string]$Default) {
 # reach a tunnel an earlier --remote cloudflare started, which has `restart: unless-stopped`.
 function Get-ComposeArgs([switch]$AllProfiles) {
   $composeArgs = @('compose', '-p', $Project, '--env-file', $EnvFile, '-f', (Join-Path $PSScriptRoot 'compose.yml'))
-  if ($AllProfiles -or (Get-Setting 'AUTOMATE_REMOTE' '') -eq 'cloudflare') { $composeArgs += @('--profile', 'cloudflare') }
+  if ($AllProfiles -or (Get-Setting 'LUPIN_REMOTE' '') -eq 'cloudflare') { $composeArgs += @('--profile', 'cloudflare') }
   return $composeArgs
 }
 
@@ -178,7 +178,7 @@ function Set-Remote([string]$Mode) {
   $values = @{}
   foreach ($name in $names) { $values[$name] = Get-Setting $name '' }
   foreach ($name in $names) { Set-EnvValue $name $values[$name] }
-  Set-EnvValue 'AUTOMATE_REMOTE' 'cloudflare'
+  Set-EnvValue 'LUPIN_REMOTE' 'cloudflare'
 }
 
 function Wait-Ready([string]$Base) {
@@ -198,21 +198,21 @@ function Wait-Ready([string]$Base) {
 # bind at startup (apps/api/src/startup-policy.ts); saying it here means the operator reads
 # it at the prompt, before anything is downloaded.
 function Assert-Exposure {
-  $bind = Get-Setting 'AUTOMATE_BIND' '127.0.0.1'
-  $profileName = Get-Setting 'AUTOMATE_PROFILE' ''
+  $bind = Get-Setting 'LUPIN_BIND' '127.0.0.1'
+  $profileName = Get-Setting 'LUPIN_PROFILE' ''
   Assert-ProfileName $profileName
-  $lan = @('1', 'true', 'yes') -contains (Get-Setting 'AUTOMATE_LAN_MODE' '')
+  $lan = @('1', 'true', 'yes') -contains (Get-Setting 'LUPIN_LAN_MODE' '')
   if ($profileName -eq 'solo' -and $lan) {
-    Fail 'AUTOMATE_PROFILE=solo keeps Automate on this machine, and AUTOMATE_LAN_MODE is on. Set AUTOMATE_PROFILE=startup to serve other people with sign-in.'
+    Fail 'LUPIN_PROFILE=solo keeps Automate on this machine, and LUPIN_LAN_MODE is on. Set LUPIN_PROFILE=startup to serve other people with sign-in.'
   }
   if ($bind -like '127.*' -or $bind -eq 'localhost' -or $bind -eq '::1' -or $bind -eq '[::1]') { return }
   if ($profileName -eq 'solo') {
-    Fail "AUTOMATE_PROFILE=solo keeps Automate on this machine, and AUTOMATE_BIND=$bind would make it reachable. Set AUTOMATE_PROFILE=startup to serve other people with sign-in, or unset AUTOMATE_BIND."
+    Fail "LUPIN_PROFILE=solo keeps Automate on this machine, and LUPIN_BIND=$bind would make it reachable. Set LUPIN_PROFILE=startup to serve other people with sign-in, or unset LUPIN_BIND."
   }
   if (-not $lan -and -not $profileName) {
-    Fail "AUTOMATE_BIND=$bind would make Automate reachable from other machines with no login. Set AUTOMATE_LAN_MODE=1 (or AUTOMATE_PROFILE=startup) to serve your network with sign-in and device pairing, or unset AUTOMATE_BIND to keep it on this machine."
+    Fail "LUPIN_BIND=$bind would make Automate reachable from other machines with no login. Set LUPIN_LAN_MODE=1 (or LUPIN_PROFILE=startup) to serve your network with sign-in and device pairing, or unset LUPIN_BIND to keep it on this machine."
   }
-  $port = Get-Setting 'AUTOMATE_PORT' '8080'
+  $port = Get-Setting 'LUPIN_PORT' '8080'
   Write-Output ''
   if ($lan) {
     Write-Output "LAN mode: other machines on your network can reach Automate on port $port, after signing in."
@@ -228,16 +228,16 @@ function Assert-Exposure {
 # startup when LAN mode is on.
 function Assert-ProfileName([string]$Name) {
   if (@('', 'solo', 'startup', 'team', 'enterprise') -notcontains $Name) {
-    Fail "AUTOMATE_PROFILE=$Name is not a profile. Use solo, startup, team or enterprise."
+    Fail "LUPIN_PROFILE=$Name is not a profile. Use solo, startup, team or enterprise."
   }
 }
 
-# Writes AUTOMATE_PROFILE into .env, replacing the line that is there. Nothing else in .env
+# Writes LUPIN_PROFILE into .env, replacing the line that is there. Nothing else in .env
 # is touched: the secrets in it sign sessions and encrypt the vault.
 function Set-Profile([string]$Name) {
   if (-not $Name) { Fail '--profile needs a value: solo, startup, team or enterprise.' }
   Assert-ProfileName $Name
-  Set-EnvValue 'AUTOMATE_PROFILE' $Name
+  Set-EnvValue 'LUPIN_PROFILE' $Name
 }
 
 # What to do next, per profile. Printed after a start so the first run ends with an action.
@@ -273,37 +273,37 @@ function Start-Automate([string[]]$Options = @()) {
   }
   # After the profile, so `--profile solo --remote cloudflare` is refused by name.
   if ($remoteWanted) {
-    if ((Get-Setting 'AUTOMATE_PROFILE' '') -eq 'solo') {
-      Fail 'AUTOMATE_PROFILE=solo keeps Automate on this machine, and --remote cloudflare publishes it through a tunnel. Use --profile startup (or larger).'
+    if ((Get-Setting 'LUPIN_PROFILE' '') -eq 'solo') {
+      Fail 'LUPIN_PROFILE=solo keeps Automate on this machine, and --remote cloudflare publishes it through a tunnel. Use --profile startup (or larger).'
     }
     Set-Remote $remoteWanted
   }
   Assert-Exposure
   # Remote access turned off: the tunnel an earlier start left running is removed, or it would
   # go on publishing the install. Nothing to remove is the usual case, so it is quiet.
-  if ((Get-Setting 'AUTOMATE_REMOTE' '') -ne 'cloudflare') { Invoke-ComposeQuietly rm --stop --force cloudflared }
-  $port = Get-Setting 'AUTOMATE_PORT' '8080'
+  if ((Get-Setting 'LUPIN_REMOTE' '') -ne 'cloudflare') { Invoke-ComposeQuietly rm --stop --force cloudflared }
+  $port = Get-Setting 'LUPIN_PORT' '8080'
   $base = "http://localhost:$port"
   Write-Output 'Downloading the Automate images (the first run takes a few minutes)...'
   # Images already here keep working offline; a tag that is missing still fails in 'up'.
   Invoke-Compose pull --ignore-pull-failures
   Invoke-Compose up -d
   Wait-Ready "http://127.0.0.1:$port"
-  $profileName = Get-Setting 'AUTOMATE_PROFILE' 'solo'
+  $profileName = Get-Setting 'LUPIN_PROFILE' 'solo'
   Write-Output ''
   Write-Output "Automate is running at $base"
   Write-Output "Profile: $profileName"
-  if ((Get-Setting 'AUTOMATE_REMOTE' '') -eq 'cloudflare') {
+  if ((Get-Setting 'LUPIN_REMOTE' '') -eq 'cloudflare') {
     Write-Output 'Remote: through Cloudflare Tunnel, at the public hostname you gave the tunnel. Cloudflare Access decides who reaches it.'
   }
-  Write-Output "Sign in with this key: $(Get-Setting 'AUTOMATE_INSTALLATION_KEY' '')"
-  Write-Output '(it is also in .env as AUTOMATE_INSTALLATION_KEY)'
+  Write-Output "Sign in with this key: $(Get-Setting 'LUPIN_INSTALLATION_KEY' '')"
+  Write-Output '(it is also in .env as LUPIN_INSTALLATION_KEY)'
   Write-NextStep $profileName
-  if ($env:AUTOMATE_NO_BROWSER -ne '1') { Start-Process $base }
+  if ($env:LUPIN_NO_BROWSER -ne '1') { Start-Process $base }
 }
 
 function Set-Version([string]$Version) {
-  Set-EnvValue 'AUTOMATE_VERSION' $Version
+  Set-EnvValue 'LUPIN_VERSION' $Version
 }
 
 function Update-Automate([string[]]$Rest) {
@@ -324,7 +324,7 @@ function Update-Automate([string[]]$Rest) {
 }
 
 # Every name and address this machine answers to on the network, for the certificate's
-# subjectAltName. AUTOMATE_TLS_NAMES adds more, comma-separated.
+# subjectAltName. LUPIN_TLS_NAMES adds more, comma-separated.
 function Get-LanNames {
   $hostName = [Environment]::MachineName.ToLowerInvariant()
   $ips = @()
@@ -338,7 +338,7 @@ function Get-LanNames {
         Where-Object { $_.AddressFamily -eq 'InterNetwork' -and -not $_.ToString().StartsWith('127.') } |
         ForEach-Object { $_.ToString() })
   }
-  $extra = @((Get-Setting 'AUTOMATE_TLS_NAMES' '') -split ',' | ForEach-Object { $_.Trim() })
+  $extra = @((Get-Setting 'LUPIN_TLS_NAMES' '') -split ',' | ForEach-Object { $_.Trim() })
   $all = @('automate.local', $hostName, "$hostName.local", 'localhost', '127.0.0.1') + $ips + $extra
   return (@($all | Where-Object { $_ -ne '' } | Select-Object -Unique) -join ',')
 }
@@ -473,7 +473,7 @@ function Backup-Automate([string[]]$Rest) {
     Write-AsciiLines (Join-Path $workPath 'manifest.env') @(
       'format=1',
       "created=$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))",
-      "version=$(Get-Setting 'AUTOMATE_VERSION' '')",
+      "version=$(Get-Setting 'LUPIN_VERSION' '')",
       "migrations=$count",
       "vault=$(Get-TextSha256 (Get-Setting 'VAULT_SECRET' ''))"
     )
@@ -541,7 +541,7 @@ function Restore-Automate([string[]]$Rest) {
     Fail "This backup was made with a different VAULT_SECRET, so the credentials stored in it could not be read. On this install, keep a copy of .env, then set only VAULT_SECRET in it to the value in $given\env and run the restore again; the rest of .env stays, because this install's database keeps the POSTGRES_PASSWORD it was first started with. On a new host, copy $given\env to .env before the first start."
   }
   $taken = [string]$manifest['version']
-  $current = Get-Setting 'AUTOMATE_VERSION' ''
+  $current = Get-Setting 'LUPIN_VERSION' ''
   if ($taken -and $current -and (Test-VersionNewer $taken $current)) {
     Fail "This backup is from Automate $taken, which is newer than this install ($current). Update first: .\start.cmd update --version $taken"
   }
@@ -575,7 +575,7 @@ function Restore-Automate([string[]]$Rest) {
     Fail "The database is restored from $given, but its stored artifacts could not be put back, so Automate is left stopped. The output above says why."
   }
   Invoke-Compose up -d
-  $port = Get-Setting 'AUTOMATE_PORT' '8080'
+  $port = Get-Setting 'LUPIN_PORT' '8080'
   Wait-Ready "http://127.0.0.1:$port"
   Write-Output "Restored $given. Migrations newer than the backup ran on start."
 }

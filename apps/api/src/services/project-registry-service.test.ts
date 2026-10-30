@@ -272,7 +272,7 @@ describe('discovery is opt-in and never fatal', () => {
       const log = collector();
       await expect(discoverProjectAtBoot(options, undefined, log)).resolves.toBeUndefined();
       expect(log.lines).toHaveLength(1);
-      expect(log.lines[0]?.msg).toMatch(/AUTOMATE_PROJECT_ROOT/u);
+      expect(log.lines[0]?.msg).toMatch(/LUPIN_PROJECT_ROOT/u);
       expect(await listProjects(options)).toHaveLength(0);
     } finally {
       await client.close();

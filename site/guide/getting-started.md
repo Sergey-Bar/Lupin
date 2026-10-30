@@ -38,7 +38,7 @@ restarting the API clears it — that is the trade, not a bug.
 
 ```powershell
 $env:NODE_ENV='development'
-$env:AUTOMATE_API_KEY='local-installation-key-32-characters'
+$env:LUPIN_API_KEY='local-installation-key-32-characters'
 $env:COOKIE_SECRET='local-cookie-secret-32-characters-long'
 $env:REPORTER_SECRET='local-reporter-secret-32-characters'
 pnpm --filter @lupin/api dev
@@ -48,7 +48,7 @@ pnpm --filter @lupin/api dev
 
 ```bash
 NODE_ENV=development \
-AUTOMATE_API_KEY=local-installation-key-32-characters \
+LUPIN_API_KEY=local-installation-key-32-characters \
 COOKIE_SECRET=local-cookie-secret-32-characters-long \
 REPORTER_SECRET=local-reporter-secret-32-characters \
 pnpm --filter @lupin/api dev

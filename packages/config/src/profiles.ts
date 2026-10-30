@@ -1,5 +1,5 @@
 /**
- * Deployment profiles: one install, sized by `AUTOMATE_PROFILE` (ADR-014).
+ * Deployment profiles: one install, sized by `LUPIN_PROFILE` (ADR-014).
  *
  * A profile sets **defaults only**. Every value it sets has its own variable, and an
  * explicit variable wins; a combination that contradicts itself is refused by the API's
@@ -16,7 +16,7 @@ export interface ProfileDefaults {
   accessControl: 'open' | 'enforced';
   /**
    * `AUTH_SSO_ENFORCED` when it is unset: a browser signs in through single sign-on only, and
-   * the installation key works only under `AUTOMATE_BREAK_GLASS=1`. Tokens for CI still work.
+   * the installation key works only under `LUPIN_BREAK_GLASS=1`. Tokens for CI still work.
    */
   ssoEnforced: boolean;
 }

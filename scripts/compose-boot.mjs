@@ -129,7 +129,7 @@ async function main() {
     if (compose(envFile, ['up', '--build', '--wait', '--wait-timeout', '600']) !== 0) {
       failures.push('docker compose up --wait did not reach a healthy stack');
     } else {
-      failures = await runProbes(bootProbes(base, values.get('AUTOMATE_INSTALLATION_KEY') ?? ''));
+      failures = await runProbes(bootProbes(base, values.get('LUPIN_INSTALLATION_KEY') ?? ''));
       failures.push(...imageProblems());
     }
     if (failures.length > 0) {

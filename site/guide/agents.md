@@ -95,8 +95,8 @@ With the repository's action:
 - uses: Sergey-Bar/AutoMate/.github/actions/lupin-health@main
   with:
     url: https://automate.example.com
-    project-id: ${{ vars.AUTOMATE_PROJECT_ID }}
-    token: ${{ secrets.AUTOMATE_UPLOAD_TOKEN }}
+    project-id: ${{ vars.LUPIN_PROJECT_ID }}
+    token: ${{ secrets.LUPIN_UPLOAD_TOKEN }}
     reports: |
       promptfoo-json:promptfoo.json
 ```
@@ -104,14 +104,14 @@ With the repository's action:
 Or directly — the other two tools the same way:
 
 ```bash
-curl --fail-with-body -H "Authorization: Bearer $AUTOMATE_UPLOAD_TOKEN" \
+curl --fail-with-body -H "Authorization: Bearer $LUPIN_UPLOAD_TOKEN" \
   --data-binary @deepeval.json \
-  "$AUTOMATE_URL/api/v1/projects/$PROJECT/health/reports?format=deepeval-json&branch=$BRANCH&commit=$SHA"
+  "$LUPIN_URL/api/v1/projects/$PROJECT/health/reports?format=deepeval-json&branch=$BRANCH&commit=$SHA"
 
 inspect eval task.py --log-format=json --log-dir logs
-curl --fail-with-body -H "Authorization: Bearer $AUTOMATE_UPLOAD_TOKEN" \
+curl --fail-with-body -H "Authorization: Bearer $LUPIN_UPLOAD_TOKEN" \
   --data-binary @"$(ls -t logs/*.json | head -n 1)" \
-  "$AUTOMATE_URL/api/v1/projects/$PROJECT/health/reports?format=inspect-eval-json&branch=$BRANCH&commit=$SHA"
+  "$LUPIN_URL/api/v1/projects/$PROJECT/health/reports?format=inspect-eval-json&branch=$BRANCH&commit=$SHA"
 ```
 
 How a tool's verdict is read: promptfoo's and DeepEval's `success` as written; Inspect has no
@@ -170,7 +170,7 @@ refused with `415 UNSUPPORTED_MEDIA_TYPE`, so set the protocol explicitly:
 ```bash
 export OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/json
 export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://automate.example.com/api/v1/projects/$PROJECT/otlp/v1/traces"
-export OTEL_EXPORTER_OTLP_TRACES_HEADERS="Authorization=Bearer%20$AUTOMATE_UPLOAD_TOKEN"
+export OTEL_EXPORTER_OTLP_TRACES_HEADERS="Authorization=Bearer%20$LUPIN_UPLOAD_TOKEN"
 # optional: export OTEL_EXPORTER_OTLP_TRACES_COMPRESSION=gzip
 ```
 
@@ -270,8 +270,8 @@ For a project with no checkout on the server, send the files from CI:
 jq -n --arg branch "$BRANCH" --arg commit "$SHA" \
   --rawfile agents AGENTS.md --rawfile mcp .mcp.json \
   '{branch: $branch, commit: $commit, files: [{path: "AGENTS.md", text: $agents}, {path: ".mcp.json", text: $mcp}]}' |
-curl --fail-with-body -H "Authorization: Bearer $AUTOMATE_UPLOAD_TOKEN" -H 'content-type: application/json' \
-  --data-binary @- "$AUTOMATE_URL/api/v1/projects/$PROJECT/health/agent-config"
+curl --fail-with-body -H "Authorization: Bearer $LUPIN_UPLOAD_TOKEN" -H 'content-type: application/json' \
+  --data-binary @- "$LUPIN_URL/api/v1/projects/$PROJECT/health/agent-config"
 ```
 
 A path that is not agent configuration, or that climbs out of the repository, is ignored and

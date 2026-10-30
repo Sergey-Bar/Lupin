@@ -9,16 +9,16 @@ export default defineConfig({
 });
 ```
 
-| Variable                   | Meaning                                                                |
-| -------------------------- | ---------------------------------------------------------------------- |
-| `AUTOMATE_URL`             | The AutoMate origin. `https://`, or `http://` only to a loopback host. |
-| `AUTOMATE_REPORTER_SECRET` | The install's `REPORTER_SECRET`. It is read from the environment only. |
-| `AUTOMATE_BRANCH`          | Optional. Falls back to `GITHUB_HEAD_REF`, then `GITHUB_REF_NAME`.     |
-| `AUTOMATE_COMMIT`          | Optional. Falls back to `GITHUB_SHA`.                                  |
+| Variable                | Meaning                                                                |
+| ----------------------- | ---------------------------------------------------------------------- |
+| `LUPIN_URL`             | The AutoMate origin. `https://`, or `http://` only to a loopback host. |
+| `LUPIN_REPORTER_SECRET` | The install's `REPORTER_SECRET`. It is read from the environment only. |
+| `LUPIN_BRANCH`          | Optional. Falls back to `GITHUB_HEAD_REF`, then `GITHUB_REF_NAME`.     |
+| `LUPIN_COMMIT`          | Optional. Falls back to `GITHUB_SHA`.                                  |
 
 Options, passed as `['@lupin/playwright-reporter', { … }]`:
 
-- `url`: overrides `AUTOMATE_URL`.
+- `url`: overrides `LUPIN_URL`.
 - `uploadArtifacts`: defaults to `true`.
 - `maxArtifactBytes`: defaults to 64 MiB, which is the server's own limit.
 

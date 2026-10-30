@@ -448,7 +448,7 @@ Rules:
 
 ### 5.5 Identity and secrets
 
-- Bootstrap from `AUTOMATE_API_KEY` only on first initialization.
+- Bootstrap from `LUPIN_API_KEY` only on first initialization.
 - Store high-entropy installation/service credentials as keyed hashes; compare using constant-time logic.
 - Store only hashes of random session tokens. Sessions have expiry, revocation, last-use metadata, and an audit event.
 - Enroll runners with one-time tokens, then issue scoped, rotatable identities bound to declared capabilities and allowed environments.
@@ -490,7 +490,7 @@ Reference: Kilo Gateway documents an OpenAI-compatible endpoint and live model c
 | `ReporterEventSchema`/`RealtimeEventSchema` in API, realtime, and contracts | Contracts own event shape/version; realtime owns transport                                       |
 | Local web `RunSchema`, `TestSchema`, `MessageSchema`                        | Delete after web imports canonical contracts                                                     |
 | Source reporter/CLI names                                                   | Restore `@lupin/reporter`; keep `@lupin/migrate-cli` separate; assess `@lupin/cli` independently |
-| `AUTOMATE_DASHBOARD_API_KEY` vs `AUTOMATE_API_KEY`                          | Deployment maps the old secret to `AUTOMATE_API_KEY`; do not expose both in app config           |
+| `LUPIN_DASHBOARD_API_KEY` vs `LUPIN_API_KEY`                                | Deployment maps the old secret to `LUPIN_API_KEY`; do not expose both in app config              |
 | `SESSION_SECRET` vs `COOKIE_SECRET`                                         | `COOKIE_SECRET` is canonical; time-boxed parser alias only                                       |
 | Source port 4000/4001 vs target 3000/SSE                                    | Target ports/routes win; legacy reporter WS is adapter-only                                      |
 | Source SQLite migrations vs target PostgreSQL                               | Target Drizzle migrations win; source SQL is never executed                                      |
@@ -834,7 +834,7 @@ NODE_ENV
 HOST
 PORT
 DATABASE_URL
-AUTOMATE_API_KEY
+LUPIN_API_KEY
 COOKIE_SECRET
 REPORTER_SECRET
 VAULT_SECRET
@@ -863,10 +863,10 @@ Rules:
 - One root `.env.example`; examples are validated against the config schema.
 - Production fails fast for missing/invalid required values.
 - No `dotenv` dependency; use Node's native `--env-file` for local development.
-- `SESSION_SECRET`, `AUTOMATE_DASHBOARD_API_KEY`, and reporter query-token auth are migration aliases with telemetry/deprecation warnings, not documented canonical settings.
+- `SESSION_SECRET`, `LUPIN_DASHBOARD_API_KEY`, and reporter query-token auth are migration aliases with telemetry/deprecation warnings, not documented canonical settings.
 - `RUNNER_ENROLLMENT_TOKEN` is accepted only during enrollment and must not be retained in runner configuration after identity issuance.
 - `RUNNER_OCI_SOCKET` is a local rootless-provider setting; production runners use the execution-provider interface and never mount a host-wide runtime socket.
-- Remove unused `AUTOMATE_SERVICE_SECRET`, dead feature flags, and `CORS_ORIGIN` until CORS middleware exists. Retain `OLLAMA_BASE_URL` only as an optional self-hosted adapter setting.
+- Remove unused `LUPIN_SERVICE_SECRET`, dead feature flags, and `CORS_ORIGIN` until CORS middleware exists. Retain `OLLAMA_BASE_URL` only as an optional self-hosted adapter setting.
 - Declare all build-affecting variables in Turbo task `env`/`globalEnv`; environment values must not leak across cache keys.
 
 ### 9.4 Root command surface

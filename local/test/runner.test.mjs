@@ -285,20 +285,20 @@ test('a command that does not exist is refused at the preview', async () => {
 });
 
 test('the child sees an allowlist, named variables and explicit ones, and nothing else from the parent', async () => {
-  const host = { ...process.env, AUTOMATE_LEAK_CHECK: 'leak', AUTOMATE_PASSED: 'visible' };
+  const host = { ...process.env, LUPIN_LEAK_CHECK: 'leak', LUPIN_PASSED: 'visible' };
   await withRunner(
     async ({ runner, req }) => {
       const id = await run(
         runner,
-        req(['env'], { passThrough: ['AUTOMATE_PASSED'], env: { EXPLICIT_ONE: '1' } }),
+        req(['env'], { passThrough: ['LUPIN_PASSED'], env: { EXPLICIT_ONE: '1' } }),
       );
       await runner.whenDone(id);
       const names = /** @type {string[]} */ (JSON.parse(runner.output(id, 'stdout').text));
-      assert.ok(names.includes('AUTOMATE_PASSED'));
+      assert.ok(names.includes('LUPIN_PASSED'));
       assert.ok(names.includes('EXPLICIT_ONE'));
       assert.ok(names.some((n) => n.toUpperCase() === 'PATH'));
       assert.ok(
-        !names.includes('AUTOMATE_LEAK_CHECK'),
+        !names.includes('LUPIN_LEAK_CHECK'),
         'an unlisted parent variable does not reach the child',
       );
     },
@@ -309,7 +309,7 @@ test('the child sees an allowlist, named variables and explicit ones, and nothin
 test('a variable passed through that is not set is refused rather than passed empty', async () => {
   await withRunner(async ({ runner, req }) => {
     await refused(
-      runner.preview(req(['env'], { passThrough: ['AUTOMATE_SURELY_UNSET_VARIABLE'] })),
+      runner.preview(req(['env'], { passThrough: ['LUPIN_SURELY_UNSET_VARIABLE'] })),
       'INVALID_REQUEST',
     );
     await refused(runner.preview(req(['env'], { env: { 'bad name': '1' } })), 'INVALID_REQUEST');

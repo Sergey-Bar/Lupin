@@ -47,7 +47,7 @@ test('the bundle holds exactly the release files, start.sh executable, version s
     assert.equal(entry('start.sh')?.mode, 0o755);
     assert.equal(entry('start.ps1')?.mode, 0o644);
     const compose = entry('compose.yml')?.data.toString() ?? '';
-    assert.match(compose, /automate-api:\$\{AUTOMATE_VERSION:-2\.5\.0\}/);
+    assert.match(compose, /automate-api:\$\{LUPIN_VERSION:-2\.5\.0\}/);
     assert.doesNotMatch(compose, /^\s+build:/m);
     assert.match(entry('QUICKSTART.md')?.data.toString() ?? '', /Automate 2\.5\.0/);
     assert.doesNotMatch(entry('QUICKSTART.md')?.data.toString() ?? '', /\{\{VERSION\}\}/);

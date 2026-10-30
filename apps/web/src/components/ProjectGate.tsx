@@ -118,7 +118,7 @@ function Onboarding({ title }: { title: string }): React.ReactElement {
         <div className="max-w-measure space-y-3 rounded-xl border border-border bg-surface-raised p-8">
           <h2 className="text-xl font-semibold">Point Automate at a repository</h2>
           <p className="max-w-measure text-pretty text-sm text-fg-muted">
-            Set <span className="font-mono">AUTOMATE_PROJECT_ROOT</span> to the checkout you want
+            Set <span className="font-mono">LUPIN_PROJECT_ROOT</span> to the checkout you want
             analysed and restart the API. It registers that folder at boot, scans every tool and
             report in it, and this screen fills in. This is an empty install, not a failure.
           </p>

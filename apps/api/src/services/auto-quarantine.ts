@@ -26,7 +26,7 @@ import type { ExecutionRun } from '../execution/types.js';
 import type { WriteContext } from '../modules/dashboard/audit-sink.js';
 import type { QuarantineStore } from '../modules/dashboard/quarantine.js';
 
-export const AUTOMATE_ACTOR: WriteContext = { actorId: 'automate', actorType: 'system' };
+export const LUPIN_ACTOR: WriteContext = { actorId: 'automate', actorType: 'system' };
 
 export interface AutoQuarantineOutcome {
   /** Identities quarantined and approved by this pass. */
@@ -91,7 +91,7 @@ export async function applyQuarantinePolicy(input: {
         quarantinedBy: 'automate',
         reason: suggestion.reason,
       },
-      AUTOMATE_ACTOR,
+      LUPIN_ACTOR,
     );
     const evidence = suggestion.evidence;
     await input.store.resolve(
@@ -102,7 +102,7 @@ export async function applyQuarantinePolicy(input: {
           `Approved by the auto-quarantine policy: ${String(evidence.retryPasses)} retry pass(es) ` +
           `and ${String(evidence.sameCommit)} commit(s) with both outcomes.`,
       },
-      AUTOMATE_ACTOR,
+      LUPIN_ACTOR,
     );
     outcome.quarantined.push(suggestion.testKey);
   }
@@ -124,7 +124,7 @@ export async function applyQuarantinePolicy(input: {
         resolution: `Passed ${String(input.policy.releaseAfter)} runs in a row without a retry.`,
         resolutionType: 'auto-released',
       },
-      AUTOMATE_ACTOR,
+      LUPIN_ACTOR,
     );
     outcome.released.push(entry.stableId);
   }

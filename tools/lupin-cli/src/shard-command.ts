@@ -25,7 +25,7 @@ import { projectUrl } from './target.js';
  *
  * **Every shard must ask with the same cut-off**, or a run finishing between two shards'
  * calls hands them different plans and a file to neither. The cut-off is `--as-of`, then
- * `AUTOMATE_SHARD_AS_OF`, then the checked-out commit's time — which every shard of one CI
+ * `LUPIN_SHARD_AS_OF`, then the checked-out commit's time — which every shard of one CI
  * run shares without being told.
  */
 
@@ -139,7 +139,7 @@ async function readOptions(argv: readonly string[], io: Io): Promise<ShardOption
   });
   const total = wholeNumber(required(parsed, 'total'), 1, MAX_SHARDS, 'total');
   const index = wholeNumber(required(parsed, 'index'), 1, total, 'index');
-  const asOfFlag = optional(parsed, 'as-of', io.env['AUTOMATE_SHARD_AS_OF']);
+  const asOfFlag = optional(parsed, 'as-of', io.env['LUPIN_SHARD_AS_OF']);
   if (asOfFlag !== undefined && Number.isNaN(Date.parse(asOfFlag))) {
     throw usage(`--as-of is an ISO-8601 time: ${asOfFlag}`);
   }

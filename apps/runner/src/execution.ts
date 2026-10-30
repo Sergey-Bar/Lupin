@@ -431,9 +431,9 @@ export class PlaywrightExecutionAdapter implements ExecutionProvider {
       cwd: this.projectRoot,
       env: {
         ...sanitizeEnvironment(this.environment, redactions),
-        AUTOMATE_BASE_URL: target,
-        AUTOMATE_OUTPUT_DIR: layout.outputDirectory,
-        AUTOMATE_RUNNER_EVENTS_PATH: layout.eventPath,
+        LUPIN_BASE_URL: target,
+        LUPIN_OUTPUT_DIR: layout.outputDirectory,
+        LUPIN_RUNNER_EVENTS_PATH: layout.eventPath,
         PLAYWRIGHT_JSON_OUTPUT_NAME: join(layout.reportDirectory, 'playwright-report.json'),
         PLAYWRIGHT_JUNIT_OUTPUT_NAME: join(layout.reportDirectory, 'junit.xml'),
         CI: '1',

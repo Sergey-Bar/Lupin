@@ -99,7 +99,7 @@ export const ErrorCode = {
   FORBIDDEN: 'FORBIDDEN',
   /**
    * Single sign-on is enforced (ADR-014, enterprise): a browser signs in through the identity
-   * provider, and the installation key only under `AUTOMATE_BREAK_GLASS=1`.
+   * provider, and the installation key only under `LUPIN_BREAK_GLASS=1`.
    */
   SSO_ENFORCED: 'SSO_ENFORCED',
   /** The client's address is outside `ALLOWED_CLIENT_CIDRS`. */

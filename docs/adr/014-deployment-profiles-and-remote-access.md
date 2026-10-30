@@ -22,7 +22,7 @@ enterprise — without becoming a hosted service or a second product.
 ## Decision
 
 **One self-hosted MIT product with four deployment profiles**, selected by
-`AUTOMATE_PROFILE` and defaulting to `solo`. A profile only sets defaults; any setting can
+`LUPIN_PROFILE` and defaulting to `solo`. A profile only sets defaults; any setting can
 be overridden, and a combination that contradicts itself is refused at startup, by name, in
 `checkExposurePolicy` (`apps/api/src/startup-policy.ts`) — the one place the exposure rule
 already lives. There is no licence key and no edition split.
@@ -36,7 +36,7 @@ already lives. There is no licence key and no edition split.
 
 **A tunnel is exposure.** Cloudflare Tunnel dials out, so an install bound to `127.0.0.1`
 becomes reachable from the internet without its bind changing. The bind check cannot see
-that, so `AUTOMATE_REMOTE=cloudflare` is its own refusal: it requires enforced access
+that, so `LUPIN_REMOTE=cloudflare` is its own refusal: it requires enforced access
 control and both `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`, and `solo` refuses it.
 
 **The credential order** — one resolver, `callerOf` in `apps/api/src/http/roles.ts`:
@@ -44,7 +44,7 @@ control and both `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`, and `solo` refuses
 1. an access token (bearer or the `automate_token` cookie);
 2. a user session;
 3. the installation session (admin), which is break-glass only under enforced SSO;
-4. a verified `Cf-Access-Jwt-Assertion`, only with `AUTOMATE_REMOTE=cloudflare`;
+4. a verified `Cf-Access-Jwt-Assertion`, only with `LUPIN_REMOTE=cloudflare`;
 5. access control `open`: the anonymous operator ADR-006 describes;
 6. otherwise nobody.
 
@@ -111,7 +111,7 @@ token stays a machine on every profile.
 
 ## Evidence
 
-- `packages/config/src/config.ts` — `AUTOMATE_PROFILE`, the profile defaults, and the remote
+- `packages/config/src/config.ts` — `LUPIN_PROFILE`, the profile defaults, and the remote
   settings.
 - `apps/api/src/startup-policy.ts` and `apps/api/src/startup-policy.test.ts` — the refusals.
 - `apps/api/src/http/roles.ts` — the credential order.

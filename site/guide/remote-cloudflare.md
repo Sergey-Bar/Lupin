@@ -34,7 +34,7 @@ refuses a tunnel.
    export TUNNEL_TOKEN='paste-the-tunnel-token'
    export CF_ACCESS_TEAM_DOMAIN='your-team'          # or your-team.cloudflareaccess.com
    export CF_ACCESS_AUD='paste-the-audience-tag'
-   export AUTOMATE_PUBLIC_URL='https://automate.example.com'
+   export LUPIN_PUBLIC_URL='https://automate.example.com'
    ./start.sh --profile startup --remote cloudflare
    ```
 
@@ -42,12 +42,12 @@ refuses a tunnel.
    $env:TUNNEL_TOKEN = 'paste-the-tunnel-token'
    $env:CF_ACCESS_TEAM_DOMAIN = 'your-team'
    $env:CF_ACCESS_AUD = 'paste-the-audience-tag'
-   $env:AUTOMATE_PUBLIC_URL = 'https://automate.example.com'
+   $env:LUPIN_PUBLIC_URL = 'https://automate.example.com'
    .\start.cmd --profile startup --remote cloudflare
    ```
 
    The start script keeps the three tunnel values in `.env`, so a plain `./start.sh` later
-   still starts the tunnel. It never prints the token. Put `AUTOMATE_PUBLIC_URL` in `.env`
+   still starts the tunnel. It never prints the token. Put `LUPIN_PUBLIC_URL` in `.env`
    too: links in reports and the cross-site check use it.
 
 5. Open `https://automate.example.com`. Cloudflare asks you to sign in; Automate then
@@ -119,10 +119,10 @@ Create a service token under _Access → Service auth_, add a _Service Auth_ pol
 the application, and give the CLI both halves beside its access token:
 
 ```sh
-export AUTOMATE_URL='https://automate.example.com'
-export AUTOMATE_TOKEN='amt_...'                       # an uploader token from the Access page
-export AUTOMATE_CF_ACCESS_CLIENT_ID='...access'
-export AUTOMATE_CF_ACCESS_CLIENT_SECRET='...'
+export LUPIN_URL='https://automate.example.com'
+export LUPIN_TOKEN='amt_...'                       # an uploader token from the Access page
+export LUPIN_CF_ACCESS_CLIENT_ID='...access'
+export LUPIN_CF_ACCESS_CLIENT_SECRET='...'
 lupin upload --format sarif --file semgrep.sarif
 ```
 
@@ -143,7 +143,7 @@ this tunnel.
   `RS256` by a key your team publishes, name your team as issuer and this application's
   audience tag, and be unexpired. Anything else carries no Cloudflare identity at all. The
   team's keys are cached and fetched again when Cloudflare rotates them.
-- **A tunnel needs a login.** `AUTOMATE_REMOTE=cloudflare` with `ACCESS_CONTROL=open`, or
+- **A tunnel needs a login.** `LUPIN_REMOTE=cloudflare` with `ACCESS_CONTROL=open`, or
   without both `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`, refuses to start. So does a
   tunnel on the `solo` profile.
 - **A LAN certificate and a tunnel do not mix on one port.** With `lan-cert` issued, the edge
@@ -165,7 +165,7 @@ visitor's address that Cloudflare forwards, two things follow:
 
 ## Turning it off
 
-1. Remove `AUTOMATE_REMOTE` and `TUNNEL_TOKEN` from `.env`, and from your shell if you
+1. Remove `LUPIN_REMOTE` and `TUNNEL_TOKEN` from `.env`, and from your shell if you
    exported them.
 2. Run `./start.sh` (`.\start.cmd` on Windows). A start without the tunnel removes the
    `cloudflared` container an earlier one left running; it restarts itself otherwise. `stop`
@@ -174,7 +174,7 @@ visitor's address that Cloudflare forwards, two things follow:
    longer connects anything, and the Access application if nothing else uses it.
 
 `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` can stay in `.env`: Automate reads them only while
-`AUTOMATE_REMOTE=cloudflare` is set.
+`LUPIN_REMOTE=cloudflare` is set.
 
 ## What has and has not been tested
 

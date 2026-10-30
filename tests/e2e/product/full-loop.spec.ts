@@ -89,7 +89,7 @@ test.describe('the full loop', () => {
       // ------------------------------------------------------------------ 3. the runner
       const runnerInstance = randomUUID();
       const runner = await startService('runner', {
-        AUTOMATE_API_URL: API_BASE,
+        LUPIN_API_URL: API_BASE,
         RUNNER_INSTANCE_ID: runnerInstance,
         RUNNER_REGISTRATION_SECRET,
         RUNNER_ALLOWED_TARGET_URLS: API_BASE,
@@ -234,7 +234,7 @@ test.describe('the full loop', () => {
       expect((await getRun(request, body.runId))?.phase, 'accepted, not yet run').toBe('queued');
 
       runner = await startService('runner', {
-        AUTOMATE_API_URL: API_BASE,
+        LUPIN_API_URL: API_BASE,
         RUNNER_INSTANCE_ID: randomUUID(),
         RUNNER_REGISTRATION_SECRET,
         RUNNER_ALLOWED_TARGET_URLS: API_BASE,
@@ -300,7 +300,7 @@ test.describe('the full loop', () => {
       expect((await getRun(request, body.runId))?.phase, 'accepted, not yet run').toBe('queued');
 
       runner = await startService('runner', {
-        AUTOMATE_API_URL: API_BASE,
+        LUPIN_API_URL: API_BASE,
         RUNNER_INSTANCE_ID: randomUUID(),
         RUNNER_REGISTRATION_SECRET,
         RUNNER_ALLOWED_TARGET_URLS: API_BASE,

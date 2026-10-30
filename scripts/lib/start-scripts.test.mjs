@@ -54,9 +54,9 @@ function findSh() {
 
 /** @returns {string | null} */
 function findPowerShell() {
-  // `AUTOMATE_TEST_POWERSHELL=powershell` runs the suite under Windows PowerShell 5.1,
+  // `LUPIN_TEST_POWERSHELL=powershell` runs the suite under Windows PowerShell 5.1,
   // which is what start.cmd launches; `pwsh` is preferred otherwise.
-  const preferred = process.env['AUTOMATE_TEST_POWERSHELL'];
+  const preferred = process.env['LUPIN_TEST_POWERSHELL'];
   for (const candidate of [...(preferred ? [preferred] : []), 'pwsh', 'powershell']) {
     const probe = spawnSync(candidate, ['-NoProfile', '-Command', 'Write-Output ok'], {
       encoding: 'utf8',
@@ -175,8 +175,8 @@ function run(kind, where, args, env) {
       ...process.env,
       PATH: `${where.bin}${path.delimiter}${process.env['PATH'] ?? ''}`,
       FAKE_DOCKER_LOG: where.log,
-      AUTOMATE_NO_BROWSER: '1',
-      AUTOMATE_READY_TIMEOUT: '10',
+      LUPIN_NO_BROWSER: '1',
+      LUPIN_READY_TIMEOUT: '10',
       ...env,
     },
   });
@@ -282,7 +282,7 @@ test('the cloudflare profile runs a tunnel that publishes nothing and is off by 
   assert.match(block, /TUNNEL_TOKEN: \$\{TUNNEL_TOKEN:-\}/u);
   assert.doesNotMatch(block, /ports:/u);
   // The API reads the tunnel settings, so the startup policy can refuse half of them.
-  for (const name of ['AUTOMATE_REMOTE', 'CF_ACCESS_TEAM_DOMAIN', 'CF_ACCESS_AUD']) {
+  for (const name of ['LUPIN_REMOTE', 'CF_ACCESS_TEAM_DOMAIN', 'CF_ACCESS_AUD']) {
     assert.match(SOURCE, new RegExp(`\\n {6}${name}: \\$\\{${name}:-\\}`, 'u'), name);
   }
 });
@@ -295,7 +295,7 @@ test('the API container receives every identity, remote and telemetry setting th
   const config = readFileSync(path.join(REPO_ROOT, 'packages/config/src/config.ts'), 'utf8');
   const identity = [
     ...config.matchAll(
-      /^ {2}((?:OIDC|CF_ACCESS)_[A-Z_]+|AUTH_SSO_ENFORCED|AUTOMATE_BREAK_GLASS|AUTOMATE_PROFILE|AUTOMATE_REMOTE):/gmu,
+      /^ {2}((?:OIDC|CF_ACCESS)_[A-Z_]+|AUTH_SSO_ENFORCED|LUPIN_BREAK_GLASS|LUPIN_PROFILE|LUPIN_REMOTE):/gmu,
     ),
   ].map((match) => match[1]);
   assert.ok(identity.length >= 12, `read only ${identity.length} identity settings`);
@@ -330,7 +330,7 @@ for (const [kind, shell] of /** @type {const} */ ([
       const where = install();
       const server = await readyServer();
       try {
-        const result = await run(kind, where, [], { AUTOMATE_PORT: String(server.port) });
+        const result = await run(kind, where, [], { LUPIN_PORT: String(server.port) });
         assert.equal(result.status, 0, result.output);
         const env = readEnv(path.join(where.dir, '.env'));
         for (const name of requiredVariables(RELEASE)) {
@@ -350,7 +350,7 @@ for (const [kind, shell] of /** @type {const} */ ([
         assert.ok(up?.includes('-d'), 'no compose up -d');
         assert.match(result.output, new RegExp(`http://localhost:${String(server.port)}`));
         assert.ok(
-          result.output.includes(env.get('AUTOMATE_INSTALLATION_KEY') ?? '!'),
+          result.output.includes(env.get('LUPIN_INSTALLATION_KEY') ?? '!'),
           'the sign-in key is not printed',
         );
       } finally {
@@ -364,9 +364,9 @@ for (const [kind, shell] of /** @type {const} */ ([
     const where = install();
     const server = await readyServer();
     try {
-      await run(kind, where, [], { AUTOMATE_PORT: String(server.port) });
+      await run(kind, where, [], { LUPIN_PORT: String(server.port) });
       const first = readFileSync(path.join(where.dir, '.env'), 'utf8');
-      const result = await run(kind, where, [], { AUTOMATE_PORT: String(server.port) });
+      const result = await run(kind, where, [], { LUPIN_PORT: String(server.port) });
       assert.equal(result.status, 0, result.output);
       assert.equal(readFileSync(path.join(where.dir, '.env'), 'utf8'), first);
     } finally {
@@ -381,7 +381,7 @@ for (const [kind, shell] of /** @type {const} */ ([
     async () => {
       const where = install();
       try {
-        const missing = await run(kind, where, [], { AUTOMATE_DOCKER: 'no-such-docker-binary' });
+        const missing = await run(kind, where, [], { LUPIN_DOCKER: 'no-such-docker-binary' });
         assert.notEqual(missing.status, 0);
         assert.match(missing.output, /Docker is not installed/);
         assert.match(missing.output, /https:\/\/docs\.docker\.com\/get-docker\//);
@@ -409,7 +409,7 @@ for (const [kind, shell] of /** @type {const} */ ([
       const where = install();
       try {
         const result = await run(kind, where, ['lan-cert'], {
-          AUTOMATE_TLS_NAMES: 'qa.example.lan',
+          LUPIN_TLS_NAMES: 'qa.example.lan',
         });
         assert.equal(result.status, 0, result.output);
         const issued = composeCall(calls(where.log), 'run');
@@ -448,26 +448,26 @@ for (const [kind, shell] of /** @type {const} */ ([
       const server = await readyServer();
       try {
         const refused = await run(kind, where, [], {
-          AUTOMATE_PORT: String(server.port),
-          AUTOMATE_BIND: '0.0.0.0',
+          LUPIN_PORT: String(server.port),
+          LUPIN_BIND: '0.0.0.0',
         });
         assert.notEqual(refused.status, 0, refused.output);
-        assert.match(refused.output, /AUTOMATE_LAN_MODE=1/);
+        assert.match(refused.output, /LUPIN_LAN_MODE=1/);
         assert.equal(composeCall(calls(where.log), 'up'), undefined, 'nothing may start');
 
         const lan = await run(kind, where, [], {
-          AUTOMATE_PORT: String(server.port),
-          AUTOMATE_BIND: '0.0.0.0',
-          AUTOMATE_LAN_MODE: '1',
+          LUPIN_PORT: String(server.port),
+          LUPIN_BIND: '0.0.0.0',
+          LUPIN_LAN_MODE: '1',
         });
         assert.equal(lan.status, 0, lan.output);
         assert.match(lan.output, /LAN mode/);
         // The firewall is the operator's to change, so the command is printed, never run.
         assert.match(lan.output, kind === 'ps' ? /New-NetFirewallRule/ : /ufw allow|firewall-cmd/);
 
-        const quiet = await run(kind, where, [], { AUTOMATE_PORT: String(server.port) });
+        const quiet = await run(kind, where, [], { LUPIN_PORT: String(server.port) });
         assert.equal(quiet.status, 0, quiet.output);
-        assert.doesNotMatch(quiet.output, /LAN mode|AUTOMATE_LAN_MODE/);
+        assert.doesNotMatch(quiet.output, /LAN mode|LUPIN_LAN_MODE/);
       } finally {
         await server.close();
         where.cleanup();
@@ -484,33 +484,33 @@ for (const [kind, shell] of /** @type {const} */ ([
       const where = install();
       const server = await readyServer();
       try {
-        const base = { AUTOMATE_PORT: String(server.port) };
-        const unknown = await run(kind, where, [], { ...base, AUTOMATE_PROFILE: 'business' });
+        const base = { LUPIN_PORT: String(server.port) };
+        const unknown = await run(kind, where, [], { ...base, LUPIN_PROFILE: 'business' });
         assert.notEqual(unknown.status, 0, unknown.output);
         assert.match(unknown.output, /solo, startup, team or enterprise/);
 
         const soloReachable = await run(kind, where, [], {
           ...base,
-          AUTOMATE_PROFILE: 'solo',
-          AUTOMATE_BIND: '0.0.0.0',
+          LUPIN_PROFILE: 'solo',
+          LUPIN_BIND: '0.0.0.0',
         });
         assert.notEqual(soloReachable.status, 0, soloReachable.output);
-        assert.match(soloReachable.output, /AUTOMATE_PROFILE=startup/);
+        assert.match(soloReachable.output, /LUPIN_PROFILE=startup/);
 
         const soloLan = await run(kind, where, [], {
           ...base,
-          AUTOMATE_PROFILE: 'solo',
-          AUTOMATE_LAN_MODE: '1',
+          LUPIN_PROFILE: 'solo',
+          LUPIN_LAN_MODE: '1',
         });
         assert.notEqual(soloLan.status, 0, soloLan.output);
-        assert.match(soloLan.output, /AUTOMATE_PROFILE=solo/);
+        assert.match(soloLan.output, /LUPIN_PROFILE=solo/);
         assert.equal(composeCall(calls(where.log), 'up'), undefined, 'nothing may start');
 
         // Every profile above solo turns sign-in on, so it may be published.
         const team = await run(kind, where, [], {
           ...base,
-          AUTOMATE_PROFILE: 'team',
-          AUTOMATE_BIND: '0.0.0.0',
+          LUPIN_PROFILE: 'team',
+          LUPIN_BIND: '0.0.0.0',
         });
         assert.equal(team.status, 0, team.output);
         assert.match(team.output, /after signing in/);
@@ -528,28 +528,28 @@ for (const [kind, shell] of /** @type {const} */ ([
       const where = install();
       const server = await readyServer();
       try {
-        const base = { AUTOMATE_PORT: String(server.port) };
+        const base = { LUPIN_PORT: String(server.port) };
         const first = await run(kind, where, ['--profile', 'team'], base);
         assert.equal(first.status, 0, first.output);
         const before = readEnv(path.join(where.dir, '.env'));
-        assert.equal(before.get('AUTOMATE_PROFILE'), 'team');
+        assert.equal(before.get('LUPIN_PROFILE'), 'team');
         assert.match(first.output, /Profile: team/);
         assert.match(first.output, /Next step:/);
 
         const second = await run(kind, where, ['--profile', 'startup'], base);
         assert.equal(second.status, 0, second.output);
         const text = readFileSync(path.join(where.dir, '.env'), 'utf8');
-        assert.equal(text.match(/^AUTOMATE_PROFILE=/gm)?.length, 1, 'one profile line, not two');
+        assert.equal(text.match(/^LUPIN_PROFILE=/gm)?.length, 1, 'one profile line, not two');
         const after = readEnv(path.join(where.dir, '.env'));
-        assert.equal(after.get('AUTOMATE_PROFILE'), 'startup');
+        assert.equal(after.get('LUPIN_PROFILE'), 'startup');
         // A rerun that rewrote a secret would lock the install out of its own vault.
-        for (const name of ['COOKIE_SECRET', 'VAULT_SECRET', 'AUTOMATE_INSTALLATION_KEY']) {
+        for (const name of ['COOKIE_SECRET', 'VAULT_SECRET', 'LUPIN_INSTALLATION_KEY']) {
           assert.equal(after.get(name), before.get(name), `${name} changed on a rerun`);
         }
 
         const wrong = await run(kind, where, ['--profile', 'business'], base);
         assert.notEqual(wrong.status, 0, wrong.output);
-        assert.equal(readEnv(path.join(where.dir, '.env')).get('AUTOMATE_PROFILE'), 'startup');
+        assert.equal(readEnv(path.join(where.dir, '.env')).get('LUPIN_PROFILE'), 'startup');
       } finally {
         await server.close();
         where.cleanup();
@@ -566,8 +566,8 @@ for (const [kind, shell] of /** @type {const} */ ([
       try {
         // A backup is of an install that exists, so the first start comes first.
         const env = {
-          AUTOMATE_PORT: String(server.port),
-          AUTOMATE_VERSION: '3.2.0',
+          LUPIN_PORT: String(server.port),
+          LUPIN_VERSION: '3.2.0',
           FAKE_MIGRATIONS: '34',
         };
         const nothing = await run(kind, where, ['backup'], env);
@@ -628,8 +628,8 @@ for (const [kind, shell] of /** @type {const} */ ([
       const server = await readyServer();
       try {
         const env = {
-          AUTOMATE_PORT: String(server.port),
-          AUTOMATE_VERSION: '3.2.0',
+          LUPIN_PORT: String(server.port),
+          LUPIN_VERSION: '3.2.0',
           FAKE_MIGRATIONS: '34',
         };
         assert.equal((await run(kind, where, [], env)).status, 0);
@@ -676,8 +676,8 @@ for (const [kind, shell] of /** @type {const} */ ([
       const server = await readyServer();
       try {
         const env = {
-          AUTOMATE_PORT: String(server.port),
-          AUTOMATE_VERSION: '3.2.0',
+          LUPIN_PORT: String(server.port),
+          LUPIN_VERSION: '3.2.0',
           FAKE_MIGRATIONS: '34',
         };
         assert.equal((await run(kind, where, [], env)).status, 0);
@@ -733,8 +733,8 @@ for (const [kind, shell] of /** @type {const} */ ([
       const server = await readyServer();
       try {
         const base = {
-          AUTOMATE_PORT: String(server.port),
-          AUTOMATE_VERSION: '3.2.0',
+          LUPIN_PORT: String(server.port),
+          LUPIN_VERSION: '3.2.0',
           FAKE_MIGRATIONS: '34',
         };
         const folder = await installWithBackup(kind, where, base);
@@ -757,7 +757,7 @@ for (const [kind, shell] of /** @type {const} */ ([
 
         const older = await run(kind, where, ['restore', folder], {
           ...base,
-          AUTOMATE_VERSION: '3.1.0',
+          LUPIN_VERSION: '3.1.0',
         });
         assert.notEqual(older.status, 0, older.output);
         assert.match(older.output, /3\.2\.0.*newer/);
@@ -845,7 +845,7 @@ for (const [kind, shell] of /** @type {const} */ ([
       const where = install();
       const server = await readyServer();
       try {
-        const base = { AUTOMATE_PORT: String(server.port) };
+        const base = { LUPIN_PORT: String(server.port) };
         const tunnel = tunnelSettings();
         const half = await run(kind, where, ['--remote', 'cloudflare'], {
           ...base,
@@ -861,7 +861,7 @@ for (const [kind, shell] of /** @type {const} */ ([
           ...tunnel,
         });
         assert.notEqual(solo.status, 0, solo.output);
-        assert.match(solo.output, /AUTOMATE_PROFILE=solo/);
+        assert.match(solo.output, /LUPIN_PROFILE=solo/);
         writeFileSync(where.log, '');
 
         const started = await run(kind, where, ['--profile', 'startup', '--remote', 'cloudflare'], {
@@ -870,7 +870,7 @@ for (const [kind, shell] of /** @type {const} */ ([
         });
         assert.equal(started.status, 0, started.output);
         const env = readEnv(path.join(where.dir, '.env'));
-        assert.equal(env.get('AUTOMATE_REMOTE'), 'cloudflare');
+        assert.equal(env.get('LUPIN_REMOTE'), 'cloudflare');
         // Kept in .env, so the next plain start still has the tunnel; the token survives
         // characters (`/`, `+`, `=`) a sed replacement would mangle.
         assert.equal(env.get('TUNNEL_TOKEN'), tunnel.TUNNEL_TOKEN);
@@ -905,8 +905,8 @@ for (const [kind, shell] of /** @type {const} */ ([
       const server = await readyServer();
       try {
         const base = {
-          AUTOMATE_PORT: String(server.port),
-          AUTOMATE_VERSION: '3.2.0',
+          LUPIN_PORT: String(server.port),
+          LUPIN_VERSION: '3.2.0',
           FAKE_MIGRATIONS: '34',
         };
         const folder = await installWithBackup(kind, where, base);
@@ -948,7 +948,7 @@ for (const [kind, shell] of /** @type {const} */ ([
       const where = install();
       const server = await readyServer();
       try {
-        const base = { AUTOMATE_PORT: String(server.port) };
+        const base = { LUPIN_PORT: String(server.port) };
         const remote = await run(kind, where, ['--profile', 'startup', '--remote', 'cloudflare'], {
           ...base,
           ...tunnelSettings(),
@@ -965,7 +965,7 @@ for (const [kind, shell] of /** @type {const} */ ([
         const lines = readFileSync(envFile, 'utf8').split('\n');
         writeFileSync(
           envFile,
-          lines.filter((line) => !/^(AUTOMATE_REMOTE|TUNNEL_TOKEN)=/u.test(line)).join('\n'),
+          lines.filter((line) => !/^(LUPIN_REMOTE|TUNNEL_TOKEN)=/u.test(line)).join('\n'),
         );
         writeFileSync(where.log, '');
         const local = await run(kind, where, [], base);
@@ -1006,7 +1006,7 @@ for (const [kind, shell] of /** @type {const} */ ([
       const where = install();
       const server = await readyServer();
       try {
-        const base = { AUTOMATE_PORT: String(server.port), ...tunnelSettings() };
+        const base = { LUPIN_PORT: String(server.port), ...tunnelSettings() };
         assert.equal((await run(kind, where, [], base)).status, 0);
         const envFile = path.join(where.dir, '.env');
         // A comment and a value an operator added by hand, in UTF-8.
@@ -1037,8 +1037,8 @@ for (const [kind, shell] of /** @type {const} */ ([
             assert.equal(mode, 0o600, `${what} left .env at ${mode.toString(8)}`);
           }
         }
-        assert.equal(readEnv(envFile).get('AUTOMATE_PROFILE'), 'startup');
-        assert.equal(readEnv(envFile).get('AUTOMATE_VERSION'), '3.1.5');
+        assert.equal(readEnv(envFile).get('LUPIN_PROFILE'), 'startup');
+        assert.equal(readEnv(envFile).get('LUPIN_VERSION'), '3.1.5');
         assert.equal(readEnv(envFile).get('TUNNEL_TOKEN'), tunnelSettings().TUNNEL_TOKEN);
       } finally {
         await server.close();
@@ -1067,28 +1067,28 @@ for (const [kind, shell] of /** @type {const} */ ([
     }
   });
 
-  test(`${label}: update moves AUTOMATE_VERSION, then pulls and restarts`, { skip }, async () => {
+  test(`${label}: update moves LUPIN_VERSION, then pulls and restarts`, { skip }, async () => {
     const where = install();
     const server = await readyServer();
     try {
       const port = String(server.port);
-      await run(kind, where, [], { AUTOMATE_PORT: port });
+      await run(kind, where, [], { LUPIN_PORT: port });
       writeFileSync(where.log, '');
       const pinned = await run(kind, where, ['update', '--version', '3.1.4'], {
-        AUTOMATE_PORT: port,
+        LUPIN_PORT: port,
       });
       assert.equal(pinned.status, 0, pinned.output);
-      assert.equal(readEnv(path.join(where.dir, '.env')).get('AUTOMATE_VERSION'), '3.1.4');
+      assert.equal(readEnv(path.join(where.dir, '.env')).get('LUPIN_VERSION'), '3.1.4');
       assert.ok(composeCall(calls(where.log), 'pull'));
       assert.ok(composeCall(calls(where.log), 'up'));
       const latest = await run(kind, where, ['update'], {
-        AUTOMATE_PORT: port,
-        AUTOMATE_RELEASES_URL: `http://127.0.0.1:${port}/releases/latest`,
+        LUPIN_PORT: port,
+        LUPIN_RELEASES_URL: `http://127.0.0.1:${port}/releases/latest`,
       });
       assert.equal(latest.status, 0, latest.output);
-      assert.equal(readEnv(path.join(where.dir, '.env')).get('AUTOMATE_VERSION'), '9.8.7');
+      assert.equal(readEnv(path.join(where.dir, '.env')).get('LUPIN_VERSION'), '9.8.7');
       const secrets = [...readEnv(path.join(where.dir, '.env')).keys()].filter(
-        (key) => key !== 'AUTOMATE_VERSION',
+        (key) => key !== 'LUPIN_VERSION',
       );
       assert.ok(secrets.includes('COOKIE_SECRET'), 'update dropped the secrets');
     } finally {

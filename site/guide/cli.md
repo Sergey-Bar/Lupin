@@ -10,16 +10,16 @@ in `.github/actions/lupin-health` does the same four things, and its inputs are 
 The CLI reads its destination and credential from the environment, so the token never appears in
 a command line, a shell history or a process listing:
 
-- `AUTOMATE_URL` — your install's origin. `https://` anywhere; `http://` only to a loopback host
+- `LUPIN_URL` — your install's origin. `https://` anywhere; `http://` only to a loopback host
   (`localhost`, `127.0.0.0/8` — also as `::ffff:127.x.x.x` — or `::1`), the same rule as the MCP
   stdio proxy. Anything else is refused before a byte is sent, because the token would cross the
   network in the clear. The composite action's own check is stricter: `localhost`, `::1` or a
   numeric `127.d.d.d`, so a hostname such as `127.evil.example` never passes.
-- `AUTOMATE_TOKEN` — an access token. For CI, an **uploader** token pinned to the project: it can
+- `LUPIN_TOKEN` — an access token. For CI, an **uploader** token pinned to the project: it can
   send reports to that one project and read nothing.
-- `AUTOMATE_PROJECT` — the project's id, from its page in the dashboard. `--project <id>` overrides it.
+- `LUPIN_PROJECT` — the project's id, from its page in the dashboard. `--project <id>` overrides it.
 
-`--branch` and `--commit` default to `AUTOMATE_BRANCH` and `AUTOMATE_COMMIT`, then to GitHub
+`--branch` and `--commit` default to `LUPIN_BRANCH` and `LUPIN_COMMIT`, then to GitHub
 Actions' own `GITHUB_HEAD_REF`/`GITHUB_REF_NAME` and `GITHUB_SHA`.
 
 Build it from a checkout with the rest of the workspace; the bin is `tools/lupin-cli/dist/index.js`.
@@ -48,7 +48,7 @@ npx playwright test $(lupin shard --total 4 --index 2 -- $(git ls-files 'e2e/*.s
 lupin deploy --environment production --status success --sha "$SHA"
 
 # AGENTS.md, CLAUDE.md, .cursor/rules, .mcp.json, SKILL.md … under a directory.
-# Needs a branch: --branch, AUTOMATE_BRANCH, or GitHub Actions' own
+# Needs a branch: --branch, LUPIN_BRANCH, or GitHub Actions' own
 lupin agent-config --dir .
 ```
 
@@ -76,8 +76,8 @@ A refusal prints the server's own error code and sentence, never the token.
 - uses: your-org/AutoMate/.github/actions/lupin-health@<pinned sha>
   with:
     url: https://automate.example.com
-    project-id: ${{ vars.AUTOMATE_PROJECT }}
-    token: ${{ secrets.AUTOMATE_UPLOADER_TOKEN }}
+    project-id: ${{ vars.LUPIN_PROJECT }}
+    token: ${{ secrets.LUPIN_UPLOADER_TOKEN }}
     reports: |
       sarif:semgrep.sarif
       lcov:coverage/lcov.info

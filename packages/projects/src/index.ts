@@ -7,7 +7,7 @@
 // without a container.
 
 export {
-  AUTOMATE_CONFIG_FILENAME,
+  LUPIN_CONFIG_FILENAME,
   AutomateConfigSchema,
   ProjectProfileSchema,
   type AutomateConfig,

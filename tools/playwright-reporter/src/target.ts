@@ -27,17 +27,17 @@ export function isLoopbackHost(hostname: string): boolean {
  */
 export function resolveOrigin(raw: string | undefined): { origin: URL } | { refused: string } {
   const value = raw?.trim() ?? '';
-  if (value === '') return { refused: 'AUTOMATE_URL is not set; nothing is sent.' };
+  if (value === '') return { refused: 'LUPIN_URL is not set; nothing is sent.' };
   let origin: URL;
   try {
     origin = new URL(value);
   } catch {
-    return { refused: `AUTOMATE_URL is not a URL (${value}); nothing is sent.` };
+    return { refused: `LUPIN_URL is not a URL (${value}); nothing is sent.` };
   }
   if (origin.username !== '' || origin.password !== '') {
     return {
       refused:
-        'AUTOMATE_URL must not carry credentials; the secret goes in AUTOMATE_REPORTER_SECRET. Nothing is sent.',
+        'LUPIN_URL must not carry credentials; the secret goes in LUPIN_REPORTER_SECRET. Nothing is sent.',
     };
   }
   const plainAllowed = origin.protocol === 'http:' && isLoopbackHost(origin.hostname);

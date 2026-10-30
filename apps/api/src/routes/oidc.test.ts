@@ -74,7 +74,7 @@ async function provider(): Promise<Provider> {
     grants.delete(String(form['code']));
     const now = Math.floor(Date.now() / 1000);
     const idToken = await sign(
-      { iss: issuer, aud: 'automate', iat: now, exp: now + 300, ...grant.claims },
+      { iss: issuer, aud: 'lupin', iat: now, exp: now + 300, ...grant.claims },
       privateJwk,
     );
     return c.json({ access_token: 'at', token_type: 'Bearer', expires_in: 300, id_token: idToken });
@@ -105,7 +105,7 @@ async function harness(overrides: Partial<OidcConfig> = {}, issuerPath = '') {
   );
   const oidc: OidcConfig = {
     issuer: `${idp.issuer}${issuerPath}`,
-    clientId: 'automate',
+    clientId: 'lupin',
     clientSecret: CLIENT_SECRET,
     redirectUri: 'https://automate.example.com/api/v1/auth/oidc/callback',
     allowedDomains: ['example.com'],

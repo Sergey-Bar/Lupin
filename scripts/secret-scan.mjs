@@ -350,7 +350,7 @@ function selfTest() {
     // them is how a high-entropy rule gets switched off.
     ['digest only', 'checksum=' + 'a'.repeat(64), false],
     ['placeholder', 'COOKIE_SECRET=replace-with-at-least-32-characters', false],
-    ['env reference', 'const key = process.env.AUTOMATE_API_KEY;', false],
+    ['env reference', 'const key = process.env.LUPIN_API_KEY;', false],
     // The placeholder convention, recognised by name rather than by exempting the
     // files that use it: `user:pass@` is this tree's documented example form and
     // appears in doc comments and loopback test fixtures.

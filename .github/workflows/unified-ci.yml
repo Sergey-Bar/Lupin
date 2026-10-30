@@ -65,10 +65,10 @@ jobs:
           POSTGRES_PASSWORD: ci-config-validation-32-characters
           COOKIE_SECRET: ci-config-validation-32-characters
           VAULT_SECRET: ci-config-validation-32-characters
-          AUTOMATE_API_KEY: ci-config-validation-32-characters
+          LUPIN_API_KEY: ci-config-validation-32-characters
           REPORTER_SECRET: ci-config-validation-32-characters
           RUNNER_REGISTRATION_SECRET: ci-config-validation-32-characters
-          AUTOMATE_INSTALLATION_KEY: ci-config-validation-32-characters
+          LUPIN_INSTALLATION_KEY: ci-config-validation-32-characters
           OBJECT_STORE_ACCESS_KEY_ID: ci-config-validation-32-characters
           OBJECT_STORE_SECRET_ACCESS_KEY: ci-config-validation-32-characters
           OBJECT_STORE_BUCKET: ci-config-validation-32-characters
@@ -132,7 +132,7 @@ jobs:
         run: node --test scripts/lib/start-scripts.test.mjs
       - name: Start scripts under Windows PowerShell 5.1
         env:
-          AUTOMATE_TEST_POWERSHELL: powershell
+          LUPIN_TEST_POWERSHELL: powershell
         run: node --test --test-name-pattern "start.ps1" scripts/lib/start-scripts.test.mjs
 
   unit-and-coverage:

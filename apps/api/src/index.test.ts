@@ -179,7 +179,7 @@ describe('Startup policy', () => {
     expect(() => checkProductionPolicy(config)).not.toThrow();
   });
 
-  it('rejects missing AUTOMATE_API_KEY in production', async () => {
+  it('rejects missing LUPIN_API_KEY in production', async () => {
     const { checkProductionPolicy } = await import('./startup-policy.js');
     const config = {
       nodeEnv: 'production',
@@ -190,12 +190,10 @@ describe('Startup policy', () => {
       apiKey: undefined,
       vaultSecret: VALID_VAULT_SECRET,
     };
-    expect(() => checkProductionPolicy(config)).toThrow(
-      'AUTOMATE_API_KEY is required in production',
-    );
+    expect(() => checkProductionPolicy(config)).toThrow('LUPIN_API_KEY is required in production');
   });
 
-  it('rejects AUTOMATE_API_KEY shorter than the floor in production', async () => {
+  it('rejects LUPIN_API_KEY shorter than the floor in production', async () => {
     const { checkProductionPolicy } = await import('./startup-policy.js');
     const config = {
       nodeEnv: 'production',
@@ -207,11 +205,11 @@ describe('Startup policy', () => {
       vaultSecret: VALID_VAULT_SECRET,
     };
     expect(() => checkProductionPolicy(config)).toThrow(
-      `AUTOMATE_API_KEY must be at least ${String(SECRET_MIN_LENGTH)} characters`,
+      `LUPIN_API_KEY must be at least ${String(SECRET_MIN_LENGTH)} characters`,
     );
   });
 
-  it('rejects placeholder "change-me" as AUTOMATE_API_KEY in production', async () => {
+  it('rejects placeholder "change-me" as LUPIN_API_KEY in production', async () => {
     const { checkProductionPolicy } = await import('./startup-policy.js');
     const config = {
       nodeEnv: 'production',
@@ -222,12 +220,10 @@ describe('Startup policy', () => {
       apiKey: 'change-me',
       vaultSecret: VALID_VAULT_SECRET,
     };
-    expect(() => checkProductionPolicy(config)).toThrow(
-      'AUTOMATE_API_KEY must not be a placeholder',
-    );
+    expect(() => checkProductionPolicy(config)).toThrow('LUPIN_API_KEY must not be a placeholder');
   });
 
-  it('rejects placeholder "automate" as AUTOMATE_API_KEY in production', async () => {
+  it('rejects placeholder "lupin" as LUPIN_API_KEY in production', async () => {
     const { checkProductionPolicy } = await import('./startup-policy.js');
     const config = {
       nodeEnv: 'production',
@@ -235,12 +231,10 @@ describe('Startup policy', () => {
       databaseUrl: 'postgres://localhost/test',
       cookieSecret: VALID_COOKIE_SECRET,
       reporterSecret: VALID_REPORTER_SECRET,
-      apiKey: 'automate',
+      apiKey: 'lupin',
       vaultSecret: VALID_VAULT_SECRET,
     };
-    expect(() => checkProductionPolicy(config)).toThrow(
-      'AUTOMATE_API_KEY must not be a placeholder',
-    );
+    expect(() => checkProductionPolicy(config)).toThrow('LUPIN_API_KEY must not be a placeholder');
   });
 
   it('rejects missing VAULT_SECRET in production', async () => {
@@ -320,11 +314,11 @@ describe('Auth matrix', () => {
   const TEST_KEY = syntheticApiKey();
 
   beforeEach(() => {
-    process.env['AUTOMATE_API_KEY'] = TEST_KEY;
+    process.env['LUPIN_API_KEY'] = TEST_KEY;
   });
 
   afterEach(() => {
-    delete process.env['AUTOMATE_API_KEY'];
+    delete process.env['LUPIN_API_KEY'];
   });
 
   // The install is open as of 2026-09-30, so there is no longer a distinction between

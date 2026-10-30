@@ -28,8 +28,8 @@ leaves it). A fine-grained token with read access to **Pull requests**, **Conten
 **Deployments** and **Actions** is enough.
 
 ```bash
-curl -X PUT "$AUTOMATE_URL/api/v1/projects/$PROJECT_ID/delivery/source" \
-  -H "authorization: Bearer $AUTOMATE_OPERATOR_TOKEN" \
+curl -X PUT "$LUPIN_URL/api/v1/projects/$PROJECT_ID/delivery/source" \
+  -H "authorization: Bearer $LUPIN_OPERATOR_TOKEN" \
   -H 'content-type: application/json' \
   -d '{ "enabled": true, "cadence": "hourly", "productionEnvironments": ["production"] }'
 ```
@@ -78,8 +78,8 @@ The push door takes the same credential as a [health report upload](repository-h
 the reporter secret, an uploader token for the project, or an operator or admin token.
 
 ```bash
-curl -X POST "$AUTOMATE_URL/api/v1/projects/$PROJECT_ID/delivery/deployments" \
-  -H "authorization: Bearer $AUTOMATE_UPLOAD_TOKEN" \
+curl -X POST "$LUPIN_URL/api/v1/projects/$PROJECT_ID/delivery/deployments" \
+  -H "authorization: Bearer $LUPIN_UPLOAD_TOKEN" \
   -H 'content-type: application/json' \
   -d '{
         "externalId": "'"$CI_PIPELINE_ID"'",
@@ -177,7 +177,7 @@ Webhooks make a sync start when something changes instead of on the next cadence
 is **off** unless both of these are set; otherwise `POST /api/v1/webhooks/github` answers a
 coded `404`:
 
-- `AUTOMATE_LAN_MODE=1` ([LAN mode](lan-mode.md)) — a loopback-only install cannot be reached;
+- `LUPIN_LAN_MODE=1` ([LAN mode](lan-mode.md)) — a loopback-only install cannot be reached;
 - `GITHUB_WEBHOOK_SECRET` — 32 characters or more.
 
 In the repository's **Settings → Webhooks**, add the install's public URL followed by

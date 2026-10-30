@@ -488,7 +488,7 @@ test('a tolerated failure around a pr-blocking gate is a finding, and one around
 });
 
 test('no CI file sets the host-scanner opt-in, and verify:local is never-in-ci', () => {
-  // `AUTOMATE_HOST_SCANNERS=unavailable` turns a scanner that cannot produce a scan
+  // `LUPIN_HOST_SCANNERS=unavailable` turns a scanner that cannot produce a scan
   // into a recorded `not_configured` pass. That is a legitimate trade on a
   // developer laptop with no semgrep and it is a *defect* in a pull request: CI is
   // the only place the security scan is actually enforced, and a job that sets the

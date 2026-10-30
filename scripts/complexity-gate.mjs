@@ -87,7 +87,7 @@ const run = spawnSync(
     cwd: root,
     encoding: 'utf8',
     maxBuffer: 32 * 1024 * 1024,
-    env: { ...process.env, AUTOMATE_COMPLEXITY_CEILING: String(ceiling) },
+    env: { ...process.env, LUPIN_COMPLEXITY_CEILING: String(ceiling) },
   },
 );
 

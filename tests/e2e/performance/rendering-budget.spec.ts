@@ -399,7 +399,7 @@ test.describe('rendering budget', () => {
     // than of a flag. `phaseFor` is the single definition of that property — the same
     // function `gate-tooling.test.mjs` uses to decide what tier the job may have — so
     // the spec and the manifest cannot disagree about which phase the repository is in.
-    const isWriteMode = process.env['AUTOMATE_RENDER_BASELINE'] === '1';
+    const isWriteMode = process.env['LUPIN_RENDER_BASELINE'] === '1';
     const isMeasured = phaseFor(baseline) === 'threshold';
 
     if (isWriteMode) {

@@ -30,7 +30,7 @@ The first run:
 - downloads the images, which takes a few minutes;
 - starts the stack and waits until it is ready;
 - opens `http://localhost:8080` and prints the installation key (also saved in `.env`
-  as `AUTOMATE_INSTALLATION_KEY`).
+  as `LUPIN_INSTALLATION_KEY`).
 
 Running it again just starts what is already there.
 
@@ -69,14 +69,14 @@ elsewhere.
 
 Set these in `.env` (or in your shell) and start again.
 
-| Setting               | Default                   | Meaning                               |
-| --------------------- | ------------------------- | ------------------------------------- |
-| `AUTOMATE_PORT`       | `8080`                    | The one port Automate publishes       |
-| `AUTOMATE_BIND`       | `127.0.0.1`               | The address it listens on             |
-| `AUTOMATE_PUBLIC_URL` | `http://localhost:<port>` | The URL users open, if it is not that |
+| Setting            | Default                   | Meaning                               |
+| ------------------ | ------------------------- | ------------------------------------- |
+| `LUPIN_PORT`       | `8080`                    | The one port Automate publishes       |
+| `LUPIN_BIND`       | `127.0.0.1`               | The address it listens on             |
+| `LUPIN_PUBLIC_URL` | `http://localhost:<port>` | The URL users open, if it is not that |
 
 ::: warning Opening it to your network
-With the default `AUTOMATE_BIND=127.0.0.1`, only this machine can reach Automate.
+With the default `LUPIN_BIND=127.0.0.1`, only this machine can reach Automate.
 The solo profile refuses settings that make it reachable from another machine.
 To share it, choose the appropriate [profile](profiles.md), then follow
 [LAN mode](lan-mode.md) or [remote access](remote-cloudflare.md). Changing the bind
@@ -98,7 +98,7 @@ original `.env` from your backup. A fresh installation does not recover those cr
 | `Docker is not running`                | Start Docker Desktop and wait until it says it is running             |
 | `Docker Compose v2 is required`        | Update Docker Desktop, or install the `docker-compose-plugin` package |
 | `did not become ready`                 | Run `logs` and look for the service that keeps restarting             |
-| `port is already allocated`            | Set `AUTOMATE_PORT` to a free port in `.env`                          |
+| `port is already allocated`            | Set `LUPIN_PORT` to a free port in `.env`                             |
 | Windows: `running scripts is disabled` | Use `start.cmd`, not `start.ps1`                                      |
 | `denied` while pulling                 | That release's images are not public yet; try the previous release    |
 

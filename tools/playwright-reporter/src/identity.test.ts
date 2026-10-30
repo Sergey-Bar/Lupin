@@ -56,7 +56,7 @@ describe('the streamed identity and the uploaded identity', () => {
     };
     const sent: Array<Record<string, unknown>> = [];
     const reporter = new AutomateReporter({
-      env: { AUTOMATE_URL: 'http://localhost:3000' },
+      env: { LUPIN_URL: 'http://localhost:3000' },
       log: () => undefined,
       fetch: (async (_url: string | URL | Request, init?: RequestInit) => {
         sent.push(JSON.parse(String(init?.body)) as Record<string, unknown>);

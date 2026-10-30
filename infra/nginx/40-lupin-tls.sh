@@ -12,9 +12,9 @@
 # the edge is the plain-HTTP proxy it always was. `start lan-cert` creates the certificate.
 set -eu
 
-CERT_DIR="${AUTOMATE_CERT_DIR:-/etc/automate/certs}"
+CERT_DIR="${LUPIN_CERT_DIR:-/etc/automate/certs}"
 OUT=/tmp/automate
-HTTPS_PORT="${AUTOMATE_HTTPS_PORT:-8443}"
+HTTPS_PORT="${LUPIN_HTTPS_PORT:-8443}"
 
 mkdir -p "$OUT"
 rm -f "$OUT/tls-server.conf" "$OUT/http-redirect.conf"

@@ -19,9 +19,9 @@ import { MCP_SERVER_INFO } from './server.js';
  * the tools, their schemas and every access decision are the server's, never this file's.
  * It reads two variables and nothing else:
  *
- * - `AUTOMATE_URL` — the install's origin. `https:` anywhere; `http:` only to a loopback
+ * - `LUPIN_URL` — the install's origin. `https:` anywhere; `http:` only to a loopback
  *   host, because the token would cross the network in the clear.
- * - `AUTOMATE_TOKEN` — an `amt_` access token with the viewer role. It is sent as a bearer
+ * - `LUPIN_TOKEN` — an `amt_` access token with the viewer role. It is sent as a bearer
  *   header to that one origin and is never written to stdout, where the protocol is.
  */
 export interface ProxyConfig {
@@ -35,26 +35,26 @@ export class ProxyConfigError extends Error {
 
 /** The endpoint and token from the environment, or the sentence that says what is wrong. */
 export function proxyConfig(env: Readonly<Record<string, string | undefined>>): ProxyConfig {
-  const raw = env['AUTOMATE_URL']?.trim() ?? '';
-  const token = env['AUTOMATE_TOKEN']?.trim() ?? '';
-  if (raw === '') throw new ProxyConfigError('Set AUTOMATE_URL to the AutoMate origin.');
+  const raw = env['LUPIN_URL']?.trim() ?? '';
+  const token = env['LUPIN_TOKEN']?.trim() ?? '';
+  if (raw === '') throw new ProxyConfigError('Set LUPIN_URL to the AutoMate origin.');
   if (!token.startsWith('amt_')) {
-    throw new ProxyConfigError('Set AUTOMATE_TOKEN to an amt_ access token with the viewer role.');
+    throw new ProxyConfigError('Set LUPIN_TOKEN to an amt_ access token with the viewer role.');
   }
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
-    throw new ProxyConfigError(`AUTOMATE_URL is not a URL: ${raw}`);
+    throw new ProxyConfigError(`LUPIN_URL is not a URL: ${raw}`);
   }
   const loopback = isLoopbackBind(url.hostname.replace(/^\[|\]$/gu, ''));
   if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) {
     throw new ProxyConfigError(
-      'AUTOMATE_URL must be https://, or http:// to a loopback host: the token would cross the network in the clear.',
+      'LUPIN_URL must be https://, or http:// to a loopback host: the token would cross the network in the clear.',
     );
   }
   if (url.username !== '' || url.password !== '') {
-    throw new ProxyConfigError('AUTOMATE_URL must not carry credentials; use AUTOMATE_TOKEN.');
+    throw new ProxyConfigError('LUPIN_URL must not carry credentials; use LUPIN_TOKEN.');
   }
   return { endpoint: new URL('/api/v1/mcp', url), token };
 }
@@ -119,8 +119,8 @@ if (isEntryPoint(import.meta.url, process.argv[1])) {
   // Diagnostics go to stderr: stdout is the protocol.
   runStdioProxy({
     env: {
-      AUTOMATE_URL: process.env['AUTOMATE_URL'],
-      AUTOMATE_TOKEN: process.env['AUTOMATE_TOKEN'],
+      LUPIN_URL: process.env['LUPIN_URL'],
+      LUPIN_TOKEN: process.env['LUPIN_TOKEN'],
     },
   }).catch((error: unknown) => {
     process.stderr.write(`lupin mcp: ${error instanceof Error ? error.message : String(error)}\n`);

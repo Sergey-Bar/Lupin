@@ -14,18 +14,18 @@
 #   ./start.sh restore FOLDER      check a backup, then replace this install's data with it
 #
 # Settings, read from the environment or from .env:
-#   AUTOMATE_PROFILE   solo (default: this machine, no login), startup, team or enterprise
-#   AUTOMATE_PORT      the port to open (default 8080)
-#   AUTOMATE_BIND      the address to listen on (default 127.0.0.1, this machine only)
-#   AUTOMATE_LAN_MODE  1 to serve other machines on your network, with sign-in required
+#   LUPIN_PROFILE   solo (default: this machine, no login), startup, team or enterprise
+#   LUPIN_PORT      the port to open (default 8080)
+#   LUPIN_BIND      the address to listen on (default 127.0.0.1, this machine only)
+#   LUPIN_LAN_MODE  1 to serve other machines on your network, with sign-in required
 set -eu
 
 cd "$(dirname "$0")"
 
-DOCKER="${AUTOMATE_DOCKER:-docker}"
-PROJECT="${AUTOMATE_PROJECT:-automate}"
-RELEASES_URL="${AUTOMATE_RELEASES_URL:-https://api.github.com/repos/Sergey-Bar/AutoMate/releases/latest}"
-READY_TIMEOUT="${AUTOMATE_READY_TIMEOUT:-180}"
+DOCKER="${LUPIN_DOCKER:-docker}"
+PROJECT="${LUPIN_PROJECT:-automate}"
+RELEASES_URL="${LUPIN_RELEASES_URL:-https://api.github.com/repos/Sergey-Bar/AutoMate/releases/latest}"
+READY_TIMEOUT="${LUPIN_READY_TIMEOUT:-180}"
 
 say() { printf '%s\n' "$*"; }
 fail() { printf 'automate: %s\n' "$*" >&2; exit 1; }
@@ -68,8 +68,8 @@ ensure_env() {
     say "POSTGRES_PASSWORD=$(secret)"
     say "COOKIE_SECRET=$(secret)"
     say "VAULT_SECRET=$(secret)"
-    say "AUTOMATE_API_KEY=$(secret)"
-    say "AUTOMATE_INSTALLATION_KEY=$(secret)"
+    say "LUPIN_API_KEY=$(secret)"
+    say "LUPIN_INSTALLATION_KEY=$(secret)"
     say "REPORTER_SECRET=$(secret)"
     say "RUNNER_REGISTRATION_SECRET=$(secret)"
     say "OBJECT_STORE_BUCKET=automate-artifacts"
@@ -93,7 +93,7 @@ setting() {
 
 compose() {
   # The tunnel's profile, when this install is remote, so start, status and logs include it.
-  if [ "$(setting AUTOMATE_REMOTE '')" = cloudflare ]; then
+  if [ "$(setting LUPIN_REMOTE '')" = cloudflare ]; then
     "$DOCKER" compose -p "$PROJECT" --env-file .env -f compose.yml --profile cloudflare "$@"
   else
     "$DOCKER" compose -p "$PROJECT" --env-file .env -f compose.yml "$@"
@@ -133,7 +133,7 @@ set_remote() {
     grep -q "^$name=" .env && [ "$(sed -n "s/^$name=//p" .env | tail -n 1)" = "$value" ] \
       || set_env_value "$name" "$value"
   done
-  set_env_value AUTOMATE_REMOTE cloudflare
+  set_env_value LUPIN_REMOTE cloudflare
 }
 
 http_ok() {
@@ -160,7 +160,7 @@ wait_ready() {
 }
 
 open_browser() {
-  [ "${AUTOMATE_NO_BROWSER:-}" = "1" ] && return 0
+  [ "${LUPIN_NO_BROWSER:-}" = "1" ] && return 0
   if command -v open >/dev/null 2>&1; then open "$1" >/dev/null 2>&1 || true
   elif command -v xdg-open >/dev/null 2>&1; then xdg-open "$1" >/dev/null 2>&1 || true
   fi
@@ -174,7 +174,7 @@ is_loopback() {
 }
 
 lan_mode() {
-  case "$(setting AUTOMATE_LAN_MODE '')" in
+  case "$(setting LUPIN_LAN_MODE '')" in
     1|true|yes) return 0 ;;
     *) return 1 ;;
   esac
@@ -183,13 +183,13 @@ lan_mode() {
 # The deployment profile (ADR-014): solo, startup, team or enterprise. Empty is unset, which
 # the API reads as solo, or as startup when LAN mode is on.
 profile() {
-  setting AUTOMATE_PROFILE ''
+  setting LUPIN_PROFILE ''
 }
 
 check_profile_name() {
   case "$1" in
     ''|solo|startup|team|enterprise) return 0 ;;
-    *) fail "AUTOMATE_PROFILE=$1 is not a profile. Use solo, startup, team or enterprise." ;;
+    *) fail "LUPIN_PROFILE=$1 is not a profile. Use solo, startup, team or enterprise." ;;
   esac
 }
 
@@ -202,32 +202,32 @@ next_step() {
   esac
 }
 
-# Writes AUTOMATE_PROFILE into .env, replacing the line that is there. Nothing else in .env
+# Writes LUPIN_PROFILE into .env, replacing the line that is there. Nothing else in .env
 # is touched: the secrets in it sign sessions and encrypt the vault.
 set_profile() {
   check_profile_name "$1"
   [ -n "$1" ] || fail "--profile needs a value: solo, startup, team or enterprise."
-  set_env_value AUTOMATE_PROFILE "$1"
+  set_env_value LUPIN_PROFILE "$1"
 }
 
 # A reachable install with no login is refused, not warned about. The API refuses the same
 # bind at startup (apps/api/src/startup-policy.ts); saying it here means the operator reads
 # it at the prompt, before anything is downloaded.
 check_exposure() {
-  bind="$(setting AUTOMATE_BIND 127.0.0.1)"
+  bind="$(setting LUPIN_BIND 127.0.0.1)"
   chosen="$(profile)"
   check_profile_name "$chosen"
   if [ "$chosen" = solo ] && lan_mode; then
-    fail "AUTOMATE_PROFILE=solo keeps Automate on this machine, and AUTOMATE_LAN_MODE is on. Set AUTOMATE_PROFILE=startup to serve other people with sign-in."
+    fail "LUPIN_PROFILE=solo keeps Automate on this machine, and LUPIN_LAN_MODE is on. Set LUPIN_PROFILE=startup to serve other people with sign-in."
   fi
   is_loopback "$bind" && return 0
   if [ "$chosen" = solo ]; then
-    fail "AUTOMATE_PROFILE=solo keeps Automate on this machine, and AUTOMATE_BIND=$bind would make it reachable. Set AUTOMATE_PROFILE=startup to serve other people with sign-in, or unset AUTOMATE_BIND."
+    fail "LUPIN_PROFILE=solo keeps Automate on this machine, and LUPIN_BIND=$bind would make it reachable. Set LUPIN_PROFILE=startup to serve other people with sign-in, or unset LUPIN_BIND."
   fi
   if ! lan_mode && [ -z "$chosen" ]; then
-    fail "AUTOMATE_BIND=$bind would make Automate reachable from other machines with no login. Set AUTOMATE_LAN_MODE=1 (or AUTOMATE_PROFILE=startup) to serve your network with sign-in and device pairing, or unset AUTOMATE_BIND to keep it on this machine."
+    fail "LUPIN_BIND=$bind would make Automate reachable from other machines with no login. Set LUPIN_LAN_MODE=1 (or LUPIN_PROFILE=startup) to serve your network with sign-in and device pairing, or unset LUPIN_BIND to keep it on this machine."
   fi
-  port="$(setting AUTOMATE_PORT 8080)"
+  port="$(setting LUPIN_PORT 8080)"
   say ""
   if lan_mode; then
     say "LAN mode: other machines on your network can reach Automate on port $port, after signing in."
@@ -255,16 +255,16 @@ start() {
   done
   # After the profile, so `--profile solo --remote cloudflare` is refused by name below.
   if [ -n "${remote_wanted:-}" ]; then
-    [ "$(profile)" = solo ] && fail "AUTOMATE_PROFILE=solo keeps Automate on this machine, and --remote cloudflare publishes it through a tunnel. Use --profile startup (or larger)."
+    [ "$(profile)" = solo ] && fail "LUPIN_PROFILE=solo keeps Automate on this machine, and --remote cloudflare publishes it through a tunnel. Use --profile startup (or larger)."
     set_remote "$remote_wanted"
   fi
   check_exposure
   # Remote access turned off: the tunnel an earlier start left running is removed, or it would
   # go on publishing the install. Nothing to remove is the usual case, so it is quiet.
-  if [ "$(setting AUTOMATE_REMOTE '')" != cloudflare ]; then
+  if [ "$(setting LUPIN_REMOTE '')" != cloudflare ]; then
     compose_all rm --stop --force cloudflared >/dev/null 2>&1 || true
   fi
-  port="$(setting AUTOMATE_PORT 8080)"
+  port="$(setting LUPIN_PORT 8080)"
   base="http://localhost:$port"
   say "Downloading the Automate images (the first run takes a few minutes)..."
   # Images already here keep working offline; a tag that is missing still fails in 'up'.
@@ -275,11 +275,11 @@ start() {
   say ""
   say "Automate is running at $base"
   say "Profile: ${chosen:-solo}"
-  if [ "$(setting AUTOMATE_REMOTE '')" = cloudflare ]; then
+  if [ "$(setting LUPIN_REMOTE '')" = cloudflare ]; then
     say "Remote: through Cloudflare Tunnel, at the public hostname you gave the tunnel. Cloudflare Access decides who reaches it."
   fi
-  say "Sign in with this key: $(setting AUTOMATE_INSTALLATION_KEY '')"
-  say "(it is also in .env as AUTOMATE_INSTALLATION_KEY)"
+  say "Sign in with this key: $(setting LUPIN_INSTALLATION_KEY '')"
+  say "(it is also in .env as LUPIN_INSTALLATION_KEY)"
   next_step "$chosen"
   open_browser "$base"
 }
@@ -293,7 +293,7 @@ latest_version() {
 }
 
 set_version() {
-  set_env_value AUTOMATE_VERSION "$1"
+  set_env_value LUPIN_VERSION "$1"
 }
 
 update() {
@@ -309,12 +309,12 @@ update() {
 }
 
 # Every name and address this machine answers to on the network, comma-separated, for the
-# certificate's subjectAltName. AUTOMATE_TLS_NAMES adds more (a DNS name your router hands
+# certificate's subjectAltName. LUPIN_TLS_NAMES adds more (a DNS name your router hands
 # out, a second interface).
 lan_names() {
   host="$(hostname 2>/dev/null || printf 'automate')"
   ips="$( { hostname -I 2>/dev/null || ipconfig getifaddr en0 2>/dev/null || true; } | tr ' \n' ',,')"
-  printf '%s' "automate.local,$host,$host.local,localhost,127.0.0.1,$ips,$(setting AUTOMATE_TLS_NAMES '')" \
+  printf '%s' "automate.local,$host,$host.local,localhost,127.0.0.1,$ips,$(setting LUPIN_TLS_NAMES '')" \
     | tr -s ',' | sed 's/^,//; s/,$//'
 }
 
@@ -447,7 +447,7 @@ backup() {
   {
     say "format=1"
     say "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    say "version=$(setting AUTOMATE_VERSION '')"
+    say "version=$(setting LUPIN_VERSION '')"
     say "migrations=$count"
     say "vault=$(sha256_text "$(setting VAULT_SECRET '')")"
   } > "$work/manifest.env"
@@ -497,7 +497,7 @@ restore() {
   [ "$(manifest_value "$folder" vault)" = "$(sha256_text "$(setting VAULT_SECRET '')")" ] \
     || fail "This backup was made with a different VAULT_SECRET, so the credentials stored in it could not be read. On this install, keep a copy of .env, then set only VAULT_SECRET in it to the value in $folder/env and run the restore again; the rest of .env stays, because this install's database keeps the POSTGRES_PASSWORD it was first started with. On a new host, copy $folder/env to .env before the first start."
   taken="$(manifest_value "$folder" version)"
-  current="$(setting AUTOMATE_VERSION '')"
+  current="$(setting LUPIN_VERSION '')"
   if [ -n "$taken" ] && [ -n "$current" ] && version_newer "$taken" "$current"; then
     fail "This backup is from Automate $taken, which is newer than this install ($current). Update first: ./start.sh update --version $taken"
   fi
@@ -527,7 +527,7 @@ restore() {
     -c 'find /data -mindepth 1 -delete && tar -C /data -xf /backup/objects.tar' \
     || fail "The database is restored from $folder, but its stored artifacts could not be put back, so Automate is left stopped. The output above says why."
   compose up -d
-  port="$(setting AUTOMATE_PORT 8080)"
+  port="$(setting LUPIN_PORT 8080)"
   wait_ready "http://127.0.0.1:$port"
   say "Restored $folder. Migrations newer than the backup ran on start."
 }

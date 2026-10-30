@@ -10,7 +10,7 @@
       "cwd": "${workspaceFolder}",
       "env": {
         "DATA_DIR": "${workspaceFolder}/apps/server/data",
-        "AUTOMATE_DASHBOARD_API_KEY": "dev-key"
+        "LUPIN_DASHBOARD_API_KEY": "dev-key"
       },
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]

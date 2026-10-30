@@ -8,13 +8,13 @@ wired network opens it in a browser, signs in or pairs, and uses it. Linux and W
 
 ```sh
 # On the server, in the folder you unpacked the release into:
-AUTOMATE_LAN_MODE=1 AUTOMATE_BIND=0.0.0.0 ./start.sh lan-cert   # once
-AUTOMATE_LAN_MODE=1 AUTOMATE_BIND=0.0.0.0 ./start.sh
+LUPIN_LAN_MODE=1 LUPIN_BIND=0.0.0.0 ./start.sh lan-cert   # once
+LUPIN_LAN_MODE=1 LUPIN_BIND=0.0.0.0 ./start.sh
 ```
 
 ```powershell
 # Windows:
-$env:AUTOMATE_LAN_MODE = '1'; $env:AUTOMATE_BIND = '0.0.0.0'
+$env:LUPIN_LAN_MODE = '1'; $env:LUPIN_BIND = '0.0.0.0'
 .\start.cmd lan-cert   # once
 .\start.cmd
 ```
@@ -24,18 +24,18 @@ device, open `https://<server-name>.local:8443` or `https://<server-ip>:8443`.
 
 ## What LAN mode turns on
 
-| Protection             | What it does                                                                                                                                                      |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sign-in on every route | `ACCESS_CONTROL` becomes `enforced`. Only the health probes and the sign-in and pairing exchanges answer without a credential.                                    |
-| A refusal, not a hint  | Binding beyond this machine without LAN mode refuses to start, at the prompt and again in the API. LAN mode with `ACCESS_CONTROL=open` also refuses.              |
-| A client allowlist     | Only private, loopback and link-local addresses are let in. Set `ALLOWED_CLIENT_CIDRS` (comma-separated, for example `192.168.1.0/24`) to narrow it.              |
-| Cross-site protection  | A state-changing request a browser sends on behalf of another page is refused with `CROSS_SITE_REQUEST`.                                                          |
-| HTTPS                  | Once `lan-cert` has run, the edge serves HTTPS on `AUTOMATE_HTTPS_PORT` (default 8443), redirects plain HTTP to it, sends HSTS, and session cookies are `Secure`. |
+| Protection             | What it does                                                                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sign-in on every route | `ACCESS_CONTROL` becomes `enforced`. Only the health probes and the sign-in and pairing exchanges answer without a credential.                                 |
+| A refusal, not a hint  | Binding beyond this machine without LAN mode refuses to start, at the prompt and again in the API. LAN mode with `ACCESS_CONTROL=open` also refuses.           |
+| A client allowlist     | Only private, loopback and link-local addresses are let in. Set `ALLOWED_CLIENT_CIDRS` (comma-separated, for example `192.168.1.0/24`) to narrow it.           |
+| Cross-site protection  | A state-changing request a browser sends on behalf of another page is refused with `CROSS_SITE_REQUEST`.                                                       |
+| HTTPS                  | Once `lan-cert` has run, the edge serves HTTPS on `LUPIN_HTTPS_PORT` (default 8443), redirects plain HTTP to it, sends HSTS, and session cookies are `Secure`. |
 
-The refusal applies to a bind you declare (`AUTOMATE_BIND`) and to a concrete `HOST` such as
-`192.168.1.5`. An API started with only `HOST=0.0.0.0` and no `AUTOMATE_BIND` starts with a
+The refusal applies to a bind you declare (`LUPIN_BIND`) and to a concrete `HOST` such as
+`192.168.1.5`. An API started with only `HOST=0.0.0.0` and no `LUPIN_BIND` starts with a
 warning instead, because that is how every container listens and it says nothing about who can
-reach it; set `AUTOMATE_BIND` to the address it is published on.
+reach it; set `LUPIN_BIND` to the address it is published on.
 
 If you narrow `ALLOWED_CLIENT_CIDRS`, keep `172.16.0.0/12` in it: the bundled runner reaches
 the API from the Docker network, and Docker Desktop delivers browser connections from its
@@ -48,7 +48,7 @@ own gateway in that range.
   or open `/dashboard/pair` on the device and type the six digits. A code works once, for
   ten minutes, and never mints an admin. Paired devices appear in the token list, named
   `device: <name>`, and **Revoke** signs that device out for good.
-- **Sign in with a key.** The installation key in `.env` (`AUTOMATE_INSTALLATION_KEY`) signs
+- **Sign in with a key.** The installation key in `.env` (`LUPIN_INSTALLATION_KEY`) signs
   in as admin. Keep it for the server's own browser.
 - **Issue a token.** The same Access page issues viewer, operator, admin or CI uploader
   tokens for people and pipelines.
@@ -58,9 +58,9 @@ own gateway in that range.
 `start lan-cert` creates a small certificate authority for your network in `certs/` and a
 server certificate for every name and address the machine answers to (`<hostname>`,
 `<hostname>.local`, `automate.local`, `localhost`, and its LAN addresses). Add more with
-`AUTOMATE_TLS_NAMES`. Each device trusts `certs/ca.crt` once; reissuing the server
+`LUPIN_TLS_NAMES`. Each device trusts `certs/ca.crt` once; reissuing the server
 certificate later (a new IP) keeps the same CA, so no device has to trust it again. Only
-`AUTOMATE_NEW_CA=1` replaces the CA.
+`LUPIN_NEW_CA=1` replaces the CA.
 
 Copy `certs/ca.crt` to the device (a USB stick, a file share, or an email to yourself), then:
 
@@ -94,11 +94,11 @@ The address the server's own browser uses is always shown on the Access page.
 ## Remote runners
 
 Another machine can run jobs for this server. The Access page's **Connect a runner** panel
-shows the settings: `AUTOMATE_API_URL` (this server's `https://` address),
+shows the settings: `LUPIN_API_URL` (this server's `https://` address),
 `RUNNER_REGISTRATION_SECRET` (from the server's `.env`) and a new `RUNNER_INSTANCE_ID`.
 Artifacts upload over HTTPS, so a runner needs no shared disk with the server.
 
-The runner refuses a plain-HTTP `AUTOMATE_API_URL` that points at another machine, because
+The runner refuses a plain-HTTP `LUPIN_API_URL` that points at another machine, because
 its registration secret and job tokens would cross the network in the clear. Issue the LAN
 certificate first, or set `RUNNER_ALLOW_INSECURE_API=1` on a network you trust completely.
 Add the URLs the runner may test to `RUNNER_ALLOWED_TARGET_URLS`.

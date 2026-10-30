@@ -29,7 +29,7 @@ test('the boot environment covers every variable the production stack requires',
     'utf8',
   );
   const names = requiredVariables(text);
-  assert.ok(names.includes('AUTOMATE_INSTALLATION_KEY'), 'the stack must require the key');
+  assert.ok(names.includes('LUPIN_INSTALLATION_KEY'), 'the stack must require the key');
   const values = bootEnvironment(names);
   assert.deepEqual([...values.keys()].sort(), names);
   for (const [name, value] of values) {

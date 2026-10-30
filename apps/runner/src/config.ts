@@ -119,7 +119,7 @@ const RunnerConfigSchema = z
       context.addIssue({
         code: 'custom',
         message:
-          `AUTOMATE_API_URL=${value.apiUrl} is plain HTTP to another machine, so the registration ` +
+          `LUPIN_API_URL=${value.apiUrl} is plain HTTP to another machine, so the registration ` +
           'secret and every job token would cross the network in the clear. Use the https:// ' +
           'address LAN mode serves, or set RUNNER_ALLOW_INSECURE_API=1 on a network you trust.',
       });
@@ -149,7 +149,7 @@ export type RunnerConfig = z.infer<typeof RunnerConfigSchema>;
 
 export function parseRunnerConfig(input: Record<string, string | undefined>): RunnerConfig {
   return RunnerConfigSchema.parse({
-    apiUrl: input['AUTOMATE_API_URL'],
+    apiUrl: input['LUPIN_API_URL'],
     instanceId: input['RUNNER_INSTANCE_ID'],
     name: input['RUNNER_NAME'],
     version: input['RUNNER_VERSION'],

@@ -61,9 +61,9 @@ async function invoke(
   const sent: Sent[] = [];
   const code = await run(['shard', ...argv], {
     env: {
-      AUTOMATE_URL: 'https://automate.example.com',
-      AUTOMATE_TOKEN: TOKEN,
-      AUTOMATE_PROJECT: PROJECT,
+      LUPIN_URL: 'https://automate.example.com',
+      LUPIN_TOKEN: TOKEN,
+      LUPIN_PROJECT: PROJECT,
       ...options.env,
     },
     cwd: options.cwd ?? process.cwd(),
@@ -107,7 +107,7 @@ describe('lupin shard', () => {
     expect(two.sent[0]?.body['asOf']).toBe(one.sent[0]?.body['asOf']);
   });
 
-  it('takes --as-of, then AUTOMATE_SHARD_AS_OF, over the commit time', async () => {
+  it('takes --as-of, then LUPIN_SHARD_AS_OF, over the commit time', async () => {
     const flag = await invoke([
       '--total',
       '2',
@@ -120,7 +120,7 @@ describe('lupin shard', () => {
     ]);
     expect(flag.sent[0]?.body['asOf']).toBe('2026-01-02T03:04:05.000Z');
     const env = await invoke(['--total', '2', '--index', '1', '--', 'a'], {
-      env: { AUTOMATE_SHARD_AS_OF: '2026-02-02T00:00:00Z' },
+      env: { LUPIN_SHARD_AS_OF: '2026-02-02T00:00:00Z' },
     });
     expect(env.sent[0]?.body['asOf']).toBe('2026-02-02T00:00:00.000Z');
   });
@@ -226,9 +226,9 @@ describe('lupin shard', () => {
     const { shard } = await import('./shard-command.js');
     await shard(argv, {
       env: {
-        AUTOMATE_URL: 'https://automate.example.com',
-        AUTOMATE_TOKEN: TOKEN,
-        AUTOMATE_PROJECT: PROJECT,
+        LUPIN_URL: 'https://automate.example.com',
+        LUPIN_TOKEN: TOKEN,
+        LUPIN_PROJECT: PROJECT,
       },
       cwd: process.cwd(),
       fetch: fakeFetch(

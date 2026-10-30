@@ -74,11 +74,11 @@ runs:
     - name: Check the destination
       shell: bash
       env:
-        AUTOMATE_URL: ${{ inputs.url }}
+        LUPIN_URL: ${{ inputs.url }}
       run: |
         set -euo pipefail
-        scheme="${AUTOMATE_URL%%://*}"
-        rest="${AUTOMATE_URL#*://}"
+        scheme="${LUPIN_URL%%://*}"
+        rest="${LUPIN_URL#*://}"
         host="${rest%%/*}"
         host="${host##*@}"
         case "$host" in
@@ -101,20 +101,20 @@ runs:
     - name: Upload reports
       shell: bash
       env:
-        AUTOMATE_URL: ${{ inputs.url }}
-        AUTOMATE_PROJECT: ${{ inputs.project-id }}
-        AUTOMATE_TOKEN: ${{ inputs.token }}
-        AUTOMATE_REPORTS: ${{ inputs.reports }}
-        AUTOMATE_CODEOWNERS: ${{ inputs.codeowners }}
-        AUTOMATE_BRANCH: ${{ github.head_ref || github.ref_name }}
-        AUTOMATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
-        AUTOMATE_ROOT: ${{ github.workspace }}
+        LUPIN_URL: ${{ inputs.url }}
+        LUPIN_PROJECT: ${{ inputs.project-id }}
+        LUPIN_TOKEN: ${{ inputs.token }}
+        LUPIN_REPORTS: ${{ inputs.reports }}
+        LUPIN_CODEOWNERS: ${{ inputs.codeowners }}
+        LUPIN_BRANCH: ${{ github.head_ref || github.ref_name }}
+        LUPIN_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        LUPIN_ROOT: ${{ github.workspace }}
       run: |
         set -euo pipefail
         headers="$(mktemp)"
         trap 'rm -f "$headers"' EXIT
-        printf 'Authorization: Bearer %s\n' "$AUTOMATE_TOKEN" > "$headers"
-        base="${AUTOMATE_URL%/}/api/v1/projects/${AUTOMATE_PROJECT}/health"
+        printf 'Authorization: Bearer %s\n' "$LUPIN_TOKEN" > "$headers"
+        base="${LUPIN_URL%/}/api/v1/projects/${LUPIN_PROJECT}/health"
         encode() { jq -rn --arg v "$1" '$v|@uri'; }
         while IFS= read -r line; do
           line="$(printf '%s' "$line" | tr -d '\r' | xargs)"
@@ -128,10 +128,10 @@ runs:
           echo "Uploading $file as $format"
           curl --fail-with-body --silent --show-error -H @"$headers" \
             --data-binary @"$file" -H 'content-type: application/octet-stream' \
-            "$base/reports?format=$(encode "$format")&branch=$(encode "$AUTOMATE_BRANCH")&commit=$(encode "$AUTOMATE_COMMIT")&sourceRoot=$(encode "$AUTOMATE_ROOT")"
+            "$base/reports?format=$(encode "$format")&branch=$(encode "$LUPIN_BRANCH")&commit=$(encode "$LUPIN_COMMIT")&sourceRoot=$(encode "$LUPIN_ROOT")"
           echo
-        done <<< "$AUTOMATE_REPORTS"
-        if [ "$AUTOMATE_CODEOWNERS" = "true" ]; then
+        done <<< "$LUPIN_REPORTS"
+        if [ "$LUPIN_CODEOWNERS" = "true" ]; then
           for candidate in .github/CODEOWNERS CODEOWNERS docs/CODEOWNERS; do
             if [ -f "$candidate" ]; then
               curl --fail-with-body --silent --show-error -X PUT -H @"$headers" \
@@ -146,17 +146,17 @@ runs:
       if: inputs.agent-config == 'true'
       shell: bash
       env:
-        AUTOMATE_URL: ${{ inputs.url }}
-        AUTOMATE_PROJECT: ${{ inputs.project-id }}
-        AUTOMATE_TOKEN: ${{ inputs.token }}
-        AUTOMATE_BRANCH: ${{ github.head_ref || github.ref_name }}
-        AUTOMATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        LUPIN_URL: ${{ inputs.url }}
+        LUPIN_PROJECT: ${{ inputs.project-id }}
+        LUPIN_TOKEN: ${{ inputs.token }}
+        LUPIN_BRANCH: ${{ github.head_ref || github.ref_name }}
+        LUPIN_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       run: |
         set -euo pipefail
         headers="$(mktemp)"
         files="$(mktemp)"
         trap 'rm -f "$headers" "$files"' EXIT
-        printf 'Authorization: Bearer %s\n' "$AUTOMATE_TOKEN" > "$headers"
+        printf 'Authorization: Bearer %s\n' "$LUPIN_TOKEN" > "$headers"
         shopt -s nocasematch
         # The agent-config scan's paths (AGENT_CONFIG_PATHS in @lupin/projects), as bash
         # patterns. In [[ ]] a * also matches /, so **/X is X or */X; the server
@@ -188,41 +188,41 @@ runs:
             fi
           done
         done < <(git ls-files -z)
-        body="$(jq -s --arg branch "$AUTOMATE_BRANCH" --arg commit "$AUTOMATE_COMMIT" \
+        body="$(jq -s --arg branch "$LUPIN_BRANCH" --arg commit "$LUPIN_COMMIT" \
           '{branch: $branch, commit: $commit, files: .}' "$files")"
         echo "Sending $count agent-config file(s)"
         printf '%s' "$body" | curl --fail-with-body --silent --show-error -H @"$headers" \
           -H 'content-type: application/json' --data-binary @- \
-          "${AUTOMATE_URL%/}/api/v1/projects/${AUTOMATE_PROJECT}/health/agent-config"
+          "${LUPIN_URL%/}/api/v1/projects/${LUPIN_PROJECT}/health/agent-config"
         echo
 
     - name: Record the deployment
       if: inputs.deployment-environment != ''
       shell: bash
       env:
-        AUTOMATE_URL: ${{ inputs.url }}
-        AUTOMATE_PROJECT: ${{ inputs.project-id }}
-        AUTOMATE_TOKEN: ${{ inputs.token }}
-        AUTOMATE_ENVIRONMENT: ${{ inputs.deployment-environment }}
-        AUTOMATE_STATUS: ${{ inputs.deployment-status }}
-        AUTOMATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
-        AUTOMATE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        AUTOMATE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        LUPIN_URL: ${{ inputs.url }}
+        LUPIN_PROJECT: ${{ inputs.project-id }}
+        LUPIN_TOKEN: ${{ inputs.token }}
+        LUPIN_ENVIRONMENT: ${{ inputs.deployment-environment }}
+        LUPIN_STATUS: ${{ inputs.deployment-status }}
+        LUPIN_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        LUPIN_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        LUPIN_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
       run: |
         set -euo pipefail
-        case "$AUTOMATE_STATUS" in
+        case "$LUPIN_STATUS" in
           success|failure) ;;
-          *) echo "::error::deployment-status is success or failure, not $AUTOMATE_STATUS"; exit 1 ;;
+          *) echo "::error::deployment-status is success or failure, not $LUPIN_STATUS"; exit 1 ;;
         esac
         headers="$(mktemp)"
         trap 'rm -f "$headers"' EXIT
-        printf 'Authorization: Bearer %s\n' "$AUTOMATE_TOKEN" > "$headers"
-        body="$(jq -n --arg env "$AUTOMATE_ENVIRONMENT" --arg status "$AUTOMATE_STATUS" \
-          --arg sha "$AUTOMATE_COMMIT" --arg url "$AUTOMATE_RUN_URL" --arg id "$AUTOMATE_RUN_ID" \
+        printf 'Authorization: Bearer %s\n' "$LUPIN_TOKEN" > "$headers"
+        body="$(jq -n --arg env "$LUPIN_ENVIRONMENT" --arg status "$LUPIN_STATUS" \
+          --arg sha "$LUPIN_COMMIT" --arg url "$LUPIN_RUN_URL" --arg id "$LUPIN_RUN_ID" \
           --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
           '{externalId: ($env + "-" + $id), environment: $env, status: $status, createdAt: $at, sha: $sha, url: $url}')"
         curl --fail-with-body --silent --show-error -H @"$headers" -H 'content-type: application/json' \
-          --data "$body" "${AUTOMATE_URL%/}/api/v1/projects/${AUTOMATE_PROJECT}/delivery/deployments"
+          --data "$body" "${LUPIN_URL%/}/api/v1/projects/${LUPIN_PROJECT}/delivery/deployments"
         echo
 
     - name: Pull-request gate
@@ -230,21 +230,21 @@ runs:
       if: inputs.gate == 'true'
       shell: bash
       env:
-        AUTOMATE_URL: ${{ inputs.url }}
-        AUTOMATE_PROJECT: ${{ inputs.project-id }}
-        AUTOMATE_TOKEN: ${{ inputs.token }}
-        AUTOMATE_BRANCH: ${{ github.head_ref || github.ref_name }}
-        AUTOMATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
-        AUTOMATE_PR: ${{ github.event.pull_request.number }}
+        LUPIN_URL: ${{ inputs.url }}
+        LUPIN_PROJECT: ${{ inputs.project-id }}
+        LUPIN_TOKEN: ${{ inputs.token }}
+        LUPIN_BRANCH: ${{ github.head_ref || github.ref_name }}
+        LUPIN_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        LUPIN_PR: ${{ github.event.pull_request.number }}
       run: |
         set -euo pipefail
         headers="$(mktemp)"
         trap 'rm -f "$headers"' EXIT
-        printf 'Authorization: Bearer %s\n' "$AUTOMATE_TOKEN" > "$headers"
-        body="$(jq -n --arg branch "$AUTOMATE_BRANCH" --arg commit "$AUTOMATE_COMMIT" --arg pr "$AUTOMATE_PR" \
+        printf 'Authorization: Bearer %s\n' "$LUPIN_TOKEN" > "$headers"
+        body="$(jq -n --arg branch "$LUPIN_BRANCH" --arg commit "$LUPIN_COMMIT" --arg pr "$LUPIN_PR" \
           '{branch: $branch, commit: $commit} + (if $pr == "" then {} else {pullRequest: ($pr|tonumber)} end)')"
         result="$(curl --fail-with-body --silent --show-error -H @"$headers" -H 'content-type: application/json' \
-          --data "$body" "${AUTOMATE_URL%/}/api/v1/projects/${AUTOMATE_PROJECT}/health/gate/report")"
+          --data "$body" "${LUPIN_URL%/}/api/v1/projects/${LUPIN_PROJECT}/health/gate/report")"
         verdict="$(printf '%s' "$result" | jq -r '.verdict')"
         echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
         {

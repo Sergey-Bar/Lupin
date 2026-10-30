@@ -498,7 +498,7 @@ const sessionRetentionSweep = ((backend) =>
 if (
   databaseResources &&
   !mayDeriveInstallationKey(runtimeConfig) &&
-  !process.env['AUTOMATE_INSTALLATION_KEY']
+  !process.env['LUPIN_INSTALLATION_KEY']
 ) {
   throw new Error(NO_INSTALLATION_KEY);
 }
@@ -558,7 +558,7 @@ const authRoutes = createAuthRoutes({
 });
 if (runtimeConfig.ssoEnforced === true && runtimeConfig.breakGlass === true) {
   logger.warn(
-    'AUTOMATE_BREAK_GLASS is on: the installation key can sign a browser in while single ' +
+    'LUPIN_BREAK_GLASS is on: the installation key can sign a browser in while single ' +
       'sign-on is enforced. Every use is audited. Turn it off once you are back in.',
   );
 }
@@ -820,7 +820,7 @@ function buildWorkspace(workspaceId: string) {
     profile: runtimeConfig.profile ?? 'solo',
     ssoEnforced: runtimeConfig.ssoEnforced === true,
     // Under enforced SSO, the installation key's session and a browser's token cookie count
-    // again only with AUTOMATE_BREAK_GLASS on (`http/roles.ts`).
+    // again only with LUPIN_BREAK_GLASS on (`http/roles.ts`).
     breakGlass: runtimeConfig.breakGlass === true,
     // A verified Cloudflare Access identity, only on an install reached through the tunnel
     // (ADR-014). The startup policy has already refused a tunnel without both Access settings.
@@ -1168,7 +1168,7 @@ function buildWorkspace(workspaceId: string) {
        * second thing that decides what the cockpit shows.
        *
        * `discoverProjectAtBoot` owns the whole failure policy: an absent
-       * `AUTOMATE_PROJECT_ROOT` logs and returns, and a discovery failure logs and
+       * `LUPIN_PROJECT_ROOT` logs and returns, and a discovery failure logs and
        * returns, because a dashboard that will not boot over a folder with no
        * `package.json` is worse than a dashboard with nothing in it.
        */
@@ -1414,7 +1414,7 @@ defaultParts.mount(app);
  * workspace's entries are re-sealed under the new secret and their `key_version` raised. An
  * entry that opens under neither stops the boot.
  *
- * `AUTOMATE_PROJECT_ROOT` is registered in the default workspace, once.
+ * `LUPIN_PROJECT_ROOT` is registered in the default workspace, once.
  */
 if (databaseResources !== undefined) {
   const registry: ProjectRegistryServiceOptions = {

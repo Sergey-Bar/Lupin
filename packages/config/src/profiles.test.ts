@@ -39,48 +39,46 @@ describe('the profile in the parsed configuration', () => {
   it('is startup for an install that already turned LAN mode or access control on', () => {
     // An install from before profiles that serves its network must not read as solo: solo
     // refuses to leave this machine, and that install already has.
-    expect(parseConfig({ AUTOMATE_LAN_MODE: '1' }).profile).toBe('startup');
+    expect(parseConfig({ LUPIN_LAN_MODE: '1' }).profile).toBe('startup');
     expect(parseConfig({ ACCESS_CONTROL: 'enforced' }).profile).toBe('startup');
   });
 
   it('turns access control on for every profile above solo', () => {
     for (const profile of ['startup', 'team', 'enterprise']) {
-      expect(parseConfig({ AUTOMATE_PROFILE: profile }).accessControl, profile).toBe('enforced');
+      expect(parseConfig({ LUPIN_PROFILE: profile }).accessControl, profile).toBe('enforced');
     }
   });
 
   it('keeps an explicit ACCESS_CONTROL beneath a profile, so the policy can refuse the conflict', () => {
-    expect(parseConfig({ AUTOMATE_PROFILE: 'team', ACCESS_CONTROL: 'open' }).accessControl).toBe(
+    expect(parseConfig({ LUPIN_PROFILE: 'team', ACCESS_CONTROL: 'open' }).accessControl).toBe(
       'open',
     );
-    expect(
-      parseConfig({ AUTOMATE_PROFILE: 'solo', ACCESS_CONTROL: 'enforced' }).accessControl,
-    ).toBe('enforced');
+    expect(parseConfig({ LUPIN_PROFILE: 'solo', ACCESS_CONTROL: 'enforced' }).accessControl).toBe(
+      'enforced',
+    );
   });
 
   it('keeps an explicit profile over the one LAN mode would derive', () => {
-    expect(parseConfig({ AUTOMATE_PROFILE: 'solo', AUTOMATE_LAN_MODE: '1' }).profile).toBe('solo');
-    expect(parseConfig({ AUTOMATE_PROFILE: 'team', AUTOMATE_LAN_MODE: '1' }).profile).toBe('team');
+    expect(parseConfig({ LUPIN_PROFILE: 'solo', LUPIN_LAN_MODE: '1' }).profile).toBe('solo');
+    expect(parseConfig({ LUPIN_PROFILE: 'team', LUPIN_LAN_MODE: '1' }).profile).toBe('team');
   });
 
   it('refuses a profile it does not know, naming the variable', () => {
-    expect(() => parseConfig({ AUTOMATE_PROFILE: 'business' })).toThrow('AUTOMATE_PROFILE');
+    expect(() => parseConfig({ LUPIN_PROFILE: 'business' })).toThrow('LUPIN_PROFILE');
   });
 
-  it('reads an empty AUTOMATE_PROFILE as unset, which is how compose passes an unset value', () => {
-    expect(parseConfig({ AUTOMATE_PROFILE: '' }).profile).toBe('solo');
+  it('reads an empty LUPIN_PROFILE as unset, which is how compose passes an unset value', () => {
+    expect(parseConfig({ LUPIN_PROFILE: '' }).profile).toBe('solo');
   });
 
   it('enforces single sign-on on enterprise unless told otherwise, and break-glass is off', () => {
-    expect(parseConfig({ AUTOMATE_PROFILE: 'enterprise' }).ssoEnforced).toBe(true);
-    expect(
-      parseConfig({ AUTOMATE_PROFILE: 'enterprise', AUTH_SSO_ENFORCED: '0' }).ssoEnforced,
-    ).toBe(false);
-    expect(parseConfig({ AUTOMATE_PROFILE: 'team', AUTH_SSO_ENFORCED: '1' }).ssoEnforced).toBe(
-      true,
+    expect(parseConfig({ LUPIN_PROFILE: 'enterprise' }).ssoEnforced).toBe(true);
+    expect(parseConfig({ LUPIN_PROFILE: 'enterprise', AUTH_SSO_ENFORCED: '0' }).ssoEnforced).toBe(
+      false,
     );
+    expect(parseConfig({ LUPIN_PROFILE: 'team', AUTH_SSO_ENFORCED: '1' }).ssoEnforced).toBe(true);
     expect(parseConfig({}).ssoEnforced).toBe(false);
     expect(parseConfig({}).breakGlass).toBe(false);
-    expect(parseConfig({ AUTOMATE_BREAK_GLASS: '1' }).breakGlass).toBe(true);
+    expect(parseConfig({ LUPIN_BREAK_GLASS: '1' }).breakGlass).toBe(true);
   });
 });

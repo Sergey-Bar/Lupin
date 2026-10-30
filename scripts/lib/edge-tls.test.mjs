@@ -73,7 +73,7 @@ test('the certificate script keeps an existing CA and issues a leaf an iPhone ac
   // A new CA would have to be trusted again on every device; it is only replaced on request.
   assert.match(
     CERT_SCRIPT,
-    /if \[ ! -f "\$CERT_DIR\/ca\.key" \] \|\| \[ "\$\{AUTOMATE_NEW_CA:-\}" = "1" \]/,
+    /if \[ ! -f "\$CERT_DIR\/ca\.key" \] \|\| \[ "\$\{LUPIN_NEW_CA:-\}" = "1" \]/,
   );
   // Apple refuses a TLS leaf valid for more than 825 days.
   assert.match(CERT_SCRIPT, /-days 825/);

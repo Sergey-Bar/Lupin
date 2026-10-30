@@ -22,14 +22,14 @@ export const PUBLISHED_IMAGES = ['migrate', 'api', 'worker', 'runner', 'web', 'e
  * The image a service runs in a release.
  *
  * The version is a default rather than a fixed tag so `start update` can move an install
- * to a newer release by setting `AUTOMATE_VERSION` in its `.env`, with no edit to the file.
+ * to a newer release by setting `LUPIN_VERSION` in its `.env`, with no edit to the file.
  *
  * @param {string} service
  * @param {string} version
  * @returns {string}
  */
 export function imageReference(service, version) {
-  return `${REGISTRY}/automate-${service}:\${AUTOMATE_VERSION:-${version}}`;
+  return `${REGISTRY}/automate-${service}:\${LUPIN_VERSION:-${version}}`;
 }
 
 /** @param {string} line @returns {number} */
@@ -76,13 +76,13 @@ export function releaseCompose(source, version) {
 
 /** Release settings a user may change, with the default the file already applies. */
 const RELEASE_SETTINGS = [
-  ['AUTOMATE_VERSION', 'The release this install runs. `start update` rewrites it.'],
+  ['LUPIN_VERSION', 'The release this install runs. `start update` rewrites it.'],
   [
-    'AUTOMATE_PROFILE',
+    'LUPIN_PROFILE',
     'Default solo (this machine, no login). startup, team or enterprise turn sign-in on.',
   ],
-  ['AUTOMATE_BIND', 'Default 127.0.0.1. 0.0.0.0 exposes an install with no login to your network.'],
-  ['AUTOMATE_PORT', 'Default 8080. The one port the stack publishes.'],
+  ['LUPIN_BIND', 'Default 127.0.0.1. 0.0.0.0 exposes an install with no login to your network.'],
+  ['LUPIN_PORT', 'Default 8080. The one port the stack publishes.'],
 ];
 
 /**

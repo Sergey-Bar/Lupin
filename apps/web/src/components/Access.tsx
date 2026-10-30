@@ -207,7 +207,7 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
       />
       {who.mode === 'open' ? (
         <Quiet data-testid="access-open">
-          Access control is open: every caller is the operator. Set AUTOMATE_LAN_MODE=1 (or
+          Access control is open: every caller is the operator. Set LUPIN_LAN_MODE=1 (or
           ACCESS_CONTROL=enforced) to require sign-in.
         </Quiet>
       ) : null}

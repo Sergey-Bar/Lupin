@@ -84,13 +84,13 @@ const VALID_SECRETS = {
   // gitleaks's `generic-api-key` rule matches these two names regardless of the
   // value, and a literal here is a credential-shaped string committed to the
   // repository for a secret scanner to find.
-  AUTOMATE_API_KEY: syntheticApiKey(),
+  LUPIN_API_KEY: syntheticApiKey(),
   VAULT_SECRET: syntheticVaultSecret(),
   RUNNER_REGISTRATION_SECRET: syntheticRunnerRegistrationSecret(),
   // Required in production since ledger P-72b: the API will not derive an
   // installation key, so a production composition has to present one. Without this
   // the whole suite refused to boot — which is the refusal working.
-  AUTOMATE_INSTALLATION_KEY: syntheticInstallationKey(),
+  LUPIN_INSTALLATION_KEY: syntheticInstallationKey(),
 };
 
 const OBJECT_STORE = {
@@ -107,8 +107,8 @@ function productionEnv(overrides: Record<string, string | undefined> = {}): void
     'COOKIE_SECRET',
     'SESSION_SECRET',
     'REPORTER_SECRET',
-    'AUTOMATE_API_KEY',
-    'AUTOMATE_INSTALLATION_KEY',
+    'LUPIN_API_KEY',
+    'LUPIN_INSTALLATION_KEY',
     'VAULT_SECRET',
     'RUNNER_REGISTRATION_SECRET',
     'DATABASE_URL',
@@ -245,10 +245,10 @@ describe('production composition', () => {
       productionEnv({
         DATABASE_URL: 'postgres://127.0.0.1:1/unreachable',
         ...OBJECT_STORE,
-        AUTOMATE_INSTALLATION_KEY: undefined,
+        LUPIN_INSTALLATION_KEY: undefined,
       });
       await expect(import('./index.js')).rejects.toThrow(
-        /AUTOMATE_INSTALLATION_KEY is required in production/,
+        /LUPIN_INSTALLATION_KEY is required in production/,
       );
     },
     COMPOSITION_IMPORT_TIMEOUT_MS,
@@ -389,9 +389,9 @@ describe('a valid production configuration', () => {
     const response = await composed?.app.request('/api/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // The login credential is AUTOMATE_INSTALLATION_KEY, the key a production boot
-      // requires (ledger MNT-20); AUTOMATE_API_KEY is only the fallback when it is unset.
-      body: JSON.stringify({ apiKey: VALID_SECRETS.AUTOMATE_INSTALLATION_KEY }),
+      // The login credential is LUPIN_INSTALLATION_KEY, the key a production boot
+      // requires (ledger MNT-20); LUPIN_API_KEY is only the fallback when it is unset.
+      body: JSON.stringify({ apiKey: VALID_SECRETS.LUPIN_INSTALLATION_KEY }),
     });
     expect(response?.status, await response?.clone().text()).toBe(200);
     expect(response?.headers.get('set-cookie') ?? '').toMatch(/Max-Age=3600(;|$)/);
@@ -404,7 +404,7 @@ describe('a valid production configuration', () => {
     const login = await composed?.app.request('/api/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey: VALID_SECRETS.AUTOMATE_INSTALLATION_KEY }),
+      body: JSON.stringify({ apiKey: VALID_SECRETS.LUPIN_INSTALLATION_KEY }),
     });
     const cookie = /automate_session=[^;]+/u.exec(login?.headers.get('set-cookie') ?? '')?.[0];
     expect(cookie, 'the login set no session cookie').toBeDefined();

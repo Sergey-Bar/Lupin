@@ -32,7 +32,7 @@ passed, what needs attention and what was never measured.
 - **Live run updates** over server-sent events, and a runner that executes declared commands outside the API process.
 - **A "Now" page** that answers "what needs me?" in five items or fewer, with focus mode, compact density, reduced motion and keyboard shortcuts (`?` lists them).
 - **Scheduled reports**, daily, weekly or custom, to Slack, Microsoft Teams, Telegram, WhatsApp, Signal or the built-in inbox — see [scheduled reports](site/guide/notifications.md).
-- **One server for your whole network.** `AUTOMATE_LAN_MODE=1` turns on sign-in everywhere, HTTPS with a local certificate, device pairing by QR code, a client allowlist and remote runners — see [LAN mode](site/guide/lan-mode.md).
+- **One server for your whole network.** `LUPIN_LAN_MODE=1` turns on sign-in everywhere, HTTPS with a local certificate, device pairing by QR code, a client allowlist and remote runners — see [LAN mode](site/guide/lan-mode.md).
 
 ## Why it is interesting to an SDET
 
@@ -66,7 +66,7 @@ pnpm install --frozen-lockfile
 
 # Terminal 1: the API
 NODE_ENV=development \
-AUTOMATE_API_KEY=local-installation-key-32-characters \
+LUPIN_API_KEY=local-installation-key-32-characters \
 COOKIE_SECRET=local-cookie-secret-32-characters-long \
 REPORTER_SECRET=local-reporter-secret-32-characters \
 pnpm --filter @lupin/api dev

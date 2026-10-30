@@ -278,7 +278,7 @@ test('pull_policy: never, an untagged image and :latest are each a finding', () 
     '  c:',
     '    image: example/c:latest',
     '  d:',
-    '    image: ghcr.io/owner/d:${AUTOMATE_VERSION:?set AUTOMATE_VERSION}',
+    '    image: ghcr.io/owner/d:${LUPIN_VERSION:?set LUPIN_VERSION}',
     '',
   ].join('\n');
   const problems = bootProblems('x.yml', compose);
@@ -296,14 +296,14 @@ test('a production API missing a boot variable is a finding naming it', () => {
     '      dockerfile: infra/docker/api.Dockerfile',
     '    environment:',
     '      NODE_ENV: production',
-    ...REQUIRED_PRODUCTION_VARIABLES.filter((name) => name !== 'AUTOMATE_INSTALLATION_KEY').map(
+    ...REQUIRED_PRODUCTION_VARIABLES.filter((name) => name !== 'LUPIN_INSTALLATION_KEY').map(
       (name) => `      ${name}: v`,
     ),
     '',
   ].join('\n');
   const problems = bootProblems('x.yml', compose);
   assert.equal(problems.length, 1);
-  assert.ok(has(problems, /AUTOMATE_INSTALLATION_KEY/));
+  assert.ok(has(problems, /LUPIN_INSTALLATION_KEY/));
 });
 
 test('the boot variables are exactly the ones the API refuses to start without', () => {
@@ -314,7 +314,7 @@ test('the boot variables are exactly the ones the API refuses to start without',
   const refused = new Set([
     ...[...policy.matchAll(/refuseIfUnusable\('([A-Z_]+)'/g)].map((match) => match[1] ?? ''),
     ...(/DATABASE_URL is required in production/.test(policy) ? ['DATABASE_URL'] : []),
-    ...[...index.matchAll(/process\.env\['(AUTOMATE_INSTALLATION_KEY)'\]/g)].map(
+    ...[...index.matchAll(/process\.env\['(LUPIN_INSTALLATION_KEY)'\]/g)].map(
       (match) => match[1] ?? '',
     ),
   ]);
@@ -402,9 +402,9 @@ test('a second published port, or no front door, is a finding', () => {
 test('the production stack publishes only the edge proxy, on loopback by default', () => {
   const text = readRepo('infra/compose/docker-compose.unified.yml');
   assert.deepEqual(frontDoorProblems('infra/compose/docker-compose.unified.yml', text), []);
-  assert.match(FRONT_DOOR, /^\$\{AUTOMATE_BIND:-127\.0\.0\.1\}:/);
+  assert.match(FRONT_DOOR, /^\$\{LUPIN_BIND:-127\.0\.0\.1\}:/);
   // The HTTPS door is the same proxy on the same bind, so it widens nothing LAN mode did not.
-  assert.match(SECURE_FRONT_DOOR, /^\$\{AUTOMATE_BIND:-127\.0\.0\.1\}:/);
+  assert.match(SECURE_FRONT_DOOR, /^\$\{LUPIN_BIND:-127\.0\.0\.1\}:/);
   assert.deepEqual(publishedPorts(text, 'edge'), [FRONT_DOOR, SECURE_FRONT_DOOR]);
 });
 

@@ -8,7 +8,7 @@
  * The result is a developer who cannot run `pnpm verify` at all, which is a
  * different failure and the worse one.
  *
- * The compromise is one explicit opt-in, `AUTOMATE_HOST_SCANNERS=unavailable`, and
+ * The compromise is one explicit opt-in, `LUPIN_HOST_SCANNERS=unavailable`, and
  * it is narrow on purpose:
  *
  *   - absent (the default, and every CI job) — behaviour is unchanged: a scanner
@@ -31,7 +31,7 @@
  */
 
 /** The env var a host sets to opt in to the degraded outcome. @type {string} */
-export const HOST_SCANNERS_ENV = 'AUTOMATE_HOST_SCANNERS';
+export const HOST_SCANNERS_ENV = 'LUPIN_HOST_SCANNERS';
 
 /** The only value that opts in. `true`/`1` do not, so a stray CI default cannot. */
 export const HOST_SCANNERS_UNAVAILABLE = 'unavailable';
@@ -48,13 +48,13 @@ export const MAX_SCAN_TIMEOUT_MS = 60 * 60 * 1000;
 /**
  * The wall-clock ceiling for one scanner, clamped.
  *
- * `AUTOMATE_SCAN_TIMEOUT_MS` exists because `gitleaks detect` over this
+ * `LUPIN_SCAN_TIMEOUT_MS` exists because `gitleaks detect` over this
  * repository's full history takes about 24 s and semgrep needs watching on a slow
  * host.
  *
  * The clamp is not fussiness, it is the second way in through the same door. A
  * scanner killed at the ceiling is `unavailable`, and `unavailable` is what
- * `AUTOMATE_HOST_SCANNERS` makes exit 0. So `AUTOMATE_SCAN_TIMEOUT_MS=1` — or any
+ * `LUPIN_HOST_SCANNERS` makes exit 0. So `LUPIN_SCAN_TIMEOUT_MS=1` — or any
  * non-numeric value, since `Number('abc')` is `NaN` and `setTimeout(fn, NaN)`
  * fires on the next tick — turns both scanners into a green, unscanned
  * `security:static` in milliseconds, through a variable that appears in no

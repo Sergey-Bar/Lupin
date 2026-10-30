@@ -20,8 +20,8 @@ write \`-- cmd /c npx playwright test\`.
 \`shard\` prints the files shard i of n should run, balanced by how long each took in recent
 runs. It never drops a file: if the plan cannot be had, it prints them all.
 
-Every command takes --project <id>, or reads AUTOMATE_PROJECT.
-Environment: AUTOMATE_URL (https://, or http:// to loopback only), AUTOMATE_TOKEN (amt_…).
+Every command takes --project <id>, or reads LUPIN_PROJECT.
+Environment: LUPIN_URL (https://, or http:// to loopback only), LUPIN_TOKEN (amt_…).
 Exit codes: 0 done or gate passed, 1 gate failed, 2 usage, 3 refused or unreachable, 4 credential refused.
 \`test\` exits with its command's code instead, and 127 when the command could not start.`;
 
