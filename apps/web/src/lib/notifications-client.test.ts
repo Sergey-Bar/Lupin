@@ -19,6 +19,7 @@ const SUBSCRIPTION = {
   enabled: true,
   describe: 'Every day at 09:00',
   nextRunAt: '2026-10-26T09:00:00.000Z',
+  projectId: null,
 };
 const DELIVERY = {
   id: 'd1',

@@ -274,13 +274,42 @@ function browserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 }
 
+/** The project a report is about. Offered only when there is something to choose between. */
+function ProjectMenu({
+  id,
+  choices,
+  value,
+  onChange,
+}: {
+  id: string;
+  choices: ReadonlyArray<{ id: string; name: string }>;
+  value: string;
+  onChange: (projectId: string) => void;
+}): React.ReactElement | null {
+  if (choices.length < 2) return null;
+  return (
+    <Select
+      id={id}
+      label="Project"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      options={[
+        { value: '', label: 'Latest report' },
+        ...choices.map((project) => ({ value: project.id, label: project.name })),
+      ]}
+    />
+  );
+}
+
 function Schedules({
   client,
+  projects,
   channels,
   onChanged,
   version,
 }: {
   client: NotificationsClient;
+  projects: ProjectChoices | undefined;
   channels: ChannelSummary[];
   onChanged: () => void;
   version: number;
@@ -289,6 +318,9 @@ function Schedules({
   const subscriptions = useResource(() => client.listSubscriptions(), [client, version]);
   const [preset, setPreset] = React.useState<(typeof PRESETS)[number]['id']>('daily');
   const [channelId, setChannelId] = React.useState('');
+  const [projectId, setProjectId] = React.useState('');
+  const projectList = useResource(() => (projects ? projects() : Promise.resolve([])), [projects]);
+  const choices = projectList.status === 'ready' ? projectList.value : [];
   const [time, setTime] = React.useState('09:00');
   const [cronExpr, setCronExpr] = React.useState('0 9 * * 1-5');
   const [timezone, setTimezone] = React.useState(browserTimezone);
@@ -305,6 +337,7 @@ function Schedules({
         weekday: chosen?.weekday ?? 1,
         timezone,
         ...(chosen?.cadence === 'custom' ? { cronExpr } : {}),
+        ...(projectId === '' ? {} : { projectId }),
       })
       .then((created) => {
         toast({ tone: 'success', title: 'Report scheduled', description: created.describe });
@@ -330,6 +363,10 @@ function Schedules({
         }),
       );
   };
+  const projectSuffix = (key: string | null) =>
+    key === null
+      ? ''
+      : ` · ${choices.find((project) => project.id === key)?.name ?? 'a removed project'}`;
   const nameOf = (channelKey: string) =>
     channels.find((channel) => channel.id === channelKey)?.name ?? 'a removed channel';
   return (
@@ -379,6 +416,12 @@ function Schedules({
                 onChange={(event) => setTime(event.target.value)}
               />
             )}
+            <ProjectMenu
+              id={`${id}-project`}
+              choices={choices}
+              value={projectId}
+              onChange={setProjectId}
+            />
             <Input
               id={`${id}-timezone`}
               label="Timezone"
@@ -408,6 +451,7 @@ function Schedules({
                 <span className="font-medium">{subscription.describe}</span>{' '}
                 <span className="text-xs text-fg-muted">
                   to {nameOf(subscription.channelId)} · {subscription.timezone}
+                  {projectSuffix(subscription.projectId)}
                 </span>
               </span>
               <Button size="sm" variant="ghost" onClick={() => remove(subscription.id)}>
@@ -486,7 +530,16 @@ function History({ deliveries }: { deliveries: DeliverySummary[] }): React.React
   );
 }
 
-export function NotificationsPage({ client }: { client: NotificationsClient }): React.ReactElement {
+export type ProjectChoices = () => Promise<ReadonlyArray<{ id: string; name: string }>>;
+
+export function NotificationsPage({
+  client,
+  projects,
+}: {
+  client: NotificationsClient;
+  /** The projects a report may be about; without it the choice is not offered. */
+  projects?: ProjectChoices;
+}): React.ReactElement {
   const [version, setVersion] = React.useState(0);
   const changed = React.useCallback(() => setVersion((value) => value + 1), []);
   const channels = useResource(() => client.listChannels(), [client, version]);
@@ -515,6 +568,7 @@ export function NotificationsPage({ client }: { client: NotificationsClient }): 
           {channels.status === 'ready' ? (
             <Schedules
               client={client}
+              projects={projects}
               channels={channels.value}
               onChanged={changed}
               version={version}

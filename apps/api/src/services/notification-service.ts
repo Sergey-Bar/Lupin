@@ -3,6 +3,7 @@ import { and, desc, eq, gte, lt, sql } from 'drizzle-orm';
 import { Cron } from 'croner';
 import {
   notificationChannels,
+  projects,
   reportDeliveries,
   reportSubscriptions,
   runs,
@@ -238,7 +239,24 @@ function subscriptionSummary(
     enabled: row.enabled,
     describe: describeCadence(row.cadence, row.cronExpr),
     nextRunAt,
+    projectId: projectOfScope(row.projectScope),
   };
+}
+
+/** The project a subscription's cockpit section is about: the first id in its scope, if any. */
+export function projectOfScope(scope: unknown): string | null {
+  const first = Array.isArray(scope) ? (scope as unknown[])[0] : undefined;
+  return typeof first === 'string' ? first : null;
+}
+
+/** A project of this workspace, or a refusal: a report must not be pointed at someone else's. */
+async function assertProject(options: NotificationOptions, projectId: string): Promise<void> {
+  const [row] = await options.db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(and(eq(projects.workspaceId, options.workspaceId), eq(projects.id, projectId)))
+    .limit(1);
+  if (row === undefined) throw new DomainError(ErrorCode.NOT_FOUND, `No project ${projectId}`);
 }
 
 export async function createSubscription(
@@ -246,6 +264,7 @@ export async function createSubscription(
   body: CreateSubscriptionBody,
 ): Promise<SubscriptionSummary> {
   const channel = await channelRow(options, body.channelId);
+  if (body.projectId !== undefined) await assertProject(options, body.projectId);
   const cronExpr = cronFor(body);
   const at = now(options);
   const next = nextOccurrence(cronExpr, body.timezone, at);
@@ -258,6 +277,7 @@ export async function createSubscription(
       cadence: body.cadence,
       cronExpr,
       timezone: body.timezone,
+      projectScope: body.projectId === undefined ? null : [body.projectId],
       createdAt: at,
       updatedAt: at,
     })

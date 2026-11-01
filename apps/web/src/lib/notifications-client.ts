@@ -24,6 +24,8 @@ export interface SubscriptionDraft {
   weekday?: number;
   cronExpr?: string;
   timezone: string;
+  /** The project the cockpit section is about; omitted, the one that reported last. */
+  projectId?: string;
 }
 
 export interface NotificationsClient {
