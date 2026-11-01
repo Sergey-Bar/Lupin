@@ -112,7 +112,7 @@ export function ConnectRunnerPanel({ origin }: { origin: string }): React.ReactE
           ? ''
           : ' This address is plain HTTP, so the runner refuses it: issue a LAN certificate first.'}
       </p>
-      <pre className="mt-2 overflow-x-auto rounded-lg bg-surface-sunken p-3 font-mono text-xs">
+      <pre className="mt-2 whitespace-pre-wrap break-all rounded-lg bg-surface-sunken p-3 font-mono text-xs">
         {snippet}
       </pre>
       <CopyButton text={snippet} label="Copy runner settings" />
