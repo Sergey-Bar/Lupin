@@ -4,6 +4,7 @@ import {
   SECTIONS,
   isApplicationPath,
   metricPath,
+  cockpitPath,
   repo360Path,
   reportPath,
   routeManifest,
@@ -215,6 +216,12 @@ describe('route manifest', () => {
       '/dashboard/metric/run-pass-rate?window=release',
     );
     expect(metricPath('a b')).toBe('/dashboard/metric/a%20b');
+    expect(metricPath('coverage', '7d', 'p 1')).toBe(
+      '/dashboard/metric/coverage?window=7d&project=p%201',
+    );
+    expect(metricPath('coverage', undefined, 'p-1')).toBe('/dashboard/metric/coverage?project=p-1');
+    expect(cockpitPath()).toBe('/dashboard/now');
+    expect(cockpitPath('p&1')).toBe('/dashboard/now?project=p%261');
   });
 
   it('builds the report download address for the window shown, with the project encoded', () => {

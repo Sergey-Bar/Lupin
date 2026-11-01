@@ -44,6 +44,11 @@ text. A failure that may have delivered the message is not followed by a second 
 
 ### The link in a report
 
+The cockpit page has a **Project** menu when the workspace has more than one project. The
+choice is kept in the address (`?project=`), so a shared link opens the same project, and its
+metric pages and the run banner stay on that project. _Latest report_ is the default: the
+project that reported most recently. Scheduled reports still follow that default.
+
 The one link at the foot of a report opens the cockpit. It uses the address in
 `LUPIN_PUBLIC_URL` (`PUBLIC_APP_URL` outside the compose stack). While that address is a
 loopback one, such as the default `http://localhost:8080`, the report goes **without a
@@ -51,7 +56,7 @@ link**, because the link would open the reader's own machine and not yours. Set 
 address people actually use, such as your [Cloudflare hostname](/guide/remote-cloudflare)
 or LAN name, and the link appears from the next report.
 
-The cockpit page also lists, under _Worth a look_, the pull requests that match one of
+The cockpit page lists, under _Worth a look_, the pull requests that match one of
 three stated facts: a large change with no test file, a merge with no approval from a
 person, and an open AI-attributed change nobody has approved. It is a list with the reason
 beside each, not a score. It reads pull requests the GitHub sync has stored.

@@ -51,6 +51,52 @@ describe('the metric route', () => {
   );
 
   it(
+    'asks about the project the link names, and goes back to that project',
+    async () => {
+      const asked = stubFetch();
+      window.scrollTo = () => undefined;
+      render(
+        <MemoryRouter initialEntries={['/dashboard/metric/coverage?window=7d&project=p-9']} />,
+      );
+      await waitFor(
+        () =>
+          expect(asked.some((url) => url.includes('/api/v1/cockpit?window=7d&projectId=p-9'))).toBe(
+            true,
+          ),
+        { timeout: RENDER_TIMEOUT_MS },
+      );
+      expect(await screen.findByRole('link', { name: 'Back to the cockpit' })).toHaveAttribute(
+        'href',
+        '/dashboard/now?project=p-9',
+      );
+    },
+    RENDER_TIMEOUT_MS * 2,
+  );
+
+  it(
+    'asks about the project the link names, and goes back to that project',
+    async () => {
+      const asked = stubFetch();
+      window.scrollTo = () => undefined;
+      render(
+        <MemoryRouter initialEntries={['/dashboard/metric/coverage?window=7d&project=p-9']} />,
+      );
+      await waitFor(
+        () =>
+          expect(asked.some((url) => url.includes('/api/v1/cockpit?window=7d&projectId=p-9'))).toBe(
+            true,
+          ),
+        { timeout: RENDER_TIMEOUT_MS },
+      );
+      expect(await screen.findByRole('link', { name: 'Back to the cockpit' })).toHaveAttribute(
+        'href',
+        '/dashboard/now?project=p-9',
+      );
+    },
+    RENDER_TIMEOUT_MS * 2,
+  );
+
+  it(
     'falls back to the last 7 days for a window it does not know',
     async () => {
       const asked = stubFetch();

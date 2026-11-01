@@ -68,7 +68,7 @@ describe('ScoreImpactBanner', () => {
     show('run-1');
     expect(await screen.findByRole('link', { name: 'Coverage' })).toHaveAttribute(
       'href',
-      '/dashboard/metric/coverage?window=7d',
+      '/dashboard/metric/coverage?window=7d&project=00000000-0000-4000-8000-000000000001',
     );
     expect(screen.getByRole('link', { name: 'Back to the cockpit' })).toHaveAttribute(
       'href',

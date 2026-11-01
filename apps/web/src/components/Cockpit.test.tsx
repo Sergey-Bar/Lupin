@@ -11,9 +11,11 @@ const NOW = new Date('2026-10-26T12:00:00.000Z');
 
 function sources(
   cockpit: CockpitSources['cockpit'] = vi.fn(async () => cockpitFixture()),
+  projects: CockpitSources['projects'] = async () => [],
 ): CockpitSources {
   return {
     cockpit,
+    projects,
     attention: {
       runs: vi.fn(async () => []),
       portfolio: vi.fn(async () => ({ projects: [] })),
@@ -373,14 +375,14 @@ describe('the way down', () => {
     const card = await screen.findByTestId('cockpit-metric-coverage');
     expect(within(card).getByRole('link', { name: /Coverage, open details/u })).toHaveAttribute(
       'href',
-      '/dashboard/metric/coverage?window=7d',
+      '/dashboard/metric/coverage?window=7d&project=00000000-0000-4000-8000-000000000001',
     );
     await user.click(screen.getByRole('button', { name: 'Since last release' }));
     const again = await screen.findByTestId('cockpit-metric-coverage');
     await waitFor(() =>
       expect(within(again).getByRole('link', { name: /Coverage, open details/u })).toHaveAttribute(
         'href',
-        '/dashboard/metric/coverage?window=release',
+        '/dashboard/metric/coverage?window=release&project=00000000-0000-4000-8000-000000000001',
       ),
     );
   });
@@ -465,5 +467,112 @@ describe('the pull requests worth a look', () => {
     const section = await screen.findByTestId('cockpit-risks');
     expect(section).toHaveTextContent('No pull request matched.');
     expect(section).toHaveTextContent('if none are synced, nothing was checked');
+  });
+});
+
+describe('choosing the project', () => {
+  const PROJECTS = [
+    { id: 'p-1', name: 'Service' },
+    { id: 'p-2', name: 'Website' },
+  ];
+
+  it('offers the projects, with the latest report as the default', async () => {
+    render(
+      <CockpitPage
+        sources={sources(undefined, async () => PROJECTS)}
+        navigate={() => undefined}
+        now={() => NOW}
+      />,
+    );
+    const select = await screen.findByLabelText('Project');
+    expect(
+      within(select)
+        .getAllByRole('option')
+        .map((option) => option.textContent),
+    ).toEqual(['Latest report', 'Service', 'Website']);
+    expect(select).toHaveValue('');
+  });
+
+  it('reads the chosen project, tells the address, and links its metrics to the same project', async () => {
+    const user = userEvent.setup();
+    const getCockpit = vi.fn(async () =>
+      cockpitFixture({ projectId: 'p-2', projectName: 'Website' }),
+    );
+    const onProjectChange = vi.fn();
+    render(
+      <CockpitPage
+        sources={sources(getCockpit, async () => PROJECTS)}
+        navigate={() => undefined}
+        now={() => NOW}
+        onProjectChange={onProjectChange}
+      />,
+    );
+    await user.selectOptions(await screen.findByLabelText('Project'), 'p-2');
+    expect(onProjectChange).toHaveBeenCalledWith('p-2');
+    await waitFor(() =>
+      expect(getCockpit).toHaveBeenLastCalledWith(
+        { window: '7d', projectId: 'p-2' },
+        expect.anything(),
+      ),
+    );
+    const card = await screen.findByTestId('cockpit-metric-coverage');
+    expect(within(card).getByRole('link', { name: /Coverage/u })).toHaveAttribute(
+      'href',
+      '/dashboard/metric/coverage?window=7d&project=p-2',
+    );
+  });
+
+  it('opens on the project the address names, and goes back to the default on request', async () => {
+    const user = userEvent.setup();
+    const getCockpit = vi.fn(async () => cockpitFixture());
+    const onProjectChange = vi.fn();
+    render(
+      <CockpitPage
+        sources={sources(getCockpit, async () => PROJECTS)}
+        navigate={() => undefined}
+        now={() => NOW}
+        initialProjectId="p-1"
+        onProjectChange={onProjectChange}
+      />,
+    );
+    const select = await screen.findByLabelText('Project');
+    expect(select).toHaveValue('p-1');
+    expect(getCockpit).toHaveBeenCalledWith({ window: '7d', projectId: 'p-1' }, expect.anything());
+    await user.selectOptions(select, '');
+    expect(onProjectChange).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('shows no picker for one project, or when the list cannot be read', async () => {
+    const { unmount } = render(
+      <CockpitPage
+        sources={sources(undefined, async () => [PROJECTS[0] as (typeof PROJECTS)[number]])}
+        navigate={() => undefined}
+        now={() => NOW}
+      />,
+    );
+    await screen.findByTestId('cockpit-status');
+    expect(screen.queryByLabelText('Project')).toBeNull();
+    unmount();
+    render(
+      <CockpitPage
+        sources={sources(undefined, () => Promise.reject(new Error('offline')))}
+        navigate={() => undefined}
+        now={() => NOW}
+      />,
+    );
+    await screen.findByTestId('cockpit-status');
+    expect(screen.queryByLabelText('Project')).toBeNull();
+  });
+
+  it('falls back to the default for a project that is not in the list', async () => {
+    render(
+      <CockpitPage
+        sources={sources(undefined, async () => PROJECTS)}
+        navigate={() => undefined}
+        now={() => NOW}
+        initialProjectId="gone"
+      />,
+    );
+    expect(await screen.findByLabelText('Project')).toHaveValue('');
   });
 });

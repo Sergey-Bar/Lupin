@@ -31,6 +31,7 @@ import {
   seriesGeometry,
   verdictOfStatus,
 } from '../lib/cockpit-view.js';
+import { cockpitPath } from '../route-manifest.js';
 import { safeHref } from './Cockpit.js';
 import { Delta, PageFrame, PageHeader, Panel, Segmented } from './kit.js';
 
@@ -65,10 +66,13 @@ const KIND_LABEL: Record<CockpitDriver['kind'], string> = {
 export function MetricDetailPage({
   metricId,
   initialWindow = '7d',
+  projectId,
   sources,
 }: {
   metricId: string;
   initialWindow?: CockpitWindow;
+  /** The project the cockpit was showing; without one, the one that reported last. */
+  projectId?: string | undefined;
   sources: MetricSources;
 }): React.ReactElement {
   const parsed = CockpitMetricIdSchema.safeParse(metricId);
@@ -76,7 +80,7 @@ export function MetricDetailPage({
   if (!parsed.success) {
     return (
       <PageFrame data-testid="metric-unknown" className="h-auto gap-4">
-        <PageHeader title="Unknown metric" subtitle={<BackToCockpit />} />
+        <PageHeader title="Unknown metric" subtitle={<BackToCockpit projectId={projectId} />} />
         <p className="text-sm text-fg-muted">
           The cockpit has no metric called “{metricId.slice(0, 60)}”. Open one from the cockpit.
         </p>
@@ -87,7 +91,7 @@ export function MetricDetailPage({
     <PageFrame data-testid="metric-page" className="h-auto gap-4 sm:gap-6">
       <PageHeader
         title={LABELS[parsed.data]}
-        subtitle={<BackToCockpit />}
+        subtitle={<BackToCockpit projectId={projectId} />}
         actions={
           <Segmented<CockpitWindow>
             label="Compare with"
@@ -98,7 +102,13 @@ export function MetricDetailPage({
         }
       />
       {/* Keyed by the window so a new read starts from loading, as the cockpit does. */}
-      <MetricReading key={window} metricId={parsed.data} window={window} sources={sources} />
+      <MetricReading
+        key={window}
+        metricId={parsed.data}
+        window={window}
+        projectId={projectId}
+        sources={sources}
+      />
     </PageFrame>
   );
 }
@@ -113,10 +123,10 @@ const LABELS: Record<CockpitMetric['id'], string> = {
   'run-pass-rate': 'Run pass rate',
 };
 
-function BackToCockpit(): React.ReactElement {
+function BackToCockpit({ projectId }: { projectId?: string | undefined }): React.ReactElement {
   return (
     <a
-      href="/dashboard/now"
+      href={cockpitPath(projectId)}
       className="rounded-sm text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
     >
       Back to the cockpit
@@ -127,13 +137,15 @@ function BackToCockpit(): React.ReactElement {
 function MetricReading({
   metricId,
   window,
+  projectId,
   sources,
 }: {
   metricId: CockpitMetric['id'];
   window: CockpitWindow;
+  projectId: string | undefined;
   sources: MetricSources;
 }): React.ReactElement {
-  const state = useCockpit(sources.cockpit, { window });
+  const state = useCockpit(sources.cockpit, { window, projectId });
   if (state.status === 'loading') {
     return (
       <div data-testid="metric-loading" aria-busy="true" className="flex flex-col gap-4">

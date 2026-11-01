@@ -13,16 +13,28 @@ import { createCockpitClient } from '../../lib/cockpit-client.js';
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/metric/$metricId',
-  validateSearch: (search: Record<string, unknown>): { window: CockpitWindow } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { window: CockpitWindow; project?: string } => ({
     window: search['window'] === 'release' ? 'release' : '7d',
+    ...(typeof search['project'] === 'string' && search['project'] !== ''
+      ? { project: search['project'].slice(0, 100) }
+      : {}),
   }),
   component: function MetricRoute() {
     const { metricId } = Route.useParams();
-    const { window } = Route.useSearch();
+    const { window, project } = Route.useSearch();
     const sources = React.useMemo<MetricSources>(() => {
       const client = createCockpitClient();
       return { cockpit: (query, signal) => client.getCockpit(query, signal) };
     }, []);
-    return <MetricDetailPage metricId={metricId} initialWindow={window} sources={sources} />;
+    return (
+      <MetricDetailPage
+        metricId={metricId}
+        initialWindow={window}
+        projectId={project}
+        sources={sources}
+      />
+    );
   },
 });

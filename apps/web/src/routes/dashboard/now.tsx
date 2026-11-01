@@ -6,19 +6,27 @@ import { defaultApiClient } from '../../lib/api.js';
 import { createCockpitClient } from '../../lib/cockpit-client.js';
 import { createHealthClient } from '../../lib/health-client.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
+import { createQaClient } from '../../lib/qa-client.js';
 
 /** The landing page: is the product better or worse than before, and what needs you. `/` lands here. */
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/now',
+  validateSearch: (search: Record<string, unknown>): { project?: string } =>
+    typeof search['project'] === 'string' && search['project'] !== ''
+      ? { project: search['project'].slice(0, 100) }
+      : {},
   component: function NowRoute() {
     const navigate = useNavigate();
+    const { project } = Route.useSearch();
     const sources = React.useMemo<CockpitSources>(() => {
       const cockpit = createCockpitClient();
       const health = createHealthClient();
       const notifications = createNotificationsClient();
+      const qa = createQaClient();
       return {
         cockpit: (query, signal) => cockpit.getCockpit(query, signal),
+        projects: async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name })),
         attention: {
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),
@@ -26,6 +34,19 @@ export const Route = createRoute({
         },
       };
     }, []);
-    return <CockpitPage sources={sources} navigate={(to) => void navigate({ to })} />;
+    return (
+      <CockpitPage
+        sources={sources}
+        navigate={(to) => void navigate({ to })}
+        initialProjectId={project}
+        onProjectChange={(next) =>
+          void navigate({
+            to: '/dashboard/now',
+            search: next === undefined ? {} : { project: next },
+            replace: true,
+          })
+        }
+      />
+    );
   },
 });

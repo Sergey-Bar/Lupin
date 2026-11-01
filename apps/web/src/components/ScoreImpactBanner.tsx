@@ -55,7 +55,7 @@ export function ScoreImpactBanner({
             <li key={metric.id}>
               {metric.candidate ? 'Possibly behind ' : 'Behind '}
               <a
-                href={metricPath(metric.id, window)}
+                href={metricPath(metric.id, window, state.value.projectId)}
                 className="rounded-sm text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
               >
                 {metric.label}

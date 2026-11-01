@@ -328,9 +328,23 @@ export function tabsOf(section: SectionId): TabRoute[] {
  * A metric's detail page, for the window the cockpit was showing. The metric ids are the
  * cockpit contract's; the window is carried so the page compares what the person was looking at.
  */
-export function metricPath(metricId: string, window?: '7d' | 'release'): string {
+export function metricPath(
+  metricId: string,
+  window?: '7d' | 'release',
+  projectId?: string,
+): string {
   const base = `/dashboard/metric/${encodeURIComponent(metricId)}`;
-  return window === undefined ? base : `${base}?window=${window}`;
+  const params: string[] = [];
+  if (window !== undefined) params.push(`window=${window}`);
+  if (projectId !== undefined) params.push(`project=${encodeURIComponent(projectId)}`);
+  return params.length === 0 ? base : `${base}?${params.join('&')}`;
+}
+
+/** The cockpit for one project; without one it shows the project that reported last. */
+export function cockpitPath(projectId?: string): string {
+  return projectId === undefined
+    ? '/dashboard/now'
+    : `/dashboard/now?project=${encodeURIComponent(projectId)}`;
 }
 
 /**

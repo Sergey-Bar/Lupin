@@ -1,8 +1,9 @@
 import React from 'react';
-import { ExternalLink, Skeleton, Sparkline, Button, cn } from '@lupin/ui';
+import { ExternalLink, Select, Skeleton, Sparkline, Button, cn } from '@lupin/ui';
 import type { Cockpit, CockpitDriver, CockpitMetric, CockpitWindow } from '@lupin/shared-contracts';
 import { useCockpit } from '../hooks/useCockpit.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
+import { useResource } from '../hooks/useResource.js';
 import type { CockpitClient } from '../lib/cockpit-client.js';
 import {
   driverText,
@@ -34,6 +35,8 @@ import { StatusLine } from './StatusLine.js';
  */
 export interface CockpitSources {
   cockpit: CockpitClient['getCockpit'];
+  /** The projects the person may choose between. */
+  projects: () => Promise<ReadonlyArray<{ id: string; name: string }>>;
   attention: NowSources;
 }
 
@@ -58,11 +61,18 @@ export function CockpitPage({
   sources,
   navigate,
   now,
+  initialProjectId,
+  onProjectChange,
 }: {
   sources: CockpitSources;
   navigate: (to: string) => void;
   now?: () => Date;
+  /** From the address (?project=), so a link names the project it was about. */
+  initialProjectId?: string | undefined;
+  /** Told when the person chooses, so the address can follow. */
+  onProjectChange?: (projectId: string | undefined) => void;
 }): React.ReactElement {
+  const [projectId, setProjectId] = React.useState<string | undefined>(initialProjectId);
   const [window, setWindow] = React.useState<CockpitWindow>('7d');
   const [reload, setReload] = React.useState(0);
   useCommandActions([
@@ -83,20 +93,31 @@ export function CockpitPage({
         title="Cockpit"
         subtitle="Is the product better or worse than before, and why."
         actions={
-          <Segmented<CockpitWindow>
-            label="Compare with"
-            options={WINDOWS}
-            value={window}
-            onChange={setWindow}
-          />
+          <div className="flex flex-wrap items-end gap-3">
+            <ProjectPicker
+              load={sources.projects}
+              value={projectId}
+              onChange={(next) => {
+                setProjectId(next);
+                onProjectChange?.(next);
+              }}
+            />
+            <Segmented<CockpitWindow>
+              label="Compare with"
+              options={WINDOWS}
+              value={window}
+              onChange={setWindow}
+            />
+          </div>
         }
       />
       {/* Keyed by the window and the reload, so a new read starts from loading and never shows
           the previous window's headline under the new window's label. */}
       <CockpitReading
-        key={`${window}:${String(reload)}`}
+        key={`${projectId ?? ''}:${window}:${String(reload)}`}
         sources={sources}
         window={window}
+        projectId={projectId}
         onRetry={() => setReload((count) => count + 1)}
       />
       <AttentionSection
@@ -111,13 +132,15 @@ export function CockpitPage({
 function CockpitReading({
   sources,
   window,
+  projectId,
   onRetry,
 }: {
   sources: CockpitSources;
   window: CockpitWindow;
+  projectId: string | undefined;
   onRetry: () => void;
 }): React.ReactElement {
-  const state = useCockpit(sources.cockpit, { window });
+  const state = useCockpit(sources.cockpit, { window, projectId });
   // The chart is the heaviest part of the page and the last thing a reader needs, so it
   // loads after the headline and the cards have painted.
   const [chartReady, setChartReady] = React.useState(false);
@@ -171,7 +194,12 @@ function CockpitReading({
         className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
         {cockpit.metrics.map((metric) => (
-          <MetricCard key={metric.id} metric={metric} window={window} />
+          <MetricCard
+            key={metric.id}
+            metric={metric}
+            window={window}
+            projectId={cockpit.projectId}
+          />
         ))}
       </ul>
       <RiskSection risks={cockpit.risks} />
@@ -242,6 +270,39 @@ function RiskSection({ risks }: { risks: Cockpit['risks'] }): React.ReactElement
   );
 }
 
+/**
+ * Chooses which project the cockpit is about. Hidden when there is nothing to choose between,
+ * and when the list cannot be read: the cockpit still opens on the project that reported last,
+ * which is what it did before there was a choice. "Latest report" names that default plainly.
+ */
+function ProjectPicker({
+  load,
+  value,
+  onChange,
+}: {
+  load: CockpitSources['projects'];
+  value: string | undefined;
+  onChange: (projectId: string | undefined) => void;
+}): React.ReactElement | null {
+  const state = useResource(() => load(), [load]);
+  if (state.status !== 'ready' || state.value.length < 2) return null;
+  const known = state.value.some((project) => project.id === value);
+  return (
+    <div className="w-56" data-testid="cockpit-project">
+      <Select
+        id="cockpit-project-select"
+        label="Project"
+        value={known ? value : ''}
+        onChange={(event) => onChange(event.target.value === '' ? undefined : event.target.value)}
+        options={[
+          { value: '', label: 'Latest report' },
+          ...state.value.map((project) => ({ value: project.id, label: project.name })),
+        ]}
+      />
+    </div>
+  );
+}
+
 function Headline({ cockpit }: { cockpit: Cockpit }): React.ReactElement {
   const href = safeHref(cockpit.overall.drivers[0]?.url ?? null);
   return (
@@ -263,9 +324,11 @@ const SPARK_TONE: Partial<Record<CockpitMetric['status'], string>> = {
 function MetricCard({
   metric,
   window,
+  projectId,
 }: {
   metric: CockpitMetric;
   window: CockpitWindow;
+  projectId: string;
 }): React.ReactElement {
   const moved = metric.status === 'improved' || metric.status === 'worse';
   const note = noteOfStatus(metric.status);
@@ -279,7 +342,7 @@ function MetricCard({
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-medium">
           <a
-            href={metricPath(metric.id, window)}
+            href={metricPath(metric.id, window, projectId)}
             className="rounded-sm text-fg-muted underline-offset-2 hover:text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
           >
             {metric.label}
