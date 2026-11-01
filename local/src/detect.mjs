@@ -10,7 +10,7 @@
  * - A limit that is hit, a file that cannot be read and a link that is not followed are
  *   recorded with a reason; they never abort the scan silently.
  */
-import { lstat, open, readdir, readFile, realpath, stat } from 'node:fs/promises';
+import { lstat, open, opendir, readdir, readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { detectFormat } from './ingest.mjs';
 
@@ -93,6 +93,13 @@ export async function scanRepository(root, options = {}) {
   }
   const parsed = path.parse(path.resolve(root));
   if (parsed.root === path.resolve(root)) return failed(root, 'filesystem-root');
+  // A folder that cannot be listed is refused here, with a reason, rather than scanned as
+  // an empty folder: "nothing found" would be a claim about a folder nobody could read.
+  const listable = await opendir(root).then(
+    (handle) => handle.close().then(() => true),
+    () => false,
+  );
+  if (!listable) return failed(root, 'unreadable');
 
   /** @type {Array<{ relativePath: string, size: number, modifiedMs: number }>} */
   const files = [];
@@ -570,6 +577,13 @@ async function detectGo(view, project, dir, file, paths) {
 // ── Report discovery ────────────────────────────────────────────────────────────────────
 
 /**
+ * Coverage files written beside lcov in formats this product does not read (Istanbul's
+ * JSON). Matched by name inside report areas, they were sniffed as broken Playwright
+ * reports and every Jest or Vitest project showed two incomplete reports.
+ */
+const NOT_REPORTS = new Set(['coverage-summary.json', 'coverage-final.json']);
+
+/**
  * Whether a path looks like it could be a report worth sniffing.
  *
  * @param {string} relativePath
@@ -578,6 +592,7 @@ export function isReportShaped(relativePath) {
   const ext = path.extname(relativePath).toLowerCase();
   if (!REPORT_EXTENSIONS.has(ext)) return false;
   const segments = relativePath.split('/');
+  if (NOT_REPORTS.has(segments.at(-1) ?? '')) return false;
   if (segments.some((segment) => REPORT_AREAS.has(segment))) return true;
   return /(junit|test-?results?|report|lcov|coverage|cobertura|results)/i.test(
     segments.at(-1) ?? '',

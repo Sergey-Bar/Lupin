@@ -1,4 +1,4 @@
-FROM nginx:1.27-alpine
+FROM nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
 ARG LUPIN_VERSION=dev
 ARG LUPIN_REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \

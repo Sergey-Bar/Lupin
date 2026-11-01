@@ -132,3 +132,21 @@ Recorded here as tasks land, so the next session reads the state from the tree.
   each with a removal condition: the tunnel's one client address (`PRO-16`) and the tokens a
   disabled person created (`PRO-17`). The minors left open are `PRO-19`.
 - Still open: Task 19 (profile-matrix E2E, `pr-reporting`).
+- 2026-10-28 — Task 19: the profile matrix (`tests/e2e/profiles/profile-matrix.spec.ts`,
+  `pnpm test:e2e:profiles`) boots the API's own entry point once per profile against the suite's
+  PostgreSQL, beside the suite's server, and checks what each profile serves and what each
+  refuses to start with: `solo` open with one workspace and no LAN mode, `startup` behind a
+  sign-in with one workspace, `team` creating, choosing and verifying a second workspace and
+  refusing `ACCESS_CONTROL=open`, and `enterprise` refusing to start without an SSO source,
+  refusing the installation key, and auditing a break-glass sign-in on a chain that verifies.
+  4 of 4 against PostgreSQL 16 on 2026-10-28, and three deliberate defects (the team refusal,
+  the workspace check, the SSO refusal) each failed their own case. Its own CI job, `pr-reporting`
+  with `continue-on-error` on the step.
+- Still open: graduating the matrix to `pr-blocking` once three consecutive runs on main record
+  `success` in the job summary: one commit that moves the tier and drops `continue-on-error`.
+- 2026-10-29 — The matrix graduated to `pr-blocking`: four consecutive runs on main (`bfee225`,
+  `053d676`, `d48e416`, `546e3e2`) each passed 4 of 4, read from the job logs. The nightly is
+  green again too: the mutation floors (`MNT-152`) and the time limits of the quality-baseline
+  and mutation jobs (`MNT-153`, `MNT-154`) were fixed, and a dispatched run on `546e3e2` passed
+  every job. **Every task of this plan is done.** What stays open is recorded rather than
+  planned: no real Cloudflare, Entra, Okta or collector run, and the ledger's open rows.

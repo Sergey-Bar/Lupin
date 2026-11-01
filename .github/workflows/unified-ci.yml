@@ -112,6 +112,33 @@ jobs:
       - name: Boot the production stack
         run: node ./scripts/compose-boot.mjs
 
+  runner-images:
+    name: Runner images
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # `oci:build` builds the three runner images and `oci:verify` inspects them; neither
+    # starts one, and the ZAP image exited 1 on every start with both green (MNT-157).
+    # `oci:smoke` starts each under the isolation its manifest declares. The ubuntu
+    # image ships Docker, so there is nothing to install beyond Node.
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          run_install: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Build the runner images
+        run: pnpm oci:build
+      - name: Inspect the runner images
+        run: pnpm oci:verify
+      - name: Start the runner images
+        run: pnpm oci:smoke
+
   start-scripts-windows:
     name: Start scripts on Windows
     needs: quality
@@ -561,12 +588,70 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Full current E2E
         run: pnpm test:e2e
+      # Lupin Local's R-020 in the same Chromium: axe in both colour schemes and
+      # keyboard reach on its MVP-0 pages. It starts its own launcher and needs no database.
+      - name: Local product accessibility
+        run: pnpm test:local:browser
       - name: Upload E2E evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: product-e2e-evidence
           path: test-results/evidence
+          if-no-files-found: ignore
+          retention-days: 14
+
+  profile-matrix:
+    name: Profile matrix
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Plan task 19: the four deployment profiles, each booted from the API's own entry point
+    # against this job's PostgreSQL, checking what each serves and what each refuses to start
+    # with. `pr-blocking` since 2026-10-29: it was `pr-reporting` until four consecutive runs on
+    # main (bfee225, 053d676, d48e416, 546e3e2) passed 4 of 4, and graduated in one commit that
+    # moved the tier and dropped `continue-on-error`. No Chromium: every case is HTTP.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
+          # trust, not a password. The service port is bound to the runner only, and a
+          # password here would be a credential committed to the repository, which
+          # pnpm security:secrets refuses, correctly. The database is destroyed with the job.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lupin -d lupin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          run_install: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Profile matrix
+        run: pnpm test:e2e:profiles
+      - name: Upload profile-matrix results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: profile-matrix-results
+          path: test-results
           if-no-files-found: ignore
           retention-days: 14
 

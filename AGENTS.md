@@ -25,7 +25,7 @@ fails_.
 | `backdrop-filter` is written in one place: the `surface-translucent` utility in `theme.css`, used only by the palette, dialogs, popovers and toasts. The plane itself is flat; the accent is the Lupin violet, used for focus, links, the active state and the one primary fill. | `eslint.config.js` — `GLASS_SELECTOR` refuses any `backdrop-*` class, spread into every block that sets `no-restricted-syntax`; `theme.test.ts` refuses a `backdrop-filter` outside the utility; `theme-resolution.test.ts` limits the utility to the four overlay files |
 | `animate-in`, `fade-in-*`, `zoom-in-*` and `slide-in-from-*` do not exist — no plugin is installed, and sixteen class names written against one compiled to nothing.                                                                                                             | `PLUGIN_PROVIDED_UTILITIES` in `theme-resolution.test.ts`. Use `animate-fade-in`, `animate-fade-out`, `animate-zoom-in-95`, `animate-zoom-out-95`                                                                                                                        |
 | `lucide-react` is a dependency of `packages/ui` and **not** of `apps/web`, so an application component cannot import it                                                                                                                                                          | pnpm's isolated `node_modules`. Import icons from `@lupin/ui`; the list is `packages/ui/src/icons.ts`, and adding one is a line a reviewer reads                                                                                                                         |
-| The two font binaries are committed once, in `packages/ui/src/assets/fonts/`, each with a sha256 and an upstream beside it                                                                                                                                                       | `packages/ui/src/tokens/fonts.test.ts`, in both directions — the recorded digest, and no binary in the directory without a row                                                                                                                                           |
+| The two font binaries (Geist and Geist Mono) are committed once, in `packages/ui/src/assets/fonts/`, each with a sha256 and an upstream beside it; the site loads those same files                                                                                               | `packages/ui/src/tokens/fonts.test.ts`, in both directions — the recorded digest, and no binary in the directory without a row                                                                                                                                           |
 | The documentation site imports the product's `theme.css`, `fonts.css` and `motion.css`; it does not copy them, and no site stylesheet holds a literal colour                                                                                                                     | `pnpm site:doctor` check 8, which reads every stylesheet under `site/.vitepress/theme/` and runs without a build, so a palette drift fails on every host rather than hiding behind a `GAP`                                                                               |
 
 ## Repository Overview
@@ -294,9 +294,10 @@ pnpm --filter @lupin/api exec vitest run src/routes/agents.test.ts -t "specific 
 **E2E tests (Playwright):**
 
 ```bash
-pnpm test:e2e                # All projects
+pnpm test:e2e                # Every project but the two with a mode of their own: the rendering budget and the profile matrix
 pnpm test:e2e:api            # The API slice (vertical-slice project, "API" tests)
 pnpm test:e2e:vertical       # The vertical slice in full
+pnpm test:e2e:profiles       # The four deployment profiles, each booted from the API's entry point. Its own required CI job
 npx playwright test e2e/some-file.spec.ts
 ```
 

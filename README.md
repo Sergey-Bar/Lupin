@@ -11,7 +11,7 @@
 
 <p align="center"><a href="site/guide/install.md"><strong>Get started</strong></a> &nbsp; · &nbsp; <a href="site/guide/concepts.md">Explore the concepts</a> &nbsp; · &nbsp; <a href="https://sergey-bar.github.io/Lupin/">Documentation</a></p>
 
-Send Lupin the reports your test tools already produce — Playwright, JUnit, k6 or
+Lupin is a local-first QA control plane. Send it the reports your test tools already produce — Playwright, JUnit, k6 or
 OWASP ZAP. It keeps each run, retry and artifact together, then shows your team what
 passed, what needs attention and what was never measured.
 

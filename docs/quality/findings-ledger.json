@@ -6860,30 +6860,46 @@
       "title": "Behind the Cloudflare tunnel every request has the tunnel's address, so sign-in limits are shared and the audit trail records the tunnel",
       "band": "Major",
       "provenance": "hand",
-      "status": "debt",
+      "status": "fixed",
       "wave": "PRO-2026-10",
       "confirmed": true,
       "confirmedOn": "2026-10-28",
       "summary": "The edge appends its TCP peer to `X-Forwarded-For`, and the API keys the per-address sign-in limits and the audit row's address on that last hop. Behind the tunnel the peer is always the `cloudflared` container, so any person Access lets in can use up the sign-in limits for every remote user, and every remote audit row carries the same address.",
       "confirmedBy": "Independent review of PR #111 on 2026-10-28, from `infra/nginx/edge.conf` and `defaultClientKey` in `routes/auth.ts`.",
-      "owner": "The repository owner.",
-      "removalCondition": "Closed when a request that reached the edge through the tunnel is keyed on the `CF-Connecting-IP` Cloudflare sets, a request from any other peer never is, and a test shows two remote visitors with separate sign-in limits and their own audit addresses.",
-      "resolution": "Recorded as debt, not fixed. Trusting the header safely needs the edge to accept it only on the tunnel's own connection and never from a client that sets it, which is a design of its own. Until then the remote guide says what is shared, and Access stands in front of every limit: nobody it refuses reaches them."
+      "resolution": "The removal condition is met at the edge, so the API needed no change: it already keys the sign-in limits and the audit address on the last `X-Forwarded-For` hop the edge writes. The tunnel's public hostname now points at `edge:8081`, a listener the compose file does not publish, which writes Cloudflare's `CF-Connecting-IP` as that hop. Run on 2026-10-29 with the real `edge.conf` in `nginx:1.27-alpine` beside an echo upstream: through 8081 the API saw `203.0.113.7` from the header, and a forged `X-Forwarded-For` beside it was replaced; without the header it saw the peer; on 8080 a forged `CF-Connecting-IP` was ignored and the peer was forwarded. A tunnel left pointed at `edge:8080` keeps working with the old shared address, and the remote guide says how to move it. The listener has no HTTPS redirect, so a LAN certificate and a tunnel now mix.",
+      "evidence": [
+        {
+          "path": "scripts/lib/edge-tls.test.mjs",
+          "asserts": "The edge has a tunnel listener on 8081 whose every location forwards `CF-Connecting-IP` (falling back to the peer) as the address the API keys on, with no HTTPS redirect; no other listener reads the header; and the compose file publishes 8080 and 8443 and not 8081."
+        },
+        {
+          "path": "infra/nginx/edge.conf",
+          "asserts": "The tunnel listener, `map $http_cf_connecting_ip $lupin_tunnel_client`, and the reason it is safe only on an unpublished port."
+        }
+      ]
     },
     {
       "id": "PRO-17",
       "title": "Disabling or deprovisioning a person leaves the access tokens they created working",
       "band": "Major",
       "provenance": "hand",
-      "status": "debt",
+      "status": "fixed",
       "wave": "PRO-2026-10",
       "confirmed": true,
       "confirmedOn": "2026-10-28",
       "summary": "SCIM deactivation and disabling on _Members_ revoke the person's sessions and nothing else. Access tokens belong to the workspace and record who created them as free text, so a token a departed person made for CI keeps its role until an admin revokes it.",
       "confirmedBy": "Independent review of PR #111 on 2026-10-28, traced through `routes/scim.ts`, `routes/members.ts` and `access_tokens.created_by`.",
-      "owner": "The repository owner.",
-      "removalCondition": "Closed when an access token records the person who created it by user id, and disabling or deprovisioning that person revokes it or makes an admin choose to keep it, with a test that a deprovisioned person's token is refused.",
-      "resolution": "Recorded as debt. Revoking a workspace's CI tokens because one person left would stop that workspace's pipelines without warning, so it stays the admin's decision: the profiles and remote guides say that disabling revokes no token, and where to revoke them."
+      "resolution": "A token a person makes already records them as `user:<id>`, so no schema change was needed. `revokeTokensMadeBy` (`apps/api/src/services/access-service.ts`) revokes them: in one workspace when the membership there ends, on Members or by SCIM DELETE, and in every workspace when the account is disabled or deprovisioned. The audit row of each carries `tokensRevoked`. A token the installation's admin made belongs to no person and is never revoked this way, and the guides now say that is the kind to give CI. This reverses the earlier decision to leave revocation to an admin: a departed person's credential working until someone remembers it is the larger risk.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/members.test.ts",
+          "asserts": "Removing a person revokes the tokens they made in that workspace only, disabling them revokes every token they made in every workspace and records how many, and tokens another person or the installation's admin made are untouched."
+        },
+        {
+          "path": "apps/api/src/routes/scim.test.ts",
+          "asserts": "SCIM deactivation revokes every token the person made, and a DELETE that leaves them in no workspace revokes theirs too, while the workspace token made by an admin token survives."
+        }
+      ]
     },
     {
       "id": "PRO-18",
@@ -6913,12 +6929,319 @@
       "title": "Minor edges of several workspaces, enforced SSO and restore that the review found and this wave left open",
       "band": "Minor",
       "provenance": "hand",
-      "status": "open",
+      "status": "fixed",
       "wave": "PRO-2026-10",
       "confirmed": true,
       "confirmedOn": "2026-10-28",
       "summary": "Two admins demoting each other at once can both pass the last-admin check. The web create-workspace form shows for any admin of the current workspace, while the API allows only the installation's admin and the default workspace's. Under enforced SSO the workspace dispatch still reads a browser's token cookie and `GET /api/v1/auth/session` still reports an installation session, though neither signs anyone in. A restore skips the release check when `LUPIN_VERSION` was never written, leaving the migration count. GitHub webhooks reach the default workspace's projects only, which the profiles guide says.",
-      "confirmedBy": "Independent review of PR #111 on 2026-10-28, and reading the code while the other findings were fixed."
+      "confirmedBy": "Independent review of PR #111 on 2026-10-28, and reading the code while the other findings were fixed.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/members.test.ts",
+          "asserts": "Two admins demoting each other at once: one succeeds, one is LAST_ADMIN, and one admin is left."
+        },
+        {
+          "path": "apps/api/src/routes/workspaces.test.ts",
+          "asserts": "The workspace list reports canCreate to exactly the callers the create route admits, and to none below team."
+        },
+        {
+          "path": "apps/web/src/components/Workspaces.test.tsx",
+          "asserts": "The create form follows the API's canCreate, not the current workspace's role."
+        },
+        {
+          "path": "apps/api/src/http/workspace-dispatch.test.ts",
+          "asserts": "Under enforced SSO without break-glass the token cookie does not steer the workspace; a bearer still does."
+        },
+        {
+          "path": "apps/api/src/routes/auth-sso.test.ts",
+          "asserts": "GET /api/v1/auth/session does not report an installation session that enforced SSO ignores."
+        },
+        {
+          "path": "scripts/lib/start-scripts.test.mjs",
+          "asserts": "A never-updated install records the release compose.yml pins, and a restore onto an older one is refused."
+        }
+      ],
+      "resolution": "Each fixed with the test above, which failed first. The last-admin changes are queued in the process, because an install is one API process (ADR-006). GitHub webhooks reaching only the default workspace's projects is a scope limit rather than an edge case, and is carried on as PRO-20."
+    },
+    {
+      "id": "MNT-152",
+      "title": "The nightly mutation ratchet failed on main: shared-contracts and orchestration below their floors",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-28",
+      "summary": "The nightly run of 2026-10-28 on `5dd838e` failed `pnpm mutation:ratchet`: `packages/shared-contracts` 90.95 against a floor of 91.43, and `packages/orchestration` 96.46 against 96.53. They fell for different reasons. Schemas added to `shared-contracts` since the floor was set took it from 1,763 mutants to 3,206, and `src/schemas/health.ts` alone had 45 survivors. The refinements' issue paths and messages, the dimension label table, the trimming of administrator-typed names and four repository-URL rules (a trailing dash, an anchored scp form, an empty ssh host, DEL) were never asserted. `orchestration` gained no survivor at all: four killed mutants went with code removed from `state-machine.ts`, so the same seven equivalent survivors that MNT-91 left in place weighed more.",
+      "confirmedBy": "The nightly log, and the report it uploaded: 288 survived and 2 without coverage in `shared-contracts`, 7 survived in `orchestration`, each read by file and line.",
+      "evidence": [
+        {
+          "path": "packages/shared-contracts/src/schemas/health.test.ts",
+          "asserts": "The issue a grade and a triage decision fail with names its field and says why; every dimension label is readable and distinct; administrator-typed names are trimmed; and a repository URL is refused by the rule that names it, a trailing dash is not a leading one, an scp-style URL is the whole value, and an ssh URL needs a host."
+        },
+        {
+          "path": "packages/orchestration/src/phase-outcome.ts",
+          "asserts": "Membership is the set's alone: the guards in front of `has` that only repeated it are gone, which removes six of the seven equivalent mutants rather than disabling them."
+        },
+        {
+          "path": "docs/quality/mutation-baseline.json",
+          "asserts": "The floors are raised to the new readings, 92.29 and 99.43, so the gain cannot be spent silently."
+        }
+      ],
+      "resolution": "Measured with StrykerJS on Windows on 2026-10-28. `health.ts` went from 45 survivors to 2, and both are equivalent: `<=` against `<` for a space, which the whitespace test catches anyway, and an empty `catch` block whose `undefined` refuses the same as its `false`. That took `shared-contracts` to 92.29 (2,959 killed of 3,206). `orchestration` reads 99.43, and its one survivor is the equivalent hour guard in `schedule.ts`, left as MNT-91 left it. No mutant was excluded and no `// Stryker disable` was added."
+    },
+    {
+      "id": "MNT-153",
+      "title": "The nightly quality baseline was cancelled at its 30-minute limit, so three runs recorded no measurement",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-28",
+      "summary": "The `quality-baseline` job in `nightly.yml` runs the whole suite twice: `pnpm test` for the per-package coverage `coverage:ratchet` reads, then `pnpm quality:baseline`, whose root Vitest run is where the aggregate counts tests. On 2026-10-28 `pnpm test` took 18 minutes and the baseline was still in its Vitest run when the 30-minute limit cancelled the job. The nightlies of 2026-10-27, 2026-10-28 and the dispatched run on `053d676` were all cancelled this way and uploaded no report. The job carries `continue-on-error`, so the workflow still read as a pass or as a failure of something else, and nobody saw that the numbers in `docs/quality/` had stopped being measured. The last green run, on 2026-10-26, took 18 minutes in total on a smaller suite.",
+      "confirmedBy": "The job logs of runs 40476041343, 40664476015 and 40705965488: each was cancelled at 30 minutes, inside `node ./scripts/quality-baseline.mjs`, after `pnpm test` had passed.",
+      "evidence": [
+        {
+          "path": ".github/workflows/nightly.yml",
+          "asserts": "The quality baseline job has 60 minutes, with the measured reason beside it."
+        }
+      ],
+      "resolution": "The limit is raised to 60 minutes. Running the suite once would be faster, but the two runs answer different questions (per-package coverage and a workspace-wide count), and folding them is a change to what the baseline measures, not to its budget. The next nightly is what shows the job finishing."
+    },
+    {
+      "id": "MNT-154",
+      "title": "The nightly mutation job was cancelled at its 90-minute limit before the ratchet ran",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-28",
+      "summary": "`pnpm mutation` runs Stryker over five packages in one job. On the two-core runner the job took 82 and 85 minutes on 2026-10-28, `packages/reporting` alone about 70 of them with 5,642 mutants, against a limit of 90. The run dispatched on `d48e416` was cancelled at 90 minutes with `reporting` 94% tested, so no report was uploaded and `mutation:ratchet` never ran: a floor that regressed that night would not have been seen. The comment beside the limit still read 'about 15 minutes on a developer laptop'.",
+      "confirmedBy": "The job logs of runs 40705965488 (82 minutes, success), 40664476015 (85 minutes) and 40731942729 (cancelled at 90 minutes, `Mutation testing 94%` the last progress line).",
+      "evidence": [
+        {
+          "path": ".github/workflows/nightly.yml",
+          "asserts": "The mutation job has 150 minutes, with the measured durations beside it."
+        }
+      ],
+      "resolution": "The limit is raised to 150 minutes. Splitting the job per package would finish sooner but is a change to how the ratchet reads its reports, not to its budget. The next nightly is what shows the job finishing."
+    },
+    {
+      "id": "MNT-155",
+      "title": "CodeQL's first scan of main found quadratic regexes, file-system races and an unescaped TOML name",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-29",
+      "summary": "`codeql.yml` was added in #118 and its first scan opened 39 alerts. Read one by one, these were real: polynomial regexes on input the product does not control (Jira base URL trailing slashes took 16 s on 50,000 slashes, CODEOWNERS comment stripping 12 s, the ZAP alert-item scan 6.4 s, plus the trailing-slash strip in flow metrics and the coverage line-counter attribute scan); a TOML dependency name used as a regex without escaping, so `a.b` matched `axb`; an alternation in the scan classifier whose anchors bound only its ends; the runner spool created with the default mode; and stat-then-read sequences in the agent-config scan, the k6 summary read and the local tool's report, archive and output reads, where the file read could differ from the file checked. The others were test code, the operator's own spawn arguments, dev tooling writing its own output, or a pattern CodeQL mistook for a regex; each is dismissed on GitHub with that reason.",
+      "confirmedBy": "Each fix has a test that names the CodeQL rule. The TOML test failed before the escape and passes after; the timing tests for Jira, CODEOWNERS and ZAP took 16 s, 12 s and 6.4 s before the change and under one second after.",
+      "evidence": [
+        {
+          "path": "packages/connectors/jira/src/index.test.ts",
+          "asserts": "Trailing slashes are trimmed in linear time, whatever precedes them."
+        },
+        {
+          "path": "packages/projects/src/health/codeowners.test.ts",
+          "asserts": "A long run of whitespace is read in linear time; a trailing comment is dropped and a `#` inside a token is kept."
+        },
+        {
+          "path": "packages/reporter/src/adapters/zap-xml.test.ts",
+          "asserts": "Many unclosed alert items are read in linear time, whatever the case of their tag."
+        },
+        {
+          "path": "packages/projects/src/detect/manifest.test.ts",
+          "asserts": "TOML names are matched literally."
+        },
+        {
+          "path": "apps/api/src/infrastructure/checked-file.test.ts",
+          "asserts": "A name that now means another file is refused, and a file over the limit when it is read is refused."
+        },
+        {
+          "path": "local/test/bounded-read.test.mjs",
+          "asserts": "The size check, the type check and the read go through one handle."
+        }
+      ],
+      "resolution": "The regexes are replaced by index scans or escaped; the reads go through one handle (`readCheckedFile`, `readFileBounded`, the k6 summary read) so the size and type checks describe the bytes read; the spool is created with mode 0600. Twenty-two alerts are dismissed on GitHub with the reason recorded on each."
+    },
+    {
+      "id": "MNT-156",
+      "title": "A grouped Dependabot update could never pass the commit-message gate, and runner manifests drifted from their images",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-29",
+      "summary": "#119 (nginx 1.29 and ZAP 2.17 across two directories) failed `Commit message` on `body-max-line-length`: Dependabot writes one line per directory, 106 characters here, and has no setting to wrap it, so every grouped update across directories was blocked for good. Reading the same updates showed a second gap: `infra/runners/k6` and `infra/runners/zap` record the tool version both in the Dockerfile's FROM tag and in `manifest.json`, Dependabot bumps only the first, and nothing compared them, so #119 and #121 would have left the manifests at 2.16.1 and 0.57.0 over 2.17.0 and 2.3.0 images.",
+      "confirmedBy": "`commitlint --from <sha>~1 --to <sha>` on #119's commit failed with main's config and passes with this one; a 101-character body line in any other commit still fails. `runner-manifests.test.mjs` failed on both manifests with the two Dependabot bumps applied, before the manifests were updated.",
+      "evidence": [
+        {
+          "path": "scripts/lib/commitlint-config.test.mjs",
+          "asserts": "Dependabot's generated body is exempt from the body line limit only with its exact trailer; every other body keeps the 100-character limit."
+        },
+        {
+          "path": "scripts/lib/runner-manifests.test.mjs",
+          "asserts": "Each runner whose base image is its tool records the FROM tag as `toolVersion`, and every runner directory is classified."
+        }
+      ],
+      "resolution": "The built-in body rule is replaced by one that skips a body carrying Dependabot's exact sign-off trailer; header, type and `scope-enum` still apply to its commits. The k6 and ZAP bumps from #121 and #119 land here with their manifests updated, and the manifest test makes the next bump fail until its manifest follows."
+    },
+    {
+      "id": "MNT-157",
+      "title": "The ZAP runner image could not start as the user it is built to run as",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-29",
+      "summary": "`infra/runners/zap` switches to uid 65532, which the upstream image has no passwd entry for. Java's `user.home` was therefore `?`, and `zap.sh -version` exited 1 with `Unable to create home directory: /zap/?/.ZAP/`, on 2.16.1 and on 2.17.0 alike. With a home but no Firefox profile, ZAP's client add-on waited for ever on `firefox -CreateProfile` (a thread dump showed `FirefoxProfileManager.getOrCreateProfile` in `ProcessImpl.waitFor`). Under the manifest's read-only root it also could not write its state. Nothing ran the image: `oci:build` builds and `oci:verify` inspects, so the defect was invisible to every gate.",
+      "confirmedBy": "Built and run with Docker on 2026-10-29: the image from main exited 1 with the home-directory error; the stock image as its own `zap` user printed 2.17.0 in 15 s. After the fix the image prints 2.17.0 and exits 0, including with `--read-only --network none --cap-drop ALL --tmpfs /tmp`. `pnpm oci:build` and `pnpm oci:verify` pass for all three runners, and k6 reports v2.3.0 under the same flags.",
+      "evidence": [
+        {
+          "path": "scripts/lib/runner-manifests.test.mjs",
+          "asserts": "The ZAP runner user has a passwd entry, a home inside the chowned tree with the bundled Firefox profile, and ZAP's state directory on /tmp under a read-only root."
+        }
+      ],
+      "resolution": "The Dockerfile adds a passwd entry for 65532 with home `/automation/home`, copies the upstream Firefox profile there, and points ZAP's state at `/tmp/zap` with `-dir`, so a read-only root needs only a `/tmp` tmpfs. The test reads the Dockerfile; it failed before the change. No CI job runs the runner images, so a regression in ZAP's startup itself would still be seen only by running one."
+    },
+    {
+      "id": "MNT-158",
+      "title": "No gate started the runner images, so an image that could not start passed every check",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-29",
+      "summary": "`oci:build` builds the three runner images and `oci:verify` inspects them (image id, configured user, manifest agreement); neither starts one, and only `release-gate.yml` ran them at all. MNT-157's ZAP image exited 1 on every start with both green, and nothing in a pull request built the images.",
+      "confirmedBy": "`pnpm oci:smoke` against the ZAP Dockerfile from before MNT-157 failed with `zap: exited 1` and `Unable to create home directory: /zap/?/.ZAP/`; against main it passed for all three (playwright, k6 v2.3.0, ZAP 2.17.0 in 12.6 s).",
+      "evidence": [
+        {
+          "path": "scripts/lib/oci-smoke.test.mjs",
+          "asserts": "Each image is started under its manifest's user, network, read-only root, memory, pids and CPU with every capability dropped, and fails on a non-zero exit, a hang past 180 s, a signal, or no output."
+        },
+        {
+          "path": ".github/workflows/unified-ci.yml",
+          "asserts": "The `Runner images` job runs `oci:build`, `oci:verify` and `oci:smoke` on every pull request."
+        }
+      ],
+      "resolution": "`scripts/oci-smoke.mjs` starts each built image with the isolation its manifest declares, and the new `Runner images` job runs build, verify and smoke on every pull request. It is `pr-blocking` because it was watched failing on the defect and passing on the fix before it was wired."
+    },
+    {
+      "id": "MNT-159",
+      "title": "site:doctor check 8 read one stylesheet, so a palette in a sibling file passed it",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-29",
+      "summary": "Check 8, named 'the site uses the product palette', read only `site/.vitepress/theme/custom.css`. The public-site redesign added `lupin.css`, which points twelve `--lupin-*` tokens and the VitePress variables at a hex palette with a violet accent, and check 8 stayed green. `site/guide/design-language.md` and AGENTS.md went on saying the check made two palettes impossible and the fonts were committed once.",
+      "confirmedBy": "A new test writes `rogue-palette.css` beside `custom.css` with a hex token; check 8 passed it before the change and fails it after. The test that the exception is named in the check's output failed before the change.",
+      "evidence": [
+        {
+          "path": "scripts/lib/site-doctor-dom.test.mjs",
+          "asserts": "A literal colour in any theme stylesheet other than the named exception fails check 8, and the exception is printed."
+        }
+      ],
+      "resolution": "Check 8 reads every stylesheet under `site/.vitepress/theme/`, and `lupin.css` is the one named exception (`SITE_PALETTE_EXCEPTION`), printed in the check's note and recorded in `site/.vitepress/DESIGN-SYSTEM.md`. The design-language page and the AGENTS.md design-system table now describe the site's palette and its Geist fonts as that exception, and the console keeps its accent with no hue and its fonts in one place."
+    },
+    {
+      "id": "MNT-160",
+      "title": "Lupin Local MVP-0: an unreadable folder scanned as empty, a zero-test report was not shown, and the offline criterion had no test",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-29",
+      "summary": "Read against the PRD's MVP-0 exit criteria and requirements. A folder the user could not list (R-002) was not refused: `scanRepository` checked only that the path was a directory, so it scanned as `complete` with nothing found, a claim about a folder nobody could read. The dashboard never rendered `testsFound.emptyReports`, so a report with zero tests showed as a total of 0 (exit criterion 5). The offline criterion (exit criterion 7, R-015) rested on regexes over a subset of source files; nothing ran the launcher with the network refused. Only `bounded-read.test.mjs` of the 22 local test files ran in CI, the browser half of R-020 had never run, the empty dashboard offered no next action (R-014), and no figure linked to the reports behind it (R-011).",
+      "confirmedBy": "Each new test was run on the old code first. The unreadable-folder test returned `complete` instead of `failed`; the end-to-end offline test reached the served dashboard and failed on the missing zero-test sentence; the three dashboard tests failed. The browser tests were checked by breaking them: a low-contrast muted colour failed axe in the scheme it was changed in, a removed focus outline failed the keyboard test, and a removed skip link failed the skip-link test.",
+      "evidence": [
+        {
+          "path": "local/test/offline.test.mjs",
+          "asserts": "The real launcher under a guard that refuses and records any non-loopback TCP, DNS or UDP use scans a folder through the form, shows the dashboard, serves every report and its original bytes, records nothing, and leaves the folder unchanged; the guard is shown to catch a connection, a lookup and a fetch."
+        },
+        {
+          "path": "local/test/detect.test.mjs",
+          "asserts": "An unlistable folder is refused as `unreadable`; read-only files are left as they were; every piece of evidence is a path:line naming a real line."
+        },
+        {
+          "path": "local/test/ui.test.mjs",
+          "asserts": "A zero-test report is said so on the dashboard; the empty dashboard offers one next action; the figures link to the reports behind them."
+        },
+        {
+          "path": "local/test/server.test.mjs",
+          "asserts": "Every refusal reason the scanner returns has its own sentence on the folder form, and the socket itself is bound to loopback."
+        }
+      ],
+      "resolution": "The scanner refuses an unlistable folder with `unreadable`, and the folder form has a sentence for every refusal. The dashboard says how many reports contain no tests, names the next step when nothing was found, and links each figure to the reports behind it. `offline-guard.mjs` and `offline.test.mjs` prove the offline criterion end to end. Every `local/test/*.test.mjs` runs in `pnpm test:integration`, so `verify` and CI run them, and `pnpm test:local:browser` runs axe in both colour schemes and keyboard reach in Chromium in the Product E2E job. `docs/local/implementation-status.md` maps each exit criterion to its test. Not done: a typecheck of `local/`, and Phase 0 user validation, which the roadmap's Phase 1 exit also requires."
+    },
+    {
+      "id": "MNT-161",
+      "title": "Lupin Local showed every Jest or Vitest project as having two incomplete reports",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-30",
+      "summary": "Found by scanning a folder laid out the way Jest and Vitest write coverage: `coverage/lcov.info` beside `coverage-summary.json` and `coverage-final.json`. The two Istanbul JSON files sit in a report area, so they were ingested, read as Playwright JSON, rejected as `not-playwright`, and the dashboard said '2 reports are not complete' on an ordinary project.",
+      "confirmedBy": "The scan of that folder reported found 4, read 2, rejected 2 and the banner; after the change, found 2, read 2, rejected 0 and no banner. The new detect test failed before the change.",
+      "evidence": [
+        {
+          "path": "local/test/detect.test.mjs",
+          "asserts": "Istanbul's coverage-summary.json and coverage-final.json beside lcov are not offered as reports, in the root and in a package."
+        }
+      ],
+      "resolution": "The scanner does not offer those two file names as reports. Any other report-shaped file that is not a report is still listed as rejected with its reason (R-013)."
+    },
+    {
+      "id": "PRO-20",
+      "title": "GitHub webhooks reach only the default workspace's projects",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "PRO-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-10-28",
+      "summary": "A webhook delivery carries no workspace credential, so it is read in the default workspace, and one for a repository registered in another workspace is answered `ignored`, `unknown-repository`. That workspace's scheduled delivery syncs still run, so its data arrives late rather than never.",
+      "confirmedBy": "Independent review of PR #111 on 2026-10-28, and `apps/api/src/routes/github-webhook.test.ts`, which pins the behaviour in a second workspace.",
+      "resolution": "The receiver is installation-wide, so `enabledSourcesForRepository(..., 'everywhere')` reads every workspace's enabled sources for the repository after the signature verifies, and each sync is queued in its source's own workspace. The installation-wide delivery syncer already ran every workspace's queue. The payload still decides only the repository, never the workspace.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/github-webhook.test.ts",
+          "asserts": "A delivery received by one workspace's composition for a repository registered in another queues the sync in the registering workspace, and the replay record stays the receiver's."
+        }
+      ]
+    },
+    {
+      "id": "MNT-162",
+      "title": "the site palette exception recorded by MNT-159 existed only because the console palette was monochrome",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-11-01",
+      "summary": "MNT-159 closed the hole in site:doctor check 8 by naming site/.vitepress/theme/lupin.css as the one stylesheet allowed its own hex palette, and recorded the site as a site-only exception to the product palette. That left two palettes, the console's hueless one and the site's violet one, held apart by a named file. The exception was the symptom: the console and the site were meant to be one design.",
+      "confirmedBy": "The 4.0.0 redesign moved the Lupin violet, Geist and the neutrals into packages/ui/src/tokens/theme.css and fonts.css, so lupin.css maps its names onto the product tokens and holds no colour. A test writes a literal colour into lupin.css itself, in hex and as oklch(), and check 8 does not report it while the exception stands.",
+      "evidence": [
+        {
+          "path": "scripts/lib/site-doctor-dom.test.mjs",
+          "asserts": "A literal colour in any theme stylesheet, lupin.css included and written as hex or as oklch(), fails check 8; there is no exempt file."
+        },
+        {
+          "path": "packages/ui/src/tokens/theme.test.ts",
+          "asserts": "The accent is the violet, in a hue band, above a chroma floor, at 4.5:1 and APCA Lc 60 on every plane step, and 20 degrees from info."
+        }
+      ],
+      "resolution": "The exception and its SITE_PALETTE_EXCEPTION constant are removed from scripts/site-doctor.mjs, along with site/.vitepress/DESIGN-SYSTEM.md. site/guide/design-language.md and the AGENTS.md design-system table describe one palette. MNT-159 stays as the record of the earlier state."
     }
   ]
 }

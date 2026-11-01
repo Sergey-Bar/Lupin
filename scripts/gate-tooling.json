@@ -74,6 +74,8 @@
     "test:e2e": "pr-blocking",
     "test:e2e:api": "pr-blocking",
     "test:e2e:vertical": "pr-blocking",
+    "test:e2e:profiles": "pr-blocking",
+    "test:local:browser": "pr-blocking",
     "test:render": "pr-blocking",
     "status:10": "pr-blocking",
     "review:pr": "pr-reporting",
@@ -89,6 +91,7 @@
     "test:performance": "nightly",
     "oci:build": "release",
     "oci:verify": "release",
+    "oci:smoke": "pr-blocking",
     "migrate:apply": "never-in-ci",
     "prepare": "pr-blocking",
     "dev": "never-in-ci",
@@ -178,6 +181,11 @@
       "preinstalledInJobImage": true,
       "why": "The ubuntu runner image ships both, so no install step is needed."
     },
+    "oci:smoke": {
+      "requires": ["docker|podman"],
+      "preinstalledInJobImage": true,
+      "why": "**`oci:build` builds the runner images and `oci:verify` inspects them, and neither starts one.** The ZAP image exited 1 on every start as its own user for as long as it existed (ledger MNT-157) with both gates green. This starts each image `oci:build` produced under the isolation its manifest declares (user, network, read-only root with a `/tmp` tmpfs, memory, pids, CPU, every capability dropped) and fails unless it exits 0 with output inside 180 s. Run against the pre-MNT-157 ZAP Dockerfile it failed with `Unable to create home directory`; against main it passed for all three. `pr-blocking` from the start because that was watched in both directions before it was wired, and it needs nothing but the Docker the ubuntu runner already ships."
+    },
     "oci:verify": {
       "requires": ["docker|podman"],
       "preinstalledInJobImage": true,
@@ -194,6 +202,10 @@
     "test:e2e:vertical": {
       "requires": [],
       "why": "Playwright is a devDependency; the browser needs `playwright install`."
+    },
+    "test:e2e:profiles": {
+      "requires": [],
+      "why": "**Graduated to `pr-blocking` on 2026-10-29, in one commit that moved this tier and dropped the step's `continue-on-error`** (plan task 19, `.kilo/plans/1793102400000-profiles-and-remote-plan.md`). The matrix boots the API's own entry point once per deployment profile against the job's PostgreSQL, beside the suite's server, and checks what each profile serves and what each refuses to start with. It was `pr-reporting` while it was new, because it starts processes and a required check that flakes teaches reviewers to read red as noise. The condition was three consecutive runs on main; four were read from the job logs, each 4 of 4 passed: `bfee225` (59.2 s), `053d676` (53.6 s), `d48e416` (44.8 s) and `546e3e2` (36.2 s). No browser: every case is HTTP, so the job installs none. Not in `verify`: it needs a database."
     },
     "test:render": {
       "requires": [],
@@ -303,6 +315,7 @@
         "test:e2e",
         "test:e2e:api",
         "test:e2e:vertical",
+        "test:e2e:profiles",
         "test:render",
         "render:baseline"
       ],
