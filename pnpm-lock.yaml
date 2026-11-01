@@ -124,6 +124,7 @@ overrides:
   yaml@>=2.0.0 <2.8.3: ^2.8.3
   uuid@<11.1.1: ^11.1.1
   csv-parse@<7.0.2: ^7.0.2
+  follow-redirects@>=1.16.0 <=1.16.1: ^1.16.2
 
 patchedDependencies:
   '@stryker-mutator/vitest-runner@10.0.0': 890316bd6edb446e7b450b23c08fe314a14cbba08ae7adedb1ce5614d07913e0
@@ -207,6 +208,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@hono/node-server':
+        specifier: ^2.1.5
+        version: 2.1.5(hono@4.13.14)
       '@lupin/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -264,9 +268,6 @@ importers:
       '@lupin/tool-sdk':
         specifier: workspace:*
         version: link:../../packages/tool-sdk
-      '@hono/node-server':
-        specifier: ^2.1.5
-        version: 2.1.5(hono@4.13.14)
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
         version: 1.32.2(supports-color@8.1.1)(zod@4.6.7)
@@ -427,12 +428,12 @@ importers:
         specifier: 'catalog:'
         version: 4.6.7
     devDependencies:
-      '@lupin/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@eslint/js':
         specifier: 'catalog:'
         version: 10.0.1(eslint@10.13.0(jiti@2.7.0)(supports-color@8.1.1))
+      '@lupin/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@sentry/vite-plugin':
         specifier: 'catalog:'
         version: 11.9.0(rollup@4.64.12)
@@ -1240,15 +1241,15 @@ importers:
 
   tests/integration:
     dependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.5.11
+        version: 0.5.11
       '@lupin/db':
         specifier: workspace:*
         version: link:../../packages/db
       '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
-      '@electric-sql/pglite':
-        specifier: ^0.5.11
-        version: 0.5.11
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@electric-sql/pglite@0.5.11)(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(pg@8.23.1)
@@ -5398,8 +5399,8 @@ packages:
   focus-trap@7.8.0:
     resolution: {integrity: sha512-/yNdlIkpWbM0ptxno3ONTuf+2g318kh2ez3KSeZN5dZ8YC6AAmgeWz+GasYYiBJPFaYcSAPeu4GfhUaChzIJXA==}
 
-  follow-redirects@1.16.1:
-    resolution: {integrity: sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==}
+  follow-redirects@1.16.2:
+    resolution: {integrity: sha512-/kVP2U8z596Ia0gwFrwyIeo74ta5aVmSeU1FfAUMAmcEP5EP7zydmag3SLiN64NaRKef3lxsq7i/g7ltJQDGow==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -11428,7 +11429,7 @@ snapshots:
 
   axios@1.20.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
-      follow-redirects: 1.16.1(debug@4.4.3(supports-color@8.1.1))
+      follow-redirects: 1.16.2(debug@4.4.3(supports-color@8.1.1))
       form-data: 4.0.6
       https-proxy-agent: 5.0.1(supports-color@8.1.1)
       proxy-from-env: 2.1.0
@@ -12403,7 +12404,7 @@ snapshots:
     dependencies:
       tabbable: 6.5.0
 
-  follow-redirects@1.16.1(debug@4.4.3(supports-color@8.1.1)):
+  follow-redirects@1.16.2(debug@4.4.3(supports-color@8.1.1)):
     optionalDependencies:
       debug: 4.4.3(supports-color@8.1.1)
 
