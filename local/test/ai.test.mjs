@@ -232,7 +232,7 @@ test('the module has no way to run a command, reach the network or change a file
 
 test('no part of the shipped program offers a way to turn AI on', () => {
   const root = path.resolve(import.meta.dirname, '..');
-  const cli = readFileSync(path.join(root, 'bin', 'automate-local.mjs'), 'utf8');
+  const cli = readFileSync(path.join(root, 'bin', 'lupin-local.mjs'), 'utf8');
   const routes = readFileSync(path.join(root, 'src', 'routes.mjs'), 'utf8');
   assert.ok(
     !/createAiGateway\s*\(/.test(cli),

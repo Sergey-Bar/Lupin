@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { CanonicalFindingSchema, type CanonicalFinding } from '@automate/shared-contracts';
+import { CanonicalFindingSchema, type CanonicalFinding } from '@lupin/shared-contracts';
 import { describe, expect, it } from 'vitest';
 import {
   AGENT_CONFIG_PATHS,

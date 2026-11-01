@@ -13,7 +13,7 @@
  * Two defects this file used to carry, both of which made the gate unrunnable rather
  * than merely wrong, and both found while wiring W-D.3:
  *
- * 1. `root` was the literal string `'C:/VS-Code-Projects/Github/Automate'`, so the gate
+ * 1. `root` was the literal string `'C:/VS-Code-Projects/Github/Lupin'`, so the gate
  *    could only ever run on the machine that committed it — and in CI, where that path
  *    does not exist, it had no `node_modules` to spawn eslint from. Resolved from
  *    `import.meta.dirname` instead, the same fix `playwright.config.ts` carries for the
@@ -87,7 +87,7 @@ const run = spawnSync(
     cwd: root,
     encoding: 'utf8',
     maxBuffer: 32 * 1024 * 1024,
-    env: { ...process.env, AUTOMATE_COMPLEXITY_CEILING: String(ceiling) },
+    env: { ...process.env, LUPIN_COMPLEXITY_CEILING: String(ceiling) },
   },
 );
 

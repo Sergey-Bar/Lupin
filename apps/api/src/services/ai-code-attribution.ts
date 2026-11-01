@@ -10,7 +10,7 @@ import {
   type AttributionOptions,
   type AttributionResult,
   type AttributionSignal,
-} from '@automate/reporting';
+} from '@lupin/reporting';
 
 /**
  * A pull request's attribution, from the pull request itself and from its commits.

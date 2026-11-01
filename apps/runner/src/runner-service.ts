@@ -7,12 +7,12 @@ import {
   type SpoolEntry,
   type SpoolQueue,
   type SpoolRetryPolicy,
-} from '@automate/runner-sdk';
+} from '@lupin/runner-sdk';
 import {
   QA_CONTRACT_VERSION,
   type RunPhase,
   type TerminalCanonicalTestStatus,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import {
   RunnerConfigurationError,
   type ExecutionArtifact,

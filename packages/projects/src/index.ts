@@ -1,4 +1,4 @@
-// @automate/projects — the project registry's pure half: ecosystem detection,
+// @lupin/projects — the project registry's pure half: ecosystem detection,
 // the declared-override merge, and (later) the derived QA Health Score.
 //
 // Nothing here holds a database handle or a filesystem handle. `detectProject`
@@ -7,10 +7,10 @@
 // without a container.
 
 export {
-  AUTOMATE_CONFIG_FILENAME,
-  AutomateConfigSchema,
+  LUPIN_CONFIG_FILENAME,
+  LupinConfigSchema,
   ProjectProfileSchema,
-  type AutomateConfig,
+  type LupinConfig,
   type ProjectProfile,
   type ResolvedProfile,
 } from './profile.js';

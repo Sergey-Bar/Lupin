@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { literalView, type RepositoryView } from '@automate/projects';
-import type { RunCommand } from '@automate/shared-contracts';
+import { literalView, type RepositoryView } from '@lupin/projects';
+import type { RunCommand } from '@lupin/shared-contracts';
 import { DomainError } from '../errors/domain-error.js';
 import { createRepoScanner, resolveCommand } from './repo-scan-service.js';
 

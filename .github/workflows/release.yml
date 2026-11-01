@@ -19,7 +19,7 @@ concurrency:
 
 env:
   NODE_VERSION: 24.x
-  IMAGE_PREFIX: ghcr.io/sergey-bar/automate
+  IMAGE_PREFIX: ghcr.io/sergey-bar/lupin
 
 jobs:
   prepare:
@@ -131,8 +131,8 @@ jobs:
           file: infra/docker/${{ matrix.image }}.Dockerfile
           platforms: linux/${{ matrix.platform.arch }}
           build-args: |
-            AUTOMATE_VERSION=${{ needs.prepare.outputs.version }}
-            AUTOMATE_REVISION=${{ github.sha }}
+            LUPIN_VERSION=${{ needs.prepare.outputs.version }}
+            LUPIN_REVISION=${{ github.sha }}
           outputs: type=image,name=${{ env.IMAGE_PREFIX }}-${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
           provenance: mode=max
           sbom: true
@@ -257,7 +257,7 @@ jobs:
         with:
           path: .
           format: cyclonedx-json
-          output-file: dist/release/automate-${{ needs.prepare.outputs.version }}.cdx.json
+          output-file: dist/release/lupin-${{ needs.prepare.outputs.version }}.cdx.json
           upload-artifact: false
           upload-release-assets: false
       - name: Publish the release
@@ -267,7 +267,7 @@ jobs:
           PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
         run: |
           set -euo pipefail
-          assets=("dist/release/automate-${VERSION}.zip" "dist/release/SHA256SUMS" "dist/release/automate-${VERSION}.cdx.json")
+          assets=("dist/release/lupin-${VERSION}.zip" "dist/release/SHA256SUMS" "dist/release/lupin-${VERSION}.cdx.json")
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" "${assets[@]}" --clobber
             gh release edit "$GITHUB_REF_NAME" --notes-file release-notes.md
@@ -290,30 +290,30 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release download "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" \
-            -p "automate-${{ needs.prepare.outputs.version }}.zip" -p SHA256SUMS
+            -p "lupin-${{ needs.prepare.outputs.version }}.zip" -p SHA256SUMS
           sha256sum -c SHA256SUMS
-          unzip -q "automate-${{ needs.prepare.outputs.version }}.zip"
+          unzip -q "lupin-${{ needs.prepare.outputs.version }}.zip"
       - name: Start it
-        working-directory: automate-${{ needs.prepare.outputs.version }}
+        working-directory: lupin-${{ needs.prepare.outputs.version }}
         env:
-          AUTOMATE_NO_BROWSER: '1'
+          LUPIN_NO_BROWSER: '1'
         run: ./start.sh
       - name: Probe it as a user
-        working-directory: automate-${{ needs.prepare.outputs.version }}
+        working-directory: lupin-${{ needs.prepare.outputs.version }}
         run: |
           set -euo pipefail
           curl -fsS http://127.0.0.1:8080/api/v1/ready
           curl -fsS -o /dev/null http://127.0.0.1:8080/
-          key="$(sed -n 's/^AUTOMATE_INSTALLATION_KEY=//p' .env)"
+          key="$(sed -n 's/^LUPIN_INSTALLATION_KEY=//p' .env)"
           curl -fsS -o /dev/null -X POST -H 'content-type: application/json' \
             -d "{\"apiKey\":\"$key\"}" http://127.0.0.1:8080/api/v1/auth/login
       - name: Logs, if it failed
         if: failure()
-        working-directory: automate-${{ needs.prepare.outputs.version }}
-        run: ./start.sh status; docker compose -p automate --env-file .env -f compose.yml logs --no-color --tail 80
+        working-directory: lupin-${{ needs.prepare.outputs.version }}
+        run: ./start.sh status; docker compose -p lupin --env-file .env -f compose.yml logs --no-color --tail 80
       - name: Remove it
         if: always()
-        working-directory: automate-${{ needs.prepare.outputs.version }}
+        working-directory: lupin-${{ needs.prepare.outputs.version }}
         run: ./start.sh uninstall --purge
       # Recorded rather than implied. GitHub's Windows runners run Windows containers only,
       # and its macOS runners have no Docker, so neither can start these Linux images.
@@ -342,7 +342,7 @@ jobs:
     # **Two starting points, because one is not enough.** `previous` is the latest final release
     # before this one. `3.0.0` is pinned: `update` keeps the old install's compose file and only
     # changes the image, so this is the one run that hands a current API the environment a
-    # pre-LAN-mode compose file gives it (HOST=0.0.0.0, no AUTOMATE_BIND). With `previous`
+    # pre-LAN-mode compose file gives it (HOST=0.0.0.0, no LUPIN_BIND). With `previous`
     # alone, the 3.1.0 release shipped an API that refused to start on every 3.0.0 install,
     # and the next release would have stopped looking for it. When the pinned release is also
     # the previous one the second run skips itself rather than repeat the first.
@@ -377,22 +377,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           OLD_VERSION: ${{ steps.previous.outputs.version }}
-          AUTOMATE_NO_BROWSER: '1'
+          LUPIN_NO_BROWSER: '1'
         run: |
           set -euo pipefail
-          gh release download "v$OLD_VERSION" -R "$GITHUB_REPOSITORY" -p "automate-$OLD_VERSION.zip" -p SHA256SUMS
+          gh release download "v$OLD_VERSION" -R "$GITHUB_REPOSITORY" -p "lupin-$OLD_VERSION.zip" -p SHA256SUMS
           sha256sum -c SHA256SUMS
-          unzip -q "automate-$OLD_VERSION.zip"
-          cd "automate-$OLD_VERSION"
+          unzip -q "lupin-$OLD_VERSION.zip"
+          cd "lupin-$OLD_VERSION"
           ./start.sh
       - name: Update it to this release
         if: steps.previous.outputs.version != ''
         env:
           OLD_VERSION: ${{ steps.previous.outputs.version }}
-          AUTOMATE_NO_BROWSER: '1'
+          LUPIN_NO_BROWSER: '1'
         run: |
           set -euo pipefail
-          cd "automate-$OLD_VERSION"
+          cd "lupin-$OLD_VERSION"
           ./start.sh update --version "$NEW_VERSION"
       - name: Probe the updated install
         if: steps.previous.outputs.version != ''
@@ -400,25 +400,25 @@ jobs:
           OLD_VERSION: ${{ steps.previous.outputs.version }}
         run: |
           set -euo pipefail
-          cd "automate-$OLD_VERSION"
-          grep -qx "AUTOMATE_VERSION=$NEW_VERSION" .env
+          cd "lupin-$OLD_VERSION"
+          grep -qx "LUPIN_VERSION=$NEW_VERSION" .env
           curl -fsS http://127.0.0.1:8080/api/v1/ready
-          key="$(sed -n 's/^AUTOMATE_INSTALLATION_KEY=//p' .env)"
+          key="$(sed -n 's/^LUPIN_INSTALLATION_KEY=//p' .env)"
           curl -fsS -o /dev/null -X POST -H 'content-type: application/json' \
             -d "{\"apiKey\":\"$key\"}" http://127.0.0.1:8080/api/v1/auth/login
-          docker compose -p automate --env-file .env -f compose.yml ps --format '{{.Image}}' \
-            | grep -q "automate-api:$NEW_VERSION"
+          docker compose -p lupin --env-file .env -f compose.yml ps --format '{{.Image}}' \
+            | grep -q "lupin-api:$NEW_VERSION"
       - name: Logs, if it failed
         if: failure() && steps.previous.outputs.version != ''
         env:
           OLD_VERSION: ${{ steps.previous.outputs.version }}
         run: |
-          cd "automate-$OLD_VERSION"
-          docker compose -p automate --env-file .env -f compose.yml logs --no-color --tail 80
+          cd "lupin-$OLD_VERSION"
+          docker compose -p lupin --env-file .env -f compose.yml logs --no-color --tail 80
       - name: Remove it
         if: always() && steps.previous.outputs.version != ''
         env:
           OLD_VERSION: ${{ steps.previous.outputs.version }}
         run: |
-          cd "automate-$OLD_VERSION"
+          cd "lupin-$OLD_VERSION"
           ./start.sh uninstall --purge

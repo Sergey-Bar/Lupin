@@ -1,4 +1,4 @@
-# AUTOMATE (local) — product requirements
+# Lupin Local — product requirements
 
 **Status:** Draft
 **Owner:** maintainers
@@ -9,7 +9,7 @@ and the numbered requirements every later document refers to.
 
 ## Vision
 
-AUTOMATE (local) is a local-first application that finds the testing ecosystem of a
+Lupin Local is a local-first application that finds the testing ecosystem of a
 repository on the user's machine, reads the test results and coverage already there into
 one honest model, and shows what is known, what is missing and what disagrees, with every
 number traceable to a file. Later it runs tests with the user's consent and recommends tools

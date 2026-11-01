@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Badge, Button, EmptyState, StatusDot } from '@automate/ui';
-import type { RunPhase } from '@automate/shared-contracts';
+import { Badge, Button, EmptyState, StatusDot } from '@lupin/ui';
+import type { RunPhase } from '@lupin/shared-contracts';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { useRunDetail } from '../../hooks/useDashboard.js';
 import { isRunActive } from '../../hooks/useRuns.js';
 import { ApiError, getArtifactUrl, type ApiClient, type Run } from '../../lib/api.js';
+import { runTransitionName } from '../../lib/view-transition.js';
 import { formatDate as formatDateWithFallback } from '../../lib/format.js';
 import { formatDuration } from '../../lib/insights.js';
 import { describeGateReason } from '../../lib/gate-reason.js';
@@ -109,7 +110,7 @@ function TestEvidence({ tests }: { tests: Run['tests'] }) {
     /*
      * The evidence surfaces sit one step *below* the panels, not on them.
      *
-     * `--automate-surface-sunken` is the plane step for content that is being
+     * `--lupin-surface-sunken` is the plane step for content that is being
      * inspected rather than acted on: the test block and each timeline entry are
      * both things a reader is reading closely, and painting them on the same step as
      * the `Card` around them makes the page a field of identical rectangles with no
@@ -163,9 +164,7 @@ function TestEvidence({ tests }: { tests: Run['tests'] }) {
               * follows the one before it: an `h4` first satisfies "no level is skipped"
               * vacuously.
               */}
-            <h3 className="font-semibold uppercase tracking-widest text-fg-muted text-xs">
-              Attempts
-            </h3>
+            <h3 className="text-sm font-medium text-fg">Attempts</h3>
             {test.attempts.length > 0 ? (
               test.attempts.map((attempt) => (
                 <div key={attempt.attempt} className="rounded bg-surface-muted p-3 text-sm">
@@ -310,7 +309,7 @@ function RunVerdict({
     <section
       aria-label="What failed"
       data-testid="run-what-failed"
-      className="shrink-0 rounded-xl border border-border bg-surface px-5 py-4"
+      className="shrink-0 rounded-lg border border-border bg-surface px-5 py-4"
     >
       <h2 className="inline-flex items-center gap-2 text-lg font-semibold text-danger">
         <StatusDot status="bad" />
@@ -532,7 +531,10 @@ function RunHeader({
           ← Runs
         </a>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">Run detail</h1>
-        <div className="mt-1 flex min-w-0 items-center gap-2 text-sm text-fg-muted">
+        <div
+          className="mt-1 flex min-w-0 items-center gap-2 text-sm text-fg-muted"
+          style={{ viewTransitionName: runTransitionName(run.id) }}
+        >
           {run.suite ? <span className="truncate font-mono text-fg">{run.suite}</span> : null}
           <span data-testid="run-id" className="truncate font-mono">
             {run.id}
@@ -616,7 +618,7 @@ function readinessTone(decision: string): 'success' | 'danger' | 'warning' {
 function SummaryPanels({ run }: { run: Run }) {
   return (
     <>
-      <div className="shrink-0 rounded-xl border border-border bg-surface-raised px-4 py-3">
+      <div className="shrink-0 rounded-lg border border-border bg-surface-raised px-4 py-3">
         <PhaseTimeline phase={run.phase} />
       </div>
 
@@ -643,7 +645,7 @@ function SummaryPanels({ run }: { run: Run }) {
       </section>
       <section
         aria-label="Run context"
-        className="shrink-0 rounded-xl border border-border bg-surface-raised px-4 py-3"
+        className="shrink-0 rounded-lg border border-border bg-surface-raised px-4 py-3"
       >
         <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3 xl:grid-cols-9">
           {/*
@@ -672,7 +674,7 @@ function SummaryPanels({ run }: { run: Run }) {
       {run.error ? (
         <div
           data-testid="run-error-context"
-          className="shrink-0 rounded-xl border border-danger px-4 py-2 text-sm"
+          className="shrink-0 rounded-lg border border-danger px-4 py-2 text-sm"
         >
           <span className="font-semibold text-danger">{run.error.code}</span>{' '}
           <span>{run.error.message}</span>
@@ -864,11 +866,8 @@ function Figure({
   hint?: string;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-border bg-surface-raised px-3 py-2 sm:px-4 sm:py-3">
-      <div
-        className="truncate text-[0.6875rem] font-medium uppercase tracking-widest text-fg-muted sm:text-xs"
-        title={label}
-      >
+    <div className="min-w-0 rounded-lg border border-border bg-surface-raised px-3 py-2 sm:px-4 sm:py-3">
+      <div className="truncate text-xs font-medium text-fg-muted" title={label}>
         {label}
       </div>
       {/* A word ("UNKNOWN") steps down a size on a phone, so four figures share one row. */}

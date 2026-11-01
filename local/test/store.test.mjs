@@ -33,7 +33,7 @@ function openStore(directory, options) {
  * @param {(directory: string) => void | Promise<void>} body
  */
 async function withDirectory(body) {
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-spike-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-spike-'));
   try {
     await body(directory);
   } finally {

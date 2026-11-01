@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@automate/ui';
+import { cn } from '@lupin/ui';
 import type { TrendBucket } from '../lib/qa.js';
 import { formatDuration, formatPercent, orDash, shortDate } from '../lib/insights.js';
 
@@ -10,7 +10,7 @@ import { formatDuration, formatPercent, orDash, shortDate } from '../lib/insight
  *
  * Each day's bar is split into **passed, failed, flaky and other** — the colour carries the
  * verdict, so a failing stripe is visible before any number is read. The colours are the
- * chart palette (`--automate-chart-*`), which `theme.test.ts` measures at 3:1 on every plane
+ * chart palette (`--lupin-chart-*`), which `theme.test.ts` measures at 3:1 on every plane
  * and apart from each other under a deuteranopia simulation; they used to be the status
  * colours at three opacities, which is what made "passed" and "other" one blur. The pass-rate line rides
  * on top with a point on every day that had a verdict. Pointing at a day draws a guide and

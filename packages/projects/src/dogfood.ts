@@ -1,4 +1,4 @@
-// @automate/projects — dogfood, run by hand against real repositories.
+// @lupin/projects — dogfood, run by hand against real repositories.
 //
 //   node --experimental-strip-types dist/dogfood.js <repo> [<repo>…]
 //

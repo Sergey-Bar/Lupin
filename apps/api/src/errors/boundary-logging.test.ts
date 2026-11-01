@@ -22,7 +22,7 @@ describe('the error boundary logs where the application says it does', () => {
   it('writes a structured record for an unhandled failure, not a console.error pair', async () => {
     const records: LogRecord[] = [];
     const logger = createLogger({
-      service: 'automate-api',
+      service: 'lupin-api',
       sink: (record) => records.push(record),
     });
     const { onError } = createErrorBoundary({
@@ -39,7 +39,7 @@ describe('the error boundary logs where the application says it does', () => {
     expect(records).toHaveLength(1);
     const record = records[0];
     expect(record?.level).toBe('error');
-    expect(record?.service).toBe('automate-api');
+    expect(record?.service).toBe('lupin-api');
     expect(record?.requestId).toBe('r-1');
     expect(record?.path).toBe('/api/v1/runs');
     // The cause survives the line, which `JSON.stringify(new Error(...))` alone
@@ -52,7 +52,7 @@ describe('the error boundary logs where the application says it does', () => {
     // must not be able to change a status code or a body — that is the property
     // that makes it safe to put in the error boundary at all.
     const records: LogRecord[] = [];
-    const logger = createLogger({ service: 'automate-api', sink: (r) => records.push(r) });
+    const logger = createLogger({ service: 'lupin-api', sink: (r) => records.push(r) });
     const { onError } = createErrorBoundary({
       requestId: () => 'r-1',
       log: logger.error,
@@ -84,7 +84,7 @@ describe('the error boundary logs where the application says it does', () => {
     const { onError } = createErrorBoundary({
       requestId: () => 'r-1',
       log: createLogger({
-        service: 'automate-api',
+        service: 'lupin-api',
         sink: () => {
           throw new Error('destination down');
         },

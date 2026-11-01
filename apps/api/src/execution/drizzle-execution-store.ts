@@ -16,8 +16,8 @@ import {
   runners,
   runs,
   tests,
-} from '@automate/db';
-import { EVENT_VERSION, storedTestIdentity, testIdentity } from '@automate/shared-contracts';
+} from '@lupin/db';
+import { EVENT_VERSION, storedTestIdentity, testIdentity } from '@lupin/shared-contracts';
 import type { QuarantineMatch } from './quarantine-excusal.js';
 import { sanitizeOutboxEnvelope } from '../infrastructure/outbox-sanitizer.js';
 // The one declaration of the byte-store port. This file used to declare its own

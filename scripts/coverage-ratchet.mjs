@@ -282,7 +282,15 @@ const { baseline: baseFloors, reason: baseReason } = baseBaseline({
     readFileAtRef(root, ref, 'docs/quality/coverage-baseline.json') ||
     readFileAtRef(root, ref, 'coverage-baseline.json'),
 });
-const floorFindings = loweredFloors(baseFloors, baseline);
+// Packages whose path changed since the base. Absent means none; the ratchet never depends on
+// the file existing. See the comment inside it for why an entry cannot lower a floor.
+const renamesPath = path.join(root, 'docs/quality/coverage-renames.json');
+const renamed = existsSync(renamesPath)
+  ? /** @type {Record<string, string>} */ (
+      JSON.parse(readFileSync(renamesPath, 'utf8')).renamed ?? {}
+    )
+  : {};
+const floorFindings = loweredFloors(baseFloors, baseline, renamed);
 
 if (floorFindings.length > 0) {
   console.error('Coverage ratchet failed: a recorded floor was weakened');

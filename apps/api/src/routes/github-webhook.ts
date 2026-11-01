@@ -1,6 +1,6 @@
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import type { GitHubWebhookAck } from '@automate/shared-contracts';
+import type { GitHubWebhookAck } from '@lupin/shared-contracts';
 import { domainErrorResponse } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { createRateLimiter } from '../middleware/rate-limit.js';
@@ -18,7 +18,7 @@ import {
 /**
  * `POST /api/v1/webhooks/github`: GitHub telling this install that a repository changed.
  *
- * **Opt-in twice.** It answers only with `AUTOMATE_LAN_MODE=1` *and* `GITHUB_WEBHOOK_SECRET`
+ * **Opt-in twice.** It answers only with `LUPIN_LAN_MODE=1` *and* `GITHUB_WEBHOOK_SECRET`
  * set; otherwise it is a coded 404, so an install that never opted in has no receiver to probe.
  * A loopback-only install cannot be reached by GitHub anyway, and a receiver with no secret
  * could not tell GitHub from anyone else.
@@ -67,8 +67,8 @@ export function createGitHubWebhookRoutes(options: GitHubWebhookRouteOptions): H
     if (options.lanMode !== true || secret === undefined || secret.length === 0) {
       throw new DomainError(
         ErrorCode.WEBHOOK_NOT_CONFIGURED,
-        'The GitHub webhook receiver is off: it needs AUTOMATE_LAN_MODE=1 or ' +
-          'AUTOMATE_REMOTE=cloudflare, and GITHUB_WEBHOOK_SECRET',
+        'The GitHub webhook receiver is off: it needs LUPIN_LAN_MODE=1 or ' +
+          'LUPIN_REMOTE=cloudflare, and GITHUB_WEBHOOK_SECRET',
       );
     }
     await next();

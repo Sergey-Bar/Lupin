@@ -3,7 +3,7 @@ import type {
   HealthGrade,
   HealthLetter,
   HealthPolicy,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * The pull-request gate: does this branch make the repository worse than policy allows?

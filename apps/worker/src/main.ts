@@ -69,7 +69,7 @@ export function installProcessFailureHandlers(
 }
 
 export async function main(env: Record<string, string | undefined> = process.env): Promise<void> {
-  const removeProcessFailureHandlers = installProcessFailureHandlers('automate-worker');
+  const removeProcessFailureHandlers = installProcessFailureHandlers('lupin-worker');
   try {
     await runWorker(env);
   } finally {
@@ -124,7 +124,7 @@ async function runWorker(env: Record<string, string | undefined>): Promise<void>
     // cannot be "fixed" into a regression by a later reader.
     onError: (error) => {
       const code = error instanceof Error ? error.name : 'WORKER_POLL_FAILED';
-      console.error(`automate-worker poll failed (${code})`);
+      console.error(`lupin-worker poll failed (${code})`);
     },
   });
   const health = new WorkerHealthServer({
@@ -134,7 +134,7 @@ async function runWorker(env: Record<string, string | undefined>): Promise<void>
     isReady: () => worker.isReady(),
   });
   const port = await health.listen();
-  console.info(`automate-worker listening on http://${config.healthHost}:${port}`);
+  console.info(`lupin-worker listening on http://${config.healthHost}:${port}`);
 
   const lifecycle = new AbortController();
   const shutdown = (): void => {
@@ -156,7 +156,7 @@ async function runWorker(env: Record<string, string | undefined>): Promise<void>
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main().catch((error: unknown) => {
     const code = error instanceof Error ? error.name : 'WORKER_START_FAILED';
-    console.error(`automate-worker failed (${code})`);
+    console.error(`lupin-worker failed (${code})`);
     process.exitCode = 1;
   });
 }

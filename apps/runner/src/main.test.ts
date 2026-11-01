@@ -30,7 +30,7 @@ function install(report?: ProcessFailureReporter): {
     unhandledRejection: new Set(process.listeners('unhandledRejection')),
     uncaughtException: new Set(process.listeners('uncaughtException')),
   };
-  const dispose = installProcessFailureHandlers('automate-runner', report);
+  const dispose = installProcessFailureHandlers('lupin-runner', report);
   disposers.push(dispose);
   const added = (): number =>
     process.listeners('unhandledRejection').filter((l) => !before.unhandledRejection.has(l))
@@ -69,14 +69,14 @@ describe('runner process failure handlers', () => {
 
     expect(reports).toEqual([
       {
-        service: 'automate-runner',
+        service: 'lupin-runner',
         kind: 'unhandledRejection',
         code: 'Error',
         message: 'api client exploded',
         stack: expect.any(String),
       },
       {
-        service: 'automate-runner',
+        service: 'lupin-runner',
         kind: 'uncaughtException',
         code: 'TypeError',
         message: 'undefined is not a function',
@@ -112,9 +112,7 @@ describe('runner process failure handlers', () => {
 
     installed.unhandledRejection[0](new Error('pool exhausted'), Promise.resolve());
 
-    expect(errors).toHaveBeenCalledWith(
-      'automate-runner unhandledRejection (Error): pool exhausted',
-    );
+    expect(errors).toHaveBeenCalledWith('lupin-runner unhandledRejection (Error): pool exhausted');
   });
 
   it('falls back to stderr and does not throw when the reporter itself fails', () => {
@@ -128,7 +126,7 @@ describe('runner process failure handlers', () => {
       installed.unhandledRejection[0](new Error('pool exhausted'), Promise.resolve()),
     ).not.toThrow();
     expect(broken).toHaveBeenCalledTimes(1);
-    expect(errors).toHaveBeenCalledWith('automate-runner unhandledRejection (Error)');
+    expect(errors).toHaveBeenCalledWith('lupin-runner unhandledRejection (Error)');
   });
 
   it('does not throw when both the reporter and stderr are gone', () => {

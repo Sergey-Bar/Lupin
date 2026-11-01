@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import {
   HEALTH_DIMENSIONS,
   PortfolioHeatmapSchema,
   SCORECARD_IDS,
   ScorecardSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import type { CallerResolver } from '../http/roles.js';
 import type { Caller } from '../services/access-service.js';
@@ -72,8 +72,8 @@ async function harness(history?: (since: Date) => Promise<readonly ExecutionRun[
   closers.push(close);
   const projectId = await agentProject(db, {}, { name: 'Alpha' });
   const tokens: Record<string, Caller> = {
-    amt_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
-    amt_uploader: { actor: 'token:uploader', role: null, uploaderFor: projectId },
+    lup_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
+    lup_uploader: { actor: 'token:uploader', role: null, uploaderFor: projectId },
   };
   const access: CallerResolver = {
     mode: 'enforced',
@@ -95,7 +95,7 @@ async function harness(history?: (since: Date) => Promise<readonly ExecutionRun[
       ...(history === undefined ? {} : { history }),
     }),
   );
-  const get = (path: string, token: string | null = 'amt_viewer') =>
+  const get = (path: string, token: string | null = 'lup_viewer') =>
     app.request(path, token === null ? {} : { headers: { authorization: `Bearer ${token}` } });
   return { db, projectId, get };
 }
@@ -161,7 +161,7 @@ describe('GET /api/v1/projects/:id/supply-chain/scorecard', () => {
     const path = `/api/v1/projects/${projectId}/supply-chain/scorecard`;
     expect((await get(path, null)).status).toBe(401);
     // An uploader token is a CI credential, not a reader.
-    expect((await get(path, 'amt_uploader')).status).toBe(403);
+    expect((await get(path, 'lup_uploader')).status).toBe(403);
     const response = await get(path);
     expect(response.status).toBe(200);
     const card = ScorecardSchema.parse(await response.json());

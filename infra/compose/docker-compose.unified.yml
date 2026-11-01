@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: automate
-      POSTGRES_USER: automate
+      POSTGRES_DB: lupin
+      POSTGRES_USER: lupin
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
     # No published port. The database is reached on the compose network only; the dev
     # stack (`compose.dev.yml`) publishes it for a developer's tools.
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U automate -d automate']
+      test: ['CMD-SHELL', 'pg_isready -U lupin -d lupin']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -20,7 +20,7 @@ services:
       context: ../..
       dockerfile: infra/docker/migrate.Dockerfile
     environment:
-      DATABASE_URL: postgresql://automate:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/automate
+      DATABASE_URL: postgresql://lupin:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/lupin
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,16 +67,16 @@ services:
       # nginx sits in front and appends the peer it saw to X-Forwarded-For (MNT-7).
       TRUST_PROXY: 'true'
       PORT: '3000'
-      DATABASE_URL: postgresql://automate:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/automate
+      DATABASE_URL: postgresql://lupin:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/lupin
       COOKIE_SECRET: ${COOKIE_SECRET:?set COOKIE_SECRET}
       VAULT_SECRET: ${VAULT_SECRET:?set VAULT_SECRET}
-      AUTOMATE_API_KEY: ${AUTOMATE_API_KEY:?set AUTOMATE_API_KEY}
+      LUPIN_API_KEY: ${LUPIN_API_KEY:?set LUPIN_API_KEY}
       REPORTER_SECRET: ${REPORTER_SECRET:?set REPORTER_SECRET}
       RUNNER_REGISTRATION_SECRET: ${RUNNER_REGISTRATION_SECRET:?set RUNNER_REGISTRATION_SECRET}
       # Required for a database-backed production boot (`NO_INSTALLATION_KEY`), and the
       # credential the installation is signed in with (ledger MNT-19, MNT-20).
-      AUTOMATE_INSTALLATION_KEY: ${AUTOMATE_INSTALLATION_KEY:?set AUTOMATE_INSTALLATION_KEY}
-      ARTIFACT_ROOT: /var/lib/automate/artifacts
+      LUPIN_INSTALLATION_KEY: ${LUPIN_INSTALLATION_KEY:?set LUPIN_INSTALLATION_KEY}
+      ARTIFACT_ROOT: /var/lib/lupin/artifacts
       # The five variables `startup-policy.ts` requires in production. `ARTIFACT_ROOT`
       # stays set for the local-filesystem fallback that development uses; in
       # production the object store is what holds artifact bytes.
@@ -93,18 +93,18 @@ services:
       # omits this line and the policy enforces the stricter path.
       OBJECT_STORE_ALLOW_INSECURE: 'true'
       # The URL a user opens: the edge proxy below, the stack's one published port.
-      PUBLIC_APP_URL: ${AUTOMATE_PUBLIC_URL:-http://localhost:${AUTOMATE_PORT:-8080}}
+      PUBLIC_APP_URL: ${LUPIN_PUBLIC_URL:-http://localhost:${LUPIN_PORT:-8080}}
       # What the startup policy reads to decide whether this install is reachable from other
       # machines: the edge's published bind, not this container's own 0.0.0.0. A reachable
-      # install with no login refuses to start; AUTOMATE_LAN_MODE=1 turns sign-in on.
-      AUTOMATE_BIND: ${AUTOMATE_BIND:-127.0.0.1}
-      AUTOMATE_LAN_MODE: ${AUTOMATE_LAN_MODE:-0}
+      # install with no login refuses to start; LUPIN_LAN_MODE=1 turns sign-in on.
+      LUPIN_BIND: ${LUPIN_BIND:-127.0.0.1}
+      LUPIN_LAN_MODE: ${LUPIN_LAN_MODE:-0}
       # solo, startup, team or enterprise (ADR-014). Empty is unset: solo, or startup with LAN mode.
-      AUTOMATE_PROFILE: ${AUTOMATE_PROFILE:-}
+      LUPIN_PROFILE: ${LUPIN_PROFILE:-}
       # Remote access through the `cloudflared` service below. The API verifies each request's
       # Cf-Access-Jwt-Assertion against the team's keys and refuses to start a tunnel without
       # access control and both Access settings (apps/api/src/startup-policy.ts).
-      AUTOMATE_REMOTE: ${AUTOMATE_REMOTE:-}
+      LUPIN_REMOTE: ${LUPIN_REMOTE:-}
       CF_ACCESS_TEAM_DOMAIN: ${CF_ACCESS_TEAM_DOMAIN:-}
       CF_ACCESS_AUD: ${CF_ACCESS_AUD:-}
       CF_ACCESS_ROLE_MAP: ${CF_ACCESS_ROLE_MAP:-}
@@ -119,7 +119,7 @@ services:
       OIDC_DEFAULT_ROLE: ${OIDC_DEFAULT_ROLE:-}
       # Empty is the profile's default: enforced on `enterprise`. Break-glass is audited.
       AUTH_SSO_ENFORCED: ${AUTH_SSO_ENFORCED:-}
-      AUTOMATE_BREAK_GLASS: ${AUTOMATE_BREAK_GLASS:-}
+      LUPIN_BREAK_GLASS: ${LUPIN_BREAK_GLASS:-}
       # The API's request traces to your OTLP/HTTP collector. Empty is off: no outbound call.
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
@@ -133,7 +133,7 @@ services:
       objectstore:
         condition: service_healthy
     volumes:
-      - artifact_data:/var/lib/automate/artifacts
+      - artifact_data:/var/lib/lupin/artifacts
     healthcheck:
       test:
         [
@@ -154,8 +154,8 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: '3001'
-      DATABASE_URL: postgresql://automate:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/automate
-      ARTIFACT_ROOT: /var/lib/automate/artifacts
+      DATABASE_URL: postgresql://lupin:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/lupin
+      ARTIFACT_ROOT: /var/lib/lupin/artifacts
       WORKER_INSTANCE_ID: 00000000-0000-4000-8000-000000000001
       WORKER_CAPABILITIES: playwright
       WORKER_LABELS: reference
@@ -168,7 +168,7 @@ services:
       api:
         condition: service_healthy
     volumes:
-      - artifact_data:/var/lib/automate/artifacts
+      - artifact_data:/var/lib/lupin/artifacts
     healthcheck:
       test:
         [
@@ -187,17 +187,17 @@ services:
       dockerfile: infra/docker/runner.Dockerfile
     environment:
       NODE_ENV: production
-      AUTOMATE_API_URL: http://api:3000
+      LUPIN_API_URL: http://api:3000
       RUNNER_INSTANCE_ID: ${RUNNER_INSTANCE_ID:-00000000-0000-4000-8000-000000000002}
       RUNNER_REGISTRATION_SECRET: ${RUNNER_REGISTRATION_SECRET:?set RUNNER_REGISTRATION_SECRET}
       RUNNER_SLOTS: '1'
       RUNNER_ALLOWED_TARGET_URLS: 'http://api,http://web'
-      ARTIFACT_ROOT: /var/lib/automate/artifacts
+      ARTIFACT_ROOT: /var/lib/lupin/artifacts
     depends_on:
       api:
         condition: service_healthy
     volumes:
-      - artifact_data:/var/lib/automate/artifacts
+      - artifact_data:/var/lib/lupin/artifacts
     networks:
       - default
       - runner_egress
@@ -239,9 +239,9 @@ services:
 
   # The front door, and the only published ports: HTTP, and HTTPS once a LAN certificate
   # exists. `/api/` goes to the API and `/` to the web UI, so a user opens one URL. Bound to
-  # loopback by default. `AUTOMATE_BIND=0.0.0.0` makes it reachable from other machines, and
+  # loopback by default. `LUPIN_BIND=0.0.0.0` makes it reachable from other machines, and
   # both the start scripts and the API's startup policy refuse that unless
-  # `AUTOMATE_LAN_MODE=1` turns sign-in on.
+  # `LUPIN_LAN_MODE=1` turns sign-in on.
   edge:
     build:
       context: ../..
@@ -259,15 +259,15 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
-      - '${AUTOMATE_BIND:-127.0.0.1}:${AUTOMATE_PORT:-8080}:8080'
-      - '${AUTOMATE_BIND:-127.0.0.1}:${AUTOMATE_HTTPS_PORT:-8443}:8443'
+      - '${LUPIN_BIND:-127.0.0.1}:${LUPIN_PORT:-8080}:8080'
+      - '${LUPIN_BIND:-127.0.0.1}:${LUPIN_HTTPS_PORT:-8443}:8443'
     environment:
       # The port a browser uses for HTTPS, so the plain-HTTP redirect names the right one.
-      AUTOMATE_HTTPS_PORT: ${AUTOMATE_HTTPS_PORT:-8443}
+      LUPIN_HTTPS_PORT: ${LUPIN_HTTPS_PORT:-8443}
     # The LAN certificate, issued by `start lan-cert`. Empty until then, and the edge serves
-    # plain HTTP only (infra/nginx/40-automate-tls.sh).
+    # plain HTTP only (infra/nginx/40-lupin-tls.sh).
     volumes:
-      - ${AUTOMATE_CERT_DIR:-./certs}:/etc/automate/certs
+      - ${LUPIN_CERT_DIR:-./certs}:/etc/lupin/certs
     healthcheck:
       # `/edge-health` rather than `/`: with TLS on, every other plain-HTTP path redirects.
       test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:8080/edge-health || exit 1']

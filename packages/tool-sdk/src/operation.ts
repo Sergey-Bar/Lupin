@@ -1,6 +1,6 @@
-import { AgentDomainSchema, AgentRequestSchema } from '@automate/shared-contracts';
-import type { AgentDomain, AgentRequest, CanonicalRunResult } from '@automate/shared-contracts';
-import { CanonicalRunResultSchema } from '@automate/shared-contracts';
+import { AgentDomainSchema, AgentRequestSchema } from '@lupin/shared-contracts';
+import type { AgentDomain, AgentRequest, CanonicalRunResult } from '@lupin/shared-contracts';
+import { CanonicalRunResultSchema } from '@lupin/shared-contracts';
 import type { z } from 'zod';
 
 export type { AgentDomain };

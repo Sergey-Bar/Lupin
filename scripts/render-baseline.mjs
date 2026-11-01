@@ -31,7 +31,7 @@ import { runRenderBudget } from './lib/render-run.mjs';
 
 // Measured against the built bundle, exactly as `pnpm test:render` measures it — a
 // ceiling recorded one way and compared another would be a ceiling on the difference.
-const status = runRenderBudget({ AUTOMATE_RENDER_BASELINE: '1' });
+const status = runRenderBudget({ LUPIN_RENDER_BASELINE: '1' });
 
 if (status !== 0) {
   // The spec reports what it measured and where it wrote it; this only adds the part

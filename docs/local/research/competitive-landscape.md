@@ -1,10 +1,10 @@
-# AUTOMATE (local) — competitive landscape
+# Lupin Local — competitive landscape
 
 **Status:** Draft
 **Owner:** maintainers
 **Last reviewed:** 2026-10-19
 
-What exists today for the problems AUTOMATE (local) is meant to address, what is verifiably
+What exists today for the problems Lupin Local is meant to address, what is verifiably
 true of each, what is only the vendor's claim, and where this product could be different
 rather than merely similar.
 
@@ -86,11 +86,11 @@ Read from the pages above; where it goes beyond what a page says, it is labelled
 ## Differentiation matrix
 
 A product's cell holds a fact with its source, a claim marked `claimed`, or "not documented
-in the pages read". The AUTOMATE (local) row is a proposal, not a capability.
+in the pages read". The Lupin Local row is a proposal, not a capability.
 
 | Product                   | Runs with no account or server       | Reads reports other tools produced                                            | Reconciles several reports of one run             | Shows missing or partial data explicitly                | Keeps history across CI runs                   |
 | ------------------------- | ------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------- |
-| AUTOMATE (local)          | Proposed: yes                        | Proposed: JUnit, Playwright JSON, lcov first                                  | Proposed: group, never merge, flag contradictions | Proposed: unknown, partial and rejected are first-class | Proposed: local history of ingested runs only  |
+| Lupin Local               | Proposed: yes                        | Proposed: JUnit, Playwright JSON, lcov first                                  | Proposed: group, never merge, flag contradictions | Proposed: unknown, partial and rejected are first-class | Proposed: local history of ingested runs only  |
 | Allure Report 3           | Yes, a local command (S-05)          | Its own results format (S-05); other formats not documented in the pages read | Not documented in the pages read                  | Not documented in the pages read                        | Not documented in the pages read               |
 | ReportPortal              | No: several services (S-08)          | Not documented in the pages read                                              | Not documented in the pages read                  | Not documented in the pages read                        | Not documented in the pages read               |
 | Playwright reports        | Yes, in the runner (S-10)            | Its own results only (S-10)                                                   | Merges shards of one Playwright run (S-11)        | Not documented in the pages read                        | Not documented in the pages read               |
@@ -101,7 +101,7 @@ in the pages read". The AUTOMATE (local) row is a proposal, not a capability.
 | Codecov                   | No: account and code-host app (S-19) | Coverage reports (S-19)                                                       | Not documented in the pages read                  | Not documented in the pages read                        | Coverage trends over time (S-19)               |
 | SonarQube Community Build | Yes, self-managed server (S-21)      | Not documented in the pages read                                              | Not documented in the pages read                  | Not documented in the pages read                        | Not documented in the pages read               |
 
-## Where AUTOMATE (local) does not win
+## Where Lupin Local does not win
 
 Said plainly, so the product is not sold against a strawman.
 
@@ -132,7 +132,7 @@ behaviour, which is weak evidence of absence and is not proof of it.
 ## Positioning statement (proposal)
 
 For the person who has to answer "what do our tests actually tell us?" in a repository with
-more than one test tool, AUTOMATE (local) is a local application that finds the tests and
+more than one test tool, Lupin Local is a local application that finds the tests and
 reports already there, reads them into one model without inventing anything, and shows what
 is known, what is missing and what disagrees, with every number traceable to the file it
 came from. Unlike hosted dashboards it needs no account and sends nothing anywhere, and

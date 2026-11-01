@@ -46,7 +46,7 @@ const observed = RUNNER_NAMES.map((name) => {
     name,
     manifest,
     manifestProblem: problem,
-    inspected: inspectImage(runtime, `automate/${name}:local`),
+    inspected: inspectImage(runtime, `lupin/${name}:local`),
   };
 });
 

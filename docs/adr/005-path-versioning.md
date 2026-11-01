@@ -55,4 +55,4 @@ So the code and the decision disagreed, and the code was right. Nothing read
 - `apps/api/src/route-manifest.test.ts` — the enumerated mounted route set.
 - `apps/api/src/index.ts` — the composition root, where every prefix is mounted.
 - `docs/architecture/api-versioning-strategy.md` — the superseded proposal, kept.
-- `pnpm --filter @automate/api test src/route-manifest.test.ts`
+- `pnpm --filter @lupin/api test src/route-manifest.test.ts`

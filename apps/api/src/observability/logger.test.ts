@@ -18,7 +18,7 @@ describe('the structured logger', () => {
     // thing this replaces. Its output is not parseable, so a deployment's only
     // option for "show me every failure with code NOT_FOUND" is to read lines.
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
 
     log.error('request failed', { requestId: 'r-1', path: '/api/v1/runs', status: 500 });
 
@@ -27,7 +27,7 @@ describe('the structured logger', () => {
     expect(record).toMatchObject({
       level: 'error',
       msg: 'request failed',
-      service: 'automate-api',
+      service: 'lupin-api',
       requestId: 'r-1',
       path: '/api/v1/runs',
       status: 500,
@@ -41,14 +41,14 @@ describe('the structured logger', () => {
     // supplying them would be able to forge the first two — and a log that can be
     // relabelled is a log that cannot be alerted on.
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
 
     log.warn('odd', { level: 'error', msg: 'forged', service: 'somebody-else' });
 
     const record = records[0];
     expect(record?.level).toBe('warn');
     expect(record?.msg).toBe('odd');
-    expect(record?.service).toBe('automate-api');
+    expect(record?.service).toBe('lupin-api');
     expect(typeof record?.time).toBe('string');
     expect(Number.isNaN(Date.parse(record?.time ?? ''))).toBe(false);
   });
@@ -57,7 +57,7 @@ describe('the structured logger', () => {
     // Reserved keys live in a nested object rather than being dropped, so the
     // caller's value is still there to read and is clearly not the record's.
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
 
     log.info('hello', { time: 'not-a-date', level: 'nope' });
 
@@ -71,7 +71,7 @@ describe('the structured logger', () => {
     // `JSON.stringify(new Error('x'))` is `{}`. A failure log that silently loses
     // the message is worse than no log, because it looks like a log.
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
 
     log.error('boom', { error: new TypeError('bad input') });
 
@@ -85,7 +85,7 @@ describe('the structured logger', () => {
     // serialiser drops: `cause` is where a wrapped error's real origin lives, and
     // an array is what a list of failed items arrives as.
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
     const root = new RangeError('socket closed');
     const wrapper = new TypeError('request failed', { cause: root });
 
@@ -105,7 +105,7 @@ describe('the structured logger', () => {
     // occurrence of a shared object was reported as `[circular]`: a false claim
     // in the one artefact whose stated property is that the context survives.
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
     const lease = { id: 'l-1', token: 'abc' };
 
     log.error('lease lost', { context: { job: { lease }, held: lease } });
@@ -130,7 +130,7 @@ describe('the structured logger', () => {
     // down the request whose failure was being reported — the exact thing the
     // logger's contract says cannot happen.
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
     const loop = new Error('boom');
     loop.cause = loop;
 
@@ -141,7 +141,7 @@ describe('the structured logger', () => {
 
   it('keeps a repeated Error at two branches rather than calling the second one circular', () => {
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
     const shared = new Error('repeated');
 
     log.error('two branches', { context: { direct: shared, nested: { inner: shared } } });
@@ -163,7 +163,7 @@ describe('the structured logger', () => {
     // request has already failed, and the failure handler is what throws. A log
     // that cannot log must still not break the error boundary.
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
     const circular: Record<string, unknown> = { name: 'loop' };
     circular['self'] = circular;
 
@@ -180,7 +180,7 @@ describe('the structured logger', () => {
       sink: () => {
         throw new Error('destination down');
       },
-      service: 'automate-api',
+      service: 'lupin-api',
       onSinkError: vi.fn(),
     });
     expect(() => log.error('boom', {})).not.toThrow();
@@ -192,7 +192,7 @@ describe('the structured logger', () => {
     // left for the first person who needs it. The omitted-context form is the
     // other default the arrow functions carry.
     const { sink, records } = capture();
-    const log = createLogger({ sink, service: 'automate-api' });
+    const log = createLogger({ sink, service: 'lupin-api' });
 
     log.debug('starting');
     log.info('');
@@ -213,7 +213,7 @@ describe('the structured logger', () => {
     const stdout = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     const stderr = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     try {
-      const log = createLogger({ service: 'automate-api' });
+      const log = createLogger({ service: 'lupin-api' });
       log.info('routine');
       log.warn('odd');
       log.error('not routine');

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { CanonicalFinding, DimensionMetric } from '@automate/shared-contracts';
+import type { CanonicalFinding, DimensionMetric } from '@lupin/shared-contracts';
 import { HealthReportError, MAX_HEALTH_REPORT_BYTES } from './sarif.js';
 import { type Json, record, list, text } from './json-fields.js';
 

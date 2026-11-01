@@ -9,7 +9,7 @@ import {
   OPT_IN_HEALTH_DIMENSIONS,
   type DimensionMetric,
   type HealthDimension,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import {
   DEFAULT_HEALTH_WEIGHTS,
   grade,
@@ -147,7 +147,7 @@ describe('HEALTH-3: an opt-in dimension changes nothing until a policy weights i
         {
           dimension: 'delivery',
           metric: 'change-failure-rate',
-          tool: { name: 'automate', version: null },
+          tool: { name: 'lupin', version: null },
           score: 40,
           summary: 'Change failure rate 30%',
         },

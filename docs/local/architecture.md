@@ -1,4 +1,4 @@
-# AUTOMATE (local) — architecture
+# Lupin Local — architecture
 
 **Status:** Draft
 **Owner:** maintainers

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { pairingCodes } from '@automate/db';
+import { pairingCodes } from '@lupin/db';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import { authenticateToken, listAccessTokens } from './access-service.js';
 import { issuePairingCode, redeemPairingCode } from './pairing-service.js';
@@ -39,7 +39,7 @@ describe('pairing codes', () => {
     );
     expect(issued.code).toMatch(/^\d{6}$/u);
     expect(
-      JSON.stringify(await db.select().from((await import('@automate/db')).pairingCodes)),
+      JSON.stringify(await db.select().from((await import('@lupin/db')).pairingCodes)),
     ).not.toContain(issued.code);
 
     const redeemed = await redeemPairingCode(options, issued.code);

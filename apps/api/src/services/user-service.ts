@@ -1,6 +1,6 @@
 import { and, eq, isNull, ne } from 'drizzle-orm';
-import type { AccessRole, RoleRule } from '@automate/config';
-import { users, workspaceMembers } from '@automate/db';
+import type { AccessRole, RoleRule } from '@lupin/config';
+import { users, workspaceMembers } from '@lupin/db';
 import { classifyDatabaseError } from '../errors/db-errors.js';
 import { ErrorCode } from '../errors/domain-error.js';
 import { ruleRoleFor } from '../http/role-map.js';

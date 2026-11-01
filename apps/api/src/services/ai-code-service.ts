@@ -7,7 +7,7 @@ import {
   pullRequestGateFindings,
   pullRequests,
   type PullRequestRow,
-} from '@automate/db';
+} from '@lupin/db';
 import {
   AGENT_SIGNATURES,
   aiCodeScorecard,
@@ -15,7 +15,7 @@ import {
   evaluateAiGovernance,
   type AiOutcomeChange,
   type AttributionOptions,
-} from '@automate/reporting';
+} from '@lupin/reporting';
 import type {
   AiAttribution,
   AiCodePullRequestList,
@@ -24,7 +24,7 @@ import type {
   DimensionMetric,
   PortfolioAiCode,
   Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import {
   attributionOptionsOf,
   attributionVersionOf,
@@ -495,7 +495,7 @@ function metricOf(card: Scorecard): DimensionMetric | null {
   return {
     dimension: 'ai-governance',
     metric: 'ai-code',
-    tool: { name: 'automate-ai-code', version: AGENT_SIGNATURES.version },
+    tool: { name: 'lupin-ai-code', version: AGENT_SIGNATURES.version },
     score: card.score,
     summary: `AI-written code ${String(card.score)} / 100 over ${String(card.windowDays)} days, limited by ${String(card.cappedBy)}`,
   };

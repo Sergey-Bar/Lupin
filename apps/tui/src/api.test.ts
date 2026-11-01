@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HttpTuiApi, TuiError, commandFor, gapView, routeFor, scoreView } from './api.js';
-import { TUI_COMMANDS, type TuiView } from '@automate/shared-contracts';
+import { TUI_COMMANDS, type TuiView } from '@lupin/shared-contracts';
 
 /**
  * The terminal, with the network and the screen both faked.

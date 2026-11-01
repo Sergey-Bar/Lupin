@@ -6,7 +6,7 @@ import {
   healthSnapshots,
   projects,
   vexDocuments,
-} from '@automate/db';
+} from '@lupin/db';
 import {
   clusterFailures,
   flakeCost,
@@ -14,7 +14,7 @@ import {
   testEffectivenessScorecard,
   type SupplyChainScorecardInput,
   type TestEffectivenessInput,
-} from '@automate/reporting';
+} from '@lupin/reporting';
 import {
   DimensionMetricSchema,
   HEALTH_DIMENSIONS,
@@ -26,7 +26,7 @@ import {
   type PortfolioHeatmap,
   type Scorecard,
   type ScorecardId,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import { belongsTo, failureInputsOf, flakeObservationsOf } from '../execution/insights.js';
 import type { ExecutionRun } from '../execution/types.js';
@@ -44,7 +44,7 @@ import { LICENCE_TOOL, readSupplyChainPolicy } from './supply-chain-service.js';
 
 /**
  * The supply-chain and test-effectiveness scorecards, gathered from what the upload door
- * stored. The builders in `@automate/reporting` decide; this module only reads.
+ * stored. The builders in `@lupin/reporting` decide; this module only reads.
  *
  * Every read is scoped to the caller's workspace twice over: `projectRow` refuses a project
  * from another workspace as "no such project", and every query filters on `workspace_id`.

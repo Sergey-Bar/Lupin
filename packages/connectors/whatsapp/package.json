@@ -1,5 +1,5 @@
 {
-  "name": "@automate/connectors-whatsapp",
+  "name": "@lupin/connectors-whatsapp",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
@@ -19,7 +19,7 @@
     "lint": "eslint --max-warnings=0 src/"
   },
   "dependencies": {
-    "@automate/connectors-sdk": "workspace:*"
+    "@lupin/connectors-sdk": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

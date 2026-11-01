@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CanonicalRunResultSchema } from '@automate/shared-contracts';
-import { playwrightJsonAdapter } from '@automate/reporter';
-import { InMemoryRealtimeBus } from '@automate/realtime';
+import { CanonicalRunResultSchema } from '@lupin/shared-contracts';
+import { playwrightJsonAdapter } from '@lupin/reporter';
+import { InMemoryRealtimeBus } from '@lupin/realtime';
 
 const fixture = JSON.parse(
   readFileSync(new URL('../fixtures/canonical-run.json', import.meta.url), 'utf8'),

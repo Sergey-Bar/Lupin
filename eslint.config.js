@@ -46,16 +46,16 @@ export const GLASS_ALLOWLIST = [];
 export const GLASS_SELECTOR = {
   selector: `Literal[value=/(^|[\\s"'\`])backdrop-(blur|filter|saturate|brightness|contrast|grayscale|invert|sepia|hue-rotate|opacity)\\b/]`,
   message:
-    'No `backdrop-filter`: the plane is flat. Use an opaque plane step (`bg-surface`, ' +
-    '`bg-surface-raised`) and, for an overlay, a `shadow-elevation-*` step.',
+    'No `backdrop-filter` utility class: the plane is flat. An overlay that floats uses the one ' +
+    'translucent material, `surface-translucent` from theme.css, with a `shadow-elevation-*` step.',
 };
 
 /** The same ban for a value written in code rather than in a class string. */
 export const GLASS_PROPERTY_SELECTOR = {
   selector: "Property[key.name='backdropFilter'], Property[key.name='webkitBackdropFilter']",
   message:
-    'No inline backdrop-filter: the plane is flat. Use an opaque plane step and, for an ' +
-    'overlay, a shadow-elevation step.',
+    'No inline backdrop-filter: the plane is flat. An overlay uses the `surface-translucent` ' +
+    'utility from theme.css, which is the only place a backdrop filter is written.',
 };
 
 export default tseslint.config(
@@ -87,12 +87,11 @@ export default tseslint.config(
        * listings are load-bearing for a different tool.
        */
       '**/storybook-static/**',
-      // `site/` needs nothing here. Its only source file is `.vitepress/config.mts`,
-      // the `**/*` blocks lint it, and its build output and dependency cache are
-      // already covered by the `dist/` and `node_modules/` rules above — which is
-      // what `outDir: 'dist'` in site/.vitepress/config.mts exists to keep true.
-      // An earlier revision added `**/.vitepress/cache/**` here, a comment that
-      // said the path could not exist, and left the rule in anyway.
+      // VitePress's dependency pre-bundle. `vitepress build` writes nothing here, but
+      // `vitepress dev` does — 3,000+ lines of minified vendor code that linted to 766
+      // errors on the first host that ran the dev server. Listed in `.gitignore` too; that
+      // listing keeps it out of git, this one keeps it out of ESLint, which reads neither.
+      '**/.vitepress/cache/**',
     ],
   },
   eslint.configs.recommended,
@@ -135,7 +134,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@automate/db', '@automate/auth', 'drizzle-orm', 'pg'],
+              group: ['@lupin/db', '@lupin/auth', 'drizzle-orm', 'pg'],
               message: 'Web code must use browser-safe contracts and API boundaries.',
             },
           ],
@@ -151,7 +150,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['hono', 'react', 'drizzle-orm', 'pg', '@automate/*'],
+              group: ['hono', 'react', 'drizzle-orm', 'pg', '@lupin/*'],
               message: 'Shared contracts must remain runtime-agnostic and dependency-free.',
             },
           ],

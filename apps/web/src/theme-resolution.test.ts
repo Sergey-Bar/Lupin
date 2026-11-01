@@ -18,8 +18,8 @@ import { compile } from 'tailwindcss';
  * assertion that can fail; asserting on a class name cannot.
  *
  * **Two more names were in that list and are not any more.** `text-success-500` and
- * `text-error-500` were aliases pointing at the same `--automate-success` and
- * `--automate-danger` variables as the plain names — a second name for one value. The
+ * `text-error-500` were aliases pointing at the same `--lupin-success` and
+ * `--lupin-danger` variables as the plain names — a second name for one value. The
  * redesign moved `StatCard` to `text-success` / `text-danger`, which left the aliases
  * referenced by nothing, so the tokens and the assertion naming them were removed
  * rather than left as a second authority nobody reads. They are recorded here because
@@ -577,7 +577,7 @@ describe('shipped theme class resolution', () => {
     ).toEqual([]);
     // And the keyframes the product's own animations name are in the output, so a
     // generated `animation` is not an animation of nothing.
-    for (const keyframes of ['automate-enter', 'automate-exit', 'automate-zoom-in']) {
+    for (const keyframes of ['lupin-enter', 'lupin-exit', 'lupin-zoom-in']) {
       expect(
         compiledAll,
         `${keyframes} is missing from the compiled CSS, so the overlay animations are inert`,
@@ -615,6 +615,66 @@ describe('shipped theme class resolution', () => {
    * the retired glass or wash utilities. `theme.css` no longer declares them, so they
    * would compile to nothing — this names the offender instead of rendering it unstyled.
    */
+  /**
+   * The translucent material is for the layers that float, and only those.
+   *
+   * `surface-translucent` is the one way to get a `backdrop-filter` in this product. The
+   * files below are the overlays — the only layers content actually passes behind, because
+   * the page scrolls in its own container under the nav rather than beneath it; a table, a chart or a card that adopts
+   * it puts evidence behind glass, which is the thing the material exists not to do. Adding
+   * a file here is a design decision a reviewer reads.
+   */
+  const TRANSLUCENT_LAYERS = [
+    'packages/ui/src/components/CommandPalette/CommandPalette.tsx',
+    'packages/ui/src/components/Dialog/Dialog.tsx',
+    'packages/ui/src/components/Popover/Popover.tsx',
+    'packages/ui/src/components/Toast/Toast.tsx',
+  ];
+
+  it('uses the translucent material on the floating layers and nowhere else', () => {
+    const adopters = listComponentFiles()
+      .filter((file) => /\bsurface-translucent\b/.test(readFileSync(file, 'utf8')))
+      .map((file) => path.relative(repoRoot, file).replaceAll('\\', '/'))
+      .sort();
+    expect(adopters, 'the translucent material is used outside the floating layers').toEqual(
+      [...TRANSLUCENT_LAYERS].sort(),
+    );
+  });
+
+  it('puts the ambient gradient only on the entry surfaces', () => {
+    const adopters = listComponentFiles()
+      .filter((file) => /\bbg-ambient\b/.test(readFileSync(file, 'utf8')))
+      .map((file) => path.relative(repoRoot, file).replaceAll('\\', '/'));
+    for (const file of adopters) {
+      expect(
+        /EmptyState|SignIn|Onboarding|Welcome|ProjectGate/.test(file),
+        `${file} draws the ambient gradient behind something that is not an entry surface`,
+      ).toBe(true);
+    }
+  });
+
+  /**
+   * Two radii for two kinds of surface.
+   *
+   * A panel, a card and a figure sit *on* the page and take the 8px panel radius
+   * (`rounded-lg`), the radius the Lupin site uses. The 12px cap (`rounded-xl`) belongs to
+   * the overlays that float above it — the palette and the dialog — so the difference in
+   * corner is one of the cues that a surface is floating. A page panel at 12px reads as a
+   * dialog that failed to open.
+   */
+  it('keeps the overlay radius on the overlays, and gives every page surface the panel radius', () => {
+    const OVERLAYS = new Set([
+      'packages/ui/src/components/CommandPalette/CommandPalette.tsx',
+      'packages/ui/src/components/Dialog/Dialog.tsx',
+    ]);
+    const offenders = listComponentFiles()
+      .map((file) => ({ file, rel: path.relative(repoRoot, file).replaceAll('\\', '/') }))
+      .filter(({ rel }) => !OVERLAYS.has(rel))
+      .filter(({ file }) => /\brounded-(?:xl|2xl|3xl)\b/.test(readFileSync(file, 'utf8')))
+      .map(({ rel }) => rel);
+    expect(offenders, 'a page surface uses the overlay radius').toEqual([]);
+  });
+
   it('writes no backdrop utility and no retired glass or wash class', () => {
     expect(
       allCandidates.filter(
@@ -637,7 +697,7 @@ describe('shipped theme class resolution', () => {
 
   it('generates the destructive variant, which is the "Cancel run" button', () => {
     expect(utilityIsGenerated(compiledAll, 'bg-error')).toBe(true);
-    expect(compiledAll).toContain('--automate-danger');
+    expect(compiledAll).toContain('--lupin-danger');
   });
 
   it('generates the error-state utilities used by Input and Select', () => {

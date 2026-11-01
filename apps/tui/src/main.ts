@@ -7,7 +7,7 @@ import {
   UnknownCommandError,
   MissingArgumentError,
 } from './command-line.js';
-import type { TuiView } from '@automate/shared-contracts';
+import type { TuiView } from '@lupin/shared-contracts';
 
 /**
  * The entry point.
@@ -39,8 +39,8 @@ if (!isKnownCommand(commandName)) {
   process.exit(2);
 }
 
-const baseUrl = process.env['AUTOMATE_API_URL'] ?? 'http://127.0.0.1:3000';
-const api = new HttpTuiApi(baseUrl, fetch, process.env['AUTOMATE_API_TOKEN']);
+const baseUrl = process.env['LUPIN_API_URL'] ?? 'http://127.0.0.1:3000';
+const api = new HttpTuiApi(baseUrl, fetch, process.env['LUPIN_API_TOKEN']);
 
 try {
   const view = await api.send(buildCommand(commandName, rest));

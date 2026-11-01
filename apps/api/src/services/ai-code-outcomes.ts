@@ -1,6 +1,6 @@
-import type { PullRequestRow } from '@automate/db';
-import type { AiOutcomeChange, Attribution } from '@automate/reporting';
-import type { AiShareWeek } from '@automate/shared-contracts';
+import type { PullRequestRow } from '@lupin/db';
+import type { AiOutcomeChange, Attribution } from '@lupin/reporting';
+import type { AiShareWeek } from '@lupin/shared-contracts';
 
 /**
  * What happened to each merged pull request after it merged, as `compareAiOutcomes` reads it.

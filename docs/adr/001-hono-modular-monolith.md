@@ -45,5 +45,5 @@ is testable without the whole app.
   written for.
 - `apps/api/src/errors/boundary.ts` — the single boundary, with a stable `code` per
   response.
-- `pnpm typecheck` and `pnpm --filter @automate/api test` — the factory signatures
+- `pnpm typecheck` and `pnpm --filter @lupin/api test` — the factory signatures
   and the per-builder tests.

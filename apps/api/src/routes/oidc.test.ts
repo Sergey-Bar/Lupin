@@ -5,9 +5,9 @@ import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { DrizzleSessionStore } from '@automate/db';
-import type { OidcConfig } from '@automate/config';
+import * as schema from '@lupin/db';
+import { DrizzleSessionStore } from '@lupin/db';
+import type { OidcConfig } from '@lupin/config';
 import { DrizzleAuthSessionBackend } from '../infrastructure/session-backend.js';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { migratedDatabase } from '../test-support/migrated-database.js';
@@ -74,7 +74,7 @@ async function provider(): Promise<Provider> {
     grants.delete(String(form['code']));
     const now = Math.floor(Date.now() / 1000);
     const idToken = await sign(
-      { iss: issuer, aud: 'automate', iat: now, exp: now + 300, ...grant.claims },
+      { iss: issuer, aud: 'lupin', iat: now, exp: now + 300, ...grant.claims },
       privateJwk,
     );
     return c.json({ access_token: 'at', token_type: 'Bearer', expires_in: 300, id_token: idToken });
@@ -105,9 +105,9 @@ async function harness(overrides: Partial<OidcConfig> = {}, issuerPath = '') {
   );
   const oidc: OidcConfig = {
     issuer: `${idp.issuer}${issuerPath}`,
-    clientId: 'automate',
+    clientId: 'lupin',
     clientSecret: CLIENT_SECRET,
-    redirectUri: 'https://automate.example.com/api/v1/auth/oidc/callback',
+    redirectUri: 'https://lupin.example.com/api/v1/auth/oidc/callback',
     allowedDomains: ['example.com'],
     roleMap: [{ role: 'admin', kind: 'email', value: 'ana@example.com' }],
     defaultRole: 'viewer',
@@ -140,10 +140,10 @@ async function signIn(
   expect(authorize.origin + authorize.pathname).toBe(`${h.idp.issuer}/authorize`);
   expect(authorize.searchParams.get('code_challenge_method')).toBe('S256');
   expect(authorize.searchParams.get('redirect_uri')).toBe(
-    'https://automate.example.com/api/v1/auth/oidc/callback',
+    'https://lupin.example.com/api/v1/auth/oidc/callback',
   );
   const flow = (start.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
-  expect(flow).toMatch(/^automate_oidc=/u);
+  expect(flow).toMatch(/^lupin_oidc=/u);
   const code = randomUUID();
   h.idp.grants.set(code, {
     challenge: authorize.searchParams.get('code_challenge') ?? '',
@@ -165,7 +165,7 @@ const ANA = { sub: 'sub-ana', email: 'ana@example.com', email_verified: true, na
 const BO = { sub: 'sub-bo', email: 'bo@example.com', email_verified: true, name: 'Bo' };
 
 async function sessionUser(h: Awaited<ReturnType<typeof harness>>, cookies: string) {
-  const token = /automate_session=([^;]+)/u.exec(cookies)?.[1];
+  const token = /lupin_session=([^;]+)/u.exec(cookies)?.[1];
   if (token === undefined) return undefined;
   return (await h.sessions.validate(token))?.userId;
 }
@@ -182,7 +182,7 @@ describe('OIDC sign-in', () => {
       { actor: `user:${String(userId)}`, role: 'admin', uploaderFor: null },
     );
     // The flow cookie is spent with the sign-in.
-    expect(result.cookies).toMatch(/automate_oidc=;/u);
+    expect(result.cookies).toMatch(/lupin_oidc=;/u);
     // A membership is the workspace's: the same person has no role in another.
     expect(
       (await callerForUser({ db: h.db as never, workspaceId: 'ws-2' }, String(userId)))?.role,
@@ -214,7 +214,7 @@ describe('OIDC sign-in', () => {
     const h = await harness();
     const result = await signIn(h, { ...BO, ...claims }, tamper);
     expect(result.location).toBe(`/?signin=${reason}`);
-    expect(result.cookies).not.toMatch(/automate_session=[^;]/u);
+    expect(result.cookies).not.toMatch(/lupin_session=[^;]/u);
     expect(await h.db.select().from(schema.sessions)).toEqual([]);
   });
 

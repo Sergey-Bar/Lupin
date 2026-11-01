@@ -37,7 +37,7 @@ export type MetricType = 'counter' | 'gauge';
 
 /** One series: a name, a type, one line of help, its labels, and its value. */
 export interface Series {
-  /** `automate_` prefix, suffixed `_total` for a counter */
+  /** `lupin_` prefix, suffixed `_total` for a counter */
   name: string;
   type: MetricType;
   /** one line; the exposition format has nowhere else to put it */
@@ -84,7 +84,7 @@ export function recordRequest(status: number): void {
 /** The current counters, for a test and for the exposition body. */
 export function requestCounterSamples(): Series[] {
   return STATUS_CLASSES.map((statusClass) => ({
-    name: 'automate_http_requests_total',
+    name: 'lupin_http_requests_total',
     type: /** @type {const} */ 'counter',
     help: 'HTTP requests answered by this process, by response status class.',
     labels: { class: statusClass },

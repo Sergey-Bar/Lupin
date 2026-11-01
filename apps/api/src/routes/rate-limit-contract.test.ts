@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { createReporterRoutes } from './reporter.js';
 import { createAuthRoutes } from './auth.js';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
-import { hashCredential } from '@automate/auth';
+import { hashCredential } from '@lupin/auth';
 import {
   syntheticCookieSecret,
   syntheticInstallationKey,

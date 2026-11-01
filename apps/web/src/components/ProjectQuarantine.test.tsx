@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ProjectQuarantine as View } from '@automate/shared-contracts';
+import type { ProjectQuarantine as View } from '@lupin/shared-contracts';
 import { makeHealthDouble } from '../test-utils.js';
 import { ProjectQuarantine, seconds } from './ProjectQuarantine.js';
 
@@ -17,7 +17,7 @@ function view(overrides: Partial<View> = {}): View {
         testFile: 'tests/pay.spec.ts',
         stableId: 'tests/pay.spec.ts › pays [webkit]',
         status: 'approved',
-        quarantinedBy: 'automate',
+        quarantinedBy: 'lupin',
         reason: 'Disagreed with itself',
         quarantinedAt: '2026-10-20T00:00:00.000Z',
         releasedAt: null,

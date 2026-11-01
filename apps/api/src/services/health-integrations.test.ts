@@ -1,12 +1,12 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import type { ConnectorAdapter, ConnectorRequest } from '@automate/connectors-sdk';
+import type { ConnectorAdapter, ConnectorRequest } from '@lupin/connectors-sdk';
 import {
   HEALTH_DIMENSIONS,
   type CanonicalFinding,
   type HealthGrade,
   type Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import {
   COMMENT_MARKER,
   aiGovernanceSection,
@@ -113,7 +113,7 @@ describe('the pull-request comment', () => {
     grade: grade('C'),
     added: [finding({ ruleId: 'evil|rule`', path: 'a|b.ts' })],
     branch: 'feature/x',
-    detailsUrl: 'https://automate.example/dashboard/repo/p',
+    detailsUrl: 'https://lupin.example/dashboard/repo/p',
   };
 
   it('starts with the marker, says why the gate failed, and links to the dashboard', () => {
@@ -121,7 +121,7 @@ describe('the pull-request comment', () => {
     expect(body.startsWith(COMMENT_MARKER)).toBe(true);
     expect(body).toContain('C · 72 / 100 — gate failed');
     expect(body).toContain('- 1 new critical finding (at most 0 allowed)');
-    expect(body).toContain('[Open the dashboard](https://automate.example/dashboard/repo/p)');
+    expect(body).toContain('[Open the dashboard](https://lupin.example/dashboard/repo/p)');
     expect(body).toContain('Security C');
   });
 
@@ -238,7 +238,7 @@ describe('the pull-request comment', () => {
     expect(first.requests[0]?.input).toMatchObject({
       sha: 'abc1234',
       state: 'failure',
-      context: 'automate/health',
+      context: 'lupin/health',
     });
 
     const again = fakeAdapter({ listIssueComments: [{ id: 42, body: `${COMMENT_MARKER}\nold` }] });
@@ -364,7 +364,7 @@ describe('alerts', () => {
         fetch: fetcher as typeof fetch,
         now: () => new Date('2026-10-23T00:00:00.000Z'),
       },
-      { webhookUrl: 'https://hooks.example.test/automate' },
+      { webhookUrl: 'https://hooks.example.test/lupin' },
       {
         projectId: 'p',
         project: 'Service',
@@ -375,7 +375,7 @@ describe('alerts', () => {
     );
     expect(outcomes).toEqual(['webhook: 204']);
     const body = String(calls[0]?.init.body);
-    const header = (calls[0]?.init.headers as Record<string, string>)['x-automate-signature'];
+    const header = (calls[0]?.init.headers as Record<string, string>)['x-lupin-signature'];
     const unix = Math.floor(new Date('2026-10-23T00:00:00.000Z').getTime() / 1000);
     expect(header).toBe(
       `t=${String(unix)},v1=${createHmac('sha256', secret)
@@ -558,7 +558,7 @@ describe('the gate status and comment when GitHub refuses part of it', () => {
     grade: grade(null),
     added: [],
     branch: 'feature',
-    detailsUrl: 'https://automate.example/dashboard/repo/p',
+    detailsUrl: 'https://lupin.example/dashboard/repo/p',
   };
   const target = { owner: 'o', repo: 'r', sha: 'abc1234', pullRequest: 3 };
 
@@ -567,7 +567,7 @@ describe('the gate status and comment when GitHub refuses part of it', () => {
     await reportToGitHub(github.adapter, 't', target, report);
     expect(github.requests[0]?.input).toMatchObject({
       description: 'Grade incomplete',
-      target_url: 'https://automate.example/dashboard/repo/p',
+      target_url: 'https://lupin.example/dashboard/repo/p',
     });
   });
 

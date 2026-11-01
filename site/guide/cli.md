@@ -1,55 +1,55 @@
-# Send results from any CI (the `automate` CLI)
+# Send results from any CI (the `lupin` CLI)
 
-`tools/automate-cli` is a small Node command, `automate`, with no dependencies of its own. It does
+`tools/lupin-cli` is a small Node command, `lupin`, with no dependencies of its own. It does
 the four things a pipeline needs: upload a scanner report, ask for the pull-request gate, record a
 deployment, and send the repository's agent configuration. On GitHub Actions the composite action
-in `.github/actions/automate-health` does the same four things, and its inputs are below.
+in `.github/actions/lupin-health` does the same four things, and its inputs are below.
 
 ## Configure it
 
 The CLI reads its destination and credential from the environment, so the token never appears in
 a command line, a shell history or a process listing:
 
-- `AUTOMATE_URL` — your install's origin. `https://` anywhere; `http://` only to a loopback host
+- `LUPIN_URL` — your install's origin. `https://` anywhere; `http://` only to a loopback host
   (`localhost`, `127.0.0.0/8` — also as `::ffff:127.x.x.x` — or `::1`), the same rule as the MCP
   stdio proxy. Anything else is refused before a byte is sent, because the token would cross the
   network in the clear. The composite action's own check is stricter: `localhost`, `::1` or a
   numeric `127.d.d.d`, so a hostname such as `127.evil.example` never passes.
-- `AUTOMATE_TOKEN` — an access token. For CI, an **uploader** token pinned to the project: it can
+- `LUPIN_TOKEN` — an access token. For CI, an **uploader** token pinned to the project: it can
   send reports to that one project and read nothing.
-- `AUTOMATE_PROJECT` — the project's id, from its page in the dashboard. `--project <id>` overrides it.
+- `LUPIN_PROJECT` — the project's id, from its page in the dashboard. `--project <id>` overrides it.
 
-`--branch` and `--commit` default to `AUTOMATE_BRANCH` and `AUTOMATE_COMMIT`, then to GitHub
+`--branch` and `--commit` default to `LUPIN_BRANCH` and `LUPIN_COMMIT`, then to GitHub
 Actions' own `GITHUB_HEAD_REF`/`GITHUB_REF_NAME` and `GITHUB_SHA`.
 
-Build it from a checkout with the rest of the workspace; the bin is `tools/automate-cli/dist/index.js`.
+Build it from a checkout with the rest of the workspace; the bin is `tools/lupin-cli/dist/index.js`.
 
 ## Commands
 
 ```bash
 # A report, in any format the upload door reads (sarif, lcov, cyclonedx-json, stryker-mutation, …)
-automate upload --format sarif --file semgrep.sarif
-automate upload --format slsa-provenance --file provenance.json --digest sha256:<64 hex>
+lupin upload --format sarif --file semgrep.sarif
+lupin upload --format slsa-provenance --file provenance.json --digest sha256:<64 hex>
 
 # The pull-request gate: exits 1 when it fails, printing every reason
-automate gate --branch "$BRANCH" --commit "$SHA" --pr 42
+lupin gate --branch "$BRANCH" --commit "$SHA" --pr 42
 
 # Run the tests, send the report, and keep the command's exit code unless every failure is an
 # approved quarantined test. The command runs without a shell; on Windows, `-- cmd /c npx …`.
-automate test --format playwright-json --report results.json -- npx playwright test --reporter=json
+lupin test --format playwright-json --report results.json -- npx playwright test --reporter=json
 
 # Which files this shard runs, balanced by how long each took. Never drops a file: if the plan
 # cannot be had, it prints them all. Every shard of one CI run sends the commit time as the
 # history cut-off (override with --as-of), so separate shards get one plan.
-npx playwright test $(automate shard --total 4 --index 2 -- $(git ls-files 'e2e/*.spec.ts'))
+npx playwright test $(lupin shard --total 4 --index 2 -- $(git ls-files 'e2e/*.spec.ts'))
 
 # A deployment, through the delivery push door, for the DORA scorecard.
 # Also: --id, --url, --created-at, and the switches --rollback, --hotfix, --unplanned
-automate deploy --environment production --status success --sha "$SHA"
+lupin deploy --environment production --status success --sha "$SHA"
 
 # AGENTS.md, CLAUDE.md, .cursor/rules, .mcp.json, SKILL.md … under a directory.
-# Needs a branch: --branch, AUTOMATE_BRANCH, or GitHub Actions' own
-automate agent-config --dir .
+# Needs a branch: --branch, LUPIN_BRANCH, or GitHub Actions' own
+lupin agent-config --dir .
 ```
 
 `upload` also takes `--source-root` (default `GITHUB_WORKSPACE`): the checkout a SARIF scanner ran
@@ -73,11 +73,11 @@ A refusal prints the server's own error code and sentence, never the token.
 ## The GitHub composite action
 
 ```yaml
-- uses: your-org/AutoMate/.github/actions/automate-health@<pinned sha>
+- uses: your-org/Lupin/.github/actions/lupin-health@<pinned sha>
   with:
-    url: https://automate.example.com
-    project-id: ${{ vars.AUTOMATE_PROJECT }}
-    token: ${{ secrets.AUTOMATE_UPLOADER_TOKEN }}
+    url: https://lupin.example.com
+    project-id: ${{ vars.LUPIN_PROJECT }}
+    token: ${{ secrets.LUPIN_UPLOADER_TOKEN }}
     reports: |
       sarif:semgrep.sarif
       lcov:coverage/lcov.info

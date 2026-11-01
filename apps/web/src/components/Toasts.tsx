@@ -1,5 +1,5 @@
 import React from 'react';
-import { Toast, ToastDescription, ToastTitle } from '@automate/ui';
+import { Toast, ToastDescription, ToastTitle } from '@lupin/ui';
 
 /**
  * One place that says "that worked" or "that failed", where the person is looking, and then

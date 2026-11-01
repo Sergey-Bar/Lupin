@@ -1,5 +1,5 @@
 import { createPublicKey, verify, X509Certificate, type KeyObject } from 'node:crypto';
-import type { DimensionMetric } from '@automate/shared-contracts';
+import type { DimensionMetric } from '@lupin/shared-contracts';
 import { certificateIdentity, identityTrusted } from './certificate-identity.js';
 import { HealthReportError, MAX_HEALTH_REPORT_BYTES } from './sarif.js';
 import { type Json, record, list, text } from './json-fields.js';

@@ -6,11 +6,11 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@automate/api", "dev"],
+      "runtimeArgs": ["--filter", "@lupin/api", "dev"],
       "cwd": "${workspaceFolder}",
       "env": {
         "DATA_DIR": "${workspaceFolder}/apps/server/data",
-        "AUTOMATE_DASHBOARD_API_KEY": "dev-key"
+        "LUPIN_DASHBOARD_API_KEY": "dev-key"
       },
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
@@ -20,7 +20,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@automate/unified-web", "exec", "vitest", "--reporter=verbose"],
+      "runtimeArgs": ["--filter", "@lupin/unified-web", "exec", "vitest", "--reporter=verbose"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
@@ -30,20 +30,20 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@automate/api", "exec", "vitest", "--reporter=verbose"],
+      "runtimeArgs": ["--filter", "@lupin/api", "exec", "vitest", "--reporter=verbose"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "DATA_DIR": "/tmp/automate-test"
+        "DATA_DIR": "/tmp/lupin-test"
       },
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
     },
     {
-      "name": "Automate Server",
+      "name": "Lupin Server",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@automate/api", "dev"],
+      "runtimeArgs": ["--filter", "@lupin/api", "dev"],
       "cwd": "${workspaceFolder}",
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434"
@@ -52,13 +52,13 @@
       "skipFiles": ["<node_internals>/**"]
     },
     {
-      "name": "Automate Tests (Current File)",
+      "name": "Lupin Tests (Current File)",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": [
         "--filter",
-        "@automate/api",
+        "@lupin/api",
         "exec",
         "vitest",
         "run",

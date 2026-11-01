@@ -84,20 +84,20 @@ export function layout(page) {
 </ul></nav></header>`;
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(page.title)} — AUTOMATE (local)</title><style>${CSS}</style></head>
+<title>${esc(page.title)} — Lupin Local</title><style>${CSS}</style></head>
 <body><a class="skip" href="#main">Skip to content</a>${nav}
 <main id="main" tabindex="-1">${page.body}</main>${page.script ?? ''}</body></html>`;
 }
 
 /** The only page served before a session exists. Reads the token from the URL fragment. */
 export const BOOTSTRAP_SCRIPT_SOURCE = `const t=new URLSearchParams(location.hash.slice(1)).get('t');
-if(t){fetch('/api/v1/session',{method:'POST',headers:{Authorization:'Bearer '+t}}).then(r=>{if(r.ok){history.replaceState(null,'','/');location.reload();}else{document.getElementById('msg').textContent='The token was not accepted. Start AUTOMATE again and open the address it prints.';}});}`;
+if(t){fetch('/api/v1/session',{method:'POST',headers:{Authorization:'Bearer '+t}}).then(r=>{if(r.ok){history.replaceState(null,'','/');location.reload();}else{document.getElementById('msg').textContent='The token was not accepted. Start Lupin Local again and open the address it prints.';}});}`;
 
 export function bootstrapPage() {
   return layout({
     title: 'Opening',
     nav: false,
-    body: `<h1>AUTOMATE (local)</h1><p id="msg" role="status">Opening your session. If nothing happens, open the address that was printed when AUTOMATE started; it contains a one-time token after the # sign.</p><noscript><p>This page needs JavaScript once, to hand the token to the server.</p></noscript>`,
+    body: `<h1>Lupin Local</h1><p id="msg" role="status">Opening your session. If nothing happens, open the address that was printed when Lupin Local started; it contains a one-time token after the # sign.</p><noscript><p>This page needs JavaScript once, to hand the token to the server.</p></noscript>`,
     script: `<script>${BOOTSTRAP_SCRIPT_SOURCE}</script>`,
   });
 }
@@ -107,7 +107,7 @@ export function onboardingPage(state = {}) {
   return layout({
     title: 'Choose a repository',
     body: `<h1>Choose a repository</h1>
-<p>AUTOMATE (local) finds the test tools and reports in a folder on this computer and shows what they say. It <strong>only reads</strong> the folder: nothing is run and nothing is written to it.</p>
+<p>Lupin Local finds the test tools and reports in a folder on this computer and shows what they say. It <strong>only reads</strong> the folder: nothing is run and nothing is written to it.</p>
 ${state.message ? `<div class="banner bad" role="alert">${esc(state.message)}</div>` : ''}
 <form method="post" action="/ui/repositories">
 <label for="path">Folder path</label>

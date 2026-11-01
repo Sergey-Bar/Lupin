@@ -124,6 +124,7 @@ overrides:
   yaml@>=2.0.0 <2.8.3: ^2.8.3
   uuid@<11.1.1: ^11.1.1
   csv-parse@<7.0.2: ^7.0.2
+  follow-redirects@>=1.16.0 <=1.16.1: ^1.16.2
 
 patchedDependencies:
   '@stryker-mutator/vitest-runner@10.0.0': 890316bd6edb446e7b450b23c08fe314a14cbba08ae7adedb1ce5614d07913e0
@@ -207,66 +208,66 @@ importers:
 
   apps/api:
     dependencies:
-      '@automate/auth':
-        specifier: workspace:*
-        version: link:../../packages/auth
-      '@automate/automation':
-        specifier: workspace:*
-        version: link:../../packages/automation
-      '@automate/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@automate/connectors-github':
-        specifier: workspace:*
-        version: link:../../packages/connectors/github
-      '@automate/connectors-jira':
-        specifier: workspace:*
-        version: link:../../packages/connectors/jira
-      '@automate/connectors-sdk':
-        specifier: workspace:*
-        version: link:../../packages/connectors/sdk
-      '@automate/connectors-signal':
-        specifier: workspace:*
-        version: link:../../packages/connectors/signal
-      '@automate/connectors-slack':
-        specifier: workspace:*
-        version: link:../../packages/connectors/slack
-      '@automate/connectors-teams':
-        specifier: workspace:*
-        version: link:../../packages/connectors/teams
-      '@automate/connectors-telegram':
-        specifier: workspace:*
-        version: link:../../packages/connectors/telegram
-      '@automate/connectors-whatsapp':
-        specifier: workspace:*
-        version: link:../../packages/connectors/whatsapp
-      '@automate/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@automate/orchestration':
-        specifier: workspace:*
-        version: link:../../packages/orchestration
-      '@automate/projects':
-        specifier: workspace:*
-        version: link:../../packages/projects
-      '@automate/realtime':
-        specifier: workspace:*
-        version: link:../../packages/realtime
-      '@automate/reporter':
-        specifier: workspace:*
-        version: link:../../packages/reporter
-      '@automate/reporting':
-        specifier: workspace:*
-        version: link:../../packages/reporting
-      '@automate/shared-contracts':
-        specifier: workspace:*
-        version: link:../../packages/shared-contracts
-      '@automate/tool-sdk':
-        specifier: workspace:*
-        version: link:../../packages/tool-sdk
       '@hono/node-server':
         specifier: ^2.1.5
         version: 2.1.5(hono@4.13.14)
+      '@lupin/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@lupin/automation':
+        specifier: workspace:*
+        version: link:../../packages/automation
+      '@lupin/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@lupin/connectors-github':
+        specifier: workspace:*
+        version: link:../../packages/connectors/github
+      '@lupin/connectors-jira':
+        specifier: workspace:*
+        version: link:../../packages/connectors/jira
+      '@lupin/connectors-sdk':
+        specifier: workspace:*
+        version: link:../../packages/connectors/sdk
+      '@lupin/connectors-signal':
+        specifier: workspace:*
+        version: link:../../packages/connectors/signal
+      '@lupin/connectors-slack':
+        specifier: workspace:*
+        version: link:../../packages/connectors/slack
+      '@lupin/connectors-teams':
+        specifier: workspace:*
+        version: link:../../packages/connectors/teams
+      '@lupin/connectors-telegram':
+        specifier: workspace:*
+        version: link:../../packages/connectors/telegram
+      '@lupin/connectors-whatsapp':
+        specifier: workspace:*
+        version: link:../../packages/connectors/whatsapp
+      '@lupin/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@lupin/orchestration':
+        specifier: workspace:*
+        version: link:../../packages/orchestration
+      '@lupin/projects':
+        specifier: workspace:*
+        version: link:../../packages/projects
+      '@lupin/realtime':
+        specifier: workspace:*
+        version: link:../../packages/realtime
+      '@lupin/reporter':
+        specifier: workspace:*
+        version: link:../../packages/reporter
+      '@lupin/reporting':
+        specifier: workspace:*
+        version: link:../../packages/reporting
+      '@lupin/shared-contracts':
+        specifier: workspace:*
+        version: link:../../packages/shared-contracts
+      '@lupin/tool-sdk':
+        specifier: workspace:*
+        version: link:../../packages/tool-sdk
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
         version: 1.32.2(supports-color@8.1.1)(zod@4.6.7)
@@ -325,13 +326,13 @@ importers:
 
   apps/runner:
     dependencies:
-      '@automate/reporter':
+      '@lupin/reporter':
         specifier: workspace:*
         version: link:../../packages/reporter
-      '@automate/runner-sdk':
+      '@lupin/runner-sdk':
         specifier: workspace:*
         version: link:../../packages/runner-sdk
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
       '@playwright/test':
@@ -368,7 +369,7 @@ importers:
 
   apps/tui:
     dependencies:
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
       zod:
@@ -399,13 +400,13 @@ importers:
 
   apps/web:
     dependencies:
-      '@automate/realtime':
+      '@lupin/realtime':
         specifier: workspace:*
         version: link:../../packages/realtime
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
-      '@automate/ui':
+      '@lupin/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@sentry/react':
@@ -427,12 +428,12 @@ importers:
         specifier: 'catalog:'
         version: 4.6.7
     devDependencies:
-      '@automate/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@eslint/js':
         specifier: 'catalog:'
         version: 10.0.1(eslint@10.13.0(jiti@2.7.0)(supports-color@8.1.1))
+      '@lupin/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@sentry/vite-plugin':
         specifier: 'catalog:'
         version: 11.9.0(rollup@4.64.12)
@@ -493,10 +494,10 @@ importers:
 
   apps/worker:
     dependencies:
-      '@automate/orchestration':
+      '@lupin/orchestration':
         specifier: workspace:*
         version: link:../../packages/orchestration
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
       croner:
@@ -539,7 +540,7 @@ importers:
 
   packages/auth:
     dependencies:
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../shared-contracts
     devDependencies:
@@ -616,7 +617,7 @@ importers:
 
   packages/connectors/github:
     dependencies:
-      '@automate/connectors-sdk':
+      '@lupin/connectors-sdk':
         specifier: workspace:*
         version: link:../sdk
     devDependencies:
@@ -641,7 +642,7 @@ importers:
 
   packages/connectors/jira:
     dependencies:
-      '@automate/connectors-sdk':
+      '@lupin/connectors-sdk':
         specifier: workspace:*
         version: link:../sdk
     devDependencies:
@@ -690,7 +691,7 @@ importers:
 
   packages/connectors/signal:
     dependencies:
-      '@automate/connectors-sdk':
+      '@lupin/connectors-sdk':
         specifier: workspace:*
         version: link:../sdk
     devDependencies:
@@ -715,7 +716,7 @@ importers:
 
   packages/connectors/slack:
     dependencies:
-      '@automate/connectors-sdk':
+      '@lupin/connectors-sdk':
         specifier: workspace:*
         version: link:../sdk
     devDependencies:
@@ -740,7 +741,7 @@ importers:
 
   packages/connectors/teams:
     dependencies:
-      '@automate/connectors-sdk':
+      '@lupin/connectors-sdk':
         specifier: workspace:*
         version: link:../sdk
     devDependencies:
@@ -765,7 +766,7 @@ importers:
 
   packages/connectors/telegram:
     dependencies:
-      '@automate/connectors-sdk':
+      '@lupin/connectors-sdk':
         specifier: workspace:*
         version: link:../sdk
     devDependencies:
@@ -790,7 +791,7 @@ importers:
 
   packages/connectors/whatsapp:
     dependencies:
-      '@automate/connectors-sdk':
+      '@lupin/connectors-sdk':
         specifier: workspace:*
         version: link:../sdk
     devDependencies:
@@ -855,7 +856,7 @@ importers:
 
   packages/orchestration:
     dependencies:
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../shared-contracts
     devDependencies:
@@ -886,7 +887,7 @@ importers:
 
   packages/projects:
     dependencies:
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../shared-contracts
       zod:
@@ -920,7 +921,7 @@ importers:
 
   packages/realtime:
     dependencies:
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../shared-contracts
       zod:
@@ -948,7 +949,7 @@ importers:
 
   packages/reporter:
     dependencies:
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../shared-contracts
       saxes:
@@ -982,7 +983,7 @@ importers:
 
   packages/reporting:
     dependencies:
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../shared-contracts
     devDependencies:
@@ -1013,7 +1014,7 @@ importers:
 
   packages/runner-sdk:
     dependencies:
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../shared-contracts
     devDependencies:
@@ -1075,10 +1076,10 @@ importers:
 
   packages/tool-sdk:
     dependencies:
-      '@automate/connectors-sdk':
+      '@lupin/connectors-sdk':
         specifier: workspace:*
         version: link:../connectors/sdk
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../shared-contracts
       zod:
@@ -1206,16 +1207,16 @@ importers:
 
   tests/contract:
     dependencies:
-      '@automate/realtime':
+      '@lupin/realtime':
         specifier: workspace:*
         version: link:../../packages/realtime
-      '@automate/reporter':
+      '@lupin/reporter':
         specifier: workspace:*
         version: link:../../packages/reporter
-      '@automate/reporting':
+      '@lupin/reporting':
         specifier: workspace:*
         version: link:../../packages/reporting
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
     devDependencies:
@@ -1240,15 +1241,15 @@ importers:
 
   tests/integration:
     dependencies:
-      '@automate/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@automate/shared-contracts':
-        specifier: workspace:*
-        version: link:../../packages/shared-contracts
       '@electric-sql/pglite':
         specifier: ^0.5.11
         version: 0.5.11
+      '@lupin/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@lupin/shared-contracts':
+        specifier: workspace:*
+        version: link:../../packages/shared-contracts
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@electric-sql/pglite@0.5.11)(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(pg@8.23.1)
@@ -1272,15 +1273,15 @@ importers:
         specifier: 'catalog:'
         version: 5.0.5(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/coverage-v8@5.0.5)(jsdom@30.1.3)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  tools/automate-cli:
+  tools/lupin-cli:
     devDependencies:
-      '@automate/config':
+      '@lupin/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@automate/projects':
+      '@lupin/projects':
         specifier: workspace:*
         version: link:../../packages/projects
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
       '@types/node':
@@ -1320,13 +1321,13 @@ importers:
 
   tools/playwright-reporter:
     devDependencies:
-      '@automate/config':
+      '@lupin/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@automate/reporter':
+      '@lupin/reporter':
         specifier: workspace:*
         version: link:../../packages/reporter
-      '@automate/shared-contracts':
+      '@lupin/shared-contracts':
         specifier: workspace:*
         version: link:../../packages/shared-contracts
       '@playwright/test':
@@ -5398,8 +5399,8 @@ packages:
   focus-trap@7.8.0:
     resolution: {integrity: sha512-/yNdlIkpWbM0ptxno3ONTuf+2g318kh2ez3KSeZN5dZ8YC6AAmgeWz+GasYYiBJPFaYcSAPeu4GfhUaChzIJXA==}
 
-  follow-redirects@1.16.1:
-    resolution: {integrity: sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==}
+  follow-redirects@1.16.2:
+    resolution: {integrity: sha512-/kVP2U8z596Ia0gwFrwyIeo74ta5aVmSeU1FfAUMAmcEP5EP7zydmag3SLiN64NaRKef3lxsq7i/g7ltJQDGow==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -11428,7 +11429,7 @@ snapshots:
 
   axios@1.20.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
-      follow-redirects: 1.16.1(debug@4.4.3(supports-color@8.1.1))
+      follow-redirects: 1.16.2(debug@4.4.3(supports-color@8.1.1))
       form-data: 4.0.6
       https-proxy-agent: 5.0.1(supports-color@8.1.1)
       proxy-from-env: 2.1.0
@@ -12403,7 +12404,7 @@ snapshots:
     dependencies:
       tabbable: 6.5.0
 
-  follow-redirects@1.16.1(debug@4.4.3(supports-color@8.1.1)):
+  follow-redirects@1.16.2(debug@4.4.3(supports-color@8.1.1)):
     optionalDependencies:
       debug: 4.4.3(supports-color@8.1.1)
 

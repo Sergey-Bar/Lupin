@@ -43,7 +43,7 @@ describe('NavBar', () => {
     render(<RouterProvider router={makeRouter()} />);
     const themeBtn = await screen.findByTestId('theme-toggle');
     fireEvent.click(themeBtn);
-    expect(localStorage.getItem('automate-theme')).toBeDefined();
+    expect(localStorage.getItem('lupin-theme')).toBeDefined();
   });
 
   /*
@@ -52,17 +52,17 @@ describe('NavBar', () => {
    * `localStorage`; `ThemeToggle.test.tsx` covers the arithmetic against a mocked hook.
    */
   it('theme cycles: light → system when starting from light', async () => {
-    localStorage.setItem('automate-theme', 'light');
+    localStorage.setItem('lupin-theme', 'light');
     render(<RouterProvider router={makeRouter()} />);
     fireEvent.click(await screen.findByTestId('theme-toggle'));
-    expect(localStorage.getItem('automate-theme')).toBe('system');
+    expect(localStorage.getItem('lupin-theme')).toBe('system');
   });
 
   it('theme cycles: dark → light when starting from dark', async () => {
-    localStorage.setItem('automate-theme', 'dark');
+    localStorage.setItem('lupin-theme', 'dark');
     render(<RouterProvider router={makeRouter()} />);
     fireEvent.click(await screen.findByTestId('theme-toggle'));
-    expect(localStorage.getItem('automate-theme')).toBe('light');
+    expect(localStorage.getItem('lupin-theme')).toBe('light');
   });
 
   it('draws the four sections, and nothing else, in the top bar', async () => {
@@ -75,10 +75,19 @@ describe('NavBar', () => {
   it('renders the product wordmark once, in the corner', async () => {
     render(<RouterProvider router={makeRouter()} />);
     await screen.findByTestId('nav-bar');
-    expect(screen.getByTestId('nav-wordmark')).toHaveTextContent('Automate');
+    expect(screen.getByTestId('nav-wordmark')).toHaveTextContent('Lupin');
     // Exactly once. A second copy is the rename having half happened — which is
     // what the retired-name gate in `scripts/lib/product-name.test.mjs` exists for.
-    expect(screen.getAllByText('Automate')).toHaveLength(1);
+    expect(screen.getAllByText('Lupin')).toHaveLength(1);
+  });
+
+  it('draws the wordmark as the site does: the name in sentence case, and a dot in the accent', async () => {
+    render(<RouterProvider router={makeRouter()} />);
+    const mark = await screen.findByTestId('nav-wordmark');
+    expect(mark.className).not.toMatch(/\buppercase\b/);
+    const dot = mark.querySelector('[data-wordmark-dot]');
+    expect(dot?.textContent).toBe('.');
+    expect(dot?.className).toMatch(/\btext-accent\b/);
   });
 
   it.each([

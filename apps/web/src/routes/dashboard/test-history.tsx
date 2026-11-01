@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Badge, Button, EmptyState, Sparkline, type BadgeProps } from '@automate/ui';
-import type { TestHistory, TestHistoryEntry } from '@automate/shared-contracts';
+import { Badge, Button, EmptyState, Sparkline, type BadgeProps } from '@lupin/ui';
+import type { TestHistory, TestHistoryEntry } from '@lupin/shared-contracts';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { PageFrame, PageHeader, Panel, Quiet } from '../../components/kit.js';
 import { defaultApiClient, type ApiClient } from '../../lib/api.js';

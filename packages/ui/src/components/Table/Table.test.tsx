@@ -167,7 +167,7 @@ describe('Table keyboard operation', () => {
  *    since it was written and the product has had throughout.
  * 2. **`text-right`** — figures are compared down a column, and a right edge is the only
  *    alignment where the *last* digit is in the same place on every row.
- * 3. **`font-mono`** — the design language says JetBrains Mono for anything a person
+ * 3. **`font-mono`** — the design language says Geist Mono for anything a person
  *    compares character by character, and a column of scores is that.
  */
 describe('a numeric cell', () => {
@@ -251,5 +251,48 @@ describe('a table that scrolls', () => {
     } finally {
       if (width) Object.defineProperty(HTMLElement.prototype, 'scrollWidth', width);
     }
+  });
+});
+
+/**
+ * The row and header states a dense table needs to be read.
+ *
+ * `j` / `k` (`apps/web/src/components/Shortcuts.tsx`) move focus row by row, so the row a
+ * keyboard reader is on has to be drawn — a focused `<tr>` with no visible state is a cursor
+ * nobody can see. The header stays put while a long table scrolls, so a column of figures is
+ * never read without its label, and it sits on an opaque step so the rows do not show through.
+ */
+describe('the table row and header states', () => {
+  function mount() {
+    render(
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Run</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow data-testid="row">
+            <TableCell>run-1</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>,
+    );
+  }
+
+  it('draws the row a keyboard reader has walked to, not only the one under the pointer', () => {
+    mount();
+    const row = screen.getByTestId('row');
+    expect(row.className).toMatch(/\bhover:bg-surface-muted\b/);
+    expect(row.className).toMatch(/\bfocus-visible:bg-surface-muted\b/);
+    expect(row.className).toMatch(/\bfocus-visible:outline-border-focus\b/);
+  });
+
+  it('keeps the header on screen, on an opaque plane step, while the body scrolls', () => {
+    mount();
+    const header = screen.getByRole('columnheader', { name: 'Run' }).closest('thead');
+    expect(header?.className).toMatch(/\bsticky\b/);
+    expect(header?.className).toMatch(/\btop-0\b/);
+    expect(header?.className).toMatch(/\bbg-surface\b/);
   });
 });

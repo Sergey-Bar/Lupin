@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HealthGradeSchema, type DimensionMetric } from '@automate/shared-contracts';
+import { HealthGradeSchema, type DimensionMetric } from '@lupin/shared-contracts';
 import { mergeConfig } from '../config.js';
 import {
   GATE_CEILING,
@@ -290,7 +290,7 @@ describe('grade', () => {
   });
 });
 
-describe('the health policy in automate.config.json', () => {
+describe('the health policy in lupin.config.json', () => {
   const base = {
     detectorVersion: 1,
     ecosystem: null,

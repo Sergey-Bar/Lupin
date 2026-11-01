@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TUI_COMMANDS, TUI_COMMAND_REQUIREMENTS } from '@automate/shared-contracts';
+import { TUI_COMMANDS, TUI_COMMAND_REQUIREMENTS } from '@lupin/shared-contracts';
 import {
   buildCommand,
   isKnownCommand,
@@ -58,7 +58,7 @@ describe('a command is built from its named arguments', () => {
   });
 
   it('ignores extra arguments rather than passing them through', () => {
-    // `automate-tui score.get project-1 --shell` must not smuggle a flag into the
+    // `lupin-tui score.get project-1 --shell` must not smuggle a flag into the
     // body. The command takes exactly the fields it declares and the rest is not
     // ours to forward — a CLI that echoed unknown flags into a request is a CLI whose
     // request shape depends on the user's shell completion.

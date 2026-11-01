@@ -18,10 +18,7 @@ const SOURCE = readFileSync(
 );
 
 test('an image reference is the registry, the service and an overridable version', () => {
-  assert.equal(
-    imageReference('api', '2.5.0'),
-    `${REGISTRY}/automate-api:\${AUTOMATE_VERSION:-2.5.0}`,
-  );
+  assert.equal(imageReference('api', '2.5.0'), `${REGISTRY}/lupin-api:\${LUPIN_VERSION:-2.5.0}`);
   assert.equal(REGISTRY, 'ghcr.io/sergey-bar');
 });
 
@@ -62,7 +59,7 @@ test('the env example names every required variable, plus the release settings',
   for (const match of out.matchAll(/\$\{([A-Z][A-Z0-9_]*):\?/g)) {
     assert.match(example, new RegExp(`^${match[1] ?? ''}=`, 'm'), match[1]);
   }
-  for (const name of ['AUTOMATE_VERSION', 'AUTOMATE_BIND', 'AUTOMATE_PORT']) {
+  for (const name of ['LUPIN_VERSION', 'LUPIN_BIND', 'LUPIN_PORT']) {
     assert.match(example, new RegExp(`^#? ?${name}=`, 'm'), name);
   }
 });

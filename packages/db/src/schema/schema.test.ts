@@ -1,5 +1,5 @@
 /**
- * Schema unit tests for @automate/db
+ * Schema unit tests for @lupin/db
  *
  * Validates all schema tables are correctly defined and exported
  * without requiring a live PostgreSQL connection.
@@ -41,7 +41,7 @@ import {
   agentConflicts,
   samlConfig,
   auditEvents,
-  // automate
+  // lupin
   conversations,
   messages,
   messageAttachments,
@@ -175,7 +175,7 @@ describe('dashboard schema — schedules', () => {
 
   it('carries the same gateStatus vocabulary as gate_evaluations, not a second copy', () => {
     // P-5. `runs.gate_status` was `['passed','failed','skipped']` while
-    // `gate_evaluations.status` — and the contract in `@automate/shared-contracts` —
+    // `gate_evaluations.status` — and the contract in `@lupin/shared-contracts` —
     // is `['passed','failed','warning','unknown','not_evaluated']`. The two disagreed in
     // both directions: three contract values were rejected by the database and one
     // non-contract value was accepted.
@@ -372,9 +372,9 @@ describe('dashboard schema — auditEvents', () => {
   });
 });
 
-// ─── automate schema ─────────────────────────────────────────────────────────
+// ─── lupin schema ─────────────────────────────────────────────────────────
 
-describe('automate schema — conversations', () => {
+describe('lupin schema — conversations', () => {
   it('is exported and has the correct table name', () => {
     expect(tname(conversations)).toBe('conversations');
   });
@@ -388,7 +388,7 @@ describe('automate schema — conversations', () => {
   });
 });
 
-describe('automate schema — messages', () => {
+describe('lupin schema — messages', () => {
   it('has table name "messages"', () => {
     expect(tname(messages)).toBe('messages');
   });
@@ -402,13 +402,13 @@ describe('automate schema — messages', () => {
   });
 });
 
-describe('automate schema — messageAttachments', () => {
+describe('lupin schema — messageAttachments', () => {
   it('has table name "message_attachments"', () => {
     expect(tname(messageAttachments)).toBe('message_attachments');
   });
 });
 
-describe('automate schema — connectorConfigs', () => {
+describe('lupin schema — connectorConfigs', () => {
   it('has table name "connector_configs"', () => {
     expect(tname(connectorConfigs)).toBe('connector_configs');
   });
@@ -418,13 +418,13 @@ describe('automate schema — connectorConfigs', () => {
   });
 });
 
-describe('automate schema — flowTemplates', () => {
+describe('lupin schema — flowTemplates', () => {
   it('has table name "flow_templates"', () => {
     expect(tname(flowTemplates)).toBe('flow_templates');
   });
 });
 
-describe('automate schema — executionLog', () => {
+describe('lupin schema — executionLog', () => {
   it('has table name "execution_log"', () => {
     expect(tname(executionLog)).toBe('execution_log');
   });
@@ -434,7 +434,7 @@ describe('automate schema — executionLog', () => {
   });
 });
 
-describe('automate schema — modelConfig', () => {
+describe('lupin schema — modelConfig', () => {
   it('has table name "model_config"', () => {
     expect(tname(modelConfig)).toBe('model_config');
   });
@@ -446,7 +446,7 @@ describe('automate schema — modelConfig', () => {
   });
 });
 
-describe('automate schema — traceLinks', () => {
+describe('lupin schema — traceLinks', () => {
   it('has table name "trace_links"', () => {
     expect(tname(traceLinks)).toBe('trace_links');
   });

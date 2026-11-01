@@ -8,7 +8,7 @@ import {
   StatusDot,
   cn,
   type DotStatus,
-} from '@automate/ui';
+} from '@lupin/ui';
 import {
   WRONG_SHOWN,
   type Finding,
@@ -26,7 +26,7 @@ import type { ReleaseReadinessCard } from '../lib/qa.js';
  * the verdict survives a monochrome display, a colour-vision deficiency and a screen
  * reader. On a monochrome plane it is also the largest colour on the screen, which is the
  * point: it is the one thing the reader came to learn. The verdict itself is computed by
- * `evaluateReadiness` in `@automate/reporting`; this file only draws it.
+ * `evaluateReadiness` in `@lupin/reporting`; this file only draws it.
  */
 const VERDICT = {
   go: { label: 'Go', Icon: CircleCheck, tone: 'text-success' },
@@ -67,11 +67,9 @@ export function VerdictHero({
     <section
       aria-label="Release readiness"
       data-testid="readiness-hero"
-      className="shrink-0 rounded-xl border border-border bg-surface px-5 py-6 sm:px-8 sm:py-8"
+      className="shrink-0 rounded-lg border border-border bg-surface px-5 py-6 sm:px-8 sm:py-8"
     >
-      <p className="text-xs font-medium uppercase tracking-wider text-fg-muted">
-        Release readiness
-      </p>
+      <p className="text-xs font-medium text-fg-muted">Release readiness</p>
       {verdict === null || summary === null ? (
         <p data-testid="readiness-pending" className="mt-3 text-lg text-fg-muted">
           {failure === null ? 'Reading release readiness…' : `Readiness unread: ${failure}`}
@@ -108,7 +106,7 @@ export function FindingsColumns({ summary }: { summary: HealthSummary }): React.
         testId="findings-wrong"
         title="What’s wrong"
         items={summary.wrong}
-        empty="Nothing is wrong that Automate can see."
+        empty="Nothing is wrong that Lupin can see."
       />
       <FindingList
         testId="findings-good"
@@ -139,10 +137,10 @@ function FindingList({
     <section
       aria-labelledby={id}
       data-testid={testId}
-      className="flex min-w-0 flex-col rounded-xl border border-border bg-surface p-5"
+      className="flex min-w-0 flex-col rounded-lg border border-border bg-surface p-5"
     >
       <h2 id={id} className="flex items-baseline justify-between gap-2">
-        <span className="text-xs font-medium uppercase tracking-wider text-fg-muted">{title}</span>
+        <span className="text-xs font-medium text-fg-muted">{title}</span>
         <span className="text-2xl font-semibold tabular-nums text-fg">{items.length}</span>
       </h2>
       {items.length === 0 ? (

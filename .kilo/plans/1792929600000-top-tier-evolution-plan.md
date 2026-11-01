@@ -16,7 +16,7 @@ Tesla-minimal design (no glass — `GLASS_SELECTOR` and the design language unch
 ## Phase B — LAN server
 
 3. `checkExposurePolicy` and the start scripts refuse a reachable install with no login;
-   `AUTOMATE_LAN_MODE=1` turns enforcement on. Ledger LAN-1 (forged XFF), LAN-2 (cookie
+   `LUPIN_LAN_MODE=1` turns enforcement on. Ledger LAN-1 (forged XFF), LAN-2 (cookie
    Secure), LAN-3 (unguarded routes).
 4. `apps/api/src/http/route-access.ts` guards every route; `PUBLIC_ROUTES` is the open set.
    Cross-site mutating requests are refused (`middleware/origin-check.ts`).

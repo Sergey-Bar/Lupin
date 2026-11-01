@@ -7,7 +7,7 @@ import { githubUrl } from '../locales';
     <div>
       <a class="lupin-wordmark" :href="withBase('/')">Lupin<span aria-hidden="true">.</span></a>
       <p>Observe. Investigate. Decide.</p>
-      <small>© 2026 Automate Platform Contributors</small>
+      <small>© 2026 Lupin Platform Contributors</small>
     </div>
     <nav aria-label="Footer">
       <a :href="withBase('/guide/')">Documentation</a><a :href="githubUrl">GitHub</a

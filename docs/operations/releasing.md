@@ -27,14 +27,14 @@ installs that bundle on a clean runner to prove it works. The decision is
    | Image …                       | Builds each image natively on amd64 and arm64, with an SBOM and provenance                                          |
    | Publish …                     | Tags one multi-arch image `X.Y.Z` (+ `X.Y` and `latest` for a final release) and attests it                         |
    | Images are public             | Pulls every image anonymously; stops if one is private                                                              |
-   | GitHub release                | Builds `automate-X.Y.Z.zip` and `SHA256SUMS` and publishes the release                                              |
+   | GitHub release                | Builds `lupin-X.Y.Z.zip` and `SHA256SUMS` and publishes the release                                                 |
    | Install from the release page | Downloads the zip, checks the checksum, runs `start.sh`, signs in, removes it                                       |
 
 ## The first release: make the packages public
 
 GHCR creates every package **private** the first time it is pushed, and no workflow can
 change that. On the first release the **Images are public** job fails and prints one
-settings link per image. For each `automate-*` package: **Package settings → Change
+settings link per image. For each `lupin-*` package: **Package settings → Change
 visibility → Public**. Then **Re-run failed jobs** on the workflow run. Later releases
 push to the same packages and stay public.
 

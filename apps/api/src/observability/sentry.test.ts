@@ -31,13 +31,13 @@ describe('readSentrySettings', () => {
   it('reads the DSN, release and environment', () => {
     const settings = readSentrySettings({
       SENTRY_DSN: DSN,
-      SENTRY_RELEASE: 'automate@1.4.2',
+      SENTRY_RELEASE: 'lupin@1.4.2',
       SENTRY_ENVIRONMENT: 'staging',
     });
 
     expect(settings).toEqual({
       dsn: DSN,
-      release: 'automate@1.4.2',
+      release: 'lupin@1.4.2',
       environment: 'staging',
       tracesSampleRate: 0,
     });

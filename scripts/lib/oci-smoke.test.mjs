@@ -16,7 +16,7 @@ const manifest = {
 };
 
 test('the image is started with the isolation its manifest declares', () => {
-  const args = smokeRunArgs('automate/zap:local', manifest);
+  const args = smokeRunArgs('lupin/zap:local', manifest);
   assert.equal(args[0], 'run');
   assert.ok(args.includes('--rm'));
   for (const [flag, value] of [
@@ -32,11 +32,11 @@ test('the image is started with the isolation its manifest declares', () => {
   }
   assert.ok(args.includes('--read-only'));
   assert.ok(args.includes('--tmpfs'), 'a read-only root still gets a writable /tmp');
-  assert.equal(args.at(-1), 'automate/zap:local', 'the image runs its own entrypoint');
+  assert.equal(args.at(-1), 'lupin/zap:local', 'the image runs its own entrypoint');
 });
 
 test('a writable manifest is not started read-only, and an open network is not cut', () => {
-  const args = smokeRunArgs('automate/k6:local', {
+  const args = smokeRunArgs('lupin/k6:local', {
     ...manifest,
     readOnly: false,
     network: 'bridge',
@@ -47,8 +47,8 @@ test('a writable manifest is not started read-only, and an open network is not c
 });
 
 test('a manifest without a numeric user is refused rather than run as the image default', () => {
-  assert.throws(() => smokeRunArgs('automate/k6:local', { ...manifest, user: undefined }), /user/);
-  assert.throws(() => smokeRunArgs('automate/k6:local', { ...manifest, user: 0 }), /root/);
+  assert.throws(() => smokeRunArgs('lupin/k6:local', { ...manifest, user: undefined }), /user/);
+  assert.throws(() => smokeRunArgs('lupin/k6:local', { ...manifest, user: 0 }), /root/);
 });
 
 test('a clean exit with output passes', () => {

@@ -72,7 +72,7 @@ export type DetectResult =
  *
  * **A proposal, never the authority.** The result is what a UI shows as
  * "detected: `pnpm test` — use this / override", and a checked-in
- * `automate.config.json` supersedes it. Detection never installs anything and
+ * `lupin.config.json` supersedes it. Detection never installs anything and
  * never executes anything (D8): the strongest thing it does is read a manifest.
  */
 export async function detectProject(view: RepositoryView): Promise<DetectResult> {

@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod/v4';
-import { ExecutionEventLineSchema } from '@automate/shared-contracts';
+import { ExecutionEventLineSchema } from '@lupin/shared-contracts';
 import { artifactKind } from './artifact-kind.js';
 
 const require = createRequire(import.meta.url);
@@ -17,7 +17,7 @@ const require = createRequire(import.meta.url);
  * This was a third declaration of `ReporterEventSchema` — and was neither the
  * contract's reporter event nor the realtime package's broadcast event. It was,
  * field for field, the execution event: `{eventId, sequence, type, occurredAt,
- * payload}`. The schema now lives in `@automate/shared-contracts` as
+ * payload}`. The schema now lives in `@lupin/shared-contracts` as
  * `ExecutionEventLineSchema`, which both sides already depend on, so the name
  * says what the thing is and there is one validator rather than three. There is
  * deliberately no local alias: an alias named `ReporterEventSchema` would read as
@@ -431,9 +431,9 @@ export class PlaywrightExecutionAdapter implements ExecutionProvider {
       cwd: this.projectRoot,
       env: {
         ...sanitizeEnvironment(this.environment, redactions),
-        AUTOMATE_BASE_URL: target,
-        AUTOMATE_OUTPUT_DIR: layout.outputDirectory,
-        AUTOMATE_RUNNER_EVENTS_PATH: layout.eventPath,
+        LUPIN_BASE_URL: target,
+        LUPIN_OUTPUT_DIR: layout.outputDirectory,
+        LUPIN_RUNNER_EVENTS_PATH: layout.eventPath,
         PLAYWRIGHT_JSON_OUTPUT_NAME: join(layout.reportDirectory, 'playwright-report.json'),
         PLAYWRIGHT_JUNIT_OUTPUT_NAME: join(layout.reportDirectory, 'junit.xml'),
         CI: '1',

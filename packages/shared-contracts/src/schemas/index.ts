@@ -1,7 +1,7 @@
 // Zod v4 schemas — canonical validation source for TypeScript consumers
 export * from './zod.js';
 
-// Domain schemas — expanded Automate contract surface
+// Domain schemas — expanded Lupin contract surface
 export * from './auth.js';
 export * from './ai.js';
 export * from './conversations.js';

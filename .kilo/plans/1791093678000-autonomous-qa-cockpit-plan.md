@@ -56,7 +56,7 @@ Everything else in the request lands as asked.
 
 Two questions were blocking and both are now answered.
 
-**D-1 — the brand.** `Cockpit` goes top-left; `Automate` stays the product wordmark. One brand per
+**D-1 — the brand.** `Cockpit` goes top-left; `Lupin` stays the product wordmark. One brand per
 slot, each answering a different question: *where am I* (left, the navigation target) and *what am I
 using* (right, the product). No rename, so `README.md`, `site/guide/design-language.md` and
 `scripts/lib/product-name.test.mjs` are untouched.
@@ -84,7 +84,7 @@ Every item below was read in the tree on 2026-10-04. Re-deriving any of it would
 | Event storage with replay | `run_events` with `sequence`, `hash`, `version`, `receivedAt` | `packages/db/src/schema/execution.ts:222` |
 | One shared SSE connection | `subscribeToRunEvents`, reference-counted | `apps/web/src/lib/api.ts:418` |
 | Where glass is decided | the token authority, the lint ban and the readability floor | `packages/ui/src/tokens/theme.css`; `eslint.config.js:30`; `1791096500000-full-glassmorphism-plan.md` |
-| Register a folder at boot | `discoverProject` + `discoverProjectAtBoot`, opt-in via `AUTOMATE_PROJECT_ROOT` | `apps/api/src/services/project-registry-service.ts:319` |
+| Register a folder at boot | `discoverProject` + `discoverProjectAtBoot`, opt-in via `LUPIN_PROJECT_ROOT` | `apps/api/src/services/project-registry-service.ts:319` |
 
 **The one that matters most for §4:** the detector already knows which tools the repository uses, and
 it already knows it **per ecosystem**. Onboarding's "scan the repository to identify existing tools"
@@ -330,10 +330,10 @@ re-derivation is recorded in the row.
 ### W1 — Brand, states, and the axe spec
 
 - `apps/web/src/components/NavBar.tsx` — the left slot stops being a `text-sm font-semibold` nav
-  link and becomes a wordmark. `Cockpit` left, `Automate` right, one job each.
+  link and becomes a wordmark. `Cockpit` left, `Lupin` right, one job each.
 - `apps/web/src/components/NavBar.test.tsx` — **red first.** Asserts each name appears exactly once,
   and that the left one is the link to `/dashboard` with `aria-current="page"`. The existing test
-  asserts `Automate` appears once and that `Release Command Center` is absent; both survive.
+  asserts `Lupin` appears once and that `Release Command Center` is absent; both survive.
 - `docs/quality/state-matrix.md` — **generated, not hand-written.** `W11.4` condition (b) names a
   matrix, so one exists; but 13 routes × 4 states kept in step by hand is a document that drifts the
   week after it lands. The axe spec below already enumerates every route and every state it visits,
@@ -388,7 +388,7 @@ red-first, and the runner step is the one that must not be skipped.
 - `apps/web/src/components/Cockpit.tsx` — re-read on `run.completed` for the visible project only.
 - `apps/web/src/lib/api.ts` — subscribe on the **existing** shared connection. A second
   `EventSource` is exactly the leak the previous plan closed.
-- **Gate:** `pnpm --filter @automate/unified-web test` — and the coverage floor holds at **96/88/96/98**
+- **Gate:** `pnpm --filter @lupin/unified-web test` — and the coverage floor holds at **96/88/96/98**
   without lowering it. One new web file here, so one real test.
 - **Ledger:** `AUTO-1`, **Blocker**, and the title says what it is: *autonomy stops at the runner
   image*.

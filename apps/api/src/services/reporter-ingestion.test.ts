@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 import { ReporterIngestionService } from './reporter-ingestion.js';
 
 const digest = 'd'.repeat(64);

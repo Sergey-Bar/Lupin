@@ -1,7 +1,7 @@
 # Scheduled reports
 
 A short report — daily, weekly, or on your own schedule — to Slack, Microsoft Teams,
-Telegram, WhatsApp, Signal, or Automate's own inbox. Open **Map → Reports**.
+Telegram, WhatsApp, Signal, or Lupin's own inbox. Open **Map → Reports**.
 
 ## What a report looks like
 
@@ -14,7 +14,7 @@ The same five-second shape on every platform, and the same shape as the **Now** 
 🔴 2 new flaky tests
 🟡 Coverage −1.2 pts
 +2 more
-https://automate.local:8443/dashboard/now
+https://lupin.local:8443/dashboard/now
 ```
 
 A status you can see before you read, one sentence, at most three items worst first,
@@ -23,7 +23,7 @@ week — sends one catch-up report, never a backlog.
 
 ## Set it up in three steps
 
-1. **Where.** Add a channel. Start with **Automate inbox**: it needs no account, and its
+1. **Where.** Add a channel. Start with **Lupin inbox**: it needs no account, and its
    reports appear in the history on the same page.
 2. **When.** Pick **Daily 09:00**, **Weekly, Monday 09:00**, or **Custom** (a cron
    expression such as `0 8 * * 1-5` for weekdays at 08:00). The timezone defaults to your
@@ -44,14 +44,14 @@ in the vault (`VAULT_SECRET` must be set) and never shown again.
 2. **OAuth & Permissions → Bot Token Scopes**: add `chat:write`.
 3. **Install to Workspace** and copy the **Bot User OAuth Token** (`xoxb-…`).
 4. In the Slack channel, `/invite @your-app`.
-5. In Automate: Slack, channel `#your-channel`, paste the token.
+5. In Lupin: Slack, channel `#your-channel`, paste the token.
 
 ### Microsoft Teams
 
 1. In the Teams channel, **⋯ → Workflows**.
 2. Choose **Post to a channel when a webhook request is received**.
 3. Finish the wizard and copy the URL it shows.
-4. In Automate: Microsoft Teams, paste the URL.
+4. In Lupin: Microsoft Teams, paste the URL.
 
 Office 365 "Incoming Webhook" connectors are retired by Microsoft; Workflows is the
 replacement. The URL is the credential — keep it like a password.
@@ -62,7 +62,7 @@ replacement. The URL is the credential — keep it like a password.
 2. Add the bot to your group (or message it directly).
 3. Send any message in that chat, then open
    `https://api.telegram.org/bot<token>/getUpdates` and copy `chat.id` (groups start with `-100`).
-4. In Automate: Telegram, chat id, paste the token.
+4. In Lupin: Telegram, chat id, paste the token.
 
 ### WhatsApp
 
@@ -73,20 +73,20 @@ one takes Meta's review (usually under a day).
 2. Note the **Phone number ID** and create a **system-user access token**.
 3. In WhatsApp Manager, create a template (category _Utility_) whose body is `{{1}}`.
 4. Wait for approval.
-5. In Automate: WhatsApp, phone number id, recipient (digits, country code first),
+5. In Lupin: WhatsApp, phone number id, recipient (digits, country code first),
    template name and language, paste the token.
 
 ### Signal
 
-Signal has no official bot API. Automate uses the self-hosted
+Signal has no official bot API. Lupin uses the self-hosted
 [`signal-cli-rest-api`](https://github.com/bbernhard/signal-cli-rest-api) bridge, shipped
 as an optional service in the compose file.
 
 1. `docker compose --profile signal up -d signal`
-2. Link it to a Signal account once: open `http://localhost:8080/v1/qrcodelink?device_name=automate`
+2. Link it to a Signal account once: open `http://localhost:8080/v1/qrcodelink?device_name=lupin`
    on the server (publish the port temporarily, or use `docker compose exec`) and scan it
    from Signal → **Settings → Linked devices**.
-3. In Automate: Signal, the account's number (`+15551234567`), the recipients
+3. In Lupin: Signal, the account's number (`+15551234567`), the recipients
    (comma-separated numbers or group ids), and bridge URL `http://signal:8080`.
 
 The bridge is reached only from inside the compose network; it is never published.

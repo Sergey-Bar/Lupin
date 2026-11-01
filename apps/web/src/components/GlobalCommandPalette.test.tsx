@@ -59,11 +59,11 @@ describe('GlobalCommandPalette', () => {
         .find((action) => action.id === 'theme-toggle')
         ?.onSelect();
     });
-    expect(localStorage.getItem('automate-theme')).toBe('dark');
+    expect(localStorage.getItem('lupin-theme')).toBe('dark');
   });
 
   it('toggles theme from dark to light', () => {
-    localStorage.setItem('automate-theme', 'dark');
+    localStorage.setItem('lupin-theme', 'dark');
     render(
       <ThemeProvider>
         <GlobalCommandPalette />
@@ -75,7 +75,7 @@ describe('GlobalCommandPalette', () => {
         .find((action) => action.id === 'theme-toggle')
         ?.onSelect();
     });
-    expect(localStorage.getItem('automate-theme')).toBe('light');
+    expect(localStorage.getItem('lupin-theme')).toBe('light');
   });
 });
 

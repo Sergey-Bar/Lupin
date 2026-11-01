@@ -2,7 +2,7 @@
  * Conversations domain schemas — Zod v4
  *
  * Covers conversation lifecycle and message contracts for the
- * Automate AI assistant and unified platform chat.
+ * Lupin AI assistant and unified platform chat.
  */
 import { z } from 'zod/v4';
 

@@ -144,10 +144,10 @@ test('check 8 catches a literal colour in the site stylesheet', () => {
 test('check 8 reads every theme stylesheet, not only custom.css', () => {
   // `lupin.css` re-pointed the product tokens at a hex palette from a sibling file and
   // check 8 stayed green, because it read one file. A palette in any other stylesheet
-  // must fail; `lupin.css` is the one named, recorded exception.
+  // must fail, and so must `lupin.css` itself — there is no exception, since the palette moved into the product tokens.
   const rogue = path.join(sitePackage, '.vitepress', 'theme', 'rogue-palette.css');
   try {
-    writeFileSync(rogue, ':root {\n  --automate-accent: #ff0000;\n}\n', 'utf8');
+    writeFileSync(rogue, ':root {\n  --lupin-accent: #ff0000;\n}\n', 'utf8');
     assert.match(
       runDoctor(),
       /rogue-palette\.css:2` has a literal colour/,
@@ -158,6 +158,25 @@ test('check 8 reads every theme stylesheet, not only custom.css', () => {
   }
 });
 
-test('the site palette exception is one named file, and the check says so', () => {
-  assert.match(built, /site palette exception: site\/\.vitepress\/theme\/lupin\.css/);
+test('check 8 reads every stylesheet in the site theme, not only custom.css', () => {
+  // **The hole this closes.** Check 8 read one file, and the site's identity lived in a
+  // second one: `lupin.css` declared sixteen literal colours and overrode the product's
+  // palette, and the check passed throughout because it never opened the file. A copied
+  // palette is as likely to be written in OKLCH as in hex now that the product's is, so
+  // both are planted.
+  const lupinTheme = path.join(sitePackage, '.vitepress', 'theme', 'lupin.css');
+  const original = readFileSync(lupinTheme, 'utf8');
+  for (const rogue of ['.rogue { color: #6754ae; }', '.rogue { color: oklch(50% 0.13 290); }']) {
+    try {
+      writeFileSync(lupinTheme, `${original}\n${rogue}\n`, 'utf8');
+      assert.match(
+        runDoctor(),
+        /lupin\.css:\d+` has a literal colour/,
+        `a literal colour in lupin.css passed check 8: ${rogue}`,
+      );
+    } finally {
+      writeFileSync(lupinTheme, original, 'utf8');
+    }
+  }
+  assert.equal(readFileSync(lupinTheme, 'utf8'), original, 'lupin.css was not restored');
 });

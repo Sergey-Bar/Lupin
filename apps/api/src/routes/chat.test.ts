@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { createChatRoutes, MAX_CHAT_BODY_BYTES } from './chat.js';
-import type { AiGateway, CompletionChunk } from '@automate/automation';
+import type { AiGateway, CompletionChunk } from '@lupin/automation';
 
 /**
  * The chat route is the only consumer `packages/automation` has.
@@ -38,9 +38,7 @@ async function* streamOf(chunks: CompletionChunk[]): AsyncIterable<CompletionChu
 }
 
 const gateway = (overrides: Partial<AiGateway> = {}): AiGateway => ({
-  listModels: vi
-    .fn()
-    .mockResolvedValue([{ id: 'kilo/sonic', gateway: 'kilo', ownedBy: 'automate' }]),
+  listModels: vi.fn().mockResolvedValue([{ id: 'kilo/sonic', gateway: 'kilo', ownedBy: 'lupin' }]),
   streamCompletion: vi.fn(() =>
     streamOf([
       { type: 'text', text: 'Checking ' },
@@ -65,7 +63,7 @@ describe('GET /api/v1/chat/models', () => {
     const response = await app(gateway()).request('/api/v1/chat/models');
     expect(response.status).toBe(200);
     const body = (await response.json()) as { models: Array<{ id: string; gateway: string }> };
-    expect(body.models).toEqual([{ id: 'kilo/sonic', gateway: 'kilo', ownedBy: 'automate' }]);
+    expect(body.models).toEqual([{ id: 'kilo/sonic', gateway: 'kilo', ownedBy: 'lupin' }]);
   });
 
   it('reports a gateway that cannot answer, rather than an empty list', async () => {

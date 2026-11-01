@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import type { DrizzleSessionStore } from '@automate/db';
-import { hashCredential, type SessionRecord } from '@automate/auth';
+import type { DrizzleSessionStore } from '@lupin/db';
+import { hashCredential, type SessionRecord } from '@lupin/auth';
 
 export interface AuthSessionBackend {
   /** `userId` signs a person in (ADR-014); without it, the session is the installation's. */

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@automate/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lupin/ui';
 
 /**
  * Keyboard shortcuts, and the `?` sheet that lists them.

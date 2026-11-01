@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { DomainError } from '../errors/domain-error.js';
-import { AutomationDefinitionSchema, ScheduleSchema } from '@automate/shared-contracts';
+import { AutomationDefinitionSchema, ScheduleSchema } from '@lupin/shared-contracts';
 import { OrchestrationService } from '../services/orchestration-service.js';
 
 /**

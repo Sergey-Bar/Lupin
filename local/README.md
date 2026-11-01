@@ -1,4 +1,4 @@
-# AUTOMATE (local)
+# Lupin Local
 
 A local-first tool that finds the testing setup of a repository on this computer, reads the
 test reports it already has, shows what they do and do not say, and (with explicit consent)
@@ -14,9 +14,9 @@ before relying on anything here.
 ## Run it
 
 ```text
-node local/bin/automate-local.mjs serve
-node local/bin/automate-local.mjs scan <folder>
-node local/bin/automate-local.mjs diagnostics
+node local/bin/lupin-local.mjs serve
+node local/bin/lupin-local.mjs scan <folder>
+node local/bin/lupin-local.mjs diagnostics
 ```
 
 `serve` prints an address with a one-time token after the `#`. It listens on the loopback

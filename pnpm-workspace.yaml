@@ -146,7 +146,7 @@ overrides:
   # Since 2026-10-21 the catalog is on vite 8, so this override is now also what holds
   # VitePress 1 on the 6.x line its `^5.4.14` range was already being stretched to. A
   # VitePress 1 build on vite 8 is not a combination anybody has tested; `pnpm build`
-  # runs `@automate/docs:build` against the 6.x copy, and the lockfile resolves two vites.
+  # runs `@lupin/docs:build` against the 6.x copy, and the lockfile resolves two vites.
   'vitepress>vite': ^6.4.4
   # Added by `pnpm audit --fix` on 2026-10-20, one entry per advisory it reported. Drop each when
   # its parent takes the fix.
@@ -186,6 +186,11 @@ overrides:
   'yaml@>=2.0.0 <2.8.3': ^2.8.3
   'uuid@<11.1.1': ^11.1.1
   'csv-parse@<7.0.2': ^7.0.2
+  # GHSA-mrwp-f3q8-3g9p, high: follow-redirects 1.16.0-1.16.1 discards cross-realm
+  # `sensitiveHeaders` arrays, so custom credentials can follow a redirect. Reached through the
+  # runner's `@usebruno/cli` (axios), which pins nothing newer. Fixed in 1.16.2, published
+  # 2026-10-25. Added 2026-11-01. Review by 2026-12-01: drop it when `@usebruno/cli` takes the fix.
+  follow-redirects@>=1.16.0 <=1.16.1: ^1.16.2
   # Removed 2026-10-21: `uuid@<11.1.1: ^11.1.1`, through storybook. Storybook 10 no longer
   # depends on `uuid`, so nothing in the tree resolves it and the override matched nothing.
 

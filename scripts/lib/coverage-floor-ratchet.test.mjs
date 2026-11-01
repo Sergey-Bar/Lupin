@@ -137,3 +137,63 @@ test('a readable base is parsed and named', () => {
   assert.deepEqual(result.baseline, { 'packages/ui': { statements: 59 } });
   assert.match(result.reason, /compared against abc123/);
 });
+
+// A package can be renamed. The ratchet reads the baseline by key, so a rename looks exactly
+// like deleting a floor and adding a new one, and a gate that cannot tell the two apart would
+// either block every rename or be told to ignore removals. Neither is acceptable, so a rename
+// is accepted only when it is recorded, and only if it keeps every metric of the old floor.
+
+test('a recorded rename carries the floor across, and lowers nothing', () => {
+  const before = { 'tools/old-cli': { statements: 96, branches: 92, functions: 98, lines: 96 } };
+  const after = { 'tools/new-cli': { statements: 96, branches: 92, functions: 98, lines: 96 } };
+  assert.deepEqual(loweredFloors(before, after, { 'tools/old-cli': 'tools/new-cli' }), []);
+});
+
+test('a rename that raises a floor is progress', () => {
+  const before = { 'tools/old-cli': { statements: 96, branches: 92, functions: 98, lines: 96 } };
+  const after = { 'tools/new-cli': { statements: 97, branches: 93, functions: 99, lines: 97 } };
+  assert.deepEqual(loweredFloors(before, after, { 'tools/old-cli': 'tools/new-cli' }), []);
+});
+
+test('a rename cannot be used to lower a floor', () => {
+  // The whole risk of accepting renames: move the package, drop the number in the same edit.
+  const before = { 'tools/old-cli': { statements: 96, branches: 92, functions: 98, lines: 96 } };
+  const after = { 'tools/new-cli': { statements: 50, branches: 92, functions: 98, lines: 96 } };
+  const findings = loweredFloors(before, after, { 'tools/old-cli': 'tools/new-cli' });
+  assert.equal(findings.length, 1);
+  assert.match(findings[0], /statements floor lowered from 96 to 50/);
+  assert.match(findings[0], /tools\/new-cli/);
+});
+
+test('an unrecorded rename is still a removal', () => {
+  const before = { 'tools/old-cli': { statements: 96, branches: 92, functions: 98, lines: 96 } };
+  const after = { 'tools/new-cli': { statements: 96, branches: 92, functions: 98, lines: 96 } };
+  const findings = loweredFloors(before, after);
+  assert.equal(findings.length, 1);
+  assert.match(findings[0], /tools\/old-cli: removed from coverage-baseline\.json/);
+});
+
+test('a recorded rename whose new key is missing is a removal, not a pass', () => {
+  const before = { 'tools/old-cli': { statements: 96, branches: 92, functions: 98, lines: 96 } };
+  const findings = loweredFloors(before, {}, { 'tools/old-cli': 'tools/new-cli' });
+  assert.equal(findings.length, 1);
+  assert.match(findings[0], /removed from coverage-baseline\.json/);
+});
+
+test('a rename does not excuse a measured floor becoming not_configured', () => {
+  const before = { 'tools/old-cli': { statements: 96, branches: 92, functions: 98, lines: 96 } };
+  const after = { 'tools/new-cli': { status: 'not_configured', reason: 'gave up' } };
+  const findings = loweredFloors(before, after, { 'tools/old-cli': 'tools/new-cli' });
+  assert.equal(findings.length, 1);
+  assert.match(findings[0], /not_configured/);
+});
+
+test('the rename map is only read for names that disappeared from the baseline', () => {
+  // A stale rename entry must not mask a lowering on a package that still exists under its
+  // old name: the old key is present, so it is compared as itself.
+  const before = { 'tools/old-cli': { statements: 96, branches: 92, functions: 98, lines: 96 } };
+  const after = { 'tools/old-cli': { statements: 10, branches: 92, functions: 98, lines: 96 } };
+  const findings = loweredFloors(before, after, { 'tools/old-cli': 'tools/new-cli' });
+  assert.equal(findings.length, 1);
+  assert.match(findings[0], /statements floor lowered from 96 to 10/);
+});

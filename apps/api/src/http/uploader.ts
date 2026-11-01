@@ -36,7 +36,7 @@ function sameSecret(presented: string, expected: string): boolean {
 export function uploaderGuard(options: UploaderGuardOptions): MiddlewareHandler {
   return guard('reporter-secret', async (context, next) => {
     const presented = bearerToken(context.req.header('authorization'));
-    if (presented !== undefined && presented.startsWith('amt_')) {
+    if (presented !== undefined && presented.startsWith('lup_')) {
       const caller = await callerOf(context, options.access);
       const project = context.req.param('id');
       if (caller.uploaderFor === project || caller.role === 'operator' || caller.role === 'admin') {
@@ -77,7 +77,7 @@ export async function uploaderActor(
   context: Parameters<MiddlewareHandler>[0],
   access: CallerResolver,
 ): Promise<string> {
-  return bearerToken(context.req.header('authorization'))?.startsWith('amt_') === true
+  return bearerToken(context.req.header('authorization'))?.startsWith('lup_') === true
     ? (await callerOf(context, access)).actor
     : 'reporter';
 }

@@ -1,4 +1,4 @@
-import type { Scorecard, ScorecardMetric } from '@automate/shared-contracts';
+import type { Scorecard, ScorecardMetric } from '@lupin/shared-contracts';
 import { median } from './stats.js';
 
 /**

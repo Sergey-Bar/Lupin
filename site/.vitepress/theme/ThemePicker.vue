@@ -64,7 +64,7 @@ const label = computed(() => {
   height: 44px;
   padding: 0;
   border-radius: 6px;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   cursor: pointer;
 }
 .theme-picker svg {
@@ -72,10 +72,10 @@ const label = computed(() => {
   height: 20px;
 }
 .theme-picker:hover {
-  background: var(--automate-surface-muted);
+  background: var(--lupin-surface-muted);
 }
 .theme-picker:focus-visible {
-  outline: 2px solid var(--automate-fg);
+  outline: 2px solid var(--lupin-fg);
   outline-offset: 3px;
 }
 </style>

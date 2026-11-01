@@ -1,8 +1,8 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { testIdentity } from '@automate/shared-contracts';
-import { playwrightJsonAdapter, type ProducerContext } from '@automate/reporter';
-import AutomateReporter from './index.js';
+import { testIdentity } from '@lupin/shared-contracts';
+import { playwrightJsonAdapter, type ProducerContext } from '@lupin/reporter';
+import LupinReporter from './index.js';
 import type { PwSuite, PwTestCase } from './playwright-types.js';
 
 /**
@@ -12,7 +12,7 @@ import type { PwSuite, PwTestCase } from './playwright-types.js';
  * (`reporter-persistence.ts`: `testIdentity({ file, describePath, title, project })`), and
  * an uploaded report's from the JSON adapter. If the two disagree — a file absolute in one
  * and relative in the other, a describe path that includes the file suite — a test's history
- * splits in two the day a team moves from `automate test` to the live reporter, and the
+ * splits in two the day a team moves from `lupin test` to the live reporter, and the
  * flake evidence of each half is half the evidence.
  */
 const ROOT = path.resolve('/repo/e2e');
@@ -55,8 +55,8 @@ describe('the streamed identity and the uploaded identity', () => {
       outcome: () => 'expected',
     };
     const sent: Array<Record<string, unknown>> = [];
-    const reporter = new AutomateReporter({
-      env: { AUTOMATE_URL: 'http://localhost:3000' },
+    const reporter = new LupinReporter({
+      env: { LUPIN_URL: 'http://localhost:3000' },
       log: () => undefined,
       fetch: (async (_url: string | URL | Request, init?: RequestInit) => {
         sent.push(JSON.parse(String(init?.body)) as Record<string, unknown>);

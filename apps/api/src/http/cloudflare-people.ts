@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import type { CloudflareAccessConfig } from '@automate/config';
+import type { CloudflareAccessConfig } from '@lupin/config';
 import { perRequest } from './per-request.js';
 import type { Caller } from '../services/access-service.js';
 import type { ProjectRegistryServiceOptions } from '../services/project-registry-service.js';

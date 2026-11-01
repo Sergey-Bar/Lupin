@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-import { DrizzleOutboxRepository } from '@automate/db';
+import { DrizzleOutboxRepository } from '@lupin/db';
 import { assertSchemaBuildIsFresh, createMigratedDatabase } from './migrations.js';
 
 /**

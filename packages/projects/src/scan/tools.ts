@@ -1,4 +1,4 @@
-import type { RepoTool } from '@automate/shared-contracts';
+import type { RepoTool } from '@lupin/shared-contracts';
 import { objectField, readJson } from '../detect/manifest.js';
 import { classifyScript, notRunnableReason } from './classify.js';
 

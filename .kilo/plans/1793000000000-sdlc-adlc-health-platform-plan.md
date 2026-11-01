@@ -36,7 +36,7 @@ project's policy weights them (invariant HEALTH-3).
 6. **Mocks made real.** Issues from findings and clusters, test proposals, vault rotation,
    shared sessions (`apps/api/src/services/issue-tracker-service.ts`).
 7. **Together.** Scorecard endpoints, the digest, the portfolio heatmap, the read-only MCP
-   server (`apps/api/src/routes/mcp.ts`), the upload CLI (`tools/automate-cli/src/commands.ts`)
+   server (`apps/api/src/routes/mcp.ts`), the upload CLI (`tools/lupin-cli/src/commands.ts`)
    and the composite action.
 
 ## Review

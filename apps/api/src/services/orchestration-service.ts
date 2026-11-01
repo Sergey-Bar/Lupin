@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { decideTransition, unownedFence } from '@automate/orchestration';
-import type { AutomationDefinition, JobEnvelope, Schedule } from '@automate/shared-contracts';
+import { decideTransition, unownedFence } from '@lupin/orchestration';
+import type { AutomationDefinition, JobEnvelope, Schedule } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 
 export class OrchestrationService {

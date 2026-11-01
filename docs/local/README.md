@@ -1,10 +1,10 @@
-# AUTOMATE (local) — blueprint index
+# Lupin Local — blueprint index
 
 **Status:** Draft
 **Owner:** maintainers
 **Last reviewed:** 2026-10-19
 
-This directory is the blueprint for **AUTOMATE (local)**: a local-first, offline-capable
+This directory is the blueprint for **Lupin Local**: a local-first, offline-capable
 product that discovers a repository's testing ecosystem, ingests existing test evidence
 into one model, reports what that evidence does and does not show, and (in later phases)
 runs tests with the user's consent.
@@ -18,7 +18,7 @@ server platform; the capability register stays the authority for what that produ
 
 | Name                | Meaning                                                                                          |
 | ------------------- | ------------------------------------------------------------------------------------------------ |
-| AUTOMATE (local)    | The product this directory designs. Provisional name; final naming is an open question.          |
+| Lupin Local         | The product this directory designs. Provisional name; final naming is an open question.          |
 | The server platform | The existing Hono, Effect and PostgreSQL product in `apps/` and `packages/`. Separate, optional. |
 
 The decision and the reuse policy are in [ADR-007](../adr/007-local-product-separate-from-server-platform.md).

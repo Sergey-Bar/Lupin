@@ -249,4 +249,4 @@ export const translations: LandingTranslation[] = [
   docs,
   note,
 }));
-export const githubUrl = 'https://github.com/Sergey-Bar/AutoMate';
+export const githubUrl = 'https://github.com/Sergey-Bar/Lupin';

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import type { CompletionInput } from '@automate/automation';
-import { EvalDatasetBodySchema, type EvalDatasetBody } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import type { CompletionInput } from '@lupin/automation';
+import { EvalDatasetBodySchema, type EvalDatasetBody } from '@lupin/shared-contracts';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import { agentProject, stubGateway } from '../test-support/agent-fixtures.js';
 import {
@@ -170,15 +170,15 @@ describe('running a dataset', () => {
       status: 'started',
     });
     const result = await prepared.execute();
-    expect(result.toolKey).toBe('automate-eval-json:capitals');
+    expect(result.toolKey).toBe('lupin-eval-json:capitals');
     expect(calls).toHaveLength(6);
     expect(calls[2]?.messages[0]).toEqual({ role: 'system', content: 'Be terse.' });
     const [run] = await db.select().from(schema.evalRuns);
     expect(run).toMatchObject({
       source: 'runner',
-      format: 'automate-eval-json',
+      format: 'lupin-eval-json',
       branch: 'feature',
-      toolName: 'automate-eval-runner',
+      toolName: 'lupin-eval-runner',
       provider: 'ollama',
     });
     expect(run?.totals).toMatchObject({

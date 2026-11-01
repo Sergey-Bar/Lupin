@@ -30,7 +30,7 @@ async function scaffold(): Promise<{
   workspace: string;
   cleanup: () => Promise<void>;
 }> {
-  const root = await mkdtemp(path.join(tmpdir(), 'automate-spawn-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'lupin-spawn-'));
   const repo = path.join(root, 'repo');
   const workspace = path.join(root, 'workspace');
   await mkdir(repo, { recursive: true });
@@ -651,7 +651,7 @@ describe('the default process path is the one product code uses', () => {
           deadlineMs: 5000,
           signal: new AbortController().signal,
           command: {
-            argv: ['automate-no-such-executable'],
+            argv: ['lupin-no-such-executable'],
             workingDirectory: '.',
             artifactGlobs: [],
           },
@@ -709,7 +709,7 @@ describe('a run that cannot finish still gives its slot and its directory back',
         },
       });
       await expect(
-        adapter.execute(context({ command: command(['automate-no-such-executable']) })),
+        adapter.execute(context({ command: command(['lupin-no-such-executable']) })),
       ).rejects.toBeInstanceOf(RunnerInfrastructureError);
       expect(await readdir(workspace)).toEqual([]);
     } finally {

@@ -14,7 +14,7 @@
  *
  * The structural check always runs, because it needs no external tool.
  *
- * A fourth path exists and is opt-in: with `AUTOMATE_HOST_SCANNERS=unavailable`
+ * A fourth path exists and is opt-in: with `LUPIN_HOST_SCANNERS=unavailable`
  * set, a *missing* scanner is recorded as `not_configured` and exits 0, so a
  * developer on a host without the binaries can run the rest of `verify`. A
  * scanner that ran and found something still fails, and CI never sets the
@@ -39,7 +39,7 @@ import {
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /** The default ceiling, and the bounds any override is clamped into. */
-const SCAN_TIMEOUT_MS = scanTimeoutMs(process.env['AUTOMATE_SCAN_TIMEOUT_MS']);
+const SCAN_TIMEOUT_MS = scanTimeoutMs(process.env['LUPIN_SCAN_TIMEOUT_MS']);
 
 /** @param {string} binary */
 function have(binary) {

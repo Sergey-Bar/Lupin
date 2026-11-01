@@ -5,10 +5,10 @@ import { cn } from '../../lib/utils.js';
 
 const buttonVariants = cva(
   /*
-   * Flat and monochrome. `primary` is the one solid fill on a screen — the foreground tone
-   * with the on-fill label, so white on black in dark and black on white in light — and
-   * every other variant is a hairline or text. Hover changes the fill a step rather than
-   * filtering it, because `brightness-110` on a near-white fill does nothing visible.
+   * `primary` is the one solid fill on a screen: the Lupin violet with the on-fill label.
+   * Every other variant is an edge or text. Hover changes the fill a step rather than
+   * filtering it, `active:scale-press` is the press, and a loading button is `aria-busy`
+   * and disabled, keeping its label so a screen reader still says what it is doing.
    */
   'inline-flex items-center justify-center rounded-md font-medium transition-[color,background-color,border-color,opacity,transform] duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus active:scale-press',
   {
@@ -24,7 +24,7 @@ const buttonVariants = cva(
       },
       size: {
         sm: 'h-8 px-3 text-xs gap-1.5',
-        md: 'h-10 px-4 text-sm gap-2',
+        md: 'h-11 px-4 text-sm gap-2',
         lg: 'h-12 px-6 text-sm gap-2.5',
       },
     },
@@ -70,6 +70,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={isDisabled}
         aria-disabled={isDisabled}
+        aria-busy={loading ? true : undefined}
         data-testid={testId}
         className={cn(
           buttonVariants({ variant, size }),

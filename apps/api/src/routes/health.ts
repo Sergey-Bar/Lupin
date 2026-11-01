@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { sql } from 'drizzle-orm';
-import { createDbResources } from '@automate/db';
-import type { Profile } from '@automate/config';
+import { createDbResources } from '@lupin/db';
+import type { Profile } from '@lupin/config';
 import { AGENT_DOMAINS } from './agent-registry.js';
 import { PROMETHEUS_CONTENT_TYPE, collect, renderExposition } from '../observability/metrics.js';
 
@@ -66,7 +66,7 @@ function healthBody(version?: '1'): Record<string, unknown> {
   return {
     status: 'healthy',
     ...(version === undefined ? {} : { version }),
-    service: 'automate-api',
+    service: 'lupin-api',
     timestamp: new Date().toISOString(),
   };
 }
@@ -93,7 +93,7 @@ export function createHealthRoutes(options: HealthRouteOptions = {}): Hono {
           await resources.close();
         }
       }
-      return c.json({ status: 'ready', service: 'automate-api' });
+      return c.json({ status: 'ready', service: 'lupin-api' });
     } catch {
       return c.json({ status: 'not_ready', reason: 'database is unavailable' }, 503);
     }
@@ -119,7 +119,7 @@ export function createHealthRoutes(options: HealthRouteOptions = {}): Hono {
     return c.json(
       {
         status: 'not_ready',
-        service: 'automate-api',
+        service: 'lupin-api',
         reason: 'one or more store dependencies are degraded',
         degraded,
       },

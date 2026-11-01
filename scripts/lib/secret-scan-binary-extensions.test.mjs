@@ -50,7 +50,7 @@ const hit = ['DATABASE_URL=', 'postgres', '://user', ':', 'swordfish', '@db:5432
  * @returns {{ status: number | null, stdout: string, stderr: string }}
  */
 function scan(files) {
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-secret-bin-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-secret-bin-'));
   try {
     execFileSync('git', ['init', '--quiet'], { cwd: directory, stdio: 'ignore' });
     for (const [relative, content] of Object.entries(files)) {
@@ -123,8 +123,8 @@ test('the real committed fonts are on the skip list rather than merely absent', 
   // files this repository actually ships, so a font added later without the
   // extension is caught here rather than in a commit hook.
   const fonts = [
-    'packages/ui/src/assets/fonts/archivo-latin-var.woff2',
-    'packages/ui/src/assets/fonts/jetbrains-mono-latin-var.woff2',
+    'packages/ui/src/assets/fonts/geist-var.woff2',
+    'packages/ui/src/assets/fonts/geist-mono-var.woff2',
   ];
   for (const font of fonts) {
     assert.ok(

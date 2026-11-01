@@ -15,8 +15,8 @@ export * from './lib/utils.js';
  * gone. `colors.ts` and `motion.ts` are read directly by `theme.test.ts` and
  * `motion.test.ts`, which is where they belong.
  *
- * The glass policy module that used to be exported here is gone with the glass: the
- * plane is flat and `backdrop-filter` is an error everywhere.
+ * The glass policy module that used to be exported here is gone: the plane is flat, and
+ * the one translucent material is the `surface-translucent` utility in `theme.css`.
  */
 
 export * from './components/Card/Card.js';

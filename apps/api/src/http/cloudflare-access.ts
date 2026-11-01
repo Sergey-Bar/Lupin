@@ -1,7 +1,7 @@
 import type { JsonWebKey } from 'node:crypto';
 import type { Context } from 'hono';
 import { verify } from 'hono/jwt';
-import type { CloudflareAccessConfig } from '@automate/config';
+import type { CloudflareAccessConfig } from '@lupin/config';
 import type { Caller } from '../services/access-service.js';
 import { roleForIdentity } from './role-map.js';
 

@@ -6,7 +6,7 @@ exposure only.
 
 ## Decisions
 
-- One self-hosted MIT product, no licence key, no SaaS. `AUTOMATE_PROFILE=solo|startup|team|enterprise`,
+- One self-hosted MIT product, no licence key, no SaaS. `LUPIN_PROFILE=solo|startup|team|enterprise`,
   default `solo`. A profile sets defaults only; contradictions are refused in `checkExposurePolicy`.
 - Remote is Cloudflare Tunnel (a `cloudflare` compose profile) plus Cloudflare Access. The
   `Cf-Access-Jwt-Assertion` header is verified against the team JWKS and is a credential source.

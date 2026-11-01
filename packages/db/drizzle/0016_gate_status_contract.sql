@@ -2,7 +2,7 @@
 -- accepting one it does not.
 --
 -- `0009_enum_constraints.sql` pinned this column to `('passed','failed','skipped')`
--- while `GateStatusSchema` in `@automate/shared-contracts` — what the API and the client
+-- while `GateStatusSchema` in `@lupin/shared-contracts` — what the API and the client
 -- both validate against — defines
 -- `('passed','failed','warning','unknown','not_evaluated')`. The two disagreed in **both**
 -- directions: the database rejected `warning`, `unknown` and `not_evaluated` outright,

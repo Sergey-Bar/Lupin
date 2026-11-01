@@ -68,7 +68,7 @@ test('a scanner that never returns is stopped, and reported as stopped', async (
 test('a scanner that does not exist is reported, not treated as a pass', async () => {
   /** @type {string[]} */
   const messages = [];
-  const result = await runBounded('automate-no-such-scanner-binary', [], {
+  const result = await runBounded('lupin-no-such-scanner-binary', [], {
     cwd,
     timeoutMs: 10_000,
     log: (message) => messages.push(message),

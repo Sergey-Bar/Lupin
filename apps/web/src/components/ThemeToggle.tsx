@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from '@automate/ui';
+import { Monitor, Moon, Sun } from '@lupin/ui';
 import { useTheme, type Theme } from '../theme/ThemeProvider.js';
 
 /**

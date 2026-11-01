@@ -19,33 +19,33 @@ import {
 describe('the exposition format', () => {
   const series: Series[] = [
     {
-      name: 'automate_thing_total',
+      name: 'lupin_thing_total',
       type: 'counter',
       help: 'Things that happened.',
       labels: { class: '2xx' },
       value: 7,
     },
     {
-      name: 'automate_thing_total',
+      name: 'lupin_thing_total',
       type: 'counter',
       help: 'Things that happened.',
       labels: { class: '5xx' },
       value: 1,
     },
-    { name: 'automate_gauge', type: 'gauge', help: 'A number.', labels: {}, value: 1.5 },
+    { name: 'lupin_gauge', type: 'gauge', help: 'A number.', labels: {}, value: 1.5 },
   ];
 
   it('emits HELP and TYPE once per metric name, before its first sample', () => {
     const body = renderExposition(series);
-    expect(body.match(/# HELP automate_thing_total/g)).toHaveLength(1);
-    expect(body.match(/# TYPE automate_thing_total/g)).toHaveLength(1);
-    expect(body).toContain('# TYPE automate_gauge gauge');
-    expect(body).toContain('automate_thing_total{class="2xx"} 7');
-    expect(body).toContain('automate_thing_total{class="5xx"} 1');
+    expect(body.match(/# HELP lupin_thing_total/g)).toHaveLength(1);
+    expect(body.match(/# TYPE lupin_thing_total/g)).toHaveLength(1);
+    expect(body).toContain('# TYPE lupin_gauge gauge');
+    expect(body).toContain('lupin_thing_total{class="2xx"} 7');
+    expect(body).toContain('lupin_thing_total{class="5xx"} 1');
   });
 
   it('omits the label braces entirely for a metric with no labels', () => {
-    expect(renderExposition(series)).toContain('\nautomate_gauge 1.5');
+    expect(renderExposition(series)).toContain('\nlupin_gauge 1.5');
   });
 
   it('ends with a newline, because the format is line-based', () => {
@@ -53,7 +53,7 @@ describe('the exposition format', () => {
     // splits on newlines drops the last sample.
     const body = renderExposition(series);
     expect(body.endsWith('\n')).toBe(true);
-    expect(body.split('\n').at(-2)).toBe('automate_gauge 1.5');
+    expect(body.split('\n').at(-2)).toBe('lupin_gauge 1.5');
     // An empty registry is an empty body, not a body with a blank line in it.
     expect(renderExposition([])).toBe('');
   });
@@ -64,14 +64,14 @@ describe('the exposition format', () => {
     // string that came from a request becomes a metric the scraper trusts.
     const body = renderExposition([
       {
-        name: 'automate_untrusted',
+        name: 'lupin_untrusted',
         type: 'gauge',
         help: 'A value that came from somewhere.',
         labels: { note: 'a"b\\c\nd' },
         value: 1,
       },
     ]);
-    expect(body).toContain('automate_untrusted{note="a\\"b\\\\c\\nd"} 1');
+    expect(body).toContain('lupin_untrusted{note="a\\"b\\\\c\\nd"} 1');
     // And the injected second line is not there as a line of its own.
     expect(body.split('\n').filter((line) => line.startsWith('d'))).toHaveLength(0);
   });
@@ -135,7 +135,7 @@ describe('what the endpoint exposes, and what it does not', () => {
     expect(names).toContain('process_resident_memory_bytes');
     expect(names).toContain('process_heap_size_used_bytes');
     expect(names).toContain('process_uptime_seconds');
-    expect(names).toContain('automate_http_requests_total');
+    expect(names).toContain('lupin_http_requests_total');
 
     // The promises the module's header and the register row make. Asserted here because
     // the failure mode of a metrics endpoint is a *new* metric added for a good reason

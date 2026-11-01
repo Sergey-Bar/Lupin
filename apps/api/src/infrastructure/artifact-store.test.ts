@@ -17,7 +17,7 @@ function sha256(bytes: Uint8Array): string {
 
 describe('LocalArtifactStore', () => {
   it('writes, verifies, and reads a relative artifact', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-'));
     try {
       const store = new LocalArtifactStore(root);
       const artifact = await store.put({
@@ -33,7 +33,7 @@ describe('LocalArtifactStore', () => {
   });
 
   it('supports deterministic execution storage keys and missing reads', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-'));
     try {
       const store = new LocalArtifactStore(root);
       const bytes = new TextEncoder().encode('evidence');
@@ -50,8 +50,8 @@ describe('LocalArtifactStore', () => {
   });
 
   it('reads legacy bytes through an explicit fallback without changing writes', async () => {
-    const primaryRoot = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-primary-'));
-    const fallbackRoot = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-fallback-'));
+    const primaryRoot = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-primary-'));
+    const fallbackRoot = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-fallback-'));
     try {
       const primary = new LocalArtifactBytesStore(new LocalArtifactStore(primaryRoot));
       const fallback = new LocalArtifactBytesStore(new LocalArtifactStore(fallbackRoot));
@@ -70,14 +70,14 @@ describe('LocalArtifactStore', () => {
   });
 
   it('rejects traversal keys', async () => {
-    const store = new LocalArtifactStore(await mkdtemp(path.join(tmpdir(), 'automate-artifacts-')));
+    const store = new LocalArtifactStore(await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-')));
     await expect(
       store.put({ key: '../secret', bytes: new Uint8Array(), contentType: 'text/plain' }),
     ).rejects.toThrow();
   });
 
   it('publishes a complete artifact under concurrent writes to the same key', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-'));
     try {
       const store = new LocalArtifactStore(root);
       const key = 'runs/run-1/contended.bin';
@@ -104,7 +104,7 @@ describe('LocalArtifactStore', () => {
   });
 
   it('leaves no temporary file behind when the publish step fails', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-'));
     try {
       const store = new LocalArtifactStore(root);
       // Rename onto an existing non-empty directory fails deterministically,
@@ -130,7 +130,7 @@ describe('the live reader is bounded and verified, not the one nothing calls', (
    * Each case below names the method a real read reaches.
    */
   it('refuses a body above the cap and returns one within it', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-'));
     try {
       // A four-byte cap, so the assertion is about the check rather than about
       // allocating 64 MB. The default is pinned separately.
@@ -150,7 +150,7 @@ describe('the live reader is bounded and verified, not the one nothing calls', (
   });
 
   it('refuses bytes whose digest is not the one the artifact row recorded', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-'));
     try {
       const store = new LocalArtifactStore(root);
       const key = 'runs/run-1/report.json';
@@ -181,7 +181,7 @@ describe('the live reader is bounded and verified, not the one nothing calls', (
   });
 
   it('carries the recorded digest through the byte-store port, not only through the store', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-'));
     try {
       const inner = new LocalArtifactStore(root);
       const store = new LocalArtifactBytesStore(inner);
@@ -204,8 +204,8 @@ describe('the live reader is bounded and verified, not the one nothing calls', (
   });
 
   it('applies the same digest policy in the fallback tier', async () => {
-    const primaryRoot = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-primary-'));
-    const fallbackRoot = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-fallback-'));
+    const primaryRoot = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-primary-'));
+    const fallbackRoot = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-fallback-'));
     try {
       const primary = new LocalArtifactBytesStore(new LocalArtifactStore(primaryRoot));
       const fallback = new LocalArtifactBytesStore(new LocalArtifactStore(fallbackRoot));
@@ -231,7 +231,7 @@ describe('the live reader is bounded and verified, not the one nothing calls', (
 
 describe('the byte-store delete is the compensating half of an artifact write', () => {
   it('removes the bytes, and an absent key is success rather than a failure', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-'));
     try {
       const store = new LocalArtifactBytesStore(new LocalArtifactStore(root));
       const bytes = new TextEncoder().encode('evidence');
@@ -253,7 +253,7 @@ describe('the byte-store delete is the compensating half of an artifact write', 
   });
 
   it('refuses a traversal key rather than deleting outside the root', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-'));
     try {
       const store = new LocalArtifactBytesStore(new LocalArtifactStore(root));
       await expect(store.delete('../secret')).rejects.toThrow(/relative|escapes/i);
@@ -263,8 +263,8 @@ describe('the byte-store delete is the compensating half of an artifact write', 
   });
 
   it('removes from both tiers, so a cleanup cannot miss the tier holding the bytes', async () => {
-    const primaryRoot = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-primary-'));
-    const fallbackRoot = await mkdtemp(path.join(tmpdir(), 'automate-artifacts-fallback-'));
+    const primaryRoot = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-primary-'));
+    const fallbackRoot = await mkdtemp(path.join(tmpdir(), 'lupin-artifacts-fallback-'));
     try {
       const primary = new LocalArtifactBytesStore(new LocalArtifactStore(primaryRoot));
       const fallback = new LocalArtifactBytesStore(new LocalArtifactStore(fallbackRoot));

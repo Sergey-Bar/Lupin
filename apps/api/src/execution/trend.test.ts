@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AnalyticsTrendSchema } from '@automate/shared-contracts';
+import { AnalyticsTrendSchema } from '@lupin/shared-contracts';
 import { InMemoryExecutionStore } from './in-memory-execution-store.js';
 import { buildTrend, createAnalyticsTrendRoutes } from './trend.js';
 import type { ExecutionRun } from './types.js';

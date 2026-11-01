@@ -1,4 +1,4 @@
-# AUTOMATE (local) — implementation status
+# Lupin Local — implementation status
 
 **Status:** Draft
 **Owner:** maintainers
@@ -140,7 +140,7 @@ in its record.
 ## Running it
 
 ```text
-node local/bin/automate-local.mjs serve
+node local/bin/lupin-local.mjs serve
 node --test --test-concurrency=1 local/test/*.test.mjs
 pnpm test:local:browser
 ```

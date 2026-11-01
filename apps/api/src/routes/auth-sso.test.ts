@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { hashCredential } from '@automate/auth';
+import { hashCredential } from '@lupin/auth';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import {
   syntheticCookieSecret,
@@ -54,7 +54,7 @@ describe('the installation key under enforced single sign-on', () => {
     const { app: target, onBreakGlass } = app({ enforced: true, breakGlass: true });
     const response = await login(target);
     expect(response.status).toBe(200);
-    expect(response.headers.get('set-cookie')).toMatch(/automate_session=/u);
+    expect(response.headers.get('set-cookie')).toMatch(/lupin_session=/u);
     expect(onBreakGlass).toHaveBeenCalledTimes(1);
     // A wrong key under break-glass is still a wrong key, and is not reported as a use.
     expect((await login(target, `${KEY}x`)).status).toBe(401);

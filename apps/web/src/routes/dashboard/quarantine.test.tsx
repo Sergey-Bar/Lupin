@@ -121,6 +121,42 @@ describe('QuarantinePage', () => {
     expect((screen.getByTestId('input-test-title') as HTMLInputElement).value).toBe('a new test');
   });
 
+  it('shows the new entry at once, marked unsaved, and closes the form before the server answers', async () => {
+    let answer: (value: QuarantineEntry) => void = () => undefined;
+    const addQuarantine = vi.fn(
+      () => new Promise<QuarantineEntry>((resolve) => (answer = resolve)),
+    );
+    render(<QuarantinePage api={stubApi({ addQuarantine })} />);
+    await waitFor(() => expect(screen.getByTestId('quarantine-item-q-1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('add-quarantine-btn'));
+    fireEvent.change(screen.getByTestId('input-test-title'), { target: { value: 'a new test' } });
+    fireEvent.change(screen.getByTestId('input-test-file'), {
+      target: { value: 'tests/new.spec.ts' },
+    });
+    fireEvent.click(screen.getByTestId('submit-quarantine-btn'));
+
+    await waitFor(() => expect(screen.getByText('a new test')).toBeInTheDocument());
+    expect(screen.queryByTestId('quarantine-form')).not.toBeInTheDocument();
+    expect(screen.getByText('Saving…')).toBeInTheDocument();
+
+    answer({ ...entry, id: 'q-2', testTitle: 'a new test', testFile: 'tests/new.spec.ts' });
+    await waitFor(() => expect(screen.getByTestId('quarantine-item-q-2')).toBeInTheDocument());
+    expect(screen.queryByText('Saving…')).not.toBeInTheDocument();
+  });
+
+  it('takes a refused entry back out of the list', async () => {
+    const addQuarantine = vi.fn().mockRejectedValue(new Error('already quarantined'));
+    render(<QuarantinePage api={stubApi({ addQuarantine })} />);
+    await waitFor(() => expect(screen.getByTestId('quarantine-item-q-1')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('add-quarantine-btn'));
+    fireEvent.change(screen.getByTestId('input-test-title'), { target: { value: 'refused' } });
+    fireEvent.change(screen.getByTestId('input-test-file'), { target: { value: 'r.spec.ts' } });
+    fireEvent.click(screen.getByTestId('submit-quarantine-btn'));
+    await waitFor(() => expect(screen.getByTestId('quarantine-add-error')).toBeInTheDocument());
+    expect(screen.queryByTestId(/^quarantine-item-unsaved/)).not.toBeInTheDocument();
+  });
+
   it('does not log the failure and hide it', async () => {
     // The defect was `console.error(err)` and nothing else, so the only trace was
     // in a console nobody reads. Asserted explicitly: a regression back to a bare

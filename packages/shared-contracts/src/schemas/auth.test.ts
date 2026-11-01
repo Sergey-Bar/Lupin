@@ -40,8 +40,8 @@ describe('JwtClaimsSchema', () => {
   it('accepts a valid full JWT claims object', () => {
     const result = JwtClaimsSchema.safeParse({
       sub: 'user-1',
-      iss: 'https://auth.automate.dev',
-      aud: 'automate-platform',
+      iss: 'https://auth.lupin.dev',
+      aud: 'lupin-platform',
       iat: 1700000000,
       exp: 1700003600,
       permissions: ['runs:read', 'tests:read'],
@@ -156,7 +156,7 @@ describe('ServiceKeySchema', () => {
   it('accepts a valid service key', () => {
     const result = ServiceKeySchema.safeParse({
       serviceId: 'svc-reporter',
-      serviceName: '@automate/reporter',
+      serviceName: '@lupin/reporter',
       keyHash: 'sha256-xyz',
       permissions: ['runs:write'],
       createdAt: '2026-01-01T00:00:00.000Z',

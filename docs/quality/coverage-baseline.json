@@ -165,7 +165,7 @@
     "functions": 100,
     "lines": 100
   },
-  "tools/automate-cli": {
+  "tools/lupin-cli": {
     "statements": 98.1,
     "branches": 92.8,
     "functions": 93.7,

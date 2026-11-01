@@ -14,7 +14,7 @@ import path from 'node:path';
 import { crc32, deflateRawSync, inflateRawSync } from 'node:zlib';
 import { envExample, releaseComposeFile } from './release-compose.mjs';
 
-/** What a bundle contains, inside its `automate-<version>/` folder. */
+/** What a bundle contains, inside its `lupin-<version>/` folder. */
 export const BUNDLE_FILES = [
   'compose.yml',
   '.env.example',
@@ -146,7 +146,7 @@ function lf(text) {
 }
 
 /**
- * Write `automate-<version>.zip` and `SHA256SUMS` into `out`.
+ * Write `lupin-<version>.zip` and `SHA256SUMS` into `out`.
  *
  * Line endings are set here rather than trusted from the checkout: `start.sh` must be LF
  * or `sh` reads `\r` as part of each command, and the Windows files are CRLF.
@@ -157,7 +157,7 @@ function lf(text) {
 export function buildBundle({ root, version, out }) {
   /** @param {string} relative */
   const read = (relative) => readFileSync(path.join(root, relative), 'utf8');
-  const folder = `automate-${version}`;
+  const folder = `lupin-${version}`;
   const compose = releaseComposeFile(read('infra/compose/docker-compose.unified.yml'), version);
 
   /** @type {Record<string, { text: string, mode: number }>} */

@@ -7,7 +7,7 @@
  * jobs and are not this one: the runner replaces the literal values it registered
  * (`apps/runner/src/execution.ts`, `sanitizeError`); `apps/api/src/infrastructure/outbox-sanitizer.ts`
  * classifies a whole outbox value as secret-or-not; the agent-config scanner in
- * `@automate/projects` reports labelled detections with placeholder heuristics; and
+ * `@lupin/projects` reports labelled detections with placeholder heuristics; and
  * `scripts/secret-scan.mjs` is a dependency-free gate. `local/src/redact.mjs` belongs to the
  * standalone local tool, which is not a workspace package and cannot be imported from here.
  * The patterns below start from that tool's, add an `sk-` key shape, and bound the

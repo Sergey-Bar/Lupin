@@ -161,7 +161,7 @@ be a regression the ratchet forbids; annotating it is the honest move.
 ## Picking up an open issue
 
 The tracking issue is
-[#6](https://github.com/Sergey-Bar/AutoMate/issues/6), and it names the three rows nobody
+[#6](https://github.com/Sergey-Bar/Lupin/issues/6), and it names the three rows nobody
 can close from a laptop, the one that needs a maintainer's decision, and the ones that are
 feature builds rather than fixes. Read the **do not start these alone** note on it before
 picking anything: three open rows want to edit the same 2 119-line file, and two of them

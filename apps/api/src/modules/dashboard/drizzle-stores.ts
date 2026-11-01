@@ -20,7 +20,7 @@
  *    the rule stated once in `schemas.ts` and an audit row for the decision.
  */
 
-import { auditEvents, qualityGateConfig, quarantine } from '@automate/db';
+import { auditEvents, qualityGateConfig, quarantine } from '@lupin/db';
 import { and, asc, eq } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';

@@ -1,8 +1,8 @@
 import { and, desc, eq, notInArray } from 'drizzle-orm';
-import { coverageLineMaps, diffCoverageResults } from '@automate/db';
-import type { LineCoverageFile } from '@automate/reporter';
-import { diffCoverage } from '@automate/reporting';
-import type { DiffCoverageRecord, DiffCoverageStatus } from '@automate/shared-contracts';
+import { coverageLineMaps, diffCoverageResults } from '@lupin/db';
+import type { LineCoverageFile } from '@lupin/reporter';
+import { diffCoverage } from '@lupin/reporting';
+import type { DiffCoverageRecord, DiffCoverageStatus } from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import { projectRow, type HealthStoreOptions } from './health-findings.js';
 

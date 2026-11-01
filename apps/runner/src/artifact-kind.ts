@@ -1,5 +1,5 @@
 import { basename, extname } from 'node:path';
-import type { ReportFormatId } from '@automate/shared-contracts';
+import type { ReportFormatId } from '@lupin/shared-contracts';
 
 /**
  * How the runner names one artifact, in **one** place.

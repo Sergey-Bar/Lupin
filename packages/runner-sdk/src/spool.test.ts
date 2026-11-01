@@ -162,7 +162,7 @@ describe('DurableSpool', () => {
     const root = await directory();
     const path = join(root, 'events.spool');
     const header = Buffer.concat([
-      Buffer.from('automate-runner-spool/v1\n', 'utf8'),
+      Buffer.from('lupin-runner-spool/v1\n', 'utf8'),
       Buffer.from(new EncryptedSpool('stable-runner-key').keyId(), 'utf8'),
     ]);
     await writeFile(path, Buffer.concat([header, Buffer.alloc(10, 7)]));
@@ -242,7 +242,7 @@ describe('DurableSpool', () => {
     const length = Buffer.alloc(4);
     length.writeUInt32BE(sealed.length);
     const header = Buffer.concat([
-      Buffer.from('automate-runner-spool/v1\n', 'utf8'),
+      Buffer.from('lupin-runner-spool/v1\n', 'utf8'),
       Buffer.from(codec.keyId(), 'utf8'),
     ]);
     await writeFile(path, Buffer.concat([header, length, sealed]));
@@ -388,7 +388,7 @@ function frame(record: unknown): Buffer {
   const length = Buffer.alloc(4);
   length.writeUInt32BE(sealed.length);
   return Buffer.concat([
-    Buffer.from('automate-runner-spool/v1\n', 'utf8'),
+    Buffer.from('lupin-runner-spool/v1\n', 'utf8'),
     Buffer.from(codec.keyId(), 'utf8'),
     length,
     sealed,

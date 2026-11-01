@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import { connectorConfigs, vaultEntries } from '@automate/db';
+import { connectorConfigs, vaultEntries } from '@lupin/db';
 import { assertSchemaBuildIsFresh, createMigratedDatabase } from './migrations.js';
 
 /**

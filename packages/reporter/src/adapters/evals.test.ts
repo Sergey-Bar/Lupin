@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { DimensionMetricSchema } from '@automate/shared-contracts';
+import { DimensionMetricSchema } from '@lupin/shared-contracts';
 import { describe, expect, it } from 'vitest';
 import {
   EVAL_REPORT_FORMATS,

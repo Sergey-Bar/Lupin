@@ -10,7 +10,7 @@
  *
  * So the web bundle is built **here, before Playwright starts**, and
  * `playwright.config.ts` serves it with `vite preview` when
- * `AUTOMATE_RENDER_SERVE=preview` is set. Building here rather than in the web
+ * `LUPIN_RENDER_SERVE=preview` is set. Building here rather than in the web
  * server's command is deliberate: Playwright starts both web servers at once, and the
  * API's server command rebuilds the shared workspace packages, so a build in the web
  * command would race it for the same `dist/` directories.
@@ -25,7 +25,7 @@ import path from 'node:path';
 const root = path.resolve(import.meta.dirname, '..', '..');
 
 /** The value `playwright.config.ts` reads to serve the built bundle. */
-export const RENDER_SERVE_ENV = 'AUTOMATE_RENDER_SERVE';
+export const RENDER_SERVE_ENV = 'LUPIN_RENDER_SERVE';
 
 /**
  * @param {string} label
@@ -60,7 +60,7 @@ export function runRenderBudget(extraEnv = {}) {
   const built = step(
     'render: web build',
     'pnpm',
-    ['--filter', '@automate/unified-web...', 'build'],
+    ['--filter', '@lupin/unified-web...', 'build'],
     env,
   );
   if (built !== 0) return built;

@@ -22,8 +22,8 @@ const junit = (tests) =>
     .join('')}</testsuite>`;
 
 async function withApp(body) {
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-rf-repo-'));
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-rf-data-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-rf-repo-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-rf-data-'));
   let clock = NOW - 3 * DAY;
   const engine = createEngine({ dataDir, now: () => new Date(clock) });
   const scanWith = async (commit, tests) => {

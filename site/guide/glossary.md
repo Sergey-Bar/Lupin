@@ -1,11 +1,11 @@
 ---
 title: Words explained
-description: Plain-language definitions and concrete examples for the terms used across Automate.
+description: Plain-language definitions and concrete examples for the terms used across Lupin.
 ---
 
 # Words explained
 
-You do not need to learn the whole vocabulary before using Automate. Start with the word
+You do not need to learn the whole vocabulary before using Lupin. Start with the word
 on the screen you are looking at.
 
 <div class="guide-hub">
@@ -19,7 +19,7 @@ on the screen you are looking at.
   <div class="guide-hub__card"><span>QUALITY GATE</span><strong>A decision using agreed rules</strong><small>A policy evaluates the available evidence against thresholds. The resulting verdict explains whether the policy was satisfied.</small></div>
   <div class="guide-hub__card"><span>QUARANTINE</span><strong>A recorded exception for an unstable test</strong><small>A proposal needs a reason and a decision. Pending proposals still count; approved tests remain visible.</small></div>
   <div class="guide-hub__card"><span>RUNNER</span><strong>The process that does the work</strong><small>A runner claims an execution job and runs it. A lost runner is an infrastructure problem, not automatically a failed test.</small></div>
-  <div class="guide-hub__card"><span>CI</span><strong>Automation around a code change</strong><small>Your CI job can run tests and send their reports to Automate. You can keep your existing test framework.</small></div>
+  <div class="guide-hub__card"><span>CI</span><strong>Automation around a code change</strong><small>Your CI job can run tests and send their reports to Lupin. You can keep your existing test framework.</small></div>
   <div class="guide-hub__card"><span>NOT CONFIGURED</span><strong>No setup for this signal</strong><small>The installation has not configured the capability needed to collect that signal. It does not mean the check passed.</small></div>
 </div>
 

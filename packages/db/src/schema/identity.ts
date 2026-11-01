@@ -169,7 +169,7 @@ export const outboxEvents = pgTable(
     aggregateType: text('aggregate_type').notNull(),
     aggregateId: text('aggregate_id').notNull(),
     eventType: text('event_type').notNull(),
-    // `EVENT_VERSION` from `@automate/shared-contracts`, repeated rather than
+    // `EVENT_VERSION` from `@lupin/shared-contracts`, repeated rather than
     // imported because `packages/db` is a leaf and must not depend on the
     // contracts. This column used to default to **2** while the contract, the SSE
     // frame and every writer used **1**, so a writer that omitted the field

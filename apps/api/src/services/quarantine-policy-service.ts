@@ -7,16 +7,16 @@
  */
 
 import { and, eq } from 'drizzle-orm';
-import { projects } from '@automate/db';
-import { ownerOf, parseCodeowners } from '@automate/projects';
-import { flakeCost } from '@automate/reporting';
+import { projects } from '@lupin/db';
+import { ownerOf, parseCodeowners } from '@lupin/projects';
+import { flakeCost } from '@lupin/reporting';
 import {
   DEFAULT_QUARANTINE_POLICY,
   QuarantinePolicySchema,
   storedTestIdentity,
   type ProjectQuarantine,
   type QuarantinePolicy,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { flakeObservationsOf } from '../execution/insights.js';
 import type { ExecutionRun } from '../execution/types.js';

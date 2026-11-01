@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import { poolCapabilities } from './runner-pool.js';
 

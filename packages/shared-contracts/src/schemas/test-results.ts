@@ -2,7 +2,7 @@
  * Test results domain schemas — Zod v4
  *
  * Covers test run, suite, result, status, and attachment contracts
- * aligned with both the Automate and the Automate unified platform.
+ * aligned with the Lupin platform.
  */
 import { z } from 'zod/v4';
 

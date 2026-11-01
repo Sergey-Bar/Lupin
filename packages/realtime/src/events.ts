@@ -8,14 +8,14 @@
  * `Flat*` on purpose.
  *
  * They used to be called `ReporterEventSchema` and `RealtimeEventSchema`, which
- * is the same name `@automate/shared-contracts` exports for a *different* shape
+ * is the same name `@lupin/shared-contracts` exports for a *different* shape
  * — an envelope with `contractVersion`/`eventId`/`occurredAt` and a `data`
  * payload, with dot-separated event types. Two validators, one bare name, no
  * compile-time signal: an import of the wrong one failed at runtime with a Zod
  * error on a message that was valid under the other. Nothing consumed these
  * outside this file's own test, so renaming costs nothing and removes the trap.
  *
- * `@automate/shared-contracts` is the single authority for the versioned reporter
+ * `@lupin/shared-contracts` is the single authority for the versioned reporter
  * contract. `ReporterContractEventSchema` below is a deliberate re-export of it,
  * not a second declaration.
  */
@@ -28,9 +28,9 @@ import {
   RunEventEnvelopeSchema,
   TEST_COMPLETED_EVENT_TYPE,
   type RunEventEnvelope,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
-export { RunEventEnvelopeSchema } from '@automate/shared-contracts';
+export { RunEventEnvelopeSchema } from '@lupin/shared-contracts';
 export type { RunEventEnvelope };
 export type RunEvent = RunEventEnvelope;
 export const CanonicalRunEventSchema = RunEventEnvelopeSchema;

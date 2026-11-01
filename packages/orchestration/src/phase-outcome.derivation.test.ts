@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RunPhase } from '@automate/shared-contracts';
+import type { RunPhase } from '@lupin/shared-contracts';
 import {
   COMPLETE_OUTCOMES,
   deriveRunState,

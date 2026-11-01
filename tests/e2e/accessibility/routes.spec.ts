@@ -171,14 +171,14 @@ async function expectRendered(page: Page, where: string): Promise<void> {
 /**
  * Pin the theme before the first script runs.
  *
- * `ThemeProvider` reads `localStorage['automate-theme']` on mount and writes
+ * `ThemeProvider` reads `localStorage['lupin-theme']` on mount and writes
  * `data-theme` from it, so the value has to be in place before the bundle evaluates —
  * setting the attribute afterwards would measure a page that had already painted in the
  * other theme and then repainted.
  */
 async function useTheme(page: Page, theme: Theme): Promise<void> {
   await page.addInitScript((value) => {
-    window.localStorage.setItem('automate-theme', value);
+    window.localStorage.setItem('lupin-theme', value);
   }, theme);
 }
 

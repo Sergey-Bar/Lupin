@@ -28,6 +28,9 @@
     // `.mjs` scripts run directly under Node, not through a bundler, so the
     // emit settings are irrelevant; only the checking matters.
     "noEmit": true,
+    // Node 24 runs `.ts` by stripping types, so a gate test may import a TypeScript module
+    // by its real file name (the site's pure helpers). Legal only because nothing is emitted.
+    "allowImportingTsExtensions": true,
     "allowJs": true,
     "checkJs": true,
     "target": "ES2022",

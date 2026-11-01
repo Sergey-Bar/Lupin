@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@automate/ui';
+import { cn } from '@lupin/ui';
 
 /**
  * A chart legend: one swatch and one label per series, in the series' own token colour.

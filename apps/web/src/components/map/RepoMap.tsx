@@ -11,7 +11,7 @@ import {
   StatusDot,
   cn,
   type DotStatus,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { LAYOUT, layoutMap } from '../../lib/map-layout.js';
 import {
   traceOf,
@@ -259,7 +259,7 @@ export function RepoMap({
               <section key={map.columns[column]} aria-labelledby={`map-column-${String(column)}`}>
                 <h3
                   id={`map-column-${String(column)}`}
-                  className="mb-2 text-xs font-medium uppercase tracking-wider text-fg-muted"
+                  className="mb-2 text-xs font-medium text-fg-muted"
                 >
                   {map.columns[column]}
                 </h3>
@@ -331,7 +331,7 @@ function Canvas({
       data-testid="map-canvas"
       role="group"
       aria-label={`Repository map, ${map.view} view`}
-      className="min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-surface-sunken p-6"
+      className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-surface-sunken p-6"
     >
       <div className="relative" style={{ width: layout.width, height: layout.height + HEADER }}>
         <svg
@@ -367,7 +367,7 @@ function Canvas({
           <ul key={map.columns[column]} aria-label={map.columns[column]} className="contents">
             <li
               aria-hidden="true"
-              className="absolute top-0 text-xs font-medium uppercase tracking-wider text-fg-muted"
+              className="absolute top-0 text-xs font-medium text-fg-muted"
               style={{ left: layout.columnX[column] ?? 0, width: LAYOUT.nodeWidth }}
             >
               {map.columns[column]}

@@ -12,7 +12,7 @@ import { z } from 'zod/v4';
  * wrong at compile time.
  *
  * It lives here because this is the wire boundary between a runner and the API,
- * and `@automate/shared-contracts` is the leaf both already depend on — so one
+ * and `@lupin/shared-contracts` is the leaf both already depend on — so one
  * declaration serves both instead of two that can drift.
  */
 export const ExecutionEventLineSchema = z.object({

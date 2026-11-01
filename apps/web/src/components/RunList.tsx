@@ -1,5 +1,5 @@
 import React from 'react';
-import { EmptyState } from '@automate/ui';
+import { EmptyState } from '@lupin/ui';
 import { useRuns } from '../hooks/useRuns.js';
 import type { ApiClient } from '../lib/api.js';
 import { runDetailPath } from '../route-manifest.js';

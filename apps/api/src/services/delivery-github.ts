@@ -1,5 +1,5 @@
 import { z } from 'zod/v4';
-import { AGENT_SIGNATURES } from '@automate/reporting';
+import { AGENT_SIGNATURES } from '@lupin/reporting';
 
 /**
  * What the delivery sync reads out of GitHub's answers, and what it derives from them.

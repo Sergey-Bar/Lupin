@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { testIdentity } from '@automate/shared-contracts';
+import { testIdentity } from '@lupin/shared-contracts';
 import { playwrightJsonAdapter } from './adapters/playwright-json.js';
 import type { ProducerContext } from './adapter.js';
 

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-import * as schema from '@automate/db';
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 import { DrizzleReporterIngestionService } from './drizzle-reporter-ingestion.js';
 
 const clients: PGlite[] = [];

@@ -138,7 +138,7 @@ test('an existing install is upgraded with `start update`, keeping its key', () 
   );
 });
 
-test('the upgrade also starts from 3.0.0, whose compose file predates AUTOMATE_BIND', () => {
+test('the upgrade also starts from 3.0.0, whose compose file predates LUPIN_BIND', () => {
   // `start update` keeps the old install's compose file and changes only the image, so an
   // upgrade from the previous release only ever tests the previous release's compose file.
   // v3.1.0 shipped an API that refused to start on every install upgraded from 3.0.0 because

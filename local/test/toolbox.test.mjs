@@ -41,7 +41,7 @@ function cleanup(directory) {
 }
 
 function repository(files) {
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-tb-repo-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-tb-repo-'));
   for (const [relative, content] of Object.entries(files)) {
     const absolute = path.join(root, ...relative.split('/'));
     mkdirSync(path.dirname(absolute), { recursive: true });
@@ -143,7 +143,7 @@ test('the catalog schema rejects what makes an entry more than data', () => {
 });
 
 test('an invalid or unreadable catalog is refused whole', () => {
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-tb-cat-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-tb-cat-'));
   try {
     const bad = shipped();
     bad.tools[1].rule = 'nope';
@@ -162,7 +162,7 @@ test('an invalid or unreadable catalog is refused whole', () => {
 /** A scan result for a recommendation test, built from the real scanner's output. */
 async function scanned(files) {
   const root = repository(files);
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-tb-data-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-tb-data-'));
   const engine = createEngine({ dataDir });
   try {
     const result = await engine.scan(root);
@@ -380,9 +380,9 @@ test('the install request uses the right manager, never runs install scripts, an
 });
 
 test('a refused catalog means no suggestions, and the engine says why', async () => {
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-tb-cat-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-tb-cat-'));
   const root = repository(VITEST_ONLY);
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-tb-data-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-tb-data-'));
   try {
     const bad = shipped();
     bad.tools[0].install.command = 'x';
@@ -428,7 +428,7 @@ function digest(root) {
 }
 
 test('an install goes through the runner: previewing changes nothing, and it runs only after the exact preview is confirmed', async () => {
-  const tools = mkdtempSync(path.join(tmpdir(), 'automate-tb-tools-'));
+  const tools = mkdtempSync(path.join(tmpdir(), 'lupin-tb-tools-'));
   const marker = fakeManager(tools, 'pnpm');
   try {
     await withScanned(VITEST_ONLY, async ({ engine, view, root, repositoryId, dataDir }) => {
@@ -472,7 +472,7 @@ test('an install goes through the runner: previewing changes nothing, and it run
 });
 
 test('the toolbox page and API show a suggestion with its evidence and hand the install to the runner preview', async () => {
-  const tools = mkdtempSync(path.join(tmpdir(), 'automate-tb-tools-'));
+  const tools = mkdtempSync(path.join(tmpdir(), 'lupin-tb-tools-'));
   fakeManager(tools, 'pnpm');
   try {
     await withScanned(VITEST_ONLY, async ({ engine, repositoryId, dataDir }) => {
@@ -565,8 +565,8 @@ test('the toolbox page and API show a suggestion with its evidence and hand the 
 });
 
 test('the toolbox page for an unscanned repository, no repositories, and a refused catalog are all well formed', async () => {
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-tb-cat-'));
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-tb-data-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-tb-cat-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-tb-data-'));
   const root = repository({ 'README.md': 'x' });
   try {
     writeFileSync(path.join(directory, 'tools.json'), '{ broken');

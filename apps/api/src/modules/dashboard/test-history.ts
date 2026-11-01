@@ -8,8 +8,8 @@
  */
 
 import { Hono } from 'hono';
-import { failureSignature } from '@automate/reporting';
-import { TestHistoryQuerySchema, type TestHistory } from '@automate/shared-contracts';
+import { failureSignature } from '@lupin/reporting';
+import { TestHistoryQuerySchema, type TestHistory } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../../errors/domain-error.js';
 import type { RunRepository } from '../../repositories/run-repository.js';
 

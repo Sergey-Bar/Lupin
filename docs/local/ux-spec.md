@@ -1,4 +1,4 @@
-# AUTOMATE (local) — UX specification
+# Lupin Local — UX specification
 
 **Status:** Draft
 **Owner:** maintainers

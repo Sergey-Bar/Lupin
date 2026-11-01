@@ -14,7 +14,7 @@ const BASE: ReportInput = {
   passRate: 97.14,
   attention: [],
   digest: [],
-  link: 'https://automate.local:8443/dashboard/now',
+  link: 'https://lupin.local:8443/dashboard/now',
 };
 
 describe('composeReport', () => {
@@ -99,7 +99,7 @@ describe('the renderers', () => {
         '97.1% passed across 42 runs.',
         '🔴 Run &lt;#812&gt; failed &amp; 3 tests "broke"',
         '🔴 2 new flaky tests',
-        '<https://automate.local:8443/dashboard/now|Open the dashboard>',
+        '<https://lupin.local:8443/dashboard/now|Open the dashboard>',
       ].join('\n'),
     );
   });
@@ -111,7 +111,7 @@ describe('the renderers', () => {
         '97.1% passed across 42 runs.',
         '🔴 Run &lt;#812&gt; failed &amp; 3 tests "broke"',
         '🔴 2 new flaky tests',
-        '<a href="https://automate.local:8443/dashboard/now">Open the dashboard</a>',
+        '<a href="https://lupin.local:8443/dashboard/now">Open the dashboard</a>',
       ].join('\n'),
     );
   });
@@ -123,7 +123,7 @@ describe('the renderers', () => {
         '97.1% passed across 42 runs.',
         '🔴 Run <#812> failed & 3 tests "broke"',
         '🔴 2 new flaky tests',
-        'https://automate.local:8443/dashboard/now',
+        'https://lupin.local:8443/dashboard/now',
       ].join('\n'),
     );
   });
@@ -135,7 +135,7 @@ describe('the renderers', () => {
       actions: Array<{ url: string }>;
     };
     expect(content.body[0]).toMatchObject({ text: '🟢 Weekly quality report', weight: 'Bolder' });
-    expect(content.actions[0]?.url).toBe('https://automate.local:8443/dashboard/now');
+    expect(content.actions[0]?.url).toBe('https://lupin.local:8443/dashboard/now');
     expect(
       'actions' in
         (renderTeams(composeReport({ ...BASE, link: null })).attachments[0]?.content ?? {}),

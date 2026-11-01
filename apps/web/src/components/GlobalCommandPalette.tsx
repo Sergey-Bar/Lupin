@@ -1,4 +1,4 @@
-import { CommandPalette } from '@automate/ui';
+import { CommandPalette } from '@lupin/ui';
 import { useCommandStore, useCommandActions } from '../hooks/useCommandActions.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { usePreferences } from '../theme/preferences.js';

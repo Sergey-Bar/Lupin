@@ -35,7 +35,7 @@ function environment(extra: Record<string, string>): Record<string, string> {
     PORT: String(PROFILE_API_PORT),
     DATABASE_URL,
     COOKIE_SECRET,
-    AUTOMATE_API_KEY: INSTALLATION_KEY,
+    LUPIN_API_KEY: INSTALLATION_KEY,
     ...extra,
   };
 }
@@ -47,7 +47,7 @@ function environment(extra: Record<string, string>): Record<string, string> {
  */
 const OIDC = {
   OIDC_ISSUER: 'http://127.0.0.1:9',
-  OIDC_CLIENT_ID: 'automate-profile-matrix',
+  OIDC_CLIENT_ID: 'lupin-profile-matrix',
   OIDC_CLIENT_SECRET: randomUUID(),
   OIDC_ALLOWED_DOMAINS: 'example.com',
 };
@@ -114,19 +114,19 @@ test.beforeAll(() => {
 });
 
 test('solo: open on this machine, one workspace, and no LAN mode', async () => {
-  await withProfile('solo', { AUTOMATE_PROFILE: 'solo' }, async (api) => {
+  await withProfile('solo', { LUPIN_PROFILE: 'solo' }, async (api) => {
     expect(await whoami(api)).toMatchObject({ profile: 'solo', mode: 'open', role: 'admin' });
     const created = await createWorkspace(api, workspaceId());
     expect(created.status()).toBe(409);
     expect(await codeOf(created)).toBe('WORKSPACES_NEED_TEAM');
   });
-  expect(await refusalOf({ AUTOMATE_PROFILE: 'solo', AUTOMATE_LAN_MODE: '1' })).toContain(
-    'AUTOMATE_PROFILE=solo keeps Automate on this machine',
+  expect(await refusalOf({ LUPIN_PROFILE: 'solo', LUPIN_LAN_MODE: '1' })).toContain(
+    'LUPIN_PROFILE=solo keeps Lupin on this machine',
   );
 });
 
 test('startup: a sign-in in front of everything, and still one workspace', async () => {
-  await withProfile('startup', { AUTOMATE_PROFILE: 'startup' }, async (api) => {
+  await withProfile('startup', { LUPIN_PROFILE: 'startup' }, async (api) => {
     expect(await whoami(api)).toMatchObject({ profile: 'startup', mode: 'enforced', role: null });
     expect((await api.get('/api/v1/workspaces')).status()).toBe(401);
     expect((await signIn(api)).status()).toBe(200);
@@ -139,7 +139,7 @@ test('startup: a sign-in in front of everything, and still one workspace', async
 
 test('team: several workspaces, each served by its own composition, and never open', async () => {
   const id = workspaceId();
-  await withProfile('team', { AUTOMATE_PROFILE: 'team' }, async (api) => {
+  await withProfile('team', { LUPIN_PROFILE: 'team' }, async (api) => {
     expect((await signIn(api)).status()).toBe(200);
     expect((await createWorkspace(api, id)).status()).toBe(201);
     const listed = await json<{ workspaces: Array<{ id: string }> }>(
@@ -156,16 +156,16 @@ test('team: several workspaces, each served by its own composition, and never op
       breaks: [],
     });
   });
-  expect(await refusalOf({ AUTOMATE_PROFILE: 'team', ACCESS_CONTROL: 'open' })).toContain(
-    'AUTOMATE_PROFILE=team serves several people and ACCESS_CONTROL=open',
+  expect(await refusalOf({ LUPIN_PROFILE: 'team', ACCESS_CONTROL: 'open' })).toContain(
+    'LUPIN_PROFILE=team serves several people and ACCESS_CONTROL=open',
   );
 });
 
 test('enterprise: single sign-on or nothing, and break-glass leaves a trace', async () => {
-  expect(await refusalOf({ AUTOMATE_PROFILE: 'enterprise' })).toContain(
+  expect(await refusalOf({ LUPIN_PROFILE: 'enterprise' })).toContain(
     'AUTH_SSO_ENFORCED is on (the enterprise profile turns it on)',
   );
-  await withProfile('enterprise', { AUTOMATE_PROFILE: 'enterprise', ...OIDC }, async (api) => {
+  await withProfile('enterprise', { LUPIN_PROFILE: 'enterprise', ...OIDC }, async (api) => {
     expect(await json(await api.get('/api/v1/features'))).toMatchObject({
       profile: 'enterprise',
       signIn: { oidc: true },
@@ -181,7 +181,7 @@ test('enterprise: single sign-on or nothing, and break-glass leaves a trace', as
   });
   await withProfile(
     'enterprise, break-glass',
-    { AUTOMATE_PROFILE: 'enterprise', ...OIDC, AUTOMATE_BREAK_GLASS: '1' },
+    { LUPIN_PROFILE: 'enterprise', ...OIDC, LUPIN_BREAK_GLASS: '1' },
     async (api) => {
       expect((await signIn(api)).status()).toBe(200);
       await expect

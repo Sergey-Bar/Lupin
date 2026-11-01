@@ -19,7 +19,7 @@ import { createReporterRoutes } from './routes/reporter.js';
 import { createAuthRoutes, defaultClientKey } from './routes/auth.js';
 import { createOidcRoutes } from './routes/oidc.js';
 import { callerForUser } from './services/user-service.js';
-import { isLoopbackBind } from '@automate/config';
+import { isLoopbackBind } from '@lupin/config';
 import {
   browserCredentialsCount,
   callerOf,
@@ -37,7 +37,7 @@ import { applyRouteAccess } from './http/route-access.js';
 import { secureCookiePolicy, type SecureCookies } from './http/secure-cookies.js';
 import { createClientAllowlist } from './middleware/client-allowlist.js';
 import { createOriginCheck } from './middleware/origin-check.js';
-import { hashCredential } from '@automate/auth';
+import { hashCredential } from '@lupin/auth';
 import { createReporterResultsRoute } from './routes/reporter-results.js';
 import { createReportingRoutes } from './routes/reporting.js';
 import { createRunnerRoutes } from './routes/runner.js';
@@ -59,7 +59,7 @@ import { createAnalyticsTrendRoutes, readSince } from './execution/trend.js';
 import { createInsightsRoutes } from './execution/insights.js';
 import { createAgentRoutes } from './routes/agents.js';
 import { createAgentCatalog } from './routes/agent-registry.js';
-import { createToolRegistry } from '@automate/tool-sdk';
+import { createToolRegistry } from '@lupin/tool-sdk';
 import { registerApiAgent } from './agents/api-adapter.js';
 import { registerBrowserAgent } from './agents/browser-adapter.js';
 import { registerLoadAgent } from './agents/load-adapter.js';
@@ -78,7 +78,7 @@ import {
   DrizzleInstallationKeyStore,
   DrizzleSessionStore,
   workspaces,
-} from '@automate/db';
+} from '@lupin/db';
 import { ingestScanArtifact } from './services/repo-health-service.js';
 import { poolCapabilities } from './services/runner-pool.js';
 import { readGitToken } from './services/git-credential-service.js';
@@ -86,17 +86,17 @@ import { rotateVaultSecrets } from './services/vault-secrets.js';
 import { audit, authenticateToken } from './services/access-service.js';
 import { alertsFor, deliverAlerts } from './services/health-integrations.js';
 import type { ReportEvent } from './services/repo-health-service.js';
-import { githubAdapter } from '@automate/connectors-github';
-import { jiraAdapter } from '@automate/connectors-jira';
-import { slackAdapter } from '@automate/connectors-slack';
-import { signalAdapter } from '@automate/connectors-signal';
-import { teamsAdapter } from '@automate/connectors-teams';
-import { telegramAdapter } from '@automate/connectors-telegram';
-import { whatsappAdapter } from '@automate/connectors-whatsapp';
+import { githubAdapter } from '@lupin/connectors-github';
+import { jiraAdapter } from '@lupin/connectors-jira';
+import { slackAdapter } from '@lupin/connectors-slack';
+import { signalAdapter } from '@lupin/connectors-signal';
+import { teamsAdapter } from '@lupin/connectors-teams';
+import { telegramAdapter } from '@lupin/connectors-telegram';
+import { whatsappAdapter } from '@lupin/connectors-whatsapp';
 import { createReportDispatcher } from './services/report-dispatcher.js';
 import { createDeliverySyncer } from './services/delivery-syncer.js';
 import { getCookie } from 'hono/cookie';
-import { DEFAULT_IGNORED, fileSystemView } from '@automate/projects';
+import { DEFAULT_IGNORED, fileSystemView } from '@lupin/projects';
 import { createRepoScanner } from './services/repo-scan-service.js';
 import { createProjectsRoutes } from './routes/projects.js';
 import {
@@ -112,7 +112,7 @@ import type { RealtimeBus } from './realtime/realtime-bus.js';
 import { DurableRealtimeBus } from './realtime/durable-realtime-bus.js';
 import { DrizzleRealtimeFeed } from './infrastructure/drizzle-realtime-feed.js';
 import { startOutboxRetentionSweep } from './infrastructure/outbox-retention.js';
-import type { AiGateway } from '@automate/automation';
+import type { AiGateway } from '@lupin/automation';
 import {
   pruneExpiredSpansEverywhere,
   SELF_AGENT_NAME,
@@ -229,7 +229,7 @@ const app = new Hono();
  * would be a second sink — and two sinks means two formats, so a deployment
  * reading the log has to know which of them produced the line it is looking at.
  */
-const logger = createLogger({ service: 'automate-api' });
+const logger = createLogger({ service: 'lupin-api' });
 const unknownExposure = exposureWarning(runtimeConfig);
 if (unknownExposure !== undefined) logger.warn(unknownExposure);
 const openIdentity = identityWarning(runtimeConfig);
@@ -272,9 +272,9 @@ if (gatewayResolution.kind === 'none') {
 /**
  * Self-instrumentation: with a database and a provider, every chat completion is recorded as
  * one GenAI `chat` span — model, tokens, duration, outcome; never content — with no project
- * (`source = 'self'`, agent `automate-chat`), read by `GET /api/v1/chat/runtime`. A test
+ * (`source = 'self'`, agent `lupin-chat`), read by `GET /api/v1/chat/runtime`. A test
  * proposal asks the same provider, instrumented the same way, under the agent name
- * `automate-test-proposals` so the runtime page tells them from chat. The adapters are
+ * `lupin-test-proposals` so the runtime page tells them from chat. The adapters are
  * unchanged: the decorator wraps whichever one was chosen.
  *
  * **Built per workspace** (ADR-014), so a workspace's spans are written in that workspace,
@@ -498,7 +498,7 @@ const sessionRetentionSweep = ((backend) =>
 if (
   databaseResources &&
   !mayDeriveInstallationKey(runtimeConfig) &&
-  !process.env['AUTOMATE_INSTALLATION_KEY']
+  !process.env['LUPIN_INSTALLATION_KEY']
 ) {
   throw new Error(NO_INSTALLATION_KEY);
 }
@@ -558,7 +558,7 @@ const authRoutes = createAuthRoutes({
 });
 if (runtimeConfig.ssoEnforced === true && runtimeConfig.breakGlass === true) {
   logger.warn(
-    'AUTOMATE_BREAK_GLASS is on: the installation key can sign a browser in while single ' +
+    'LUPIN_BREAK_GLASS is on: the installation key can sign a browser in while single ' +
       'sign-on is enforced. Every use is audited. Turn it off once you are back in.',
   );
 }
@@ -569,7 +569,7 @@ if (runtimeConfig.ssoEnforced === true && runtimeConfig.breakGlass === true) {
  * SELECT and a `last_used_at` write on the same row.
  */
 const sessionOf = perRequest(async (context: Context) => {
-  const token = getCookie(context, 'automate_session');
+  const token = getCookie(context, 'lupin_session');
   return token === undefined ? undefined : authRoutes.sessions.validate(token);
 });
 
@@ -820,7 +820,7 @@ function buildWorkspace(workspaceId: string) {
     profile: runtimeConfig.profile ?? 'solo',
     ssoEnforced: runtimeConfig.ssoEnforced === true,
     // Under enforced SSO, the installation key's session and a browser's token cookie count
-    // again only with AUTOMATE_BREAK_GLASS on (`http/roles.ts`).
+    // again only with LUPIN_BREAK_GLASS on (`http/roles.ts`).
     breakGlass: runtimeConfig.breakGlass === true,
     // A verified Cloudflare Access identity, only on an install reached through the tunnel
     // (ADR-014). The startup policy has already refused a tunnel without both Access settings.
@@ -1022,7 +1022,7 @@ function buildWorkspace(workspaceId: string) {
             gateway: gateways.testProposals,
             provider: chatProvider,
           },
-          // The runs `automate test` records are the history a shard plan reads.
+          // The runs `lupin test` records are the history a shard plan reads.
           shardHistory: runRepository,
           // The same run repository, canonical store and bus the reporter upload door writes,
           // and the same quarantine every gate evaluation reads.
@@ -1044,7 +1044,7 @@ function buildWorkspace(workspaceId: string) {
             ...healthHooks,
             detailsUrl: dashboardUrl,
             // The commit's test run, read with the same quarantine and the same rule the gate and
-            // `automate test` use.
+            // `lupin test` use.
             commitTests: (projectId, commit) =>
               commitTests(
                 {
@@ -1168,7 +1168,7 @@ function buildWorkspace(workspaceId: string) {
        * second thing that decides what the cockpit shows.
        *
        * `discoverProjectAtBoot` owns the whole failure policy: an absent
-       * `AUTOMATE_PROJECT_ROOT` logs and returns, and a discovery failure logs and
+       * `LUPIN_PROJECT_ROOT` logs and returns, and a discovery failure logs and
        * returns, because a dashboard that will not boot over a folder with no
        * `package.json` is worse than a dashboard with nothing in it.
        */
@@ -1416,7 +1416,7 @@ defaultParts.mount(app);
  * workspace's entries are re-sealed under the new secret and their `key_version` raised. An
  * entry that opens under neither stops the boot.
  *
- * `AUTOMATE_PROJECT_ROOT` is registered in the default workspace, once.
+ * `LUPIN_PROJECT_ROOT` is registered in the default workspace, once.
  */
 if (databaseResources !== undefined) {
   const registry: ProjectRegistryServiceOptions = {
@@ -1461,7 +1461,7 @@ if (runtimeConfig.nodeEnv !== 'test') {
   const server = serve(
     { fetch: app.fetch, port: runtimeConfig.port, hostname: runtimeConfig.host },
     (info) => {
-      console.info(`automate-api listening on http://${runtimeConfig.host}:${info.port}`);
+      console.info(`lupin-api listening on http://${runtimeConfig.host}:${info.port}`);
     },
   );
   // Closed in the reverse of this order: the server stops taking requests, then the sweep stops,
@@ -1485,7 +1485,7 @@ if (runtimeConfig.nodeEnv !== 'test') {
     lifecycle.add('report dispatcher', () => reportDispatcher.stop());
   }
   if (deliverySyncer) {
-    // Parsed and bounded (a whole number, 10 s or more) by `@automate/config`, so NaN cannot
+    // Parsed and bounded (a whole number, 10 s or more) by `@lupin/config`, so NaN cannot
     // reach the timer; `getConfig` always sets it, the `??` only satisfies the partial type.
     deliverySyncer.start(runtimeConfig.deliverySyncIntervalMs ?? 60_000);
     lifecycle.add('delivery syncer', () => deliverySyncer.stop());

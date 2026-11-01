@@ -3,7 +3,7 @@
  * `pnpm release:compose` — write the release compose file and its `.env.example`.
  *
  * Reads `infra/compose/docker-compose.unified.yml`, replaces every `build:` with the
- * published `ghcr.io/sergey-bar/automate-<service>` image at this package's version, and
+ * published `ghcr.io/sergey-bar/lupin-<service>` image at this package's version, and
  * writes `dist/release/compose.yml` and `dist/release/.env.example`. See
  * `scripts/lib/release-compose.mjs` for why the release file is derived, not written.
  *

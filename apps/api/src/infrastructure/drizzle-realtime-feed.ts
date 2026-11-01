@@ -4,7 +4,7 @@ import {
   type OutboxDatabase,
   type OutboxEvent,
   type OutboxReadPage,
-} from '@automate/db';
+} from '@lupin/db';
 
 type FeedListener = (event: OutboxEvent) => void | Promise<void>;
 

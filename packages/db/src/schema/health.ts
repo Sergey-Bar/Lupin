@@ -22,7 +22,7 @@ import { projects, workspaces } from './dashboard.js';
 // migration: `workspace_id` NOT NULL, a `restrict` key onto `workspaces`, and an index that
 // leads with it.
 //
-// **No grade is stored as an authority.** The grade is `grade()` in `@automate/projects`,
+// **No grade is stored as an authority.** The grade is `grade()` in `@lupin/projects`,
 // computed live from the open findings and the latest metrics. `health_snapshots` is a
 // history — each row is the grade as it was computed just after an upload, drawn only as a
 // past point on the trend line — exactly the rule `scan_snapshots` follows.

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { MCP_TOOL_NAMES } from '@automate/shared-contracts';
+import { MCP_TOOL_NAMES } from '@lupin/shared-contracts';
 import type { CallerResolver } from '../http/roles.js';
 import type { Caller } from '../services/access-service.js';
 import { createMcpRoutes } from '../routes/mcp.js';
@@ -54,32 +54,32 @@ async function upstreamApp() {
 
 describe('proxyConfig', () => {
   it('builds the endpoint from the origin and keeps the token', () => {
+    expect(proxyConfig({ LUPIN_URL: 'https://lupin.example/', LUPIN_TOKEN: ` ${TOKEN} ` })).toEqual(
+      {
+        endpoint: new URL('https://lupin.example/api/v1/mcp'),
+        token: TOKEN,
+      },
+    );
     expect(
-      proxyConfig({ AUTOMATE_URL: 'https://automate.example/', AUTOMATE_TOKEN: ` ${TOKEN} ` }),
-    ).toEqual({
-      endpoint: new URL('https://automate.example/api/v1/mcp'),
-      token: TOKEN,
-    });
-    expect(
-      proxyConfig({ AUTOMATE_URL: 'http://127.0.0.1:3000', AUTOMATE_TOKEN: TOKEN }).endpoint.href,
+      proxyConfig({ LUPIN_URL: 'http://127.0.0.1:3000', LUPIN_TOKEN: TOKEN }).endpoint.href,
     ).toBe('http://127.0.0.1:3000/api/v1/mcp');
+    expect(proxyConfig({ LUPIN_URL: 'http://[::1]:3000', LUPIN_TOKEN: TOKEN }).endpoint.port).toBe(
+      '3000',
+    );
     expect(
-      proxyConfig({ AUTOMATE_URL: 'http://[::1]:3000', AUTOMATE_TOKEN: TOKEN }).endpoint.port,
-    ).toBe('3000');
-    expect(
-      proxyConfig({ AUTOMATE_URL: 'http://localhost', AUTOMATE_TOKEN: TOKEN }).endpoint.hostname,
+      proxyConfig({ LUPIN_URL: 'http://localhost', LUPIN_TOKEN: TOKEN }).endpoint.hostname,
     ).toBe('localhost');
   });
 
   it.each([
-    [{ AUTOMATE_TOKEN: TOKEN }, /Set AUTOMATE_URL/u],
-    [{ AUTOMATE_URL: 'https://a.example' }, /Set AUTOMATE_TOKEN/u],
-    [{ AUTOMATE_URL: 'https://a.example', AUTOMATE_TOKEN: 'not-a-token' }, /amt_/u],
-    [{ AUTOMATE_URL: 'not a url', AUTOMATE_TOKEN: TOKEN }, /not a URL/u],
+    [{ LUPIN_TOKEN: TOKEN }, /Set LUPIN_URL/u],
+    [{ LUPIN_URL: 'https://a.example' }, /Set LUPIN_TOKEN/u],
+    [{ LUPIN_URL: 'https://a.example', LUPIN_TOKEN: 'not-a-token' }, /lup_/u],
+    [{ LUPIN_URL: 'not a url', LUPIN_TOKEN: TOKEN }, /not a URL/u],
     // The token would cross the network in the clear.
-    [{ AUTOMATE_URL: 'http://192.168.1.10:3000', AUTOMATE_TOKEN: TOKEN }, /in the clear/u],
-    [{ AUTOMATE_URL: 'ftp://a.example', AUTOMATE_TOKEN: TOKEN }, /https/u],
-    [{ AUTOMATE_URL: 'https://user:pass@a.example', AUTOMATE_TOKEN: TOKEN }, /credentials/u],
+    [{ LUPIN_URL: 'http://192.168.1.10:3000', LUPIN_TOKEN: TOKEN }, /in the clear/u],
+    [{ LUPIN_URL: 'ftp://a.example', LUPIN_TOKEN: TOKEN }, /https/u],
+    [{ LUPIN_URL: 'https://user:pass@a.example', LUPIN_TOKEN: TOKEN }, /credentials/u],
   ])('refuses %o', (env, message) => {
     expect(() => proxyConfig(env)).toThrow(ProxyConfigError);
     expect(() => proxyConfig(env)).toThrow(message);
@@ -120,7 +120,7 @@ describe('the stdio proxy', () => {
     const stdin = new PassThrough();
     const stdout = new PassThrough();
     const running = await runStdioProxy({
-      env: { AUTOMATE_URL: 'http://127.0.0.1:3000', AUTOMATE_TOKEN: TOKEN },
+      env: { LUPIN_URL: 'http://127.0.0.1:3000', LUPIN_TOKEN: TOKEN },
       stdin,
       stdout,
       fetch: fetchApp,

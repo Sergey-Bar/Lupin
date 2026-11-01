@@ -2,8 +2,8 @@ import { getTableColumns, getTableName, isTable } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-import * as schema from '@automate/db';
-import { canonicalRunResults, quarantine, runs, workspaces } from '@automate/db';
+import * as schema from '@lupin/db';
+import { canonicalRunResults, quarantine, runs, workspaces } from '@lupin/db';
 import {
   applyMigrations,
   assertSchemaBuildIsFresh,
@@ -30,7 +30,7 @@ describe('migration graph', () => {
   // made this file the slowest in the workspace for no extra signal.
   let shared: Awaited<ReturnType<typeof createMigratedDatabase>>;
   beforeAll(async () => {
-    // `@automate/db` resolves to `dist/`. If the build is stale, every assertion
+    // `@lupin/db` resolves to `dist/`. If the build is stale, every assertion
     // below compares the migrations against yesterday's schema and passes
     // without checking anything, so the staleness is checked first.
     assertSchemaBuildIsFresh();
@@ -540,7 +540,7 @@ describe('fail-closed constraints from migration 0006', () => {
     // produced a row a consumer could never match against the frame, because it
     // compared 2 to 1 and found no equality. `packages/db` is a leaf and cannot
     // import the contract, so the two agreeing is asserted here instead.
-    const { EVENT_VERSION } = (await import('@automate/shared-contracts')) as {
+    const { EVENT_VERSION } = (await import('@lupin/shared-contracts')) as {
       EVENT_VERSION: number;
     };
     expect(EVENT_VERSION).toBe(1);

@@ -2,7 +2,7 @@ import { Hono, type Context } from 'hono';
 import { deleteCookie, setCookie } from 'hono/cookie';
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod/v4';
-import { accessTokens } from '@automate/db';
+import { accessTokens } from '@lupin/db';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import {
   callerOf,

@@ -1,10 +1,10 @@
-import { HealthPolicySchema } from '@automate/shared-contracts';
+import { HealthPolicySchema } from '@lupin/shared-contracts';
 import { z } from 'zod';
 
 import { SCORE_CATEGORIES, SCORE_SURFACES } from './vocabulary.js';
 
 /**
- * The reusable list schemas, hoisted so `AutomateConfigSchema` can declare its
+ * The reusable list schemas, hoisted so `LupinConfigSchema` can declare its
  * override fields as `optional()` **without** inheriting `.default([])`.
  *
  * Reusing `ProjectProfileSchema.shape.artifactGlobs` is the obvious one-liner and
@@ -49,7 +49,7 @@ const TargetSet = z.object({
 /**
  * The detected (or declared) shape of a project, as stored on `projects.profile`.
  *
- * This is the *proposal*. `AutomateConfig` below is the override, and where the
+ * This is the *proposal*. `LupinConfig` below is the override, and where the
  * two disagree the override wins — see `mergeConfig`, which is the only place
  * that decision is made.
  */
@@ -91,7 +91,7 @@ export const ProjectProfileSchema = z.object({
 export type ProjectProfile = z.infer<typeof ProjectProfileSchema>;
 
 /**
- * `automate.config.json`, checked into the customer's repository.
+ * `lupin.config.json`, checked into the customer's repository.
  *
  * Every field is optional and every field **overrides** the detected proposal.
  * That direction is the whole point: an operator who corrects a guess is not
@@ -100,7 +100,7 @@ export type ProjectProfile = z.infer<typeof ProjectProfileSchema>;
  *
  * ```json
  * {
- *   "$schema": "https://automate.dev/schema/automate.config.json",
+ *   "$schema": "https://lupin.dev/schema/lupin.config.json",
  *   "version": 1,
  *   "commands": { "unit": ["pytest", "-q", "tests/unit"] },
  *   "artifactGlobs": [{ "glob": "reports/*.xml", "format": "junit-xml", "category": "unit" }],
@@ -110,7 +110,7 @@ export type ProjectProfile = z.infer<typeof ProjectProfileSchema>;
  * }
  * ```
  */
-export const AutomateConfigSchema = z.object({
+export const LupinConfigSchema = z.object({
   $schema: z.string().optional(),
   version: z.literal(1),
   /**
@@ -147,10 +147,10 @@ export const AutomateConfigSchema = z.object({
   /** Reweights the health grade, disables a gate, or sets the pull-request policy. */
   health: HealthPolicySchema.optional(),
 });
-export type AutomateConfig = z.infer<typeof AutomateConfigSchema>;
+export type LupinConfig = z.infer<typeof LupinConfigSchema>;
 
 /** The filename the override is looked for under, at the repository root. */
-export const AUTOMATE_CONFIG_FILENAME = 'automate.config.json';
+export const LUPIN_CONFIG_FILENAME = 'lupin.config.json';
 
 /** A detected proposal plus whatever the operator declared, and which won. */
 export interface ResolvedProfile {

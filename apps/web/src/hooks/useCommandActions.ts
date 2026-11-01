@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react';
-import type { CommandAction } from '@automate/ui';
+import type { CommandAction } from '@lupin/ui';
 
 class CommandStore {
   private actions: Map<string, CommandAction> = new Map();

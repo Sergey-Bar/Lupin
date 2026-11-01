@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@automate/ui';
+import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@lupin/ui';
 import type { HealthClient, WhoAmI } from '../lib/health-client.js';
 import type { AdminClient } from '../lib/admin-client.js';
 import { AccessGate } from './Access.js';

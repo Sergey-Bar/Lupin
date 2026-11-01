@@ -4,7 +4,7 @@ import { isIP } from 'node:net';
  * Whether a host keeps the request on this machine: `localhost`, `127.0.0.0/8` (also as an
  * IPv4-mapped `::ffff:127.x.x.x`), and `::1` in any spelling.
  *
- * The same answer as `isLoopbackBind` in `@automate/config` and `isLoopbackHost` in the
+ * The same answer as `isLoopbackBind` in `@lupin/config` and `isLoopbackHost` in the
  * CLI. The reporter ships with no runtime dependency, so it cannot import either;
  * `target.test.ts` holds it to `isLoopbackBind` over a table of hosts instead.
  */
@@ -27,17 +27,17 @@ export function isLoopbackHost(hostname: string): boolean {
  */
 export function resolveOrigin(raw: string | undefined): { origin: URL } | { refused: string } {
   const value = raw?.trim() ?? '';
-  if (value === '') return { refused: 'AUTOMATE_URL is not set; nothing is sent.' };
+  if (value === '') return { refused: 'LUPIN_URL is not set; nothing is sent.' };
   let origin: URL;
   try {
     origin = new URL(value);
   } catch {
-    return { refused: `AUTOMATE_URL is not a URL (${value}); nothing is sent.` };
+    return { refused: `LUPIN_URL is not a URL (${value}); nothing is sent.` };
   }
   if (origin.username !== '' || origin.password !== '') {
     return {
       refused:
-        'AUTOMATE_URL must not carry credentials; the secret goes in AUTOMATE_REPORTER_SECRET. Nothing is sent.',
+        'LUPIN_URL must not carry credentials; the secret goes in LUPIN_REPORTER_SECRET. Nothing is sent.',
     };
   }
   const plainAllowed = origin.protocol === 'http:' && isLoopbackHost(origin.hostname);

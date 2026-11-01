@@ -42,9 +42,9 @@ describe('telegram adapter', () => {
   });
 
   it('checks the token with getMe', async () => {
-    stubFetch([{ status: 200, body: { ok: true, result: { username: 'automate_bot' } } }]);
+    stubFetch([{ status: 200, body: { ok: true, result: { username: 'lupin_bot' } } }]);
     const result = await telegramAdapter.execute({ operation: 'getMe', input: {} }, 't');
-    expect(result.data).toEqual({ username: 'automate_bot' });
+    expect(result.data).toEqual({ username: 'lupin_bot' });
   });
 
   it('retries a rate-limit refusal, which sent nothing, even though sending is not idempotent', async () => {

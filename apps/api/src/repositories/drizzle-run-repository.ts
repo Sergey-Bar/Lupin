@@ -2,13 +2,13 @@
  * drizzle-run-repository.ts — Drizzle/Postgres-backed RunRepository implementation
  *
  * Implements all 8 methods of the RunRepository interface using Drizzle ORM
- * against the runs and tests tables from @automate/db.
+ * against the runs and tests tables from @lupin/db.
  */
 import { eq, and, sql, asc, desc, gte, lt, lte, inArray, type SQL } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
-import { runs, tests } from '@automate/db';
-import { storedTestIdentity } from '@automate/shared-contracts';
+import { runs, tests } from '@lupin/db';
+import { storedTestIdentity } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import {
   toPersistedStatus,

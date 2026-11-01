@@ -48,9 +48,10 @@ interface LockedFont {
   family: string;
   file: string;
   upstream: string;
+  revision: string;
   source: string;
-  version: string;
   licence: string;
+  licenceFile: string;
   axes: Record<string, string>;
   unicodeRange: string;
   sha256: string;
@@ -128,13 +129,16 @@ describe('the committed font binaries', () => {
   it.each(lock.fonts.map((font) => [font.family, font] as const))(
     'records where %s came from, because a hash is not a provenance',
     (_family, font) => {
-      expect(font.upstream).toMatch(/^https:\/\/fonts\.gstatic\.com\//);
-      expect(font.source).toContain('Google Fonts');
-      expect(font.version).toMatch(/^v\d+$/);
-      // SIL OFL, asserted as a substring rather than a comparison, because the
-      // lock records the licence *name* and the licence text ships with the
-      // family upstream rather than in this repository.
+      // An upstream repository and the commit the file was taken from: a branch name
+      // or a "latest" moves, and a 40-character revision does not.
+      expect(font.upstream).toMatch(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/);
+      expect(font.revision).toMatch(/^[0-9a-f]{40}$/);
+      expect(font.source.length).toBeGreaterThan(0);
       expect(font.licence).toContain('SIL Open Font License');
+      // The OFL requires the licence to travel with the font, so its text is committed
+      // beside the binaries rather than left upstream.
+      const licence = readFileSync(path.join(fontsDirectory, '..', font.licenceFile), 'utf8');
+      expect(licence).toMatch(/SIL OPEN FONT LICENSE/i);
     },
   );
 });
@@ -171,16 +175,16 @@ describe('fonts.css declares each locked face', () => {
   it('publishes exactly two font stacks, as custom properties', () => {
     // Two families. A third face is a decision somebody makes in a component
     // and not in this file, so the count is asserted rather than trusted.
-    expect(fontsCss.match(/--automate-font-(?:sans|mono):/g)).toHaveLength(2);
-    expect(fontsCss).toContain("--automate-font-sans: 'Archivo', 'Archivo Fallback'");
-    expect(fontsCss).toContain("--automate-font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback'");
+    expect(fontsCss.match(/--lupin-font-(?:sans|mono):/g)).toHaveLength(2);
+    expect(fontsCss).toContain("--lupin-font-sans: 'Geist', 'Geist Fallback'");
+    expect(fontsCss).toContain("--lupin-font-mono: 'Geist Mono', 'Geist Mono Fallback'");
   });
 });
 
 describe('the fallback carries the measured metrics, not conventional ones', () => {
   const cases = [
-    { family: 'Archivo', fallback: 'Archivo Fallback', local: 'Arial' },
-    { family: 'JetBrains Mono', fallback: 'JetBrains Mono Fallback', local: 'Consolas' },
+    { family: 'Geist', fallback: 'Geist Fallback', local: 'Arial' },
+    { family: 'Geist Mono', fallback: 'Geist Mono Fallback', local: 'Consolas' },
   ] as const;
 
   it.each(cases)('$family Fallback declares a local $local face', (entry) => {
@@ -215,8 +219,12 @@ describe('the fallback carries the measured metrics, not conventional ones', () 
     if (!defined(metrics)) throw new Error(`no metrics for ${entry.family}`);
     const target = metrics.xHeight / unitsPerEm;
     const fallback = metrics.fallbackXHeightPerCent / 100;
-    const expected = `${((target / fallback) * 100).toFixed(2)}%`;
-    expect(fallbackFaceFor(entry.fallback) ?? '').toContain(`size-adjust: ${expected};`);
+    const expected = (target / fallback) * 100;
+    // Compared as a number to two places: Prettier writes `102.20%` as `102.2%`, and a
+    // string comparison would fail on the formatter rather than on the measurement.
+    const declared = /size-adjust:\s*([\d.]+)%;/.exec(fallbackFaceFor(entry.fallback) ?? '');
+    expect(declared, `${entry.fallback} declares no size-adjust`).not.toBeNull();
+    expect(Number(declared?.[1])).toBeCloseTo(expected, 2);
   });
 });
 
@@ -226,8 +234,8 @@ describe('the stylesheet the app serves', () => {
   });
 
   it('sets the body font from the custom property rather than a literal stack', () => {
-    expect(indexCss).toContain('font-family: var(--automate-font-sans);');
-    expect(indexCss).toContain('font-family: var(--automate-font-mono);');
+    expect(indexCss).toContain('font-family: var(--lupin-font-sans);');
+    expect(indexCss).toContain('font-family: var(--lupin-font-mono);');
     // A second stack written here is the failure this replaces: `index.css` used
     // to name `Inter`, which nothing loaded, so the product rendered in the OS
     // face while the stylesheet claimed otherwise.

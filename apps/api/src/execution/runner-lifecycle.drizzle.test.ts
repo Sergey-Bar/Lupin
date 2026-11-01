@@ -5,7 +5,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DrizzleExecutionStore } from './drizzle-execution-store.js';
 import { hashRunnerToken } from './in-memory-execution-store.js';
 import type { ExecutionStore, RunnerManifest } from './types.js';

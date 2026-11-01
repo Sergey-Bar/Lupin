@@ -222,7 +222,7 @@ export const HealthGradeSchema = z
 export type HealthGrade = z.infer<typeof HealthGradeSchema>;
 
 /**
- * The `health` key of `automate.config.json`.
+ * The `health` key of `lupin.config.json`.
  *
  * Weights reweight measured dimensions; a weight of `0` drops a dimension from the grade on
  * purpose, which is different from it being unmeasured and is shown as such. `gate` is the
@@ -231,7 +231,7 @@ export type HealthGrade = z.infer<typeof HealthGradeSchema>;
 /**
  * The `aiGovernance` block of the health policy: the pull-request rules for change an AI agent
  * wrote, and the labels that mark it. Off unless `enabled` is `true`. Read by
- * `evaluateAiGovernance` in `@automate/reporting`; a human pull request is never subject to it.
+ * `evaluateAiGovernance` in `@lupin/reporting`; a human pull request is never subject to it.
  */
 export const AiGovernancePolicySchema = z.object({
   enabled: z.boolean().default(false),
@@ -378,14 +378,14 @@ export const LINE_COVERAGE_REPORT_FORMATS = [
 ] as const satisfies readonly HealthMetricFormat[];
 
 /**
- * Eval run reports: three tools' native JSON, and Automate's own run shape — which the
+ * Eval run reports: three tools' native JSON, and Lupin's own run shape — which the
  * built-in eval runner writes, so its runs enter through this same door (one writer).
  */
 export const EVAL_UPLOAD_FORMATS = [
   'promptfoo-json',
   'deepeval-json',
   'inspect-eval-json',
-  'automate-eval-json',
+  'lupin-eval-json',
 ] as const;
 export type EvalUploadFormat = (typeof EVAL_UPLOAD_FORMATS)[number];
 
@@ -414,7 +414,7 @@ export const HEALTH_EVIDENCE_FORMATS = [
  * agent-config scanner's findings are stored as a report of this kind so the finding
  * lifecycle and the grade read them like any scanner's.
  */
-export const BUILT_IN_REPORT_FORMATS = ['automate-agent-config'] as const;
+export const BUILT_IN_REPORT_FORMATS = ['lupin-agent-config'] as const;
 
 /** The report formats the upload door reads. `sarif` covers most scanners. */
 export const HEALTH_REPORT_FORMATS = [
@@ -441,7 +441,7 @@ export const FINDING_REPORT_FORMATS = [
   'stryker-mutation',
   'axe-json',
   'skillspector-json',
-  'automate-agent-config',
+  'lupin-agent-config',
 ] as const satisfies readonly HealthReportFormat[];
 export type FindingReportFormat = (typeof FINDING_REPORT_FORMATS)[number];
 

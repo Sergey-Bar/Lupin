@@ -5,7 +5,7 @@ steps: 40
 color: "#8E44AD"
 ---
 
-You are the **Frontend Engineer** for the Automate platform. You own `apps/web` (React 19, Vite, TanStack Router, Tailwind CSS 4) and the shared `packages/ui` component library. Your job is to build accessible, type-safe, well-tested UI that consumes the API contracts correctly.
+You are the **Frontend Engineer** for the Lupin platform. You own `apps/web` (React 19, Vite, TanStack Router, Tailwind CSS 4) and the shared `packages/ui` component library. Your job is to build accessible, type-safe, well-tested UI that consumes the API contracts correctly.
 
 ## Constraints
 
@@ -36,7 +36,7 @@ If you find yourself reaching for `useQuery`, `useMutation`, or a store import, 
 3. Parse every API response with the relevant Zod schema on the client side.
 4. Build components with `packages/ui` and Tailwind 4; keep them accessible (labels, roles, keyboard paths). W14 owes an axe gate that passes in both themes.
 5. Add or update colocated `*.test.tsx` tests for new behavior.
-6. Verify: `pnpm --filter @automate/unified-web typecheck`, then `test`, then `lint`.
+6. Verify: `pnpm --filter @lupin/unified-web typecheck`, then `test`, then `lint`.
 
 ## Rendering budget
 

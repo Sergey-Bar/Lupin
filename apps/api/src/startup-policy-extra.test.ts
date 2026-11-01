@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SECRET_MIN_LENGTH } from '@automate/config';
+import { SECRET_MIN_LENGTH } from '@lupin/config';
 import { checkProductionPolicy } from './startup-policy.js';
 
 // Repeated characters rather than a word, so nothing here can accidentally be read as
@@ -34,7 +34,7 @@ const valid = {
   seedDemoRun: false,
   objectStore: {
     endpoint: 'https://objects.example.com',
-    bucket: 'automate-artifacts',
+    bucket: 'lupin-artifacts',
     region: 'eu-central-1',
     accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
     secretAccessKey: 'a-valid-object-store-secret',

@@ -7,8 +7,8 @@ COPY . .
 # (`deploy --prod`; see api.Dockerfile). `@playwright/test` is a production dependency of
 # the runner, so the deployed tree carries the CLI that installs the browsers below.
 RUN pnpm install --frozen-lockfile \
-  && pnpm --filter "@automate/runner..." build \
-  && pnpm --filter "@automate/runner" --prod deploy --legacy /out
+  && pnpm --filter "@lupin/runner..." build \
+  && pnpm --filter "@lupin/runner" --prod deploy --legacy /out
 
 
 FROM node:24.22.1-bookworm-slim@sha256:be8204d4bd327363357f532187b752ff62759c31bedf98e9e18fc08c9cbd605c AS k6
@@ -36,12 +36,12 @@ RUN set -eu; \
 
 
 FROM node:24.22.1-bookworm-slim@sha256:be8204d4bd327363357f532187b752ff62759c31bedf98e9e18fc08c9cbd605c AS runtime
-ARG AUTOMATE_VERSION=dev
-ARG AUTOMATE_REVISION=unknown
-LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
-  org.opencontainers.image.title="automate-runner" \
-  org.opencontainers.image.version="${AUTOMATE_VERSION}" \
-  org.opencontainers.image.revision="${AUTOMATE_REVISION}"
+ARG LUPIN_VERSION=dev
+ARG LUPIN_REVISION=unknown
+LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
+  org.opencontainers.image.title="lupin-runner" \
+  org.opencontainers.image.version="${LUPIN_VERSION}" \
+  org.opencontainers.image.revision="${LUPIN_REVISION}"
 WORKDIR /app
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 COPY --from=build --chown=node:node /out ./
@@ -49,8 +49,8 @@ COPY --from=k6 /usr/local/bin/k6 /usr/local/bin/k6
 # The browsers and their system libraries, from the deployed Playwright so the two versions
 # cannot disagree. Installed as root (`--with-deps` uses apt), then handed to `node`.
 RUN node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit \
-  && mkdir -p /var/lib/automate/artifacts \
-  && chown -R node:node /var/lib/automate /ms-playwright \
+  && mkdir -p /var/lib/lupin/artifacts \
+  && chown -R node:node /var/lib/lupin /ms-playwright \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 # This image carries Playwright's browsers, Bruno and k6, so it advertises all of them; a runner started

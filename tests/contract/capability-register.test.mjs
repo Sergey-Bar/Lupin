@@ -130,7 +130,7 @@ describe('the capability-register check', () => {
   it(
     'fails, with a reason, for every kind of drift',
     () => {
-      const directory = mkdtempSync(path.join(tmpdir(), 'automate-register-'));
+      const directory = mkdtempSync(path.join(tmpdir(), 'lupin-register-'));
       try {
         const file = path.join(directory, 'register.md');
         for (const testCase of CASES) {
@@ -148,7 +148,7 @@ describe('the capability-register check', () => {
   it(
     'reports a real commit as the baseline, and refuses one that is not',
     () => {
-      const directory = mkdtempSync(path.join(tmpdir(), 'automate-register-'));
+      const directory = mkdtempSync(path.join(tmpdir(), 'lupin-register-'));
       try {
         const file = path.join(directory, 'register.md');
         const head = spawnSync('git', ['rev-parse', 'HEAD'], {
@@ -206,7 +206,7 @@ describe('the capability-register check', () => {
   it(
     'can refresh the baseline, and says so',
     () => {
-      const directory = mkdtempSync(path.join(tmpdir(), 'automate-register-'));
+      const directory = mkdtempSync(path.join(tmpdir(), 'lupin-register-'));
       try {
         const file = path.join(directory, 'register.md');
         const head = spawnSync('git', ['rev-parse', 'HEAD'], {

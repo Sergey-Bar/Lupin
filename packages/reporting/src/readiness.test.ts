@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ReleaseReadinessCardSchema } from '@automate/shared-contracts';
+import { ReleaseReadinessCardSchema } from '@lupin/shared-contracts';
 import { buildDigest, evaluateReadiness, type ReadinessInput } from './readiness.js';
 
 const AT = '2026-10-20T12:00:00.000Z';

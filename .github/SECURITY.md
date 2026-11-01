@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 **Do not open a public issue.** Use GitHub's private reporting on the Security tab
-(https://github.com/sergey-bar/AutoMate/security/advisories/new), or email the
+(https://github.com/sergey-bar/Lupin/security/advisories/new), or email the
 maintainer directly if that route is unavailable to you.
 
 Please include: what the affected version or commit is, what an attacker can do, the
@@ -36,8 +36,8 @@ reporter or runner and the API.
 - **Authorization.** `WORKSPACE_ID` is the only tenancy boundary in the system. Every
   workspace-scoped read or write needs a cross-workspace isolation test, and a change
   that adds one without a test is the reportable defect.
-- **Secrets.** Six installation secrets are read by `@automate/config` and validated at
-  startup: `COOKIE_SECRET`, `SESSION_SECRET`, `VAULT_SECRET`, `AUTOMATE_API_KEY`,
+- **Secrets.** Six installation secrets are read by `@lupin/config` and validated at
+  startup: `COOKIE_SECRET`, `SESSION_SECRET`, `VAULT_SECRET`, `LUPIN_API_KEY`,
   `REPORTER_SECRET` and `RUNNER_REGISTRATION_SECRET`. A placeholder is **refused** when
   `NODE_ENV=production` — `isSecretPlaceholder` matches documented development values
   exactly, plus two cookie-secret fragments, and startup fails rather than warns. If a
@@ -75,7 +75,7 @@ reporter or runner and the API.
 `pnpm security:secrets` and `pnpm security:secrets:history` are the dependency-free
 floor, and they run in CI. `pnpm security:static` adds semgrep and gitleaks and exits
 non-zero when it cannot produce a scan, because an unrun security scan is not a pass.
-`AUTOMATE_HOST_SCANNERS=unavailable` records a _scanner that could not run_ as
+`LUPIN_HOST_SCANNERS=unavailable` records a _scanner that could not run_ as
 `not_configured` — and a scanner killed at its timeout counts as unavailable, never as
 clean, so a stall cannot become a green gate.
 

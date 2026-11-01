@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import { createSecurityHeaders } from './security-headers.js';
 
-const ALLOWED = 'https://automate.example.test';
+const ALLOWED = 'https://lupin.example.test';
 const OTHER = 'https://other.example.test';
 
 /** @param {Partial<Parameters<typeof createSecurityHeaders>[0]>} options */
@@ -95,7 +95,7 @@ describe('CORS', () => {
   });
 
   it('never reflects an unknown origin, and never answers with a wildcard', async () => {
-    for (const origin of [OTHER, 'null', 'https://automate.example.test.evil.test', '']) {
+    for (const origin of [OTHER, 'null', 'https://lupin.example.test.evil.test', '']) {
       const response = await app().request('/api/v1/health', {
         headers: origin === '' ? {} : { origin },
       });
@@ -108,15 +108,15 @@ describe('CORS', () => {
   });
 
   it('matches an allowed origin exactly, not by suffix', async () => {
-    // The suffix trap: `https://automate.example.test.evil.test` ends with
-    // `automate.example.test`, and any endsWith-style allowlist allows it.
+    // The suffix trap: `https://lupin.example.test.evil.test` ends with
+    // `lupin.example.test`, and any endsWith-style allowlist allows it.
     const response = await app().request('/api/v1/health', {
-      headers: { origin: 'https://automate.example.test.evil.test' },
+      headers: { origin: 'https://lupin.example.test.evil.test' },
     });
     expect(response.headers.get('access-control-allow-origin')).toBeNull();
 
     const differentPort = await app().request('/api/v1/health', {
-      headers: { origin: 'https://automate.example.test:8443' },
+      headers: { origin: 'https://lupin.example.test:8443' },
     });
     expect(differentPort.headers.get('access-control-allow-origin')).toBeNull();
   });

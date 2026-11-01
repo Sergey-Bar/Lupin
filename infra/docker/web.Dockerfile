@@ -6,16 +6,16 @@ WORKDIR /app
 RUN corepack enable
 COPY . .
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter "@automate/unified-web..." build
+RUN pnpm --filter "@lupin/unified-web..." build
 
 
 FROM nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de AS runtime
-ARG AUTOMATE_VERSION=dev
-ARG AUTOMATE_REVISION=unknown
-LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
-  org.opencontainers.image.title="automate-web" \
-  org.opencontainers.image.version="${AUTOMATE_VERSION}" \
-  org.opencontainers.image.revision="${AUTOMATE_REVISION}"
+ARG LUPIN_VERSION=dev
+ARG LUPIN_REVISION=unknown
+LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
+  org.opencontainers.image.title="lupin-web" \
+  org.opencontainers.image.version="${LUPIN_VERSION}" \
+  org.opencontainers.image.revision="${LUPIN_REVISION}"
 # Unprivileged nginx: the stock image runs as root and writes to
 # /var/cache/nginx, /var/run and the pid file. Running as `nginx` with the
 # listen port moved to 8080 means the process needs no capabilities at all.

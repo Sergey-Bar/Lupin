@@ -174,9 +174,9 @@ export const CopilotSuggestionSchema = z
      * The exact change, as a document the operator can commit.
      *
      * **A document, not a shell line.** A copilot that offers
-     * `echo "commands": {...} >> automate.config.json` has handed back the raw-shell
+     * `echo "commands": {...} >> lupin.config.json` has handed back the raw-shell
      * passthrough D7 rules out, wearing a helpful tone. `overrides` is the
-     * `automate.config.json` shape, so applying a suggestion is a merge into a file
+     * `lupin.config.json` shape, so applying a suggestion is a merge into a file
      * under review rather than a command typed at a prompt.
      */
     overrides: z.record(z.string(), z.unknown()),

@@ -6,7 +6,7 @@
 
 ## Context
 
-The server platform's canonical run contract (`automate.run@2`) is the nearest existing
+The server platform's canonical run contract (`lupin.run@2`) is the nearest existing
 model for test evidence, and its adapters read JUnit XML and Playwright JSON. It cannot
 express several cases the local product must handle: a run with zero tests, a test that
 errored as distinct from one that failed, a test that was never run, and a report with no

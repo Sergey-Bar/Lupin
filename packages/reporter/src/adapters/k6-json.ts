@@ -1,4 +1,4 @@
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 import { canonicalRunResult, type CanonicalAttemptInput } from '../canonical-run-result.js';
 import type { ProducerAdapter, ProducerContext } from '../adapter.js';
 import type { CanonicalStatus } from '../producer-status.js';

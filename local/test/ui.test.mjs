@@ -45,7 +45,7 @@ function assertWellFormedPage(html, name) {
 }
 
 function repository(files) {
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-ui-repo-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-ui-repo-'));
   for (const [relative, content] of Object.entries(files)) {
     const absolute = path.join(root, ...relative.split('/'));
     mkdirSync(path.dirname(absolute), { recursive: true });
@@ -56,7 +56,7 @@ function repository(files) {
 
 async function render(files, scanOptions = {}) {
   const root = repository(files);
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-ui-data-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-ui-data-'));
   const engine = createEngine({ dataDir, now: () => new Date('2026-10-19T12:00:00Z') });
   try {
     const scanned = await engine.scan(root, scanOptions);

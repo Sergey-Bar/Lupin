@@ -5,13 +5,13 @@ is a root script or a documented tool; nothing below is a step someone has to re
 
 ## What runs
 
-| Process | Started by                                | Listens on    | Needs                         |
-| ------- | ----------------------------------------- | ------------- | ----------------------------- |
-| API     | `pnpm dev:all`                            | `:3000`       | PostgreSQL, the secrets below |
-| Web     | `pnpm dev:all`                            | `:5173`       | the API for `/api`            |
-| Worker  | `pnpm dev:all`                            | `:3001`       | PostgreSQL                    |
-| Runner  | `pnpm dev:all`                            | `:3002`       | the API, a Chromium           |
-| Local   | `node local/bin/automate-local.mjs serve` | a random port | nothing; see `docs/local/`    |
+| Process | Started by                             | Listens on    | Needs                         |
+| ------- | -------------------------------------- | ------------- | ----------------------------- |
+| API     | `pnpm dev:all`                         | `:3000`       | PostgreSQL, the secrets below |
+| Web     | `pnpm dev:all`                         | `:5173`       | the API for `/api`            |
+| Worker  | `pnpm dev:all`                         | `:3001`       | PostgreSQL                    |
+| Runner  | `pnpm dev:all`                         | `:3002`       | the API, a Chromium           |
+| Local   | `node local/bin/lupin-local.mjs serve` | a random port | nothing; see `docs/local/`    |
 
 The worker and runner health ports bind to loopback by default in `.env.example`. The runner
 waits up to two minutes for the API, so the order the four start in does not matter.
@@ -19,10 +19,10 @@ waits up to two minutes for the API, so the order the four start in does not mat
 ## First time
 
 1. `pnpm install`
-2. A PostgreSQL 16 on `localhost:55432` with database, user and password `automate` / `automate` /
+2. A PostgreSQL 16 on `localhost:55432` with database, user and password `lupin` / `lupin` /
    your choice. The compose file `infra/compose/compose.dev.yml` describes one; any PostgreSQL 16 works.
 3. `cp .env.example .env`, then replace the five `replace-with-…` secrets with random values of at
-   least 32 characters (`COOKIE_SECRET`, `VAULT_SECRET`, `AUTOMATE_API_KEY`, `REPORTER_SECRET`,
+   least 32 characters (`COOKIE_SECRET`, `VAULT_SECRET`, `LUPIN_API_KEY`, `REPORTER_SECRET`,
    `RUNNER_REGISTRATION_SECRET`) and set `DATABASE_URL`. `.env` is git-ignored, and the API, worker
    and runner all read it.
 4. `pnpm db:migrate`
@@ -35,7 +35,7 @@ dashboard, or `POST /api/v1/runs`, and the runner picks it up.
 ## When something is wrong
 
 - **The API refuses to start and names a secret.** The startup policy rejects missing or
-  placeholder secrets. Fix `.env`; do not set `AUTOMATE_ALLOW_DEV_SECRETS` on a machine anyone else
+  placeholder secrets. Fix `.env`; do not set `LUPIN_ALLOW_DEV_SECRETS` on a machine anyone else
   can reach.
 - **A runner says `RUNNER_ID_TAKEN`.** Its `RUNNER_INSTANCE_ID` is registered and its credential is
   still live. It restarts cleanly inside the credential's 15 minutes and again after it lapses; the

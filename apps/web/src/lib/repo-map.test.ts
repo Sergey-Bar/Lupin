@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ScoreCell } from '@automate/shared-contracts';
+import type { ScoreCell } from '@lupin/shared-contracts';
 import {
   buildRepoMap,
   compactMapSearch,
@@ -66,7 +66,7 @@ function cell(
 }
 
 const INPUT: MapInput = {
-  projectName: 'Automate',
+  projectName: 'Lupin',
   scan: {
     sourceFiles: 120,
     testFiles: 40,

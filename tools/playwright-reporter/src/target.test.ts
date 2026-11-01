@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isLoopbackBind } from '@automate/config';
+import { isLoopbackBind } from '@lupin/config';
 import { isLoopbackHost, resolveOrigin } from './target.js';
 
 /**
  * The reporter's definition of loopback is a copy — it ships with no runtime dependency —
- * so it is held to `@automate/config`'s, which the CLI and the MCP proxy are held to too.
+ * so it is held to `@lupin/config`'s, which the CLI and the MCP proxy are held to too.
  */
 const HOSTS = [
   'localhost',
@@ -35,7 +35,7 @@ const HOSTS = [
 ];
 
 describe('isLoopbackHost', () => {
-  it('is the same answer as @automate/config isLoopbackBind on every host', () => {
+  it('is the same answer as @lupin/config isLoopbackBind on every host', () => {
     for (const host of HOSTS) expect(isLoopbackHost(host), host).toBe(isLoopbackBind(host));
   });
 

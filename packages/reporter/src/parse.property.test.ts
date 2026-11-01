@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { CanonicalRunResultSchema } from '@automate/shared-contracts';
+import { CanonicalRunResultSchema } from '@lupin/shared-contracts';
 import type { ProducerAdapter, ProducerContext } from './adapter.js';
 import { junitXmlAdapter } from './adapters/junit-xml.js';
 import { K6_JSON_ADAPTER } from './adapters/k6-json.js';

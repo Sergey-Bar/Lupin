@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import type { AgentRuntimeReport, ProjectEvals } from '@automate/shared-contracts';
+import type { AgentRuntimeReport, ProjectEvals } from '@lupin/shared-contracts';
 import type { AgentsClient } from '../lib/agents-client.js';
 import {
   makeDatasets,
@@ -405,7 +405,7 @@ describe('the agents page', () => {
     expect(screen.queryByRole('button', { name: 'Run support answers' })).not.toBeInTheDocument();
   });
 
-  it('shows Automate’s own chat runtime as secondary chrome, or that it has not run', async () => {
+  it('shows Lupin’s own chat runtime as secondary chrome, or that it has not run', async () => {
     const agents = agentsDouble();
     const { unmount } = renderAgents(agents);
     const chat = await screen.findByTestId('chat-runtime');

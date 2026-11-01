@@ -2,9 +2,9 @@ import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { AGENT_CONFIG_TOOL } from '@automate/projects';
-import { MAX_AGENT_CONFIG_FILE_BYTES, McpServerListSchema } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import { AGENT_CONFIG_TOOL } from '@lupin/projects';
+import { MAX_AGENT_CONFIG_FILE_BYTES, McpServerListSchema } from '@lupin/shared-contracts';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import { agentProject } from '../test-support/agent-fixtures.js';
 import {
@@ -149,7 +149,7 @@ describe('ingesting agent configuration', () => {
     expect(findings.every((row) => row.toolKey === AGENT_CONFIG_TOOL)).toBe(true);
     expect(findings.map((row) => row.ruleId)).toContain('agent-config/prompt-injection');
     const [report] = await db.select().from(schema.healthReports);
-    expect(report).toMatchObject({ format: 'automate-agent-config', toolKey: AGENT_CONFIG_TOOL });
+    expect(report).toMatchObject({ format: 'lupin-agent-config', toolKey: AGENT_CONFIG_TOOL });
     const inventory = McpServerListSchema.parse(await listMcpServers(options, projectId));
     const files = inventory.servers.find((server) => server.name === 'files');
     expect(files).toMatchObject({
@@ -160,7 +160,7 @@ describe('ingesting agent configuration', () => {
     });
     expect(JSON.stringify(inventory)).not.toContain('value-that-must-not-be-stored');
     const health = await projectHealth(base, projectId, 'main');
-    expect(health.reports.map((entry) => entry.format)).toContain('automate-agent-config');
+    expect(health.reports.map((entry) => entry.format)).toContain('lupin-agent-config');
   });
 
   it('replaces the inventory and fixes what the next scan no longer finds', async () => {

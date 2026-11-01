@@ -4,7 +4,7 @@
  *
  * A POST because the caller sends the file list: every file in it is planned, including the
  * ones with no history (SHARD-1), and a GET would have to fit ten thousand paths in a query
- * string. Nothing is written. The planner is `planShards` in `@automate/reporting`; this
+ * string. Nothing is written. The planner is `planShards` in `@lupin/reporting`; this
  * route reads the durations and draws the cut-off.
  *
  * Guarded as the test-report route is — the reporter secret, or an access token pinned to
@@ -14,8 +14,8 @@
 
 import { Hono, type MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { ShardPlanBodySchema, type ShardPlanResponse } from '@automate/shared-contracts';
-import { planShards } from '@automate/reporting';
+import { ShardPlanBodySchema, type ShardPlanResponse } from '@lupin/shared-contracts';
+import { planShards } from '@lupin/reporting';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { domainErrorResponse } from '../errors/boundary.js';
 import type { RunRepository } from '../repositories/run-repository.js';

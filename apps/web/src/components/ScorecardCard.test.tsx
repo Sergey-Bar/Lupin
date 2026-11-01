@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { METRIC_UNITS } from '@automate/shared-contracts';
+import { METRIC_UNITS } from '@lupin/shared-contracts';
 import { makeMetric, makeScorecard } from '../test-utils.js';
 import { ScorecardCard } from './ScorecardCard.js';
 

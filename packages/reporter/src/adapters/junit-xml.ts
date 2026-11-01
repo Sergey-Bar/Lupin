@@ -1,5 +1,5 @@
 import { SaxesParser } from 'saxes';
-import { testIdentity, type CanonicalRunResult } from '@automate/shared-contracts';
+import { testIdentity, type CanonicalRunResult } from '@lupin/shared-contracts';
 import type { ProducerAdapter } from '../adapter.js';
 import { canonicalRunResult, type CanonicalStatus } from '../canonical-run-result.js';
 import { canonicalTestStatusFrom, outcomesWithDeclaredRunStatus } from '../producer-status.js';

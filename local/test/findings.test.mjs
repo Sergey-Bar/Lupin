@@ -472,8 +472,8 @@ const junit = (tests) =>
     .join('')}</testsuite>`;
 
 async function withHistory(body) {
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-fi-repo-'));
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-fi-data-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-fi-repo-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-fi-data-'));
   let clock = NOW - 10 * DAY;
   const engine = createEngine({ dataDir, now: () => new Date(clock) });
   /** @param {string} commit @param {Array<[string, boolean, number?]>} tests */

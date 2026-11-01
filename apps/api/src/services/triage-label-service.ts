@@ -1,15 +1,15 @@
 /**
  * Triage labels: what a recurring failure is, decided once and applied to every recurrence.
  *
- * The key is `failureSignature` (`@automate/reporting`) — the key the insights page clusters
+ * The key is `failureSignature` (`@lupin/reporting`) — the key the insights page clusters
  * on and the per-test history groups by — so a label given today labels the same cause
  * tomorrow, in any test, without anyone re-reading it. Stored in `fingerprint_categories`,
  * which 0048 scoped to the workspace; the categories are `defect_categories` rows it seeded.
  */
 
 import { and, asc, eq } from 'drizzle-orm';
-import { fingerprintCategories } from '@automate/db';
-import type { TriageCategory, TriageLabel, TriageLabelBody } from '@automate/shared-contracts';
+import { fingerprintCategories } from '@lupin/db';
+import type { TriageCategory, TriageLabel, TriageLabelBody } from '@lupin/shared-contracts';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 
 type Options = Pick<ProjectRegistryServiceOptions, 'db' | 'workspaceId'>;

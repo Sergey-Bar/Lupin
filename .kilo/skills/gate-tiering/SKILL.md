@@ -61,11 +61,11 @@ It marks a script run by hand:
 
 ## The one permitted way around a scanner
 
-On a host where the static scanners cannot run, `AUTOMATE_HOST_SCANNERS=unavailable` — set for you by `pnpm verify:local` — records `not_configured` and exits 0. The boundary is narrow and machine-checked by `scripts/lib/host-scanners.mjs`:
+On a host where the static scanners cannot run, `LUPIN_HOST_SCANNERS=unavailable` — set for you by `pnpm verify:local` — records `not_configured` and exits 0. The boundary is narrow and machine-checked by `scripts/lib/host-scanners.mjs`:
 
 - a scanner that **ran** and reported something still fails, with or without the flag;
 - a scanner **killed at the ceiling** counts as unavailable, never as clean, so a ten-minute stall cannot become a green security gate;
-- `AUTOMATE_SCAN_TIMEOUT_MS` is clamped to [1 min, 1 h], because a ceiling small enough to guarantee a kill is the same defect by another route;
+- `LUPIN_SCAN_TIMEOUT_MS` is clamped to [1 min, 1 h], because a ceiling small enough to guarantee a kill is the same defect by another route;
 - **no file anywhere under `.github/` may set it**, composite actions included — `auditRepository` reports that as a finding.
 
 Extending the opt-in is a change to `scripts/lib/host-scanners.mjs`, not to a workflow.

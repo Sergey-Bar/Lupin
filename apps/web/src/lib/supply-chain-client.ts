@@ -10,7 +10,7 @@ import {
   type Scorecard,
   type SupplyChainPolicy,
   type SupplyChainPolicyRecord,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createJsonTransport, projectPath, queryString } from './json-transport.js';
 
 /**

@@ -1,4 +1,4 @@
-import type { Scorecard, ScorecardMetric } from '@automate/shared-contracts';
+import type { Scorecard, ScorecardMetric } from '@lupin/shared-contracts';
 import {
   bootstrapMeanDifference,
   compareRates,
@@ -12,7 +12,7 @@ import {
  *
  * ## The inputs are structural
  *
- * The case shape is stated here rather than imported from `@automate/reporter`, so the
+ * The case shape is stated here rather than imported from `@lupin/reporter`, so the
  * policy depends on what it reads — a case id and its attempts — and not on the adapter
  * that produced them. Any producer whose cases have this shape can be gated.
  *

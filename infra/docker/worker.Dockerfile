@@ -6,23 +6,23 @@ COPY . .
 # Build the worker and its workspace dependencies, then write only what it runs to /out
 # (`deploy --prod`; see api.Dockerfile).
 RUN pnpm install --frozen-lockfile \
-  && pnpm --filter "@automate/worker..." build \
-  && pnpm --filter "@automate/worker" --prod deploy --legacy /out
+  && pnpm --filter "@lupin/worker..." build \
+  && pnpm --filter "@lupin/worker" --prod deploy --legacy /out
 
 
 FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runtime
-ARG AUTOMATE_VERSION=dev
-ARG AUTOMATE_REVISION=unknown
-LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
-  org.opencontainers.image.title="automate-worker" \
-  org.opencontainers.image.version="${AUTOMATE_VERSION}" \
-  org.opencontainers.image.revision="${AUTOMATE_REVISION}"
+ARG LUPIN_VERSION=dev
+ARG LUPIN_REVISION=unknown
+LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
+  org.opencontainers.image.title="lupin-worker" \
+  org.opencontainers.image.version="${LUPIN_VERSION}" \
+  org.opencontainers.image.revision="${LUPIN_REVISION}"
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 ENV NODE_ENV=production
 # The artifact volume mounts here and must be writable by `node`.
-RUN mkdir -p /var/lib/automate/artifacts \
-  && chown -R node:node /var/lib/automate
+RUN mkdir -p /var/lib/lupin/artifacts \
+  && chown -R node:node /var/lib/lupin
 USER node
 EXPOSE 3001
 HEALTHCHECK --interval=10s --timeout=5s --retries=12 CMD node -e "fetch('http://127.0.0.1:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"

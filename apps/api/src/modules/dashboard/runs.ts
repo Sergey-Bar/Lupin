@@ -6,7 +6,7 @@
  */
 import { Hono } from 'hono';
 import { DomainError } from '../../errors/domain-error.js';
-import { PERSISTED_RUN_STATUS_VALUES } from '@automate/shared-contracts';
+import { PERSISTED_RUN_STATUS_VALUES } from '@lupin/shared-contracts';
 import type { RunRepository } from '../../repositories/run-repository.js';
 import { currentRequestId } from '../../observability/request-context.js';
 import { isTerminalRunStatus } from './terminal-status.js';

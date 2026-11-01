@@ -41,20 +41,20 @@ describe('the OTLP settings', () => {
       settings: {
         url: 'http://collector:4318/v1/traces',
         headers: {},
-        serviceName: 'automate-api',
+        serviceName: 'lupin-api',
       },
     });
     expect(
       readOtlpSettings({
         OTEL_EXPORTER_OTLP_ENDPOINT: 'http://ignored:4318',
         OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: 'https://otlp.example.com/ingest',
-        OTEL_SERVICE_NAME: 'automate-prod',
+        OTEL_SERVICE_NAME: 'lupin-prod',
       }),
     ).toEqual({
       settings: {
         url: 'https://otlp.example.com/ingest',
         headers: {},
-        serviceName: 'automate-prod',
+        serviceName: 'lupin-prod',
       },
     });
   });
@@ -110,7 +110,7 @@ describe('a W3C traceparent', () => {
 describe('the OTLP/HTTP JSON body', () => {
   it('is one resource with the service name, one scope, and each span as the protocol writes it', () => {
     const body = encodeTraces([span({ parentSpanId: PARENT, error: true })], {
-      serviceName: 'automate-api',
+      serviceName: 'lupin-api',
       serviceVersion: '3.2.0',
     });
     expect(body).toEqual({
@@ -118,13 +118,13 @@ describe('the OTLP/HTTP JSON body', () => {
         {
           resource: {
             attributes: [
-              { key: 'service.name', value: { stringValue: 'automate-api' } },
+              { key: 'service.name', value: { stringValue: 'lupin-api' } },
               { key: 'service.version', value: { stringValue: '3.2.0' } },
             ],
           },
           scopeSpans: [
             {
-              scope: { name: '@automate/api' },
+              scope: { name: '@lupin/api' },
               spans: [
                 {
                   traceId: TRACE,
@@ -153,7 +153,7 @@ describe('the exporter', () => {
   const settings = {
     url: 'https://otlp.example.com/v1/traces',
     headers: { authorization: 'Basic abc' },
-    serviceName: 'automate-api',
+    serviceName: 'lupin-api',
   };
 
   it('posts the queued spans as JSON with the configured headers, in batches', async () => {

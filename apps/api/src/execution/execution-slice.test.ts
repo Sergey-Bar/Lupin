@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
-import { IntegrationMaturitySchema } from '@automate/shared-contracts';
+import { IntegrationMaturitySchema } from '@lupin/shared-contracts';
 import { createExecutionRoutes } from '../routes/execution.js';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
 import { DEFAULT_WORKSPACE_ID } from '../repositories/run-repository.js';

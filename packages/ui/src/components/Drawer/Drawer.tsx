@@ -34,7 +34,7 @@ export interface DrawerProps extends DialogHTMLAttributes<HTMLDialogElement> {
  */
 /**
  * **The drawer slides**, which is the `transition` role and the only movement in the
- * product: `open:animate-automate-slide-in` is opacity plus an 8% `translateY` over 300 ms
+ * product: `open:animate-lupin-slide-in` is opacity plus an 8% `translateY` over 300 ms
  * on the `in-out` easing.
  *
  * The 300 ms and the 8% are both stated in `motion.css` with the reasoning. `transition-
@@ -43,7 +43,7 @@ export interface DrawerProps extends DialogHTMLAttributes<HTMLDialogElement> {
  * therefore the one the reader sees on the way out, and the way out is faster on purpose.
  */
 const drawerVariants = cva(
-  `fixed z-modal text-fg transition-transform duration-300 ease-in-out open:animate-automate-slide-in backdrop:bg-surface/50 p-0 m-0 bg-surface-raised shadow-elevation-3`,
+  `fixed z-modal text-fg transition-transform duration-300 ease-in-out open:animate-lupin-slide-in backdrop:bg-surface/50 p-0 m-0 bg-surface-raised shadow-elevation-3`,
   {
     variants: {
       position: {

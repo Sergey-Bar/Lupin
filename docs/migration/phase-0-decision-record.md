@@ -24,7 +24,7 @@ The source code snapshots were also verified with `git fsck --connectivity-only 
 
 ## Owner scope confirmation
 
-The owner confirmed that AutoMate and the pinned Dashboard are local/sample-only. No production traffic, production data, or production cutover is authorized in this migration branch. The owner also confirmed that no Git remote is established; publication remains blocked.
+The owner confirmed that Lupin and the pinned Dashboard are local/sample-only. No production traffic, production data, or production cutover is authorized in this migration branch. The owner also confirmed that no Git remote is established; publication remains blocked.
 
 The owner delegated the safest handling of the pinned Dashboard auth artifact. It is therefore treated as potentially sensitive: its contents were not inspected, copied, logged, or migrated. Security review remains required before any source archive or overlay decision.
 
@@ -63,7 +63,7 @@ Every path visible in the original worktree is listed exactly once. `keep` means
 | `.artifacts/automation-playwright-report.json`                                                                                    | untracked | `e6d7d8408f77eac998c21b1432f4a83a06c39cb97ebe438de6aeaa0c8b35226a`  | discard        | Generated output with command error text.                                        |
 | `.artifacts/automation-playwright-report.utf8.json`                                                                               | untracked | `25981ee0b3430ef98fd003af954537361cf17e65f16ea9805021477b8536f0c6`  | discard        | Generated output with encoding and command errors.                               |
 | `.artifacts/automation-playwright-report.valid.json`                                                                              | untracked | `b6674240476a55047dfd88821dae110a7797f491289bd1d6d5f8955cb6600e43`  | discard        | Valid JSON but stale foreign-checkout evidence.                                  |
-| `.artifacts/playwright-automate-report.json`                                                                                      | untracked | `3e6f7a7fa4acf67130a217c57ffed1fceb8907447f20dcf8356ef28342cf6644`  | discard        | Not JSON; generated failure text.                                                |
+| `.artifacts/playwright-lupin-report.json`                                                                                         | untracked | `3e6f7a7fa4acf67130a217c57ffed1fceb8907447f20dcf8356ef28342cf6644`  | discard        | Not JSON; generated failure text.                                                |
 | `.kilo/plans/1790276458882-unified-repository-migration.md`                                                                       | untracked | `c8918b47ee049cd5ba75269b17204e6dc1e4965de138631c100e8e105abbeb59`  | keep           | Durable copy is `docs/migration/unified-repository-migration.md`.                |
 | `CLAUDE.md`                                                                                                                       | untracked | `cb86c410332798e6a3fac25b8c681b903ae13e684a7ac87370533449cf8a7e64`  | discard        | Local agent notes describe the dirty implementation and are not authority.       |
 | `COMPLETION_SUMMARY.md`                                                                                                           | untracked | `c7058fd3947402f71fa3b5a7e3fc883130656a54da76b55c288435e436d308fb`  | discard        | Archive-only; readiness and test claims are unverified.                          |
@@ -74,17 +74,17 @@ Every path visible in the original worktree is listed exactly once. `keep` means
 
 ## Source decisions
 
-### AutoMate
+### Lupin
 
 The pinned source is `bce507ecc36e9f5cc33b3016741238b7fc834f0f`, tree `6c7b2a31ea9268929a17b839fb87ff5f2b2a6f8d`. It is a frozen extraction source, not an overlay. The source declares SQLite for the main and vault databases, carries a versioned Drizzle migration plus an inline migration path, and includes tracked SQLite/WAL/SHM residue that must be classified before any archive or import decision.
 
-The local AutoMate checkout is on a different feature commit (`547f9d2709261f6bfea187faba2d732c406a0846`). The owner confirmed there is no production deployment in scope, so the pinned source remains frozen locally and no credential revocation, write freeze, or source deletion is authorized by this record.
+The local Lupin checkout is on a different feature commit (`547f9d2709261f6bfea187faba2d732c406a0846`). The owner confirmed there is no production deployment in scope, so the pinned source remains frozen locally and no credential revocation, write freeze, or source deletion is authorized by this record.
 
 ### Dashboard
 
-The pinned source is `b5a068538e433e09d816292852dba2a0a87acf22`, tree `53c5be4fc2b43a5fa35dfeca20a9c9ca020ab0c4`. The local `AutoMate/dashboard/` candidate is materially different: it has different repository/package identity, SQLite versus claimed PostgreSQL persistence, different reporter authentication, different auth and feature flags, different routes, tests, and deployment. The candidate is evidence only and must not be overlaid.
+The pinned source is `b5a068538e433e09d816292852dba2a0a87acf22`, tree `53c5be4fc2b43a5fa35dfeca20a9c9ca020ab0c4`. The local `Lupin/dashboard/` candidate is materially different: it has different repository/package identity, SQLite versus claimed PostgreSQL persistence, different reporter authentication, different auth and feature flags, different routes, tests, and deployment. The candidate is evidence only and must not be overlaid.
 
-The pinned Dashboard commit tracks `apps/server/.automate/auth.json` with Git blob `a3122fc30615e7ccb1cc89735a7943e62346b24d`. Its contents were not inspected or copied. Under the owner-confirmed safest-handling policy, it remains quarantined as potentially sensitive and requires security review before migration.
+The pinned Dashboard commit tracks `apps/server/.lupin/auth.json` with Git blob `a3122fc30615e7ccb1cc89735a7943e62346b24d`. Its contents were not inspected or copied. Under the owner-confirmed safest-handling policy, it remains quarantined as potentially sensitive and requires security review before migration.
 
 ### QA-Doctor / Mjölnir
 
@@ -103,7 +103,7 @@ QA-Doctor is a clean, read-only reference at `d981ba356313ae8cea0538ca85c665e88b
 | Source-only reporter packaging            | cite     | Preserve the packaging discipline, not the old package surface.                     |
 | Suppression policy                        | reject   | No accepted product requirement or suppression data contract yet.                   |
 | Evidence graph and advanced trends        | reject   | Product dashboard and reporting package remain canonical.                           |
-| Remote worker pool architecture           | reject   | Use the Automate execution-provider port and durable runner protocol.               |
+| Remote worker pool architecture           | reject   | Use the Lupin execution-provider port and durable runner protocol.                  |
 | Committed static HTML report              | reject   | Use authenticated product views and immutable artifacts.                            |
 | Boolean `verified` sentinel               | reject   | Use proof and completeness dimensions instead.                                      |
 
@@ -117,7 +117,7 @@ QA-Doctor is a clean, read-only reference at `d981ba356313ae8cea0538ca85c665e88b
 | QA-Doctor traceability recorded                                    | passed                     | none                                                                                 |
 | Capability register recorded                                       | passed                     | none                                                                                 |
 | Production data sources reproducible                               | passed for scope           | Owner confirmed local/sample-only scope; no production data migration is authorized. |
-| AutoMate deployed SHA confirmed                                    | passed for scope           | No production deployment is in scope; pinned source remains frozen locally.          |
+| Lupin deployed SHA confirmed                                       | passed for scope           | No production deployment is in scope; pinned source remains frozen locally.          |
 | Active consumers, traffic, jobs, and reporter versions inventoried | passed for scope           | No production traffic or jobs; local-only consumers remain unknown.                  |
 | Rollback retention and credential rotation approved                | deferred                   | Required before any production or decommission action.                               |
 | Product, data, security, and engineering approvals                 | local scope approved       | Formal production sign-off remains deferred.                                         |

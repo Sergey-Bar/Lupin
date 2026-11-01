@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
-import { DrizzleSessionStore } from '@automate/db';
+import * as schema from '@lupin/db';
+import { DrizzleSessionStore } from '@lupin/db';
 import type { CallerResolver } from '../http/roles.js';
 import type { Caller } from '../services/access-service.js';
 import { signInPerson } from '../services/user-service.js';
@@ -29,7 +29,7 @@ async function harness() {
   closers.push(close);
   const access: CallerResolver = {
     mode: 'enforced',
-    authenticateToken: async (token) => (token === 'amt_admin' ? ADMIN : null),
+    authenticateToken: async (token) => (token === 'lup_admin' ? ADMIN : null),
     hasSession: async () => false,
   };
   const options = { db: db as never, workspaceId: 'ws-1', access, defaultRole: 'viewer' as const };
@@ -135,7 +135,7 @@ describe('SCIM users', () => {
         name,
         role: 'operator',
         tokenHash: `hash-${name}`,
-        displayPrefix: 'amt_xx',
+        displayPrefix: 'lup_xx',
         createdBy,
       });
     await token(`user:${ana.id}`, 'ana-ci');
@@ -455,9 +455,9 @@ describe('SCIM groups are the three roles', () => {
       Resources: Array<{ id: string; displayName: string }>;
     };
     expect(groups.Resources.map((group) => group.displayName)).toEqual([
-      'automate-viewer',
-      'automate-operator',
-      'automate-admin',
+      'lupin-viewer',
+      'lupin-operator',
+      'lupin-admin',
     ]);
     const response = await h.scim('PATCH', '/scim/v2/Groups/admin', {
       schemas: [PATCH_SCHEMA],
@@ -505,7 +505,7 @@ describe('SCIM groups are the three roles', () => {
       displayName: string;
       members: Array<{ value: string }>;
     };
-    expect(group.displayName).toBe('automate-operator');
+    expect(group.displayName).toBe('lupin-operator');
     expect(group.members.map((member) => member.value)).toEqual([ana.id]);
     expect((await h.scim('GET', '/scim/v2/Groups/owner')).status).toBe(404);
     expect((await h.scim('PATCH', '/scim/v2/Groups/owner', { Operations: [] })).status).toBe(404);
@@ -542,12 +542,10 @@ describe('SCIM groups are the three roles', () => {
     // Okta renames with a pathless value object, Entra with a path. Neither names a member,
     // and neither may be read as "the group now has none".
     expect(
-      await patch('admin', [
-        { op: 'replace', value: { id: 'admin', displayName: 'automate-admin' } },
-      ]),
+      await patch('admin', [{ op: 'replace', value: { id: 'admin', displayName: 'lupin-admin' } }]),
     ).toBe(204);
     expect(
-      await patch('admin', [{ op: 'Replace', path: 'displayName', value: 'automate-admin' }]),
+      await patch('admin', [{ op: 'Replace', path: 'displayName', value: 'lupin-admin' }]),
     ).toBe(204);
     expect(await roleOf()).toBe('admin');
     // A pathless value object that does carry members is about them.
@@ -561,13 +559,13 @@ describe('SCIM groups are the three roles', () => {
     const h = await harness();
     const find = async (filter: string) =>
       h.scim('GET', `/scim/v2/Groups?filter=${encodeURIComponent(filter)}`);
-    const found = (await (await find('displayName eq "automate-admin"')).json()) as {
+    const found = (await (await find('displayName eq "lupin-admin"')).json()) as {
       totalResults: number;
       Resources: Array<{ id: string }>;
     };
     expect(found.totalResults).toBe(1);
     expect(found.Resources.map((group) => group.id)).toEqual(['admin']);
-    const none = (await (await find('displayName eq "automate-owner"')).json()) as {
+    const none = (await (await find('displayName eq "lupin-owner"')).json()) as {
       totalResults: number;
     };
     expect(none.totalResults).toBe(0);
@@ -582,7 +580,7 @@ describe('the SCIM token', () => {
     const h = await harness();
     const created = await create(h);
     expect((await h.scim('GET', '/scim/v2/Users', undefined, 'scim_wrong')).status).toBe(401);
-    expect((await h.scim('GET', '/scim/v2/Users', undefined, 'amt_admin')).status).toBe(401);
+    expect((await h.scim('GET', '/scim/v2/Users', undefined, 'lup_admin')).status).toBe(401);
     expect(
       (await h.scim('GET', `/scim/v2/Users/${created.id}`, undefined, h.otherToken)).status,
     ).toBe(404);
@@ -593,7 +591,7 @@ describe('the SCIM token', () => {
     const admin = (method: string, path: string, body?: unknown) =>
       h.app.request(path, {
         method,
-        headers: { authorization: 'Bearer amt_admin', 'content-type': 'application/json' },
+        headers: { authorization: 'Bearer lup_admin', 'content-type': 'application/json' },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
     const issued = await admin('POST', '/api/v1/scim-tokens', { name: 'Okta' });
@@ -609,7 +607,7 @@ describe('the SCIM token', () => {
     expect(JSON.stringify(listed)).not.toContain(token);
     const unnamed = await h.app.request('/api/v1/scim-tokens', {
       method: 'POST',
-      headers: { authorization: 'Bearer amt_admin', 'content-type': 'application/json' },
+      headers: { authorization: 'Bearer lup_admin', 'content-type': 'application/json' },
       body: '{not json',
     });
     expect(unnamed.status).toBe(400);

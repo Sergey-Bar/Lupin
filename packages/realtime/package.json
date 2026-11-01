@@ -1,5 +1,5 @@
 {
-  "name": "@automate/realtime",
+  "name": "@lupin/realtime",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
@@ -19,7 +19,7 @@
     "test": "vitest run --coverage && node ../../scripts/write-coverage-provenance.mjs"
   },
   "dependencies": {
-    "@automate/shared-contracts": "workspace:*",
+    "@lupin/shared-contracts": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

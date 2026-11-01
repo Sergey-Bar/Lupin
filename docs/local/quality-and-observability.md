@@ -1,4 +1,4 @@
-# AUTOMATE (local) — quality, performance and observability
+# Lupin Local — quality, performance and observability
 
 **Status:** Draft
 **Owner:** maintainers

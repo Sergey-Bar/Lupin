@@ -8,7 +8,7 @@
  * what made it a defect rather than a bug: there was no value to compare, only two.
  *
  * Availability is **derived from the tool registry** the dispatch uses
- * (`@automate/tool-sdk`'s `ToolRegistry`), not declared beside it: a domain is available
+ * (`@lupin/tool-sdk`'s `ToolRegistry`), not declared beside it: a domain is available
  * exactly when an adapter has been registered for at least one of its actions, so the
  * advertisement and the behaviour cannot part company. That registry is built once, in the
  * composition root (`index.ts`); an app composed without adapters — as most tests are —
@@ -17,8 +17,8 @@
  * Split out of `routes/agents.ts` so `/api/v1/features` can answer without importing the
  * router.
  */
-import { AgentDomainSchema } from '@automate/shared-contracts';
-import { AGENT_ACTIONS, type ToolRegistry } from '@automate/tool-sdk';
+import { AgentDomainSchema } from '@lupin/shared-contracts';
+import { AGENT_ACTIONS, type ToolRegistry } from '@lupin/tool-sdk';
 import { API_UNSUPPORTED_REASONS } from '../agents/api-adapter.js';
 import { BROWSER_UNSUPPORTED_REASONS } from '../agents/browser-adapter.js';
 import { LOAD_UNSUPPORTED_REASONS } from '../agents/load-adapter.js';

@@ -125,7 +125,7 @@ test('ZIP64 markers are refused rather than misread', () => {
 });
 
 test('reading an archive writes nothing to disk, whatever the entry names say', () => {
-  const directory = mkdtempSync(path.join(tmpdir(), 'automate-zip-'));
+  const directory = mkdtempSync(path.join(tmpdir(), 'lupin-zip-'));
   const before = process.cwd();
   try {
     process.chdir(directory);

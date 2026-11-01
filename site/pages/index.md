@@ -13,7 +13,7 @@ language** is what it looks like and why.
 | -------------------------------------------------- | -------------------------------------------------------------------- |
 | [Architecture](../architecture.md)                 | What are the boundaries, and where does the tenancy boundary sit?    |
 | [Operations](../operations.md)                     | How do I run it, migrate it, rehearse a restore, and read the gates? |
-| [The design language](../guide/design-language.md) | Why is it this dark, this blue, this type, and this motion?          |
+| [The design language](../guide/design-language.md) | Why this plane, this violet, this type, and this motion?             |
 
 ::: warning These pages state what is proven
 Where a claim rests on a measurement nobody has taken, the page says so and names the

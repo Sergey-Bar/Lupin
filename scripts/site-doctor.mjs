@@ -13,7 +13,7 @@
  * would need, never a silent pass"*, because a gate that always passes is this
  * repository's existing disease. So there are three outcomes — `pass`, `fail`, `GAP` —
  * and a `GAP` names the artefact it needs. Five of the ten need the **built** HTML, which
- * does not exist until `pnpm --filter @automate/docs build` has run; on a host where it
+ * does not exist until `pnpm --filter @lupin/docs build` has run; on a host where it
  * does not, those five say so rather than reporting clean.
  *
  * **What the blocking set is, and what is not.** The roadmap's risk table also says
@@ -27,7 +27,7 @@
  * not be a stale copy of a machine-checked source. The five DOM checks are the ones
  * that need a browser to be worth anything.
  */
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { collectDriftEnvironment, driftFindings, ASSERTIONS } from './lib/docs-drift.mjs';
 import { twelvePage } from './lib/site-ten-page.mjs';
@@ -78,7 +78,7 @@ function sitePages() {
  * happened to be lying on the developer's disk — a stale build passes or fails on
  * yesterday's markup and nobody can tell. So the DOM checks run only when
  * `SITE_DOCTOR_BUILT=1` is set, which the docs workflow sets immediately after
- * `pnpm --filter @automate/docs build` and nobody sets by hand. Without it they report
+ * `pnpm --filter @lupin/docs build` and nobody sets by hand. Without it they report
  * `GAP` and name the build, which is the honest answer and the rule the roadmap's own
  * risk table gives: an unimplemented check reports `GAP` with what it would need, never
  * a silent pass.
@@ -419,15 +419,9 @@ function checkHeadings(pages) {
  * and the comparison cannot disagree about which files they are.
  */
 const SITE_THEME_CSS = 'site/.vitepress/theme/custom.css';
-const PRODUCT_ENTRY_CSS = 'apps/web/src/index.css';
+/** Every stylesheet in the site's theme, of which `custom.css` is the one that imports. */
 const SITE_THEME_DIR = 'site/.vitepress/theme';
-/**
- * The one stylesheet allowed its own colours: the public site's identity palette,
- * recorded as a site-only exception in `site/.vitepress/DESIGN-SYSTEM.md` and on the
- * design-language page. It is named here so the exception is one file a reviewer reads,
- * and every other theme stylesheet is still held to "no literal colour".
- */
-const SITE_PALETTE_EXCEPTION = 'site/.vitepress/theme/lupin.css';
+const PRODUCT_ENTRY_CSS = 'apps/web/src/index.css';
 
 /** The name both halves of check 8 report under, so a dropped half is visible. */
 const CHECK_8_NAME = 'the site uses the product palette, and every image has alt text';
@@ -468,10 +462,14 @@ const tokenNames = (paths) => [...new Set(paths.map((p) => p.split('/').pop() ??
  * @returns {string[]}
  */
 function literalColours(css, label) {
+  // A hex, or a colour function whose first argument is a number. `color-mix(in oklab,
+  // var(--lupin-accent) 12%, …)` and `oklch(from var(--x) …)` start with a word and are
+  // derived from a token; `oklch(50% 0.13 290)` starts with a number and is a palette.
+  const literal = /#[0-9a-f]{3,8}\b|\b(?:oklch|oklab|lch|lab|rgba?|hsla?|hwb)\(\s*[-+.\d]/i;
   return css
     .split(/\r?\n/)
     .map((line, index) => ({ line, number: index + 1 }))
-    .filter(({ line }) => /#[0-9a-f]{3,8}\b/i.test(line))
+    .filter(({ line }) => literal.test(line))
     .filter(({ line }) => !line.trim().startsWith('*'))
     .map(
       ({ line, number }) => `\`${label}:${String(number)}\` has a literal colour: ${line.trim()}`,
@@ -524,19 +522,31 @@ function checkSitePalette() {
     }
   }
 
-  // A literal hex in the site's stylesheet is a colour that does not come from a token.
-  // One exception and it is spelled out: the `Canvas` and `CanvasText` values inside
-  // `forced-colors` are the *operating system's* palette by name, and a hex there
-  // would be the one place the user has explicitly overridden us.
-  problems.push(...literalColours(themeCss, SITE_THEME_CSS));
-  // Every other stylesheet beside it, so a palette cannot move one file over.
-  for (const name of readdirSync(path.join(ROOT, SITE_THEME_DIR)).sort()) {
-    const relative = `${SITE_THEME_DIR}/${name}`;
-    if (!name.endsWith('.css') || relative === SITE_THEME_CSS) continue;
-    if (relative === SITE_PALETTE_EXCEPTION) continue;
-    problems.push(...literalColours(read(relative), relative));
+  // A literal colour in any of the site's stylesheets is a colour that does not come from
+  // a token. **Every** stylesheet, not only the one that imports: the site's identity once
+  // lived in `lupin.css` with sixteen literal colours overriding the product palette, and
+  // this check passed throughout because it read `custom.css` alone. One exception and it
+  // is spelled out: the `Canvas` and `CanvasText` values inside `forced-colors` are the
+  // *operating system's* palette by name, and a hex there would be the one place the user
+  // has explicitly overridden us.
+  for (const file of siteStylesheets()) {
+    problems.push(...literalColours(read(file), file));
   }
   return problems;
+}
+
+/**
+ * The site theme's stylesheets, sorted so a failure message reads the same twice.
+ *
+ * @returns {string[]}
+ */
+function siteStylesheets() {
+  const directory = path.join(ROOT, SITE_THEME_DIR);
+  if (!existsSync(directory)) return [SITE_THEME_CSS];
+  return readdirSync(directory)
+    .filter((name) => name.endsWith('.css'))
+    .sort()
+    .map((name) => `${SITE_THEME_DIR}/${name}`);
 }
 
 /**
@@ -582,7 +592,7 @@ function checkImages(pages) {
     name: CHECK_8_NAME,
     outcome: problems.length === 0 ? 'pass' : 'fail',
     problems,
-    note: `site palette exception: ${SITE_PALETTE_EXCEPTION}, recorded in site/.vitepress/DESIGN-SYSTEM.md; every other theme stylesheet has no literal colour.`,
+    note: `every stylesheet under ${SITE_THEME_DIR} has no literal colour: the palette is the product's.`,
   };
 }
 
@@ -654,7 +664,7 @@ function domGap(number, name, needs) {
     outcome: 'GAP',
     problems: [],
     note:
-      `needs \`${needs}\` — run \`pnpm --filter @automate/docs build\` first. A check that ` +
+      `needs \`${needs}\` — run \`pnpm --filter @lupin/docs build\` first. A check that ` +
       'cannot run reports GAP, never a pass.',
   };
 }

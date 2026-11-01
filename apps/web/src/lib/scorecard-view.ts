@@ -3,7 +3,7 @@ import type {
   MetricUnit,
   ScorecardMetric,
   ScorecardStatus,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { formatDuration, type Verdict } from './insights.js';
 
 /**

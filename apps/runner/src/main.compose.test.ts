@@ -84,7 +84,7 @@ afterEach(async () => {
 
 function env(overrides: Record<string, string | undefined> = {}): Record<string, string> {
   const base: Record<string, string | undefined> = {
-    AUTOMATE_API_URL: 'http://127.0.0.1:9/',
+    LUPIN_API_URL: 'http://127.0.0.1:9/',
     RUNNER_INSTANCE_ID: 'runner-a',
     RUNNER_REGISTRATION_SECRET: 'registration-secret-value',
     RUNNER_SPOOL_ROOT: spoolRoot,
@@ -112,7 +112,7 @@ function serviceOptions(): RunnerServiceOptions {
 function healthPort(): number {
   const line = listening.mock.calls
     .map((call) => String(call[0]))
-    .find((message) => message.startsWith('automate-runner listening on'));
+    .find((message) => message.startsWith('lupin-runner listening on'));
   const port = Number(line?.split(':').at(-1));
   expect(port).toBeGreaterThan(0);
   return port;
@@ -154,7 +154,7 @@ describe('runner main composition', () => {
       expect.objectContaining({
         protocolVersion: '1',
         runnerId: 'runner-a',
-        name: 'automate-playwright-runner-runner-a',
+        name: 'lupin-playwright-runner-runner-a',
         slots: 2,
         os: process.platform,
         arch: process.arch,
@@ -319,7 +319,7 @@ describe('runner main composition', () => {
     await main(env());
 
     expect(errors).toHaveBeenCalledWith(
-      'automate-runner registration refresh failed (RunnerApiError)',
+      'lupin-runner registration refresh failed (RunnerApiError)',
     );
     expect(errors.mock.calls.flat().join('\n')).not.toContain('issued-token');
     await expect(readStoredToken(spoolRoot, 'issued-runner')).resolves.toBe('issued-token');
@@ -338,7 +338,7 @@ describe('runner main composition', () => {
 
     expect(calls).toBe(2);
     expect(listening).toHaveBeenCalledWith(
-      'automate-runner waiting for the API at http://127.0.0.1:9',
+      'lupin-runner waiting for the API at http://127.0.0.1:9',
     );
     expect(serviceOptions().runnerId).toBe('issued-runner');
   });

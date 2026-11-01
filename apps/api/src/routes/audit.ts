@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { and, asc, desc, eq, gt, isNotNull, lt, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod/v4';
-import { auditEvents } from '@automate/db';
+import { auditEvents } from '@lupin/db';
 import { callerOf, requireRole, type CallerResolver } from '../http/roles.js';
 import { audit } from '../services/access-service.js';
 import type { ProjectRegistryServiceOptions } from '../services/project-registry-service.js';
@@ -202,7 +202,7 @@ export function createAuditRoutes(options: AuditRouteOptions): Hono {
     return new Response(stream, {
       headers: {
         'content-type': format === 'csv' ? 'text/csv; charset=utf-8' : 'application/x-ndjson',
-        'content-disposition': `attachment; filename="automate-audit-${stamp}.${format === 'csv' ? 'csv' : 'ndjson'}"`,
+        'content-disposition': `attachment; filename="lupin-audit-${stamp}.${format === 'csv' ? 'csv' : 'ndjson'}"`,
       },
     });
   });

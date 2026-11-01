@@ -59,31 +59,31 @@ const stage = computed(() => props.journey.stages[selected.value]);
 .page-journey {
   margin: 0 auto 2.5rem;
   max-width: 72rem;
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 0.4rem;
   overflow: hidden;
-  background: var(--automate-surface);
-  color: var(--automate-fg);
+  background: var(--lupin-surface);
+  color: var(--lupin-fg);
 }
 .page-journey__glossary {
   display: block;
   padding: 0.85rem 1.5rem;
-  border-top: 1px solid var(--automate-border);
-  color: var(--automate-fg-muted);
+  border-top: 1px solid var(--lupin-border);
+  color: var(--lupin-fg-muted);
   font-size: 0.8rem;
   text-underline-offset: 0.2em;
 }
 .page-journey__glossary:hover {
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
 }
 .page-journey__intro {
   padding: 1.5rem;
 }
 .page-journey__intro > span,
 .page-journey__detail > span {
-  font: 0.63rem var(--automate-font-mono);
+  font: 0.63rem var(--lupin-font-mono);
   letter-spacing: 0.1em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .page-journey__intro > strong {
   display: block;
@@ -95,13 +95,13 @@ const stage = computed(() => props.journey.stages[selected.value]);
 }
 .page-journey__intro > p {
   margin: 0;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   font-size: 0.8rem;
 }
 .page-journey__steps {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-block: 1px solid var(--automate-border);
+  border-block: 1px solid var(--lupin-border);
 }
 .page-journey__steps button {
   position: relative;
@@ -112,20 +112,20 @@ const stage = computed(() => props.journey.stages[selected.value]);
   padding: 1.25rem;
   min-width: 0;
   border: 0;
-  border-right: 1px solid var(--automate-border);
-  background: var(--automate-surface-sunken);
-  color: var(--automate-fg-muted);
+  border-right: 1px solid var(--lupin-border);
+  background: var(--lupin-surface-sunken);
+  color: var(--lupin-fg-muted);
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--automate-duration-150);
+  transition: background-color var(--lupin-duration-150);
 }
 .page-journey__steps button:last-child {
   border-right: 0;
 }
 .page-journey__steps button[aria-pressed='true'] {
-  background: var(--automate-surface-raised);
-  color: var(--automate-fg);
-  box-shadow: inset 0 -2px var(--automate-accent);
+  background: var(--lupin-surface-raised);
+  color: var(--lupin-fg);
+  box-shadow: inset 0 -2px var(--lupin-accent);
 }
 .page-journey__steps svg {
   width: 2.5rem;
@@ -134,7 +134,7 @@ const stage = computed(() => props.journey.stages[selected.value]);
   stroke-width: 1.5;
 }
 .page-journey__steps button > span {
-  font: 0.65rem var(--automate-font-mono);
+  font: 0.65rem var(--lupin-font-mono);
 }
 .page-journey__steps button strong {
   font-size: 0.92rem;
@@ -155,10 +155,10 @@ const stage = computed(() => props.journey.stages[selected.value]);
   margin: 0.4rem 0 0;
   font-size: 1rem;
   line-height: 1.6;
-  animation: journey-enter 150ms var(--automate-ease-out);
+  animation: journey-enter 150ms var(--lupin-ease-out);
 }
 .page-journey > details {
-  border-top: 1px solid var(--automate-border);
+  border-top: 1px solid var(--lupin-border);
   padding: 1rem 1.5rem;
 }
 .page-journey summary {
@@ -169,12 +169,12 @@ const stage = computed(() => props.journey.stages[selected.value]);
 .page-journey details p {
   margin: 0.7rem 0 0;
   font-size: 0.9rem;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   line-height: 1.6;
 }
 .page-journey button:focus-visible,
 .page-journey summary:focus-visible {
-  outline: 2px solid var(--automate-accent);
+  outline: 2px solid var(--lupin-accent);
   outline-offset: -3px;
 }
 @keyframes journey-enter {

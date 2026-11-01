@@ -16,7 +16,7 @@ const PROJECT = '11111111-1111-4111-8111-111111111111';
 async function seed(workspace: string): Promise<void> {
   await client.query(
     'INSERT INTO workspaces (id, name, config_path, test_results_dir, created_at) VALUES ($1, $1, $2, $3, $4) ON CONFLICT DO NOTHING',
-    [workspace, '/etc/automate', '/var/automate', NOW],
+    [workspace, '/etc/lupin', '/var/lupin', NOW],
   );
 }
 

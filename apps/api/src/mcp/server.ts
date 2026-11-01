@@ -4,7 +4,7 @@ import { isDomainError } from '../errors/domain-error.js';
 import { MCP_TOOLS, type McpScope, type McpTool } from './tools.js';
 
 /** What the server calls itself in `initialize`. */
-export const MCP_SERVER_INFO = { name: 'automate', version: '1.0.0' } as const;
+export const MCP_SERVER_INFO = { name: 'lupin', version: '1.0.0' } as const;
 
 /**
  * A tool failure as an MCP tool error: `isError` with the DomainError's stable code, so an
@@ -63,7 +63,7 @@ export function createMcpServer(scope: McpScope, log: McpLog = consoleLog): McpS
   const server = new McpServer(MCP_SERVER_INFO, {
     capabilities: { tools: { listChanged: false } },
     instructions:
-      'Read-only access to AutoMate: repository health, findings, the pull-request gate, delivery, AI-written code, agent quality, supply chain and test effectiveness. Call list_projects first to find a project id.',
+      'Read-only access to Lupin: repository health, findings, the pull-request gate, delivery, AI-written code, agent quality, supply chain and test effectiveness. Call list_projects first to find a project id.',
   });
   for (const tool of MCP_TOOLS) {
     server.registerTool(

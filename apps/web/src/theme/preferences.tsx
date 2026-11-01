@@ -18,7 +18,7 @@ export interface Preferences {
   motion: 'full' | 'reduced';
 }
 
-export const PREFERENCES_KEY = 'automate-preferences';
+export const PREFERENCES_KEY = 'lupin-preferences';
 
 function systemMotion(): Preferences['motion'] {
   return typeof window !== 'undefined' &&

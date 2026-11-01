@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { DurableSpool, readOrCreateSpoolKey } from '@automate/runner-sdk';
+import { DurableSpool, readOrCreateSpoolKey } from '@lupin/runner-sdk';
 import { ApiExecutionAdapter } from './api-run.js';
 import { RunnerApiClient } from './client.js';
 import { parseRunnerConfig } from './config.js';
@@ -79,7 +79,7 @@ export function installProcessFailureHandlers(
 }
 
 export async function main(env: Record<string, string | undefined> = process.env): Promise<void> {
-  const removeProcessFailureHandlers = installProcessFailureHandlers('automate-runner');
+  const removeProcessFailureHandlers = installProcessFailureHandlers('lupin-runner');
   try {
     await runRunner(env);
   } finally {
@@ -117,7 +117,7 @@ async function runRunner(env: Record<string, string | undefined>): Promise<void>
     const registration = await whileUnreachable(() => client.register(registrationRequest), {
       timeoutMs: 120_000,
       intervalMs: 1_000,
-      onWait: () => console.info(`automate-runner waiting for the API at ${config.apiUrl}`),
+      onWait: () => console.info(`lupin-runner waiting for the API at ${config.apiUrl}`),
     });
     runnerId = registration.runnerId;
     token = registration.token;
@@ -207,12 +207,12 @@ async function runRunner(env: Record<string, string | undefined>): Promise<void>
   const health = new HealthServer({
     host: config.healthHost,
     port: config.healthPort,
-    service: 'automate-runner',
+    service: 'lupin-runner',
     version: config.version,
     isReady: () => service.isReady(),
   });
   const port = await health.listen();
-  console.info(`automate-runner listening on http://${config.healthHost}:${port}`);
+  console.info(`lupin-runner listening on http://${config.healthHost}:${port}`);
 
   const lifecycle = new AbortController();
   const shutdown = (): void => {
@@ -235,7 +235,7 @@ async function runRunner(env: Record<string, string | undefined>): Promise<void>
           )
           .catch((error: unknown) => {
             console.error(
-              `automate-runner registration refresh failed (${error instanceof Error ? error.name : 'REGISTRATION_ERROR'})`,
+              `lupin-runner registration refresh failed (${error instanceof Error ? error.name : 'REGISTRATION_ERROR'})`,
             );
           });
       }, 10 * 60_000);
@@ -253,7 +253,7 @@ async function runRunner(env: Record<string, string | undefined>): Promise<void>
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main().catch((error: unknown) => {
     const code = error instanceof Error ? error.name : 'RUNNER_START_FAILED';
-    console.error(`automate-runner failed (${code})`);
+    console.error(`lupin-runner failed (${code})`);
     process.exitCode = 1;
   });
 }

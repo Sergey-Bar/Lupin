@@ -6,13 +6,13 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { Hono } from 'hono';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { createProjectsRoutes } from './projects.js';
 import { InMemoryExecutionStore } from '../execution/in-memory-execution-store.js';
 import { readHistory } from '../services/scan-history-service.js';
-import { literalView } from '@automate/projects';
-import type { RepositoryView } from '@automate/projects';
+import { literalView } from '@lupin/projects';
+import type { RepositoryView } from '@lupin/projects';
 import {
   CopilotAnswerSchema,
   ProjectHistorySchema,
@@ -20,7 +20,7 @@ import {
   ReleaseReadinessCardSchema,
   RepoScanSchema,
   ScoreDeltaSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * The registry and the score, over a real migrated database.
@@ -246,14 +246,14 @@ describe('registering a repository', () => {
     }
   });
 
-  it('lets a checked-in automate.config.json override the detection', async () => {
+  it('lets a checked-in lupin.config.json override the detection', async () => {
     const { client, db } = await migrated();
     try {
       const app = harness(
         db,
         literalView({
           ...NODE_REPO,
-          'automate.config.json': JSON.stringify({
+          'lupin.config.json': JSON.stringify({
             version: 1,
             commands: { unit: ['pytest', '-q', 'tests/unit'] },
           }),
@@ -897,7 +897,7 @@ describe('every remaining endpoint of the group is reachable and validated', () 
     try {
       const app = harness(
         db,
-        literalView({ ...NODE_REPO, 'automate.config.json': '{ "version": 1, ' }),
+        literalView({ ...NODE_REPO, 'lupin.config.json': '{ "version": 1, ' }),
       );
       // A customer with one missing brace must be told **which file** to fix. The
       // alternative — treating it as absent and silently falling back to detection —
@@ -908,7 +908,7 @@ describe('every remaining endpoint of the group is reachable and validated', () 
         repoPath: '/repos/svc',
       });
       expect(response.status).toBe(400);
-      expect(await response.text()).toContain('automate.config.json');
+      expect(await response.text()).toContain('lupin.config.json');
     } finally {
       await client.close();
     }

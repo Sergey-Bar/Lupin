@@ -120,7 +120,7 @@ declare global {
      * exactly the seam where a rendering reading silently becomes a number nobody
      * checked. The name is prefixed so it cannot collide with the application's own.
      */
-    __automateRenderBudget?: RenderMetrics;
+    __lupinRenderBudget?: RenderMetrics;
   }
 }
 
@@ -146,7 +146,7 @@ function isLayoutShift(
 async function installObservers(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const totals: RenderMetrics = { lcpMs: 0, inpMs: 0, cls: 0, longTasks: 0 };
-    window.__automateRenderBudget = totals;
+    window.__lupinRenderBudget = totals;
 
     // A route that paints no large element emits no LCP entry at all. The reading
     // stays 0 and `measurementProblems` reports it as unmeasured rather than as a
@@ -204,7 +204,7 @@ async function installObservers(page: Page): Promise<void> {
  * those two is the difference between a budget that measures and one that agrees.
  */
 async function readMetrics(page: Page): Promise<RenderMetrics> {
-  const totals = await page.evaluate(() => window.__automateRenderBudget);
+  const totals = await page.evaluate(() => window.__lupinRenderBudget);
   if (totals === undefined) {
     throw new Error(
       'The render observers were installed by addInitScript, so a missing accumulator ' +
@@ -291,7 +291,7 @@ function reportMeasurements(
  *
  * Counted from computed style rather than from a class name, so the number describes what
  * the browser is doing rather than what the source hopes it is doing: a token that stops
- * applying — `--automate-glass-blur: 0px` under `prefers-reduced-transparency`, or a
+ * applying — `--lupin-glass-blur: 0px` under `prefers-reduced-transparency`, or a
  * utility that compiles to nothing — stops being counted.
  */
 async function measureGlass(page: Page): Promise<{ surfaces: number; depth: number }> {
@@ -399,7 +399,7 @@ test.describe('rendering budget', () => {
     // than of a flag. `phaseFor` is the single definition of that property — the same
     // function `gate-tooling.test.mjs` uses to decide what tier the job may have — so
     // the spec and the manifest cannot disagree about which phase the repository is in.
-    const isWriteMode = process.env['AUTOMATE_RENDER_BASELINE'] === '1';
+    const isWriteMode = process.env['LUPIN_RENDER_BASELINE'] === '1';
     const isMeasured = phaseFor(baseline) === 'threshold';
 
     if (isWriteMode) {

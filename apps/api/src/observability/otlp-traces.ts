@@ -44,7 +44,7 @@ export interface OtlpSettings {
   serviceName: string;
 }
 
-const DEFAULT_SERVICE_NAME = 'automate-api';
+const DEFAULT_SERVICE_NAME = 'lupin-api';
 
 function httpUrl(value: string): string | undefined {
   try {
@@ -152,7 +152,7 @@ export function encodeTraces(
         },
         scopeSpans: [
           {
-            scope: { name: '@automate/api' },
+            scope: { name: '@lupin/api' },
             spans: spans.map((span) => ({
               traceId: span.traceId,
               spanId: span.spanId,
@@ -339,7 +339,7 @@ export function otlpRequestSpans(exporter: Pick<OtlpExporter, 'record'>): Middle
           'http.request.method': context.req.method,
           ...(named ? { 'http.route': route } : {}),
           'http.response.status_code': status,
-          ...(requestId === undefined ? {} : { 'automate.request_id': requestId }),
+          ...(requestId === undefined ? {} : { 'lupin.request_id': requestId }),
         },
         error: status >= 500,
       });

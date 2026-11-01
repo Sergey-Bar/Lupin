@@ -1,8 +1,8 @@
 /**
- * @automate/realtime
+ * @lupin/realtime
  *
  * Shared typed WebSocket event contracts and reconnection helpers for the
- * Automate unified platform.
+ * Lupin unified platform.
  */
 export * from './events.js';
 export * from './reconnect.js';

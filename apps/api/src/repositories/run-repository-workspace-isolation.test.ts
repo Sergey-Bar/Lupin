@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DrizzleRunRepository } from './drizzle-run-repository.js';
 import type { RunRecord, TestRecord } from './run-repository.js';
 

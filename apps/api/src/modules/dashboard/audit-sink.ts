@@ -19,7 +19,7 @@
  * without a database. A source-text assertion would not: it would pass against a
  * store built by a helper.
  */
-import { auditEvents } from '@automate/db';
+import { auditEvents } from '@lupin/db';
 import { requestAuditFields } from '../../observability/request-context.js';
 
 /**

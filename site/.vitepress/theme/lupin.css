@@ -1,75 +1,52 @@
-/* Lupin public-site identity. Product tokens remain imported as the semantic foundation.
-   These overrides are intentionally website-only; no console styles are changed. */
-@font-face {
-  font-family: 'Geist';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('/fonts/Geist-Variable.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Geist Mono';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('/fonts/GeistMono-Variable.woff2') format('woff2');
-}
+/* The Lupin site's layout: the home page, the hero, the sections and the footer. The palette
+   and the type are the product's, imported by custom.css; this file adds layout only. */
+/*
+ * The site's names for the product palette. Every colour is a `var()` into
+ * `packages/ui/src/tokens/theme.css` — the one place the palette is declared — and
+ * `pnpm site:doctor` check 8 fails on a literal colour in any stylesheet here.
+ *
+ * The site's page is light where the console's is recessed: the console sets panels on
+ * a sunken page, the site sets prose on an open one. So the canvas is the step nearest
+ * the page in each theme — `raised` on white, `sunken` on the dark plane — rather than
+ * one fixed step, and that choice is the only design decision this block makes.
+ */
 :root {
-  --lupin-canvas: #fafaf9;
-  --lupin-surface: #ffffff;
-  --lupin-text: #15161a;
-  --lupin-muted: #6b6d76;
-  --lupin-border: #e7e7e8;
-  --lupin-accent: #6754ae;
-  --lupin-soft: #f0ecf8;
-  --lupin-on-accent: #ffffff;
-  --lupin-sans: 'Geist', Arial, sans-serif;
-  --lupin-mono: 'Geist Mono', Consolas, monospace;
-  --lupin-width: 1248px;
-  --lupin-radius: 8px;
-  --lupin-space: 8px;
+  --site-canvas: var(--lupin-surface-raised);
+  --site-surface: var(--lupin-surface);
+  --site-text: var(--lupin-fg);
+  --site-muted: var(--lupin-fg-muted);
+  --site-border: var(--lupin-border);
+  --site-accent: var(--lupin-accent);
+  --site-soft: color-mix(in oklab, var(--lupin-accent) 12%, var(--lupin-surface));
+  --site-on-accent: var(--lupin-on-fill);
+  --site-sans: var(--lupin-font-sans);
+  --site-mono: var(--lupin-font-mono);
+  --site-width: 1248px;
+  --site-radius: 8px;
+  --site-space: 8px;
 }
 html.dark,
 html[data-theme='dark'] {
-  --lupin-canvas: #101114;
-  --lupin-surface: #191a1f;
-  --lupin-text: #f4f4f6;
-  --lupin-muted: #a0a2ac;
-  --lupin-border: #2d2f36;
-  --lupin-accent: #b0a1ea;
-  --lupin-soft: #242030;
-  --lupin-on-accent: #101114;
+  --site-canvas: var(--lupin-surface-sunken);
 }
 html,
 html[data-theme],
 html:not([data-theme='light']) {
-  --automate-font-sans: var(--lupin-sans);
-  --automate-font-mono: var(--lupin-mono);
-  --automate-surface-sunken: var(--lupin-canvas);
-  --automate-surface: var(--lupin-surface);
-  --automate-surface-muted: var(--lupin-canvas);
-  --automate-surface-raised: var(--lupin-surface);
-  --automate-fg: var(--lupin-text);
-  --automate-fg-muted: var(--lupin-muted);
-  --automate-border: var(--lupin-border);
-  --automate-border-strong: var(--lupin-muted);
-  --automate-accent: var(--lupin-accent);
-  --automate-on-fill: var(--lupin-on-accent);
-  --vp-font-family-base: var(--lupin-sans);
-  --vp-font-family-mono: var(--lupin-mono);
-  --vp-c-bg: var(--lupin-canvas);
-  --vp-c-bg-alt: var(--lupin-surface);
-  --vp-c-bg-soft: var(--lupin-surface);
-  --vp-c-bg-elv: var(--lupin-surface);
-  --vp-c-text-1: var(--lupin-text);
-  --vp-c-text-2: var(--lupin-muted);
-  --vp-c-brand-1: var(--lupin-accent);
-  --vp-c-brand-2: var(--lupin-accent);
-  --vp-c-brand-3: var(--lupin-accent);
-  --vp-c-brand-soft: var(--lupin-soft);
-  --vp-c-divider: var(--lupin-border);
-  --vp-nav-bg-color: var(--lupin-canvas);
-  --vp-layout-max-width: var(--lupin-width);
+  --vp-font-family-base: var(--site-sans);
+  --vp-font-family-mono: var(--site-mono);
+  --vp-c-bg: var(--site-canvas);
+  --vp-c-bg-alt: var(--site-surface);
+  --vp-c-bg-soft: var(--site-surface);
+  --vp-c-bg-elv: var(--site-surface);
+  --vp-c-text-1: var(--site-text);
+  --vp-c-text-2: var(--site-muted);
+  --vp-c-brand-1: var(--site-accent);
+  --vp-c-brand-2: var(--site-accent);
+  --vp-c-brand-3: var(--site-accent);
+  --vp-c-brand-soft: var(--site-soft);
+  --vp-c-divider: var(--site-border);
+  --vp-nav-bg-color: var(--site-canvas);
+  --vp-layout-max-width: var(--site-width);
   color-scheme: light;
 }
 html.dark,
@@ -77,7 +54,7 @@ html[data-theme='dark'] {
   color-scheme: dark;
 }
 body {
-  font-family: var(--lupin-sans);
+  font-family: var(--site-sans);
 }
 .VPNavBarTitle .title {
   font-size: 22px;
@@ -96,7 +73,7 @@ body {
   line-height: 36px;
 }
 .VPNav {
-  border-block-end: 1px solid var(--lupin-border);
+  border-block-end: 1px solid var(--site-border);
 }
 .VPNavBarSearch {
   flex-grow: 0 !important;
@@ -109,21 +86,21 @@ body {
   gap: 4px;
 }
 .VPNavBar .container {
-  max-width: var(--lupin-width);
+  max-width: var(--site-width);
 }
 .language-dialog {
   border-radius: 8px !important;
 }
 .lupin-home {
-  max-width: var(--lupin-width);
+  max-width: var(--site-width);
   margin-inline: auto;
   padding-inline: 32px;
 }
 .lupin-home h1,
 .lupin-home h2,
 .lupin-home h3 {
-  font-family: var(--lupin-sans);
-  color: var(--lupin-text);
+  font-family: var(--site-sans);
+  color: var(--site-text);
   font-weight: 550;
 }
 .lupin-hero {
@@ -136,7 +113,7 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
-  color: var(--lupin-muted);
+  color: var(--site-muted);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.6;
@@ -149,7 +126,7 @@ body {
 .lupin-kicker > span {
   width: 6px;
   height: 6px;
-  background: var(--lupin-accent);
+  background: var(--site-accent);
   border-radius: 50%;
 }
 .lupin-hero h1 {
@@ -160,12 +137,12 @@ body {
   text-wrap: balance;
 }
 .lupin-hero h1 span {
-  color: var(--lupin-accent);
+  color: var(--site-accent);
 }
 .lupin-lead {
   max-width: 620px;
   margin: 28px auto 0;
-  color: var(--lupin-muted);
+  color: var(--site-muted);
   font-size: 18px;
   line-height: 1.7;
   text-wrap: pretty;
@@ -189,27 +166,27 @@ body {
   gap: 16px;
   min-height: 44px;
   padding: 10px 18px;
-  border: 1px solid var(--lupin-muted);
+  border: 1px solid var(--site-muted);
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   line-height: 22px;
-  color: var(--lupin-text);
+  color: var(--site-text);
   transition:
     background-color 150ms ease,
     color 150ms ease;
 }
 .lupin-button.primary {
-  color: var(--lupin-on-accent);
-  background: var(--lupin-accent);
-  border-color: var(--lupin-accent);
+  color: var(--site-on-accent);
+  background: var(--site-accent);
+  border-color: var(--site-accent);
 }
 .lupin-button:hover {
-  background: var(--lupin-soft);
-  color: var(--lupin-accent);
+  background: var(--site-soft);
+  color: var(--site-accent);
 }
 .lupin-hero-note {
-  color: var(--lupin-muted);
+  color: var(--site-muted);
   margin-block-start: 20px;
   font-size: 12px;
   line-height: 1.7;
@@ -226,7 +203,7 @@ body {
   letter-spacing: -0.02em;
 }
 .lupin-home a:not(.lupin-button) {
-  color: var(--lupin-accent);
+  color: var(--site-accent);
 }
 .lupin-section-line a,
 .lupin-text-link {
@@ -244,12 +221,12 @@ body {
   display: block;
   width: 100%;
   height: auto;
-  border: 1px solid var(--lupin-border);
-  border-radius: var(--lupin-radius);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius);
 }
 .lupin-showcase figcaption {
   font-size: 12px;
-  color: var(--lupin-muted);
+  color: var(--site-muted);
   line-height: 1.7;
   margin-block-start: 12px;
 }
@@ -261,18 +238,18 @@ body {
 }
 .lupin-showcase-notes p {
   font-size: 14px;
-  color: var(--lupin-muted);
+  color: var(--site-muted);
   line-height: 1.7;
 }
 .lupin-showcase-notes strong {
   display: block;
-  color: var(--lupin-text);
+  color: var(--site-text);
   font-weight: 550;
   margin-block-end: 6px;
 }
 .lupin-section {
   padding-block: 96px;
-  border-block-end: 1px solid var(--lupin-border);
+  border-block-end: 1px solid var(--site-border);
   scroll-margin-top: 88px;
 }
 .lupin-section-heading {
@@ -292,7 +269,7 @@ body {
 .lupin-open p {
   font-size: 17px;
   line-height: 1.75;
-  color: var(--lupin-muted);
+  color: var(--site-muted);
 }
 .lupin-steps {
   list-style: none;
@@ -302,8 +279,8 @@ body {
   padding: 0;
 }
 .lupin-index {
-  font: 12px var(--lupin-mono);
-  color: var(--lupin-accent);
+  font: 12px var(--site-mono);
+  color: var(--site-accent);
 }
 .lupin-steps h3,
 .lupin-capabilities h3 {
@@ -316,7 +293,7 @@ body {
 .lupin-capabilities p {
   font-size: 16px;
   line-height: 1.75;
-  color: var(--lupin-muted);
+  color: var(--site-muted);
 }
 .lupin-steps a {
   display: inline-block;
@@ -329,14 +306,14 @@ body {
   gap: 0 40px;
 }
 .lupin-capabilities article {
-  border-block-start: 1px solid var(--lupin-border);
+  border-block-start: 1px solid var(--site-border);
   padding-block: 28px 36px;
 }
 .lupin-capabilities h3 a {
-  color: var(--lupin-text) !important;
+  color: var(--site-text) !important;
 }
 .lupin-capabilities h3 span {
-  color: var(--lupin-accent);
+  color: var(--site-accent);
   font-size: 16px;
 }
 .lupin-integrations {
@@ -344,7 +321,7 @@ body {
   padding: 0;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  border-block: 1px solid var(--lupin-border);
+  border-block: 1px solid var(--site-border);
   margin-block-end: 24px;
 }
 .lupin-integrations li {
@@ -357,7 +334,7 @@ body {
   margin-block-end: 12px;
 }
 .lupin-integrations span {
-  color: var(--lupin-muted);
+  color: var(--site-muted);
   font-size: 12px;
   line-height: 1.7;
   display: block;
@@ -370,9 +347,9 @@ body {
   align-items: center;
 }
 .lupin-install-panel {
-  background: var(--lupin-surface);
+  background: var(--site-surface);
   padding: 32px;
-  border: 1px solid var(--lupin-border);
+  border: 1px solid var(--site-border);
   border-radius: 8px;
 }
 .lupin-install-panel > p:first-child {
@@ -388,15 +365,15 @@ body {
   justify-content: space-between;
   gap: 12px;
   padding-block: 20px;
-  border-block-start: 1px solid var(--lupin-border);
+  border-block-start: 1px solid var(--site-border);
 }
 .lupin-install-panel dt {
   font-size: 13px;
-  color: var(--lupin-muted);
+  color: var(--site-muted);
 }
 .lupin-install-panel code {
-  font: 14px var(--lupin-mono);
-  color: var(--lupin-text);
+  font: 14px var(--site-mono);
+  color: var(--site-text);
 }
 .lupin-install-panel .lupin-technical-note {
   font-size: 12px;
@@ -412,13 +389,13 @@ body {
 }
 .lupin-footer {
   width: 100%;
-  max-width: var(--lupin-width);
+  max-width: var(--site-width);
   padding: 40px 32px 48px;
   margin-inline: auto;
   display: flex;
   gap: 40px;
   justify-content: space-between;
-  border-block-start: 1px solid var(--lupin-border);
+  border-block-start: 1px solid var(--site-border);
 }
 .lupin-wordmark {
   font-size: 24px;
@@ -426,13 +403,13 @@ body {
   letter-spacing: -0.05em;
 }
 .lupin-wordmark span {
-  color: var(--lupin-accent);
+  color: var(--site-accent);
 }
 .lupin-footer p,
 .lupin-footer small {
   font-size: 12px;
   line-height: 1.8;
-  color: var(--lupin-muted);
+  color: var(--site-muted);
   margin-block: 8px;
   display: block;
 }
@@ -445,14 +422,14 @@ body {
 }
 .lupin-home :is(a, button):focus-visible,
 .lupin-footer a:focus-visible {
-  outline: 2px solid var(--lupin-accent);
+  outline: 2px solid var(--site-accent);
   outline-offset: 4px;
 }
 .localized-home {
-  max-width: var(--lupin-width) !important;
+  max-width: var(--site-width) !important;
 }
 .localized-home h1 {
-  font-family: var(--lupin-sans);
+  font-family: var(--site-sans);
   font-size: clamp(36px, 5vw, 72px) !important;
   letter-spacing: -0.035em;
 }

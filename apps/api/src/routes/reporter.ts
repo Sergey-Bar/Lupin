@@ -3,7 +3,7 @@
  *
  * Accepts reporter events in two formats:
  *
- * 1. Legacy compatibility format (legacy-flat-v1, @automate/reporter v1):
+ * 1. Legacy compatibility format (legacy-flat-v1, @lupin/reporter v1):
  *    { type: 'run:start' | 'test:begin' | ..., runId: string, payload: unknown }
  *
  * 2. Versioned format:
@@ -22,12 +22,12 @@
  * If no secret is configured the endpoint is open (development / test mode).
  *
  * Uploads go through the canonical model (POST /api/v1/reporter/upload):
- *   the bytes are parsed by one `@automate/reporter` adapter into one
+ *   the bytes are parsed by one `@lupin/reporter` adapter into one
  *   `CanonicalRunResult`, that result is written to `canonical_run_results`, and
  *   `runs`/`tests` are projected from it. **This door used to parse JUnit and
  *   Playwright with its own scanner, map statuses with its own table, and write
  *   `runs`/`tests` directly** — a second ingestion system whose output nothing in
- *   `@automate/reporting` could read, and which reported a retried JUnit suite as a
+ *   `@lupin/reporting` could read, and which reported a retried JUnit suite as a
  *   clean pass while the canonical adapter reported it as flaky. See ledger row P-73
  *   and `reporter-two-doors.test.ts`.
  */
@@ -56,7 +56,7 @@ import {
   type ReportFormat,
   type ReportFormatId,
   type CanonicalRunResult,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import {
   allureResultsAdapter,
   junitXmlAdapter,
@@ -66,7 +66,7 @@ import {
   ZAP_XML_ADAPTER,
   type ProducerAdapter,
   type ProducerContext,
-} from '@automate/reporter';
+} from '@lupin/reporter';
 import { DEFAULT_WORKSPACE_ID, type RunRepository } from '../repositories/run-repository.js';
 import { ingestCanonicalResult } from '../services/canonical-ingestion.js';
 import type { ReporterResultStore } from '../services/reporter-ingestion.js';
@@ -77,7 +77,7 @@ import { guard } from '../http/access.js';
 import type { RealtimeBus } from '../realtime/realtime-bus.js';
 
 // ---------------------------------------------------------------------------
-// Legacy wire shape — emitted by @automate/reporter
+// Legacy wire shape — emitted by @lupin/reporter
 // ---------------------------------------------------------------------------
 
 const LEGACY_EVENT_TYPES = [
@@ -205,7 +205,7 @@ const ADAPTER_VERSION = '2';
  * the wild, and a rejected spelling means a real report gets "this document contains no
  * test cases", a message about the wrong file.
  *
- * **The declared vocabulary is `@automate/shared-contracts`' table, not a list here.** This
+ * **The declared vocabulary is `@lupin/shared-contracts`' table, not a list here.** This
  * function used to name three formats and the package exported five, so a k6 summary
  * declaring `format=k6` matched nothing and fell through to the filename rule, which sent
  * it to the Playwright adapter; a ZAP report declaring `format=zap` fell through to the XML

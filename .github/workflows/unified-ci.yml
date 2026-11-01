@@ -65,10 +65,10 @@ jobs:
           POSTGRES_PASSWORD: ci-config-validation-32-characters
           COOKIE_SECRET: ci-config-validation-32-characters
           VAULT_SECRET: ci-config-validation-32-characters
-          AUTOMATE_API_KEY: ci-config-validation-32-characters
+          LUPIN_API_KEY: ci-config-validation-32-characters
           REPORTER_SECRET: ci-config-validation-32-characters
           RUNNER_REGISTRATION_SECRET: ci-config-validation-32-characters
-          AUTOMATE_INSTALLATION_KEY: ci-config-validation-32-characters
+          LUPIN_INSTALLATION_KEY: ci-config-validation-32-characters
           OBJECT_STORE_ACCESS_KEY_ID: ci-config-validation-32-characters
           OBJECT_STORE_SECRET_ACCESS_KEY: ci-config-validation-32-characters
           OBJECT_STORE_BUCKET: ci-config-validation-32-characters
@@ -159,7 +159,7 @@ jobs:
         run: node --test scripts/lib/start-scripts.test.mjs
       - name: Start scripts under Windows PowerShell 5.1
         env:
-          AUTOMATE_TEST_POWERSHELL: powershell
+          LUPIN_TEST_POWERSHELL: powershell
         run: node --test --test-name-pattern "start.ps1" scripts/lib/start-scripts.test.mjs
 
   unit-and-coverage:
@@ -365,8 +365,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # 	rust, not a password. The service port is bound to the runner
           # only, and a password here would be a credential committed to the
           # repository — which pnpm security:secrets refuses, correctly. The
@@ -375,12 +375,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -452,8 +452,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # 	rust, not a password. The service port is bound to the runner
           # only, and a password here would be a credential committed to the
           # repository — which pnpm security:secrets refuses, correctly. The
@@ -462,12 +462,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -554,8 +554,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # 	rust, not a password. The service port is bound to the runner
           # only, and a password here would be a credential committed to the
           # repository — which pnpm security:secrets refuses, correctly. The
@@ -564,12 +564,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -588,7 +588,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Full current E2E
         run: pnpm test:e2e
-      # AUTOMATE (local)'s R-020 in the same Chromium: axe in both colour schemes and
+      # Lupin Local's R-020 in the same Chromium: axe in both colour schemes and
       # keyboard reach on its MVP-0 pages. It starts its own launcher and needs no database.
       - name: Local product accessibility
         run: pnpm test:local:browser
@@ -615,8 +615,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # trust, not a password. The service port is bound to the runner only, and a
           # password here would be a credential committed to the repository, which
           # pnpm security:secrets refuses, correctly. The database is destroyed with the job.
@@ -624,12 +624,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -675,7 +675,7 @@ jobs:
       - name: Install frozen dependencies
         run: pnpm install --frozen-lockfile
       # The repository's own gate tests (`scripts/lib/*.test.mjs`), dependency-free and
-      # build-free. The PGlite suites in `@automate/integration-tests` used to be chained
+      # build-free. The PGlite suites in `@lupin/integration-tests` used to be chained
       # here too, which is why this job built the workspace first; they are a workspace
       # package, so `pnpm test` in `unit-and-coverage` already runs them, and running them
       # a second time here measured nothing new (`scripts/lib/gate-duplication.mjs`).
@@ -691,8 +691,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # 	rust, not a password. The service port is bound to the runner
           # only, and a password here would be a credential committed to the
           # repository — which pnpm security:secrets refuses, correctly. The
@@ -701,12 +701,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

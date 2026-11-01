@@ -33,7 +33,7 @@ test('the build job runs site:doctor against the built output', () => {
 test('site:doctor runs after the build and before the artifact is uploaded', () => {
   const steps = buildSteps();
   const at = (/** @type {RegExp} */ pattern) => steps.findIndex((step) => pattern.test(step));
-  const built = at(/--filter @automate\/docs build/);
+  const built = at(/--filter @lupin\/docs build/);
   const doctor = at(/pnpm site:doctor/);
   const upload = at(/upload-pages-artifact/);
   assert.ok(built !== -1 && doctor !== -1 && upload !== -1, 'all three steps exist');

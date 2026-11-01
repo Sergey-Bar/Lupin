@@ -44,10 +44,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const TEST_KEY = 'workspace-isolation-installation-key';
 
 beforeAll(() => {
-  process.env['AUTOMATE_API_KEY'] = TEST_KEY;
+  process.env['LUPIN_API_KEY'] = TEST_KEY;
 });
 afterAll(() => {
-  delete process.env['AUTOMATE_API_KEY'];
+  delete process.env['LUPIN_API_KEY'];
 });
 
 /**

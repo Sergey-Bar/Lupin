@@ -19,18 +19,18 @@ Six rules an agent working in this tree will otherwise violate by writing someth
 looks right. The **why** behind each is on the design-language page; this is the _what
 fails_.
 
-| Rule                                                                                                                                                                                                                   | What enforces it                                                                                                                                                                                          |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Colour is a token. A literal hex in a `.ts` or `.tsx` file is a build failure.                                                                                                                                         | `apps/web/src/theme-resolution.test.ts` scans **both** `packages/ui/src` and `apps/web/src`, resolves each utility against a real Tailwind compile, and fails on any class that generates nothing         |
-| `backdrop-filter` is an error, with no allowlist. The plane is flat and monochrome: no glass, no page wash, and the accent has no hue.                                                                                 | `eslint.config.js` — `GLASS_SELECTOR`, spread into every block that sets `no-restricted-syntax`, because a standalone block silently replaced the double-assertion rule the first time it was written     |
-| `animate-in`, `fade-in-*`, `zoom-in-*` and `slide-in-from-*` do not exist — no plugin is installed, and sixteen class names written against one compiled to nothing.                                                   | `PLUGIN_PROVIDED_UTILITIES` in `theme-resolution.test.ts`. Use `animate-fade-in`, `animate-fade-out`, `animate-zoom-in-95`, `animate-zoom-out-95`                                                         |
-| `lucide-react` is a dependency of `packages/ui` and **not** of `apps/web`, so an application component cannot import it                                                                                                | pnpm's isolated `node_modules`. Import icons from `@automate/ui`; the list is `packages/ui/src/icons.ts`, and adding one is a line a reviewer reads                                                       |
-| The two console font binaries are committed once, in `packages/ui/src/assets/fonts/`, each with a sha256 and an upstream beside it. The public site's Geist fonts live in `site/public/fonts/` with their own manifest | `packages/ui/src/tokens/fonts.test.ts`, in both directions — the recorded digest, and no binary in the directory without a row. `site/tests/lupin-design.test.mjs` holds the site's two to their manifest |
-| The documentation site imports the product's `theme.css`; it does not copy it. Its one palette exception is `site/.vitepress/theme/lupin.css`, recorded in `site/.vitepress/DESIGN-SYSTEM.md`                          | `pnpm site:doctor` check 8, which runs without a build so a palette drift fails on every host rather than hiding behind a `GAP`, and fails on a literal colour in any other theme stylesheet              |
+| Rule                                                                                                                                                                                                                                                                             | What enforces it                                                                                                                                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Colour is a token. A literal hex in a `.ts` or `.tsx` file is a build failure.                                                                                                                                                                                                   | `apps/web/src/theme-resolution.test.ts` scans **both** `packages/ui/src` and `apps/web/src`, resolves each utility against a real Tailwind compile, and fails on any class that generates nothing                                                                        |
+| `backdrop-filter` is written in one place: the `surface-translucent` utility in `theme.css`, used only by the palette, dialogs, popovers and toasts. The plane itself is flat; the accent is the Lupin violet, used for focus, links, the active state and the one primary fill. | `eslint.config.js` — `GLASS_SELECTOR` refuses any `backdrop-*` class, spread into every block that sets `no-restricted-syntax`; `theme.test.ts` refuses a `backdrop-filter` outside the utility; `theme-resolution.test.ts` limits the utility to the four overlay files |
+| `animate-in`, `fade-in-*`, `zoom-in-*` and `slide-in-from-*` do not exist — no plugin is installed, and sixteen class names written against one compiled to nothing.                                                                                                             | `PLUGIN_PROVIDED_UTILITIES` in `theme-resolution.test.ts`. Use `animate-fade-in`, `animate-fade-out`, `animate-zoom-in-95`, `animate-zoom-out-95`                                                                                                                        |
+| `lucide-react` is a dependency of `packages/ui` and **not** of `apps/web`, so an application component cannot import it                                                                                                                                                          | pnpm's isolated `node_modules`. Import icons from `@lupin/ui`; the list is `packages/ui/src/icons.ts`, and adding one is a line a reviewer reads                                                                                                                         |
+| The two font binaries (Geist and Geist Mono) are committed once, in `packages/ui/src/assets/fonts/`, each with a sha256 and an upstream beside it; the site loads those same files                                                                                               | `packages/ui/src/tokens/fonts.test.ts`, in both directions — the recorded digest, and no binary in the directory without a row                                                                                                                                           |
+| The documentation site imports the product's `theme.css`, `fonts.css` and `motion.css`; it does not copy them, and no site stylesheet holds a literal colour                                                                                                                     | `pnpm site:doctor` check 8, which reads every stylesheet under `site/.vitepress/theme/` and runs without a build, so a palette drift fails on every host rather than hiding behind a `GAP`                                                                               |
 
 ## Repository Overview
 
-This is a **pnpm workspace monorepo** containing the unified Automate platform.
+This is a **pnpm workspace monorepo** containing the unified Lupin platform.
 
 | Directory                   | Product                  | Stack                                           |
 | --------------------------- | ------------------------ | ----------------------------------------------- |
@@ -38,7 +38,7 @@ This is a **pnpm workspace monorepo** containing the unified Automate platform.
 | `apps/web`                  | Unified Web              | React 19, Vite, TanStack Router, Tailwind CSS 4 |
 | `apps/runner`               | Execution boundary       | Node, rootless process control                  |
 | `apps/worker`               | Lease and recovery loop  | Node, worker resilience                         |
-| `tools/automate-cli`        | `automate`, the CI CLI   | Node, no runtime dependencies                   |
+| `tools/lupin-cli`           | `lupin`, the CI CLI      | Node, no runtime dependencies                   |
 | `tools/playwright-reporter` | Live Playwright reporter | Node, no runtime dependencies                   |
 | `site`                      | Documentation site       | VitePress                                       |
 
@@ -71,7 +71,7 @@ pnpm unify:preflight      # Pre-unification safety check
 check that says so):
 
 ```bash
-pnpm test:contract        # @automate/contract-tests only (also inside `pnpm test`)
+pnpm test:contract        # @lupin/contract-tests only (also inside `pnpm test`)
 pnpm test:integration     # node --test scripts/lib/*.test.mjs — the gate meta-tests. PGlite suites run in `pnpm test`
 pnpm test:runner          # runner, runner-sdk, worker only (also inside `pnpm test`)
 pnpm test:performance     # k6 thresholds. Exits non-zero as not_configured without k6
@@ -131,13 +131,13 @@ security scan is not a pass. On a host where `semgrep` is pip-installed, answers
 `--version`, and never returns from `scan`, that makes `verify` unrunnable — and a
 developer who cannot run the other twelve steps is worse off than one who can.
 
-**`AUTOMATE_HOST_SCANNERS=unavailable`** (set for you by `pnpm verify:local`) records
+**`LUPIN_HOST_SCANNERS=unavailable`** (set for you by `pnpm verify:local`) records
 that as `not_configured` and exits 0. The boundary is narrow and machine-checked:
 
 - a scanner that **ran** and reported something still fails, with or without it;
 - a scanner **killed at the ceiling** counts as unavailable, never as clean — so a
   ten-minute stall cannot become a green security gate;
-- `AUTOMATE_SCAN_TIMEOUT_MS` is clamped to [1 min, 1 h], because a ceiling small
+- `LUPIN_SCAN_TIMEOUT_MS` is clamped to [1 min, 1 h], because a ceiling small
   enough to guarantee a kill is the same defect by another route;
 - **no file anywhere under `.github/` may set it**, composite actions included —
   `auditRepository` reports it as a finding.
@@ -241,7 +241,7 @@ reintroduce the split.
 **`.omo/` and `.sisyphus/` are dead state and are not the planning system.** They are
 byte-identical to each other, both point at `C:\VScode\QA\.sisyphus\plans\` — a path
 from a different machine — and they name packages that no longer exist
-(`@automate/server`, `dashboard-server`, `packages/cli`). They are gitignored, so
+(`@lupin/server`, `dashboard-server`, `packages/cli`). They are gitignored, so
 nothing checks them, which is exactly why nothing noticed. **`.kilo/plans/` is the
 authority**; the other two can be deleted whenever nobody wants their session history.
 
@@ -275,20 +275,20 @@ vanished rows. See `confirmationProblems` in `scripts/lib/findings-ledger.mjs`.
 **Single package:**
 
 ```bash
-pnpm --filter @automate/api test          # API tests only
-pnpm --filter @automate/unified-web test  # Web client tests only
-pnpm --filter @automate/shared-contracts test # Contracts tests only
-pnpm --filter @automate/cli test          # The `automate` CI CLI only
-pnpm --filter @automate/playwright-reporter test # The live Playwright reporter only
-pnpm --filter @automate/api dev           # API dev only
-pnpm --filter @automate/unified-web dev   # Web dev only
+pnpm --filter @lupin/api test          # API tests only
+pnpm --filter @lupin/unified-web test  # Web client tests only
+pnpm --filter @lupin/shared-contracts test # Contracts tests only
+pnpm --filter @lupin/cli test          # The `lupin` CI CLI only
+pnpm --filter @lupin/playwright-reporter test # The live Playwright reporter only
+pnpm --filter @lupin/api dev           # API dev only
+pnpm --filter @lupin/unified-web dev   # Web dev only
 ```
 
 **Single test file (Vitest):**
 
 ```bash
-pnpm --filter @automate/api exec vitest run src/routes/execution.test.ts
-pnpm --filter @automate/api exec vitest run src/routes/agents.test.ts -t "specific test name"
+pnpm --filter @lupin/api exec vitest run src/routes/execution.test.ts
+pnpm --filter @lupin/api exec vitest run src/routes/agents.test.ts -t "specific test name"
 ```
 
 **E2E tests (Playwright):**
@@ -368,7 +368,7 @@ packages/
   tool-sdk/          Agent operation declaration, dispatch, result normalisation, error classes
   ui/                Shared Tailwind 4 component library
 tools/
-  automate-cli/      `automate`, the dependency-free CI CLI (upload, gate, deploy, agent-config)
+  lupin-cli/      `lupin`, the dependency-free CI CLI (upload, gate, deploy, agent-config)
   migrate-cli/       Migration utilities
 tests/performance/         k6 scenarios and the recorded thresholds
 infra/runners/             k6 / playwright / zap runner images (manifests only)
@@ -449,7 +449,7 @@ scripts/             Gate scripts, all `.mjs`, plus `scripts/lib/` node:test sui
 - **Routing**: TanStack Router with file-based routes in `src/routes/`.
 - **Validation**: Zod schemas parse API responses on the client side.
 - **UI components**: Tailwind CSS 4 + `packages/ui` library.
-- **Icons**: from `@automate/ui` (`packages/ui/src/icons.ts`). `lucide-react` is a
+- **Icons**: from `@lupin/ui` (`packages/ui/src/icons.ts`). `lucide-react` is a
   dependency of `packages/ui` only, so `apps/web` cannot import it directly.
 
 ### Testing
@@ -510,9 +510,9 @@ scripts/             Gate scripts, all `.mjs`, plus `scripts/lib/` node:test sui
 ### Security
 
 - **LAN mode is the only way off loopback.** `checkExposurePolicy` (`apps/api/src/startup-policy.ts`)
-  refuses a non-loopback `AUTOMATE_BIND`/`HOST` with `ACCESS_CONTROL=open`, in every environment,
+  refuses a non-loopback `LUPIN_BIND`/`HOST` with `ACCESS_CONTROL=open`, in every environment,
   and the start scripts refuse it before anything starts (`scripts/lib/start-scripts.test.mjs`).
-  `AUTOMATE_LAN_MODE=1` turns enforcement on. Every route is guarded where it is declared or in
+  `LUPIN_LAN_MODE=1` turns enforcement on. Every route is guarded where it is declared or in
   `apps/api/src/http/route-access.ts`; only the probes and the credential exchanges in
   `PUBLIC_ROUTES` are open, and `authz-matrix.test.ts` fails on any other `open` row. A new route
   needs a guard or a row there.

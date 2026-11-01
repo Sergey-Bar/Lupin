@@ -5,7 +5,7 @@ import {
   EVENT_VERSION,
   toDurableSseFrame,
   type DurableOutboxEventType,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import type { RealtimeBus } from '../realtime/realtime-bus.js';
 
 export interface DurableRealtimeEvent {

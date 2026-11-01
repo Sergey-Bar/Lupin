@@ -33,7 +33,7 @@ import path from 'node:path';
  */
 
 /** The register's evidence rule: a citation is a path, or something a person can follow. */
-const EXTERNAL_CITATION = /^(https?:|docs\/migration\/[^/]+\.json|AutoMate\/)/;
+const EXTERNAL_CITATION = /^(https?:|docs\/migration\/[^/]+\.json|Lupin\/)/;
 
 /** Directories a qualification may cite a path inside. */
 const REPO_TOP_LEVEL = new Set([

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * The browser half of R-020 for AUTOMATE (local): an automated accessibility check and
+ * The browser half of R-020 for Lupin Local: an automated accessibility check and
  * keyboard reach on the MVP-0 screens, in a real Chromium, in both colour schemes.
  *
  * Separate from the root `playwright.config.ts`, which boots the server platform against

@@ -21,7 +21,7 @@ interface BoundaryBody {
 
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { describe, expect, it } from 'vitest';
-import { hashCredential, verifyCredential } from '@automate/auth';
+import { hashCredential, verifyCredential } from '@lupin/auth';
 import { createAuthRoutes } from './auth.js';
 import {
   syntheticCookieSecret,
@@ -56,7 +56,7 @@ const INSTALLATION_ID = '00000000-0000-4000-9000-0000000000aa';
 const API_KEY = syntheticInstallationKey();
 const SESSION_TTL_MS = 60_000;
 
-const COOKIE = 'automate_session';
+const COOKIE = 'lupin_session';
 
 /** The session cookie from a response, or undefined. */
 function sessionCookie(response: Response): string | undefined {
@@ -177,7 +177,7 @@ describe('logout revokes', () => {
     const loggedOut = await h.logout(login);
     // Max-Age=0 is how a browser is told to delete it; absent would leave the
     // cookie in place with no server-side error to explain the 401s after.
-    expect(loggedOut.headers.get('set-cookie')).toMatch(/automate_session=;/);
+    expect(loggedOut.headers.get('set-cookie')).toMatch(/lupin_session=;/);
     expect(loggedOut.headers.get('set-cookie')).toMatch(/Max-Age=0/i);
   });
 

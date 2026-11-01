@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DrizzleRunRepository } from './drizzle-run-repository.js';
 import { DEFAULT_WORKSPACE_ID, RunRecord, TestRecord } from './run-repository.js';
 

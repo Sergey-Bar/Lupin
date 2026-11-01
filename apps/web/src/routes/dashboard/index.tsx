@@ -14,7 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { LaunchRunForm, RecentRuns, ReleaseReadinessCard } from '../dashboard.js';
 import {
@@ -91,7 +91,7 @@ export function RunsListPage({ api = defaultApiClient }: { api?: ApiClient }) {
           headingLevel={2}
           data-testid="runs-list-error"
           title="Runs unavailable"
-          description="Automate could not load your runs. Try again. If this continues, ask the installation owner to check the API service and its logs."
+          description="Lupin could not load your runs. Try again. If this continues, ask the installation owner to check the API service and its logs."
           action={
             <div className="space-y-3">
               <Button onClick={() => void refresh()}>Try loading runs again</Button>

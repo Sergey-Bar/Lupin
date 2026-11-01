@@ -12,7 +12,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectNoBlockingAxeViolations } from './test-axe.js';
 import { RunExplorer } from './components/dashboard/RunExplorer.js';
-import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@automate/ui';
+import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@lupin/ui';
 import { RunList } from './components/RunList.js';
 import { ThemeToggle } from './components/ThemeToggle.js';
 import { NavBar } from './components/NavBar.js';
@@ -164,7 +164,7 @@ describe('NavBar keyboard operation', () => {
    */
   it('cycles the theme on Enter, from the theme the provider read out of storage', async () => {
     const user = userEvent.setup();
-    localStorage.setItem('automate-theme', 'light');
+    localStorage.setItem('lupin-theme', 'light');
     renderRouted(
       <ThemeProvider>
         <NavBar />
@@ -176,7 +176,7 @@ describe('NavBar keyboard operation', () => {
     await user.keyboard('{Enter}');
 
     // `light` advances to `system`, which is `THEMES[2]`.
-    expect(localStorage.getItem('automate-theme')).toBe('system');
+    expect(localStorage.getItem('lupin-theme')).toBe('system');
   });
 
   /**
@@ -360,7 +360,7 @@ describe('the application obeys the two rules the library sweep enforces', () =>
         (element) =>
           `${element.tagName.toLowerCase()}"${(element.textContent ?? '').trim().slice(0, 20)}" [${element.className}]`,
       );
-    expect(offenders, 'one focus idiom, on --automate-accent, drawn as an outline').toEqual([]);
+    expect(offenders, 'one focus idiom, on --lupin-accent, drawn as an outline').toEqual([]);
   });
 
   it.each(CHROME)('%s gives every icon-only control a 44Ã—44 target', async (_name, mount) => {

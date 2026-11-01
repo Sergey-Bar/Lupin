@@ -1,9 +1,9 @@
 import { and, eq } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
-import { canonicalRunResults } from '@automate/db';
-import { CanonicalRunResultSchema, type CanonicalRunResult } from '@automate/shared-contracts';
-import { fingerprint } from '@automate/reporting';
+import { canonicalRunResults } from '@lupin/db';
+import { CanonicalRunResultSchema, type CanonicalRunResult } from '@lupin/shared-contracts';
+import { fingerprint } from '@lupin/reporting';
 import type { ReporterIngestionResult, ReporterResultStore } from './reporter-ingestion.js';
 
 type AnyPgDb =

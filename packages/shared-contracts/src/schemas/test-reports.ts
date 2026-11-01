@@ -3,7 +3,7 @@ import { z } from 'zod/v4';
 /**
  * `POST /api/v1/projects/:id/tests/reports` — a CI job's test report, and the verdict on it.
  *
- * This is what `automate test` asks after the test command fails: is every failed test
+ * This is what `lupin test` asks after the test command fails: is every failed test
  * quarantined? The server decides, from the report it parsed and the quarantine it holds,
  * so the CLI never reads a report and cannot read one differently from the gate.
  */
@@ -56,7 +56,7 @@ export type TestReportVerdict = z.infer<typeof TestReportVerdictSchema>;
  * - `off` — nothing, not even a suggestion on the pull request.
  * - `suggest` — the default: the insights page and the comment name it; a person decides.
  * - `auto` — a test with evidence a code change cannot explain (a retry pass, or two outcomes
- *   on one commit; FLAKE-4) is quarantined and approved by `automate`, and released after
+ *   on one commit; FLAKE-4) is quarantined and approved by `lupin`, and released after
  *   `releaseAfter` clean passes in a row.
  */
 export const QUARANTINE_MODES = ['off', 'suggest', 'auto'] as const;
@@ -157,7 +157,7 @@ export type TestHistory = z.infer<typeof TestHistorySchema>;
 
 /**
  * What a recurring failure is, decided once by a person and applied to every recurrence.
- * Keyed on `failureSignature` from `@automate/reporting`, the key insights clusters on.
+ * Keyed on `failureSignature` from `@lupin/reporting`, the key insights clusters on.
  */
 export const TRIAGE_CATEGORIES = ['product', 'test', 'environment', 'known-issue'] as const;
 export type TriageCategory = (typeof TRIAGE_CATEGORIES)[number];
@@ -189,7 +189,7 @@ export type TriageLabel = z.infer<typeof TriageLabelSchema>;
  *
  * The caller names every file, so a file with no history is still planned. `asOf` bounds the
  * history to runs finished by then: every shard of one CI run sends the same `asOf` (the
- * commit's time, by default in `automate shard`), so a run finishing elsewhere between two
+ * commit's time, by default in `lupin shard`), so a run finishing elsewhere between two
  * shards' calls cannot hand them two different plans — and a file to neither.
  */
 export const MAX_SHARDS = 64;

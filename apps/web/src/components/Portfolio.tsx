@@ -9,14 +9,14 @@ import {
   TableHeader,
   TableRow,
   cn,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type {
   Portfolio as PortfolioPayload,
   PortfolioAiCode,
   PortfolioDelivery,
   PortfolioEntry,
   ScorecardStatus,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource, type Resource } from '../hooks/useResource.js';
 import type { AiCodeClient } from '../lib/ai-code-client.js';
 import type { DeliveryClient } from '../lib/delivery-client.js';

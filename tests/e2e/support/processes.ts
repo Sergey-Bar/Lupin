@@ -9,7 +9,7 @@
  * the API itself the same way, once per deployment profile, beside the suite's own.
  *
  * They run the TypeScript sources under `tsx` rather than `dist/`, which is what
- * `pnpm --filter @automate/worker dev` runs and what `playwright.config.ts` already does for the
+ * `pnpm --filter @lupin/worker dev` runs and what `playwright.config.ts` already does for the
  * API, so nothing here depends on a build step the suite does not perform.
  */
 import { spawn, type ChildProcess } from 'node:child_process';

@@ -28,7 +28,7 @@ export function bootstrapDisplayPrefix(config: Pick<AppConfig, 'nodeEnv'>): stri
  *
  * Development keeps the convenience, because that is where it is one: a
  * `git clone` and `pnpm dev` should not require an operator to mint a credential.
- * Production requires the operator to present `AUTOMATE_INSTALLATION_KEY`, because
+ * Production requires the operator to present `LUPIN_INSTALLATION_KEY`, because
  * that is where it is not one.
  *
  * `test` is treated as development. A CI run against a production config that has no
@@ -50,7 +50,7 @@ export function mayDeriveInstallationKey(config: Pick<AppConfig, 'nodeEnv'>): bo
  * for. This names the variable and says what deriving one would have cost.
  */
 export const NO_INSTALLATION_KEY =
-  'AUTOMATE_INSTALLATION_KEY is required in production. Automate will not derive one: a ' +
+  'LUPIN_INSTALLATION_KEY is required in production. Lupin will not derive one: a ' +
   'bootstrapped key is a credential nobody chose, derived from a default that is in the ' +
   'repository, and it is written to the installation_keys table on first boot. Set a ' +
   '32+ character value, or run with NODE_ENV=development for the local sample.';

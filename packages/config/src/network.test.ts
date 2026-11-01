@@ -12,15 +12,7 @@ describe('isWildcardBind', () => {
     for (const bind of ['0.0.0.0', '::', '[::]', '0:0:0:0:0:0:0:0', ' 0.0.0.0 ', '::0']) {
       expect(isWildcardBind(bind), bind).toBe(true);
     }
-    for (const bind of [
-      '127.0.0.1',
-      '::1',
-      '192.168.1.5',
-      'localhost',
-      '0.0.0.1',
-      'automate',
-      '',
-    ]) {
+    for (const bind of ['127.0.0.1', '::1', '192.168.1.5', 'localhost', '0.0.0.1', 'lupin', '']) {
       expect(isWildcardBind(bind), bind).toBe(false);
     }
   });
@@ -78,6 +70,6 @@ describe('isLoopbackBind', () => {
     expect(isLoopbackBind('[::1]')).toBe(true);
     expect(isLoopbackBind('0.0.0.0')).toBe(false);
     expect(isLoopbackBind('192.168.1.10')).toBe(false);
-    expect(isLoopbackBind('automate.local')).toBe(false);
+    expect(isLoopbackBind('lupin.local')).toBe(false);
   });
 });

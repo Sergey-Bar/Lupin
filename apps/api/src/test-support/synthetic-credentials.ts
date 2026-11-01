@@ -48,7 +48,7 @@ export function syntheticStripeKey(): string {
 /**
  * A self-hosted installation's own secrets, which have no provider prefix.
  *
- * gitleaks's `generic-api-key` rule matches `AUTOMATE_API_KEY = '…'` and
+ * gitleaks's `generic-api-key` rule matches `LUPIN_API_KEY = '…'` and
  * `VAULT_SECRET = '…'` on the *name* alone, so these two had to be assembled too
  * even though they are not provider tokens. The same reasoning as every function
  * above: the value exists only at runtime, so the repository contains nothing a
@@ -99,14 +99,14 @@ export function syntheticRunnerRegistrationSecret(): string {
 }
 
 /**
- * An `amt_` access token, which is the shape the MCP stdio proxy and the CI CLI accept.
+ * An `lup_` access token, which is the shape the MCP stdio proxy and the CI CLI accept.
  *
- * Written as a literal it was `const TOKEN = 'amt_…'`, which `no-hardcoded-secret-literal`
+ * Written as a literal it was `const TOKEN = 'lup_…'`, which `no-hardcoded-secret-literal`
  * reports on the name and gitleaks' `generic-api-key` can match: a credential-shaped
  * value committed for a scanner to be told to ignore.
  */
 export function syntheticAccessToken(): string {
-  return ['amt_', 'viewer', '_for_the_proxy'].join('');
+  return ['lup_', 'viewer', '_for_the_proxy'].join('');
 }
 
 /** A JWT with three dot-separated base64url segments. */

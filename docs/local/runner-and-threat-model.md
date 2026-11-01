@@ -1,4 +1,4 @@
-# AUTOMATE (local) — runner design and threat model
+# Lupin Local — runner design and threat model
 
 **Status:** Draft
 **Owner:** maintainers

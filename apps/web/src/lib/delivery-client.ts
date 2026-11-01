@@ -8,7 +8,7 @@ import {
   type DeliverySourceBody,
   type DeliverySyncQueued,
   type PortfolioDelivery,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createJsonTransport, projectPath, queryString } from './json-transport.js';
 
 /** Delivery performance: DORA, pull-request flow, the GitHub source and its sync. */

@@ -1,4 +1,4 @@
-# AUTOMATE (local) — team and shared features: decision
+# Lupin Local — team and shared features: decision
 
 **Status:** Draft
 **Owner:** maintainers

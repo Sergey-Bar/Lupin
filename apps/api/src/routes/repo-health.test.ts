@@ -5,7 +5,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { Hono } from 'hono';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import {
   DiffCoverageStatusSchema,
   HealthFindingsPageSchema,
@@ -16,12 +16,12 @@ import {
   ProjectHealthSchema,
   SbomComponentsPageSchema,
   SupplyChainPolicyRecordSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { syntheticReporterSecret } from '../test-support/synthetic-credentials.js';
 import { createRepoHealthRoutes, type RepoHealthRouteOptions } from './repo-health.js';
 import { eq } from 'drizzle-orm';
-import type { ConnectorRequest } from '@automate/connectors-sdk';
+import type { ConnectorRequest } from '@lupin/connectors-sdk';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const drizzleDirectory = path.resolve(here, '../../../../packages/db/drizzle');
@@ -235,7 +235,7 @@ describe('the pull-request gate', () => {
     const { app, db, projectId } = await harness({
       secret: SECRET,
       extra: {
-        detailsUrl: (id) => `https://automate.test/dashboard/repo/${id}`,
+        detailsUrl: (id) => `https://lupin.test/dashboard/repo/${id}`,
         github: {
           tokenFor: async () => 'synthetic-github-token',
           adapter: {
@@ -275,7 +275,7 @@ describe('the pull-request gate', () => {
       owner: 'example',
       repo: 'service',
       sha: 'abc1234',
-      target_url: `https://automate.test/dashboard/repo/${projectId}`,
+      target_url: `https://lupin.test/dashboard/repo/${projectId}`,
     });
   });
 

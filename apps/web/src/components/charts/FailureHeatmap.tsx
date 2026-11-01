@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@automate/ui';
+import { cn } from '@lupin/ui';
 import type { HeatmapRow } from '../../lib/qa.js';
 import { shortDate } from '../../lib/insights.js';
 import { tickIndices } from '../TrendChart.js';

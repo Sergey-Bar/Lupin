@@ -94,7 +94,7 @@ function planFiles() {
  *
  * Narrow on purpose. A first pass accepted any backticked token containing a `/`
  * and produced 30 findings, almost all of them things a document is *allowed* to
- * name without them existing: a package name (`@automate/db`), a lint rule
+ * name without them existing: a package name (`@lupin/db`), a lint rule
  * (`@typescript-eslint/no-explicit-any`), a URL path (`/api/v1`), and a bare
  * directory relative to whichever package the reader is in (`src/`). A gate that
  * cries wolf is switched off, and this one would have been.
@@ -241,7 +241,7 @@ test('the cited path check reaches the documents it claims to', () => {
   assert.deepEqual(
     citedPaths(
       [
-        '`@automate/shared-contracts` is a package',
+        '`@lupin/shared-contracts` is a package',
         '`@typescript-eslint/no-explicit-any` is a rule',
         '`/api/v1/agents` is a route',
         '`src/` is relative to the package',

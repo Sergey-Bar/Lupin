@@ -40,7 +40,7 @@ interface BoundaryBody {
 
 import { withErrorBoundary } from '../../test-support/error-boundary-app.js';
 import { Hono } from 'hono';
-import { PERSISTED_RUN_STATUS_VALUES, RUN_STATUS_VALUES } from '@automate/shared-contracts';
+import { PERSISTED_RUN_STATUS_VALUES, RUN_STATUS_VALUES } from '@lupin/shared-contracts';
 import { InMemoryRunRepository } from '../../repositories/in-memory-run-repository.js';
 import { DEFAULT_WORKSPACE_ID, RunRecord, TestRecord } from '../../repositories/run-repository.js';
 import { createDashboardRunsRoutes } from './runs.js';

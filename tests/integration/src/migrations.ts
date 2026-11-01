@@ -106,7 +106,7 @@ export async function createMigratedDatabase(): Promise<PGlite> {
 /**
  * Fails when `packages/db` has not been rebuilt since its source changed.
  *
- * `@automate/db` resolves to `dist/`, so the schema these tests compare against
+ * `@lupin/db` resolves to `dist/`, so the schema these tests compare against
  * the migrations is whatever was last built. A bare `npx vitest` run bypasses
  * turbo's `test.dependsOn: ["^build"]`, so it can resolve a stale build — and a
  * drift test that silently compares yesterday's schema passes without checking
@@ -119,8 +119,8 @@ export function assertSchemaBuildIsFresh(
   const guidance =
     'These assertions compare the migrations against the built schema. Use ' +
     'pnpm test (turbo builds dependencies first), or run ' +
-    'pnpm --filter @automate/db build. A bare npx vitest run resolves ' +
-    '@automate/db to whatever was last built.';
+    'pnpm --filter @lupin/db build. A bare npx vitest run resolves ' +
+    '@lupin/db to whatever was last built.';
   let buildTime: number;
   try {
     buildTime = statSync(buildOutput).mtimeMs;

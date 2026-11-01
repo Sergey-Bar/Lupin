@@ -5,7 +5,7 @@ import type { DigestItem, QaGapsResponse, ReadinessReason, ReleaseReadinessCard 
  *
  * Pure, so the ranking is a unit test rather than something a reader infers from a
  * screenshot. The readiness verdict is computed on the server (`evaluateReadiness` in
- * `@automate/reporting`); this only orders what it said and joins the week's digest and
+ * `@lupin/reporting`); this only orders what it said and joins the week's digest and
  * the score's gap queue to it.
  *
  * ## The order is the argument

@@ -1,5 +1,5 @@
-import { scanRepository, type RepositoryView } from '@automate/projects';
-import type { RepoScan, RunCommand } from '@automate/shared-contracts';
+import { scanRepository, type RepositoryView } from '@lupin/projects';
+import type { RepoScan, RunCommand } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 
 /**
@@ -69,7 +69,7 @@ export interface ResolvedCommand {
  * ## Two allowlists, both written by the repository
  *
  * A **profile** command was proposed by the detector or declared in
- * `automate.config.json`, and it is a test suite: it declares the artifacts it writes,
+ * `lupin.config.json`, and it is a test suite: it declares the artifacts it writes,
  * so it is held to the artifact rule. A **scanned** tool is a script or a Makefile target
  * the repository declares; most are not suites, so the verdict is the exit code. Neither
  * list can be extended by the caller: the body carries an id, and an id that is in
@@ -100,7 +100,7 @@ export function resolveCommand(
   if (tool === undefined) {
     throw new DomainError(
       ErrorCode.NOT_FOUND,
-      `No command ${commandId} in this project's profile or repository. Rescan, or correct it in automate.config.json.`,
+      `No command ${commandId} in this project's profile or repository. Rescan, or correct it in lupin.config.json.`,
     );
   }
   if (!tool.runnable) {

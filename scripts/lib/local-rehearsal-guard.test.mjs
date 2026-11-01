@@ -6,9 +6,9 @@ test('accepts explicit loopback mode', () => {
   assert.deepEqual(
     assertLocalRehearsal({
       REHEARSAL_MODE: 'local',
-      DATABASE_URL: 'postgresql://localhost:5432/automate',
+      DATABASE_URL: 'postgresql://localhost:5432/lupin',
     }),
-    { databaseHost: 'localhost', databaseName: 'automate' },
+    { databaseHost: 'localhost', databaseName: 'lupin' },
   );
 });
 
@@ -17,7 +17,7 @@ test('rejects remote and publication targets', () => {
     () =>
       assertLocalRehearsal({
         REHEARSAL_MODE: 'local',
-        DATABASE_URL: 'postgresql://db.prod:5432/automate',
+        DATABASE_URL: 'postgresql://db.prod:5432/lupin',
       }),
     /loopback/,
   );
@@ -25,7 +25,7 @@ test('rejects remote and publication targets', () => {
     () =>
       assertLocalRehearsal({
         REHEARSAL_MODE: 'local',
-        DATABASE_URL: 'postgresql://localhost/automate',
+        DATABASE_URL: 'postgresql://localhost/lupin',
         PUBLISH: 'true',
       }),
     /forbidden/,

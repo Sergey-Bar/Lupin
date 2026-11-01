@@ -31,7 +31,7 @@ describe('the runner', () => {
     renderRunner(makeQa());
     await waitFor(() => expect(screen.getByTestId('tool-script:.:test')).toBeInTheDocument());
     expect(screen.getByRole('heading', { level: 1, name: 'Launch' })).toBeInTheDocument();
-    expect(screen.getByText('3 runnable of 4 tools declared in Automate')).toBeInTheDocument();
+    expect(screen.getByText('3 runnable of 4 tools declared in Lupin')).toBeInTheDocument();
     expect(screen.getByTestId('run-script:.:dev')).toBeDisabled();
     expect(screen.getByTestId('tool-script:.:dev')).toHaveTextContent('long-running server');
     expect(screen.getByTestId('tool-script:apps/web:test:e2e')).toHaveTextContent('apps/web');
@@ -210,7 +210,7 @@ describe('the runner, as a daily tool', () => {
     expect(screen.getByTestId('pin-script:.:lint')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('pin-script:.:lint')).toHaveAccessibleName('Unpin lint');
     expect(order()[0]).toBe('tool-script:.:lint');
-    expect(JSON.parse(localStorage.getItem('automate-pinned-tools') ?? '[]')).toEqual([
+    expect(JSON.parse(localStorage.getItem('lupin-pinned-tools') ?? '[]')).toEqual([
       'script:.:lint',
     ]);
     fireEvent.click(screen.getByTestId('group-pinned'));
@@ -225,11 +225,11 @@ describe('the runner, as a daily tool', () => {
   });
 
   it('reads a corrupt pin store as no pins rather than failing the page', async () => {
-    localStorage.setItem('automate-pinned-tools', '{not json');
+    localStorage.setItem('lupin-pinned-tools', '{not json');
     renderRunner(makeQa());
     await waitFor(() => expect(screen.getByTestId('tool-script:.:lint')).toBeInTheDocument());
     expect(screen.queryByTestId('group-pinned')).not.toBeInTheDocument();
-    localStorage.setItem('automate-pinned-tools', '{"a":1}');
+    localStorage.setItem('lupin-pinned-tools', '{"a":1}');
     renderRunner(makeQa());
     await waitFor(() => expect(screen.getAllByTestId('tool-script:.:lint')).toHaveLength(2));
     expect(screen.queryByTestId('group-pinned')).not.toBeInTheDocument();

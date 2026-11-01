@@ -5,7 +5,7 @@
  * Patched at the lowest layer each protocol shares: `net.Socket.prototype.connect` carries
  * TCP for `http`, `https`, `tls` and `fetch` (undici opens its sockets through `net`);
  * `dns.lookup` and `dns.promises.lookup` carry name resolution; `dgram` sockets carry UDP.
- * Each attempt is appended to the file named by `AUTOMATE_OFFLINE_LOG` before it fails, so a
+ * Each attempt is appended to the file named by `LUPIN_OFFLINE_LOG` before it fails, so a
  * caller that swallows the error still leaves the evidence. The first line written is
  * `armed`, so a test can tell "nothing was attempted" from "the guard never loaded".
  */
@@ -14,8 +14,8 @@ import dgram from 'node:dgram';
 import dns from 'node:dns';
 import net from 'node:net';
 
-const LOG = process.env['AUTOMATE_OFFLINE_LOG'];
-if (LOG === undefined || LOG === '') throw new Error('AUTOMATE_OFFLINE_LOG is not set');
+const LOG = process.env['LUPIN_OFFLINE_LOG'];
+if (LOG === undefined || LOG === '') throw new Error('LUPIN_OFFLINE_LOG is not set');
 
 /** @param {string} line */
 const record = (line) => appendFileSync(LOG, `${line}\n`);

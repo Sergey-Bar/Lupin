@@ -109,11 +109,11 @@ alpha dimension; §3 is the contrast case that has to move.
 In `packages/ui/src/tokens/theme.css`, beside the four plane steps:
 
 ```
---automate-glass-blur: 8px          /* the floor of the scheduled 8–16px range */
---automate-glass-saturate: 1.05     /* the floor of the scheduled 1.05–1.15 range */
---automate-glass-fill: color-mix(in oklab, var(--automate-surface) 72%, transparent)
---automate-glass-border: …          /* see §3 — a fixed alpha border cannot exist */
---automate-glass-radius: 12px       /* ceiling, not a default */
+--lupin-glass-blur: 8px          /* the floor of the scheduled 8–16px range */
+--lupin-glass-saturate: 1.05     /* the floor of the scheduled 1.05–1.15 range */
+--lupin-glass-fill: color-mix(in oklab, var(--lupin-surface) 72%, transparent)
+--lupin-glass-border: …          /* see §3 — a fixed alpha border cannot exist */
+--lupin-glass-radius: 12px       /* ceiling, not a default */
 ```
 
 **Why the bottom of both ranges, when the plan scheduled 8–16 and 1.05–1.15.** Because the whole
@@ -123,7 +123,7 @@ behind the panel — at roughly a third of the compositing cost of 16px and 1.15
 the range is available as a token later, on a measurement, which is the only reason it should ever
 be reached.
 
-`--automate-glass-radius` is a **ceiling** because a radius that grows past the panel's content
+`--lupin-glass-radius` is a **ceiling** because a radius that grows past the panel's content
 starts rounding the data inside it, and rounded evidence columns are harder to compare down a column.
 
 **A fixed alpha border cannot exist, and that is the §3 crux.** The design language has two borders,
@@ -146,16 +146,16 @@ The concern is legitimate and G-1 does not dismiss it. Four mechanisms, each mac
 failing in a way a test can see:
 
 1. **`prefers-reduced-transparency` gets an opaque fallback.** Someone who has told the OS they do
-   not want translucency gets `--automate-surface` and the elevation shadow. The cinematic plan
+   not want translucency gets `--lupin-surface` and the elevation shadow. The cinematic plan
    already listed this as a gate; it is load-bearing under G-1 and not optional.
-2. **A minimum-opacity floor.** `--automate-glass-fill` at 72% is the *lightest* a data panel may go.
+2. **A minimum-opacity floor.** `--lupin-glass-fill` at 72% is the *lightest* a data panel may go.
    Below it, contrast against the worst-case backdrop stops being measurable, so the floor is a
    token value with a test, not a guideline.
 3. **The contrast test moves from "token vs plane" to "token vs worst-case backdrop."** The design
    language states there is *a test for that case per plane step*. Under glass, the backdrop is not
    known, so the test computes against the extreme of the plane behind it and requires the ratio to
-   hold at **both** extremes. A panel that passes only against `--automate-surface` and fails against
-   `--automate-surface-sunken` is the exact defect this catches, and no existing assertion can see
+   hold at **both** extremes. A panel that passes only against `--lupin-surface` and fails against
+   `--lupin-surface-sunken` is the exact defect this catches, and no existing assertion can see
    it.
 4. **The axe spec lands first.** `pnpm status:10` reports **13 route files, zero covered**, and
    `expectNoBlockingAxeViolations` is used by exactly one component test. Shipping glass over data
@@ -220,7 +220,7 @@ hand-maintained. This also discharges `W11.4` conditions (a) and (b).
   trees, and a new list asserting **no `backdrop-*` class exists that no component declares**, so a
   blur radius cannot be invented per component.
 
-**Gate:** `pnpm --filter @automate/ui test`, token-resolution green in both themes.
+**Gate:** `pnpm --filter @lupin/ui test`, token-resolution green in both themes.
 
 ### G3 — Open the lint, replace the review rule
 
@@ -233,7 +233,7 @@ hand-maintained. This also discharges `W11.4` conditions (a) and (b).
 
 ### G4 — Adoption, and the per-route blur cap
 
-Components adopt `--automate-glass-*` starting with `AppShell`, `NavBar`, `Card`, `Drawer`, `Popover`,
+Components adopt `--lupin-glass-*` starting with `AppShell`, `NavBar`, `Card`, `Drawer`, `Popover`,
 `CommandPalette`, `Toast` — then `Table` and `StatCard`, which is where G-1 actually bites. The
 per-route blur cap is a value in the rendering budget's route list, so a route cannot silently raise
 its own.

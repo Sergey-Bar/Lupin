@@ -11,7 +11,7 @@ afterEach(async () => {
 describe('worker process boundaries', () => {
   it('parses safe queue and health limits', () => {
     const config = parseWorkerConfig({
-      DATABASE_URL: 'postgresql://postgres@localhost/automate',
+      DATABASE_URL: 'postgresql://postgres@localhost/lupin',
       WORKER_MAX_ATTEMPTS: '4',
       WORKER_WORKSPACE_QUOTA: '12',
     });

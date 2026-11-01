@@ -1,6 +1,6 @@
 import React from 'react';
-import { ArrowRight, StatusDot, cn } from '@automate/ui';
-import type { Scorecard, ScorecardMetric } from '@automate/shared-contracts';
+import { ArrowRight, StatusDot, cn } from '@lupin/ui';
+import type { Scorecard, ScorecardMetric } from '@lupin/shared-contracts';
 import {
   METRIC_STATUS_DOT,
   METRIC_STATUS_TONE,
@@ -50,10 +50,10 @@ export function ScorecardCard({
       aria-labelledby={id}
       data-testid={`scorecard-${scorecard.id}`}
       data-status={scorecard.status}
-      className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:p-5"
+      className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-surface p-4 sm:p-5"
     >
       <div className="flex items-start justify-between gap-2">
-        <Heading id={id} className="text-xs font-medium uppercase tracking-wider text-fg-muted">
+        <Heading id={id} className="text-xs font-medium text-fg-muted">
           {scorecard.title}
         </Heading>
         <span

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CanonicalFindingSchema } from '@automate/shared-contracts';
+import { CanonicalFindingSchema } from '@lupin/shared-contracts';
 import { HealthReportError, MAX_SARIF_RESULTS, parseSarif } from './sarif.js';
 import { parseHealthMetrics } from './health-metrics.js';
 

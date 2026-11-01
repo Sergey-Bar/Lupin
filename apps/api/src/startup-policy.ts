@@ -3,11 +3,11 @@ import {
   isLoopbackBind,
   isSecretPlaceholder,
   type SecretVariable,
-} from '@automate/config';
+} from '@lupin/config';
 import type { AppConfig } from './config.js';
 
 /**
- * The cookie secret used when `AUTOMATE_ALLOW_DEV_SECRETS=1` is set outside a
+ * The cookie secret used when `LUPIN_ALLOW_DEV_SECRETS=1` is set outside a
  * test environment.
  *
  * This literal is in git history and in every clone, so it is a *publicly known
@@ -20,7 +20,7 @@ export const DEVELOPMENT_COOKIE_SECRET = 'development-only-cookie-secret-32-char
 export const DEVELOPMENT_INSTALLATION_KEY = 'development-installation-key';
 
 /**
- * One secret policy, and the numbers live in `@automate/config`.
+ * One secret policy, and the numbers live in `@lupin/config`.
  *
  * This file used to write `32` and `16` itself, in its own messages, while
  * `packages/config` wrote the same thresholds in a Zod schema. Two copies of one
@@ -53,7 +53,7 @@ function refuseIfUnusable(variable: SecretVariable, value: string | undefined): 
  * development secrets outside a test run. Grep for it to find every place the
  * development path is reachable.
  */
-export const ALLOW_DEV_SECRETS_ENV = 'AUTOMATE_ALLOW_DEV_SECRETS';
+export const ALLOW_DEV_SECRETS_ENV = 'LUPIN_ALLOW_DEV_SECRETS';
 
 export function devSecretsAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
   const value = env[ALLOW_DEV_SECRETS_ENV]?.trim().toLowerCase();
@@ -109,7 +109,7 @@ export function checkProductionPolicy(config: AppConfig): void {
   if (isProduction(config)) {
     refuseIfUnusable('COOKIE_SECRET', config.cookieSecret);
     refuseIfUnusable('REPORTER_SECRET', config.reporterSecret);
-    refuseIfUnusable('AUTOMATE_API_KEY', config.apiKey);
+    refuseIfUnusable('LUPIN_API_KEY', config.apiKey);
     refuseIfUnusable('VAULT_SECRET', config.vaultSecret);
     if (!config.databaseUrl) {
       throw new Error('DATABASE_URL is required in production');
@@ -135,7 +135,7 @@ export function checkProductionPolicy(config: AppConfig): void {
  * Who may reach this install, against who it lets in.
  *
  * The API had no login in front of it by design (ADR-006), and the only thing between that
- * and the network was a warning the start scripts printed when `AUTOMATE_BIND` was not
+ * and the network was a warning the start scripts printed when `LUPIN_BIND` was not
  * loopback. A warning is advice; a reachable install with no login is a decision someone
  * should have to make on purpose. So it is refused, in every environment — the network does
  * not care about `NODE_ENV` — and the refusal names the switch that makes it safe.
@@ -150,16 +150,16 @@ export function checkExposurePolicy(config: AppConfig): void {
   if (config.remote === 'cloudflare') checkTunnel(config);
   if (!isLoopbackBind(bind) && (config.accessControl ?? 'open') === 'open') {
     throw new Error(
-      `Automate would be reachable from other machines (${bind}) with no login in front of it. ` +
-        'Set AUTOMATE_LAN_MODE=1 to serve your local network with sign-in, device pairing and ' +
+      `Lupin would be reachable from other machines (${bind}) with no login in front of it. ` +
+        'Set LUPIN_LAN_MODE=1 to serve your local network with sign-in, device pairing and ' +
         'a client allowlist, or bind to 127.0.0.1 to keep it on this machine.',
     );
   }
   if (config.profile === 'solo' && (config.lanMode === true || !isLoopbackBind(bind))) {
     throw new Error(
-      `AUTOMATE_PROFILE=solo keeps Automate on this machine, and ${
-        config.lanMode === true ? 'AUTOMATE_LAN_MODE is on' : `it would be reachable on ${bind}`
-      }. Set AUTOMATE_PROFILE=startup to serve other people with sign-in, or bind to 127.0.0.1.`,
+      `LUPIN_PROFILE=solo keeps Lupin on this machine, and ${
+        config.lanMode === true ? 'LUPIN_LAN_MODE is on' : `it would be reachable on ${bind}`
+      }. Set LUPIN_PROFILE=startup to serve other people with sign-in, or bind to 127.0.0.1.`,
     );
   }
   checkSsoSource(config);
@@ -173,7 +173,7 @@ export function checkExposurePolicy(config: AppConfig): void {
 function checkProfileContradictions(config: AppConfig): void {
   if (config.lanMode === true && config.accessControl === 'open') {
     throw new Error(
-      'AUTOMATE_LAN_MODE is on and ACCESS_CONTROL=open is set. LAN mode serves other machines ' +
+      'LUPIN_LAN_MODE is on and ACCESS_CONTROL=open is set. LAN mode serves other machines ' +
         'and needs a login: remove ACCESS_CONTROL (LAN mode turns it on) or set it to enforced.',
     );
   }
@@ -182,9 +182,9 @@ function checkProfileContradictions(config: AppConfig): void {
     config.accessControl === 'open'
   ) {
     throw new Error(
-      `AUTOMATE_PROFILE=${config.profile} serves several people and ACCESS_CONTROL=open would ` +
+      `LUPIN_PROFILE=${config.profile} serves several people and ACCESS_CONTROL=open would ` +
         'let anyone who can reach it act as the admin. Remove ACCESS_CONTROL (the profile turns ' +
-        'it on), or set AUTOMATE_PROFILE=solo for a single-person install on this machine.',
+        'it on), or set LUPIN_PROFILE=solo for a single-person install on this machine.',
     );
   }
 }
@@ -198,7 +198,7 @@ function checkSsoSource(config: AppConfig): void {
     throw new Error(
       'AUTH_SSO_ENFORCED is on (the enterprise profile turns it on) and there is no single ' +
         'sign-on to enforce. Configure OIDC_ISSUER, OIDC_CLIENT_ID and OIDC_CLIENT_SECRET, or ' +
-        'AUTOMATE_REMOTE=cloudflare with Cloudflare Access, or set AUTH_SSO_ENFORCED=0.',
+        'LUPIN_REMOTE=cloudflare with Cloudflare Access, or set AUTH_SSO_ENFORCED=0.',
     );
   }
 }
@@ -212,20 +212,20 @@ function checkSsoSource(config: AppConfig): void {
 function checkTunnel(config: AppConfig): void {
   if (config.profile === 'solo') {
     throw new Error(
-      'AUTOMATE_PROFILE=solo keeps Automate on this machine, and AUTOMATE_REMOTE=cloudflare ' +
-        'publishes it through a tunnel. Set AUTOMATE_PROFILE=startup to serve other people.',
+      'LUPIN_PROFILE=solo keeps Lupin on this machine, and LUPIN_REMOTE=cloudflare ' +
+        'publishes it through a tunnel. Set LUPIN_PROFILE=startup to serve other people.',
     );
   }
   if ((config.accessControl ?? 'open') === 'open') {
     throw new Error(
-      'AUTOMATE_REMOTE=cloudflare makes Automate reachable from the internet, and ' +
+      'LUPIN_REMOTE=cloudflare makes Lupin reachable from the internet, and ' +
         'ACCESS_CONTROL=open would let anyone who gets through act as the admin. Remove ' +
         'ACCESS_CONTROL (the tunnel turns it on) or set it to enforced.',
     );
   }
   if (config.cloudflareAccess === undefined) {
     throw new Error(
-      'AUTOMATE_REMOTE=cloudflare needs both CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD: the ' +
+      'LUPIN_REMOTE=cloudflare needs both CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD: the ' +
         "Access team and the application's audience tag, so a request Cloudflare let in can " +
         'be told from one that only carries its header.',
     );
@@ -236,7 +236,7 @@ function checkTunnel(config: AppConfig): void {
  * What to tell the operator when the install cannot know whether it is reachable.
  *
  * The 3.0.0 compose file sets `HOST=0.0.0.0` (every interface of the container, which every
- * container needs) and does not pass `AUTOMATE_BIND`, and `start update` keeps that file. So
+ * container needs) and does not pass `LUPIN_BIND`, and `start update` keeps that file. So
  * an upgraded install has a wildcard listen address and no declared bind, and refusing it
  * left every upgraded install down (v3.1.0). It is allowed, with this warning, because the
  * start scripts still refuse an exposed bind before anything starts, and the 3.1 compose
@@ -248,9 +248,9 @@ function checkTunnel(config: AppConfig): void {
 export function exposureWarning(config: AppConfig): string | undefined {
   if (config.bindUndeclared !== true) return undefined;
   return (
-    'AUTOMATE_BIND is not set and HOST is a wildcard, so this install cannot tell whether ' +
-    'other machines can reach it. Set AUTOMATE_BIND to the address it is published on ' +
-    '(127.0.0.1 keeps it on this machine, and AUTOMATE_LAN_MODE=1 serves your network with ' +
+    'LUPIN_BIND is not set and HOST is a wildcard, so this install cannot tell whether ' +
+    'other machines can reach it. Set LUPIN_BIND to the address it is published on ' +
+    '(127.0.0.1 keeps it on this machine, and LUPIN_LAN_MODE=1 serves your network with ' +
     'sign-in). Without a login, anything that can reach the port can use the install.'
   );
 }
@@ -271,20 +271,20 @@ export interface AuthSecrets {
  * was still reachable.
  *
  * Now the literal is reachable only where it is harmless: a test run, or a
- * developer's own machine with `AUTOMATE_ALLOW_DEV_SECRETS=1`. Everywhere else
+ * developer's own machine with `LUPIN_ALLOW_DEV_SECRETS=1`. Everywhere else
  * a missing secret is a startup failure, not a silent fallback.
  *
- * **`AUTOMATE_API_KEY` is still required in production** by `checkProductionPolicy`.
+ * **`LUPIN_API_KEY` is still required in production** by `checkProductionPolicy`.
  * The install has no login in front of it (open since 2026-09-30), but sessions are
  * still minted, and the credential they are minted against must not be a published
  * literal. This comment once said the opposite while the policy beside it refused a
  * missing key, so an operator reading one was misled by the other.
  *
- * **The credential is `AUTOMATE_INSTALLATION_KEY` when it is set (ledger MNT-20).** A
+ * **The credential is `LUPIN_INSTALLATION_KEY` when it is set (ledger MNT-20).** A
  * production boot with a database refuses to start without that variable
  * (`NO_INSTALLATION_KEY`), and until this was fixed nothing then *read* it: the
- * credential was derived from `AUTOMATE_API_KEY`, so the key the boot error told an
- * operator to set was not the key that signed them in. `AUTOMATE_API_KEY` remains the
+ * credential was derived from `LUPIN_API_KEY`, so the key the boot error told an
+ * operator to set was not the key that signed them in. `LUPIN_API_KEY` remains the
  * fallback for a development or test run that sets only that.
  */
 export function resolveAuthSecrets(
@@ -305,11 +305,11 @@ export function resolveAuthSecrets(
   }
   if (!config.apiKey && !allowLiterals) {
     throw new Error(
-      `AUTOMATE_API_KEY is required. Set it, or set ${ALLOW_DEV_SECRETS_ENV}=1 ` +
+      `LUPIN_API_KEY is required. Set it, or set ${ALLOW_DEV_SECRETS_ENV}=1 ` +
         'on a development machine to accept the development installation key.',
     );
   }
-  const presented = env['AUTOMATE_INSTALLATION_KEY']?.trim();
+  const presented = env['LUPIN_INSTALLATION_KEY']?.trim();
   return {
     cookieSecret: config.cookieSecret ?? DEVELOPMENT_COOKIE_SECRET,
     installationKey:

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
-import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@automate/ui';
+import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@lupin/ui';
 
 /**
  * The one place the three states a screen can be in are asserted together.

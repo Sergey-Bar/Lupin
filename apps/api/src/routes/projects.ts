@@ -5,7 +5,7 @@ import {
   GitRepositoryUrlSchema,
   RunStartBodySchema,
   RunStopBodySchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { qaScore, stopRun } from '../services/qa-score-service.js';
 import { answer } from '../services/copilot-service.js';
@@ -15,9 +15,9 @@ import {
   type RepoScanner,
   type ResolvedCommand,
 } from '../services/repo-scan-service.js';
-import { diffScores } from '@automate/projects';
-import { evaluateReadiness } from '@automate/reporting';
-import type { ProjectHistory } from '@automate/shared-contracts';
+import { diffScores } from '@lupin/projects';
+import { evaluateReadiness } from '@lupin/reporting';
+import type { ProjectHistory } from '@lupin/shared-contracts';
 import { DEFAULT_QUALITY_POLICY } from '../execution/quality-gate.js';
 import { belongsTo } from '../execution/insights.js';
 import { readSince, startOfDay } from '../execution/trend.js';
@@ -52,7 +52,7 @@ import { createNotificationRoutes } from './notifications.js';
 import { audit, authenticateToken } from '../services/access-service.js';
 import { qaTestsReading } from '../services/repo-health-service.js';
 import { ingestHealthReport, ingestParsedReport } from '../services/repo-health-service.js';
-import type { AiGateway } from '@automate/automation';
+import type { AiGateway } from '@lupin/automation';
 import { agentRuntimeReading } from '../services/genai-span-service.js';
 import { evalGateReading } from '../services/eval-service.js';
 import { scanLocalAgentConfig, type AgentConfigOptions } from '../services/agent-config-service.js';
@@ -91,7 +91,7 @@ import { createRepoHealthRoutes, type RepoHealthRouteOptions } from './repo-heal
  * against the stored profile. There is deliberately no body field for an argv: a
  * body that could carry one would make the typed command registry advisory, because
  * a caller could send any executable and the registry would be consulted only to be
- * overridden. Correcting a detected command is a *profile edit* — `automate.config.json`
+ * overridden. Correcting a detected command is a *profile edit* — `lupin.config.json`
  * or `PATCH /projects/:id` — which is reviewable, version-controlled, and says why.
  *
  * ## Every number is served with its limiter
@@ -413,7 +413,7 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
   );
   // AI-written code: read-only scorecards over what the delivery sync attributed.
   app.route('/', createAiCodeRoutes({ db: options.db, workspaceId: options.workspaceId, access }));
-  // A CI job's test report and the quarantine verdict `automate test` acts on. Mounted
+  // A CI job's test report and the quarantine verdict `lupin test` acts on. Mounted
   // always, so the authz matrix lists it; without its stores it answers NOT_CONFIGURED.
   app.route(
     '/',
@@ -692,7 +692,7 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
     /**
      * Release readiness: go, caution or no-go, with every reason and its evidence.
      *
-     * The route gathers; `evaluateReadiness` in `@automate/reporting` decides. The flaky
+     * The route gathers; `evaluateReadiness` in `@lupin/reporting` decides. The flaky
      * allowance is the gate policy's own `maxFlakyRate` and the pass-rate threshold is the
      * project's gate row, so the card can never disagree with the gate about a number.
      */

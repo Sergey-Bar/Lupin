@@ -1,14 +1,14 @@
 import { and, eq } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
-import { runs } from '@automate/db';
-import { QaScoreSchema, type QaScore } from '@automate/shared-contracts';
+import { runs } from '@lupin/db';
+import { QaScoreSchema, type QaScore } from '@lupin/shared-contracts';
 import {
   parseCoverage,
   surfaceCoverage,
   type CoverageFormat,
   type CoverageReport,
-} from '@automate/reporter';
+} from '@lupin/reporter';
 import {
   DEFAULT_WEIGHTS,
   score,
@@ -17,7 +17,7 @@ import {
   type RunRecord,
   type ScoreInputs,
   type ScoreSurface,
-} from '@automate/projects';
+} from '@lupin/projects';
 import { readScoreInputs, type ProjectRegistryServiceOptions } from './project-registry-service.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 
@@ -103,7 +103,7 @@ async function assemble(
  * `src/api`, `src/routes` and anything under `server` is backend; `src/ui`,
  * `src/web`, `src/components` and `src/pages` is frontend; everything else is
  * platform. A real install replaces this with the project's own declaration —
- * `automate.config.json` is where that belongs — and until it does, the honest
+ * `lupin.config.json` is where that belongs — and until it does, the honest
  * thing is a documented default rather than a per-file guess that would move
  * files between surfaces on a rename.
  */

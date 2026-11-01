@@ -36,7 +36,7 @@ export interface QuarantineEntry {
   stableId: string | null;
   /** The project whose test this is; `null` matches the test in any project (0047). */
   projectId: string | null;
-  /** `manual` for a person's entry, `automate` for one the auto-quarantine policy wrote. */
+  /** `manual` for a person's entry, `lupin` for one the auto-quarantine policy wrote. */
   quarantinedBy: string;
   reason: string | null;
   quarantinedAt: string; // ISO-8601
@@ -59,7 +59,7 @@ export interface QuarantineEntry {
 export type NewQuarantineEntry = Pick<QuarantineEntry, 'testTitle' | 'testFile' | 'reason'> & {
   stableId?: string | null;
   projectId?: string | null;
-  quarantinedBy?: 'manual' | 'automate';
+  quarantinedBy?: 'manual' | 'lupin';
 };
 
 // ---------------------------------------------------------------------------

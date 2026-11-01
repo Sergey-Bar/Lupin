@@ -252,7 +252,7 @@ export class GenericSpawnAdapter implements ExecutionProvider {
    *
    * The denylist guards the *implicit* pass-through. It does not guard an
    * explicitly named variable, because a heuristic the operator cannot override is
-   * worse than useless here: `automate.config.json`'s `env` list exists for exactly
+   * worse than useless here: `lupin.config.json`'s `env` list exists for exactly
    * the credentials a suite needs, and most of them are named `*_TOKEN`. Refusing
    * them would leave the field able to carry nothing security-shaped, and the
    * workaround people reach for is putting the value in a committed file.
@@ -392,7 +392,7 @@ export class GenericSpawnAdapter implements ExecutionProvider {
         `Command exited with ${String(child.exitCode)} and produced none of its declared artifacts. ` +
         `The run asserted nothing: the score has no row to read. Check that the command writes what ` +
         `the project declares in ` +
-        '`automate.config.json`' +
+        '`lupin.config.json`' +
         `, and that the glob matches its path.`
       );
     }

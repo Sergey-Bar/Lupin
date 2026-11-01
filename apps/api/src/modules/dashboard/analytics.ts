@@ -9,7 +9,7 @@
  * avgDurationMs — average durationMs across all runs that have a recorded duration
  */
 import { Hono } from 'hono';
-import { DashboardAnalyticsSummarySchema } from '@automate/shared-contracts';
+import { DashboardAnalyticsSummarySchema } from '@lupin/shared-contracts';
 import type { RunRepository } from '../../repositories/run-repository.js';
 
 // ---------------------------------------------------------------------------

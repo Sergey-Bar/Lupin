@@ -8,11 +8,11 @@ import {
   TableHeader,
   TableRow,
   type BadgeProps,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type {
   ProjectQuarantine as ProjectQuarantineView,
   QuarantineMode,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { HealthClient } from '../lib/health-client.js';
 import { Panel, Quiet, Segmented } from './kit.js';
@@ -141,15 +141,13 @@ export function ProjectQuarantine({
                     </TableCell>
                     <TableCell>{`${String(entry.daysQuarantined)} d`}</TableCell>
                     <TableCell>
-                      {entry.status === 'approved' && entry.quarantinedBy === 'automate'
+                      {entry.status === 'approved' && entry.quarantinedBy === 'lupin'
                         ? `${String(entry.cleanStreak)} / ${String(view.value.policy.releaseAfter)}`
                         : '—'}
                     </TableCell>
                     <TableCell>
                       <Badge variant={STATUS_TONE[entry.status]}>
-                        {entry.quarantinedBy === 'automate'
-                          ? `${entry.status} · auto`
-                          : entry.status}
+                        {entry.quarantinedBy === 'lupin' ? `${entry.status} · auto` : entry.status}
                       </Badge>
                     </TableCell>
                   </TableRow>

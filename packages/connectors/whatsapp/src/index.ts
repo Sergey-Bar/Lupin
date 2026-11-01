@@ -9,7 +9,7 @@ import {
   type ConnectorAdapter,
   type ConnectorRequest,
   type ConnectorResult,
-} from '@automate/connectors-sdk';
+} from '@lupin/connectors-sdk';
 
 /**
  * WhatsApp, through Meta's Cloud API.

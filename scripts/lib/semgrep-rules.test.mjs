@@ -79,7 +79,7 @@ const SAFE_TWINS = [
   },
   { id: 'no-shell-true', line: "return spawnSync('git', ['rev-parse', 'HEAD']);" },
   { id: 'no-hardcoded-secret-literal', line: "const code = 'REPORTER_SECRET_NOT_CONFIGURED';" },
-  { id: 'no-hardcoded-secret-literal', line: "const SESSION_COOKIE = 'automate_session';" },
+  { id: 'no-hardcoded-secret-literal', line: "const SESSION_COOKIE = 'lupin_session';" },
   { id: 'no-hardcoded-secret-literal', line: "return process.env['SESSION_SECRET'];" },
   { id: 'no-hardcoded-secret-literal', line: 'const password = readSecret();' },
   { id: 'no-string-set-timeout', line: 'setTimeout(() => {' },

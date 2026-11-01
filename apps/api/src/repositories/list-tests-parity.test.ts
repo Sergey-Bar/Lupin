@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DrizzleRunRepository } from './drizzle-run-repository.js';
 import { InMemoryRunRepository } from './in-memory-run-repository.js';
 import { DEFAULT_WORKSPACE_ID, PersistedRunStatus, RunRecord } from './run-repository.js';
@@ -117,7 +117,7 @@ describe('listTestsForRuns', () => {
         const full = path.join(current, entry.name);
         if (entry.isDirectory()) stack.push(full);
         else if (entry.name.endsWith('.ts') && statSync(full).mtimeMs > buildTime) {
-          throw new Error('packages/db is not built; run pnpm --filter @automate/db build');
+          throw new Error('packages/db is not built; run pnpm --filter @lupin/db build');
         }
       }
     }

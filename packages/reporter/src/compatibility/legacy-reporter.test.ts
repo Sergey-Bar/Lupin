@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CanonicalReporterEvent } from '@automate/shared-contracts';
+import type { CanonicalReporterEvent } from '@lupin/shared-contracts';
 import { digestRunOutcome, normalizeLegacyEvent } from './legacy-reporter.js';
 
 const context = {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-import { DrizzleOutboxRepository as DrizzleStore, samlConfig } from '@automate/db';
+import { DrizzleOutboxRepository as DrizzleStore, samlConfig } from '@lupin/db';
 import { assertSchemaBuildIsFresh, createMigratedDatabase } from './migrations.js';
 
 /**
@@ -19,9 +19,9 @@ let client: PGlite;
 const ROW = {
   id: 'saml-1',
   entryPoint: 'https://idp.example.com/sso',
-  issuer: 'automate',
+  issuer: 'lupin',
   idpCert: 'CERT',
-  callbackUrl: 'https://automate.example.com/saml/callback',
+  callbackUrl: 'https://lupin.example.com/saml/callback',
   // `updated_at` is `NOT NULL` with no database default, so a row that omits it is a
   // constraint violation rather than a defaulted value. Supplied explicitly here because
   // the first run of this file failed with `23502` and a `null` in the last column,

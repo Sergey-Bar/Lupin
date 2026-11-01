@@ -6,15 +6,15 @@ import {
   issueTrackers,
   type IssueLinkRow,
   type IssueTrackerRow,
-} from '@automate/db';
-import type { ConnectorAdapter, ConnectorResult } from '@automate/connectors-sdk';
+} from '@lupin/db';
+import type { ConnectorAdapter, ConnectorResult } from '@lupin/connectors-sdk';
 import type {
   ClusterIssueBody,
   IssueLink,
   IssueTarget,
   IssueTracker,
   IssueTrackerBody,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { readGitToken } from './git-credential-service.js';
 import { githubRepository } from './health-integrations.js';
@@ -287,7 +287,7 @@ async function prepareGitHub(
   return {
     adapter: adapters.github,
     token,
-    input: { ...repository, title: draft.summary, body: draft.description, labels: ['automate'] },
+    input: { ...repository, title: draft.summary, body: draft.description, labels: ['lupin'] },
     read: (data) => {
       const fields = record(data);
       const number = fields['number'];
@@ -457,7 +457,7 @@ async function createLinkedIssue(
 
 function linkBack(adapters: IssueAdapters, projectId: string): string[] {
   const url = adapters.detailsUrl?.(projectId);
-  return url === undefined ? [] : ['', `Open in Automate: ${url}`];
+  return url === undefined ? [] : ['', `Open in Lupin: ${url}`];
 }
 
 /** An issue from one finding of the project. */

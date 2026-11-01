@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm release:bundle` — write `dist/release/automate-<version>.zip` and `SHA256SUMS`.
+ * `pnpm release:bundle` — write `dist/release/lupin-<version>.zip` and `SHA256SUMS`.
  *
  * The zip is what a user downloads from the GitHub release: the derived compose file,
  * an `.env.example`, the three start scripts, a quick start and the licence. The version

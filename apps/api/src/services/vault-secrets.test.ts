@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import { syntheticVaultSecret } from '../test-support/synthetic-credentials.js';

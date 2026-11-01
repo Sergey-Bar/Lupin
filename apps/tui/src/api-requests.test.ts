@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  TUI_COMMANDS,
-  TUI_COMMAND_REQUIREMENTS,
-  type TuiCommand,
-} from '@automate/shared-contracts';
+import { TUI_COMMANDS, TUI_COMMAND_REQUIREMENTS, type TuiCommand } from '@lupin/shared-contracts';
 import { HttpTuiApi, routeFor, scoreView } from './api.js';
 
 /**

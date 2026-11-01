@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { and, asc, eq, isNull, ne } from 'drizzle-orm';
 import { z } from 'zod/v4';
-import { DrizzleSessionStore, users, workspaceMembers } from '@automate/db';
+import { DrizzleSessionStore, users, workspaceMembers } from '@lupin/db';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import {
   callerOf,

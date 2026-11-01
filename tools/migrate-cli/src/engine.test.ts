@@ -10,7 +10,7 @@ import { buildPlan, type MigrationPlan } from './plan.js';
 
 describe('migration engine control plane', () => {
   it('creates and reloads a deterministic catalog plan', () => {
-    const directory = mkdtempSync(path.join(tmpdir(), 'automate-migration-'));
+    const directory = mkdtempSync(path.join(tmpdir(), 'lupin-migration-'));
     try {
       const source = path.join(directory, 'source.db');
       const database = new Database(source);
@@ -124,7 +124,7 @@ describe('migration engine control plane', () => {
   });
 
   it('persists resumable state and reports count discrepancies', () => {
-    const directory = mkdtempSync(path.join(tmpdir(), 'automate-state-'));
+    const directory = mkdtempSync(path.join(tmpdir(), 'lupin-state-'));
     try {
       const statePath = path.join(directory, 'state.json');
       const store = new MigrationStateStore(statePath);

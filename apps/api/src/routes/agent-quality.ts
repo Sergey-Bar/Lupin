@@ -8,7 +8,7 @@ import {
   EvalDatasetRunBodySchema,
   type HealthUploadResult,
   type OtlpExportResponse,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { domainErrorResponse } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { invalidRequest } from '../http/invalid-request.js';
@@ -38,7 +38,7 @@ import {
  * analytics over them, the agent-config scan's MCP inventory, and the built-in eval runner.
  *
  * Eval reports are uploaded through **the** health upload door (`POST /health/reports` with
- * `format=promptfoo-json|deepeval-json|inspect-eval-json|automate-eval-json`); this group
+ * `format=promptfoo-json|deepeval-json|inspect-eval-json|lupin-eval-json`); this group
  * reads them. Every write here is audited with counts, never content.
  */
 export interface AgentQualityRouteOptions extends AgentConfigOptions, EvalRunnerOptions {

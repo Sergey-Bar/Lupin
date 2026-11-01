@@ -5,7 +5,7 @@ name: Publish npm packages
 # package.json without `"private": true`, which `scripts/lib/npm-publish-workflow.test.mjs`
 # checks, so making a package public is one edit to its package.json.
 #
-# Publishing needs an `NPM_TOKEN` secret with publish rights on the `@automate` scope. Without
+# Publishing needs an `NPM_TOKEN` secret with publish rights on the `@lupin` scope. Without
 # one the job builds, tests and packs, records the gap in the summary, and stops before
 # publishing rather than failing the release.
 on:

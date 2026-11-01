@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QA_CAPABILITIES, RepoScanSchema } from '@automate/shared-contracts';
+import { QA_CAPABILITIES, RepoScanSchema } from '@lupin/shared-contracts';
 import { literalView } from '../detect/repository-view.js';
 import { TOOL_CATALOG } from './catalog.js';
 import { CAPABILITY_WEIGHTS, scanRepository } from './index.js';

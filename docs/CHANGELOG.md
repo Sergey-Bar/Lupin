@@ -2,21 +2,88 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
+## 4.0.0 - 2026-10-30 - the product is Lupin, with a redesigned console
+
+The product is renamed to **Lupin** everywhere, and the console takes the Lupin site's look.
+There is **no upgrade path from 3.x**: every name an install depended on has changed, so a
+3.x install is replaced by a fresh 4.0.0 install, not upgraded in place.
+
+### Changed — the rename
+
+- **Packages** are `@lupin/*`. The CI CLI is `lupin`; the TUI is
+  `lupin-tui`. `tools/lupin-cli`, the CI action `.github/actions/lupin-health`, and the
+  edge scripts carry the new name.
+- **Environment variables** are `LUPIN_*`, all 64 of them, in the API,
+  the CLI, the runner, the start scripts and the `.env` they write.
+- **Access tokens** start `lup_`. Tokens issued by 3.x are not accepted.
+- **Cookies** are `lupin_*`, so every browser signs in again. The webhook signature header is
+  `x-lupin-signature`, the MCP server is `lupin`, the API title is "Lupin API", and the
+  metric is `lupin_http_requests_total`.
+- **Database and infrastructure**: the Postgres database and role are `lupin`, the compose
+  project is `lupin`, images are `ghcr.io/sergey-bar/lupin-*`, and the artifact bucket is
+  `lupin-artifacts`.
+- **Repository URLs** point at `Sergey-Bar/Lupin`.
+- A retired-name gate (`scripts/lib/product-name.test.mjs`) fails on the old name in any
+  case, with three files exempt by path and stated reason.
+
+### Changed — the design system
+
+- **Colour.** The Lupin violet is the accent — focus, links, the active state and the one
+  primary fill — on a near-neutral plane with the violet's undertone in dark and warm paper
+  in light. Every colour is declared in OKLCH, and text tokens are held to an APCA floor
+  beside the WCAG 2 ratio.
+- **Type.** Geist and Geist Mono replace Archivo and JetBrains Mono, committed once and shared
+  with the site, with measured fallback metrics and per-step tracking in place of an optical
+  axis.
+- **Shape and depth.** Controls are 44px at a 6px radius; page surfaces use the 8px panel
+  radius and overlays keep 12px. Overlay shadows are layered neutral stacks.
+- **Motion.** Arrivals settle on a CSS `linear()` spring; every navigation is a view
+  transition, and a run's row morphs into its detail heading. Reduced motion — the OS
+  setting or the console's own — now also stops view transitions and literal durations.
+- **Translucency, narrowly.** One `surface-translucent` material for the palette, dialogs,
+  popovers and toasts, opaque by default and under reduced transparency, more contrast and
+  forced colours, legible over any backdrop. The four primary routes still composite nothing
+  at rest.
+- **The shell.** The "Lupin." wordmark and the site's favicon; sentence-case headings.
+
+### Fixed
+
+- `Input`, `Select` and `Textarea` drew their only edge in the decorative border, below the
+  3:1 WCAG 1.4.11 requires; they now use the strong border.
+- `site:doctor` check 8 read only `custom.css`, so sixteen literal colours in `lupin.css`
+  passed; it now reads every site stylesheet and catches colour functions as well as hex.
+- The in-app "reduce motion" setting only scaled the motion tokens, so literal durations kept
+  animating; it is now the same clamp as the operating-system setting.
+
+### Added
+
+- Adding a test to quarantine is optimistic: the row appears at once, marked "Saving…", and a
+  refusal takes it out again and reopens the form with the text kept.
+- Tests for the `now` and `gaps` routes, which had none.
+
+### Before you install 4.0.0
+
+- Remove the 3.x install (`.\start.cmd uninstall --purge` or `./start.sh uninstall --purge`)
+  after taking a backup you may want to keep for reference, then install 4.0.0 from the
+  release zip.
+- Move any CI configuration to the `LUPIN_*` variables, reissue access tokens, and call the
+  `lupin` CLI and the `lupin-health` action.
+
 ## 3.1.1 - 2026-10-27 - upgrades from 3.0.0 start again
 
 ### Fixed
 
 - **An install upgraded from 3.0.0 with `./start.sh update` did not start (3.1.0).** `update`
   keeps the old install's compose file and changes only the image. The 3.0.0 compose file sets
-  `HOST=0.0.0.0` and does not pass `AUTOMATE_BIND`, and the 3.1.0 API read that wildcard as
+  `HOST=0.0.0.0` and does not pass `LUPIN_BIND`, and the 3.1.0 API read that wildcard as
   "reachable from other machines with no login" and refused to start. A wildcard `HOST` names no
-  machine (it is how every container listens), so with no `AUTOMATE_BIND` it now reads as
-  loopback and the API logs a warning that the exposure is unknown. An explicit `AUTOMATE_BIND`,
+  machine (it is how every container listens), so with no `LUPIN_BIND` it now reads as
+  loopback and the API logs a warning that the exposure is unknown. An explicit `LUPIN_BIND`,
   and a concrete `HOST` such as `192.168.1.5`, are enforced exactly as before. The start scripts
   still refuse an exposed bind before anything starts, and the 3.1 compose file passes the real
   one. **Given up:** an API image run on its own with only `HOST=0.0.0.0` now starts with a
   warning, as it did in 3.0.0, instead of refusing. If you were relying on that refusal, set
-  `AUTOMATE_BIND`.
+  `LUPIN_BIND`.
 - The release workflow's upgrade job now also starts from 3.0.0, not only the previous release,
   so a compose file older than the API can no longer slip through unexercised.
 
@@ -30,17 +97,17 @@ If you ran `update` to 3.1.0 and the stack is down, run `./start.sh update --ver
 - **Test intelligence.** One test identity (`file › describe › title [project]`) across every
   producer, so one test in two Playwright projects is no longer one flaky test. Quarantine now
   gates: a quarantined failure excuses itself (`ready_with_warnings`, `quarantine:EXCUSED`)
-  without rewriting the run, and `automate test` exits 0 only when the server confirms it. An
+  without rewriting the run, and `lupin test` exits 0 only when the server confirms it. An
   optional per-project policy (`off`, `suggest`, `auto`) quarantines on retry-pass or
   same-commit evidence and releases after 20 clean passes. Per-test history
   (`GET /api/v1/dashboard/tests/history`, `/dashboard/test`) and triage labels on failure causes.
-- **`@automate/playwright-reporter`** streams a run and uploads failure traces, screenshots and
+- **`@lupin/playwright-reporter`** streams a run and uploads failure traces, screenshots and
   videos (`POST /api/v1/reporter/runs/:runId/artifacts`; artifacts need database mode).
-- **`automate shard`** and `POST /api/v1/projects/:id/shards/plan`: duration-balanced CI shards.
+- **`lupin shard`** and `POST /api/v1/projects/:id/shards/plan`: duration-balanced CI shards.
 - **Allure importer**: `format=allure-results` on the upload door.
-- Every workspace package is now MIT; `@automate/cli` and the reporter are publishable
+- Every workspace package is now MIT; `@lupin/cli` and the reporter are publishable
   (`npm-publish.yml`; the publish step needs an `NPM_TOKEN` secret and has not been run).
-- **LAN mode** (`AUTOMATE_LAN_MODE=1`). One machine serves every laptop, phone and tablet on
+- **LAN mode** (`LUPIN_LAN_MODE=1`). One machine serves every laptop, phone and tablet on
   the network, Linux or Windows Docker Desktop: sign-in on every route, HTTPS from a local
   certificate authority (`start lan-cert`), device pairing with a six-digit code or QR, a
   client allowlist (`ALLOWED_CLIENT_CIDRS`), a cross-site request check, and remote runners
@@ -58,8 +125,8 @@ If you ran `update` to 3.1.0 and the stack is down, run `./start.sh update --ver
 ### Changed
 
 - A non-loopback bind with no sign-in **refuses to start**; it used to print a warning. This
-  includes running the API image on its own (`HOST=0.0.0.0`): set `AUTOMATE_BIND` to the
-  address the container is published on, or `AUTOMATE_LAN_MODE=1`.
+  includes running the API image on its own (`HOST=0.0.0.0`): set `LUPIN_BIND` to the
+  address the container is published on, or `LUPIN_LAN_MODE=1`.
 - `pnpm verify` runs each check once: 13 steps instead of 17, and about 27% faster on the
   reference host (474 s to 345 s). `scripts/lib/gate-duplication.mjs` fails if work is
   repeated again.
@@ -120,7 +187,7 @@ same key.
 
 - **Migration `0030` drops `results`, `blob_shards` and `api_keys`**, which were superseded
   and had no reader. It refuses to run, naming the table, if one still holds rows unless
-  `automate.allow_drop_nonempty` is set. Anything reading them directly must stop.
+  `lupin.allow_drop_nonempty` is set. Anything reading them directly must stop.
 - The runner advertises `playwright`, `chromium`, `api` and `k6` in the image
   (`RUNNER_CAPABILITIES`), and `playwright,chromium,api` by default elsewhere. Set it
   explicitly if you run a runner outside the image. `RUNNER_K6_SCRIPT_ROOT` and
@@ -145,18 +212,18 @@ same key.
 
 ## 2.5.0 — 2026-10-22 — download and run
 
-Automate can now be installed by downloading one zip from the release page and running
+Lupin can now be installed by downloading one zip from the release page and running
 `start`. Every release publishes amd64 and arm64 images, the bundle and its checksum from
 a `v*` tag. Getting there meant making the production stack boot at all.
 
 ### Added
 
-- **One-download install.** `automate-<version>.zip` holds the compose file, the start
+- **One-download install.** `lupin-<version>.zip` holds the compose file, the start
   scripts (`start.cmd`, `start.ps1`, `start.sh`), `.env.example` and a quick start. `start`
   creates the secrets once, pulls, starts, waits for ready, opens `http://localhost:8080`
   and prints the sign-in key; `stop`, `status`, `logs`, `update` and `uninstall [--purge]`
   do what they say. See [Install](../site/guide/install.md).
-- **Published images** on `ghcr.io/sergey-bar/automate-*`, multi-arch, with an SBOM and a
+- **Published images** on `ghcr.io/sergey-bar/lupin-*`, multi-arch, with an SBOM and a
   build-provenance attestation, from `.github/workflows/release.yml`
   ([ADR-013](./adr/013-published-images-and-a-release-bundle.md)). The release ends by
   installing itself from the release page on a clean runner.
@@ -167,8 +234,8 @@ a `v*` tag. Getting there meant making the production stack boot at all.
 ### Fixed
 
 - **MNT-19 (Critical)** — the production stack could not boot: the API refuses to start
-  without `AUTOMATE_INSTALLATION_KEY` and compose never set it.
-- **MNT-20** — that key was never read; sign-in used `AUTOMATE_API_KEY` instead.
+  without `LUPIN_INSTALLATION_KEY` and compose never set it.
+- **MNT-20** — that key was never read; sign-in used `LUPIN_API_KEY` instead.
 - **MNT-21 (Critical)** — `minio/minio` no longer exists on Docker Hub, and
   `pull_policy: never` hid it. SeaweedFS replaces it and creates the bucket on start.
 - **MNT-22** — the edge proxy sent `/` to a port nothing listened on.
@@ -180,13 +247,13 @@ a `v*` tag. Getting there meant making the production stack boot at all.
 ### Changed
 
 - The production stack publishes **one port**, `127.0.0.1:8080`, through the edge proxy.
-  `AUTOMATE_PORT` and `AUTOMATE_BIND` change it; the start scripts warn when it is opened
+  `LUPIN_PORT` and `LUPIN_BIND` change it; the start scripts warn when it is opened
   beyond the machine, because the install has no login.
 - Images are production-only: the API image went from 2.32 GB to 454 MB, the worker from
   2.74 GB to 242 MB. `db-migrate.Dockerfile` is merged into `migrate.Dockerfile`.
 - `.env.compose.example` replaces the two MinIO root-credential variables with
   `OBJECT_STORE_ACCESS_KEY_ID` / `OBJECT_STORE_SECRET_ACCESS_KEY` and adds
-  `AUTOMATE_INSTALLATION_KEY`.
+  `LUPIN_INSTALLATION_KEY`.
 
 ## 2.4.0 — 2026-10-22 — open items from 2.3.0 closed
 
@@ -330,7 +397,7 @@ and `SEM-4` were recorded `open` while their fixes were verifiably in the tree. 
 own standard is a run, so the number was taken from CI before the ledger was edited:
 `Static analysis passed: semgrep and gitleaks reported nothing.` — semgrep 1.178.0 against
 `.config/semgrep.yml` on `1129d26`, in the `Security and license audit` job of
-[run 36962862652](https://github.com/Sergey-Bar/AutoMate/actions/runs/36962862652).
+[run 36962862652](https://github.com/Sergey-Bar/Lupin/actions/runs/36962862652).
 **Zero findings.**
 
 - `SEM-2` — the row's condition was zero blocking findings. It had 22 (16 from `SEM-3`, 6
@@ -543,7 +610,7 @@ took `phase`, `outcome` and `status` from a hand-written table while `apps/api` 
 derivation that makes `runs_phase_outcome_check` unreachable. Its fallthrough produced
 `{phase: 'requeue', outcome: 'requeue'}` — a non-terminal phase carrying an outcome, which
 PostgreSQL refuses. It survived because `main.ts` passes no handler, so the path is dormant
-in production. `deriveRunState` now lives in `@automate/orchestration` and both stores
+in production. `deriveRunState` now lives in `@lupin/orchestration` and both stores
 derive from it.
 
 **An API that accepted completions under an expired lease.** The store fenced on `leaseId`
@@ -620,7 +687,7 @@ must be reachable from anywhere else.
 - `createAuthMiddleware` is no longer mounted. A credential that **is** presented is
   still accepted, so an existing script or CI job holding a stale key keeps working; a
   caller with none is served.
-- `AUTOMATE_API_KEY` no longer fails a production start. `COOKIE_SECRET` still is
+- `LUPIN_API_KEY` no longer fails a production start. `COOKIE_SECRET` still is
   required — sessions are still minted, and signing one with a published literal is a
   real defect even when nothing requires a session.
 - **Still enforced, deliberately:** the reporter secret, the runner token, lease
@@ -672,7 +739,7 @@ one outstanding is the named `durable-path.spec.ts` artefact, tracked as `E2E-3`
 
 Gates at this release: `lint`, `typecheck`, `format:check`, `complexity`,
 `security:secrets`, `docs:check` and `findings:check` clean. `test:integration`
-267/267, `@automate/api` 1159/1159, `@automate/unified-web` 242/242, `test:e2e` 19/19
+267/267, `@lupin/api` 1159/1159, `@lupin/unified-web` 242/242, `test:e2e` 19/19
 against a real PostgreSQL.
 
 ### 2.0.0 addendum — the migration

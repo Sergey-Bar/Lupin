@@ -6,7 +6,7 @@ import { z } from 'zod/v4';
 const defaultProjectRoot = fileURLToPath(new URL('../fixtures/playwright-smoke/', import.meta.url));
 const defaultApiCollectionRoot = fileURLToPath(new URL('../fixtures/api-smoke/', import.meta.url));
 const defaultK6ScriptRoot = fileURLToPath(new URL('../fixtures/k6/', import.meta.url));
-const defaultSpoolRoot = join(tmpdir(), 'automate-runner-spool');
+const defaultSpoolRoot = join(tmpdir(), 'lupin-runner-spool');
 
 function csv(value: string): string[] {
   return [
@@ -119,7 +119,7 @@ const RunnerConfigSchema = z
       context.addIssue({
         code: 'custom',
         message:
-          `AUTOMATE_API_URL=${value.apiUrl} is plain HTTP to another machine, so the registration ` +
+          `LUPIN_API_URL=${value.apiUrl} is plain HTTP to another machine, so the registration ` +
           'secret and every job token would cross the network in the clear. Use the https:// ' +
           'address LAN mode serves, or set RUNNER_ALLOW_INSECURE_API=1 on a network you trust.',
       });
@@ -142,14 +142,14 @@ const RunnerConfigSchema = z
   // with an opaque 23505 DUPLICATE, whatever its instance id.
   .transform((value) => ({
     ...value,
-    name: value.name ?? `automate-playwright-runner-${value.instanceId}`,
+    name: value.name ?? `lupin-playwright-runner-${value.instanceId}`,
   }));
 
 export type RunnerConfig = z.infer<typeof RunnerConfigSchema>;
 
 export function parseRunnerConfig(input: Record<string, string | undefined>): RunnerConfig {
   return RunnerConfigSchema.parse({
-    apiUrl: input['AUTOMATE_API_URL'],
+    apiUrl: input['LUPIN_API_URL'],
     instanceId: input['RUNNER_INSTANCE_ID'],
     name: input['RUNNER_NAME'],
     version: input['RUNNER_VERSION'],

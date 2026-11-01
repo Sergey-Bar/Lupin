@@ -28,14 +28,14 @@ and what to do next.
 ## Solo
 
 Nothing to configure. `./start.sh` binds to `127.0.0.1`, and anything that tries to make the
-install reachable from another machine — `AUTOMATE_BIND=0.0.0.0`, LAN mode, a tunnel — is
+install reachable from another machine — `LUPIN_BIND=0.0.0.0`, LAN mode, a tunnel — is
 refused with the profile to use instead.
 
 ## Startup
 
 Turns sign-in on. Then pick how people reach it:
 
-- **Same network:** [LAN mode](/guide/lan-mode) — `AUTOMATE_BIND=0.0.0.0`, a LAN certificate,
+- **Same network:** [LAN mode](/guide/lan-mode) — `LUPIN_BIND=0.0.0.0`, a LAN certificate,
   and device pairing from the Access page.
 - **Anywhere:** [Cloudflare Tunnel and Access](/guide/remote-cloudflare) —
   `./start.sh --profile startup --remote cloudflare`. No router port is opened.
@@ -45,18 +45,18 @@ Issue access tokens with a role (`viewer`, `operator`, `admin`) from the Access 
 
 ## Team
 
-Adds people. Register Automate with your identity provider (Google, Microsoft Entra, Okta,
+Adds people. Register Lupin with your identity provider (Google, Microsoft Entra, Okta,
 GitHub through an OIDC bridge, or any OpenID Connect provider) as a **confidential web
 application** with the redirect URI `https://<your host>/api/v1/auth/oidc/callback`, then:
 
 ```sh
 OIDC_ISSUER=https://login.example.com
-OIDC_CLIENT_ID=automate
+OIDC_CLIENT_ID=lupin
 OIDC_CLIENT_SECRET=...
 OIDC_ALLOWED_DOMAINS=example.com
 OIDC_ROLE_MAP=admin:ana@example.com,operator:group:qa
 OIDC_DEFAULT_ROLE=viewer          # or none, to admit only the people the map names
-AUTOMATE_PUBLIC_URL=https://automate.example.com
+LUPIN_PUBLIC_URL=https://lupin.example.com
 ```
 
 The sign-in screen then shows _Sign in with single sign-on_. A person's role is per
@@ -67,9 +67,9 @@ first sign-in only, when their account is made. After that they keep what an adm
 and someone an admin removes from the default workspace stays removed: they can still sign in
 to the other workspaces they are a member of.
 
-Automate trusts the email your identity provider asserts: it is what `OIDC_ALLOWED_DOMAINS`
+Lupin trusts the email your identity provider asserts: it is what `OIDC_ALLOWED_DOMAINS`
 and the email rules in the role map are checked against, and what links a person SCIM
-provisioned to their first sign-in. So register Automate in a single-organisation
+provisioned to their first sign-in. So register Lupin in a single-organisation
 configuration of your provider (in Entra, _accounts in this organizational directory only_),
 never one that lets any organisation's accounts sign in. An email the provider marks
 unverified is refused; one it says nothing about is taken as asserted, because Entra sends no
@@ -84,11 +84,11 @@ Everything in `team`, plus:
   signed in; tokens sent by CI keep working. The install refuses to start without OIDC or
   Cloudflare Access configured, because otherwise nobody could sign in.
 - **SAML** goes through Cloudflare Access: add your SAML identity provider to Zero Trust, and
-  map its groups with `CF_ACCESS_ROLE_MAP=admin:group:automate-admins`. Automate verifies the
+  map its groups with `CF_ACCESS_ROLE_MAP=admin:group:lupin-admins`. Lupin verifies the
   token Cloudflare signs, so there is no XML signature handling in the app. The people Access
   lets in are accounts, so SCIM, Members and per-workspace roles apply to them as they do to
   OIDC sign-ins ([how](/guide/remote-cloudflare#on-team-and-enterprise-people-are-accounts)).
-- **Break-glass.** If single sign-on is down, set `AUTOMATE_BREAK_GLASS=1` and restart: the
+- **Break-glass.** If single sign-on is down, set `LUPIN_BREAK_GLASS=1` and restart: the
   installation key works again, behind Cloudflare Access too, every use is logged and written
   to the audit trail, and the start-up log says it is on. Turn it off once you are back in, and
   the sessions it signed in stop counting.
@@ -103,7 +103,7 @@ Everything in `team`, plus:
   rewritten up to that point.
 - **Provisioning with SCIM.** Issue a SCIM token (`POST /api/v1/scim-tokens`, as an admin) and
   give your identity provider the base URL `https://<your host>/scim/v2` and that token. Assign
-  people to the `automate-viewer`, `automate-operator` or `automate-admin` groups to set their
+  people to the `lupin-viewer`, `lupin-operator` or `lupin-admin` groups to set their
   role. Deactivating someone in the identity provider ends every session they hold at once,
   and they cannot sign in again. Every access token they made is revoked with them, in every
   workspace, so a token one person made for CI stops when they leave: make CI tokens as the

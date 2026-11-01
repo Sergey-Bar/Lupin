@@ -49,7 +49,7 @@ describe('health and readiness routes', () => {
       expect(response.status, path).toBe(200);
       expect((await response.json()) as Record<string, unknown>).toMatchObject({
         status: 'healthy',
-        service: 'automate-api',
+        service: 'lupin-api',
       });
     }
   });
@@ -119,7 +119,7 @@ describe('the metrics route', () => {
     const body = await (await app.request('/metrics')).text();
 
     expect(body).toContain('# HELP process_resident_memory_bytes');
-    expect(body).toContain('# TYPE automate_http_requests_total counter');
+    expect(body).toContain('# TYPE lupin_http_requests_total counter');
     expect(body.endsWith('\n')).toBe(true);
     // Every sample line is `name{labels} value` or `name value` — nothing else.
     for (const line of body.split('\n').filter((candidate) => candidate !== '')) {
@@ -141,7 +141,7 @@ describe('the metrics route', () => {
 describe('the readiness alias', () => {
   it('answers both paths identically when the database is reachable', async () => {
     const app = createHealthRoutes({
-      databaseUrl: 'postgres://automate:secret@db.internal:5432/automate',
+      databaseUrl: 'postgres://lupin:secret@db.internal:5432/lupin',
       checkDatabase: async () => undefined,
     });
 
@@ -157,12 +157,12 @@ describe('the readiness alias', () => {
     expect(bodies[0]?.status).toBe(200);
     expect(bodies[1]?.status).toBe(200);
     expect(bodies[1]?.body).toEqual(bodies[0]?.body);
-    expect(bodies[0]?.body).toEqual({ status: 'ready', service: 'automate-api' });
+    expect(bodies[0]?.body).toEqual({ status: 'ready', service: 'lupin-api' });
   });
 
   it('answers both paths identically when the database check fails', async () => {
     const app = createHealthRoutes({
-      databaseUrl: 'postgres://automate:secret@db.internal:5432/automate',
+      databaseUrl: 'postgres://lupin:secret@db.internal:5432/lupin',
       checkDatabase: async () => {
         throw new Error('connect ECONNREFUSED 10.0.0.7:5432');
       },
@@ -197,7 +197,7 @@ describe('the readiness alias', () => {
     // fresh pool per call.
     let probes = 0;
     const app = createHealthRoutes({
-      databaseUrl: 'postgres://automate@db.internal:5432/automate',
+      databaseUrl: 'postgres://lupin@db.internal:5432/lupin',
       checkDatabase: async () => {
         probes += 1;
       },
@@ -220,7 +220,7 @@ describe('the readiness alias', () => {
   it('does not probe the database when the health routes are asked instead', async () => {
     let probes = 0;
     const app = createHealthRoutes({
-      databaseUrl: 'postgres://automate@db.internal:5432/automate',
+      databaseUrl: 'postgres://lupin@db.internal:5432/lupin',
       checkDatabase: async () => {
         probes += 1;
       },
@@ -340,7 +340,7 @@ describe('what a readiness response is allowed to say', () => {
     // every few seconds, and a changing body makes a probe's output impossible to
     // diff between the last good and the first bad one.
     const app = createHealthRoutes({
-      databaseUrl: 'postgres://automate@db.internal:5432/automate',
+      databaseUrl: 'postgres://lupin@db.internal:5432/lupin',
       checkDatabase: async () => undefined,
     });
 

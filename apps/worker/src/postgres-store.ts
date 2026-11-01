@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import pg, { type PoolClient, type QueryResultRow } from 'pg';
-import { deriveRunState, type DerivedRunState } from '@automate/orchestration';
-import type { RunPhase } from '@automate/shared-contracts';
+import { deriveRunState, type DerivedRunState } from '@lupin/orchestration';
+import type { RunPhase } from '@lupin/shared-contracts';
 import type {
   DeliverySourceDue,
   DeliverySyncEnqueue,
@@ -100,7 +100,7 @@ function terminalJobState(status: JobResultStatus): 'completed' | 'failed' | 'ca
  * The worker's vocabulary is **not** a phase vocabulary â€” `JobResultStatus` names
  * job outcomes, and `'completed'` is not a `RunPhase`. So the fold belongs here,
  * where the vocabulary is known, while the derivation that follows belongs in
- * `@automate/orchestration`.
+ * `@lupin/orchestration`.
  *
  * It is a closed, total map with no fallthrough, because a fallthrough is what
  * produced the defect: an unmatched status became `phase: status,

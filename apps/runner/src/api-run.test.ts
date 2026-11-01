@@ -34,7 +34,7 @@ beforeAll(async () => {
   server = createServer((request, response) => {
     if (request.url === '/health') {
       response.setHeader('content-type', 'application/json');
-      response.end(JSON.stringify({ service: 'automate-api', status: 'ok' }));
+      response.end(JSON.stringify({ service: 'lupin-api', status: 'ok' }));
       return;
     }
     response.statusCode = 404;
@@ -53,7 +53,7 @@ afterEach(async () => {
 });
 
 async function scratchDirectory(): Promise<string> {
-  const path = await mkdtemp(join(tmpdir(), 'automate-api-run-'));
+  const path = await mkdtemp(join(tmpdir(), 'lupin-api-run-'));
   scratch.push(path);
   return path;
 }

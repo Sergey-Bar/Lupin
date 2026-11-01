@@ -9,14 +9,14 @@ import {
   TableHeader,
   TableRow,
   cn,
-} from '@automate/ui';
+} from '@lupin/ui';
 import {
   AI_ATTRIBUTIONS,
   type AiAttribution,
   type AiCodePullRequestList,
   type AiCodeReport,
   type AiOutcomeComparisonRecord,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { AiCodeClient } from '../lib/ai-code-client.js';
 import type { HealthClient } from '../lib/health-client.js';

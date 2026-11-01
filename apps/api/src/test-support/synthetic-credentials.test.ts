@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SECRET_MIN_LENGTH, isSecretPlaceholder, parseConfig } from '@automate/config';
+import { SECRET_MIN_LENGTH, isSecretPlaceholder, parseConfig } from '@lupin/config';
 import {
   syntheticApiKey,
   syntheticCookieSecret,
@@ -23,7 +23,7 @@ import {
 const INSTALLATION_SECRETS = {
   COOKIE_SECRET: syntheticCookieSecret(),
   VAULT_SECRET: syntheticVaultSecret(),
-  AUTOMATE_API_KEY: syntheticApiKey(),
+  LUPIN_API_KEY: syntheticApiKey(),
   REPORTER_SECRET: syntheticReporterSecret(),
   RUNNER_REGISTRATION_SECRET: syntheticRunnerRegistrationSecret(),
 } as const;
@@ -49,11 +49,11 @@ describe('synthetic installation secrets', () => {
       {
         NODE_ENV: 'production',
         ...INSTALLATION_SECRETS,
-        DATABASE_URL: 'postgresql://user:pass@127.0.0.1:5432/automate',
+        DATABASE_URL: 'postgresql://user:pass@127.0.0.1:5432/lupin',
       },
       { requireProductionSecrets: false },
     );
-    expect(parsed.installationApiKey).toBe(INSTALLATION_SECRETS.AUTOMATE_API_KEY);
+    expect(parsed.installationApiKey).toBe(INSTALLATION_SECRETS.LUPIN_API_KEY);
     expect(parsed.reporterSecret).toBe(INSTALLATION_SECRETS.REPORTER_SECRET);
     expect(parsed.runnerRegistrationSecret).toBe(INSTALLATION_SECRETS.RUNNER_REGISTRATION_SECRET);
     expect(parsed.vaultSecret).toBe(INSTALLATION_SECRETS.VAULT_SECRET);

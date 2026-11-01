@@ -6,7 +6,7 @@ import {
   sbomComponents,
   supplyChainPolicies,
   vexDocuments,
-} from '@automate/db';
+} from '@lupin/db';
 import {
   applyVex,
   type PreTriagedFinding,
@@ -14,8 +14,8 @@ import {
   type SbomComponent,
   type VexDocument,
   type VexFinding,
-} from '@automate/reporter';
-import { evaluateLicence } from '@automate/reporting';
+} from '@lupin/reporter';
+import { evaluateLicence } from '@lupin/reporting';
 import {
   SupplyChainPolicySchema,
   type CanonicalFinding,
@@ -24,7 +24,7 @@ import {
   type SbomComponentsPage,
   type SupplyChainPolicy,
   type SupplyChainPolicyRecord,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import {
   INSERT_CHUNK,
@@ -53,7 +53,7 @@ import {
  * for machine decisions too, with a date that is renewed on every upload that re-applies the
  * statement behind it.
  */
-export const LICENCE_TOOL = 'automate-licence';
+export const LICENCE_TOOL = 'lupin-licence';
 const SBOM_TRIAGE_PREFIX = 'sbom:';
 const VEX_TRIAGE_PREFIX = 'vex:';
 

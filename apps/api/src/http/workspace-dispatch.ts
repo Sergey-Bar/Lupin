@@ -10,7 +10,7 @@ import { BROWSER_SIGN_IN } from './roles.js';
  *
  * **The workspace comes from a credential the server trusts**, in this order:
  *
- * 1. a live access token (`amt_…`): the token row's own workspace, whatever else the request
+ * 1. a live access token (`lup_…`): the token row's own workspace, whatever else the request
  *    says. An unknown or revoked one is no credential, and the rules below decide, as the
  *    caller resolver passes over it to the next credential;
  * 2. a runner's call about a job (`/api/v1/jobs/:jobId/…`, the id a uuid): the job's
@@ -22,7 +22,7 @@ import { BROWSER_SIGN_IN } from './roles.js';
  *    uploads land in the default, a SCIM token is scoped by its own row, and a runner's
  *    registration, heartbeat and claim reach the shared pool there;
  * 4. a person — their session, or on team and enterprise the account Cloudflare Access signs in:
- *    the workspace they chose (the `automate_workspace` cookie) if they are a member of it, else
+ *    the workspace they chose (the `lupin_workspace` cookie) if they are a member of it, else
  *    the default if they are a member there, else their first;
  * 5. the installation's own admin (the installation session, an open install, or a Cloudflare
  *    identity the role map makes an admin and that is not an account): any workspace that
@@ -43,7 +43,7 @@ import { BROWSER_SIGN_IN } from './roles.js';
  * Named without `cookie` because the secret-literal rule reads that word in a name as a
  * credential held in source (the same reason as `BROWSER_SIGN_IN`).
  */
-export const WORKSPACE_CHOICE = 'automate_workspace';
+export const WORKSPACE_CHOICE = 'lupin_workspace';
 
 /** A workspace id: what the create route accepts. `WORKSPACE_ID`, the default, may be any. */
 export const WORKSPACE_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/u;

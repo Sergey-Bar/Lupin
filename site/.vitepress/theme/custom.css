@@ -28,7 +28,7 @@
  *
  * 1. the dark default, because this product is authored dark-first and a site that
  *    opens light shows a different product than the one it documents;
- * 2. the accent, mapped onto `--automate-accent`, so a link in this site is the
+ * 2. the accent, mapped onto `--lupin-accent`, so a link in this site is the
  *    same colour as a link in the console;
  * 3. the page background, mapped onto the sunken plane step, so the surface a page
  *    of prose sits on is one of the four the product defines.
@@ -49,38 +49,38 @@
 
 /* The plane, and the accent, behind every VitePress surface. */
 :root {
-  --vp-c-bg: var(--automate-surface-sunken);
-  --vp-c-bg-soft: var(--automate-surface);
-  --vp-c-bg-alt: var(--automate-surface-muted);
-  --vp-c-bg-elv: var(--automate-surface-raised);
-  --vp-c-divider: var(--automate-border);
-  --vp-c-gutter: var(--automate-border);
+  --vp-c-bg: var(--lupin-surface-sunken);
+  --vp-c-bg-soft: var(--lupin-surface);
+  --vp-c-bg-alt: var(--lupin-surface-muted);
+  --vp-c-bg-elv: var(--lupin-surface-raised);
+  --vp-c-divider: var(--lupin-border);
+  --vp-c-gutter: var(--lupin-border);
 
-  --vp-c-text-1: var(--automate-fg);
-  --vp-c-text-2: var(--automate-fg-muted);
-  --vp-c-text-3: var(--automate-fg-muted);
+  --vp-c-text-1: var(--lupin-fg);
+  --vp-c-text-2: var(--lupin-fg-muted);
+  --vp-c-text-3: var(--lupin-fg-muted);
 
   /* The accent, in both of the roles VitePress gives it. `--vp-c-brand-1` is the
      link colour in prose, so it is measured as text: 4.5:1 on the page background,
      which is why the light theme uses the 800 step rather than the 500 the product's
      dark theme can get away with. See `theme.test.ts` for both numbers. */
-  --vp-c-brand-1: var(--automate-accent);
-  --vp-c-brand-2: var(--automate-accent);
-  --vp-c-brand-3: var(--automate-accent);
-  --vp-c-brand-soft: color-mix(in oklab, var(--automate-accent) 14%, transparent);
+  --vp-c-brand-1: var(--lupin-accent);
+  --vp-c-brand-2: var(--lupin-accent);
+  --vp-c-brand-3: var(--lupin-accent);
+  --vp-c-brand-soft: color-mix(in oklab, var(--lupin-accent) 14%, transparent);
 
-  --vp-c-default-1: var(--automate-accent);
-  --vp-c-default-2: var(--automate-surface-raised);
-  --vp-c-default-3: var(--automate-border-strong);
-  --vp-c-default-soft: color-mix(in oklab, var(--automate-accent) 14%, transparent);
+  --vp-c-default-1: var(--lupin-accent);
+  --vp-c-default-2: var(--lupin-surface-raised);
+  --vp-c-default-3: var(--lupin-border-strong);
+  --vp-c-default-soft: color-mix(in oklab, var(--lupin-accent) 14%, transparent);
 
-  --vp-c-code-1: var(--automate-fg);
-  --vp-c-code-2: var(--automate-fg-muted);
-  --vp-c-code-3: var(--automate-surface-muted);
-  --vp-c-code-bg: var(--automate-surface);
+  --vp-c-code-1: var(--lupin-fg);
+  --vp-c-code-2: var(--lupin-fg-muted);
+  --vp-c-code-3: var(--lupin-surface-muted);
+  --vp-c-code-bg: var(--lupin-surface);
 
-  --vp-font-family-base: var(--automate-font-sans);
-  --vp-font-family-mono: var(--automate-font-mono);
+  --vp-font-family-base: var(--lupin-font-sans);
+  --vp-font-family-mono: var(--lupin-font-mono);
 
   --vp-layout-max-width: 1440px;
   color-scheme: dark;
@@ -118,8 +118,8 @@ html:not([data-theme='light']) {
  */
 .vp-doc pre,
 .vp-doc [class*='language-'] {
-  background-color: var(--automate-surface) !important;
-  border: 1px solid var(--automate-border);
+  background-color: var(--lupin-surface) !important;
+  border: 1px solid var(--lupin-border);
 }
 
 .vp-doc table {
@@ -131,12 +131,12 @@ html:not([data-theme='light']) {
 .vp-doc th {
   text-align: left;
   font-weight: 600;
-  color: var(--automate-fg-muted);
-  border-bottom: 1px solid var(--automate-border-strong);
+  color: var(--lupin-fg-muted);
+  border-bottom: 1px solid var(--lupin-border-strong);
 }
 
 .vp-doc td {
-  border-bottom: 1px solid var(--automate-border);
+  border-bottom: 1px solid var(--lupin-border);
 }
 
 /* Numerals in a table are readings, so they line up. */
@@ -188,19 +188,19 @@ html:not([data-theme='light']) {
   align-self: center;
   padding: 0 1rem;
   margin: 0;
-  border: 1px solid var(--automate-accent);
+  border: 1px solid var(--lupin-accent);
   border-radius: 0.25rem;
-  background: var(--automate-accent);
-  color: var(--automate-on-fill);
+  background: var(--lupin-accent);
+  color: var(--lupin-on-fill);
 }
 
 .VPNavBarMenuLink:last-child:hover,
 .VPNavBarMenuLink:last-child.active {
-  color: var(--automate-on-fill);
+  color: var(--lupin-on-fill);
 }
 
 .VPNavBarMenuLink:last-child:focus-visible {
-  outline: 2px solid var(--automate-accent);
+  outline: 2px solid var(--lupin-accent);
   outline-offset: 3px;
 }
 
@@ -235,9 +235,9 @@ html:not([data-theme='light']) {
 }
 
 .vp-doc details {
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 0.25rem;
-  background: var(--automate-surface);
+  background: var(--lupin-surface);
 }
 
 .vp-doc details > summary {
@@ -253,13 +253,13 @@ html:not([data-theme='light']) {
 }
 .concept-comparison > div {
   padding: 1.5rem;
-  border: 1px solid var(--automate-border);
-  background: var(--automate-surface);
+  border: 1px solid var(--lupin-border);
+  background: var(--lupin-surface);
   border-radius: 0.3rem;
 }
 .concept-comparison > div > span {
-  font: 0.65rem var(--automate-font-mono);
-  color: var(--automate-fg-muted);
+  font: 0.65rem var(--lupin-font-mono);
+  color: var(--lupin-fg-muted);
   letter-spacing: 0.08em;
 }
 .concept-comparison strong {
@@ -271,7 +271,7 @@ html:not([data-theme='light']) {
 .concept-comparison p {
   font-size: 0.9rem;
   line-height: 1.6;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .concept-track {
   display: flex;
@@ -279,18 +279,18 @@ html:not([data-theme='light']) {
   flex-wrap: wrap;
   font-size: 0.75rem;
   padding: 0.8rem 0;
-  border-block: 1px solid var(--automate-border);
+  border-block: 1px solid var(--lupin-border);
 }
 .concept-track span {
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .concept-result {
   display: flex;
   gap: 0.7rem;
   align-items: center;
   padding: 0.8rem 0;
-  border-block: 1px solid var(--automate-border);
-  color: var(--automate-danger);
+  border-block: 1px solid var(--lupin-border);
+  color: var(--lupin-danger);
   font-size: 0.85rem;
 }
 @media (max-width: 640px) {
@@ -302,7 +302,7 @@ html:not([data-theme='light']) {
 .vp-doc > div > p:first-of-type {
   font-size: 1.08rem;
   line-height: 1.65;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 
 .vp-doc a {
@@ -321,27 +321,27 @@ html:not([data-theme='light']) {
   flex-direction: column;
   min-height: 12rem;
   padding: 1.5rem;
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 0.25rem;
-  background: var(--automate-surface);
-  color: var(--automate-fg);
+  background: var(--lupin-surface);
+  color: var(--lupin-fg);
   text-decoration: none;
 }
 
 .vp-doc .guide-hub__card:hover {
-  border-color: var(--automate-border-strong);
+  border-color: var(--lupin-border-strong);
 }
 
 .vp-doc .guide-hub__card:focus-visible {
-  outline: 2px solid var(--automate-accent);
+  outline: 2px solid var(--lupin-accent);
   outline-offset: 3px;
 }
 
 .vp-doc .guide-hub__card > span {
-  font-family: var(--automate-font-mono);
+  font-family: var(--lupin-font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.1em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 
 .vp-doc .guide-hub__card strong {
@@ -358,7 +358,7 @@ html:not([data-theme='light']) {
   margin-top: 0.65rem;
   font-size: 0.87rem;
   line-height: 1.5;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 
 @media (max-width: 640px) {
@@ -385,7 +385,7 @@ html:not([data-theme='light']) {
  *
  * **VitePress's default is five: tip, warning, danger, info and details.** `info` is
  * the one that mattered and it is the one this product cannot use for it: in a
- * repository where `--automate-info` is steel *because* the brand blue means a
+ * repository where `--lupin-info` is steel *because* the brand blue means a
  * verdict, an information box drawn in the brand blue would be making the same claim
  * in a second place. So the mapping here is deliberate — `tip` takes the accent,
  * `info` takes the status steel, and the other three take the run states they are
@@ -396,28 +396,28 @@ html:not([data-theme='light']) {
  * surface that has quietly stopped using the product's palette.
  */
 .vp-doc .custom-block.tip {
-  border-left-color: var(--automate-accent);
+  border-left-color: var(--lupin-accent);
 }
 
 .vp-doc .custom-block.info {
-  border-left-color: var(--automate-info);
+  border-left-color: var(--lupin-info);
 }
 
 .vp-doc .custom-block.warning {
-  border-left-color: var(--automate-warning);
+  border-left-color: var(--lupin-warning);
 }
 
 .vp-doc .custom-block.danger {
-  border-left-color: var(--automate-danger);
+  border-left-color: var(--lupin-danger);
 }
 
 .vp-doc .custom-block p,
 .vp-doc .custom-block li {
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 
 .vp-doc .custom-block .custom-block-title {
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   font-weight: 600;
 }
 
@@ -435,7 +435,7 @@ html:not([data-theme='light']) {
   .VPDoc,
   .VPNav,
   .VPSidebar {
-    --vp-c-divider: var(--automate-border-strong);
+    --vp-c-divider: var(--lupin-border-strong);
   }
 }
 
@@ -480,12 +480,12 @@ html:not([data-theme='light']) {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--automate-fg);
+  color: var(--lupin-fg);
   justify-content: center;
 }
 .VPNavBarSearch .DocSearch-Button:hover,
 .VPNavBar .VPSocialLink:hover {
-  background: var(--automate-surface-muted);
+  background: var(--lupin-surface-muted);
 }
 .VPNavBarSearch .DocSearch-Search-Icon {
   width: 20px;

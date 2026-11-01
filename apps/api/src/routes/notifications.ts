@@ -3,8 +3,8 @@ import {
   CreateChannelBodySchema,
   CreateSubscriptionBodySchema,
   type ReportPreview,
-} from '@automate/shared-contracts';
-import { composeReport, renderPlain } from '@automate/reporting';
+} from '@lupin/shared-contracts';
+import { composeReport, renderPlain } from '@lupin/reporting';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { callerOf, requireRole, type CallerResolver } from '../http/roles.js';
 import { audit } from '../services/access-service.js';

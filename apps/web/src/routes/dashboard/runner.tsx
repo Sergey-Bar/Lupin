@@ -15,7 +15,7 @@ import {
   Search,
   Star,
   cn,
-} from '@automate/ui';
+} from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
 import {
   CopyButton,
@@ -163,7 +163,7 @@ function RunnerBody({
  * Pinned tools, kept in this browser: the handful of commands a QA engineer runs ten times a
  * day sit at the top of every group rather than wherever the manifest put them.
  */
-const PIN_KEY = 'automate-pinned-tools';
+const PIN_KEY = 'lupin-pinned-tools';
 
 function readPins(): Set<string> {
   try {

@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
   type BadgeProps,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type { ApiClient, QuarantineEntry } from '../../lib/api.js';
 import { formatDate } from '../../lib/format.js';
 import { Kpi, PageFrame, PageHeader, Paged, Panel, Quiet } from '../../components/kit.js';
@@ -52,10 +52,10 @@ const QUARANTINE_STATUS_TONE: Partial<Record<QuarantineEntry['status'], BadgePro
 const UNKNOWN_STATUS_TONE = 'default';
 
 const INPUT =
-  'mt-1 min-h-11 w-full rounded-lg border border-border-default bg-surface px-3 text-sm text-fg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus';
+  'mt-1 min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 text-sm text-fg outline-none hover:border-fg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus';
 
 export function QuarantinePage({ api }: { api?: ApiClient }) {
-  const { data, isLoading, error, addQuarantine } = useQuarantine(api);
+  const { data, isLoading, error, addQuarantine, isUnsaved } = useQuarantine(api);
   const [isAdding, setIsAdding] = useState(false);
   const [testTitle, setTestTitle] = useState('');
   const [testFile, setTestFile] = useState('');
@@ -94,16 +94,19 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
     e.preventDefault();
     if (!testTitle || !testFile) return;
     setAddError(null);
+    // Optimistic: the entry is in the list the moment the form closes, marked "Saving…".
+    setIsAdding(false);
     try {
       await addQuarantine({ testTitle, testFile, reason: reason || undefined });
       setTestTitle('');
       setTestFile('');
       setReason('');
-      setIsAdding(false);
     } catch (err) {
-      // Shown, not just logged, and the form is left populated: clearing the fields on a
-      // failure would discard the work, which is the second way to lose it.
+      // The hook has already taken the guess back out of the list. The form reopens with
+      // the reader's text and says why, because clearing the fields on a failure would
+      // discard the work, which is the second way to lose it.
       setAddError(err instanceof Error ? err.message : 'Could not add the test to quarantine');
+      setIsAdding(true);
     }
   };
 
@@ -174,8 +177,18 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
                 </TableHeader>
                 <TableBody>
                   {page.map((entry) => (
-                    <TableRow key={entry.id} data-testid={`quarantine-item-${entry.id}`}>
-                      <TableCell>{entry.testTitle}</TableCell>
+                    <TableRow
+                      key={entry.id}
+                      data-testid={`quarantine-item-${entry.id}`}
+                      aria-busy={isUnsaved(entry.id) ? true : undefined}
+                      className={isUnsaved(entry.id) ? 'opacity-60' : undefined}
+                    >
+                      <TableCell>
+                        {entry.testTitle}
+                        {isUnsaved(entry.id) ? (
+                          <span className="ml-2 text-xs text-fg-muted">Saving…</span>
+                        ) : null}
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{entry.testFile}</TableCell>
                       <TableCell className="text-fg-muted">
                         {entry.reason ?? 'no reason given'}

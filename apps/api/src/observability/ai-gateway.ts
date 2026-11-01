@@ -16,7 +16,7 @@
  * deployment that will not start because an optional feature is unconfigured, and
  * an unconfigured feature is not a broken one.
  */
-import { KiloGateway, OllamaGateway, type AiGateway } from '@automate/automation';
+import { KiloGateway, OllamaGateway, type AiGateway } from '@lupin/automation';
 
 export type GatewayChoice = 'kilo' | 'ollama' | 'none';
 

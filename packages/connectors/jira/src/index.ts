@@ -10,7 +10,7 @@ import {
   type ConnectorAdapter,
   type ConnectorRequest,
   type ConnectorResult,
-} from '@automate/connectors-sdk';
+} from '@lupin/connectors-sdk';
 
 /**
  * The Jira Cloud REST API, v3.

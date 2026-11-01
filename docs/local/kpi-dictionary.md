@@ -1,4 +1,4 @@
-# AUTOMATE (local) — KPI dictionary
+# Lupin Local — KPI dictionary
 
 **Status:** Draft
 **Owner:** maintainers

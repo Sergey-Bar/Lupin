@@ -4,7 +4,7 @@ import type {
   FindingKind,
   FindingSeverity,
   HealthDimension,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 /**
  * The agent's instructions and MCP configuration, scanned as supply-chain input.
@@ -55,7 +55,7 @@ import type {
  * than a crash or a silent pass — a config nobody could read was not checked.
  */
 
-export const AGENT_CONFIG_TOOL = 'automate-agent-config';
+export const AGENT_CONFIG_TOOL = 'lupin-agent-config';
 
 /**
  * Where coding agents read instructions and MCP configuration, as repository-relative

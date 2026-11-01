@@ -21,7 +21,7 @@ import {
   TableRow,
   Textarea,
   cn,
-} from '@automate/ui';
+} from '@lupin/ui';
 import {
   FINDING_SEVERITIES,
   HEALTH_DIMENSIONS,
@@ -33,7 +33,7 @@ import {
   type HealthFinding,
   type HealthHistory,
   type ProjectHealth,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { HealthClient, HealthSettings } from '../lib/health-client.js';
 import {
@@ -165,7 +165,7 @@ function GradeHero({
     <section
       aria-label="Health grade"
       data-testid="health-hero"
-      className="grid gap-4 rounded-xl border border-border-strong bg-surface p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-8 sm:p-8"
+      className="grid gap-4 rounded-lg border border-border-strong bg-surface p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-8 sm:p-8"
     >
       <div className="flex items-baseline gap-3">
         <span
@@ -255,10 +255,10 @@ function DimensionTile({ entry }: { entry: DimensionScore }): React.ReactElement
       data-testid={`dimension-${entry.dimension}`}
       data-measured={entry.measured ? 'true' : 'false'}
       data-opt-in={optIn ? 'true' : 'false'}
-      className="flex min-w-0 flex-col gap-2 rounded-xl border border-border bg-surface px-4 py-3"
+      className="flex min-w-0 flex-col gap-2 rounded-lg border border-border bg-surface px-4 py-3"
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-xs font-medium uppercase tracking-wider text-fg-muted">
+        <span className="truncate text-xs font-medium text-fg-muted">
           {dimensionLabel(entry.dimension)}
         </span>
         <span className={cn('text-2xl font-semibold tabular-nums', letterTone(entry.letter))}>

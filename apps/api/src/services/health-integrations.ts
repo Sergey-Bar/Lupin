@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { isIP } from 'node:net';
-import type { ConnectorAdapter } from '@automate/connectors-sdk';
-import type { GateVerdict } from '@automate/projects';
+import type { ConnectorAdapter } from '@lupin/connectors-sdk';
+import type { GateVerdict } from '@lupin/projects';
 import {
   HEALTH_DIMENSION_LABELS,
   type CanonicalFinding,
@@ -9,7 +9,7 @@ import {
   type HealthGrade,
   type HealthLetter,
   type Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import type { AiGovernanceCheck } from './repo-health-service.js';
 import type { EvalGateReading, EvalGateSuite } from './eval-service.js';
@@ -36,8 +36,8 @@ export function githubRepository(url: string | null): { owner: string; repo: str
 }
 
 /** The comment's first line, which is how the next report finds the comment to update. */
-export const COMMENT_MARKER = '<!-- automate-health -->';
-export const STATUS_CONTEXT = 'automate/health';
+export const COMMENT_MARKER = '<!-- lupin-health -->';
+export const STATUS_CONTEXT = 'lupin/health';
 const COMMENT_FINDINGS = 10;
 
 export interface GateReport {
@@ -69,7 +69,7 @@ function testList(ids: readonly string[]): string {
 
 /**
  * The "Tests" section: the commit's run, which failures are quarantined and which are not,
- * and the flaky tests nobody has quarantined yet. The same verdict `automate test` acted on,
+ * and the flaky tests nobody has quarantined yet. The same verdict `lupin test` acted on,
  * because both read `excusesRun`.
  */
 export function testsSection(tests: CommitTests): string[] {
@@ -611,7 +611,7 @@ async function sendWebhook(
   event: AlertEvent,
 ): Promise<string> {
   const body = JSON.stringify({
-    type: 'automate.health.alert',
+    type: 'lupin.health.alert',
     projectId: event.projectId,
     project: event.project,
     branch: event.branch,
@@ -624,7 +624,7 @@ async function sendWebhook(
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-automate-signature': signWebhook(secret, body, unix),
+        'x-lupin-signature': signWebhook(secret, body, unix),
       },
       body,
       redirect: 'error',

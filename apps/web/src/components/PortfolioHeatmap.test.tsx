@@ -6,7 +6,7 @@ import {
   PortfolioHeatmapSchema,
   SCORECARD_IDS,
   type PortfolioHeatmap as HeatmapPayload,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { makeHealthDouble, pending, PROJECT_UUID, serverRefusal } from '../test-utils.js';
 import {
   PortfolioHeatmap,

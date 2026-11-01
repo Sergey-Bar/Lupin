@@ -39,7 +39,7 @@ importers:
 
   apps/api:
     dependencies:
-      '@automate/db':
+      '@lupin/db':
         specifier: workspace:*
         version: link:../db
       '@hono/node-server':
@@ -103,7 +103,7 @@ test('a peer-suffixed resolution is recorded as the bare version it pins', () =>
 
 test('a workspace link is resolved, not versioned, so it is not a version to review', () => {
   const parsed = parseLockfile(LOCKFILE);
-  const link = parsed.importers['apps/api'].dependencies['@automate/db'];
+  const link = parsed.importers['apps/api'].dependencies['@lupin/db'];
   assert.equal(link.specifier, 'workspace:*');
   // `link:../db` is deliberately kept verbatim. Whether an internal dependency is
   // still imported is the unused-dependency check's question; which registry version
@@ -120,7 +120,7 @@ test('the packages section is not mistaken for importers', () => {
   assert.equal(parsed.importers['hono@4.12.29'], undefined);
   assert.deepEqual(
     Object.values(parsed.importers).map((importer) => Object.keys(importer.dependencies)),
-    [['prettier'], ['@automate/db', '@hono/node-server', 'effect', 'hono'], []],
+    [['prettier'], ['@lupin/db', '@hono/node-server', 'effect', 'hono'], []],
   );
 });
 
@@ -133,7 +133,7 @@ test('a declared dependency nothing imports is reported, with the importer that 
   const source = [
     "import { Hono } from 'hono';",
     "import server from '@hono/node-server';",
-    "import { createDbResources } from '@automate/db';",
+    "import { createDbResources } from '@lupin/db';",
   ].join('\n');
 
   const unused = unusedDependencies(parsed, source, { '.': ROOT_TOOLS, 'apps/web': WEB_TOOLS });
@@ -150,7 +150,7 @@ test('one dependency declared in many packages is one finding listing all of the
   const parsed = parseLockfile(LOCKFILE);
   const unused = unusedDependencies(parsed, '', {
     '.': ['typescript', 'prettier'],
-    'apps/api': ['@automate/db', '@hono/node-server', 'effect', 'hono'],
+    'apps/api': ['@lupin/db', '@hono/node-server', 'effect', 'hono'],
     'apps/web': [],
   });
   assert.deepEqual(unused, [{ name: 'turbo', declaredIn: ['.', 'apps/web'] }]);
@@ -166,7 +166,7 @@ test('a package named in a configuration string counts as referenced', () => {
   const unused = unusedDependencies(
     parsed,
     '',
-    { '.': ROOT_TOOLS, 'apps/api': ['@automate/db', 'effect', 'hono'], 'apps/web': WEB_TOOLS },
+    { '.': ROOT_TOOLS, 'apps/api': ['@lupin/db', 'effect', 'hono'], 'apps/web': WEB_TOOLS },
     [],
     ["  addons: ['@hono/node-server'],"].join('\n'),
   );
@@ -186,7 +186,7 @@ test('the same string in application source is not a reference', () => {
     "const effect = 'effect';",
     {
       '.': ROOT_TOOLS,
-      'apps/api': ['@automate/db', '@hono/node-server', 'hono'],
+      'apps/api': ['@lupin/db', '@hono/node-server', 'hono'],
       'apps/web': WEB_TOOLS,
     },
     [],
@@ -226,7 +226,7 @@ test('a package named in prose, without quotes, is still unused', () => {
   const prose = '// Import effect here once the boundary exists. Effect is the plan.';
   const unused = unusedDependencies(parsed, prose, {
     '.': ROOT_TOOLS,
-    'apps/api': ['@automate/db', '@hono/node-server', 'hono'],
+    'apps/api': ['@lupin/db', '@hono/node-server', 'hono'],
     'apps/web': WEB_TOOLS,
   });
   assert.deepEqual(unused, [{ name: 'effect', declaredIn: ['apps/api'] }]);
@@ -239,7 +239,7 @@ test('an exemption marked with `*` applies to every importer', () => {
   // applies to that importer alone, which is the next test.
   const parsed = parseLockfile(LOCKFILE);
   const unused = unusedDependencies(parsed, '', {
-    '*': ['@automate/db', '@hono/node-server', 'effect', 'hono', 'prettier', 'typescript', 'turbo'],
+    '*': ['@lupin/db', '@hono/node-server', 'effect', 'hono', 'prettier', 'typescript', 'turbo'],
   });
   assert.deepEqual(unused, []);
 });
@@ -255,7 +255,7 @@ test('a dependency recorded as deliberately unused is exempt, and the exemption 
     '',
     {
       '.': ROOT_TOOLS,
-      'apps/api': ['@automate/db', '@hono/node-server', 'hono'],
+      'apps/api': ['@lupin/db', '@hono/node-server', 'hono'],
       'apps/web': WEB_TOOLS,
     },
     ['effect'],
@@ -267,7 +267,7 @@ test('a subpath import counts as an import of the package', () => {
   const parsed = parseLockfile(LOCKFILE);
   const unused = unusedDependencies(parsed, "import { bodyLimit } from 'hono/body-limit';", {
     '.': ROOT_TOOLS,
-    'apps/api': ['@automate/db', '@hono/node-server', 'effect'],
+    'apps/api': ['@lupin/db', '@hono/node-server', 'effect'],
     'apps/web': WEB_TOOLS,
   });
   assert.deepEqual(unused, []);
@@ -277,7 +277,7 @@ test('a dynamic import and a require count as imports', () => {
   const parsed = parseLockfile(LOCKFILE);
   const exemptions = {
     '.': ROOT_TOOLS,
-    'apps/api': ['@automate/db', '@hono/node-server', 'effect'],
+    'apps/api': ['@lupin/db', '@hono/node-server', 'effect'],
     'apps/web': WEB_TOOLS,
   };
   assert.deepEqual(
@@ -295,7 +295,7 @@ test('a dependency named only in prose is still unused', () => {
   const prose = '// Use Effect for dependency injection. See the effect documentation.';
   const unused = unusedDependencies(parsed, prose, {
     '.': ROOT_TOOLS,
-    'apps/api': ['@automate/db'],
+    'apps/api': ['@lupin/db'],
     'apps/web': WEB_TOOLS,
   });
   assert.deepEqual(unused.map((entry) => entry.name).sort(), [
@@ -313,7 +313,7 @@ test('an exemption at one importer does not silence the same name at another', (
   const parsed = parseLockfile(LOCKFILE);
   const unused = unusedDependencies(parsed, '', {
     '.': ['typescript', 'prettier'],
-    'apps/api': ['@automate/db', '@hono/node-server', 'effect', 'hono'],
+    'apps/api': ['@lupin/db', '@hono/node-server', 'effect', 'hono'],
   });
   assert.deepEqual(unused, [{ name: 'turbo', declaredIn: ['.', 'apps/web'] }]);
 });

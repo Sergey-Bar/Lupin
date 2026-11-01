@@ -1,7 +1,7 @@
 import { exec, execSync, spawn, spawnSync } from 'node:child_process';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { runs } from '@automate/db';
+import { runs } from '@lupin/db';
 
 /**
  * A semgrep probe fixture. Not application code, never imported, never executed.
@@ -112,7 +112,7 @@ export function safeErrorCode(): string {
 
 /** SAFE: a published cookie *name*. */
 export function safeCookieName(): string {
-  const SESSION_COOKIE = 'automate_session';
+  const SESSION_COOKIE = 'lupin_session';
   return SESSION_COOKIE;
 }
 

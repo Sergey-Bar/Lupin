@@ -33,7 +33,7 @@ describe('ThemeProvider', () => {
   });
 
   it('initializes from localStorage', () => {
-    localStorage.setItem('automate-theme', 'dark');
+    localStorage.setItem('lupin-theme', 'dark');
     const { result } = renderHook(() => useTheme(), { wrapper });
     expect(result.current.theme).toBe('dark');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
@@ -47,7 +47,7 @@ describe('ThemeProvider', () => {
     });
 
     expect(result.current.theme).toBe('light');
-    expect(localStorage.getItem('automate-theme')).toBe('light');
+    expect(localStorage.getItem('lupin-theme')).toBe('light');
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
@@ -116,7 +116,7 @@ describe('ThemeProvider', () => {
         dispatchEvent: vi.fn(),
       })),
     });
-    localStorage.setItem('automate-theme', 'dark');
+    localStorage.setItem('lupin-theme', 'dark');
     const { result } = renderHook(() => useTheme(), { wrapper });
     act(() => {
       result.current.setTheme('system');
@@ -231,7 +231,7 @@ describe('ThemeProvider', () => {
     // straight to `data-theme` — so an arbitrary string became an attribute no
     // stylesheet matches, and the page rendered in no theme with nothing in the
     // console to say why.
-    localStorage.setItem('automate-theme', 'neon');
+    localStorage.setItem('lupin-theme', 'neon');
     const { result } = renderHook(() => useTheme(), { wrapper });
     expect(result.current.theme).toBe('system');
     expect(document.documentElement.getAttribute('data-theme')).not.toBe('neon');

@@ -2,8 +2,8 @@ import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod/v4';
-import type { Profile } from '@automate/config';
-import { accessTokens, users, workspaceMembers, workspaces } from '@automate/db';
+import type { Profile } from '@lupin/config';
+import { accessTokens, users, workspaceMembers, workspaces } from '@lupin/db';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { guard } from '../http/access.js';
 import { bearerToken } from '../http/bearer-token.js';
@@ -212,7 +212,7 @@ export function createWorkspacesRoutes(options: WorkspacesRouteOptions): Hono {
     if (options.profile !== 'team' && options.profile !== 'enterprise') {
       throw new DomainError(
         'WORKSPACES_NEED_TEAM',
-        'Several workspaces need AUTOMATE_PROFILE=team or enterprise',
+        'Several workspaces need LUPIN_PROFILE=team or enterprise',
       );
     }
     const parsed = CreateSchema.safeParse(await context.req.json().catch(() => null));

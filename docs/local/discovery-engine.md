@@ -1,4 +1,4 @@
-# AUTOMATE (local) — repository discovery engine
+# Lupin Local — repository discovery engine
 
 **Status:** Draft
 **Owner:** maintainers

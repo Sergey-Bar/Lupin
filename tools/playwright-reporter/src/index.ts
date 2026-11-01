@@ -15,14 +15,14 @@ import { Transport } from './transport.js';
 export type * from './playwright-types.js';
 
 /**
- * `@automate/playwright-reporter` — a Playwright run, streamed into AutoMate as it happens.
+ * `@lupin/playwright-reporter` — a Playwright run, streamed into Lupin as it happens.
  *
  * ```ts
  * // playwright.config.ts
- * reporter: [['list'], ['@automate/playwright-reporter']],
+ * reporter: [['list'], ['@lupin/playwright-reporter']],
  * ```
  *
- * with `AUTOMATE_URL` and `AUTOMATE_REPORTER_SECRET` in the environment. Each test lands on
+ * with `LUPIN_URL` and `LUPIN_REPORTER_SECRET` in the environment. Each test lands on
  * the run page as it finishes, and a failed attempt's trace, screenshot and video land
  * beside it in the run's artifact list, so the failure can be opened
  * (`npx playwright show-trace trace.zip`) without digging through a CI job's artifacts.
@@ -34,14 +34,14 @@ export type * from './playwright-types.js';
  * Playwright's JSON reporter writes, so a test's history does not split between this
  * reporter and an uploaded report.
  *
- * **For the CI gate, use `automate test`.** It uploads the finished report against a
+ * **For the CI gate, use `lupin test`.** It uploads the finished report against a
  * project and answers with the verdict, which a streaming reporter cannot: the gate is a
  * statement about the whole run, and the process exits before a reporter could ask for it.
  * Sending one run through both doors records it twice.
  */
 
 export interface ReporterOptions {
-  /** The AutoMate origin. Defaults to `AUTOMATE_URL`. The secret is read from the environment only. */
+  /** The Lupin origin. Defaults to `LUPIN_URL`. The secret is read from the environment only. */
   url?: string;
   /** Upload the attachments of a failed attempt. Default `true`. */
   uploadArtifacts?: boolean;
@@ -70,7 +70,7 @@ const EXTENSIONS: Readonly<Record<string, string>> = {
 
 type ReportedStatus = 'passed' | 'failed' | 'flaky' | 'skipped' | 'timedOut';
 
-export default class AutomateReporter {
+export default class LupinReporter {
   private readonly env: Readonly<Record<string, string | undefined>>;
   private readonly log: (line: string) => void;
   private transport: Transport | undefined;
@@ -87,12 +87,12 @@ export default class AutomateReporter {
   }
 
   onBegin(config: PwFullConfig, suite: PwSuite): void {
-    const target = resolveOrigin(this.options.url ?? this.env['AUTOMATE_URL']);
+    const target = resolveOrigin(this.options.url ?? this.env['LUPIN_URL']);
     if ('refused' in target) {
-      this.log(`AutoMate reporter: ${target.refused}`);
+      this.log(`Lupin reporter: ${target.refused}`);
       return;
     }
-    const secret = this.env['AUTOMATE_REPORTER_SECRET']?.trim();
+    const secret = this.env['LUPIN_REPORTER_SECRET']?.trim();
     this.transport = new Transport({
       origin: target.origin,
       secret: secret === undefined || secret === '' ? undefined : secret,
@@ -102,10 +102,10 @@ export default class AutomateReporter {
     });
     this.rootDir = config.rootDir;
     const branch =
-      present(this.env['AUTOMATE_BRANCH']) ??
+      present(this.env['LUPIN_BRANCH']) ??
       present(this.env['GITHUB_HEAD_REF']) ??
       present(this.env['GITHUB_REF_NAME']);
-    const commit = present(this.env['AUTOMATE_COMMIT']) ?? present(this.env['GITHUB_SHA']);
+    const commit = present(this.env['LUPIN_COMMIT']) ?? present(this.env['GITHUB_SHA']);
     this.event('run:start', true, {
       total: suite.allTests().length,
       ...(branch === undefined ? {} : { branch }),
@@ -197,7 +197,7 @@ export default class AutomateReporter {
   }
 }
 
-export { AutomateReporter };
+export { LupinReporter };
 
 function present(value: string | undefined): string | undefined {
   const trimmed = value?.trim() ?? '';

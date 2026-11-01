@@ -39,9 +39,9 @@ function tempRecordPath() {
 }
 
 test('a locally built image is tagged where both scripts look for it', () => {
-  assert.equal(imageRefOf('k6'), 'automate/k6:local');
-  assert.equal(imageRefOf('playwright'), 'automate/playwright:local');
-  assert.equal(imageRefOf('zap'), 'automate/zap:local');
+  assert.equal(imageRefOf('k6'), 'lupin/k6:local');
+  assert.equal(imageRefOf('playwright'), 'lupin/playwright:local');
+  assert.equal(imageRefOf('zap'), 'lupin/zap:local');
 });
 
 test('the three runners are the ones this repository ships', () => {
@@ -67,7 +67,7 @@ test('a build record round-trips', () => {
         schemaVersion: BUILD_RECORD_SCHEMA,
         runtime: 'docker',
         images: {
-          k6: { imageRef: 'automate/k6:local', imageId: DIGEST_A, user: '65532', repoDigests: [] },
+          k6: { imageRef: 'lupin/k6:local', imageId: DIGEST_A, user: '65532', repoDigests: [] },
         },
       },
       at,

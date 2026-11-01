@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { createTriageLabelRoutes } from '../routes/triage-labels.js';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { migratedDatabase } from '../test-support/migrated-database.js';

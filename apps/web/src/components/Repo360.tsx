@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, cn } from '@automate/ui';
+import { ArrowRight, cn } from '@lupin/ui';
 import type {
   AgentRuntimeReport,
   AiCodeReport,
@@ -7,7 +7,7 @@ import type {
   ProjectEvals,
   ProjectHealth,
   Scorecard,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource, type Resource } from '../hooks/useResource.js';
 import type { AgentsClient } from '../lib/agents-client.js';
 import type { AiCodeClient } from '../lib/ai-code-client.js';
@@ -301,7 +301,7 @@ function ReadCards<T>({
 }): React.ReactElement {
   if (resource.status !== 'ready') {
     return (
-      <div className="rounded-xl border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-surface p-4">
         <Loaded
           resource={resource}
           label={label}
@@ -315,7 +315,7 @@ function ReadCards<T>({
   const list = cards(resource.value);
   if (list.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-surface p-4">
         <Quiet>{`No ${label} scorecard: nothing has reported.`}</Quiet>
       </div>
     );

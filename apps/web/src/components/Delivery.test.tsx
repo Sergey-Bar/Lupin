@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { DeliveryReport } from '@automate/shared-contracts';
+import type { DeliveryReport } from '@lupin/shared-contracts';
 import type { DeliveryClient } from '../lib/delivery-client.js';
 import {
   makeDeliveryReport,

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TuiView } from '@automate/shared-contracts';
+import type { TuiView } from '@lupin/shared-contracts';
 
 /**
  * The entry point, run in-process.
@@ -48,7 +48,7 @@ beforeEach(() => {
     stderr.push(String(chunk));
     return true;
   });
-  vi.stubEnv('AUTOMATE_API_URL', 'http://api.test');
+  vi.stubEnv('LUPIN_API_URL', 'http://api.test');
 });
 
 afterEach(() => {
@@ -58,9 +58,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** Runs `automate-tui ...args` and resolves to the exit code, or `undefined` if it did not exit. */
+/** Runs `lupin-tui ...args` and resolves to the exit code, or `undefined` if it did not exit. */
 async function run(...args: string[]): Promise<number | string | null | undefined> {
-  process.argv = ['node', 'automate-tui', ...args];
+  process.argv = ['node', 'lupin-tui', ...args];
   try {
     await import('./main.js');
     return undefined;
@@ -90,7 +90,7 @@ describe('with no command, or asking for help', () => {
   it('exits 0 when help was asked for, because that is not a mistake', async () => {
     expect(await run('--help')).toBe(0);
     expect(await run('-h')).toBe(0);
-    expect(stdout.join('')).toContain('automate-tui <command>');
+    expect(stdout.join('')).toContain('lupin-tui <command>');
   });
 });
 
@@ -160,23 +160,23 @@ describe('where the request goes, and who it says it is', () => {
 
   it('talks to the loopback API on port 3000 when no URL is configured', async () => {
     vi.unstubAllEnvs();
-    vi.stubEnv('AUTOMATE_API_URL', undefined as unknown as string);
-    delete process.env['AUTOMATE_API_URL'];
+    vi.stubEnv('LUPIN_API_URL', undefined as unknown as string);
+    delete process.env['LUPIN_API_URL'];
     const seen = answerCapturingAuth();
     expect(await run('score.get', 'p1')).toBeUndefined();
     expect(seen.urls).toEqual(['http://127.0.0.1:3000/api/v1/projects/p1/qa/score']);
   });
 
   it('sends the bearer token from the environment, and none when it is unset', async () => {
-    vi.stubEnv('AUTOMATE_API_TOKEN', 'operator-token');
+    vi.stubEnv('LUPIN_API_TOKEN', 'operator-token');
     const withToken = answerCapturingAuth();
     await run('score.get', 'p1');
     expect(withToken.auth).toEqual(['Bearer operator-token']);
 
     vi.resetModules();
     vi.unstubAllEnvs();
-    vi.stubEnv('AUTOMATE_API_URL', 'http://api.test');
-    delete process.env['AUTOMATE_API_TOKEN'];
+    vi.stubEnv('LUPIN_API_URL', 'http://api.test');
+    delete process.env['LUPIN_API_TOKEN'];
     const withoutToken = answerCapturingAuth();
     await run('score.get', 'p1');
     expect(withoutToken.auth).toEqual([undefined]);

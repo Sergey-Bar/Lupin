@@ -70,14 +70,14 @@ test('script references are separated from pnpm builtins and filtered invocation
   assert.deepEqual(referencedScripts('pnpm audit --audit-level=high'), []);
   assert.deepEqual(referencedScripts('pnpm exec playwright install --with-deps chromium'), []);
   // A filtered invocation names a package script, not a root one.
-  assert.deepEqual(referencedScripts('pnpm --filter @automate/worker test'), []);
-  assert.deepEqual(referencedScripts('pnpm --filter @automate/api run dev'), []);
+  assert.deepEqual(referencedScripts('pnpm --filter @lupin/worker test'), []);
+  assert.deepEqual(referencedScripts('pnpm --filter @lupin/api run dev'), []);
   // `exec` after a filter is pnpm's subcommand, and everything after it belongs to
   // the exec'd program. Reading to the next flag instead made the audit claim the
   // workflow ran a root script called `127.0.0.1` — a false positive, which is the
   // direction that trains people to ignore the gate.
   assert.deepEqual(
-    referencedScripts('pnpm --filter @automate/unified-web exec vite --host 127.0.0.1 --port 5173'),
+    referencedScripts('pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1 --port 5173'),
     [],
   );
   // A known limitation, pinned so it is a decision rather than an accident. A token
@@ -87,7 +87,7 @@ test('script references are separated from pnpm builtins and filtered invocation
   // a missed reference is caught by the ratchet and complexity gates, which run
   // unwrapped. Widening it means distinguishing a package script from a root one,
   // which needs the workspace manifest rather than the argv.
-  assert.deepEqual(referencedScripts('pnpm --filter @automate/worker lint'), []);
+  assert.deepEqual(referencedScripts('pnpm --filter @lupin/worker lint'), []);
   // A chained command contributes its own reference.
   assert.deepEqual(referencedScripts('pnpm verify && pnpm security:verify'), [
     'verify',
@@ -212,7 +212,7 @@ test('a postgres service satisfies the E2E database requirement', () => {
     '      postgres:',
     '        image: postgres:16-alpine',
     '        env:',
-    '          POSTGRES_PASSWORD: automate',
+    '          POSTGRES_PASSWORD: lupin',
     '    steps:',
     '      - run: pnpm install --frozen-lockfile',
     '      - run: pnpm test:e2e',
@@ -232,7 +232,7 @@ test('an explicit DATABASE_URL env satisfies it without a service', () => {
     '    runs-on: ubuntu-24.04',
     '    timeout-minutes: 20',
     '    env:',
-    '      DATABASE_URL: postgresql://user:pass@127.0.0.1:5432/automate',
+    '      DATABASE_URL: postgresql://user:pass@127.0.0.1:5432/lupin',
     '    steps:',
     '      - run: pnpm test:e2e',
   ].join('\n');
@@ -488,7 +488,7 @@ test('a tolerated failure around a pr-blocking gate is a finding, and one around
 });
 
 test('no CI file sets the host-scanner opt-in, and verify:local is never-in-ci', () => {
-  // `AUTOMATE_HOST_SCANNERS=unavailable` turns a scanner that cannot produce a scan
+  // `LUPIN_HOST_SCANNERS=unavailable` turns a scanner that cannot produce a scan
   // into a recorded `not_configured` pass. That is a legitimate trade on a
   // developer laptop with no semgrep and it is a *defect* in a pull request: CI is
   // the only place the security scan is actually enforced, and a job that sets the

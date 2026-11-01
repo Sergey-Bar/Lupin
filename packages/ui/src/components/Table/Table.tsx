@@ -53,7 +53,14 @@ export const TableHeader = forwardRef<
   HTMLTableSectionElement,
   HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('[&_tr]:border-b border-border-default', className)} {...props} />
+  <thead
+    ref={ref}
+    className={cn(
+      'sticky top-0 z-chrome bg-surface [&_tr]:border-b [&_tr]:border-border',
+      className,
+    )}
+    {...props}
+  />
 ));
 TableHeader.displayName = 'TableHeader';
 
@@ -70,7 +77,7 @@ export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTable
     <tr
       ref={ref}
       className={cn(
-        'border-b border-border-default transition-colors hover:bg-bg-muted/50 data-[state=selected]:bg-bg-muted',
+        'border-b border-border transition-colors hover:bg-surface-muted focus-visible:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-focus data-[state=selected]:bg-surface-muted',
         className,
       )}
       {...props}
@@ -185,7 +192,7 @@ export const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(
          * `tabular-nums` because a digit is proportional by default and a column of scores
          * shifts sideways every time one updates; `text-right` because a right edge is the
          * only alignment that puts the last digit in the same place on every row; and
-         * `font-mono` because the design language sets JetBrains Mono for anything a
+         * `font-mono` because the design language sets Geist Mono for anything a
          * person compares character by character, which a column of scores is.
          */
         numeric && 'tabular-nums text-right font-mono',

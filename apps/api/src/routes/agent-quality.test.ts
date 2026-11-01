@@ -1,7 +1,7 @@
 import { gzipSync } from 'node:zlib';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { sql } from 'drizzle-orm';
 import {
   AgentConfigScanResultSchema,
@@ -13,7 +13,7 @@ import {
   McpServerListSchema,
   OtlpExportResponseSchema,
   ProjectEvalsSchema,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import type { CallerResolver } from '../http/roles.js';
 import { uploaderGuard } from '../http/uploader.js';
@@ -47,9 +47,9 @@ async function harness(
   closers.push(close);
   const projectId = await agentProject(db);
   const tokens: Record<string, Caller> = {
-    amt_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
-    amt_operator: { actor: 'token:operator', role: 'operator', uploaderFor: null },
-    amt_uploader: { actor: 'token:uploader', role: 'viewer', uploaderFor: projectId },
+    lup_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
+    lup_operator: { actor: 'token:operator', role: 'operator', uploaderFor: null },
+    lup_uploader: { actor: 'token:uploader', role: 'viewer', uploaderFor: projectId },
   };
   const access: CallerResolver = {
     mode: 'enforced',
@@ -137,7 +137,7 @@ describe('evals', () => {
     const { call, projectId } = await harness();
     const uploaded = await call(
       'POST',
-      `/api/v1/projects/${projectId}/health/reports?format=automate-eval-json&branch=main`,
+      `/api/v1/projects/${projectId}/health/reports?format=lupin-eval-json&branch=main`,
       {
         token: SECRET,
         body: json(evalRun('support', { a: 9, b: 9 })),
@@ -145,19 +145,19 @@ describe('evals', () => {
     );
     expect(uploaded.status).toBe(201);
     const response = await call('GET', `/api/v1/projects/${projectId}/evals?branch=main`, {
-      token: 'amt_viewer',
+      token: 'lup_viewer',
     });
     expect(response.status).toBe(200);
     const evals = ProjectEvalsSchema.parse(await response.json());
     expect(evals.suites.map((suite) => suite.suite)).toEqual(['support']);
     const runId = evals.runs[0]?.id ?? '';
     const detail = await call('GET', `/api/v1/projects/${projectId}/evals/runs/${runId}`, {
-      token: 'amt_viewer',
+      token: 'lup_viewer',
     });
     expect(EvalRunDetailSchema.parse(await detail.json()).cases).toHaveLength(2);
     expect((await call('GET', `/api/v1/projects/${projectId}/evals`)).status).toBe(401);
     expect(
-      (await call('GET', `/api/v1/projects/${projectId}/evals?branch=`, { token: 'amt_viewer' }))
+      (await call('GET', `/api/v1/projects/${projectId}/evals?branch=`, { token: 'lup_viewer' }))
         .status,
     ).toBe(400);
   });
@@ -166,7 +166,7 @@ describe('evals', () => {
     const { call, projectId } = await harness();
     const response = await call(
       'POST',
-      `/api/v1/projects/${projectId}/health/reports?format=automate-agent-config`,
+      `/api/v1/projects/${projectId}/health/reports?format=lupin-agent-config`,
       {
         token: SECRET,
         body: '{}',
@@ -203,14 +203,14 @@ describe('the OTLP receiver', () => {
   it('reads a gzipped export', async () => {
     const { call, projectId } = await harness();
     const response = await call('POST', path(projectId), {
-      token: 'amt_uploader',
+      token: 'lup_uploader',
       type: 'application/json',
       headers: { 'content-encoding': 'gzip' },
       body: gzipSync(Buffer.from(exportBody())),
     });
     expect(response.status).toBe(200);
     const broken = await call('POST', path(projectId), {
-      token: 'amt_uploader',
+      token: 'lup_uploader',
       type: 'application/json',
       headers: { 'content-encoding': 'gzip' },
       body: 'not gzip',
@@ -275,7 +275,7 @@ describe('the OTLP receiver', () => {
     expect(
       (
         await call('POST', path(projectId), {
-          token: 'amt_viewer',
+          token: 'lup_viewer',
           type: 'application/json',
           body: exportBody(),
         })
@@ -299,22 +299,22 @@ describe('runtime and the MCP inventory', () => {
       body: exportBody(),
     });
     const project = await call('GET', `/api/v1/projects/${projectId}/agents/runtime?days=7`, {
-      token: 'amt_viewer',
+      token: 'lup_viewer',
     });
     expect(AgentRuntimeReportSchema.parse(await project.json()).runtime.overall.current.runs).toBe(
       1,
     );
-    const self = await call('GET', '/api/v1/chat/runtime', { token: 'amt_viewer' });
+    const self = await call('GET', '/api/v1/chat/runtime', { token: 'lup_viewer' });
     expect(AgentRuntimeReportSchema.parse(await self.json()).projectId).toBeNull();
     expect(
       (
         await call('GET', `/api/v1/projects/${projectId}/agents/runtime?days=0`, {
-          token: 'amt_viewer',
+          token: 'lup_viewer',
         })
       ).status,
     ).toBe(400);
     expect(
-      (await call('GET', '/api/v1/chat/runtime?days=500', { token: 'amt_viewer' })).status,
+      (await call('GET', '/api/v1/chat/runtime?days=500', { token: 'lup_viewer' })).status,
     ).toBe(400);
   });
 
@@ -336,7 +336,7 @@ describe('runtime and the MCP inventory', () => {
     expect(sent.status).toBe(201);
     expect(AgentConfigScanResultSchema.parse(await sent.json()).mcpServers).toBe(1);
     const listed = await call('GET', `/api/v1/projects/${projectId}/agents/mcp-servers`, {
-      token: 'amt_viewer',
+      token: 'lup_viewer',
     });
     expect(McpServerListSchema.parse(await listed.json()).servers[0]?.transport).toBe('http');
     expect(
@@ -350,7 +350,7 @@ describe('runtime and the MCP inventory', () => {
     expect(
       (
         await call('GET', `/api/v1/projects/${projectId}/agents/mcp-servers?branch=`, {
-          token: 'amt_viewer',
+          token: 'lup_viewer',
         })
       ).status,
     ).toBe(400);
@@ -375,14 +375,14 @@ describe('the built-in eval runner', () => {
     expect(
       (
         await call('POST', datasets, {
-          token: 'amt_viewer',
+          token: 'lup_viewer',
           type: 'application/json',
           body: json(dataset),
         })
       ).status,
     ).toBe(403);
     const created = await call('POST', datasets, {
-      token: 'amt_operator',
+      token: 'lup_operator',
       type: 'application/json',
       body: json(dataset),
     });
@@ -391,7 +391,7 @@ describe('the built-in eval runner', () => {
     expect(
       (
         await call('POST', datasets, {
-          token: 'amt_operator',
+          token: 'lup_operator',
           type: 'application/json',
           body: json(dataset),
         })
@@ -400,17 +400,17 @@ describe('the built-in eval runner', () => {
     expect(
       (
         await call('POST', datasets, {
-          token: 'amt_operator',
+          token: 'lup_operator',
           type: 'application/json',
           body: '{}',
         })
       ).status,
     ).toBe(400);
-    const listed = await call('GET', datasets, { token: 'amt_viewer' });
+    const listed = await call('GET', datasets, { token: 'lup_viewer' });
     expect(EvalDatasetListSchema.parse(await listed.json()).datasets).toHaveLength(1);
 
     const run = await call('POST', `/api/v1/projects/${projectId}/evals/datasets/${saved.id}/run`, {
-      token: 'amt_operator',
+      token: 'lup_operator',
       type: 'application/json',
       body: json({ branch: 'main' }),
     });
@@ -435,14 +435,14 @@ describe('the built-in eval runner', () => {
     expect(
       (
         await call('POST', `/api/v1/projects/${projectId}/evals/datasets/${saved.id}/run`, {
-          token: 'amt_viewer',
+          token: 'lup_viewer',
         })
       ).status,
     ).toBe(403);
     expect(
       (
         await call('POST', `${datasets}/${saved.id}/run`, {
-          token: 'amt_operator',
+          token: 'lup_operator',
           type: 'application/json',
           body: json({ commit: 'zz' }),
         })
@@ -456,14 +456,14 @@ describe('the built-in eval runner', () => {
     const created = EvalDatasetSchema.parse(
       await (
         await unconfigured.call('POST', datasets, {
-          token: 'amt_operator',
+          token: 'lup_operator',
           type: 'application/json',
           body: json(dataset),
         })
       ).json(),
     );
     const refused = await unconfigured.call('POST', `${datasets}/${created.id}/run`, {
-      token: 'amt_operator',
+      token: 'lup_operator',
     });
     expect(refused.status).toBe(503);
     expect(((await refused.json()) as { error: { code: string } }).error.code).toBe(
@@ -475,14 +475,14 @@ describe('the built-in eval runner', () => {
     const saved = EvalDatasetSchema.parse(
       await (
         await failing.call('POST', failingDatasets, {
-          token: 'amt_operator',
+          token: 'lup_operator',
           type: 'application/json',
           body: json(dataset),
         })
       ).json(),
     );
     expect(
-      (await failing.call('POST', `${failingDatasets}/${saved.id}/run`, { token: 'amt_operator' }))
+      (await failing.call('POST', `${failingDatasets}/${saved.id}/run`, { token: 'lup_operator' }))
         .status,
     ).toBe(202);
     await Promise.all(failing.tasks.map((task) => task()));
@@ -499,14 +499,14 @@ describe('the built-in eval runner', () => {
     const saved = EvalDatasetSchema.parse(
       await (
         await failing.call('POST', datasets, {
-          token: 'amt_operator',
+          token: 'lup_operator',
           type: 'application/json',
           body: json(dataset),
         })
       ).json(),
     );
     expect(
-      (await failing.call('POST', `${datasets}/${saved.id}/run`, { token: 'amt_operator' })).status,
+      (await failing.call('POST', `${datasets}/${saved.id}/run`, { token: 'lup_operator' })).status,
     ).toBe(202);
     // The database refuses audit rows between the start and the end of the run.
     await failing.db.execute(sql`ALTER TABLE audit_events RENAME TO audit_events_gone`);
@@ -532,20 +532,20 @@ describe('the built-in eval runner', () => {
     const saved = EvalDatasetSchema.parse(
       await (
         await call('POST', datasets, {
-          token: 'amt_operator',
+          token: 'lup_operator',
           type: 'application/json',
           body: json(dataset),
         })
       ).json(),
     );
     const [first, second] = await Promise.all([
-      call('POST', `${datasets}/${saved.id}/run`, { token: 'amt_operator' }),
-      call('POST', `${datasets}/${saved.id}/run`, { token: 'amt_operator' }),
+      call('POST', `${datasets}/${saved.id}/run`, { token: 'lup_operator' }),
+      call('POST', `${datasets}/${saved.id}/run`, { token: 'lup_operator' }),
     ]);
     expect([first.status, second.status].sort()).toEqual([202, 409]);
     await Promise.all(tasks.map((task) => task()));
     expect(
-      (await call('POST', `${datasets}/${saved.id}/run`, { token: 'amt_operator' })).status,
+      (await call('POST', `${datasets}/${saved.id}/run`, { token: 'lup_operator' })).status,
     ).toBe(202);
     await Promise.all(tasks.slice(1).map((task) => task()));
   });

@@ -8,7 +8,7 @@
  * disorder is not a preference the product gets to ignore.
  *
  * The mechanism is one multiplier rather than a second copy of the scale:
- * `motion.css` defines every duration as `calc(<value> * var(--automate-motion-scale))`
+ * `motion.css` defines every duration as `calc(<value> * var(--lupin-motion-scale))`
  * and the reduced-motion media query sets that one variable. So the reduced
  * rule is a single declaration that reaches every duration *and every duration
  * added later*, with no list here to fall out of date. `motion.test.ts` asserts
@@ -28,11 +28,18 @@ export const motion = {
     in: 'cubic-bezier(0.4, 0, 1, 1)',
     out: 'cubic-bezier(0, 0, 0.2, 1)',
     'in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
+    /**
+     * A damped spring (damping ratio 0.78) sampled into 17 stops: it overshoots by 2% and
+     * settles. `linear()` is interpolated by the browser like any other easing, so it costs
+     * nothing per frame on the main thread. For arrivals only — an exit never bounces.
+     */
+    spring:
+      'linear(0, 0.102, 0.309, 0.526, 0.708, 0.842, 0.93, 0.982, 1.008, 1.018, 1.02, 1.017, 1.012, 1.008, 1.005, 1.003, 1)',
   },
 };
 
 /** The custom property every duration is multiplied by. `1` is "no scaling". */
-export const MOTION_SCALE_VARIABLE = '--automate-motion-scale';
+export const MOTION_SCALE_VARIABLE = '--lupin-motion-scale';
 
 /**
  * The multiplier applied under `prefers-reduced-motion: reduce`.
@@ -49,12 +56,12 @@ export const REDUCED_MOTION_DURATION = `${REDUCED_MOTION_SCALE}ms`;
 
 /** The custom property a duration step is published under. */
 export function durationVariableName(step: number): string {
-  return `--automate-duration-${step}`;
+  return `--lupin-duration-${step}`;
 }
 
 /** The custom property an easing step is published under. */
 export function easingVariableName(step: string): string {
-  return `--automate-ease-${step}`;
+  return `--lupin-ease-${step}`;
 }
 
 /**

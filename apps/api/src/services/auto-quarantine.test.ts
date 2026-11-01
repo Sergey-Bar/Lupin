@@ -60,7 +60,7 @@ describe('applyQuarantinePolicy', () => {
     }
   });
 
-  it('quarantines and approves a test with retry evidence, once, as automate', async () => {
+  it('quarantines and approves a test with retry evidence, once, as lupin', async () => {
     const store = new InMemoryQuarantineStore();
     const input = {
       policy: { mode: 'auto' as const, releaseAfter: 20 },
@@ -77,11 +77,11 @@ describe('applyQuarantinePolicy', () => {
       stableId: KEY,
       projectId: PROJECT,
       status: 'approved',
-      quarantinedBy: 'automate',
+      quarantinedBy: 'lupin',
     });
     expect(store.recorded.map((entry) => [entry.action, entry.actorId])).toEqual([
-      ['quarantine.created', 'automate'],
-      ['quarantine.approved', 'automate'],
+      ['quarantine.created', 'lupin'],
+      ['quarantine.approved', 'lupin'],
     ]);
   });
 

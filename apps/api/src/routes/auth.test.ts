@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
-import { hashCredential } from '@automate/auth';
+import { hashCredential } from '@lupin/auth';
 import { createAuthRoutes, memoryBackend } from './auth.js';
 
 const cookieSecret = 'c'.repeat(32);
@@ -48,7 +48,7 @@ describe('auth routes', () => {
     });
     expect(login.status).toBe(200);
     const cookie = login.headers.get('set-cookie');
-    expect(cookie).toContain('automate_session=');
+    expect(cookie).toContain('lupin_session=');
     expect(cookie).toContain('HttpOnly');
     const session = await api.request('/api/v1/auth/session', {
       headers: { cookie: cookie ?? '' },

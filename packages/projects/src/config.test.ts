@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { mergeConfig, profileFromDetection } from './config.js';
-import { AutomateConfigSchema } from './profile.js';
+import { LupinConfigSchema } from './profile.js';
 import { literalView } from './detect/repository-view.js';
 import { detectProject } from './detect/index.js';
 
@@ -27,7 +27,7 @@ describe('a declared command is argv, never a shell string (D7)', () => {
     // in this repository ever concatenates these into a shell line — impossible
     // to execute at all. A config that *could* hold a string would be the raw
     // shell passthrough D7 rules out, wearing a file extension.
-    const result = AutomateConfigSchema.safeParse({
+    const result = LupinConfigSchema.safeParse({
       version: 1,
       commands: { unit: 'pytest -q' },
     });
@@ -35,7 +35,7 @@ describe('a declared command is argv, never a shell string (D7)', () => {
   });
 
   it('refuses a config that declares an unknown category', () => {
-    const result = AutomateConfigSchema.safeParse({
+    const result = LupinConfigSchema.safeParse({
       version: 1,
       commands: { smoke: ['make', 'smoke'] },
     });
@@ -43,7 +43,7 @@ describe('a declared command is argv, never a shell string (D7)', () => {
   });
 
   it('refuses a config with no version, rather than assuming one', () => {
-    const result = AutomateConfigSchema.safeParse({ commands: { unit: ['pytest'] } });
+    const result = LupinConfigSchema.safeParse({ commands: { unit: ['pytest'] } });
     expect(result.success).toBe(false);
   });
 
@@ -75,7 +75,7 @@ describe('a checked-in override always wins over detection', () => {
     // operator said not to run.
     expect(unitCommands).toHaveLength(1);
     expect(unitCommands[0]?.argv).toEqual(['pytest', '-q', 'tests/unit']);
-    expect(unitCommands[0]?.evidence).toBe('automate.config.json#commands.unit');
+    expect(unitCommands[0]?.evidence).toBe('lupin.config.json#commands.unit');
     // And it is not the detected one.
     expect(unitCommands[0]?.argv).not.toEqual(detectedUnit?.argv);
   });
@@ -91,7 +91,7 @@ describe('a checked-in override always wins over detection', () => {
   it('records which keys were overridden, so a score can be explained', async () => {
     const base = await detectedProfile();
     const merged = mergeConfig(base, {
-      $schema: 'https://automate.dev/schema/automate.config.json',
+      $schema: 'https://lupin.dev/schema/lupin.config.json',
       version: 1,
       timeoutMs: 60_000,
       commands: { unit: ['pytest'] },

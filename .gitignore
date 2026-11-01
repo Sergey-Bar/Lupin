@@ -46,11 +46,11 @@ Tempplaywright-mcp/
 nul
 
 # Legacy nested source checkout (root-only)
-/AutoMate/
+/Lupin/
 
 # Auth and runtime credentials
 **/auth.json
-**/.automate/
+**/.lupin/
 
 # Sisyphus agent state
 .sisyphus/
@@ -117,3 +117,6 @@ var/
 # LAN certificates issued by `start lan-cert`. The CA key never belongs in git.
 infra/compose/certs/
 certs/
+
+# Local before/after screenshots and axe reports for design sign-off.
+.shots/

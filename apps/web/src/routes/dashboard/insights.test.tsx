@@ -31,7 +31,7 @@ describe('the insights page', () => {
     renderInsights(makeQa());
     await waitFor(() => expect(screen.getByTestId('insights-flaky')).toBeInTheDocument());
     expect(screen.getByRole('heading', { level: 1, name: 'Insights' })).toBeInTheDocument();
-    expect(screen.getByText('12 runs in Automate over the last 14 days')).toBeInTheDocument();
+    expect(screen.getByText('12 runs in Lupin over the last 14 days')).toBeInTheDocument();
     expect(screen.getByTestId('insight-readiness')).toHaveTextContent('Caution');
     expect(screen.getByTestId('insight-readiness')).toHaveAttribute('data-hero', '');
     expect(screen.getByTestId('insight-flaky')).toHaveTextContent('2');

@@ -7,7 +7,7 @@ import { validateVaultTransfer } from './vault.js';
 
 describe('migration artifact and vault references', () => {
   it('inventories files deterministically without exposing absolute paths', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-artifact-source-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-artifact-source-'));
     try {
       await mkdir(path.join(root, 'nested'));
       await writeFile(path.join(root, 'b.txt'), 'b');

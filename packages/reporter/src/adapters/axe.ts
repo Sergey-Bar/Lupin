@@ -4,7 +4,7 @@ import type {
   DimensionMetric,
   FindingSeverity,
   HealthTool,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { HealthReportError, MAX_HEALTH_REPORT_BYTES, MAX_SARIF_RESULTS } from './sarif.js';
 import { type Json, record, list, text, strings } from './json-fields.js';
 

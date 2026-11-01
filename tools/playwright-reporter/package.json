@@ -1,12 +1,12 @@
 {
-  "name": "@automate/playwright-reporter",
+  "name": "@lupin/playwright-reporter",
   "version": "1.0.0",
   "license": "MIT",
   "type": "module",
-  "description": "A dependency-free Playwright reporter that streams a run into AutoMate as it happens, with the traces, screenshots and videos of every failure.",
+  "description": "A dependency-free Playwright reporter that streams a run into Lupin as it happens, with the traces, screenshots and videos of every failure.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sergey-Bar/AutoMate.git",
+    "url": "git+https://github.com/Sergey-Bar/Lupin.git",
     "directory": "tools/playwright-reporter"
   },
   "files": [
@@ -35,9 +35,9 @@
     "test": "vitest run --coverage && node ../../scripts/write-coverage-provenance.mjs"
   },
   "devDependencies": {
-    "@automate/config": "workspace:*",
-    "@automate/reporter": "workspace:*",
-    "@automate/shared-contracts": "workspace:*",
+    "@lupin/config": "workspace:*",
+    "@lupin/reporter": "workspace:*",
+    "@lupin/shared-contracts": "workspace:*",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
     "typescript": "catalog:",

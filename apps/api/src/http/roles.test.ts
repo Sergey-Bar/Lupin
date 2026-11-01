@@ -23,7 +23,7 @@ const CF_CALLER: Caller = { actor: 'cf:ana@example.com', role: 'operator', uploa
 function resolver(overrides: Partial<CallerResolver> = {}): CallerResolver {
   return {
     mode: 'enforced',
-    authenticateToken: vi.fn(async (token: string) => (token === 'amt_good' ? TOKEN_CALLER : null)),
+    authenticateToken: vi.fn(async (token: string) => (token === 'lup_good' ? TOKEN_CALLER : null)),
     hasSession: vi.fn(async () => false),
     ...overrides,
   };
@@ -52,7 +52,7 @@ describe('the credential order', () => {
     const authenticateRemote = vi.fn(async () => CF_CALLER);
     const access = resolver({ authenticateRemote });
     const response = await app(access).request('/who', {
-      headers: { authorization: 'Bearer amt_good' },
+      headers: { authorization: 'Bearer lup_good' },
     });
     expect(await response.json()).toEqual(TOKEN_CALLER);
     expect(authenticateRemote).not.toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe('the credential order', () => {
     expect(await (await app(access).request('/who')).json()).toEqual(person);
     expect(authenticateRemote).not.toHaveBeenCalled();
     const withToken = await app(access).request('/who', {
-      headers: { authorization: 'Bearer amt_good' },
+      headers: { authorization: 'Bearer lup_good' },
     });
     expect(await withToken.json()).toEqual(TOKEN_CALLER);
   });
@@ -106,7 +106,7 @@ describe('the credential order', () => {
 });
 
 describe('enforced single sign-on', () => {
-  const tokenCookie = { cookie: `${BROWSER_SIGN_IN}=amt_good` };
+  const tokenCookie = { cookie: `${BROWSER_SIGN_IN}=lup_good` };
 
   it('ignores a browser’s token cookie and the installation session, and keeps a bearer token', async () => {
     const access = resolver({ ssoEnforced: true, hasSession: vi.fn(async () => true) });
@@ -118,7 +118,7 @@ describe('enforced single sign-on', () => {
     expect((await app(access).request('/op', { headers: tokenCookie })).status).toBe(401);
     // CI's credential is a bearer token, and it keeps working.
     const bearer = await app(access).request('/who', {
-      headers: { authorization: 'Bearer amt_good' },
+      headers: { authorization: 'Bearer lup_good' },
     });
     expect(await bearer.json()).toEqual(TOKEN_CALLER);
     // A person signs in through the identity provider, so Access still counts.

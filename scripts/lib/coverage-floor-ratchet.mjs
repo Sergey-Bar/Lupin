@@ -27,22 +27,45 @@ import { execFileSync } from 'node:child_process';
  *
  * @param {Record<string, Record<string, unknown>> | null} before
  * @param {Record<string, Record<string, unknown>>} after
+ * @param {Record<string, string>} [renamed] old package path to new package path, for a package
+ *   that was renamed. The floor moves with it and is compared as itself, exactly as for any
+ *   other package; a rename is never an excuse to lower one, and an entry is read only when
+ *   the old key has left the baseline.
  * @returns {string[]}
  */
-export function loweredFloors(before, after) {
+export function loweredFloors(before, after, renamed = {}) {
   // No base to compare against: there is nothing to have lowered, and reporting
   // every floor as lowered on a single-commit clone would be a gate that can never
   // be green. The caller decides whether "no base" is acceptable; this returns
   // nothing, and the caller says so out loud rather than passing quietly.
   if (before === null) return [];
   return Object.entries(before).flatMap(([name, previous]) => {
-    const current = after[name];
+    // A package that was renamed is compared as itself under its new name. The map is
+    // consulted only when the old key is gone, so a stale entry cannot hide a lowering on
+    // a package that still exists, and the floor is checked exactly as for any other.
+    const successor = after[name] === undefined ? renamed[name] : undefined;
+    const current = successor === undefined ? after[name] : after[successor];
+    const label = successor === undefined ? name : `${name} (now ${successor})`;
     if (current === undefined) return [removedFinding(name)];
-    if (isUnmeasured(previous) && !isUnmeasured(current)) return [];
-    if (!isUnmeasured(previous) && isUnmeasured(current)) return [unmeasuredFinding(name)];
-    if (isUnmeasured(previous)) return [];
-    return [...loweredMetrics(name, previous, current), ...newMetrics(name, previous, current)];
+    if (successor !== undefined) return compareRenamed(label, previous, current);
+    return compareRenamed(name, previous, current);
   });
+}
+
+/**
+ * One package's old floor against its current one: the comparison every package takes,
+ * renamed or not.
+ *
+ * @param {string} label the name the finding reports
+ * @param {Record<string, unknown>} previous
+ * @param {Record<string, unknown>} current
+ * @returns {string[]}
+ */
+function compareRenamed(label, previous, current) {
+  if (isUnmeasured(previous) && !isUnmeasured(current)) return [];
+  if (!isUnmeasured(previous) && isUnmeasured(current)) return [unmeasuredFinding(label)];
+  if (isUnmeasured(previous)) return [];
+  return [...loweredMetrics(label, previous, current), ...newMetrics(label, previous, current)];
 }
 
 /**

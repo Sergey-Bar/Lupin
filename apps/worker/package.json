@@ -1,5 +1,5 @@
 {
-  "name": "@automate/worker",
+  "name": "@lupin/worker",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
@@ -15,8 +15,8 @@
     "lint": "eslint --max-warnings=0 src/"
   },
   "dependencies": {
-    "@automate/orchestration": "workspace:*",
-    "@automate/shared-contracts": "workspace:*",
+    "@lupin/orchestration": "workspace:*",
+    "@lupin/shared-contracts": "workspace:*",
     "croner": "catalog:",
     "pg": "catalog:",
     "zod": "catalog:"

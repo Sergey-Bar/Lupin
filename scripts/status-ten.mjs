@@ -60,7 +60,7 @@ const strict = true;
 if (process.argv.includes('--json')) {
   console.log(JSON.stringify({ counts, points: reports }, null, 2));
 } else {
-  console.log("Automate — 10/10, as the roadmap's §17 defines it");
+  console.log("Lupin — 10/10, as the roadmap's §17 defines it");
   console.log('');
   for (const report of reports) {
     console.log(

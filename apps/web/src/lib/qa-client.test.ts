@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QaScoreSchema, type QaScore } from '@automate/shared-contracts';
+import { QaScoreSchema, type QaScore } from '@lupin/shared-contracts';
 import { QaApiError, createQaClient } from './qa-client.js';
 import { QaGapsResponseSchema } from './qa.js';
 import { makeScan, makeTrend } from '../test-utils.js';

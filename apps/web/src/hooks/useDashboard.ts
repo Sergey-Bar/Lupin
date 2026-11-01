@@ -10,6 +10,7 @@ import {
   type Run,
   type RunEvent,
 } from '../lib/api.js';
+import { useOptimisticList } from './use-optimistic.js';
 import { useRequestLifecycle } from './use-request-lifecycle.js';
 import { projectRunEvent } from './useRuns.js';
 
@@ -311,7 +312,8 @@ export function useReleaseReadiness(releaseId: string | null, api = defaultApiCl
 }
 
 export function useQuarantine(api = defaultApiClient) {
-  const [data, setData] = useState<QuarantineEntry[]>([]);
+  const list = useOptimisticList<QuarantineEntry>([]);
+  const { reset } = list;
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { begin, cancelAll } = useRequestLifecycle();
@@ -321,7 +323,7 @@ export function useQuarantine(api = defaultApiClient) {
     void api
       .getQuarantine({ signal })
       .then((result) => {
-        setData(result);
+        reset(result);
         setError(null);
       })
       .catch((caught: unknown) => {
@@ -334,13 +336,24 @@ export function useQuarantine(api = defaultApiClient) {
     return () => {
       cancelAll();
     };
-  }, [api, begin, cancelAll]);
+  }, [api, begin, cancelAll, reset]);
 
-  const addQuarantine = async (entry: { testTitle: string; testFile: string; reason?: string }) => {
-    const created = await api.addQuarantine(entry);
-    setData((current) => [...current, created]);
-    return created;
-  };
+  /**
+   * Optimistic: the entry is in the list, marked pending, the moment the form is submitted.
+   * A refusal takes it away again and rethrows, so the form can say why and keep the text.
+   */
+  const addQuarantine = (entry: { testTitle: string; testFile: string; reason?: string }) =>
+    list.add(
+      {
+        id: `unsaved-${String(Date.now())}-${entry.testFile}`,
+        testTitle: entry.testTitle,
+        testFile: entry.testFile,
+        reason: entry.reason ?? null,
+        quarantinedAt: new Date().toISOString(),
+        status: 'pending',
+      },
+      () => api.addQuarantine(entry),
+    );
 
-  return { data, isLoading, error, addQuarantine };
+  return { data: list.items, isLoading, error, addQuarantine, isUnsaved: list.isPending };
 }

@@ -7,7 +7,7 @@ import {
   type SpoolEntry,
   type SpoolQueue,
   type SpoolRetryPolicy,
-} from '@automate/runner-sdk';
+} from '@lupin/runner-sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   RunnerConfigurationError,
@@ -393,7 +393,7 @@ describe('RunnerService', () => {
             token: 'tok-xyz',
             branch: 'main',
           });
-          return '/repos/.automate-checkouts/job-clone';
+          return '/repos/.lupin-checkouts/job-clone';
         },
         remove: async (path) => {
           removed.push(path);
@@ -404,9 +404,9 @@ describe('RunnerService', () => {
     await runner.run();
     clearTimeout(stop);
     expect(checkoutCalls).toEqual(['job-clone']);
-    expect(seen[0]?.repository).toBe('/repos/.automate-checkouts/job-clone');
+    expect(seen[0]?.repository).toBe('/repos/.lupin-checkouts/job-clone');
     expect(seen[0]?.redactions).toContain('tok-xyz');
-    expect(removed).toEqual(['/repos/.automate-checkouts/job-clone']);
+    expect(removed).toEqual(['/repos/.lupin-checkouts/job-clone']);
   });
 
   it('fails a clone job on a runner that cannot clone, without running anything', async () => {

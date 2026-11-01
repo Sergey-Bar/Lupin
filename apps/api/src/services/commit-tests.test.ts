@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { failureSignature } from '@automate/reporting';
+import { failureSignature } from '@lupin/reporting';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
 import type { TestRecord } from '../repositories/run-repository.js';
 import type { QuarantineMatch } from '../execution/quarantine-excusal.js';

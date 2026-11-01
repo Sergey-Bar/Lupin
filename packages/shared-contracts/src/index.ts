@@ -1,5 +1,5 @@
 /**
- * @automate/shared-contracts
+ * @lupin/shared-contracts
  *
  * Contract types and validation schemas shared across services.
  *

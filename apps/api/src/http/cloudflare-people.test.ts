@@ -3,8 +3,8 @@ import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import * as schema from '@automate/db';
-import { parseRoleMap, type CloudflareAccessConfig } from '@automate/config';
+import * as schema from '@lupin/db';
+import { parseRoleMap, type CloudflareAccessConfig } from '@lupin/config';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import {
   CF_ACCESS_HEADER,

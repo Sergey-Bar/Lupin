@@ -2,8 +2,8 @@ import { createHmac } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { sql } from 'drizzle-orm';
-import * as schema from '@automate/db';
-import { GitHubWebhookAckSchema } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import { GitHubWebhookAckSchema } from '@lupin/shared-contracts';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import {

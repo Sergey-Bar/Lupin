@@ -34,7 +34,7 @@ export const GUARDED_ACCESS = [
 export type GuardedAccess = (typeof GUARDED_ACCESS)[number];
 
 /** Registered (not local) so a script reading the built app can find it without importing us. */
-export const ACCESS_TAG = Symbol.for('automate.access-class');
+export const ACCESS_TAG = Symbol.for('lupin.access-class');
 
 /** Tags `middleware` as enforcing `access`, and returns the same function. */
 export function guard<T extends MiddlewareHandler>(access: GuardedAccess, middleware: T): T {

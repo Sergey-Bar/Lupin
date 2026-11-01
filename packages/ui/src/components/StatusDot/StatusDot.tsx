@@ -38,7 +38,7 @@ export const StatusDot = forwardRef<HTMLSpanElement, StatusDotProps>(
       className={cn(
         'inline-block h-2 w-2 shrink-0 rounded-full',
         TONE[status],
-        live && 'animate-automate-pulse motion-reduce:animate-none',
+        live && 'animate-lupin-pulse motion-reduce:animate-none',
         className,
       )}
       {...props}

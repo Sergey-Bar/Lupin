@@ -15,7 +15,7 @@
     "sourceOfTruth": true
   },
   "target": {
-    "repository": "local unified Automate repository",
+    "repository": "local unified Lupin repository",
     "remote": null,
     "baseCommit": "01cc19c8167e0e8365928862de463fd50caaee5c",
     "baseTree": "c08e5255f8f09b3eba8d73e4b9ba9e57aac449d1",
@@ -87,9 +87,9 @@
   },
   "sources": [
     {
-      "id": "automate",
+      "id": "lupin",
       "role": "frozen-extraction-source",
-      "repository": "https://github.com/Sergey-Bar/AutoMate.git",
+      "repository": "https://github.com/Sergey-Bar/Lupin.git",
       "commit": "bce507ecc36e9f5cc33b3016741238b7fc834f0f",
       "tree": "6c7b2a31ea9268929a17b839fb87ff5f2b2a6f8d",
       "checkout": "detached read-only worktree",
@@ -170,20 +170,20 @@
           "apps/server/src/db/migrate.ts"
         ],
         "declaredDataLocations": [
-          "DATA_DIR/automate.db",
+          "DATA_DIR/lupin.db",
           "DATABASE_URL",
-          "apps/server/data/automate.db",
-          ".automate-vault.db",
+          "apps/server/data/lupin.db",
+          ".lupin-vault.db",
           "VAULT_DB_PATH"
         ],
         "trackedResidue": [
           {
-            "path": "data/automate.db-wal",
+            "path": "data/lupin.db-wal",
             "bytes": 16512,
             "gitBlob": "a5e204b3a347b18a5d04b92be8078346ee7d1eea"
           },
           {
-            "path": "data/automate.db-shm",
+            "path": "data/lupin.db-shm",
             "bytes": 32768,
             "gitBlob": "468e205415de1b263fdbbc623247e043c2c24d4a"
           },
@@ -203,12 +203,12 @@
             "gitBlob": "044fac572ea65b041718e6b8cc20d2488e2fc550"
           },
           {
-            "path": "apps/server/.automate-vault.db-wal",
+            "path": "apps/server/.lupin-vault.db-wal",
             "bytes": 0,
             "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
           },
           {
-            "path": "apps/server/.automate-vault.db-shm",
+            "path": "apps/server/.lupin-vault.db-shm",
             "bytes": 32768,
             "gitBlob": "fe9ac2845eca6fe6da8a63cd096d9cf9e24ece10"
           }
@@ -233,7 +233,7 @@
     {
       "id": "dashboard",
       "role": "primary-ux-reference",
-      "repository": "https://github.com/Sergey-Bar/Automate-Dashboard.git",
+      "repository": "https://github.com/Sergey-Bar/Lupin-Dashboard.git",
       "commit": "b5a068538e433e09d816292852dba2a0a87acf22",
       "tree": "53c5be4fc2b43a5fa35dfeca20a9c9ca020ab0c4",
       "checkout": "detached read-only clone",
@@ -287,7 +287,7 @@
         ],
         "trackedSensitiveArtifacts": [
           {
-            "path": "apps/server/.automate/auth.json",
+            "path": "apps/server/.lupin/auth.json",
             "gitBlob": "a3122fc30615e7ccb1cc89735a7943e62346b24d",
             "contentsInspected": false,
             "status": "security-review-required"
@@ -304,7 +304,7 @@
         "activeConsumerInventory": "unknown"
       },
       "comparison": {
-        "candidate": "AutoMate/dashboard",
+        "candidate": "Lupin/dashboard",
         "verdict": "materially-different",
         "overlayAllowed": false,
         "differences": [
@@ -365,10 +365,10 @@
   },
   "dataSources": [
     {
-      "id": "automate-primary-db",
-      "source": "automate",
+      "id": "lupin-primary-db",
+      "source": "lupin",
       "engine": "SQLite",
-      "logicalLocations": ["DATA_DIR/automate.db", "DATABASE_URL"],
+      "logicalLocations": ["DATA_DIR/lupin.db", "DATABASE_URL"],
       "reproducible": false,
       "status": "owner-confirmation-required",
       "requiredEvidence": [
@@ -380,10 +380,10 @@
       ]
     },
     {
-      "id": "automate-vault",
-      "source": "automate",
+      "id": "lupin-vault",
+      "source": "lupin",
       "engine": "SQLite",
-      "logicalLocations": [".automate-vault.db", "VAULT_DB_PATH"],
+      "logicalLocations": [".lupin-vault.db", "VAULT_DB_PATH"],
       "reproducible": false,
       "status": "owner-confirmation-required",
       "requiredEvidence": [
@@ -409,7 +409,7 @@
     },
     {
       "id": "artifact-stores",
-      "source": "automate-and-dashboard",
+      "source": "lupin-and-dashboard",
       "engine": "filesystem-or-object-storage",
       "logicalLocations": ["ARTIFACTS_DIR", "data/blobs", "backups"],
       "reproducible": false,
@@ -424,7 +424,7 @@
   ],
   "credentialSources": [
     {
-      "name": "AUTOMATE_API_KEY",
+      "name": "LUPIN_API_KEY",
       "valueIncluded": false,
       "purpose": "installation bootstrap",
       "status": "owner-confirmation-required"
@@ -476,7 +476,7 @@
   },
   "verification": {
     "targetBaseIdentity": true,
-    "automateIdentity": true,
+    "lupinIdentity": true,
     "dashboardIdentity": true,
     "qaDoctorIdentity": true,
     "sourceCheckoutsClean": true,
@@ -493,7 +493,7 @@
       "frozenInstall": "passed",
       "lint": "passed",
       "typecheck": "blocked",
-      "typecheckReason": "The initial clean checkout omitted five ignored apps/web/src/routes/automate modules required by src/router.ts.",
+      "typecheckReason": "The initial clean checkout omitted five ignored apps/web/src/routes/lupin modules required by src/router.ts.",
       "productTests": "not-run-phase0"
     },
     "phase1": {
@@ -540,7 +540,7 @@
         "evidence": "Owner confirmed local/sample-only scope; no production data is in scope."
       },
       {
-        "id": "automate-deployment-sha-confirmed",
+        "id": "lupin-deployment-sha-confirmed",
         "status": "passed",
         "evidence": "No production deployment is in scope; pinned source remains frozen locally."
       },

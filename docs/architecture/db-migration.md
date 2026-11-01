@@ -13,7 +13,7 @@
 
 ## Summary
 
-This ADR defines the migration tooling policy for the Automate monorepo: all current SQLite databases (Dashboard, Automate) and the future PostgreSQL database (`@automate/db`, T9). It inventories every table in the current SQLite schemas, establishes the migration baseline strategy for Postgres, and documents the data import approach that preserves existing SQLite data.
+This ADR defines the migration tooling policy for the Lupin monorepo: all current SQLite databases (Dashboard, Lupin) and the future PostgreSQL database (`@lupin/db`, T9). It inventories every table in the current SQLite schemas, establishes the migration baseline strategy for Postgres, and documents the data import approach that preserves existing SQLite data.
 
 ---
 
@@ -78,10 +78,10 @@ prevents. See [ADR-003](../adr/003-postgres-only-durable-queue.md).
 
 ## 2. Schema Inventory
 
-### 2.1 Automate — SQLite (`@automate/api`)
+### 2.1 Lupin — SQLite (`@lupin/api`)
 
-Source: `Automate/apps/server/src/db/schema.ts`
-Migrations: `Automate/apps/server/drizzle/` (8 files)
+Source: `Lupin/apps/server/src/db/schema.ts`
+Migrations: `Lupin/apps/server/drizzle/` (8 files)
 
 | Table                        | Key Columns                                                                                                                                                                                         | Notes                                                                                   |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -118,10 +118,10 @@ Migrations: `Automate/apps/server/drizzle/` (8 files)
 
 ---
 
-### 2.2 Automate — SQLite (`@automate/server`)
+### 2.2 Lupin — SQLite (`@lupin/server`)
 
-Source: `Automate/apps/server/src/db/schema.ts`
-Migrations: `Automate/apps/server/drizzle/` (1 file)
+Source: `Lupin/apps/server/src/db/schema.ts`
+Migrations: `Lupin/apps/server/drizzle/` (1 file)
 
 | Table                 | Key Columns                                                                                                                                                     | Notes                           |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
@@ -134,13 +134,13 @@ Migrations: `Automate/apps/server/drizzle/` (1 file)
 | `model_config`        | `id` (PK default `'default'`), `provider`, `model`, `endpoint`, `temperature`, `max_tokens`, `system_prompt`, `updated_at`                                      | Active LLM configuration        |
 | `trace_links`         | `id` (PK), `source_type`, `source_id`, `target_type`, `target_id`, `link_type`, `metadata`, `created_at`, `created_by`                                          | Cross-entity traceability links |
 
-**Total Automate tables: 8**
+**Total Lupin tables: 8**
 
 ---
 
-### 2.3 Automate Vault — SQLite (separate DB file)
+### 2.3 Lupin Vault — SQLite (separate DB file)
 
-Source: `Automate/apps/server/src/vault/schema.ts`
+Source: `Lupin/apps/server/src/vault/schema.ts`
 Migration: raw `CREATE TABLE IF NOT EXISTS` executed via `better-sqlite3` exec (no Drizzle kit)
 
 | Table           | Key Columns                                                                                                            | Notes                                       |
@@ -155,18 +155,18 @@ Migration: raw `CREATE TABLE IF NOT EXISTS` executed via `better-sqlite3` exec (
 
 ## 3. PostgreSQL Migration Baseline (T9)
 
-> **This section is forward-looking.** The actual `@automate/db` package is created in Task 9. This section defines the approach so T9 has a clear contract.
+> **This section is forward-looking.** The actual `@lupin/db` package is created in Task 9. This section defines the approach so T9 has a clear contract.
 
 ### 3.1 New package: `packages/db`
 
-Task 9 will create `packages/db/` (package name `@automate/db`) containing:
+Task 9 will create `packages/db/` (package name `@lupin/db`) containing:
 
 ```
 packages/db/
   src/
     schema/
       dashboard.ts    # All 28 Dashboard tables, ported to pgTable
-      automate.ts     # All 8 Automate tables, ported to pgTable
+      lupin.ts     # All 8 Lupin tables, ported to pgTable
       vault.ts        # vault_entries, ported to pgTable
     index.ts          # re-exports
     client.ts         # Postgres connection (drizzle-orm/node-postgres)
@@ -178,9 +178,9 @@ packages/db/
 
 ### 3.2 Baseline generation
 
-When `@automate/db` is created in T9:
+When `@lupin/db` is created in T9:
 
-1. All three SQLite schemas (Dashboard, Automate, Vault) will be transcribed to Drizzle `pgTable` definitions.
+1. All three SQLite schemas (Dashboard, Lupin, Vault) will be transcribed to Drizzle `pgTable` definitions.
 2. Run `pnpm db:generate` once to produce the **initial baseline migration** (`drizzle/0000_*.sql`). This is the single SQL file that creates every table from scratch on a fresh Postgres instance.
 3. Commit `drizzle/0000_*.sql` to git — this is the auditable starting point.
 4. All subsequent schema changes follow the standard flow: edit schema → `db:generate` → commit .sql → `db:migrate`.
@@ -207,7 +207,7 @@ When `@automate/db` is created in T9:
 - [ ] All legacy services are stopped (no active writes to SQLite)
 - [ ] SQLite files are backed up to a separate location (e.g., `backups/YYYYMMDD/`)
 - [ ] Postgres schema is at baseline (migration `0000` applied, empty tables)
-- [ ] Database credentials are set in `@automate/db`'s `.env`
+- [ ] Database credentials are set in `@lupin/db`'s `.env`
 
 ### 4.2 Import approach
 
@@ -265,6 +265,6 @@ CI pipelines must:
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Why ban `db:push` in production?             | It has no history, no rollback, and can silently drop data. `db:generate` + `db:migrate` gives a git-auditable, reversible change set.   |
 | Why keep SQLite for legacy products?         | Zero-infrastructure, proven in production, no migration risk. Legacy products stay on SQLite until full parity is verified (T12+).       |
-| Why a dedicated `@automate/db` package?      | Isolation: shared DB logic and schema live in one place, consumed by both the new unified server (T9) and any future services.           |
+| Why a dedicated `@lupin/db` package?         | Isolation: shared DB logic and schema live in one place, consumed by both the new unified server (T9) and any future services.           |
 | Why Postgres for the unified platform?       | Multi-writer concurrency, richer query planner, JSONB operators, and production-grade HA — all needed at scale.                          |
 | Why transcribe schemas (not dump + restore)? | SQLite and Postgres have different type systems. A clean Drizzle schema transcription produces idiomatic Postgres DDL with proper types. |

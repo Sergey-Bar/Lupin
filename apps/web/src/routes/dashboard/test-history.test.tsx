@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { TestHistory } from '@automate/shared-contracts';
+import type { TestHistory } from '@lupin/shared-contracts';
 import { makeApi } from '../../test-utils.js';
 import { testHistoryPath } from '../../route-manifest.js';
 import { TestHistoryPage } from './test-history.js';

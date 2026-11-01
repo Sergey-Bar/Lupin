@@ -28,7 +28,7 @@ import { expect, test } from '@playwright/test';
  */
 
 const LOCAL = path.resolve(import.meta.dirname, '..', '..');
-const BIN = path.join(LOCAL, 'bin', 'automate-local.mjs');
+const BIN = path.join(LOCAL, 'bin', 'lupin-local.mjs');
 const FILES = path.join(LOCAL, 'corpus', 'files');
 const fixture = (/** @type {string} */ name) => readFileSync(path.join(FILES, name));
 
@@ -79,7 +79,7 @@ function folder(root, files) {
 }
 
 test.beforeAll(async () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'automate-a11y-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'lupin-a11y-'));
   const out = path.join(dir, 'serve.txt');
   const fd = openSync(out, 'w');
   const child = spawn(process.execPath, [BIN, 'serve', '--data-dir', path.join(dir, 'data')], {
@@ -144,7 +144,7 @@ test.afterAll(async () => {
  */
 async function signIn(page) {
   await page.goto(app.url.href);
-  await expect(page.getByRole('heading', { level: 1 })).not.toHaveText('AUTOMATE (local)');
+  await expect(page.getByRole('heading', { level: 1 })).not.toHaveText('Lupin Local');
 }
 
 /**

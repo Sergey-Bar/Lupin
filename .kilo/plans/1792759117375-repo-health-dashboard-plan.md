@@ -1,11 +1,11 @@
-# AutoMate Health — the repository health and quality dashboard
+# Lupin Health — the repository health and quality dashboard
 
 **Status:** plan of record, being implemented on `feat/repo-health`. Lean by directive: no
 homegrown analyser, no new scanner, nothing built that the deferred list names.
 
 ## Problem
 
-AutoMate scored test health only, for repositories already on the runner host. There was no
+Lupin scored test health only, for repositories already on the runner host. There was no
 letter grade, no stored lint / security / dependency / duplication findings, no per-dimension
 trend, no remote repository, and nearly every route was `open`.
 
@@ -23,7 +23,7 @@ trend, no remote repository, and nearly every route was `open`.
    a fix available, or failing default-branch tests caps the overall at D. A dimension no tool
    reported on is *not measured* and excluded; without Security, or with fewer than two
    dimensions, the grade is *incomplete* and prints no letter. Weights, disabled gates and the
-   pull-request policy live under `health` in `automate.config.json`.
+   pull-request policy live under `health` in `lupin.config.json`.
 3. **Untrusted code.** A git-sourced repository runs only scanners that never execute
    repository code, enforced server-side. Local paths keep the existing GenericSpawn. CI upload
    executes nothing on the host.

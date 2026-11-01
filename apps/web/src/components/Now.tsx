@@ -1,6 +1,6 @@
 import React from 'react';
-import { Badge, Button, EmptyState, Skeleton } from '@automate/ui';
-import type { DeliverySummary, Portfolio } from '@automate/shared-contracts';
+import { Badge, Button, EmptyState, Skeleton } from '@lupin/ui';
+import type { DeliverySummary, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from '../lib/api.js';
 import { isNew, rankAttention, type AttentionItem } from '../lib/attention.js';
 import { ago } from '../lib/health-view.js';
@@ -22,7 +22,7 @@ export interface NowSources {
   deliveries: () => Promise<DeliverySummary[]>;
 }
 
-export const LAST_VISIT_KEY = 'automate-now-last-visit';
+export const LAST_VISIT_KEY = 'lupin-now-last-visit';
 
 interface Ready {
   status: 'ready';
@@ -158,7 +158,7 @@ function AttentionList({
         <li
           key={item.id}
           data-testid={`now-item-${item.id}`}
-          className="flex animate-fade-in items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4"
+          className="flex animate-fade-in items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4"
         >
           <div className="min-w-0">
             <p className="flex items-center gap-2 font-medium">

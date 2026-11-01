@@ -20,7 +20,7 @@ import {
   TriageLabelSchema,
   type TriageLabel,
   type TriageLabelBody,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 
 export const RunSchema = NormalizedRunSchema;
 export const RunEventSchema = RunEventEnvelopeSchema;

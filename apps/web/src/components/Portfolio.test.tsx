@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { PortfolioAiCode, PortfolioDelivery } from '@automate/shared-contracts';
+import type { PortfolioAiCode, PortfolioDelivery } from '@lupin/shared-contracts';
 import type { AiCodeClient } from '../lib/ai-code-client.js';
 import type { DeliveryClient } from '../lib/delivery-client.js';
 import {

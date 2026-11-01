@@ -2,7 +2,7 @@ import {
   HEALTH_METRIC_FORMATS,
   type DimensionMetric,
   type HealthMetricFormat,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { HealthReportError, MAX_HEALTH_REPORT_BYTES } from './sarif.js';
 import { type Json, record, finite } from './json-fields.js';
 import { parseCoverage, type CoverageFormat } from './coverage.js';

@@ -1,4 +1,4 @@
-# @automate/contract-tests
+# @lupin/contract-tests
 
 The contract suite: the API, web client, reporter and runner agree on every payload, and committed generated documents match their sources.
 
@@ -6,4 +6,4 @@ The contract suite: the API, web client, reporter and runner agree on every payl
 pnpm test:contract
 ```
 
-Part of the [Automate](https://github.com/Sergey-Bar/AutoMate) monorepo; see the root README for the whole picture.
+Part of the [Lupin](https://github.com/Sergey-Bar/Lupin) monorepo; see the root README for the whole picture.

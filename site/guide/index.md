@@ -18,7 +18,7 @@ for short definitions with examples.
 <div class="guide-hub">
   <a class="guide-hub__card" href="install">
     <span>01 / START</span>
-    <strong>Get Automate running <span aria-hidden="true">↗</span></strong>
+    <strong>Get Lupin running <span aria-hidden="true">↗</span></strong>
     <small>Install locally and open the console.</small>
   </a>
   <a class="guide-hub__card" href="sending-results">

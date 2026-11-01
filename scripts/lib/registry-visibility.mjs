@@ -21,7 +21,7 @@ export function packageSettingsUrl(owner, image) {
  * Ask GHCR, anonymously, for one image's manifest.
  *
  * @param {string} owner lower-case namespace, for example `sergey-bar`
- * @param {string} image for example `automate-api`
+ * @param {string} image for example `lupin-api`
  * @param {string} tag
  * @param {typeof fetch} [fetcher]
  * @returns {Promise<PullCheck>}

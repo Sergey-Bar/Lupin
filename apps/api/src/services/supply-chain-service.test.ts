@@ -1,8 +1,8 @@
 import { generateKeyPairSync, sign, type KeyObject } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
-import * as schema from '@automate/db';
-import type { HealthGrade } from '@automate/shared-contracts';
+import * as schema from '@lupin/db';
+import type { HealthGrade } from '@lupin/shared-contracts';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import {
   ingestHealthReport,

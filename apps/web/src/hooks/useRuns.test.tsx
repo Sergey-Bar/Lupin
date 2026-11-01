@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { RunEventEnvelope } from '@automate/shared-contracts';
+import type { RunEventEnvelope } from '@lupin/shared-contracts';
 import { isRunActive, useRuns } from './useRuns.js';
 import {
   abortError,

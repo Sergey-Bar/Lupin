@@ -22,11 +22,11 @@ Every `v*` tag runs `.github/workflows/release.yml`, which:
    section, then runs `pnpm verify`;
 2. builds each image in `PUBLISHED_IMAGES` (`scripts/lib/release-compose.mjs`) natively on
    amd64 and arm64 runners and publishes one multi-arch image per service to
-   `ghcr.io/sergey-bar/automate-<service>`, tagged `X.Y.Z` — and `X.Y` and `latest` only for
+   `ghcr.io/sergey-bar/lupin-<service>`, tagged `X.Y.Z` — and `X.Y` and `latest` only for
    a final release — with an SBOM and a build-provenance attestation;
 3. stops if any image cannot be pulled anonymously (`pnpm release:visibility`);
 4. publishes a GitHub release whose notes are the changelog section and whose assets are
-   `automate-X.Y.Z.zip` and `SHA256SUMS` (`pnpm release:bundle`);
+   `lupin-X.Y.Z.zip` and `SHA256SUMS` (`pnpm release:bundle`);
 5. installs that zip from the release page on a clean runner, probes it, and removes it.
 
 The zip carries a compose file **derived** from `infra/compose/docker-compose.unified.yml`
@@ -42,7 +42,7 @@ secrets once, keep them, and bind to loopback unless told otherwise.
 - **A first release needs one manual step:** GHCR creates each package private and only
   the owner can make it public. The workflow detects it and names each settings page.
 - **The install is open by default** (no login, ADR-006), which is why the published port
-  binds `127.0.0.1` and the start scripts warn when `AUTOMATE_BIND` is anything else.
+  binds `127.0.0.1` and the start scripts warn when `LUPIN_BIND` is anything else.
 - **The acceptance job covers Linux amd64 only.** GitHub's Windows runners run Windows
   containers and its macOS runners have no Docker; the job summary records both as GAPs,
   and `start.ps1` / `start.cmd` are tested against a fake `docker` on a Windows runner.

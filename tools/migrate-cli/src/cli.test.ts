@@ -19,7 +19,7 @@ const pgMock = vi.hoisted(() => {
 
 vi.mock('pg', () => ({ default: { Pool: pgMock.Pool }, Pool: pgMock.Pool }));
 
-const TARGET = 'postgres://user:pass@localhost:5432/automate';
+const TARGET = 'postgres://user:pass@localhost:5432/lupin';
 
 let directory: string;
 let savedExitCode: typeof process.exitCode;
@@ -27,7 +27,7 @@ let stderr: MockInstance<typeof console.error>;
 let stdout: MockInstance<typeof console.info>;
 
 beforeEach(() => {
-  directory = mkdtempSync(path.join(tmpdir(), 'automate-cli-'));
+  directory = mkdtempSync(path.join(tmpdir(), 'lupin-cli-'));
   savedExitCode = process.exitCode;
   process.exitCode = undefined;
   stderr = vi.spyOn(console, 'error').mockImplementation(() => undefined);

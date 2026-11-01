@@ -23,7 +23,7 @@ vi.mock('pg', () => ({
 let tempDir: string;
 
 beforeEach(async () => {
-  tempDir = await mkdtemp(join(tmpdir(), 'automate-migrate-'));
+  tempDir = await mkdtemp(join(tmpdir(), 'lupin-migrate-'));
   mocks.query.mockReset();
   mocks.end.mockReset();
   mocks.query.mockResolvedValue({ rows: [], rowCount: 1 });
@@ -157,7 +157,7 @@ describe('migrateToPostgres', () => {
 
     const report = await migrateToPostgres({
       from,
-      to: 'postgres://user:pass@localhost:5432/automate',
+      to: 'postgres://user:pass@localhost:5432/lupin',
       dryRun: false,
       workspaceId: 'workspace-1',
     });
@@ -184,7 +184,7 @@ describe('migrateToPostgres', () => {
 
     const report = await migrateToPostgres({
       from,
-      to: 'postgres://user:pass@localhost:5432/automate',
+      to: 'postgres://user:pass@localhost:5432/lupin',
       dryRun: true,
       log,
     });
@@ -206,7 +206,7 @@ describe('migrateToPostgres', () => {
 
     await migrateToPostgres({
       from,
-      to: 'postgres://user:pass@localhost:5432/automate',
+      to: 'postgres://user:pass@localhost:5432/lupin',
       dryRun: false,
       workspaceId: 'workspace-1',
     });
@@ -247,7 +247,7 @@ describe('migrateToPostgres', () => {
 
     await migrateToPostgres({
       from,
-      to: 'postgres://user:pass@localhost:5432/automate',
+      to: 'postgres://user:pass@localhost:5432/lupin',
       dryRun: false,
       workspaceId: 'workspace-1',
     });
@@ -282,7 +282,7 @@ describe('migrateToPostgres', () => {
 
     await migrateToPostgres({
       from,
-      to: 'postgres://user:pass@localhost:5432/automate',
+      to: 'postgres://user:pass@localhost:5432/lupin',
       dryRun: false,
       workspaceId: 'workspace-1',
     });
@@ -315,7 +315,7 @@ describe('migrateToPostgres', () => {
     await expect(
       migrateToPostgres({
         from,
-        to: 'postgres://user:pass@localhost:5432/automate',
+        to: 'postgres://user:pass@localhost:5432/lupin',
         dryRun: true,
       }),
     ).rejects.toThrow('Schema mismatch for runs: unknown columns unexpected_column');
@@ -323,7 +323,7 @@ describe('migrateToPostgres', () => {
 });
 
 describe('migrateToPostgres refusals and row-level failures', () => {
-  const TARGET = 'postgres://user:pass@localhost:5432/automate';
+  const TARGET = 'postgres://user:pass@localhost:5432/lupin';
 
   function sqlite(name: string, sql: string): string {
     const filePath = join(tempDir, name);
@@ -612,7 +612,7 @@ describe('migrateToPostgres refusals and row-level failures', () => {
 });
 
 describe('migrateToPostgres and the workspace boundary (ledger MNT-17)', () => {
-  const TARGET = 'postgres://user:pass@localhost:5432/automate';
+  const TARGET = 'postgres://user:pass@localhost:5432/lupin';
 
   function sqlite(name: string, sql: string): string {
     const filePath = join(tempDir, name);

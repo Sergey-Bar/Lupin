@@ -21,7 +21,7 @@ import {
   ExecutionEventLineSchema,
   RunEventTypeSchema,
   type RunEventType,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import type { RunRepository } from '../../repositories/run-repository.js';
 import type { RealtimeBus } from '../../realtime/realtime-bus.js';
 import type { ExecutionRun, ExecutionStore } from '../../execution/types.js';

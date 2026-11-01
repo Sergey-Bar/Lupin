@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, afterEach } from 'vitest';
-import { SECRET_MIN_LENGTH, isSecretPlaceholder, type SecretVariable } from '@automate/config';
+import { SECRET_MIN_LENGTH, isSecretPlaceholder, type SecretVariable } from '@lupin/config';
 import { getConfig, readObjectStoreSettings } from './config.js';
 import { checkProductionPolicy } from './startup-policy.js';
 
@@ -13,7 +13,7 @@ afterEach(() => {
 
 const OBJECT_STORE_ENV = {
   OBJECT_STORE_ENDPOINT: 'https://objects.example.com',
-  OBJECT_STORE_BUCKET: 'automate-artifacts',
+  OBJECT_STORE_BUCKET: 'lupin-artifacts',
   OBJECT_STORE_REGION: 'eu-central-1',
   OBJECT_STORE_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
   OBJECT_STORE_SECRET_ACCESS_KEY: 'secret-access-key-value',
@@ -69,7 +69,7 @@ describe('getConfig', () => {
     for (const [key, value] of Object.entries(OBJECT_STORE_ENV)) process.env[key] = value;
     expect(getConfig().objectStore).toEqual({
       endpoint: 'https://objects.example.com',
-      bucket: 'automate-artifacts',
+      bucket: 'lupin-artifacts',
       region: 'eu-central-1',
       accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
       secretAccessKey: 'secret-access-key-value',
@@ -102,7 +102,7 @@ describe('readObjectStoreSettings', () => {
     expect(() =>
       readObjectStoreSettings({
         OBJECT_STORE_ENDPOINT: 'https://objects.example.com',
-        OBJECT_STORE_BUCKET: 'automate-artifacts',
+        OBJECT_STORE_BUCKET: 'lupin-artifacts',
       }),
     ).toThrow(
       'Object store configuration is incomplete; set OBJECT_STORE_REGION, OBJECT_STORE_ACCESS_KEY_ID, OBJECT_STORE_SECRET_ACCESS_KEY',
@@ -110,8 +110,8 @@ describe('readObjectStoreSettings', () => {
   });
 
   it('rejects an unusable endpoint, boolean, or bound', () => {
-    const complete = { ...OBJECT_STORE_ENV, OBJECT_STORE_BUCKET: 'Automate' };
-    expect(() => readObjectStoreSettings({ ...complete, OBJECT_STORE_BUCKET: 'Automate' })).toThrow(
+    const complete = { ...OBJECT_STORE_ENV, OBJECT_STORE_BUCKET: 'Lupin' };
+    expect(() => readObjectStoreSettings({ ...complete, OBJECT_STORE_BUCKET: 'Lupin' })).toThrow(
       'OBJECT_STORE_BUCKET must be a lowercase S3 bucket name',
     );
     expect(() =>
@@ -168,7 +168,7 @@ const SECRET_VARIABLES = [
   'COOKIE_SECRET',
   'SESSION_SECRET',
   'VAULT_SECRET',
-  'AUTOMATE_API_KEY',
+  'LUPIN_API_KEY',
   'REPORTER_SECRET',
   'RUNNER_REGISTRATION_SECRET',
 ] as const satisfies readonly SecretVariable[];
@@ -177,7 +177,7 @@ const SECRET_VARIABLES = [
  * The repository root, at module scope.
  *
  * It was declared inside the `describe` block, which meant the module-level
- * `exportedConst` — added so the audit can follow `AUTOMATE_API_KEY: INSTALLATION_KEY`
+ * `exportedConst` — added so the audit can follow `LUPIN_API_KEY: INSTALLATION_KEY`
  * to the file that declares the value — could not reach it. Hoisted rather than passed
  * as an argument, because three functions below already want it and threading a path
  * through all three to save one constant is not a trade worth making.
@@ -303,11 +303,11 @@ function assignmentsIn(text: string): Array<{ variable: SecretVariable; value: s
 /**
  * A named export from a repository file, evaluated.
  *
- * `playwright.config.ts` passes `AUTOMATE_API_KEY: INSTALLATION_KEY` — an identifier,
+ * `playwright.config.ts` passes `LUPIN_API_KEY: INSTALLATION_KEY` — an identifier,
  * not a literal — because the value lives in one place (`tests/e2e/support/config.ts`) and the
  * two files holding it disagreed, which is what made every authenticated E2E call answer
  * 401. `auditSource` measures the *value*, so it has to follow a reference to find it;
- * measuring the identifier instead reports `AUTOMATE_API_KEY=INSTALLATION_KEY (17
+ * measuring the identifier instead reports `LUPIN_API_KEY=INSTALLATION_KEY (17
  * characters)`, which is a finding about a name rather than about a secret.
  *
  * The expression is read from a file in this repository and evaluated, so the scope of
@@ -352,7 +352,7 @@ function auditAssignment(
   resolve: (identifier: string) => string | undefined,
 ): string[] {
   // A bare value in an object literal carries its trailing comma, so
-  // `AUTOMATE_API_KEY: INSTALLATION_KEY,` reaches here as `INSTALLATION_KEY,` — which
+  // `LUPIN_API_KEY: INSTALLATION_KEY,` reaches here as `INSTALLATION_KEY,` — which
   // matches no identifier and would be measured as a 17-character secret. The comma is
   // punctuation around the value, never part of it.
   const trimmed = written.replace(/,$/, '');

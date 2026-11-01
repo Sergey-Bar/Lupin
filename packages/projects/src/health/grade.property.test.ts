@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { FINDING_SEVERITIES, HEALTH_DIMENSIONS, FINDING_KINDS } from '@automate/shared-contracts';
+import { FINDING_SEVERITIES, HEALTH_DIMENSIONS, FINDING_KINDS } from '@lupin/shared-contracts';
 import { GATE_CEILING, grade, type FindingObservation, type HealthInputs } from './grade.js';
 
 /**

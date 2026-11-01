@@ -23,9 +23,9 @@ function cleanup(directory) {
 }
 
 async function withEngine(files, body) {
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-im-repo-'));
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-im-data-'));
-  const work = mkdtempSync(path.join(tmpdir(), 'automate-im-work-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-im-repo-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-im-data-'));
+  const work = mkdtempSync(path.join(tmpdir(), 'lupin-im-work-'));
   for (const [relative, content] of Object.entries(files)) {
     mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
     writeFileSync(path.join(root, relative), content);

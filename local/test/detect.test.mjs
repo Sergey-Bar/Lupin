@@ -24,7 +24,7 @@ import { LOCAL_ROOT } from './support.mjs';
  * @param {Record<string, string>} files
  */
 function repository(files) {
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-repo-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-repo-'));
   for (const [relative, content] of Object.entries(files)) {
     const absolute = path.join(root, ...relative.split('/'));
     mkdirSync(path.dirname(absolute), { recursive: true });

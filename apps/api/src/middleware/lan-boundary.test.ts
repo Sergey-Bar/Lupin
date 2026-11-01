@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CLIENT_CIDRS } from '@automate/config';
+import { DEFAULT_CLIENT_CIDRS } from '@lupin/config';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { createClientAllowlist } from './client-allowlist.js';
 import { createOriginCheck } from './origin-check.js';
@@ -21,7 +21,7 @@ function app(clientAddress: string, enabled = true): Hono {
         clientKey: () => clientAddress,
       }),
     )
-    .use('*', createOriginCheck({ allowedOrigins: ['https://automate.local'] }))
+    .use('*', createOriginCheck({ allowedOrigins: ['https://lupin.local'] }))
     .get('/api/v1/runs', (c) => c.json({ ok: true }))
     .post('/api/v1/runs', (c) => c.json({ ok: true }));
 }
@@ -59,7 +59,7 @@ describe('the cross-site check', () => {
 
   it('admits the dashboard on its own host, an allowlisted origin, and a client with no origin', async () => {
     expect((await post({ origin: 'http://192.168.1.10:8080' })).status).toBe(200);
-    expect((await post({ origin: 'https://automate.local' })).status).toBe(200);
+    expect((await post({ origin: 'https://lupin.local' })).status).toBe(200);
     expect((await post({})).status).toBe(200);
     expect((await post({ 'sec-fetch-site': 'same-origin' })).status).toBe(200);
   });

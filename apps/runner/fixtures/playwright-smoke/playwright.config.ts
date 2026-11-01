@@ -6,9 +6,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],
-  outputDir: process.env['AUTOMATE_OUTPUT_DIR'] ?? 'test-results',
+  outputDir: process.env['LUPIN_OUTPUT_DIR'] ?? 'test-results',
   use: {
-    baseURL: process.env['AUTOMATE_BASE_URL'] ?? 'http://127.0.0.1:3000',
+    baseURL: process.env['LUPIN_BASE_URL'] ?? 'http://127.0.0.1:3000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

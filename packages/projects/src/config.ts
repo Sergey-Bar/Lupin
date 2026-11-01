@@ -1,7 +1,7 @@
 import {
-  AutomateConfigSchema,
+  LupinConfigSchema,
   ProjectProfileSchema,
-  type AutomateConfig,
+  type LupinConfig,
   type ProjectProfile,
   type ResolvedProfile,
 } from './profile.js';
@@ -22,7 +22,7 @@ function declaredCommand(
     // candidate; the ceiling is 1 because there is nothing more certain than
     // "the operator said this".
     confidence: Math.min(1, confidence + 0.15),
-    evidence: `automate.config.json#commands.${category}`,
+    evidence: `lupin.config.json#commands.${category}`,
   };
 }
 
@@ -56,7 +56,7 @@ export function profileFromDetection(detection: DetectResult): ProjectProfile {
 }
 
 /**
- * Folds a checked-in `automate.config.json` over a detected profile.
+ * Folds a checked-in `lupin.config.json` over a detected profile.
  *
  * **The override always wins.** Not "wins when it is more confident", and not
  * "wins when the detector is unsure" — always. The alternative is a detector that
@@ -66,7 +66,7 @@ export function profileFromDetection(detection: DetectResult): ProjectProfile {
  * operator changed, which is the only thing that makes the number explainable.
  */
 export function mergeConfig(base: ProjectProfile, raw: unknown): ResolvedProfile {
-  const config: AutomateConfig = AutomateConfigSchema.parse(raw);
+  const config: LupinConfig = LupinConfigSchema.parse(raw);
   const overriddenKeys = Object.keys(raw as Record<string, unknown>).filter(
     (key) => key !== '$schema' && key !== 'version',
   );
@@ -98,7 +98,7 @@ export function mergeConfig(base: ProjectProfile, raw: unknown): ResolvedProfile
  */
 function mergeCommands(
   detected: ProjectProfile['commands'],
-  declared: AutomateConfig['commands'],
+  declared: LupinConfig['commands'],
 ): ProjectProfile['commands'] {
   if (declared === undefined) return detected;
   const replaced = new Set<ScoreCategory>(Object.keys(declared) as ScoreCategory[]);
@@ -112,7 +112,7 @@ function mergeCommands(
 /** Merged field by field, so a config setting one target loses none of the others. */
 function mergeTargets(
   base: ProjectProfile['targets'],
-  declared: AutomateConfig['targets'],
+  declared: LupinConfig['targets'],
 ): ProjectProfile['targets'] {
   if (declared === undefined) return base;
   const pyramid = declared.pyramid ?? base.pyramid;

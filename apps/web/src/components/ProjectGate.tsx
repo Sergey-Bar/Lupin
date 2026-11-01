@@ -1,5 +1,5 @@
 import React from 'react';
-import { EmptyState } from '@automate/ui';
+import { EmptyState } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import type { QaClient } from '../lib/qa-client.js';
 import type { RegisteredProject } from '../lib/qa.js';
@@ -72,7 +72,7 @@ export function ProjectGate({
             writeChoice(event.target.value);
             choose(event.target.value);
           }}
-          className="min-h-11 max-w-56 truncate rounded-lg border border-border bg-surface-raised px-3 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+          className="min-h-11 max-w-56 truncate rounded-md border border-border-strong bg-surface-raised px-3 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
         >
           {projects.map((project) => (
             <option key={project.id} value={project.id}>
@@ -92,7 +92,7 @@ export function ProjectGate({
  * moving from the dashboard to the runner should stay on the repository they picked.
  * A stored id that is no longer registered falls back to the first project.
  */
-const CHOICE_KEY = 'automate-project';
+const CHOICE_KEY = 'lupin-project';
 
 function readChoice(): string | null {
   try {
@@ -114,11 +114,11 @@ function Onboarding({ title }: { title: string }): React.ReactElement {
   return (
     <PageFrame data-testid="onboarding">
       <PageHeader title={title} subtitle="No project is registered yet." />
-      <div className="flex flex-1 items-center justify-center">
-        <div className="max-w-measure space-y-3 rounded-xl border border-border bg-surface-raised p-8">
-          <h2 className="text-xl font-semibold">Point Automate at a repository</h2>
+      <div className="flex flex-1 items-center justify-center rounded-lg bg-ambient">
+        <div className="max-w-measure space-y-3 rounded-lg border border-border bg-surface-raised p-8">
+          <h2 className="text-xl font-semibold">Point Lupin at a repository</h2>
           <p className="max-w-measure text-pretty text-sm text-fg-muted">
-            Set <span className="font-mono">AUTOMATE_PROJECT_ROOT</span> to the checkout you want
+            Set <span className="font-mono">LUPIN_PROJECT_ROOT</span> to the checkout you want
             analysed and restart the API. It registers that folder at boot, scans every tool and
             report in it, and this screen fills in. This is an empty install, not a failure.
           </p>

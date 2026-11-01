@@ -1,4 +1,4 @@
-# ADR-007: AUTOMATE (local) is a separate product in this monorepo, reusing only portable parts
+# ADR-007: Lupin Local is a separate product in this monorepo, reusing only portable parts
 
 **Status:** proposed
 **Date:** 2026-10-19
@@ -25,7 +25,7 @@ the HTTP runner protocol.
 
 ## Decision
 
-**AUTOMATE (local) is a separate product that lives in this monorepo.** It shares the
+**Lupin Local is a separate product that lives in this monorepo.** It shares the
 toolchain and may reuse a component only when all of these hold:
 
 1. The component is pure or sits behind a narrow port (no Hono, Effect, Drizzle or
@@ -47,8 +47,8 @@ cover. The mechanism is a later decision and is not made here.
 
 - Two deployment shapes exist in one tree. Documents must say which one they describe;
   `docs/local/README.md` carries that rule.
-- The local product's name is provisional. The repository already uses the name Automate
-  for the server platform, so `docs/local/` calls the new product AUTOMATE (local) and
+- The local product's name is provisional. The repository already uses the name Lupin
+  for the server platform, so `docs/local/` calls the new product Lupin Local and
   the existing one the server platform. Final naming is an open question.
 - The reuse list is a proposal until each component is extracted and its tests run in the
   new package. `docs/local/feasibility.md` records which reuse claims were exercised and

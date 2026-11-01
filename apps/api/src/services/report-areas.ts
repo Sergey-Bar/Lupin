@@ -1,7 +1,7 @@
 import { asc, eq } from 'drizzle-orm';
-import { projects } from '@automate/db';
-import type { ReportArea, ReportCard, ReportFix, ReportInput } from '@automate/reporting';
-import type { Scorecard } from '@automate/shared-contracts';
+import { projects } from '@lupin/db';
+import type { ReportArea, ReportCard, ReportFix, ReportInput } from '@lupin/reporting';
+import type { Scorecard } from '@lupin/shared-contracts';
 import { aiCodeReport, AI_CODE_GRADE_WINDOW_DAYS } from './ai-code-service.js';
 import { deliveryReading } from './delivery-service.js';
 import { projectEvals } from './eval-service.js';

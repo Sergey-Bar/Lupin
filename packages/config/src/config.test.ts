@@ -102,7 +102,7 @@ describe('apiProxyTarget', () => {
     //
     // `HOST=127.0.0.1:3000@evil.example.com` parses as a URL whose real host is
     // `evil.example.com`, so every `/api` request — including the login body
-    // carrying `AUTOMATE_API_KEY` — would be proxied off-box, with a proxy target
+    // carrying `LUPIN_API_KEY` — would be proxied off-box, with a proxy target
     // that still *looks* like loopback in a log. Anything that is not a plain
     // host or IP literal is refused and falls back to the default.
     for (const value of [
@@ -182,10 +182,10 @@ describe('the documented quick start', () => {
 
   it('signs in with the key it tells the reader to set', () => {
     // The other half of the broken quick start: it set
-    // `AUTOMATE_API_KEY=local-installation-key-32-characters` and then said to
+    // `LUPIN_API_KEY=local-installation-key-32-characters` and then said to
     // sign in with `local-installation-key`, which is a different string and
     // cannot authenticate — `verifyCredential` compares the whole value.
-    const assigned = /AUTOMATE_API_KEY=['"]?([A-Za-z0-9-]+)['"]?/.exec(readme);
+    const assigned = /LUPIN_API_KEY=['"]?([A-Za-z0-9-]+)['"]?/.exec(readme);
     expect(assigned).not.toBeNull();
     const value = assigned?.[1] ?? '';
     expect(readme).toContain(`Sign in with \`${value}\``);
@@ -217,7 +217,7 @@ describe('parseConfig', () => {
   it('uses COOKIE_SECRET before the compatibility alias', () => {
     const config = parseConfig({
       NODE_ENV: 'production',
-      DATABASE_URL: 'postgresql://user:pass@localhost:5432/automate',
+      DATABASE_URL: 'postgresql://user:pass@localhost:5432/lupin',
       COOKIE_SECRET: long('c'),
       SESSION_SECRET: long('s'),
       VAULT_SECRET: long('v'),
@@ -261,13 +261,13 @@ describe('LAN mode and the client allowlist', () => {
   });
 
   it('turns access control on when LAN mode is set and ACCESS_CONTROL is not', () => {
-    const config = parseConfig({ AUTOMATE_LAN_MODE: '1' });
+    const config = parseConfig({ LUPIN_LAN_MODE: '1' });
     expect(config.lanMode).toBe(true);
     expect(config.accessControl).toBe('enforced');
   });
 
   it('keeps an explicit ACCESS_CONTROL, so the startup policy can refuse the conflict', () => {
-    expect(parseConfig({ AUTOMATE_LAN_MODE: 'true', ACCESS_CONTROL: 'open' }).accessControl).toBe(
+    expect(parseConfig({ LUPIN_LAN_MODE: 'true', ACCESS_CONTROL: 'open' }).accessControl).toBe(
       'open',
     );
   });
@@ -275,14 +275,12 @@ describe('LAN mode and the client allowlist', () => {
   it('reads the published bind ahead of the API listen address', () => {
     // In compose the API listens on 0.0.0.0 inside its network and the edge is what is
     // published, so the edge bind is the exposure.
-    expect(parseConfig({ HOST: '0.0.0.0', AUTOMATE_BIND: '127.0.0.1' }).exposedBind).toBe(
-      '127.0.0.1',
-    );
-    expect(parseConfig({ HOST: '0.0.0.0', AUTOMATE_BIND: '127.0.0.1' }).bindUndeclared).toBe(false);
+    expect(parseConfig({ HOST: '0.0.0.0', LUPIN_BIND: '127.0.0.1' }).exposedBind).toBe('127.0.0.1');
+    expect(parseConfig({ HOST: '0.0.0.0', LUPIN_BIND: '127.0.0.1' }).bindUndeclared).toBe(false);
   });
 
   it('keeps an explicit wildcard bind exposed: the operator said it', () => {
-    const config = parseConfig({ HOST: '0.0.0.0', AUTOMATE_BIND: '0.0.0.0' });
+    const config = parseConfig({ HOST: '0.0.0.0', LUPIN_BIND: '0.0.0.0' });
     expect(config.exposedBind).toBe('0.0.0.0');
     expect(config.bindUndeclared).toBe(false);
   });
@@ -290,7 +288,7 @@ describe('LAN mode and the client allowlist', () => {
   it('does not read a wildcard listen address as exposure when no bind is declared', () => {
     // 0.0.0.0 and :: mean "every interface of this container", which every container
     // needs and which says nothing about who can reach the container. The 3.0.0 compose
-    // file sets HOST=0.0.0.0 and never AUTOMATE_BIND; reading that as exposed made the
+    // file sets HOST=0.0.0.0 and never LUPIN_BIND; reading that as exposed made the
     // 3.1.0 API refuse to start on every install upgraded from 3.0.0 (release v3.1.0).
     for (const host of ['0.0.0.0', '::', '[::]', '0:0:0:0:0:0:0:0']) {
       const config = parseConfig({ HOST: host });
@@ -319,7 +317,7 @@ describe('LAN mode and the client allowlist', () => {
     expect(() => parseConfig({ ALLOWED_CLIENT_CIDRS: '10.1.0.0/40' })).toThrow(
       'ALLOWED_CLIENT_CIDRS',
     );
-    expect(() => parseConfig({ AUTOMATE_LAN_MODE: 'maybe' })).toThrow();
+    expect(() => parseConfig({ LUPIN_LAN_MODE: 'maybe' })).toThrow();
   });
 });
 
@@ -345,7 +343,7 @@ describe('the secret floor', () => {
     ['COOKIE_SECRET', 'cookieSecret'],
     ['SESSION_SECRET', 'sessionSecret'],
     ['VAULT_SECRET', 'vaultSecret'],
-    ['AUTOMATE_API_KEY', 'installationApiKey'],
+    ['LUPIN_API_KEY', 'installationApiKey'],
     ['REPORTER_SECRET', 'reporterSecret'],
     ['RUNNER_REGISTRATION_SECRET', 'runnerRegistrationSecret'],
     ['KILO_API_KEY', 'kiloApiKey'],
@@ -388,7 +386,7 @@ describe('isSecretPlaceholder', () => {
   it('refuses the documented placeholders for the variable that owns them', () => {
     expect(isSecretPlaceholder('REPORTER_SECRET', 'reporter-secret')).toBe(true);
     expect(isSecretPlaceholder('RUNNER_REGISTRATION_SECRET', 'change-me')).toBe(true);
-    expect(isSecretPlaceholder('AUTOMATE_API_KEY', 'automate')).toBe(true);
+    expect(isSecretPlaceholder('LUPIN_API_KEY', 'lupin')).toBe(true);
     expect(isSecretPlaceholder('COOKIE_SECRET', 'development-only-cookie-secret-32-chars')).toBe(
       true,
     );
@@ -399,7 +397,7 @@ describe('isSecretPlaceholder', () => {
     // credential and nothing else. A shared list would refuse a perfectly good
     // vault secret because the reporter one was left at its default.
     expect(isSecretPlaceholder('VAULT_SECRET', 'reporter-secret')).toBe(false);
-    expect(isSecretPlaceholder('AUTOMATE_API_KEY', 'reporter-secret')).toBe(false);
+    expect(isSecretPlaceholder('LUPIN_API_KEY', 'reporter-secret')).toBe(false);
   });
 
   it('accepts a value long enough to be a real secret', () => {

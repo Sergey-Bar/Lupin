@@ -1,4 +1,4 @@
-import type { RepoReport } from '@automate/shared-contracts';
+import type { RepoReport } from '@lupin/shared-contracts';
 import { readJson } from '../detect/manifest.js';
 
 /**

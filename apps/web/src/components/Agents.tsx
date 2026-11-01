@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type {
   AgentRuntimeReport,
   EvalRunDetail,
@@ -21,7 +21,7 @@ import type {
   EvalSuiteStatus,
   McpServerList,
   ProjectEvals,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { AgentsClient, EvalDatasetList } from '../lib/agents-client.js';
 import type { HealthClient } from '../lib/health-client.js';
@@ -38,7 +38,7 @@ import { useToast } from './Toasts.js';
 
 /**
  * Agent quality: whether the repository's agents regress, what they cost to run, which tools
- * they are given — and the same runtime figures for Automate's own chat.
+ * they are given — and the same runtime figures for Lupin's own chat.
  *
  * Every verdict is the server's: a suite's comparison decides `pass`, `fail` or
  * `insufficient` with intervals, and only a `significant` regression is listed as one. A
@@ -478,7 +478,7 @@ function RuntimeView({ report }: { report: AgentRuntimeReport }): React.ReactEle
     return (
       <Quiet data-testid="runtime-empty">
         No agent run arrived in this window. Agents report runtime by exporting OTLP traces to
-        Automate.
+        Lupin.
       </Quiet>
     );
   }
@@ -504,7 +504,7 @@ function RuntimeView({ report }: { report: AgentRuntimeReport }): React.ReactEle
 function Loops({ loops }: { loops: AgentRuntimeReport['runtime']['loops'] }): React.ReactElement {
   return (
     <div data-testid="runtime-loops">
-      <h3 className="text-xs font-medium uppercase tracking-wider text-fg-muted">Loops</h3>
+      <h3 className="text-xs font-medium text-fg-muted">Loops</h3>
       {loops.length === 0 ? (
         <p className="text-sm text-fg-muted">
           No agent called the same tool with the same arguments repeatedly.
@@ -705,7 +705,7 @@ function ChatRuntimePanel({
     [agents, days],
   );
   return (
-    <Panel title="Automate's own chat" data-testid="chat-runtime" data-chrome="secondary">
+    <Panel title="Lupin's own chat" data-testid="chat-runtime" data-chrome="secondary">
       <Loaded resource={runtime} label="the chat runtime" testId="chat-runtime">
         {(value) => <ChatRuntime report={value} />}
       </Loaded>

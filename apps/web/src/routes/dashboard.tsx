@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { createRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { Badge, Button } from '@automate/ui';
+import { Badge, Button } from '@lupin/ui';
 import { Route as rootRoute } from './__root.js';
-import type { CreateRunRequest, DomainReadinessStatus } from '@automate/shared-contracts';
+import type { CreateRunRequest, DomainReadinessStatus } from '@lupin/shared-contracts';
 import { useReleaseReadiness } from '../hooks/useDashboard.js';
 import { isRunActive } from '../hooks/useRuns.js';
 import { Dashboard } from '../components/Dashboard.js';
@@ -10,6 +10,7 @@ import { Panel, Quiet } from '../components/kit.js';
 import { createQaClient } from '../lib/qa-client.js';
 import { defaultApiClient, type ApiClient, type Run } from '../lib/api.js';
 import { formatDate } from '../lib/format.js';
+import { runTransitionName } from '../lib/view-transition.js';
 
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
@@ -104,7 +105,7 @@ export function LaunchRunForm({ api, onCreated }: { api: ApiClient; onCreated: (
   };
 
   const inputClass =
-    'mt-1 w-full rounded-md border border-border-default bg-surface px-3 py-2 text-sm outline-none focus:border-accent';
+    'mt-1 min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-sm outline-none hover:border-fg-muted focus:border-accent';
 
   return (
     <div>
@@ -315,7 +316,11 @@ export function RecentRuns({ runs, isLive }: { runs: Run[]; isLive: boolean }) {
             className="flex items-center justify-between gap-3 rounded-md py-2 no-underline hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
           >
             <div className="min-w-0">
-              <div className="truncate font-mono text-xs" title={run.suite ?? run.id}>
+              <div
+                className="truncate font-mono text-xs"
+                title={run.suite ?? run.id}
+                style={{ viewTransitionName: runTransitionName(run.id) }}
+              >
                 {run.suite ?? run.id}
               </div>
               <div className="text-xs text-fg-muted">{formatRequiredDate(run.createdAt)}</div>

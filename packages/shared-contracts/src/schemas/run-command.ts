@@ -66,7 +66,7 @@ export const RunStartBodySchema = z.object({
    * The body carries an id and never an argv. Accepting argv here would make the
    * typed command registry in `no-second-authority` advisory: a caller could send
    * any executable and the registry would still be consulted afterwards, only to
-   * be overridden. An override is a *profile edit* (`automate.config.json` or
+   * be overridden. An override is a *profile edit* (`lupin.config.json` or
    * `PATCH /projects/{id}`), which is reviewable, versioned and explains itself.
    */
   commandId: z.string().min(1),

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
-import { Sparkline, cn } from '@automate/ui';
-import { SCORE_CATEGORIES, SCORE_SURFACES, type ScoreCell } from '@automate/shared-contracts';
+import { Sparkline, cn } from '@lupin/ui';
+import { SCORE_CATEGORIES, SCORE_SURFACES, type ScoreCell } from '@lupin/shared-contracts';
 import { useResource, type Resource } from '../hooks/useResource.js';
 import { repoHealthPath } from '../route-manifest.js';
 import type { ApiClient, QuarantineEntry } from '../lib/api.js';

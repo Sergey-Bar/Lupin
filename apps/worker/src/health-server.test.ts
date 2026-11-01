@@ -23,7 +23,7 @@ describe('WorkerHealthServer', () => {
     expect(response.headers.get('content-type')).toBe('application/json');
     expect(await response.json()).toMatchObject({
       status: 'healthy',
-      service: 'automate-worker',
+      service: 'lupin-worker',
       version: '9.9.9',
       timestamp: expect.any(String),
     });

@@ -48,7 +48,7 @@ function call(server, request = {}) {
 
 /** @param {(ctx: { engine: any, server: any, auth: Record<string, string>, dataDir: string }) => Promise<void>} body */
 async function withServer(body) {
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-server-data-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-server-data-'));
   const engine = createEngine({ dataDir });
   const server = await startServer({ engine });
   try {
@@ -61,7 +61,7 @@ async function withServer(body) {
 }
 
 function repository(files) {
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-server-repo-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-server-repo-'));
   for (const [relative, content] of Object.entries(files)) {
     const absolute = path.join(root, ...relative.split('/'));
     mkdirSync(path.dirname(absolute), { recursive: true });
@@ -227,7 +227,7 @@ test('the server is bound to loopback on an assigned port, and two servers get d
     assert.equal(server.host, '127.0.0.1');
     assert.equal(server.boundAddress, '127.0.0.1', 'the socket itself is bound to loopback');
     assert.ok(server.port > 0);
-    const dir = mkdtempSync(path.join(tmpdir(), 'automate-server-data-'));
+    const dir = mkdtempSync(path.join(tmpdir(), 'lupin-server-data-'));
     const engine = createEngine({ dataDir: dir });
     const second = await startServer({ engine });
     try {

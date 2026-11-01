@@ -12,12 +12,12 @@
  *
  * A leaf module fixes it structurally rather than by a second hand-written list.
  * `execution.ts` re-exports every name from here, so nothing downstream of
- * `@automate/db` changes, and `dashboard.ts` can now import the same constant the
+ * `@lupin/db` changes, and `dashboard.ts` can now import the same constant the
  * contract is generated from. One vocabulary, one place to widen it, and the compiler
  * compares the two columns instead of a reader doing it.
  *
  * **The contract is the authority.** These mirror `GateStatusSchema` and friends in
- * `@automate/shared-contracts`, which is what the API and the client both validate
+ * `@lupin/shared-contracts`, which is what the API and the client both validate
  * against. A value here that the contract does not define is a value the product
  * cannot represent, and a value the contract defines that is missing here is a value
  * the database rejects — which is exactly the state this module exists to end.

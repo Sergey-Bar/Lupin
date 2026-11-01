@@ -1,4 +1,4 @@
-import { parseConfig, type AppConfig as CanonicalConfig } from '@automate/config';
+import { parseConfig, type AppConfig as CanonicalConfig } from '@lupin/config';
 import { DEVELOPMENT_COOKIE_SECRET } from './startup-policy.js';
 import {
   normalizeObjectStoreSettings,

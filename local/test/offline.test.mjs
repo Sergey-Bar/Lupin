@@ -32,7 +32,7 @@ import { FILES_DIR } from './support.mjs';
  * record, which must hold nothing but the line saying the guard was loaded.
  */
 
-const BIN = path.resolve(import.meta.dirname, '..', 'bin', 'automate-local.mjs');
+const BIN = path.resolve(import.meta.dirname, '..', 'bin', 'lupin-local.mjs');
 // A file URL, because --import reads a Windows absolute path as a URL scheme.
 const GUARD = pathToFileURL(path.resolve(import.meta.dirname, 'offline-guard.mjs')).href;
 const fixture = (name) => readFileSync(path.join(FILES_DIR, name));
@@ -52,7 +52,7 @@ function guarded(args, directory) {
   const child = spawn(process.execPath, ['--import', GUARD, ...args], {
     stdio: ['ignore', fd, fd],
     windowsHide: true,
-    env: { ...process.env, AUTOMATE_OFFLINE_LOG: log },
+    env: { ...process.env, LUPIN_OFFLINE_LOG: log },
   });
   const exited = new Promise((resolve) => child.once('exit', (code) => resolve(code)));
   return {
@@ -113,7 +113,7 @@ function treeDigest(root) {
 }
 
 test('the guard sees and refuses an outbound connection, a lookup and a fetch', async () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'automate-offline-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'lupin-offline-'));
   try {
     const script = [
       "import net from 'node:net';",
@@ -137,7 +137,7 @@ test('the guard sees and refuses an outbound connection, a lookup and a fetch', 
 });
 
 test('offline, the launcher starts, scans, ingests and shows the dashboard, and connects nowhere', async () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'automate-offline-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'lupin-offline-'));
   const repo = path.join(dir, 'repo');
   mkdirSync(path.join(repo, 'reports'), { recursive: true });
   mkdirSync(path.join(repo, 'coverage'), { recursive: true });

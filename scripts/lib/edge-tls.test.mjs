@@ -16,20 +16,20 @@ const REPO_ROOT = path.resolve(import.meta.dirname, '..', '..');
 const read = (/** @type {string} */ file) => readFileSync(path.join(REPO_ROOT, file), 'utf8');
 
 const EDGE_CONF = read('infra/nginx/edge.conf');
-const ENTRYPOINT = read('infra/nginx/40-automate-tls.sh');
-const CERT_SCRIPT = read('infra/nginx/automate-lan-cert.sh');
+const ENTRYPOINT = read('infra/nginx/40-lupin-tls.sh');
+const CERT_SCRIPT = read('infra/nginx/lupin-lan-cert.sh');
 const DOCKERFILE = read('infra/docker/edge.Dockerfile');
 
 test('the main config reads the TLS includes from the tmpfs, and probes without a redirect', () => {
-  assert.match(EDGE_CONF, /include \/tmp\/automate\/tls-server\*\.conf;/);
-  assert.match(EDGE_CONF, /include \/tmp\/automate\/http-redirect\*\.conf;/);
+  assert.match(EDGE_CONF, /include \/tmp\/lupin\/tls-server\*\.conf;/);
+  assert.match(EDGE_CONF, /include \/tmp\/lupin\/http-redirect\*\.conf;/);
   // The healthcheck must still answer 2xx over plain HTTP once every other path redirects.
   assert.match(EDGE_CONF, /location = \/edge-health \{\s*return 204;/);
 });
 
 test('the entrypoint writes exactly the includes the config reads, and only with a certificate', () => {
-  assert.match(ENTRYPOINT, /\/tmp\/automate\/tls-server\.conf/);
-  assert.match(ENTRYPOINT, /\/tmp\/automate\/http-redirect\.conf/);
+  assert.match(ENTRYPOINT, /\/tmp\/lupin\/tls-server\.conf/);
+  assert.match(ENTRYPOINT, /\/tmp\/lupin\/http-redirect\.conf/);
   assert.match(ENTRYPOINT, /\[ -f "\$CERT_DIR\/server\.crt" \]/);
   assert.match(ENTRYPOINT, /listen 8443 ssl/);
   assert.match(ENTRYPOINT, /ssl_protocols TLSv1\.2 TLSv1\.3;/);
@@ -55,13 +55,13 @@ test('every API path an outside client calls is proxied to the API, over HTTP an
   assert.deepEqual(prefixes, ['/scim/v2/']);
   for (const [name, text] of [
     ['edge.conf', EDGE_CONF],
-    ['40-automate-tls.sh', ENTRYPOINT],
+    ['40-lupin-tls.sh', ENTRYPOINT],
   ]) {
     for (const prefix of prefixes) {
       assert.match(
         text,
         new RegExp(
-          `location ${prefix.replaceAll('/', '\\/')} \\{\\s*proxy_pass http:\\/\\/automate_api;`,
+          `location ${prefix.replaceAll('/', '\\/')} \\{\\s*proxy_pass http:\\/\\/lupin_api;`,
         ),
         `${name} does not proxy ${prefix} to the API`,
       );
@@ -73,7 +73,7 @@ test('the certificate script keeps an existing CA and issues a leaf an iPhone ac
   // A new CA would have to be trusted again on every device; it is only replaced on request.
   assert.match(
     CERT_SCRIPT,
-    /if \[ ! -f "\$CERT_DIR\/ca\.key" \] \|\| \[ "\$\{AUTOMATE_NEW_CA:-\}" = "1" \]/,
+    /if \[ ! -f "\$CERT_DIR\/ca\.key" \] \|\| \[ "\$\{LUPIN_NEW_CA:-\}" = "1" \]/,
   );
   // Apple refuses a TLS leaf valid for more than 825 days.
   assert.match(CERT_SCRIPT, /-days 825/);
@@ -87,11 +87,11 @@ test('the image ships both scripts where they run, and the CLI that creates the 
   assert.match(DOCKERFILE, /apk add --no-cache openssl/);
   assert.match(
     DOCKERFILE,
-    /COPY infra\/nginx\/40-automate-tls\.sh \/docker-entrypoint\.d\/40-automate-tls\.sh/,
+    /COPY infra\/nginx\/40-lupin-tls\.sh \/docker-entrypoint\.d\/40-lupin-tls\.sh/,
   );
   assert.match(
     DOCKERFILE,
-    /COPY infra\/nginx\/automate-lan-cert\.sh \/usr\/local\/bin\/automate-lan-cert/,
+    /COPY infra\/nginx\/lupin-lan-cert\.sh \/usr\/local\/bin\/lupin-lan-cert/,
   );
   assert.match(DOCKERFILE, /EXPOSE 8080 8443/);
 });
@@ -123,20 +123,20 @@ test('a visitor through the tunnel is keyed by the address Cloudflare saw (PRO-1
   const tunnel = serverListening(8081);
   assert.match(
     EDGE_CONF,
-    /map \$http_cf_connecting_ip \$automate_tunnel_client \{\s*''\s+\$remote_addr;\s*default\s+\$http_cf_connecting_ip;\s*\}/,
+    /map \$http_cf_connecting_ip \$lupin_tunnel_client \{\s*''\s+\$remote_addr;\s*default\s+\$http_cf_connecting_ip;\s*\}/,
   );
   const forwarded = [...tunnel.matchAll(/proxy_set_header X-Forwarded-For (\S+);/g)].map(
     (match) => match[1],
   );
   assert.ok(forwarded.length >= 3, 'every location in the tunnel server sets X-Forwarded-For');
-  assert.deepEqual([...new Set(forwarded)], ['$automate_tunnel_client']);
+  assert.deepEqual([...new Set(forwarded)], ['$lupin_tunnel_client']);
   // Cloudflare ends TLS, so the API sees https, and the LAN certificate's redirect does not apply.
   assert.doesNotMatch(tunnel, /http-redirect/);
   assert.match(tunnel, /proxy_set_header X-Forwarded-Proto https;/);
   // Every other listener keeps appending its own peer, and never reads the header.
   const plain = serverListening(8080);
-  assert.doesNotMatch(plain, /cf_connecting_ip|automate_tunnel_client/);
-  assert.doesNotMatch(ENTRYPOINT, /cf_connecting_ip|automate_tunnel_client/);
+  assert.doesNotMatch(plain, /cf_connecting_ip|lupin_tunnel_client/);
+  assert.doesNotMatch(ENTRYPOINT, /cf_connecting_ip|lupin_tunnel_client/);
   // Not published: the compose file maps 8080 and 8443 to the host, and nothing else.
   const compose = read('infra/compose/docker-compose.unified.yml');
   assert.doesNotMatch(compose, /:8081['"]?\s*$/m);

@@ -7,7 +7,7 @@ import { junitXmlAdapter } from './adapters/junit-xml.js';
 import { playwrightJsonAdapter } from './adapters/playwright-json.js';
 import { COVERAGE_ADAPTERS } from './adapters/coverage.js';
 import { INGESTED_PRODUCERS } from './producer-status.js';
-import { CanonicalRunResultSchema } from '@automate/shared-contracts';
+import { CanonicalRunResultSchema } from '@lupin/shared-contracts';
 import type { ProducerAdapter, ProducerContext } from './adapter.js';
 
 const context: ProducerContext = {

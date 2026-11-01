@@ -79,19 +79,19 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # `trust`, not a password. The service port is bound to the runner only.
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
       # The guard's own precondition. It refuses anything that is not loopback, which
       # is why it can run in CI at all: the service is published on 127.0.0.1.
       REHEARSAL_MODE: local
@@ -137,7 +137,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pnpm --filter @automate/unified-web exec vite --host 127.0.0.1 --port 5173 &
+          pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1 --port 5173 &
           for attempt in $(seq 1 120); do
             if curl --silent --fail --max-time 2 http://127.0.0.1:5173/ > /dev/null; then
               echo "web ready after ${attempt}s"
@@ -250,7 +250,7 @@ jobs:
           cache: pnpm
       - name: Install frozen dependencies
         run: pnpm install --frozen-lockfile
-      # The packages import `@automate/shared-contracts` through `dist/`. Unbuilt, those test
+      # The packages import `@lupin/shared-contracts` through `dist/`. Unbuilt, those test
       # files fail to load and Stryker reports their mutants as NoCoverage instead of failing:
       # a score that quietly measures less than the suite. `pnpm mutation` refuses to start
       # without the build for the same reason.
@@ -282,8 +282,8 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: automate
-          POSTGRES_DB: automate
+          POSTGRES_USER: lupin
+          POSTGRES_DB: lupin
           # `trust`, not a password. The service port is bound to the runner
           # only, and a password here would be a credential committed to the
           # repository — which `pnpm security:secrets` refuses, correctly.
@@ -291,12 +291,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U automate -d automate"
+          --health-cmd "pg_isready -U lupin -d lupin"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://automate@127.0.0.1:5432/automate
+      DATABASE_URL: postgresql://lupin@127.0.0.1:5432/lupin
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

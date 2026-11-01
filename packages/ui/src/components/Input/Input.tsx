@@ -3,11 +3,11 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils.js';
 
 const inputVariants = cva(
-  'flex w-full rounded-lg border bg-transparent transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:opacity-50',
+  'flex w-full rounded-md border bg-transparent transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'border-border-default text-text-primary',
+        default: 'border-border-strong text-text-primary hover:border-fg-muted',
         /*
          * The error variant changes the *border* and stops there.
          *
@@ -24,7 +24,7 @@ const inputVariants = cva(
       },
       size: {
         sm: 'h-8 px-2.5 text-xs',
-        md: 'h-10 px-3.5 text-sm',
+        md: 'h-11 px-3.5 text-sm',
         lg: 'h-12 px-5 text-base',
       },
     },

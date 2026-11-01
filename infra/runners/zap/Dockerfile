@@ -8,6 +8,6 @@ COPY manifest.json /automation/manifest.json
 RUN mkdir -p /automation/input /automation/output /automation/home \
   && cp -a /home/zap/.mozilla /automation/home/.mozilla \
   && chown -R 65532:65532 /automation \
-  && echo 'automate:x:65532:65532::/automation/home:/sbin/nologin' >> /etc/passwd
+  && echo 'lupin:x:65532:65532::/automation/home:/sbin/nologin' >> /etc/passwd
 USER 65532:65532
 ENTRYPOINT ["zap.sh", "-dir", "/tmp/zap", "-version"]

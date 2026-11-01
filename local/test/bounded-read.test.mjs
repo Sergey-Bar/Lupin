@@ -6,7 +6,7 @@ import test from 'node:test';
 import { readFileBounded, readFileBoundedSync } from '../src/bounded-read.mjs';
 
 function scratch() {
-  return mkdtempSync(path.join(tmpdir(), 'automate-bounded-read-'));
+  return mkdtempSync(path.join(tmpdir(), 'lupin-bounded-read-'));
 }
 
 /**

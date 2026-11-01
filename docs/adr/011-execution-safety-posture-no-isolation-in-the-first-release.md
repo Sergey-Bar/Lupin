@@ -6,7 +6,7 @@
 
 ## Context
 
-AUTOMATE (local) will eventually run the test commands a repository declares. A repository
+Lupin Local will eventually run the test commands a repository declares. A repository
 is untrusted input: a script in it can be malicious or just destructive by accident. The
 operating systems offer real isolation (Windows job-object limits and AppContainer, macOS
 sandbox profiles, Linux namespaces and Landlock), but each is platform-specific, each has

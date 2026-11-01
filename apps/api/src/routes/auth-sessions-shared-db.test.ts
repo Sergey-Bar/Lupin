@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { hashCredential } from '@automate/auth';
-import * as schema from '@automate/db';
-import { DrizzleSessionStore } from '@automate/db';
+import { hashCredential } from '@lupin/auth';
+import * as schema from '@lupin/db';
+import { DrizzleSessionStore } from '@lupin/db';
 import { DrizzleAuthSessionBackend } from '../infrastructure/session-backend.js';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
@@ -25,7 +25,7 @@ const API_KEY = syntheticInstallationKey();
 const INSTALLATION_ID = '00000000-0000-4000-8000-000000000001';
 const TTL_MS = 60 * 60_000;
 const RETENTION_MS = 24 * 60 * 60_000;
-const COOKIE = 'automate_session';
+const COOKIE = 'lupin_session';
 
 const closers: Array<() => Promise<void>> = [];
 afterEach(async () => {

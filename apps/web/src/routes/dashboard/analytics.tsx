@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type { AnalyticsSummary, ApiClient } from '../../lib/api.js';
 import { createQaClient, type QaClient } from '../../lib/qa-client.js';
 import type { AnalyticsTrend } from '../../lib/qa.js';

@@ -18,7 +18,7 @@ import { listMigrationFiles, MIGRATION_ADVISORY_LOCK_KEY, runMigrations } from '
  * journal-consistency refusal happens before any migration SQL is sent.
  */
 
-const VALID_URL = 'postgresql://user:pass@db.internal:5432/automate';
+const VALID_URL = 'postgresql://user:pass@db.internal:5432/lupin';
 const LOCK_KEY = MIGRATION_ADVISORY_LOCK_KEY.toString();
 
 const pgMock = vi.hoisted(() => ({ constructed: [] as unknown[], pool: null as unknown }));
@@ -93,7 +93,7 @@ const MIGRATION_HASH = createHash('sha256').update(MIGRATION_SQL).digest('hex');
 const MIGRATION_WHEN = 1_700_000_000_000;
 
 beforeEach(() => {
-  folder = mkdtempSync(path.join(tmpdir(), 'automate-db-migrations-'));
+  folder = mkdtempSync(path.join(tmpdir(), 'lupin-db-migrations-'));
   mkdirSync(path.join(folder, 'meta'));
   writeFileSync(
     path.join(folder, 'meta', '_journal.json'),

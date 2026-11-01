@@ -5,13 +5,13 @@ import { z } from 'zod/v4';
  *
  * ## One policy record per project, and what each half decides
  *
- * `licences` is judged by `evaluateLicence` in `@automate/reporting` against every component
+ * `licences` is judged by `evaluateLicence` in `@lupin/reporting` against every component
  * of the project's latest SBOM: `denied` is a violation, `unlisted` is one only when an allow
  * list exists, and `unknown` (no licence, `NOASSERTION`, `NONE`, an unreadable expression) is
  * one unless `failOnUnknown` is turned off — absence is not permission. Each violation is a
- * finding in Dependencies from the tool `automate-licence`.
+ * finding in Dependencies from the tool `lupin-licence`.
  *
- * `provenance` is the trust `verifyProvenance` in `@automate/reporter` checks a
+ * `provenance` is the trust `verifyProvenance` in `@lupin/reporter` checks a
  * `slsa-provenance` upload against. With no keys and no roots a signature is
  * `not_configured`, never `verified`: a key the document supplied itself proves nothing.
  *
@@ -129,7 +129,7 @@ export const PortfolioComponentsPageSchema = z.object({
 });
 export type PortfolioComponentsPage = z.infer<typeof PortfolioComponentsPageSchema>;
 
-/** Diff coverage of one commit on one branch, as `diffCoverage` in `@automate/reporting` computed it. */
+/** Diff coverage of one commit on one branch, as `diffCoverage` in `@lupin/reporting` computed it. */
 export const DiffCoverageRecordSchema = z.object({
   covered: z.number().int().min(0),
   executable: z.number().int().min(0),

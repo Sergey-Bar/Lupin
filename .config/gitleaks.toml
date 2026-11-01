@@ -1,4 +1,4 @@
-# Gitleaks configuration for the Automate monorepo.
+# Gitleaks configuration for the Lupin monorepo.
 # https://github.com/gitleaks/gitleaks#configuration
 #
 # Commit-level suppression here is limited to the two reviewed commits below; single findings in
@@ -45,7 +45,7 @@
 # The other eight commits that used to be listed are gone: their values were scrubbed and
 # the commits rewritten out of existence.
 
-title = "Automate Gitleaks Config"
+title = "Lupin Gitleaks Config"
 
 [extend]
 # The default ruleset covers AWS, GCP, GitHub and generic provider tokens.
@@ -162,7 +162,7 @@ regexes = [
 ]
 
 [[rules]]
-id = "automate-migration-checksum-sentinel"
+id = "lupin-migration-checksum-sentinel"
 description = "Checksum-shaped literals in the migration directory: the 0006 backfill sentinel."
 # Precise: a 64-character lowercase hex value inside the migration directory.
 # The directory allowlisted above is itself narrow, so this cannot hide a secret

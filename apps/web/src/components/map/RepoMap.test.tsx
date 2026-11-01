@@ -12,7 +12,7 @@ import { buildRepoMap, type MapInput, type MapSearch } from '../../lib/repo-map'
 import { expectNoBlockingAxeViolations } from '../../test-axe';
 
 const INPUT: MapInput = {
-  projectName: 'Automate',
+  projectName: 'Lupin',
   scan: {
     sourceFiles: 10,
     testFiles: 4,

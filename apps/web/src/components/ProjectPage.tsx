@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Skeleton } from '@automate/ui';
+import { Button, Skeleton } from '@lupin/ui';
 import type { Resource } from '../hooks/useResource.js';
 import type { HealthClient, WhoAmI } from '../lib/health-client.js';
 import type { QaClient } from '../lib/qa-client.js';

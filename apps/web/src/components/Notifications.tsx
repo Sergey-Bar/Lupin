@@ -11,13 +11,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@automate/ui';
+} from '@lupin/ui';
 import type {
   ChannelKind,
   ChannelSummary,
   CreateChannelBody,
   DeliverySummary,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { NotificationsClient } from '../lib/notifications-client.js';
 import { ago } from '../lib/health-view.js';
@@ -45,7 +45,7 @@ interface KindGuide {
 
 export const KIND_GUIDES: Record<ChannelKind, KindGuide> = {
   inbox: {
-    label: 'Automate inbox',
+    label: 'Lupin inbox',
     help: 'Reports are kept here, on this page. No account needed — a good first channel.',
     fields: [],
   },
@@ -73,7 +73,7 @@ export const KIND_GUIDES: Record<ChannelKind, KindGuide> = {
     fields: [
       { key: 'phoneNumberId', label: 'Phone number id', placeholder: '123456789012345' },
       { key: 'to', label: 'Send to (digits only)', placeholder: '15551234567' },
-      { key: 'template', label: 'Template name', placeholder: 'automate_report' },
+      { key: 'template', label: 'Template name', placeholder: 'lupin_report' },
       { key: 'language', label: 'Template language', placeholder: 'en_US' },
     ],
     credentialLabel: 'Access token',
@@ -237,7 +237,7 @@ function Channels({
         }),
       );
   };
-  if (channels.length === 0) return <Quiet>No channel yet. Start with the Automate inbox.</Quiet>;
+  if (channels.length === 0) return <Quiet>No channel yet. Start with the Lupin inbox.</Quiet>;
   return (
     <ul className="divide-y divide-border" aria-label="Channels">
       {channels.map((channel) => (

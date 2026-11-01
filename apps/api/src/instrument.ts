@@ -12,7 +12,7 @@ import { initSentry } from './observability/sentry.js';
  * startup policy refused to boot:
  *
  * ```
- * Error: AUTOMATE_API_KEY is required. Set it, or set AUTOMATE_ALLOW_DEV_SECRETS=1 ...
+ * Error: LUPIN_API_KEY is required. Set it, or set LUPIN_ALLOW_DEV_SECRETS=1 ...
  * ```
  *
  * **which is advice that did not work**, because `pnpm dev` runs through Turborepo, whose
@@ -25,7 +25,7 @@ import { initSentry } from './observability/sentry.js';
  * orchestrator is unaffected.
  *
  * Values already in the environment win: `loadEnvFile` does not overwrite them, so an
- * explicit `AUTOMATE_ALLOW_DEV_SECRETS=1 pnpm dev` still overrides the file.
+ * explicit `LUPIN_ALLOW_DEV_SECRETS=1 pnpm dev` still overrides the file.
  */
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const candidate of [

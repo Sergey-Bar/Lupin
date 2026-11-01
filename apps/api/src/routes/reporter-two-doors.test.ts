@@ -10,7 +10,7 @@
  *     own scanner and its own status mapping, and wrote `runs` / `tests`.
  *   - `POST /api/v1/reporter/results` — the canonical door. It parsed nothing; it took a
  *     `CanonicalRunResult` and wrote `canonical_run_results`, the only table
- *     `@automate/reporting` can read.
+ *     `@lupin/reporting` can read.
  *
  * Three consequences were live at once, and each is a test below rather than a sentence
  * in a document:
@@ -46,7 +46,7 @@ import { createReporterRoutes } from './reporter.js';
 import { createReportingRoutes } from './reporting.js';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
 import { ReporterIngestionService } from '../services/reporter-ingestion.js';
-import { junitXmlAdapter } from '@automate/reporter';
+import { junitXmlAdapter } from '@lupin/reporter';
 
 /**
  * Assembled at runtime rather than written as a literal.

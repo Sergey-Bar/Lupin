@@ -4,7 +4,7 @@ outline: deep
 
 # Getting started
 
-Automate runs checks as **jobs**: a run is a job with a lease, an attempt count, and
+Lupin runs checks as **jobs**: a run is a job with a lease, an attempt count, and
 an evidence bundle. This page gets you to a running dashboard. Everything it claims
 about the product's limits is recorded on [Capabilities](/pages/capabilities), which
 is generated from the repository's own register rather than written by hand.
@@ -38,20 +38,20 @@ restarting the API clears it — that is the trade, not a bug.
 
 ```powershell
 $env:NODE_ENV='development'
-$env:AUTOMATE_API_KEY='local-installation-key-32-characters'
+$env:LUPIN_API_KEY='local-installation-key-32-characters'
 $env:COOKIE_SECRET='local-cookie-secret-32-characters-long'
 $env:REPORTER_SECRET='local-reporter-secret-32-characters'
-pnpm --filter @automate/api dev
+pnpm --filter @lupin/api dev
 ```
 
 **Terminal 1 — API (macOS/Linux)**
 
 ```bash
 NODE_ENV=development \
-AUTOMATE_API_KEY=local-installation-key-32-characters \
+LUPIN_API_KEY=local-installation-key-32-characters \
 COOKIE_SECRET=local-cookie-secret-32-characters-long \
 REPORTER_SECRET=local-reporter-secret-32-characters \
-pnpm --filter @automate/api dev
+pnpm --filter @lupin/api dev
 ```
 
 The API listens on `127.0.0.1:3000` by default. Set `PORT` in **both** terminals if
@@ -62,7 +62,7 @@ nowhere with no error.
 **Terminal 2 — Web**
 
 ```bash
-pnpm --filter @automate/unified-web dev
+pnpm --filter @lupin/unified-web dev
 ```
 
 Then open `http://localhost:5173` and sign in with

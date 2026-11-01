@@ -30,7 +30,7 @@ env:
   # A GitHub *project* page is served from `/<repo>/`, so every asset URL in the
   # built HTML has to carry that prefix or the site renders unstyled and blank —
   # which is what `site/.vitepress/config.mts` warns about when it defaults to `/`.
-  # Deriving it from the repository name rather than writing `/AutoMate/` means a
+  # Deriving it from the repository name rather than writing `/Lupin/` means a
   # fork under a different owner is still correct, and it means renaming the
   # repository cannot silently leave a stale prefix in a workflow file.
   SITE_BASE: /${{ github.event.repository.name }}/
@@ -84,7 +84,7 @@ jobs:
         run: pnpm site:generate
 
       - name: Build
-        run: pnpm --filter @automate/docs build
+        run: pnpm --filter @lupin/docs build
 
       - name: Check the built site
         # SITE-1's removal condition: `site:doctor` against the **built** output. Without

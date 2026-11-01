@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, ChevronRight } from '@automate/ui';
+import { BookOpen, ChevronRight } from '@lupin/ui';
 import { routeFor } from '../route-manifest.js';
 import { pageGuidance } from '../page-guidance.js';
 

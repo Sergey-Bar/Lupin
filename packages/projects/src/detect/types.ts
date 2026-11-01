@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { DETECTABLE_REPORT_FORMAT_IDS, type ReportFormatId } from '@automate/shared-contracts';
+import { DETECTABLE_REPORT_FORMAT_IDS, type ReportFormatId } from '@lupin/shared-contracts';
 import { SCORE_CATEGORIES, SCORE_SURFACES } from '../vocabulary.js';
 
 /** The eight ecosystems the v1 detector reads. Narrowing this is a plan change, not a flag. */
@@ -44,7 +44,7 @@ export type CoverageFormat = z.infer<typeof CoverageFormatSchema>;
  * divergent XML that all parse under one adapter and one `unsupported` path —
  * dialect fixtures against the existing parser, not six new adapters (R4).
  *
- * **Derived from `@automate/shared-contracts`' `REPORT_FORMATS`, not written here.** This
+ * **Derived from `@lupin/shared-contracts`' `REPORT_FORMATS`, not written here.** This
  * list, `declaredFormat()` in the upload door, `artifactKind()` in the runner and the
  * provenance producer enum were four spellings of the same set of formats, each written by
  * whoever needed it and each blind to the one added since. They were equal until k6 and ZAP

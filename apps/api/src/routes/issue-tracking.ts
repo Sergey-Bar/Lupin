@@ -4,7 +4,7 @@ import {
   FindingIssueBodySchema,
   IssueTrackerBodySchema,
   type IssueLink,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { callerOf, requireRole, type CallerResolver } from '../http/roles.js';
 import { audit } from '../services/access-service.js';

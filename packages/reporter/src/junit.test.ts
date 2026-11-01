@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CanonicalRunResultSchema, testIdentity } from '@automate/shared-contracts';
+import { CanonicalRunResultSchema, testIdentity } from '@lupin/shared-contracts';
 import { junitXmlAdapter, MAX_MESSAGE_CHARS } from './adapters/junit-xml.js';
 
 const context = {

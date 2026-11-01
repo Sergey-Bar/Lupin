@@ -1,12 +1,12 @@
 ---
 title: Sending results
-description: Get a Playwright, JUnit, k6 or ZAP report into Automate from any CI job.
+description: Get a Playwright, JUnit, k6 or ZAP report into Lupin from any CI job.
 outline: deep
 ---
 
 # Sending results
 
-Your tests already create a report. Send that file to Automate and inspect the result
+Your tests already create a report. Send that file to Lupin and inspect the result
 alongside its original evidence.
 
 <GuideStoryboard kind="upload" />
@@ -88,15 +88,15 @@ code this build does not recognise is `unknown` rather than clean.
 A GitHub Actions step, run even when the tests failed:
 
 ```yaml
-- name: Upload results to Automate
+- name: Upload results to Lupin
   if: always()
   run: |
     curl --fail-with-body \
-      -H "Authorization: Bearer ${{ secrets.AUTOMATE_REPORTER_SECRET }}" \
+      -H "Authorization: Bearer ${{ secrets.LUPIN_REPORTER_SECRET }}" \
       -F file=@results.json -F format=playwright \
       -F runId="${{ github.run_id }}-${{ github.run_attempt }}" \
       -F branch="${{ github.ref_name }}" -F commitSha="${{ github.sha }}" \
-      "${{ vars.AUTOMATE_URL }}/api/v1/reporter/upload"
+      "${{ vars.LUPIN_URL }}/api/v1/reporter/upload"
 ```
 
 `if: always()` matters: the run you most need to see is the one that failed.
@@ -107,4 +107,4 @@ A reporter that streams while the suite runs can post events to
 `POST /api/v1/reporter/events` — `run:start`, `test:begin`, `test:end`, `run:end` — and
 the dashboard updates over server-sent events as they arrive. The event contracts are in
 `packages/shared-contracts/src/schemas/reporter-events.ts`, and the full route list is in
-[`docs/openapi.json`](https://github.com/Sergey-Bar/AutoMate/blob/main/docs/openapi.json).
+[`docs/openapi.json`](https://github.com/Sergey-Bar/Lupin/blob/main/docs/openapi.json).

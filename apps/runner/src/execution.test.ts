@@ -67,7 +67,7 @@ function fakeSpawn(
             writeFile(reportPath, '{"stats":{"unexpected":0}}\n'),
             writeFile(String(options.env?.['PLAYWRIGHT_JUNIT_OUTPUT_NAME']), '<testsuites/>\n'),
             writeFile(
-              String(options.env?.['AUTOMATE_RUNNER_EVENTS_PATH']),
+              String(options.env?.['LUPIN_RUNNER_EVENTS_PATH']),
               `${JSON.stringify({ eventId: 'event-1', sequence: 1, type: 'test.completed', occurredAt: new Date().toISOString(), payload: { testId: 'test-1', status: 'passed' } })}\n`,
             ),
           ]);
@@ -363,7 +363,7 @@ describe('PlaywrightExecutionAdapter outcomes', () => {
   it('fails the run as infrastructure when a reporter event line is not a valid event', async () => {
     const { adapter } = await adapterWith({
       spawnProcess: scriptedSpawn(async (child, env) => {
-        await writeFile(String(env['AUTOMATE_RUNNER_EVENTS_PATH']), '{"type":"half an event"}\n');
+        await writeFile(String(env['LUPIN_RUNNER_EVENTS_PATH']), '{"type":"half an event"}\n');
         child.emit('close', 0, null);
       }),
     });
@@ -378,7 +378,7 @@ describe('PlaywrightExecutionAdapter outcomes', () => {
     const { adapter } = await adapterWith({
       spawnProcess: scriptedSpawn(async (child, env) => {
         await writeFile(
-          String(env['AUTOMATE_RUNNER_EVENTS_PATH']),
+          String(env['LUPIN_RUNNER_EVENTS_PATH']),
           `${JSON.stringify({ eventId: 'e-1', sequence: 1, type: 'test.started', occurredAt: new Date().toISOString(), payload: {} })}\n`,
         );
         child.emit('close', 0, null);
@@ -410,7 +410,7 @@ describe('PlaywrightExecutionAdapter outcomes', () => {
     };
     const { adapter } = await adapterWith({
       spawnProcess: scriptedSpawn(async (child, env) => {
-        const output = String(env['AUTOMATE_OUTPUT_DIR']);
+        const output = String(env['LUPIN_OUTPUT_DIR']);
         await mkdir(join(output, 'nested'), { recursive: true });
         await Promise.all(
           Object.keys(files).map((name) => writeFile(join(output, 'nested', name), 'x')),
@@ -438,7 +438,7 @@ describe('PlaywrightExecutionAdapter outcomes', () => {
     const { adapter, workspaceRoot } = await adapterWith({
       artifactMaxBytes: 8,
       spawnProcess: scriptedSpawn(async (child, env) => {
-        await writeFile(join(String(env['AUTOMATE_OUTPUT_DIR']), 'big.bin'), 'x'.repeat(9));
+        await writeFile(join(String(env['LUPIN_OUTPUT_DIR']), 'big.bin'), 'x'.repeat(9));
         child.emit('close', 0, null);
       }),
     });
@@ -487,7 +487,7 @@ describe('PlaywrightExecutionAdapter outcomes', () => {
     const result = await run(adapter);
 
     expect(result.status).toBe('passed');
-    expect(calls[0]?.env?.['AUTOMATE_BASE_URL']).toBe('https://allowed.test/');
+    expect(calls[0]?.env?.['LUPIN_BASE_URL']).toBe('https://allowed.test/');
     expect(calls[0]?.env?.['CI']).toBe('1');
   });
 
@@ -499,7 +499,7 @@ describe('PlaywrightExecutionAdapter outcomes', () => {
         GITHUB_TOKEN: 'ghp-anything',
         DB_PASSWORD: 'pw',
         // Assembled, so the secret scan does not read a credential-shaped literal.
-        DATABASE_URL: ['postgres://user', 'super-secret@db/automate'].join(':'),
+        DATABASE_URL: ['postgres://user', 'super-secret@db/lupin'].join(':'),
         JOB_SECRET_VALUE_HOLDER: 'harmless',
         HOME: '/home/runner',
       },

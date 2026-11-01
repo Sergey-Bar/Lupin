@@ -1,4 +1,4 @@
-import type { FixNext, HealthGrade, Scorecard } from '@automate/shared-contracts';
+import type { FixNext, HealthGrade, Scorecard } from '@lupin/shared-contracts';
 import { dimensionLabel } from './health-view.js';
 
 /**

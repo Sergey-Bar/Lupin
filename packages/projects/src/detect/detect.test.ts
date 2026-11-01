@@ -100,7 +100,7 @@ describe('detection is deterministic when two ecosystems could both match', () =
 
 describe('the filesystem view walks a real repository and installs nothing (D8)', () => {
   it('reads a manifest off disk without descending into dependencies', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'automate-detect-'));
+    const root = await mkdtemp(path.join(tmpdir(), 'lupin-detect-'));
     await mkdir(path.join(root, 'src'), { recursive: true });
     await mkdir(path.join(root, 'node_modules', 'left-pad'), { recursive: true });
     await writeFile(

@@ -38,11 +38,11 @@ import base from '../eslint.config.js';
 import sonarjs from 'eslint-plugin-sonarjs';
 
 /** @type {number} */
-const ceiling = Number(process.env['AUTOMATE_COMPLEXITY_CEILING'] ?? '15');
+const ceiling = Number(process.env['LUPIN_COMPLEXITY_CEILING'] ?? '15');
 
 if (!Number.isInteger(ceiling) || ceiling < 1) {
   throw new Error(
-    `AUTOMATE_COMPLEXITY_CEILING must be a positive integer, got ${String(ceiling)}. A ` +
+    `LUPIN_COMPLEXITY_CEILING must be a positive integer, got ${String(ceiling)}. A ` +
       'complexity ceiling that is not a number would silently measure nothing, which is ' +
       'the one outcome this ratchet exists to rule out.',
   );

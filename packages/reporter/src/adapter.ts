@@ -1,4 +1,4 @@
-import type { CanonicalRunResult } from '@automate/shared-contracts';
+import type { CanonicalRunResult } from '@lupin/shared-contracts';
 
 /**
  * Everything a producer has to say about *where* a result came from, as distinct from

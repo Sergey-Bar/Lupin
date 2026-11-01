@@ -1,5 +1,5 @@
 {
-  "name": "@automate/unified-web",
+  "name": "@lupin/unified-web",
   "version": "1.0.0",
   "license": "MIT",
   "private": true,
@@ -12,9 +12,9 @@
     "lint": "eslint --max-warnings=0 src/"
   },
   "dependencies": {
-    "@automate/realtime": "workspace:*",
-    "@automate/shared-contracts": "workspace:*",
-    "@automate/ui": "workspace:*",
+    "@lupin/realtime": "workspace:*",
+    "@lupin/shared-contracts": "workspace:*",
+    "@lupin/ui": "workspace:*",
     "@sentry/react": "catalog:",
     "@tanstack/react-router": "^1.170.46",
     "react": "catalog:",
@@ -23,7 +23,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@automate/config": "workspace:*",
+    "@lupin/config": "workspace:*",
     "@eslint/js": "catalog:",
     "@sentry/vite-plugin": "catalog:",
     "@tailwindcss/vite": "catalog:",

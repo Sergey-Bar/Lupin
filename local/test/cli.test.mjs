@@ -19,11 +19,11 @@ import test from 'node:test';
 import { FILES_DIR } from './support.mjs';
 import { URL, URLSearchParams } from 'node:url';
 
-const BIN = path.resolve(import.meta.dirname, '..', 'bin', 'automate-local.mjs');
+const BIN = path.resolve(import.meta.dirname, '..', 'bin', 'lupin-local.mjs');
 const fixture = (name) => readFileSync(path.join(FILES_DIR, name));
 
 function scratch() {
-  const dir = mkdtempSync(path.join(tmpdir(), 'automate-cli-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'lupin-cli-'));
   return { dir, cleanup: () => rmSync(dir, { recursive: true, force: true, maxRetries: 5 }) };
 }
 

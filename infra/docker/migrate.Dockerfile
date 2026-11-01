@@ -6,20 +6,20 @@ COPY . .
 # The migration runner and the SQL it applies: `deploy --prod` keeps `packages/db/drizzle`
 # beside `dist/`, which is where `migrationsFolderFor` looks (`../drizzle` from `dist/`).
 RUN pnpm install --frozen-lockfile \
-  && pnpm --filter "@automate/db..." build \
-  && pnpm --filter "@automate/db" --prod deploy --legacy /out
+  && pnpm --filter "@lupin/db..." build \
+  && pnpm --filter "@lupin/db" --prod deploy --legacy /out
 
 
 # One migration image for both stacks. `db-migrate.Dockerfile` was this file with
 # `NODE_ENV=production` added, so the dev and production stacks applied migrations from two
 # images that could drift; `NODE_ENV` changes nothing the runner reads.
 FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runtime
-ARG AUTOMATE_VERSION=dev
-ARG AUTOMATE_REVISION=unknown
-LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/AutoMate" \
-  org.opencontainers.image.title="automate-migrate" \
-  org.opencontainers.image.version="${AUTOMATE_VERSION}" \
-  org.opencontainers.image.revision="${AUTOMATE_REVISION}"
+ARG LUPIN_VERSION=dev
+ARG LUPIN_REVISION=unknown
+LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
+  org.opencontainers.image.title="lupin-migrate" \
+  org.opencontainers.image.version="${LUPIN_VERSION}" \
+  org.opencontainers.image.revision="${LUPIN_REVISION}"
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 ENV NODE_ENV=production

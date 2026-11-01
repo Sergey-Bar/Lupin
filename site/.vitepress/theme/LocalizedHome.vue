@@ -25,14 +25,11 @@ const copy = computed(
     <figure lang="en" dir="ltr">
       <img
         :src="preview"
-        alt="Current AutoMate interface showing test runs, outcomes, and release-readiness signals"
+        alt="Current Lupin interface showing test runs, outcomes, and release-readiness signals"
         width="1440"
         height="900"
       />
-      <figcaption>
-        Current application interface — AutoMate branding. The Lupin identity applies to this
-        website.
-      </figcaption>
+      <figcaption>The Lupin console, captured from the product with demonstration runs.</figcaption>
     </figure>
 
     <a class="localized-home__docs" :href="withBase('/guide/')">{{ copy.docs }} →</a>
@@ -46,9 +43,9 @@ const copy = computed(
   text-align: center;
 }
 .localized-home__brand {
-  font: 0.75rem var(--automate-font-mono);
+  font: 0.75rem var(--lupin-font-mono);
   letter-spacing: 0.25em;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 h1 {
   max-width: 64rem;
@@ -63,7 +60,7 @@ h1 {
   margin: 0 auto;
   font-size: 1.25rem;
   line-height: 1.7;
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
 }
 .localized-home__actions {
   display: flex;
@@ -74,21 +71,21 @@ h1 {
 }
 .localized-home__actions a {
   padding: 0.85rem 1.5rem;
-  border: 1px solid var(--automate-border-strong);
+  border: 1px solid var(--lupin-border-strong);
   border-radius: 6px;
   font-weight: 600;
 }
 a.primary {
-  background: var(--automate-fg);
-  color: var(--automate-surface-sunken);
+  background: var(--lupin-fg);
+  color: var(--lupin-surface-sunken);
 }
 a:focus-visible {
-  outline: 2px solid var(--automate-fg);
+  outline: 2px solid var(--lupin-fg);
   outline-offset: 4px;
 }
 .localized-home__note,
 figcaption {
-  color: var(--automate-fg-muted);
+  color: var(--lupin-fg-muted);
   font-size: 0.85rem;
   line-height: 1.6;
 }
@@ -98,7 +95,7 @@ figure {
 img {
   width: 100%;
   height: auto;
-  border: 1px solid var(--automate-border);
+  border: 1px solid var(--lupin-border);
   border-radius: 8px;
 }
 figcaption {

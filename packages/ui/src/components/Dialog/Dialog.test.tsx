@@ -350,3 +350,24 @@ describe('Dialog with content that brings its own heading', () => {
     expect(screen.getByTestId('dialog')).toHaveFocus();
   });
 });
+
+describe('the translucent material on a dialog', () => {
+  // A closed `<dialog>` stays mounted, and `getComputedStyle` reports its backdrop filter
+  // even while it is hidden — so a dialog that was translucent at rest would count as a glass
+  // layer on every route that mounts one, and the render budget's `glassStackDepth` of 0 on
+  // the primary routes would fail on a dialog nobody had opened. It is opaque at rest and
+  // takes the material only through the `open:` variant.
+  it('is translucent only while open', () => {
+    render(
+      <Dialog open={false} onOpenChange={() => undefined}>
+        <p>hidden</p>
+      </Dialog>,
+    );
+    const dialog = document.querySelector('dialog');
+    expect(dialog).not.toBeNull();
+    const classes = (dialog?.getAttribute('class') ?? '').split(/\s+/);
+    expect(classes).toContain('bg-surface-raised');
+    expect(classes).not.toContain('surface-translucent');
+    expect(classes).toContain('open:surface-translucent');
+  });
+});

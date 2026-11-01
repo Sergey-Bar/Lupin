@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import type { JobState } from '@automate/shared-contracts';
+import type { JobState } from '@lupin/shared-contracts';
 import { canTransition, isTerminal } from './state-machine.js';
 import {
   allMappedStoredStates,

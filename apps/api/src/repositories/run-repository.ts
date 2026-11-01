@@ -7,10 +7,10 @@
  */
 
 // ---------------------------------------------------------------------------
-// Domain types (aligned with @automate/db schema)
+// Domain types (aligned with @lupin/db schema)
 // ---------------------------------------------------------------------------
 
-import { PERSISTED_RUN_STATUS_VALUES, RUN_STATUS_VALUES } from '@automate/shared-contracts';
+import { PERSISTED_RUN_STATUS_VALUES, RUN_STATUS_VALUES } from '@lupin/shared-contracts';
 import { deriveRunState } from '../execution/phase-outcome.js';
 import type { RunOutcome, RunPhase } from '../execution/types.js';
 
@@ -181,7 +181,7 @@ export interface TestRecord {
   title: string;
   file: string;
   /**
-   * The test's identity across runs (`testIdentity` in `@automate/shared-contracts`), which
+   * The test's identity across runs (`testIdentity` in `@lupin/shared-contracts`), which
    * `tests.stable_id` holds. Required, so a writer cannot forget it: every writer of a
    * test row derives it from what the producer said, and the `0045` backfill wrote the
    * legacy identity for every row before it.

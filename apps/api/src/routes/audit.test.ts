@@ -1,7 +1,7 @@
 import type { QueryOptions, Results } from '@electric-sql/pglite';
 import { sql } from 'drizzle-orm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import type { CallerResolver } from '../http/roles.js';
 import { audit, type Caller } from '../services/access-service.js';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
@@ -19,8 +19,8 @@ afterEach(async () => {
 });
 
 const CALLERS: Record<string, Caller> = {
-  amt_admin: { actor: 'token:admin', role: 'admin', uploaderFor: null },
-  amt_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
+  lup_admin: { actor: 'token:admin', role: 'admin', uploaderFor: null },
+  lup_viewer: { actor: 'token:viewer', role: 'viewer', uploaderFor: null },
 };
 
 async function harness(workspaceId = 'ws-1') {
@@ -40,7 +40,7 @@ async function harness(workspaceId = 'ws-1') {
     { actor: 'token:other', action: 'elsewhere', resourceType: 't', resourceId: 'x' },
   );
   const app = withErrorBoundary(createAuditRoutes({ ...options, access }));
-  const get = (path: string, token = 'amt_admin') =>
+  const get = (path: string, token = 'lup_admin') =>
     app.request(path, { headers: { authorization: `Bearer ${token}` } });
   return { db, get };
 }
@@ -212,7 +212,7 @@ describe('the audit trail', () => {
   it('is the admin’s alone', async () => {
     const { get } = await harness();
     for (const path of ['/api/v1/audit', '/api/v1/audit/export', '/api/v1/audit/verify']) {
-      expect((await get(path, 'amt_viewer')).status, path).toBe(403);
+      expect((await get(path, 'lup_viewer')).status, path).toBe(403);
     }
   });
 

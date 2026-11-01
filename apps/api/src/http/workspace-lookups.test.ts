@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import { afterEach, describe, expect, it } from 'vitest';
-import * as schema from '@automate/db';
+import * as schema from '@lupin/db';
 import { createAccessToken, revokeAccessToken } from '../services/access-service.js';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import { createWorkspaceDispatch } from './workspace-dispatch.js';
@@ -55,7 +55,7 @@ describe('the workspace lookups', () => {
       'session',
     );
     expect(await lookups.tokenWorkspace(two.token)).toBe('ws-2');
-    expect(await lookups.tokenWorkspace('amt_not-a-token')).toBeNull();
+    expect(await lookups.tokenWorkspace('lup_not-a-token')).toBeNull();
     await revokeAccessToken({ db: db as never, workspaceId: 'ws-2' }, two.summary.id);
     expect(await lookups.tokenWorkspace(two.token)).toBeNull();
   });
@@ -116,7 +116,7 @@ describe('the workspace lookups', () => {
       (await app.request('/api/v1/runs', { headers })).text();
     expect(await ask({ authorization: `Bearer ${two.token}` })).toBe('ws-2');
     expect(
-      await ask({ authorization: `Bearer ${two.token}`, cookie: 'automate_workspace=ws-1' }),
+      await ask({ authorization: `Bearer ${two.token}`, cookie: 'lupin_workspace=ws-1' }),
     ).toBe('ws-2');
     expect(await ask({})).toBe('ws-1');
   });
@@ -146,7 +146,7 @@ describe('the workspace lookups', () => {
       (
         await app.request('/api/v1/reporter/upload', {
           method: 'POST',
-          headers: { 'x-test-user': bo, cookie: 'automate_workspace=ws-2', ...headers },
+          headers: { 'x-test-user': bo, cookie: 'lupin_workspace=ws-2', ...headers },
         })
       ).text();
     // Bo is a viewer of ws-2 and chose it, so his own requests are served there.

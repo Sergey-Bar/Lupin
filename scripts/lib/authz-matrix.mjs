@@ -20,7 +20,7 @@
  */
 
 /** The registered symbol `guard()` tags a middleware with. */
-export const ACCESS_TAG = Symbol.for('automate.access-class');
+export const ACCESS_TAG = Symbol.for('lupin.access-class');
 
 /** What a route with no tagged middleware is. */
 export const OPEN = 'open';

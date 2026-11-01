@@ -25,8 +25,8 @@ import {
   Webhook,
   Workflow,
   Wrench,
-} from '@automate/ui';
-import type { ToolKind } from '@automate/shared-contracts';
+} from '@lupin/ui';
+import type { ToolKind } from '@lupin/shared-contracts';
 import { Segmented } from './kit.js';
 
 /**

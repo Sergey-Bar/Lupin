@@ -2,7 +2,7 @@
  * Connectors domain schemas — Zod v4
  *
  * Covers connector name enum, configuration, health checks, and status
- * for the Automate connector subsystem.
+ * for the Lupin connector subsystem.
  */
 import { z } from 'zod/v4';
 

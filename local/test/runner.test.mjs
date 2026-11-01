@@ -38,8 +38,8 @@ function cleanup(directory) {
  * @param {Partial<Parameters<typeof createRunner>[0]> & { files?: Record<string, string> }} [options]
  */
 async function withRunner(body, options = {}) {
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-run-repo-'));
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-run-data-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-run-repo-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-run-data-'));
   for (const [relative, content] of Object.entries(options.files ?? {})) {
     const absolute = path.join(root, ...relative.split('/'));
     mkdirSync(path.dirname(absolute), { recursive: true });
@@ -175,7 +175,7 @@ test('a deadline is mandatory and bounded', async () => {
 });
 
 test('the working directory must be a folder inside the repository, by its resolved path', async () => {
-  const outside = mkdtempSync(path.join(tmpdir(), 'automate-run-outside-'));
+  const outside = mkdtempSync(path.join(tmpdir(), 'lupin-run-outside-'));
   try {
     await withRunner(
       async ({ runner, req, root }) => {
@@ -285,20 +285,20 @@ test('a command that does not exist is refused at the preview', async () => {
 });
 
 test('the child sees an allowlist, named variables and explicit ones, and nothing else from the parent', async () => {
-  const host = { ...process.env, AUTOMATE_LEAK_CHECK: 'leak', AUTOMATE_PASSED: 'visible' };
+  const host = { ...process.env, LUPIN_LEAK_CHECK: 'leak', LUPIN_PASSED: 'visible' };
   await withRunner(
     async ({ runner, req }) => {
       const id = await run(
         runner,
-        req(['env'], { passThrough: ['AUTOMATE_PASSED'], env: { EXPLICIT_ONE: '1' } }),
+        req(['env'], { passThrough: ['LUPIN_PASSED'], env: { EXPLICIT_ONE: '1' } }),
       );
       await runner.whenDone(id);
       const names = /** @type {string[]} */ (JSON.parse(runner.output(id, 'stdout').text));
-      assert.ok(names.includes('AUTOMATE_PASSED'));
+      assert.ok(names.includes('LUPIN_PASSED'));
       assert.ok(names.includes('EXPLICIT_ONE'));
       assert.ok(names.some((n) => n.toUpperCase() === 'PATH'));
       assert.ok(
-        !names.includes('AUTOMATE_LEAK_CHECK'),
+        !names.includes('LUPIN_LEAK_CHECK'),
         'an unlisted parent variable does not reach the child',
       );
     },
@@ -309,7 +309,7 @@ test('the child sees an allowlist, named variables and explicit ones, and nothin
 test('a variable passed through that is not set is refused rather than passed empty', async () => {
   await withRunner(async ({ runner, req }) => {
     await refused(
-      runner.preview(req(['env'], { passThrough: ['AUTOMATE_SURELY_UNSET_VARIABLE'] })),
+      runner.preview(req(['env'], { passThrough: ['LUPIN_SURELY_UNSET_VARIABLE'] })),
       'INVALID_REQUEST',
     );
     await refused(runner.preview(req(['env'], { env: { 'bad name': '1' } })), 'INVALID_REQUEST');
@@ -381,7 +381,7 @@ test('a deadline ends the command and records why', async () => {
 });
 
 test('cancelling ends the command AND everything it started', async () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'automate-run-tree-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'lupin-run-tree-'));
   const record = path.join(dir, 'pids.txt');
   try {
     await withRunner(async ({ runner, req }) => {
@@ -407,7 +407,7 @@ test('cancelling ends the command AND everything it started', async () => {
 
 if (WINDOWS) {
   test('ending a run also ends a tree started through a .cmd launcher, which killing only the child would leave running', async () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'automate-run-tree-'));
+    const dir = mkdtempSync(path.join(tmpdir(), 'lupin-run-tree-'));
     const record = path.join(dir, 'pids.txt');
     try {
       await withRunner(
@@ -439,7 +439,7 @@ if (WINDOWS) {
 }
 
 test('a deadline also ends a whole tree', async () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'automate-run-tree-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'lupin-run-tree-'));
   const record = path.join(dir, 'pids.txt');
   try {
     await withRunner(async ({ runner, req }) => {
@@ -560,8 +560,8 @@ test('report paths must stay inside the repository', async () => {
 });
 
 test('history survives a restart, and a run left running is marked crashed with its output redacted and the raw file removed', async () => {
-  const dataDir = mkdtempSync(path.join(tmpdir(), 'automate-run-data-'));
-  const root = mkdtempSync(path.join(tmpdir(), 'automate-run-repo-'));
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'lupin-run-data-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'lupin-run-repo-'));
   try {
     let id = '';
     let repositoryId = '';

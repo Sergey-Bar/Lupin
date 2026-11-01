@@ -1,7 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { and, desc, eq, lt, notInArray, or } from 'drizzle-orm';
-import { webhookDeliveries } from '@automate/db';
-import type { GitHubWebhookAck } from '@automate/shared-contracts';
+import { webhookDeliveries } from '@lupin/db';
+import type { GitHubWebhookAck } from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import {
   enabledSourcesForRepository,

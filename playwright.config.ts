@@ -175,10 +175,10 @@ const durablePathSpecFiles = specFiles.filter((file) => file.endsWith('durable-p
  * server and compared with ceilings recorded against the bundle would fail on the
  * difference between the two servers rather than on the product.
  */
-const renderServe = process.env['AUTOMATE_RENDER_SERVE'] === 'preview';
+const renderServe = process.env['LUPIN_RENDER_SERVE'] === 'preview';
 const webServerCommand = renderServe
-  ? `pnpm --filter @automate/unified-web exec vite preview --host 127.0.0.1 --port ${String(WEB_PORT)} --strictPort`
-  : 'pnpm --filter @automate/unified-web exec vite --host 127.0.0.1';
+  ? `pnpm --filter @lupin/unified-web exec vite preview --host 127.0.0.1 --port ${String(WEB_PORT)} --strictPort`
+  : 'pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1';
 
 const RENDER_PROJECT = 'rendering-budget';
 const PROFILE_MATRIX_PROJECT = 'profile-matrix';
@@ -189,7 +189,7 @@ const PROFILE_MATRIX_PROJECT = 'profile-matrix';
  * exists only in this mode, for the budget's reason: `pnpm test:e2e` runs every project, and
  * the matrix is its own required job rather than part of Product E2E.
  */
-const profileMatrix = process.env['AUTOMATE_PROFILE_MATRIX'] === '1';
+const profileMatrix = process.env['LUPIN_PROFILE_MATRIX'] === '1';
 
 /** The projects that exist only in a mode of their own, and whether that mode is on. */
 const MODE_PROJECTS: Record<string, boolean> = {
@@ -252,8 +252,8 @@ export default defineConfig({
       // *after* the server can prepare the database for it.
       //
       // So both live here. The build, because the API's `dev` script imports
-      // `@automate/db` and `@automate/shared-contracts` through `node_modules` to their
-      // `dist`s, which `pnpm install` does not produce; `--filter @automate/api...` is
+      // `@lupin/db` and `@lupin/shared-contracts` through `node_modules` to their
+      // `dist`s, which `pnpm install` does not produce; `--filter @lupin/api...` is
       // pnpm's own answer on that — the package *and its dependencies*, read from the
       // graph rather than from a list to keep in step with it. The migration, because a
       // server that boots against an unmigrated database does not start at all.
@@ -262,11 +262,11 @@ export default defineConfig({
       // migration is idempotent, so a second run applies nothing and says so.
       command: [
         // The worker and runner too: `full-loop.spec.ts` starts both from source, and the
-        // runner imports `@automate/runner-sdk`, which is not an API dependency and so is not
-        // built by `@automate/api...`. Locally an earlier `pnpm build` hid that; CI has none.
-        'pnpm --filter @automate/api... --filter @automate/worker... --filter @automate/runner... build',
+        // runner imports `@lupin/runner-sdk`, which is not an API dependency and so is not
+        // built by `@lupin/api...`. Locally an earlier `pnpm build` hid that; CI has none.
+        'pnpm --filter @lupin/api... --filter @lupin/worker... --filter @lupin/runner... build',
         'pnpm db:migrate',
-        'pnpm --filter @automate/api run dev',
+        'pnpm --filter @lupin/api run dev',
       ].join(' && '),
       url: `${apiUrl}/api/v1/health`,
       env: {
@@ -274,7 +274,7 @@ export default defineConfig({
         NODE_ENV: 'development',
         DATABASE_URL: databaseUrl,
         COOKIE_SECRET,
-        AUTOMATE_API_KEY: INSTALLATION_KEY,
+        LUPIN_API_KEY: INSTALLATION_KEY,
         // The lane enrols a runner, and enrolling is a separate act from reading runs.
         // Without this the register route answered `RUNNER_REGISTRATION_UNAUTHORIZED`:
         // it treats a *missing* secret as a misconfiguration outside `NODE_ENV=test`, and
@@ -290,7 +290,7 @@ export default defineConfig({
         // the list was broken.
         //
         // This is the mechanism the product itself documents. The onboarding screen says
-        // "Set AUTOMATE_PROJECT_ROOT to the checkout you want analysed and restart the
+        // "Set LUPIN_PROJECT_ROOT to the checkout you want analysed and restart the
         // API", and `discoverProjectAtBoot` registers it at boot with no default — in
         // compose the working directory is `/app`, so a default would register the
         // container as the user's project. Setting it here is that instruction, followed,
@@ -298,7 +298,7 @@ export default defineConfig({
         //
         // `configDir` is the repository root, which has the `package.json` and the
         // workspace file the detectors read.
-        AUTOMATE_PROJECT_ROOT: configDir,
+        LUPIN_PROJECT_ROOT: configDir,
       },
       reuseExistingServer: !process.env['CI'],
       timeout: 60_000,

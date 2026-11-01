@@ -16,7 +16,7 @@ import {
   type HealthLetter,
   type HealthPolicy,
   type HealthTool,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { weightedGeometric } from '../score/geometric.js';
 
 /**

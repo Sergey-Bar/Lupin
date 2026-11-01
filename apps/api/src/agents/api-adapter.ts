@@ -16,8 +16,8 @@
  * - **`generate`** — *not supported.* Writing a collection from an OpenAPI document needs the
  *   AI gateway and a destination for the generated files; neither is wired here.
  */
-import { ApiRunInputSchema, type ApiRunInput } from '@automate/shared-contracts';
-import type { ToolRegistry } from '@automate/tool-sdk';
+import { ApiRunInputSchema, type ApiRunInput } from '@lupin/shared-contracts';
+import type { ToolRegistry } from '@lupin/tool-sdk';
 import type { ExecutionStore } from '../execution/types.js';
 import type { SubmittableRun } from '../execution/run-submission.js';
 import { createExecutionBridgeAdapter, defineAcceptedRunOperation } from './execution-bridge.js';

@@ -38,7 +38,7 @@ import {
  * was never validated — and no screen builds a URL by concatenation, so no screen
  * can construct a path with a project id in it.
  *
- * The schemas are the **server's** contracts, imported from `@automate/shared-contracts`
+ * The schemas are the **server's** contracts, imported from `@lupin/shared-contracts`
  * rather than re-declared. A copy is a second authority that disagrees the first time
  * a field is added, which is the defect `RUN_PHASES` was and the one this package
  * exists to not repeat.

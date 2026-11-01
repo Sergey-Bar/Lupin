@@ -6,7 +6,7 @@ import {
   type RepoScan,
   type RepoTool,
   type ToolboxEntry,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { objectField, readJson } from '../detect/manifest.js';
 import type { RepositoryView } from '../detect/repository-view.js';
 import { TOOL_CATALOG, type CatalogTool } from './catalog.js';

@@ -156,11 +156,7 @@ test('each detector fires on the shape of claim it exists to catch', () => {
     ['README.md: `pnpm a-script-nobody-added` is not a script in the root package.json'],
   );
   assert.deepEqual(
-    findingsFor(
-      'commands',
-      'README.md',
-      'Run `pnpm --filter @automate/api test` and `pnpm install`.',
-    ),
+    findingsFor('commands', 'README.md', 'Run `pnpm --filter @lupin/api test` and `pnpm install`.'),
     [],
     'a filtered package script and a built-in are not root scripts and are not findings',
   );
@@ -188,13 +184,9 @@ test('each detector fires on the shape of claim it exists to catch', () => {
   );
 
   assert.deepEqual(
-    findingsFor(
-      'env-vars',
-      'docs/x.md',
-      'Rotate `AUTOMATE_DASHBOARD_API_KEY` and `VAULT_PASSWORD`.',
-    ),
+    findingsFor('env-vars', 'docs/x.md', 'Rotate `LUPIN_DASHBOARD_API_KEY` and `VAULT_PASSWORD`.'),
     [
-      'docs/x.md: `AUTOMATE_DASHBOARD_API_KEY` is not declared in packages/config and read nowhere in the workspace',
+      'docs/x.md: `LUPIN_DASHBOARD_API_KEY` is not declared in packages/config and read nowhere in the workspace',
       'docs/x.md: `VAULT_PASSWORD` is not declared in packages/config and read nowhere in the workspace',
     ],
   );

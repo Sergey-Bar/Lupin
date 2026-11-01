@@ -11,7 +11,7 @@
  * — and a gate here that disagrees with the contract is a gate that lets a concluded
  * run back into flight.
  */
-import { PERSISTED_RUN_STATUS_VALUES } from '@automate/shared-contracts';
+import { PERSISTED_RUN_STATUS_VALUES } from '@lupin/shared-contracts';
 
 /**
  * The statuses a run does not leave once it reaches them.

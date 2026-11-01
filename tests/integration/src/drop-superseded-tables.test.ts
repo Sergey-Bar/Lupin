@@ -14,7 +14,7 @@ import { readMigrations, type Migration } from './migrations.js';
  *
  * The migration is fail-closed in the same spirit as 0028 and 0029. It drops only
  * tables that are empty, and a table that holds rows stops the migration, naming the
- * table and the count, unless `automate.allow_drop_nonempty` is `on`. Dropping data
+ * table and the count, unless `lupin.allow_drop_nonempty` is `on`. Dropping data
  * is the one thing a migration must never do by default.
  */
 
@@ -123,7 +123,7 @@ describe(TAG, () => {
       await client.exec(SEED[table]);
 
       await expect(applyTarget(client)).rejects.toThrow(
-        new RegExp(`${table}: 1 row\\(s\\).*automate\\.allow_drop_nonempty`, 's'),
+        new RegExp(`${table}: 1 row\\(s\\).*lupin\\.allow_drop_nonempty`, 's'),
       );
 
       // Nothing was applied: all three tables and both keys are still there.
@@ -138,7 +138,7 @@ describe(TAG, () => {
     const client = await applyBefore();
     await seedUnrelated(client);
     await client.exec(SEED.api_keys);
-    await client.exec(`SET automate.allow_drop_nonempty = 'off'`);
+    await client.exec(`SET lupin.allow_drop_nonempty = 'off'`);
 
     await expect(applyTarget(client)).rejects.toThrow(/api_keys: 1 row/);
     expect(await tablesPresent(client)).toEqual([...SUPERSEDED].sort());
@@ -155,7 +155,7 @@ describe(TAG, () => {
       INSERT INTO artifacts (run_id, workspace_id, result_id, name, content_type, storage_key, checksum, size_bytes)
         VALUES ('${RUN}', 'default-workspace', 'r-1', 'a.log', 'text/plain', 'k/1', '${'a'.repeat(64)}', 1);
     `);
-    await client.exec(`SET automate.allow_drop_nonempty = 'on'`);
+    await client.exec(`SET lupin.allow_drop_nonempty = 'on'`);
 
     await applyTarget(client);
 

@@ -1,4 +1,4 @@
-import type { FindingSeverity } from '@automate/shared-contracts';
+import type { FindingSeverity } from '@lupin/shared-contracts';
 
 /**
  * A CVSS base score as a finding severity, on the CVSS v3 qualitative bands

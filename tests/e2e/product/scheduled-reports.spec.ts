@@ -49,7 +49,7 @@ test.describe('scheduled reports', () => {
     expect(delivery.status, 'the inbox is delivered by the dispatcher in the same request').toBe(
       'sent',
     );
-    expect(delivery.rendered).toContain('Test report from Automate');
+    expect(delivery.rendered).toContain('Test report from Lupin');
 
     await page.goto(`${WEB_BASE}/dashboard/reports`);
     await expect(page.getByTestId('notifications-page')).toBeVisible({ timeout: 15_000 });

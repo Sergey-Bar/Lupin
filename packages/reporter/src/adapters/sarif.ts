@@ -5,7 +5,7 @@ import type {
   FindingSeverity,
   HealthDimension,
   HealthTool,
-} from '@automate/shared-contracts';
+} from '@lupin/shared-contracts';
 import { type Json, record, list, text } from './json-fields.js';
 import { severityFromCvss } from './cvss.js';
 

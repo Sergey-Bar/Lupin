@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
  * One declaration per canonical event *type*, not merely per canonical schema name.
  *
  * `event-name-ownership.test.ts` already fails when a canonical *schema* is declared
- * outside `@automate/shared-contracts`. It cannot see the other half of the problem:
+ * outside `@lupin/shared-contracts`. It cannot see the other half of the problem:
  * the event type a writer emits and the event type a reader matches on are **strings**,
  * and a string is invisible to a schema-name gate. So `run:started` was written out
  * as a literal in eight files across four packages — five `z.literal('run:started')`

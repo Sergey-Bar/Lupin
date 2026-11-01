@@ -11,7 +11,7 @@ a page reload, and replay what it missed. The design that was written first spec
 WebSocket transport — a design no code in this repository ever implemented — and three
 documents still described one: the security runbook
 named `REPORTER_SECRET` as securing "the WebSocket connection", the platform design
-record described `@automate/realtime` as "Shared WebSocket logic", and the reporter
+record described `@lupin/realtime` as "Shared WebSocket logic", and the reporter
 compatibility note promised WebSocket protocol support, which no code implemented.
 
 ## Decision
@@ -51,4 +51,4 @@ produced it.
   caller's transaction.
 - `docs/migration/capability-register.md`, row `realtime.sse` — the register's own
   statement, `real`, with the development in-memory bus called out as explicit.
-- `pnpm --filter @automate/api test src/routes/events.test.ts`
+- `pnpm --filter @lupin/api test src/routes/events.test.ts`

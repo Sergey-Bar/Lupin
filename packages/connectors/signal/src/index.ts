@@ -9,7 +9,7 @@ import {
   type ConnectorAdapter,
   type ConnectorRequest,
   type ConnectorResult,
-} from '@automate/connectors-sdk';
+} from '@lupin/connectors-sdk';
 
 /**
  * Signal, through a self-hosted `signal-cli-rest-api` bridge.
@@ -17,7 +17,7 @@ import {
  * Signal has no official API for bots or businesses. The established way to send from a
  * server is `bbernhard/signal-cli-rest-api`: a container linked to a Signal account
  * (a spare number, or this install as a linked device), answering `POST /v2/send`. The
- * bridge usually runs beside Automate on the same machine or LAN, so — unlike every other
+ * bridge usually runs beside Lupin on the same machine or LAN, so — unlike every other
  * connector here — a private `http:` address is expected. The secret is the bridge's base
  * URL, set by an admin; the account number and the recipients arrive in the input.
  *

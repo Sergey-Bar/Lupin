@@ -224,21 +224,21 @@ describe('a command is read out of a job spec, and validated before it spawns', 
   it('looks declared variable names up in the runner environment, never the values', () => {
     // The spec names a variable; the runner supplies its value. A spec that could
     // carry a credential would be a credential in a database row.
-    process.env['AUTOMATE_TEST_REDACT_ME'] = 'resolved-at-spawn-time';
+    process.env['LUPIN_TEST_REDACT_ME'] = 'resolved-at-spawn-time';
     try {
       const command = readGenericCommand({
-        command: { argv: ['pytest'], env: ['AUTOMATE_TEST_REDACT_ME', 'AUTOMATE_TEST_ABSENT'] },
+        command: { argv: ['pytest'], env: ['LUPIN_TEST_REDACT_ME', 'LUPIN_TEST_ABSENT'] },
       });
-      expect(command?.env).toEqual({ AUTOMATE_TEST_REDACT_ME: 'resolved-at-spawn-time' });
+      expect(command?.env).toEqual({ LUPIN_TEST_REDACT_ME: 'resolved-at-spawn-time' });
       expect(Object.keys(command?.env ?? {})).toHaveLength(1);
     } finally {
-      delete process.env['AUTOMATE_TEST_REDACT_ME'];
+      delete process.env['LUPIN_TEST_REDACT_ME'];
     }
   });
 
   it('drops a declared name that is unset, rather than sending an empty value', () => {
     const command = readGenericCommand({
-      command: { argv: ['pytest'], env: ['AUTOMATE_TEST_DEFINITELY_ABSENT'] },
+      command: { argv: ['pytest'], env: ['LUPIN_TEST_DEFINITELY_ABSENT'] },
     });
     expect(command?.env).toEqual({});
   });

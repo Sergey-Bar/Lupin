@@ -1,7 +1,7 @@
 /**
  * Reporter events domain schemas — Zod v4
  *
- * Contracts for events emitted by the @automate/reporter
+ * Contracts for events emitted by the @lupin/reporter
  * WebSocket reporter. All events carry an explicit `version` field
  * to support future schema evolution.
  */

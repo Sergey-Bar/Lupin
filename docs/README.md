@@ -2,8 +2,8 @@
 
 The documentation lives in two places, and they do different jobs:
 
-- **`site/` is the guide** — written for someone using or evaluating Automate, and
-  published to <https://sergey-bar.github.io/AutoMate/>. Start with
+- **`site/` is the guide** — written for someone using or evaluating Lupin, and
+  published to <https://sergey-bar.github.io/Lupin/>. Start with
   [Getting started](../site/guide/getting-started.md).
 - **`docs/` is the record** — the engineering decisions and the machine-checked quality
   state the guide is built on. Most files here are read by a gate, so they stay accurate.

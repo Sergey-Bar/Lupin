@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RepoScanSchema } from '@automate/shared-contracts';
+import { RepoScanSchema } from '@lupin/shared-contracts';
 import { literalView } from '../detect/repository-view.js';
 import { classifyScript, notRunnableReason } from './classify.js';
 import { scanRepository } from './index.js';

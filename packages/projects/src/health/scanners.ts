@@ -1,4 +1,4 @@
-import type { HealthReportFormat } from '@automate/shared-contracts';
+import type { HealthReportFormat } from '@lupin/shared-contracts';
 
 /**
  * The health scanners this install knows how to run, as data.
@@ -20,7 +20,7 @@ import type { HealthReportFormat } from '@automate/shared-contracts';
  * ## The output lands in the checkout
  *
  * The runner collects artifacts from the command's working directory, so each scanner writes
- * `automate-health-*` at the repository root. Add that pattern to `.gitignore`.
+ * `lupin-health-*` at the repository root. Add that pattern to `.gitignore`.
  */
 export interface HealthScanner {
   /** Also the runner capability that advertises the binary is installed. */
@@ -35,7 +35,7 @@ export interface HealthScanner {
   ecosystems: readonly string[] | null;
 }
 
-export const HEALTH_OUTPUT_PREFIX = 'automate-health-';
+export const HEALTH_OUTPUT_PREFIX = 'lupin-health-';
 
 const sarif = (id: string) => `${HEALTH_OUTPUT_PREFIX}${id}.sarif`;
 

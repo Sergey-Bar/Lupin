@@ -12,7 +12,7 @@ production rather than starting with them.
 
 | Variable                           | Required | Purpose                                            |
 | ---------------------------------- | -------- | -------------------------------------------------- |
-| `AUTOMATE_API_KEY`                 | Yes      | Bearer token the web app presents. 32+ characters. |
+| `LUPIN_API_KEY`                    | Yes      | Bearer token the web app presents. 32+ characters. |
 | `COOKIE_SECRET`                    | Yes      | Session cookie signing. 32+ characters.            |
 | `REPORTER_SECRET`                  | Yes      | Reporter upload authentication.                    |
 | `WORKSPACE_ID`                     | Yes      | **The tenancy boundary.**                          |

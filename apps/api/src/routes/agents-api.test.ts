@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AgentAcceptedRunSchema } from '@automate/shared-contracts';
-import { createToolRegistry } from '@automate/tool-sdk';
+import { AgentAcceptedRunSchema } from '@lupin/shared-contracts';
+import { createToolRegistry } from '@lupin/tool-sdk';
 import { registerApiAgent } from '../agents/api-adapter.js';
 import { registerBrowserAgent } from '../agents/browser-adapter.js';
 import { InMemoryExecutionStore } from '../execution/in-memory-execution-store.js';

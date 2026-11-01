@@ -19,7 +19,7 @@ beforeEach(async () => {
   }
   directory = await mkdtemp(join(tmpdir(), 'runner-reporter-'));
   eventsPath = join(directory, 'events.ndjson');
-  vi.stubEnv('AUTOMATE_RUNNER_EVENTS_PATH', eventsPath);
+  vi.stubEnv('LUPIN_RUNNER_EVENTS_PATH', eventsPath);
 });
 
 afterEach(async () => {
@@ -164,7 +164,7 @@ describe('NdjsonReporter', () => {
   });
 
   it('writes nothing when the runner did not provide an events path', async () => {
-    vi.stubEnv('AUTOMATE_RUNNER_EVENTS_PATH', undefined);
+    vi.stubEnv('LUPIN_RUNNER_EVENTS_PATH', undefined);
     const reporter = new NdjsonReporter();
 
     reporter.onTestBegin(testCase('logs in'), testResult({}));

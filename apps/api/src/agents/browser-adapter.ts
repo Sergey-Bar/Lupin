@@ -19,8 +19,8 @@
  * with no enrolled runner carrying `playwright` waits in `queued` until one claims it; this
  * adapter does not pretend otherwise by refusing, nor by blocking.
  */
-import { BrowserRunInputSchema, type BrowserRunInput } from '@automate/shared-contracts';
-import type { ToolRegistry } from '@automate/tool-sdk';
+import { BrowserRunInputSchema, type BrowserRunInput } from '@lupin/shared-contracts';
+import type { ToolRegistry } from '@lupin/tool-sdk';
 import type { ExecutionStore } from '../execution/types.js';
 import type { SubmittableRun } from '../execution/run-submission.js';
 import { createExecutionBridgeAdapter, defineAcceptedRunOperation } from './execution-bridge.js';

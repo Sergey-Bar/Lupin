@@ -28,7 +28,7 @@ A row's command has to be **specific enough that it can fail, and cheap enough t
 Good:
 
 ```bash
-pnpm --filter @automate/api exec vitest run src/routes/execution.test.ts
+pnpm --filter @lupin/api exec vitest run src/routes/execution.test.ts
 ```
 
 Bad, and each for a named reason:

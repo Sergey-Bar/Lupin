@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
-import type { Profile } from '@automate/config';
+import type { Profile } from '@lupin/config';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { guard } from './access.js';
 import { bearerToken } from './bearer-token.js';
@@ -11,8 +11,8 @@ import { satisfies } from '../services/access-service.js';
  * Who is calling, resolved once per request, and the guards that read it.
  *
  * Credentials, in order (ADR-014): an `Authorization: Bearer` access token, then the
- * `automate_token` cookie a browser sign-in with a token sets, then a person's session
- * (OIDC), then the `automate_session` cookie the installation key's sign-in sets (which is the
+ * `lupin_token` cookie a browser sign-in with a token sets, then a person's session
+ * (OIDC), then the `lupin_session` cookie the installation key's sign-in sets (which is the
  * admin), then a verified Cloudflare Access identity when the install is remote. The
  * installation session comes before Access because behind the tunnel every request carries an
  * Access identity: read after it, a break-glass sign-in would never be read at all. With
@@ -29,8 +29,8 @@ import { satisfies } from '../services/access-service.js';
  * at sign-in. Named without `cookie` or `token` because the secret-literal rule reads those
  * words in a name as a credential held in source.
  */
-export const BROWSER_SIGN_IN = 'automate_token';
-const CALLER = 'automate.caller';
+export const BROWSER_SIGN_IN = 'lupin_token';
+const CALLER = 'lupin.caller';
 
 export interface CallerResolver {
   mode: 'open' | 'enforced';
@@ -43,7 +43,7 @@ export interface CallerResolver {
    */
   ssoEnforced?: boolean;
   /**
-   * Break-glass (`AUTOMATE_BREAK_GLASS=1`): under enforced single sign-on, the installation
+   * Break-glass (`LUPIN_BREAK_GLASS=1`): under enforced single sign-on, the installation
    * session and a browser's token cookie count again, so the installation key can get an admin
    * in while the identity provider is down.
    */
@@ -55,7 +55,7 @@ export interface CallerResolver {
    */
   authenticateSession?: (context: Context) => Promise<Caller | null>;
   /**
-   * A verified remote identity — Cloudflare Access with `AUTOMATE_REMOTE=cloudflare` — or
+   * A verified remote identity — Cloudflare Access with `LUPIN_REMOTE=cloudflare` — or
    * `null`. Absent means the install has no remote credential source.
    */
   authenticateRemote?: (context: Context) => Promise<Caller | null>;

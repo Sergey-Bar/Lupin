@@ -5,7 +5,7 @@
  *
  * Every UI library ships a spring. Motion here is a set of **named durations, four named
  * easings, six keyframes and one press scale**, and the reason to say that is the criterion:
- * motion here is only decoration. Nothing in this repository moves to be looked at. There is
+ * motion here is never only decoration. Nothing in this repository moves to be looked at. There is
  * no animation that is not reporting a state change — a panel opening, a row changing, a
  * button being pressed, a number updating — and a duration is spent drawing attention to
  * information that just arrived.
@@ -18,18 +18,18 @@
  *
  * 1. **Press** — 75 ms. The scale moves, nothing else. A press is a question asked and
  *    answered in the same breath; anything longer reads as latency on the input device.
- *    `--automate-press-scale` is a token because a scale typed into a class string
+ *    `--lupin-press-scale` is a token because a scale typed into a class string
  *    (`active:scale-[0.98]`) is a value no media query can reach, so the reduced-motion
  *    escape hatch below could not stop it.
  * 2. **Hover and colour** — 100 ms. Background and border. No transform: a row that grows
  *    when the pointer passes over it moves the thing below it.
- * 3. **Enter** — 150 ms. `automate-enter` for a panel arriving, `automate-zoom-in` for one
+ * 3. **Enter** — 150 ms. `lupin-enter` for a panel arriving, `lupin-zoom-in` for one
  *    anchored to a control. Opacity and transform only; both are compositor properties, so
  *    the cost does not scale with how much is on the page.
- * 4. **Exit** — 100 ms, and the asymmetry with entering is the decision. `automate-exit`
+ * 4. **Exit** — 100 ms, and the asymmetry with entering is the decision. `lupin-exit`
  *    drops opacity with no translation, because something leaving does not need to be
  *    directed; a leaving element that travels draws the eye away from whatever replaced it.
- * 5. **Transition** — 300 ms. `automate-slide-in` is a drawer and a dialog crossing the
+ * 5. **Transition** — 300 ms. `lupin-slide-in` is a drawer and a dialog crossing the
  *    viewport, and it is the one case where a transform is the whole effect.
  *
  * ## The escape hatch, once
@@ -37,15 +37,14 @@
  * Two selectors, one value, and no component has to know either of them exists.
  * `prefers-reduced-motion: reduce` is the one that matters.
  *
- * ## Why there is no spring here
+ * ## The spring, and why it is admissible now
  *
- * A spring is the right answer to "how does this feel on a 120 Hz display with a variable
- * frame budget". This is a QA console that runs on the hardware an installation gave it, is
- * read in sessions rather than used in bursts, and whose rendering budget is *recorded*
- * rather than assumed — `tests/performance/rendering-budget.json`, where `PERF-1` in the ledger is
- * still open because nobody has run it on the reference hardware. A spring is the one
- * animation whose cost depends on the frame budget, and adding it while that number is
- * unrecorded would be adding the part that cannot be measured yet.
+ * Arrivals settle on a spring: `--lupin-ease-spring`, a damped curve sampled into a CSS
+ * `linear()` easing that overshoots by 2%. Earlier this file refused a spring because a
+ * physics loop's cost depends on the frame budget, and that budget was unrecorded. A
+ * `linear()` easing is not a loop — the browser interpolates it on the compositor exactly
+ * as it does a cubic-bezier — so it adds feel without adding a per-frame cost. Exits never
+ * spring: something leaving accelerates away.
  */
 
 :root {
@@ -55,25 +54,25 @@
    * `animationend` a component waits on never fires; `motion.ts` says so at greater length
    * and `motion.test.ts` asserts the link in both directions.
    */
-  --automate-motion-scale: 1;
+  --lupin-motion-scale: 1;
 
   /*
    * The press scale, published as `scale-press` so `active:scale-press` is the press
    * feedback. Slightly less aggressive than Tailwind's `active:scale-95`, because a console
    * button is small and frequently pressed: 0.98 reads as a press, 0.95 reads as a bounce.
    */
-  --automate-press-scale: 0.98;
+  --lupin-press-scale: 0.98;
 
   /*
    * The durations, in milliseconds, each as `calc(value * scale)` rather than as a literal.
    * The multiplier is the whole mechanism, and it is what lets the media query at the foot
    * of this file reach a duration added later with no second edit anywhere.
    */
-  --automate-duration-75: calc(75ms * var(--automate-motion-scale));
-  --automate-duration-100: calc(100ms * var(--automate-motion-scale));
-  --automate-duration-150: calc(150ms * var(--automate-motion-scale));
-  --automate-duration-200: calc(200ms * var(--automate-motion-scale));
-  --automate-duration-300: calc(300ms * var(--automate-motion-scale));
+  --lupin-duration-75: calc(75ms * var(--lupin-motion-scale));
+  --lupin-duration-100: calc(100ms * var(--lupin-motion-scale));
+  --lupin-duration-150: calc(150ms * var(--lupin-motion-scale));
+  --lupin-duration-200: calc(200ms * var(--lupin-motion-scale));
+  --lupin-duration-300: calc(300ms * var(--lupin-motion-scale));
 
   /*
    * Four easings, and the choice is about where the value ends up.
@@ -85,10 +84,34 @@
    * `linear` is published because a `--animate-*` entry has to name a timing function, and an
    * easing nobody uses should say so by being the trivial one rather than by being absent.
    */
-  --automate-ease-linear: linear;
-  --automate-ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --automate-ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --automate-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --lupin-ease-linear: linear;
+  --lupin-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --lupin-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --lupin-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  /*
+   * `spring` for anything arriving that should feel physical: a panel, a popover, a palette.
+   * A damped spring sampled into `linear()` stops, overshooting by 2% and settling; see
+   * `motion.ts` for the parameters and `motion.test.ts` for the shape it is held to.
+   */
+  --lupin-ease-spring: linear(
+    0,
+    0.102,
+    0.309,
+    0.526,
+    0.708,
+    0.842,
+    0.93,
+    0.982,
+    1.008,
+    1.018,
+    1.02,
+    1.017,
+    1.012,
+    1.008,
+    1.005,
+    1.003,
+    1
+  );
 }
 
 @theme inline {
@@ -96,39 +119,39 @@
    * The published animations.
    *
    * The first four are the class names components already write, kept so that no component
-   * has to know which role a name maps to. `fade-*` is `automate-enter` / `automate-exit` —
+   * has to know which role a name maps to. `fade-*` is `lupin-enter` / `lupin-exit` —
    * an arrival with a 4% rise rather than a plain opacity fade, because an element that
    * arrives from the same pixel position reads as a new object rather than as this
    * control's panel opening.
    *
    * The last two are the roles that had no name before, named after what they are.
    */
-  --animate-fade-in: automate-enter
-    calc(var(--automate-duration-150) * var(--automate-motion-scale)) var(--automate-ease-out);
-  --animate-fade-out: automate-exit
-    calc(var(--automate-duration-100) * var(--automate-motion-scale)) var(--automate-ease-in);
-  --animate-zoom-in-95: automate-zoom-in
-    calc(var(--automate-duration-150) * var(--automate-motion-scale)) var(--automate-ease-out);
-  --animate-zoom-out-95: automate-zoom-out
-    calc(var(--automate-duration-100) * var(--automate-motion-scale)) var(--automate-ease-in);
-  --animate-automate-slide-in: automate-slide-in
-    calc(var(--automate-duration-300) * var(--automate-motion-scale)) var(--automate-ease-in-out);
-  --animate-automate-pulse: automate-pulse
-    calc(var(--automate-duration-150) * var(--automate-motion-scale)) var(--automate-ease-in-out);
+  --animate-fade-in: lupin-enter calc(var(--lupin-duration-200) * var(--lupin-motion-scale))
+    var(--lupin-ease-spring);
+  --animate-fade-out: lupin-exit calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
+    var(--lupin-ease-in);
+  --animate-zoom-in-95: lupin-zoom-in calc(var(--lupin-duration-200) * var(--lupin-motion-scale))
+    var(--lupin-ease-spring);
+  --animate-zoom-out-95: lupin-zoom-out calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
+    var(--lupin-ease-in);
+  --animate-lupin-slide-in: lupin-slide-in
+    calc(var(--lupin-duration-300) * var(--lupin-motion-scale)) var(--lupin-ease-in-out);
+  --animate-lupin-pulse: lupin-pulse calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
+    var(--lupin-ease-in-out);
 
   /* The press scale, so `active:scale-press` is the press feedback. */
-  --scale-press: var(--automate-press-scale);
+  --scale-press: var(--lupin-press-scale);
 }
 
 /*
- * `automate-enter` — **role: enter.** A panel or a card arriving.
+ * `lupin-enter` — **role: enter.** A panel or a card arriving.
  *
  * Opacity from 0, translated up by 4%. Four percent rather than a slide from the edge,
  * because this is *arrival* and not *travel*: the element is coming into existence in place
  * and the reader's eye is somewhere else on the page. A translation large enough to read as
  * travel pulls the eye before the content does.
  */
-@keyframes automate-enter {
+@keyframes lupin-enter {
   from {
     opacity: 0;
     transform: translateY(4%);
@@ -140,14 +163,14 @@
 }
 
 /*
- * `automate-exit` — **role: exit.** The counterpart, and it is *not* symmetric.
+ * `lupin-exit` — **role: exit.** The counterpart, and it is *not* symmetric.
  *
  * Opacity to 0 and no translation, at the shorter duration and the accelerating easing.
  * Entering is a signal that something became available; leaving is a signal that something
  * stopped being; and a leaving element that travels draws the eye away from the thing that
  * replaced it.
  */
-@keyframes automate-exit {
+@keyframes lupin-exit {
   from {
     opacity: 1;
   }
@@ -157,7 +180,7 @@
 }
 
 /*
- * `automate-zoom-in` — **role: enter, anchored.** A popover, a tooltip, a palette, an
+ * `lupin-zoom-in` — **role: enter, anchored.** A popover, a tooltip, a palette, an
  * empty state.
  *
  * From 95%, not from 0: the element is anchored to a control the reader has just pressed,
@@ -168,7 +191,7 @@
  * anchor and only the component knows which edge it is on. A global origin would be wrong
  * for every panel that is not at the top.
  */
-@keyframes automate-zoom-in {
+@keyframes lupin-zoom-in {
   from {
     opacity: 0;
     transform: scale(0.95);
@@ -180,10 +203,10 @@
 }
 
 /*
- * `automate-zoom-out` — **role: exit, anchored.** The reverse of the above, at the exit
+ * `lupin-zoom-out` — **role: exit, anchored.** The reverse of the above, at the exit
  * duration and the exit easing.
  */
-@keyframes automate-zoom-out {
+@keyframes lupin-zoom-out {
   from {
     opacity: 1;
     transform: scale(1);
@@ -195,7 +218,7 @@
 }
 
 /*
- * `automate-slide-in` — **role: transition.** The one movement in the product: a drawer
+ * `lupin-slide-in` — **role: transition.** The one movement in the product: a drawer
  * and a dialog crossing the viewport.
  *
  * `translateY(8%)` over 300 ms, and both numbers are load-bearing. 8% is far enough to read
@@ -206,7 +229,7 @@
  * `transform`, never `height` or `top`: a transform on a composited layer is free per frame
  * and a box metric is a layout pass per frame, with the whole subtree behind it.
  */
-@keyframes automate-slide-in {
+@keyframes lupin-slide-in {
   from {
     opacity: 0;
     transform: translateY(8%);
@@ -218,14 +241,14 @@
 }
 
 /*
- * `automate-pulse` — **role: attention, and the only one allowed to repeat.** A skeleton
+ * `lupin-pulse` — **role: attention, and the only one allowed to repeat.** A skeleton
  * that has not resolved yet.
  *
  * An opacity ramp rather than a moving gradient, because a moving gradient repaints on every
  * frame and an opacity ramp does not. The skeleton is the one place in the product where
  * something is genuinely pending.
  */
-@keyframes automate-pulse {
+@keyframes lupin-pulse {
   0%,
   100% {
     opacity: 1;
@@ -233,6 +256,29 @@
   50% {
     opacity: 0.55;
   }
+}
+
+/*
+ * Route changes, as view transitions.
+ *
+ * The router calls `document.startViewTransition` on every navigation, and the browser
+ * cross-fades a snapshot of the old page into the new one. `::view-transition-group(*)`
+ * is every pair the browser animates — the page, and any element given a shared
+ * `view-transition-name` (a run row and the run-detail header it opens) — so one rule sets
+ * the duration and the easing for all of them, from the same tokens the components use.
+ * A browser without the API navigates instantly, which is the right fallback.
+ */
+::view-transition-group(*) {
+  animation-duration: var(--lupin-duration-200);
+  animation-timing-function: var(--lupin-ease-spring);
+}
+
+::view-transition-old(root) {
+  animation: lupin-exit var(--lupin-duration-100) var(--lupin-ease-in) both;
+}
+
+::view-transition-new(root) {
+  animation: lupin-enter var(--lupin-duration-200) var(--lupin-ease-spring) both;
 }
 
 /*
@@ -254,7 +300,7 @@
  */
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --automate-motion-scale: 0.01;
+    --lupin-motion-scale: 0.01;
   }
 
   /*
@@ -272,16 +318,40 @@
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
+
+  /* `*` matches elements, and these are pseudo-elements of the document. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.01ms !important;
+  }
 }
 
-.motion-off {
-  --automate-motion-scale: 0.01;
+/*
+ * The same clamp, for the product's own "reduce motion" setting: `theme/preferences.tsx`
+ * sets `data-motion="reduced"` on `<html>`. It is here rather than in `index.css` so the
+ * operating-system request and the in-app one are one policy in one file, and the in-app
+ * one reaches the literal `duration-*` utilities and the view transitions as the OS one
+ * does, rather than only the scaled tokens.
+ */
+.motion-off,
+html[data-motion='reduced'] {
+  --lupin-motion-scale: 0.01;
 }
 
 .motion-off *,
 .motion-off *::before,
-.motion-off *::after {
+.motion-off *::after,
+html[data-motion='reduced'] *,
+html[data-motion='reduced'] *::before,
+html[data-motion='reduced'] *::after {
   transition-duration: 0.01ms !important;
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
+}
+
+html[data-motion='reduced']::view-transition-group(*),
+html[data-motion='reduced']::view-transition-old(*),
+html[data-motion='reduced']::view-transition-new(*) {
+  animation-duration: 0.01ms !important;
 }

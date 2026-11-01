@@ -372,7 +372,7 @@ export function composeProblems(file, text) {
  *
  * `apps/api/src/startup-policy.ts` refuses the five secrets and `DATABASE_URL`, and
  * `apps/api/src/index.ts` refuses a database-backed production boot with no
- * `AUTOMATE_INSTALLATION_KEY` (`NO_INSTALLATION_KEY`). The test beside this module reads
+ * `LUPIN_INSTALLATION_KEY` (`NO_INSTALLATION_KEY`). The test beside this module reads
  * both files and fails if a name here is not refused there, or one refused there is not
  * here, so this list cannot become a second authority that drifts.
  */
@@ -380,10 +380,10 @@ export const REQUIRED_PRODUCTION_VARIABLES = [
   'DATABASE_URL',
   'COOKIE_SECRET',
   'REPORTER_SECRET',
-  'AUTOMATE_API_KEY',
+  'LUPIN_API_KEY',
   'VAULT_SECRET',
   'RUNNER_REGISTRATION_SECRET',
-  'AUTOMATE_INSTALLATION_KEY',
+  'LUPIN_INSTALLATION_KEY',
 ];
 
 /**
@@ -493,13 +493,13 @@ export function publishedPorts(text, serviceName) {
 }
 
 /** What the production stack publishes: one port, loopback unless the operator says otherwise. */
-export const FRONT_DOOR = '${AUTOMATE_BIND:-127.0.0.1}:${AUTOMATE_PORT:-8080}:8080';
+export const FRONT_DOOR = '${LUPIN_BIND:-127.0.0.1}:${LUPIN_PORT:-8080}:8080';
 
 /**
  * The same proxy over HTTPS, on the same bind. Nothing listens behind it until a LAN
  * certificate exists (`start lan-cert`), so publishing it widens nothing by itself.
  */
-export const SECURE_FRONT_DOOR = '${AUTOMATE_BIND:-127.0.0.1}:${AUTOMATE_HTTPS_PORT:-8443}:8443';
+export const SECURE_FRONT_DOOR = '${LUPIN_BIND:-127.0.0.1}:${LUPIN_HTTPS_PORT:-8443}:8443';
 
 /**
  * Every way the production stack publishes something other than its one front door.

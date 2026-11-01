@@ -1,5 +1,5 @@
 {
-  "name": "@automate/contract-tests",
+  "name": "@lupin/contract-tests",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
@@ -10,10 +10,10 @@
     "lint": "eslint --max-warnings=0 src/"
   },
   "dependencies": {
-    "@automate/realtime": "workspace:*",
-    "@automate/reporting": "workspace:*",
-    "@automate/reporter": "workspace:*",
-    "@automate/shared-contracts": "workspace:*"
+    "@lupin/realtime": "workspace:*",
+    "@lupin/reporting": "workspace:*",
+    "@lupin/reporter": "workspace:*",
+    "@lupin/shared-contracts": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

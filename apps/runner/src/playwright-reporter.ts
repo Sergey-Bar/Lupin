@@ -79,7 +79,7 @@ export default class NdjsonReporter implements Reporter {
   }
 
   private write(type: string, payload: Record<string, unknown>): void {
-    const path = process.env['AUTOMATE_RUNNER_EVENTS_PATH'];
+    const path = process.env['LUPIN_RUNNER_EVENTS_PATH'];
     if (!path) return;
     const event = {
       eventId: randomUUID(),
