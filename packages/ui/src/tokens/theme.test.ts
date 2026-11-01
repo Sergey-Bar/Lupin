@@ -1584,9 +1584,8 @@ describe('the plane is flat', () => {
 
   /** A declaration's value wherever it is declared, read to its semicolon. */
   function themeValueAnywhere(variable: string): string {
-    const match = new RegExp(`${variable.replace(/-/g, '\\-')}\\s*:\\s*([^;]+);`).exec(
-      declarations,
-    );
+    const escaped = variable.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
+    const match = new RegExp(`${escaped}\\s*:\\s*([^;]+);`).exec(declarations);
     return match?.[1]?.replace(/\s+/g, ' ').trim() ?? '';
   }
 

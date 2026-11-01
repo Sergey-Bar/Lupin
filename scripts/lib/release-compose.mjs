@@ -29,7 +29,7 @@ export const PUBLISHED_IMAGES = ['migrate', 'api', 'worker', 'runner', 'web', 'e
  * @returns {string}
  */
 export function imageReference(service, version) {
-  return `${REGISTRY}/lupin-${service}:\${LUPIN_VERSION:-${version}}`;
+  return `${REGISTRY}/lupin-${service}:` + '${LUPIN_VERSION:-' + version + '}';
 }
 
 /** @param {string} line @returns {number} */
