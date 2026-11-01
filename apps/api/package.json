@@ -36,13 +36,13 @@
     "@sentry/node": "catalog:",
     "croner": "catalog:",
     "drizzle-orm": "catalog:",
-    "effect": "^4.0.6",
+    "effect": "^4.1.0",
     "hono": "^4.13.14",
     "openid-client": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.11",
+    "@electric-sql/pglite": "^0.5.13",
     "@eslint/js": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",

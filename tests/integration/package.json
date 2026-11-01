@@ -13,7 +13,7 @@
   "dependencies": {
     "@lupin/db": "workspace:*",
     "@lupin/shared-contracts": "workspace:*",
-    "@electric-sql/pglite": "^0.5.11",
+    "@electric-sql/pglite": "^0.5.13",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {
