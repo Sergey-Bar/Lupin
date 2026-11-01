@@ -370,6 +370,15 @@ jobs:
           else
             tag="v$FROM"
           fi
+          # 4.0.0 renamed images, environment variables and bundles with no compatibility layer,
+          # so a starting point from an earlier major line has no update path to exercise.
+          NEW_MAJOR="${NEW_VERSION%%.*}"
+          tag_major="${tag#v}"
+          tag_major="${tag_major%%.*}"
+          if [ -n "$tag" ] && [ "$tag_major" != "$NEW_MAJOR" ]; then
+            echo "$tag is on an earlier major line than $NEW_VERSION; there is no update path from it." >> "$GITHUB_STEP_SUMMARY"
+            tag=""
+          fi
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
           [ -n "$tag" ] || echo "Nothing to upgrade from for '$FROM'." >> "$GITHUB_STEP_SUMMARY"
       - name: Install the previous release

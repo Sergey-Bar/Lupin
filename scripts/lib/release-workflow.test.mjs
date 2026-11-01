@@ -138,6 +138,16 @@ test('an existing install is upgraded with `start update`, keeping its key', () 
   );
 });
 
+test('the upgrade skips a starting point from an earlier major line', () => {
+  // 4.0.0 renamed the product: image names, environment variables and bundle names changed with
+  // no compatibility layer, so `start update` from a 3.x install has no path to test. Without
+  // this the first 4.x release would fail on a release that can never succeed.
+  const job = jobs().get('upgrade') ?? '';
+  assert.match(job, /NEW_MAJOR="\$\{NEW_VERSION%%\.\*\}"/);
+  assert.match(job, /"\$tag_major" != "\$NEW_MAJOR"/);
+  assert.match(job, /earlier major line/);
+});
+
 test('the upgrade also starts from 3.0.0, whose compose file predates LUPIN_BIND', () => {
   // `start update` keeps the old install's compose file and changes only the image, so an
   // upgrade from the previous release only ever tests the previous release's compose file.
