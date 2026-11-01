@@ -42,7 +42,7 @@ release record.
 - **Screenshot sign-off by the owner** against the reference products (Linear, Vercel,
   Raycast) has not happened. Per-route redesign beyond the shared kit (radius, headings,
   labels, fields, tables, overlays, wordmark) is not done; each route still has its 3.x layout.
-- **Keyboard walkthrough specs** per primary route are not written; they need the E2E stack.
+- **Keyboard walkthrough specs** are written: `tests/e2e/product/keyboard-walkthrough.spec.ts` covers the `g` chords, the `?` sheet, typing in a field, `j`/`k` rows and first-Tab focus on the six primary routes. It passed 32/32 locally against the in-memory API; CI runs it in Product E2E.
 - **Manual, outside the repository:** rename the GitHub repository to `Sergey-Bar/Lupin`,
   re-enable GitHub Pages under the new URL, remove the old ghcr packages, and later claim the
   `@lupin` npm scope and set `NPM_TOKEN`.
