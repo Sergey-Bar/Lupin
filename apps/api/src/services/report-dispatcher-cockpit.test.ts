@@ -4,7 +4,7 @@ import type { ConnectorAdapter, ConnectorRequest, ConnectorResult } from '@lupin
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import { syntheticVaultSecret } from '../test-support/synthetic-credentials.js';
 import { loadCockpitDigest } from './cockpit-digest.js';
-import { createChannel, queueTestDelivery } from './notification-service.js';
+import { createChannel, createSubscription, queueTestDelivery } from './notification-service.js';
 import { createReportDispatcher } from './report-dispatcher.js';
 
 /**
@@ -333,6 +333,97 @@ describe('the report with the cockpit', () => {
     await deliverTo(db, options, telegram, { telegram: adapter });
     expect(calls[0]?.request.operation).toBe('sendMessage');
     expect(JSON.stringify(calls[0]?.request.input)).not.toContain('Down 6 points');
+  });
+});
+
+/** A second project that reported after the first, so "the one that reported last" is not it. */
+async function seedNewerProject(db: MigratedDb) {
+  const [project] = await db
+    .insert(schema.projects)
+    .values({ workspaceId: 'ws-1', name: 'Website', slug: 'website', defaultBranch: 'main' })
+    .returning({ id: schema.projects.id });
+  const projectId = (project as { id: string }).id;
+  await db.insert(schema.healthSnapshots).values({
+    workspaceId: 'ws-1',
+    projectId,
+    branch: 'main',
+    takenAt: daysAgo(0.1),
+    score: 90,
+    letter: 'A',
+    grade: {},
+    formulaVersion: 1,
+  });
+  return projectId;
+}
+
+describe('the report of a subscription with a project', () => {
+  const body = {
+    name: 'Weekly',
+    cadence: 'weekly',
+    time: '09:00',
+    weekday: 1,
+    timezone: 'UTC',
+  } as const;
+
+  async function deliverSubscription(projectId: string | undefined) {
+    const { db, options } = await setup();
+    const own = await seedCockpit(db);
+    await seedNewerProject(db);
+    const channel = await createChannel(options, telegram);
+    const subscription = await createSubscription(options, {
+      ...body,
+      channelId: channel.id,
+      ...(projectId === 'own' ? { projectId: own } : {}),
+    });
+    await db.insert(schema.reportDeliveries).values({
+      workspaceId: 'ws-1',
+      subscriptionId: subscription.id,
+      channelId: channel.id,
+      idempotencyKey: `schedule:${subscription.id}:1`,
+      scheduledFor: NOW,
+      nextAttemptAt: NOW,
+    });
+    const { adapter, calls } = scripted([ok]);
+    const dispatcher = createReportDispatcher({
+      db: db as never,
+      vaultSecret: VAULT,
+      adapters: { telegram: adapter },
+      link: null,
+      now: () => NOW,
+    });
+    await dispatcher.runOnce();
+    return JSON.stringify(calls[0]?.request.input);
+  }
+
+  it('is about the project it names, even when another reported later', async () => {
+    expect(await deliverSubscription('own')).toContain('Down 6 points since last week');
+  });
+
+  it('follows the project that reported last when it names none', async () => {
+    const sent = await deliverSubscription(undefined);
+    expect(sent).not.toContain('Down 6 points');
+    expect(sent).toContain('no earlier reading to compare with');
+  });
+
+  it('loadCockpitDigest reads the project it is given', async () => {
+    const { db, options } = await setup();
+    const own = await seedCockpit(db);
+    await seedNewerProject(db);
+    expect((await loadCockpitDigest(options, undefined, own))?.cockpit.headline).toContain(
+      'Down 6 points',
+    );
+    expect((await loadCockpitDigest(options, undefined, null))?.cockpit.headline).not.toContain(
+      'Down 6 points',
+    );
+  });
+
+  it('leaves the cockpit out, without failing, when the project has since gone', async () => {
+    const { options } = await setup();
+    const onError = vi.fn();
+    expect(
+      await loadCockpitDigest(options, onError, '00000000-0000-4000-8000-0000000000aa'),
+    ).toBeNull();
+    expect(onError).not.toHaveBeenCalled();
   });
 });
 
