@@ -19,3 +19,7 @@ export * from './eval-regression.js';
 export * from './agent-runtime.js';
 export * from './supply-chain-scorecard.js';
 export * from './test-effectiveness-scorecard.js';
+export * from './cockpit.js';
+export * from './cockpit-digest.js';
+export * from './cockpit-risk.js';
+export * from './cockpit-html.js';

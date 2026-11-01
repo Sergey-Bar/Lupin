@@ -421,7 +421,7 @@
     },
     {
       "id": "DIGEST-1",
-      "statement": "Every rendering of a scheduled report fits its platform limit at any limit from 80 characters up (Telegram, Slack, plain text for WhatsApp and Signal), and a report never shows more than three items, with the rest counted, nor more than three area lines or three actions, with no action listed twice.",
+      "statement": "Every rendering of a scheduled report fits its platform limit at any limit from 80 characters up (Telegram, Slack, plain text for WhatsApp and Signal), and a report never shows more than three items, with the rest counted, nor more than three area lines, three actions or three cockpit changes, with no action listed twice, and the cockpit's headline and changes (as hostile as every other line) obey the same limits.",
       "package": "packages/reporting",
       "testFile": "packages/reporting/src/report.property.test.ts",
       "seed": 20261025,
@@ -442,6 +442,38 @@
       "testFile": "apps/api/src/http/cloudflare-access.property.test.ts",
       "seed": 20261027,
       "shownToFail": "The harness refutes a verifier that trusts the payload in the suite itself; skipping the signature check in createCloudflareAccessVerifier fails the property on the first payload change."
+    },
+    {
+      "id": "COCKPIT-1",
+      "statement": "A cockpit change is stated only between two comparable readings: a delta exists only with a value, a baseline and, for the health grade, one real formula version behind both; nothing measured is `not_measured` with no delta, never a delta of 0.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/cockpit.property.test.ts",
+      "seed": 20261106,
+      "shownToFail": "The harness refutes a delta of 0 over a not_measured metric and a delta over a formula_changed one, and finds counterexamples to 'every payload has a delta' and 'no payload is formula_changed'."
+    },
+    {
+      "id": "COCKPIT-2",
+      "statement": "A cockpit driver names only a pull request, run or commit present in the input, at most three are shown, a metric that did not improve or worsen has none, and a link points at the project's own GitHub repository or is null.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/cockpit.property.test.ts",
+      "seed": 20261106,
+      "shownToFail": "Mutation: making the 'unknown' driver name a run id that is not in the input fails the existence property on the first generated case with a step and no commit."
+    },
+    {
+      "id": "COCKPIT-3",
+      "statement": "The order the readings, runs, pull requests and deployments arrive in does not change the cockpit.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/cockpit.property.test.ts",
+      "seed": 20261106,
+      "shownToFail": "It failed on the first implementation: with two runs on one commit the first in the list was named, so the answer followed the order. Pinned by the 'most recent run' example in cockpit.test.ts."
+    },
+    {
+      "id": "COCKPIT-4",
+      "statement": "The cockpit's pace series is twelve contiguous Monday-UTC weeks, the last the only partial one, whose merged and lines-changed counts add up to exactly the changes merged inside them, whose share is null when nothing merged and within 0 to 100 otherwise, and which does not depend on the window asked for.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/cockpit.property.test.ts",
+      "seed": 20261106,
+      "shownToFail": "Mutation: counting only a change's additions and not its deletions fails the conservation property, the pinned lines example and the harness checker on the first case with a deletion."
     }
   ]
 }

@@ -194,6 +194,7 @@ describe('migration graph', () => {
       '0050_audit_chain',
       '0051_scim_tokens',
       '0052_audit_append_only',
+      '0053_health_snapshot_commit',
     ]);
   });
 

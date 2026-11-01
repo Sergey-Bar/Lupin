@@ -147,6 +147,13 @@ export const healthSnapshots = pgTable(
     letter: text('letter'),
     // `HealthGrade`, verbatim, so a past point can be explained by what produced it.
     grade: jsonb('grade').$type<Record<string, unknown>>().notNull(),
+    // The commit of the report that produced this snapshot (`0053`), copied from that
+    // `health_reports` row and from nowhere else. Null when the report named none, and for a
+    // snapshot a person caused (a triage, a policy change): no commit changed that grade.
+    commitSha: text('commit_sha'),
+    // `GRADE_FORMULA_VERSION` when the grade was computed (`0053`). 0 is every row from before
+    // the column: unversioned, so a trend never compares it with a versioned point.
+    formulaVersion: integer('formula_version').notNull().default(0),
   },
   (table) => [
     index('health_snapshots_project_taken_idx').on(
@@ -159,6 +166,7 @@ export const healthSnapshots = pgTable(
       'health_snapshots_score_check',
       sql`${table.score} IS NULL OR ${table.score} BETWEEN 0 AND 100`,
     ),
+    check('health_snapshots_formula_version_check', sql`${table.formulaVersion} >= 0`),
   ],
 );
 

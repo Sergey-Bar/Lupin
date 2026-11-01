@@ -1,5 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from '../../router.js';
+import { cockpitFixture } from '../../test-utils.js';
 import { Route } from './now.js';
 
 /**
@@ -10,6 +12,16 @@ import { Route } from './now.js';
  */
 const RENDER_TIMEOUT_MS = 15_000;
 
+const PROJECTS = ['p-1', 'p-2'].map((id) => ({
+  id,
+  workspaceId: 'w',
+  name: 'Project ${id}',
+  slug: id,
+  repoPath: null,
+  detectorVersion: 1,
+  createdAt: '2026-10-01T00:00:00.000Z',
+}));
+
 function stubFetch(): string[] {
   const asked: string[] = [];
   vi.stubGlobal(
@@ -17,7 +29,13 @@ function stubFetch(): string[] {
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       asked.push(url);
-      return new Response('[]', { status: 200, headers: { 'Content-Type': 'application/json' } });
+      // The cockpit has its own shape; everything else the page reads is a list.
+      const body = url.includes('/api/v1/cockpit')
+        ? JSON.stringify(cockpitFixture())
+        : url.endsWith('/api/v1/projects')
+          ? JSON.stringify({ projects: PROJECTS })
+          : '[]';
+      return new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } });
     }),
   );
   return asked;
@@ -33,7 +51,7 @@ describe('the Now route', () => {
   });
 
   it(
-    'is where / lands, and asks for the runs, the portfolio and the deliveries',
+    'is where / lands, and asks for the cockpit, the runs, the portfolio and the deliveries',
     async () => {
       const asked = stubFetch();
       window.scrollTo = () => undefined;
@@ -43,12 +61,35 @@ describe('the Now route', () => {
       });
       await waitFor(
         () => {
+          expect(asked.some((url) => url.includes('/api/v1/cockpit?window=7d'))).toBe(true);
           expect(asked.some((url) => url.includes('/runs'))).toBe(true);
           expect(asked.some((url) => url.includes('portfolio'))).toBe(true);
           expect(asked.some((url) => url.includes('deliveries'))).toBe(true);
         },
         { timeout: RENDER_TIMEOUT_MS },
       );
+    },
+    RENDER_TIMEOUT_MS * 2,
+  );
+  it(
+    'asks about the project the address names, and follows the choice in the address',
+    async () => {
+      const asked = stubFetch();
+      window.scrollTo = () => undefined;
+      render(<MemoryRouter initialEntries={['/dashboard/now?project=p-1']} />);
+      await waitFor(() => expect(asked.some((url) => url.includes('projectId=p-1'))).toBe(true), {
+        timeout: RENDER_TIMEOUT_MS,
+      });
+      const select = await screen.findByLabelText('Project');
+      expect(select).toHaveValue('p-1');
+      await userEvent.setup().selectOptions(select, 'p-2');
+      await waitFor(() => expect(asked.some((url) => url.includes('projectId=p-2'))).toBe(true), {
+        timeout: RENDER_TIMEOUT_MS,
+      });
+      await userEvent.setup().selectOptions(await screen.findByLabelText('Project'), '');
+      await waitFor(() => expect(screen.getByLabelText('Project')).toHaveValue(''), {
+        timeout: RENDER_TIMEOUT_MS,
+      });
     },
     RENDER_TIMEOUT_MS * 2,
   );

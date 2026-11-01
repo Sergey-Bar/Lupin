@@ -25,6 +25,7 @@ import {
 } from './routes/dashboard/portfolio.js';
 import { Route as reportsRoute } from './routes/dashboard/reports.js';
 import { Route as nowRoute } from './routes/dashboard/now.js';
+import { Route as metricRoute } from './routes/dashboard/metric.js';
 import {
   AgentsRoute,
   AiCodeRoute,
@@ -35,6 +36,7 @@ import {
 
 const dashboardTree = dashboardRoute.addChildren([
   nowRoute,
+  metricRoute,
   PortfolioRoute,
   RepoHealthRoute,
   Repo360Route,

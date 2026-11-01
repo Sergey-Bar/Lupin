@@ -125,6 +125,7 @@ import { createDashboardModule } from './modules/dashboard/index.js';
 import { InMemoryQuarantineStore, type QuarantineStore } from './modules/dashboard/quarantine.js';
 import { boundQuarantineSource } from './execution/quarantine-excusal.js';
 import { commitTests } from './services/commit-tests.js';
+import { publicLink } from './services/public-link.js';
 import { applyProjectQuarantinePolicy } from './services/quarantine-policy-service.js';
 import { listTriageLabels } from './services/triage-label-service.js';
 import type { ExecutionRun } from './execution/types.js';
@@ -443,7 +444,7 @@ const reportDispatcher = databaseResources
         whatsapp: whatsappAdapter,
         signal: signalAdapter,
       },
-      link: `${(runtimeConfig.publicAppUrl ?? 'http://localhost:8080').replace(/\/$/u, '')}/dashboard/now`,
+      link: publicLink(runtimeConfig.publicAppUrl, '/dashboard/now'),
     })
   : undefined;
 /**

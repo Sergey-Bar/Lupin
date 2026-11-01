@@ -114,9 +114,12 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
     // The heading, not a sub-state testid: the cockpit has two states — a report and
     // an onboarding screen — and both are named `Dashboard`, so this assertion holds
     // whichever one a bare install is in.
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Now' })).toBeInTheDocument(), {
-      timeout: RENDER_TIMEOUT_MS,
-    });
+    await waitFor(
+      () => expect(screen.getByRole('heading', { level: 1, name: 'Cockpit' })).toBeInTheDocument(),
+      {
+        timeout: RENDER_TIMEOUT_MS,
+      },
+    );
   });
 
   it('settles in one navigation rather than looping toward the update bound', async () => {

@@ -56,6 +56,17 @@ export interface HealthInputs {
   policy?: HealthPolicy | undefined;
 }
 
+/**
+ * Which version of the scoring formula produced a grade. Stored on every `health_snapshots`
+ * row so a trend never compares a point computed by one formula with a point from another:
+ * the drop would be the formula's, not the product's.
+ *
+ * Raise it whenever a weight, a penalty, the decay, a letter floor, a gate or the arithmetic in
+ * `grade()` changes, and record the new constants in `grade-formula-version.test.ts`, which
+ * fails on a changed constant until you do. Rows from before the version existed carry 0.
+ */
+export const GRADE_FORMULA_VERSION = 1;
+
 export const DEFAULT_HEALTH_WEIGHTS: Readonly<Record<HealthDimension, number>> = {
   security: 25,
   tests: 20,

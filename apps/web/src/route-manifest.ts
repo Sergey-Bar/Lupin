@@ -12,6 +12,16 @@
  * `label` is the page's own name (the palette says "Go to Trends"); `tab` is the short
  * label on its section's tab row. A page with no `tab` is a detail page — reachable from
  * a link, never from the tab row.
+ *
+ * ## The cockpit, and the pages that became its detail
+ *
+ * The product answers one question — is it better or worse than before, and why — on the
+ * cockpit, and a metric's page (`/dashboard/metric/:metricId`) is where a QA engineer goes
+ * one level down. Trends, Quarantine and Agents therefore left the tab rows: Trends and
+ * Quarantine are now reached from the metric they explain (the run pass rate and the flaky
+ * tests), and Agents does not feed the cockpit. They are still routed, still in this
+ * manifest and still open the same page, so a bookmark or a link from an old message keeps
+ * working; `route-manifest.test.ts` pins every old path.
  */
 export const SECTIONS = [
   { id: 'overview', label: 'Overview', path: '/dashboard/now' },
@@ -35,10 +45,17 @@ export const routeManifest = [
   {
     id: 'now',
     path: '/dashboard/now',
-    label: 'Now',
+    label: 'Cockpit',
     visible: true,
     section: 'overview',
-    tab: 'Now',
+    tab: 'Cockpit',
+  },
+  {
+    id: 'metric',
+    path: '/dashboard/metric/:metricId',
+    label: 'Metric',
+    visible: false,
+    section: 'overview',
   },
   {
     id: 'portfolio',
@@ -105,17 +122,15 @@ export const routeManifest = [
     id: 'analytics',
     path: '/dashboard/analytics',
     label: 'Trends',
-    visible: true,
+    visible: false,
     section: 'insights',
-    tab: 'Trends',
   },
   {
     id: 'quarantine',
     path: '/dashboard/quarantine',
     label: 'Quarantine',
-    visible: true,
+    visible: false,
     section: 'insights',
-    tab: 'Quarantine',
   },
   {
     id: 'test-history',
@@ -144,9 +159,8 @@ export const routeManifest = [
     id: 'agents',
     path: '/dashboard/agents',
     label: 'Agents',
-    visible: true,
+    visible: false,
     section: 'insights',
-    tab: 'Agents',
   },
   {
     id: 'score',
@@ -308,6 +322,37 @@ export function tabsOf(section: SectionId): TabRoute[] {
     (route): route is TabRoute => route.section === section && 'tab' in route,
   );
   return tabs.length > 1 ? tabs : [];
+}
+
+/**
+ * A metric's detail page, for the window the cockpit was showing. The metric ids are the
+ * cockpit contract's; the window is carried so the page compares what the person was looking at.
+ */
+export function metricPath(
+  metricId: string,
+  window?: '7d' | 'release',
+  projectId?: string,
+): string {
+  const base = `/dashboard/metric/${encodeURIComponent(metricId)}`;
+  const params: string[] = [];
+  if (window !== undefined) params.push(`window=${window}`);
+  if (projectId !== undefined) params.push(`project=${encodeURIComponent(projectId)}`);
+  return params.length === 0 ? base : `${base}?${params.join('&')}`;
+}
+
+/** The cockpit for one project; without one it shows the project that reported last. */
+export function cockpitPath(projectId?: string): string {
+  return projectId === undefined
+    ? '/dashboard/now'
+    : `/dashboard/now?project=${encodeURIComponent(projectId)}`;
+}
+
+/**
+ * The cockpit as one downloadable HTML file, for the window being shown. It is an API address,
+ * not a page of this app, so it is followed as a download rather than routed to.
+ */
+export function reportPath(projectId: string, window: '7d' | 'release'): string {
+  return `/api/v1/projects/${encodeURIComponent(projectId)}/cockpit/report.html?window=${window}&download=1`;
 }
 
 export function runDetailPath(runId: string): string {

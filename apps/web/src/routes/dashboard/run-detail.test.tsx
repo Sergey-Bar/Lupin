@@ -2,7 +2,14 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { RunDetailPage } from './run-detail.js';
-import { makeApi, makePhaseEvent, makeRun, TEST_TIMESTAMP } from '../../test-utils.js';
+import {
+  cockpitFixture,
+  cockpitMetric,
+  makeApi,
+  makePhaseEvent,
+  makeRun,
+  TEST_TIMESTAMP,
+} from '../../test-utils.js';
 import { ApiError, type ApiClient, type Run } from '../../lib/api.js';
 
 const artifact = {
@@ -520,5 +527,66 @@ describe('RunDetailPage', () => {
     );
     fireEvent.click(screen.getByTestId('cancel-run'));
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('cancel rejected'));
+  });
+});
+
+describe('RunDetailPage from the cockpit', () => {
+  const driver = {
+    kind: 'run' as const,
+    ref: 'run-123',
+    label: 'Run on abc1234',
+    url: null,
+    candidate: true,
+    change: -10,
+    at: null,
+  };
+  const named = () =>
+    vi.fn(async () =>
+      cockpitFixture({
+        metrics: [cockpitMetric({ id: 'coverage', label: 'Coverage', drivers: [driver] })],
+      }),
+    );
+
+  it('says the cockpit names this run, when the person came from the cockpit and it does', async () => {
+    const getCockpit = named();
+    render(
+      <RunDetailPage
+        id="run-123"
+        api={detailApi(passedRun)}
+        scoreContext={{ window: 'release' }}
+        cockpit={getCockpit}
+      />,
+    );
+    const banner = await screen.findByTestId('score-impact');
+    expect(banner).toHaveTextContent('Possibly behind Coverage (-10 pts)');
+    expect(getCockpit).toHaveBeenCalledWith(
+      { window: 'release', projectId: 'lupin' },
+      expect.any(AbortSignal),
+    );
+    expect(screen.getByTestId('run-detail-page')).toContainElement(banner);
+  });
+
+  it('asks the cockpit nothing when the person did not come from it', async () => {
+    const getCockpit = named();
+    render(<RunDetailPage id="run-123" api={detailApi(passedRun)} cockpit={getCockpit} />);
+    await screen.findByTestId('run-what-failed');
+    expect(getCockpit).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('score-impact')).toBeNull();
+  });
+
+  it('shows no banner for a run the cockpit does not name, and the page is unchanged', async () => {
+    const getCockpit = vi.fn(async () => cockpitFixture());
+    render(
+      <RunDetailPage
+        id="run-123"
+        api={detailApi(passedRun)}
+        scoreContext={{ window: '7d' }}
+        cockpit={getCockpit}
+      />,
+    );
+    await screen.findByTestId('run-what-failed');
+    await waitFor(() => expect(getCockpit).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByTestId('score-impact')).toBeNull();
   });
 });

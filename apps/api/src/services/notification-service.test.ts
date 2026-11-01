@@ -522,6 +522,7 @@ describe('each channel gets its own rendering', () => {
     more: 0,
     areas: [],
     actions: [],
+    cockpit: null,
     link: null,
   };
   const channel = (kind: string, settings: Record<string, string> = {}) => ({

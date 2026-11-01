@@ -133,32 +133,36 @@ describe('NavBar', () => {
   });
 
   it('shows the section tabs for a section with more than one page', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard/analytics')} />);
+    render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
     const tabs = await screen.findByTestId('section-tabs');
     expect(tabs).toHaveAttribute('aria-label', 'Insights pages');
     const links = within(tabs).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual([
-      'Tests',
-      'Trends',
-      'Quarantine',
-      'Delivery',
-      'AI code',
-      'Agents',
-    ]);
-    expect(within(tabs).getByRole('link', { name: 'Trends' })).toHaveAttribute(
+    expect(links.map((link) => link.textContent)).toEqual(['Tests', 'Delivery', 'AI code']);
+    expect(within(tabs).getByRole('link', { name: 'Tests' })).toHaveAttribute(
       'aria-current',
       'page',
     );
   });
 
-  it('shows the now, portfolio and project tabs on the overview, and none on a detail page', async () => {
+  it('shows no tab row on a page that left the tab row, and keeps its section current', async () => {
+    // Trends is reached from the run pass rate now, so it is a detail page: a bookmark still
+    // opens it, in Insights, with no tab row above it that would mark nothing as current.
+    render(<RouterProvider router={makeRouter('/dashboard/analytics')} />);
+    await screen.findByTestId('nav-bar');
+    expect(screen.queryByTestId('section-tabs')).toBeNull();
+    expect(
+      within(screen.getByTestId('nav-bar')).getByRole('link', { name: 'Insights' }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('shows the cockpit, portfolio and project tabs on the overview, and none on a detail page', async () => {
     const { unmount } = render(<RouterProvider router={makeRouter('/dashboard')} />);
     const tabs = await screen.findByTestId('section-tabs');
     expect(
       within(tabs)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Now', 'Portfolio', 'Project']);
+    ).toEqual(['Cockpit', 'Portfolio', 'Project']);
     unmount();
     render(<RouterProvider router={makeRouter('/dashboard/runs/run-1')} />);
     await screen.findByTestId('nav-bar');

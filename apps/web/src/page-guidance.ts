@@ -9,13 +9,25 @@ export interface PageGuidance {
 /** Teaching copy follows the route manifest, including detail screens. */
 export const pageGuidance = {
   now: {
-    purpose: 'Start here to see what needs attention across your quality signals.',
+    purpose: 'Start here to see whether the product is better or worse than before, and why.',
     steps: [
-      'Read the current summary.',
-      'Open the highest-priority item.',
-      'Inspect the evidence before deciding what to do.',
+      'Read the headline: the score, how it changed, and the sentence that says why.',
+      'Open the metric that moved most to see its readings and what was recorded while it moved.',
+      'Follow a pull request or a run to the change itself.',
     ],
-    remember: 'A missing signal means there is not enough evidence to judge it.',
+    remember:
+      'A metric that was not measured, or has nothing earlier to compare with, is not a metric that held steady.',
+  },
+  metric: {
+    purpose:
+      'See one metric of the cockpit in detail: its readings, what moved it, and where to act.',
+    steps: [
+      'Read the value and how far it moved from the start of the window.',
+      'Look at what was recorded while it moved. A run listed as possible is a candidate, not the cause.',
+      'Open a page under Go deeper to work on it.',
+    ],
+    remember:
+      'The cause is named only when a commit was recorded. Otherwise it says it is unknown.',
   },
   portfolio: {
     purpose: 'Compare the repositories you work on and choose one to investigate.',

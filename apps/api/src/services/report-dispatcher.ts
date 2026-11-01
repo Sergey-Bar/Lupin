@@ -1,6 +1,6 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { reportDeliveries, reportSubscriptions, type ReportDeliveryRow } from '@lupin/db';
-import type { ConnectorAdapter, ConnectorRequest } from '@lupin/connectors-sdk';
+import type { ConnectorAdapter, ConnectorRequest, ConnectorResult } from '@lupin/connectors-sdk';
 import type { ChannelKind, ChannelSummary } from '@lupin/shared-contracts';
 import {
   composeReport,
@@ -11,7 +11,9 @@ import {
   type ReportModel,
 } from '@lupin/reporting';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
+import { loadCockpitDigest } from './cockpit-digest.js';
 import { channelWithSecret, loadReport } from './notification-service.js';
+import type { TrendChart } from './trend-chart.js';
 
 /**
  * Sends the reports the worker queued.
@@ -53,34 +55,90 @@ export interface DispatchOutcome {
 
 const BACKOFF_MS = [60_000, 5 * 60_000, 30 * 60_000];
 
-/** The request for one channel, and the text kept as history. */
+/**
+ * The error codes that mean the platform refused a request and sent nothing: Telegram's and
+ * Slack's refusals, and the adapters' own refusals of the input before any request. A code
+ * for a status line (`slack_502`) or a transport failure is absent on purpose, because those
+ * may follow a message that arrived.
+ */
+const NOTHING_WAS_SENT =
+  /^(slack_(api_error|channel_id_required|invalid_[a-z_]+)|telegram_(rejected_\d+|invalid_[a-z_]+|caption_too_long))$/u;
+
+/**
+ * The request for one channel, the text kept as history, and, when the primary request carries
+ * a picture, the plain request to send if the picture is refused.
+ */
 export function requestFor(
   channel: ChannelSummary,
   model: ReportModel,
-): { request: ConnectorRequest | null; rendered: string } {
+  image: TrendChart | null = null,
+): { request: ConnectorRequest | null; fallback?: ConnectorRequest; rendered: string } {
   const settings = channel.settings as Record<string, string>;
   const plain = renderPlain(model, 2_000);
+  const photoBase64 = image === null ? null : Buffer.from(image.png).toString('base64');
   switch (channel.kind) {
     case 'inbox':
       return { request: null, rendered: plain };
     case 'slack': {
       const text = renderSlack(model);
-      return {
-        request: { operation: 'postMessage', input: { channel: settings['channel'], text } },
-        rendered: text,
+      const post: ConnectorRequest = {
+        operation: 'postMessage',
+        input: { channel: settings['channel'], text },
       };
+      // The upload needs a channel id, and the adapter says so before any request when it was
+      // given a name; the plain post is then sent, exactly as before the picture existed.
+      return photoBase64 === null
+        ? { request: post, rendered: text }
+        : {
+            request: {
+              operation: 'postMessageWithImage',
+              input: {
+                channel: settings['channel'],
+                text,
+                photoBase64,
+                title: 'Pace against quality',
+              },
+            },
+            fallback: post,
+            rendered: text,
+          };
     }
     case 'teams':
       return {
-        request: { operation: 'postCard', input: { message: renderTeams(model) } },
+        request: {
+          operation: 'postCard',
+          input: {
+            message: renderTeams(
+              model,
+              photoBase64 === null || image === null
+                ? undefined
+                : { dataUri: `data:image/png;base64,${photoBase64}`, alt: image.alt },
+            ),
+          },
+        },
         rendered: plain,
       };
     case 'telegram': {
       const text = renderTelegram(model);
-      return {
-        request: { operation: 'sendMessage', input: { chatId: settings['chatId'], text } },
-        rendered: text,
+      const send: ConnectorRequest = {
+        operation: 'sendMessage',
+        input: { chatId: settings['chatId'], text },
       };
+      return photoBase64 === null
+        ? { request: send, rendered: text }
+        : {
+            request: {
+              operation: 'sendPhoto',
+              // A caption is at most 1,024 characters; the digest renders for that limit.
+              input: {
+                chatId: settings['chatId'],
+                caption: renderTelegram(model, 1_024),
+                photoBase64,
+              },
+            },
+            fallback: send,
+            rendered: text,
+          };
     }
     case 'whatsapp': {
       // A template's body parameter may not hold a newline, so lines are joined.
@@ -166,6 +224,65 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
     return subscription ?? null;
   }
 
+  type Scoped = Parameters<typeof loadReport>[0];
+
+  /**
+   * The report for one delivery: what it always said, with the cockpit at its head when the
+   * workspace has one, and the chart beside it. A report without a cockpit is the report it
+   * always was.
+   */
+  async function composeFor(
+    scoped: Scoped,
+    subscription: Awaited<ReturnType<typeof subscriptionOf>>,
+  ): Promise<{ model: ReportModel; image: TrendChart | null }> {
+    const digest = await loadCockpitDigest(scoped, (error) =>
+      options.log?.('cockpit digest unavailable', {
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
+    const model = composeReport({
+      ...(await loadReport(scoped, {
+        title: subscription?.name ?? 'Test report from Lupin',
+        windowDays: subscription?.cadence === 'daily' ? 1 : 7,
+        link: options.link,
+      })),
+      ...(digest === null ? {} : { cockpit: digest.cockpit }),
+    });
+    return { model, image: digest?.image ?? null };
+  }
+
+  /**
+   * Sends the request, and the plain one in its place when the picture was refused before
+   * anything was sent. Only a refusal qualifies: an answer that may already have been delivered
+   * is never followed by a second message, because that is a duplicate.
+   */
+  async function sendWithFallback(
+    row: ReportDeliveryRow,
+    adapter: ConnectorAdapter,
+    secret: string,
+    request: ConnectorRequest,
+    fallback: ConnectorRequest | undefined,
+  ): Promise<ConnectorResult> {
+    const result = await adapter.execute(request, secret);
+    if (
+      result.status !== 'error' ||
+      fallback === undefined ||
+      result.error?.retryable === true ||
+      !NOTHING_WAS_SENT.test(result.error?.code ?? '')
+    ) {
+      return result;
+    }
+    options.log?.('report picture refused, sending the text', {
+      id: row.id,
+      code: result.error?.code,
+    });
+    return adapter.execute(fallback, secret);
+  }
+
+  function statusOf(row: ReportDeliveryRow, result: ConnectorResult): DispatchOutcome['status'] {
+    if (result.status === 'ok') return 'sent';
+    return result.error?.retryable === true && row.attempts < maxAttempts ? 'pending' : 'failed';
+  }
   async function deliver(row: ReportDeliveryRow): Promise<DispatchOutcome> {
     const scoped = {
       db: options.db,
@@ -182,14 +299,8 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
     }
     try {
       const { channel, secret } = await channelWithSecret(scoped, channelId);
-      const model = composeReport(
-        await loadReport(scoped, {
-          title: subscription?.name ?? 'Test report from Lupin',
-          windowDays: subscription?.cadence === 'daily' ? 1 : 7,
-          link: options.link,
-        }),
-      );
-      const { request, rendered } = requestFor(channel, model);
+      const { model, image } = await composeFor(scoped, subscription);
+      const { request, fallback, rendered } = requestFor(channel, model, image);
       if (request === null) {
         const outcome = { id: row.id, status: 'sent' as const, errorCode: null };
         await finish(row, { ...outcome, rendered });
@@ -205,13 +316,8 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
         await finish(row, { ...outcome, rendered });
         return outcome;
       }
-      const result = await adapter.execute(request, secret);
-      const status =
-        result.status === 'ok'
-          ? ('sent' as const)
-          : result.error?.retryable === true && row.attempts < maxAttempts
-            ? ('pending' as const)
-            : ('failed' as const);
+      const result = await sendWithFallback(row, adapter, secret, request, fallback);
+      const status = statusOf(row, result);
       const outcome = { id: row.id, status, errorCode: result.error?.code ?? null };
       await finish(row, { ...outcome, rendered });
       return outcome;

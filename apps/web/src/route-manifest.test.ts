@@ -3,7 +3,10 @@ import { routeTree } from './router.js';
 import {
   SECTIONS,
   isApplicationPath,
+  metricPath,
+  cockpitPath,
   repo360Path,
+  reportPath,
   routeManifest,
   runDetailPath,
   sectionOf,
@@ -61,11 +64,8 @@ describe('route manifest', () => {
       '/dashboard/runs',
       '/dashboard/runner',
       '/dashboard/insights',
-      '/dashboard/analytics',
-      '/dashboard/quarantine',
       '/dashboard/delivery',
       '/dashboard/ai-code',
-      '/dashboard/agents',
       '/dashboard/map',
       '/dashboard/health',
       '/dashboard/supply-chain',
@@ -124,17 +124,10 @@ describe('route manifest', () => {
     expect(sectionOf('/elsewhere')).toBeNull();
   });
 
-  it('lists each section’s tabs, and the overview leads with Now', () => {
-    expect(tabsOf('overview').map((tab) => tab.tab)).toEqual(['Now', 'Portfolio', 'Project']);
+  it('lists each section’s tabs, and the overview leads with the cockpit', () => {
+    expect(tabsOf('overview').map((tab) => tab.tab)).toEqual(['Cockpit', 'Portfolio', 'Project']);
     expect(tabsOf('runs').map((tab) => tab.tab)).toEqual(['Runs', 'Launch']);
-    expect(tabsOf('insights').map((tab) => tab.tab)).toEqual([
-      'Tests',
-      'Trends',
-      'Quarantine',
-      'Delivery',
-      'AI code',
-      'Agents',
-    ]);
+    expect(tabsOf('insights').map((tab) => tab.tab)).toEqual(['Tests', 'Delivery', 'AI code']);
     expect(tabsOf('map').map((tab) => tab.tab)).toEqual([
       'Map',
       'Capabilities',
@@ -166,6 +159,89 @@ describe('route manifest', () => {
       [...registered].some((path) => path.replace(/\/$/u, '').endsWith('map')),
       'the map route is not registered',
     ).toBe(true);
+  });
+
+  it('still opens every page the product ever had, so no bookmark or old message breaks', () => {
+    // Written out, not read from the manifest: a list derived from the thing under test cannot
+    // notice that something was removed from it. Trends, Quarantine and Agents left the tab
+    // rows when the cockpit arrived, and each must still open the page it always did.
+    const EVER_REACHABLE: ReadonlyArray<readonly [path: string, section: string]> = [
+      ['/dashboard', 'overview'],
+      ['/dashboard/now', 'overview'],
+      ['/dashboard/portfolio', 'overview'],
+      ['/dashboard/repo/p-1', 'overview'],
+      ['/dashboard/repo/p-1/overview', 'overview'],
+      ['/dashboard/runs', 'runs'],
+      ['/dashboard/runs/r-1', 'runs'],
+      ['/dashboard/runner', 'runs'],
+      ['/dashboard/insights', 'insights'],
+      ['/dashboard/analytics', 'insights'],
+      ['/dashboard/quarantine', 'insights'],
+      ['/dashboard/test', 'insights'],
+      ['/dashboard/delivery', 'insights'],
+      ['/dashboard/ai-code', 'insights'],
+      ['/dashboard/agents', 'insights'],
+      ['/dashboard/score/p-1', 'insights'],
+      ['/dashboard/gaps/p-1', 'insights'],
+      ['/dashboard/hollow/p-1', 'insights'],
+      ['/dashboard/flaky/p-1', 'insights'],
+      ['/dashboard/structure/p-1', 'insights'],
+      ['/dashboard/map', 'map'],
+      ['/dashboard/health', 'map'],
+      ['/dashboard/supply-chain', 'map'],
+      ['/dashboard/toolbox', 'map'],
+      ['/dashboard/access', 'map'],
+      ['/dashboard/members', 'map'],
+      ['/dashboard/audit', 'map'],
+      ['/dashboard/deployment', 'map'],
+      ['/dashboard/reports', 'map'],
+      ['/dashboard/pair', 'map'],
+    ];
+    for (const [path, section] of EVER_REACHABLE) {
+      expect(isApplicationPath(path), `${path} no longer opens a page`).toBe(true);
+      expect(sectionOf(path), `${path} moved sections`).toBe(section);
+    }
+    // And the router still serves the ones that left the tab rows.
+    const registered = registeredPaths().map((path) => path.replace(/^\//u, ''));
+    for (const path of ['analytics', 'quarantine', 'agents']) {
+      expect(registered, `${path} is no longer routed`).toContain(path);
+    }
+  });
+
+  it('puts the cockpit metric page in the overview, off the tab row', () => {
+    expect(sectionOf('/dashboard/metric/coverage')).toBe('overview');
+    expect(visibleRoutes.some((route) => route.path.startsWith('/dashboard/metric'))).toBe(false);
+    expect(metricPath('flaky-tests')).toBe('/dashboard/metric/flaky-tests');
+    expect(metricPath('run-pass-rate', 'release')).toBe(
+      '/dashboard/metric/run-pass-rate?window=release',
+    );
+    expect(metricPath('a b')).toBe('/dashboard/metric/a%20b');
+    expect(metricPath('coverage', '7d', 'p 1')).toBe(
+      '/dashboard/metric/coverage?window=7d&project=p%201',
+    );
+    expect(metricPath('coverage', undefined, 'p-1')).toBe('/dashboard/metric/coverage?project=p-1');
+    expect(cockpitPath()).toBe('/dashboard/now');
+    expect(cockpitPath('p&1')).toBe('/dashboard/now?project=p%261');
+  });
+
+  it('builds the report download address for the window shown, with the project encoded', () => {
+    expect(reportPath('p-1', '7d')).toBe(
+      '/api/v1/projects/p-1/cockpit/report.html?window=7d&download=1',
+    );
+    expect(reportPath('a/b c', 'release')).toBe(
+      '/api/v1/projects/a%2Fb%20c/cockpit/report.html?window=release&download=1',
+    );
+    // It is an API address, not a page of the app.
+    expect(isApplicationPath(reportPath('p-1', '7d'))).toBe(false);
+  });
+
+  it('has Trends, Quarantine and Agents off the tab rows and the palette, not off the product', () => {
+    for (const id of ['analytics', 'quarantine', 'agents']) {
+      const entry = routeManifest.find((route) => route.id === id);
+      expect(entry, id).toBeDefined();
+      expect(entry?.visible, id).toBe(false);
+      expect(entry !== undefined && 'tab' in entry, id).toBe(false);
+    }
   });
 
   it('registers the scorecard pages and the 360 in the router', () => {

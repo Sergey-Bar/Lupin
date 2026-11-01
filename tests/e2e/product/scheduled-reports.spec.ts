@@ -75,7 +75,8 @@ test.describe('scheduled reports', () => {
   test('the dashboard opens on Now', async ({ page }) => {
     await page.goto(`${WEB_BASE}/`);
     await expect(page).toHaveURL(`${WEB_BASE}/dashboard/now`);
+    await expect(page.getByTestId('cockpit-page')).toBeVisible({ timeout: 15_000 });
+    // The section under the cockpit, which reads the runs, the portfolio and the deliveries.
     await expect(page.getByTestId('now-page')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('now-status')).toBeVisible();
   });
 });

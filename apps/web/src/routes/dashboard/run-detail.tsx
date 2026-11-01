@@ -1,24 +1,43 @@
 import React, { useState } from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Badge, Button, EmptyState, StatusDot } from '@lupin/ui';
-import type { RunPhase } from '@lupin/shared-contracts';
+import type { CockpitWindow, RunPhase } from '@lupin/shared-contracts';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { useRunDetail } from '../../hooks/useDashboard.js';
 import { isRunActive } from '../../hooks/useRuns.js';
 import { ApiError, getArtifactUrl, type ApiClient, type Run } from '../../lib/api.js';
+import { createCockpitClient, type CockpitClient } from '../../lib/cockpit-client.js';
 import { runTransitionName } from '../../lib/view-transition.js';
 import { formatDate as formatDateWithFallback } from '../../lib/format.js';
 import { formatDuration } from '../../lib/insights.js';
 import { describeGateReason } from '../../lib/gate-reason.js';
 import { PageFrame, PageHeader, Panel } from '../../components/kit.js';
 import { Responsive } from '../../components/responsive.js';
+import { ScoreImpactBanner } from '../../components/ScoreImpactBanner.js';
 
+/**
+ * `?from=cockpit&window=` is how the cockpit says it sent the person here. It is the only
+ * thing that makes this page ask the cockpit anything, so a run opened from the runs list, a
+ * link in a message or a bookmark costs what it always did.
+ */
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/runs/$runId',
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { from?: 'cockpit'; window?: CockpitWindow } =>
+    search['from'] === 'cockpit'
+      ? { from: 'cockpit', window: search['window'] === 'release' ? 'release' : '7d' }
+      : {},
   component: () => {
     const { runId } = Route.useParams();
-    return <RunDetailPage id={runId} />;
+    const { from, window } = Route.useSearch();
+    return (
+      <RunDetailPage
+        id={runId}
+        {...(from === 'cockpit' ? { scoreContext: { window: window ?? '7d' } } : {})}
+      />
+    );
   },
 });
 
@@ -352,7 +371,19 @@ function RunVerdict({
   );
 }
 
-export function RunDetailPage({ id, api }: { id: string; api?: ApiClient }) {
+export function RunDetailPage({
+  id,
+  api,
+  scoreContext,
+  cockpit,
+}: {
+  id: string;
+  api?: ApiClient;
+  /** Present when the person came from the cockpit: the window it was showing. */
+  scoreContext?: { window: CockpitWindow };
+  /** Reads the cockpit for {@link ScoreImpactBanner}; defaults to the real one. */
+  cockpit?: CockpitClient['getCockpit'];
+}) {
   const {
     run,
     artifacts,
@@ -417,6 +448,15 @@ export function RunDetailPage({ id, api }: { id: string; api?: ApiClient }) {
         onRetry={() => void performRetry()}
       />
       <ActionNotice actionError={actionError} retryTarget={retryTarget} />
+      {scoreContext === undefined ? null : (
+        <ScoreImpactBanner
+          runId={run.id}
+          commit={run.commit ?? null}
+          window={scoreContext.window}
+          projectId={run.projectId ?? undefined}
+          getCockpit={cockpit ?? defaultCockpit}
+        />
+      )}
 
       <RunVerdict run={run} gate={gate} />
 
@@ -456,6 +496,10 @@ export function RunDetailPage({ id, api }: { id: string; api?: ApiClient }) {
 }
 
 type RunDetailState = ReturnType<typeof useRunDetail>;
+
+/** One client for the page's life: the banner's read must not change with every render. */
+const defaultCockpit: CockpitClient['getCockpit'] = (query, signal) =>
+  createCockpitClient().getCockpit(query, signal);
 
 function RunDetailLoading({ id }: { id: string }) {
   return (

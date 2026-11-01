@@ -507,3 +507,96 @@ describe('lupin test', () => {
     expect(seen).toHaveLength(0);
   });
 });
+
+describe('lupin report', () => {
+  const PAGE = '<!doctype html>\n<html lang="en"><head><title>Cockpit</title></head></html>\n';
+  /** The stub answers JSON; a page comes back as a JSON string, which `send` reads as text. */
+  const page = (body: unknown = PAGE) => ({ status: 200, body });
+
+  it('saves the cockpit page where it is told, and says how big it is', async () => {
+    const dir = await tempDir();
+    reply = () => page();
+    const result = await invoke(['report', '--out', 'cockpit.html'], {}, dir);
+    expect(result.code).toBe(EXIT.ok);
+    expect(result.out).toBe(
+      `Wrote the cockpit report to cockpit.html (${String(PAGE.length)} bytes).`,
+    );
+    const { readFile } = await import('node:fs/promises');
+    expect(await readFile(path.join(dir, 'cockpit.html'), 'utf8')).toBe(PAGE);
+    const [request] = seen;
+    expect(request?.method).toBe('GET');
+    const url = new URL(request?.url ?? '', origin);
+    expect(url.pathname).toBe(`/api/v1/projects/${PROJECT}/cockpit/report.html`);
+    expect(Object.fromEntries(url.searchParams)).toEqual({ window: '7d' });
+    expect(request?.authorization).toBe(`Bearer ${TOKEN}`);
+    expect(result.out + result.err).not.toContain(TOKEN);
+  });
+
+  it('asks for the window and the branch it is given, and for the default branch otherwise', async () => {
+    const dir = await tempDir();
+    reply = () => page();
+    await invoke(['report', '--out', 'a.html', '--window', 'release', '--branch', 'main'], {}, dir);
+    expect(Object.fromEntries(new URL(seen[0]?.url ?? '', origin).searchParams)).toEqual({
+      window: 'release',
+      branch: 'main',
+    });
+    // The branch CI is building is not the branch the cockpit is about: a pull request's branch
+    // has no history, so the CI variables are not read here.
+    await invoke(['report', '--out', 'b.html'], { GITHUB_HEAD_REF: 'feature/x' }, dir);
+    expect(new URL(seen[1]?.url ?? '', origin).searchParams.has('branch')).toBe(false);
+  });
+
+  it('makes the folder it writes into', async () => {
+    const dir = await tempDir();
+    reply = () => page();
+    const result = await invoke(['report', '--out', 'artifacts/reports/cockpit.html'], {}, dir);
+    expect(result.code).toBe(EXIT.ok);
+    const { readFile } = await import('node:fs/promises');
+    expect(await readFile(path.join(dir, 'artifacts', 'reports', 'cockpit.html'), 'utf8')).toBe(
+      PAGE,
+    );
+  });
+
+  it('needs somewhere to write, and a window it knows, before any request', async () => {
+    expect((await invoke(['report'])).code).toBe(EXIT.usage);
+    const bad = await invoke(['report', '--out', 'x.html', '--window', 'year']);
+    expect(bad).toMatchObject({ code: EXIT.usage, err: '--window is 7d or release' });
+    expect(seen).toHaveLength(0);
+  });
+
+  it('writes nothing when the server answers with something that is not a page', async () => {
+    const dir = await tempDir();
+    reply = () => page('<html>a proxy’s error page</html>');
+    const refused = await invoke(['report', '--out', 'cockpit.html'], {}, dir);
+    expect(refused).toMatchObject({
+      code: EXIT.refused,
+      err: 'The server did not answer with a report page.',
+    });
+    reply = () => ({ status: 200, body: { not: 'a page' } });
+    expect((await invoke(['report', '--out', 'cockpit.html'], {}, dir)).code).toBe(EXIT.refused);
+    const { access } = await import('node:fs/promises');
+    await expect(access(path.join(dir, 'cockpit.html'))).rejects.toThrow();
+  });
+
+  it('maps a refused credential and a missing project to their exit codes', async () => {
+    const dir = await tempDir();
+    reply = () => ({
+      status: 403,
+      body: { error: { code: 'FORBIDDEN', message: 'This token cannot read this project' } },
+    });
+    const forbidden = await invoke(['report', '--out', 'c.html'], {}, dir);
+    expect(forbidden).toMatchObject({ code: EXIT.unauthorised });
+    expect(forbidden.err).toContain('FORBIDDEN: This token cannot read this project');
+    reply = () => ({ status: 404, body: { error: { code: 'NOT_FOUND', message: 'No project' } } });
+    expect((await invoke(['report', '--out', 'c.html'], {}, dir)).code).toBe(EXIT.refused);
+  });
+
+  it('says so when the file cannot be written', async () => {
+    const dir = await tempDir();
+    await writeFile(path.join(dir, 'blocker'), 'a file where a folder is needed');
+    reply = () => page();
+    const result = await invoke(['report', '--out', 'blocker/cockpit.html'], {}, dir);
+    expect(result.code).toBe(EXIT.refused);
+    expect(result.err).toMatch(/^Could not write blocker\/cockpit\.html/u);
+  });
+});
