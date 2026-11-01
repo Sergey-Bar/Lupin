@@ -1,0 +1,21 @@
+{
+  "$comment": [
+    "Packages whose path in coverage-baseline.json changed, old path to new path.",
+    "",
+    "`pnpm coverage:ratchet` compares the baseline with the merge base by key, so a renamed",
+    "package looks exactly like a deleted floor plus a new one, and the gate refuses it. An",
+    "entry here tells the ratchet that the floor moved rather than vanished.",
+    "",
+    "It is not a way to lower a floor. The ratchet reads an entry only once the old key has left",
+    "the baseline, and then compares the new key against the old floor metric by metric: a",
+    "lower number, a missing metric or a `not_configured` replacement is a finding exactly as",
+    "it would be for a package that was never renamed (`scripts/lib/coverage-floor-ratchet.test.mjs`).",
+    "",
+    "This file names the old path, which the retired-name gate otherwise forbids, so it is the",
+    "one exempt file for that reason (`RETIRED_NAME_EXEMPTIONS`). An entry is dead weight once the",
+    "merge base has the new key, and can be deleted then; leaving it does no harm."
+  ],
+  "renamed": {
+    "tools/automate-cli": "tools/lupin-cli"
+  }
+}

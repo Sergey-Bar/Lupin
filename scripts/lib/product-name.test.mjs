@@ -114,6 +114,11 @@ export const RETIRED_NAMES = [
  */
 export const RETIRED_NAME_EXEMPTIONS = [
   {
+    path: 'docs/quality/coverage-renames.json',
+    reason:
+      'a rename record: it has to name the old package path for the coverage ratchet to carry that floor to the new one, and it is the only place that does',
+  },
+  {
     path: 'scripts/secret-scan-baseline.json',
     reason:
       'a forensic record of findings in git history, keyed on the path each historical blob had; renaming a path would make the row describe a file that never existed',

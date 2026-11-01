@@ -7242,6 +7242,25 @@
         }
       ],
       "resolution": "The exception and its SITE_PALETTE_EXCEPTION constant are removed from scripts/site-doctor.mjs, along with site/.vitepress/DESIGN-SYSTEM.md. site/guide/design-language.md and the AGENTS.md design-system table describe one palette. MNT-159 stays as the record of the earlier state."
+    },
+    {
+      "id": "MNT-163",
+      "title": "the coverage ratchet could not tell a renamed package from a deleted floor",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-10",
+      "confirmed": true,
+      "confirmedOn": "2026-11-01",
+      "summary": "pnpm coverage:ratchet compares the baseline with the merge base by key. Renaming the CLI package's folder moved its floor, unchanged, to a new key, and the ratchet reported the old key as removed from coverage-baseline.json and failed the pull request. It passed locally, because locally the base is HEAD~1 and the rename was already in it. The two ways to make it green were both wrong: edit the ratchet to ignore removals, which is the exact defect it exists to catch, or leave the package unmeasured.",
+      "confirmedBy": "CI run 41277706005 failed the Coverage ratchet job on this. Running the ratchet with COVERAGE_FLOOR_BASE set to the CI base (d98fc7c) reproduced it locally, and passes after the change. Four of the seven new cases in coverage-floor-ratchet.test.mjs failed before the change.",
+      "evidence": [
+        {
+          "path": "scripts/lib/coverage-floor-ratchet.test.mjs",
+          "asserts": "A recorded rename carries the floor across; a rename that lowers any metric, drops a metric or becomes not_configured is still a finding; an unrecorded rename is still a removal; a stale entry cannot mask a lowering on a package that still exists under its old name."
+        }
+      ],
+      "resolution": "loweredFloors takes an optional old-path to new-path map, read only when the old key has left the baseline, and compares the new key against the old floor by the same rules as any package. The map lives in docs/quality/coverage-renames.json beside the baseline. The ratchet still cannot be loosened by naming a rename: the new floor must be at least the old one on every metric."
     }
   ]
 }
