@@ -46,7 +46,19 @@ interface SlackOperation {
 const OPERATIONS: Record<string, SlackOperation> = {
   authTest: { method: 'auth.test', fields: [] },
   postMessage: { method: 'chat.postMessage', fields: ['channel', 'text'] },
+  // Three calls, not one (see `postMessageWithImage`); the entry names the last, the one that posts.
+  postMessageWithImage: {
+    method: 'files.completeUploadExternal',
+    fields: ['channel', 'text', 'photoBase64'],
+  },
 };
+
+const IMAGE_OPERATION = 'postMessageWithImage';
+/** A channel id, which is what a file upload posts to; a `#name` is for `chat.postMessage` only. */
+const CHANNEL_ID = /^[CGD][A-Z0-9]{8,}$/u;
+/** Far above a chart and far below Slack's own limit: what this adapter is willing to send. */
+const MAX_PHOTO_BYTES = 1_000_000;
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 /** Slack error codes worth another attempt. */
 const RETRYABLE_SLACK_ERRORS = new Set(['ratelimited', 'internal_error', 'service_unavailable']);
@@ -93,6 +105,7 @@ export const slackAdapter: ConnectorAdapter = {
     operations: {
       authTest: { sideEffecting: false, idempotent: true, timeoutMs: 10_000 },
       postMessage: { sideEffecting: true, idempotent: false, timeoutMs: 10_000 },
+      postMessageWithImage: { sideEffecting: true, idempotent: false, timeoutMs: 30_000 },
     },
   },
 
@@ -105,6 +118,11 @@ export const slackAdapter: ConnectorAdapter = {
         slackAdapter.manifest,
         request.operation,
       );
+
+      if (request.operation === IMAGE_OPERATION) {
+        const uploaded = await postMessageWithImage(request, secret, { idempotent, timeoutMs });
+        return { status: 'ok', data: { fileId: uploaded.fileId }, attempts: uploaded.attempts };
+      }
 
       const body: Record<string, unknown> = {};
       for (const field of operation.fields) body[field] = requireString(request.input, field);
@@ -246,4 +264,173 @@ function slackErrorOf(error: unknown): string | undefined {
   if (!(error instanceof ConnectorRejectionError)) return undefined;
   const match = /^slack: (.+)$/.exec(error.message);
   return match?.[1];
+}
+
+/** One Web API call as a form, which is what the file methods accept; `ok: false` is a refusal. */
+async function callForm(
+  operation: string,
+  params: URLSearchParams,
+  secret: string,
+  signal: AbortSignal | undefined,
+): Promise<Record<string, unknown>> {
+  const response = await fetch(`https://slack.com/api/${operation}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      authorization: `Bearer ${secret}`,
+    },
+    body: params.toString(),
+    signal,
+  });
+  if (!response.ok) throw new ConnectorHttpError(response.status, 'Slack request failed');
+  const parsed: unknown = await response.json();
+  if (typeof parsed !== 'object' || parsed === null) {
+    throw new ConnectorHttpError(response.status, 'Slack response body was not an object');
+  }
+  const record = parsed as Record<string, unknown>;
+  if (record['ok'] === false) {
+    const detail = slackRefusal(record);
+    throw new ConnectorRejectionError(detail.status, `slack: ${detail.slackError}`);
+  }
+  return record;
+}
+
+/** The picture, decoded and checked before any request: a PNG, within the size this will send. */
+function photoBytes(input: unknown): Buffer {
+  const bytes = Buffer.from(requireString(input, 'photoBase64'), 'base64');
+  if (bytes.length === 0 || bytes.length > MAX_PHOTO_BYTES) {
+    throw new ConnectorInputError('invalid_photo', 'The picture is empty or larger than allowed');
+  }
+  if (!PNG_SIGNATURE.every((byte, index) => bytes[index] === byte)) {
+    throw new ConnectorInputError('invalid_photo', 'The picture is not a PNG');
+  }
+  return bytes;
+}
+
+/**
+ * Where the bytes may be sent. The address comes from Slack's own reply, so it is checked
+ * rather than trusted: a reply that named another host would otherwise be handed the picture.
+ */
+function uploadUrlFrom(record: Record<string, unknown>): { url: string; fileId: string } {
+  const url = record['upload_url'];
+  const fileId = record['file_id'];
+  if (typeof url !== 'string' || typeof fileId !== 'string' || fileId === '') {
+    throw new ConnectorHttpError(200, 'Slack did not name an upload address');
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new ConnectorInputError(
+      'invalid_upload_url',
+      'Slack named an upload address that is not a URL',
+    );
+  }
+  if (
+    parsed.protocol !== 'https:' ||
+    !(parsed.hostname === 'slack.com' || parsed.hostname.endsWith('.slack.com'))
+  ) {
+    throw new ConnectorInputError(
+      'invalid_upload_url',
+      'Slack named an upload address outside slack.com',
+    );
+  }
+  return { url: parsed.href, fileId };
+}
+
+interface ImageUpload {
+  channel: string;
+  text: string;
+  title: string;
+  bytes: Buffer;
+}
+
+/** The request's own fields, checked: a channel id, the text, a title, and a PNG. */
+function uploadFrom(input: unknown): ImageUpload {
+  const channel = requireString(input, 'channel');
+  const text = requireString(input, 'text');
+  if (!CHANNEL_ID.test(channel)) {
+    throw new ConnectorInputError(
+      'channel_id_required',
+      'Posting a picture needs the channel id (C...), not its name',
+    );
+  }
+  const title = (input as Record<string, unknown>)['title'];
+  return {
+    channel,
+    text,
+    title: typeof title === 'string' && title !== '' ? title.slice(0, 100) : 'chart',
+    bytes: photoBytes(input),
+  };
+}
+
+/**
+ * One attempt of the three-step upload: ask for an address, send the bytes there, then
+ * complete the upload into the channel with the text as its comment.
+ *
+ * The token goes to Slack's API and never to the upload address, which is a different host.
+ * A refusal at any step (a missing `files:write` scope, say) is a statement that nothing was
+ * posted, and a refusal in the first two steps is raised before the third is reached.
+ */
+async function uploadAndPost(
+  upload: ImageUpload,
+  secret: string,
+  signal: AbortSignal | undefined,
+): Promise<string> {
+  const ask = await callForm(
+    'files.getUploadURLExternal',
+    new URLSearchParams({ filename: 'chart.png', length: String(upload.bytes.length) }),
+    secret,
+    signal,
+  );
+  const target = uploadUrlFrom(ask);
+  const sent = await fetch(target.url, {
+    method: 'POST',
+    // No authorisation here: the address is pre-signed, and the token is Slack API's.
+    headers: { 'content-type': 'application/octet-stream' },
+    body: new Uint8Array(upload.bytes),
+    signal,
+  });
+  if (!sent.ok) throw new ConnectorHttpError(sent.status, 'Slack upload failed');
+  await callForm(
+    'files.completeUploadExternal',
+    new URLSearchParams({
+      channel_id: upload.channel,
+      initial_comment: upload.text,
+      files: JSON.stringify([{ id: target.fileId, title: upload.title }]),
+    }),
+    secret,
+    signal,
+  );
+  return target.fileId;
+}
+
+/**
+ * Posts a message with a picture.
+ *
+ * The whole upload is one operation with one claim in the manifest, that repeating it is not
+ * safe, and it is retried as one: only after a refusal, which says nothing was posted, never
+ * after an answer that may have been delivered (a 502 on the last step). A refusal in the
+ * first step stops after one call with nothing posted, which is what lets the caller send the
+ * text on its own.
+ *
+ * Built from Slack's documentation for `files.getUploadURLExternal` and
+ * `files.completeUploadExternal`; no run against a workspace is recorded.
+ *
+ * @throws {ConnectorInputError} `channel_id_required`, `invalid_photo`, `invalid_upload_url`
+ */
+async function postMessageWithImage(
+  request: ConnectorRequest,
+  secret: string,
+  policy: { idempotent: boolean; timeoutMs: number },
+): Promise<{ fileId: string; attempts: number }> {
+  const upload = uploadFrom(request.input);
+  const { idempotent, timeoutMs } = policy;
+  const done = await executeWithRetry((signal) => uploadAndPost(upload, secret, signal), {
+    retries: 2,
+    signal: request.signal,
+    idempotent,
+    attemptTimeoutMs: timeoutMs,
+  });
+  return { fileId: done.value, attempts: done.attempts };
 }

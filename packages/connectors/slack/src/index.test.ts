@@ -348,3 +348,252 @@ describe('the branches the cases above do not reach', () => {
     expect(JSON.stringify(result)).not.toContain('socket hang up');
   });
 });
+
+describe('slack adapter: postMessageWithImage', () => {
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    Buffer.from('rest-of-the-image'),
+  ]);
+  const post = (extra: Record<string, unknown> = {}) => ({
+    operation: 'postMessageWithImage',
+    input: {
+      channel: 'C0123456789',
+      text: '*Weekly* Down 6 points',
+      photoBase64: png.toString('base64'),
+      title: 'Pace against quality',
+      ...extra,
+    },
+  });
+  const UPLOAD_URL = 'https://files.slack.com/upload/v1/ABC';
+  const happy = () =>
+    stubFetchSequence([
+      { ok: true, status: 200, body: { ok: true, upload_url: UPLOAD_URL, file_id: 'F123' } },
+      { ok: true, status: 200, body: 'OK - 24' },
+      { ok: true, status: 200, body: { ok: true, files: [{ id: 'F123' }] } },
+    ]);
+
+  it('declares the upload as a post that is not repeated blindly', () => {
+    expect(slackAdapter.manifest.operations['postMessageWithImage']).toEqual({
+      sideEffecting: true,
+      idempotent: false,
+      timeoutMs: 30_000,
+    });
+  });
+
+  it('asks for an upload address, sends the bytes there, and posts the file with the text', async () => {
+    const calls = happy();
+    const result = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(result).toEqual({ status: 'ok', data: { fileId: 'F123' }, attempts: 1 });
+    expect(calls.map((call) => call.url)).toEqual([
+      'https://slack.com/api/files.getUploadURLExternal',
+      UPLOAD_URL,
+      'https://slack.com/api/files.completeUploadExternal',
+    ]);
+    const first = new URLSearchParams(String(calls[0]?.init?.body));
+    expect(first.get('filename')).toBe('chart.png');
+    expect(first.get('length')).toBe(String(png.length));
+    expect(Buffer.from(calls[1]?.init?.body as Uint8Array).equals(png)).toBe(true);
+    const last = new URLSearchParams(String(calls[2]?.init?.body));
+    expect(last.get('channel_id')).toBe('C0123456789');
+    expect(last.get('initial_comment')).toBe('*Weekly* Down 6 points');
+    expect(JSON.parse(last.get('files') as string)).toEqual([
+      { id: 'F123', title: 'Pace against quality' },
+    ]);
+  });
+
+  it('sends the token to Slack’s API and never to the upload address', async () => {
+    const calls = happy();
+    await slackAdapter.execute(post(), 'xoxb-token');
+    const auth = (index: number) =>
+      JSON.stringify((calls[index]?.init?.headers ?? {}) as Record<string, string>);
+    expect(auth(0)).toContain('Bearer xoxb-token');
+    expect(auth(2)).toContain('Bearer xoxb-token');
+    expect(auth(1)).not.toContain('xoxb-token');
+    expect(auth(1).toLowerCase()).not.toContain('authorization');
+  });
+
+  it('refuses an upload address that is not Slack’s, so a reply cannot send the picture elsewhere', async () => {
+    const calls = stubFetchSequence([
+      {
+        ok: true,
+        status: 200,
+        body: { ok: true, upload_url: 'https://evil.example/upload', file_id: 'F123' },
+      },
+    ]);
+    const result = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(result.status).toBe('error');
+    expect(result.error?.code).toBe('slack_invalid_upload_url');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('needs a channel id, because a name cannot be posted to by an upload, and asks Slack nothing', async () => {
+    const calls = happy();
+    const result = await slackAdapter.execute(post({ channel: '#reports' }), 'xoxb-token');
+    expect(result.error).toMatchObject({ code: 'slack_channel_id_required', retryable: false });
+    expect(calls).toHaveLength(0);
+  });
+
+  it('refuses something that is not a PNG, and a missing field, before any request', async () => {
+    const calls = happy();
+    const html = await slackAdapter.execute(
+      post({ photoBase64: Buffer.from('<html></html>').toString('base64') }),
+      'xoxb-token',
+    );
+    expect(html.error?.code).toBe('slack_invalid_photo');
+    const missing = await slackAdapter.execute(
+      { operation: 'postMessageWithImage', input: { channel: 'C0123456789', text: 't' } },
+      'xoxb-token',
+    );
+    expect(missing.error?.code).toBe('slack_invalid_input');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('stops at a missing scope after one call, so nothing was posted and the text can still go', async () => {
+    const calls = stubFetchSequence([
+      { ok: true, status: 200, body: { ok: false, error: 'missing_scope' } },
+    ]);
+    const result = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(result.error).toMatchObject({ code: 'slack_api_error', retryable: false });
+    expect(calls).toHaveLength(1);
+  });
+
+  it('does not repeat any step after an answer that may have been delivered', async () => {
+    const calls = stubFetchSequence([
+      { ok: true, status: 200, body: { ok: true, upload_url: UPLOAD_URL, file_id: 'F123' } },
+      { ok: true, status: 200, body: 'OK - 24' },
+      { ok: false, status: 502, body: {} },
+      { ok: true, status: 200, body: { ok: true } },
+    ]);
+    const result = await slackAdapter.execute(post(), 'xoxb-token');
+    // The post answered 502, which may follow a message that arrived: nothing is sent again.
+    expect(result.status).toBe('error');
+    expect(result.error?.code).toBe('slack_502');
+    expect(result.attempts).toBe(1);
+    expect(calls.map((call) => call.url)).toEqual([
+      'https://slack.com/api/files.getUploadURLExternal',
+      UPLOAD_URL,
+      'https://slack.com/api/files.completeUploadExternal',
+    ]);
+  });
+
+  it('reports a failed byte upload as the status Slack answered, and posts nothing', async () => {
+    const calls = stubFetchSequence([
+      { ok: true, status: 200, body: { ok: true, upload_url: UPLOAD_URL, file_id: 'F123' } },
+      { ok: false, status: 500, body: 'broken' },
+      { ok: false, status: 500, body: 'broken' },
+      { ok: false, status: 500, body: 'broken' },
+    ]);
+    const result = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(result.error?.code).toBe('slack_500');
+    // The completing call, the one that posts, was never made.
+    expect(calls.some((call) => call.url.endsWith('completeUploadExternal'))).toBe(false);
+  });
+
+  it('starts the whole upload again after a refusal that says nothing was posted', async () => {
+    const calls = stubFetchSequence([
+      { ok: true, status: 200, body: { ok: true, upload_url: UPLOAD_URL, file_id: 'F1' } },
+      { ok: true, status: 200, body: 'OK' },
+      { ok: true, status: 200, body: { ok: false, error: 'ratelimited' } },
+      { ok: true, status: 200, body: { ok: true, upload_url: UPLOAD_URL, file_id: 'F2' } },
+      { ok: true, status: 200, body: 'OK' },
+      { ok: true, status: 200, body: { ok: true } },
+    ]);
+    const result = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(result).toEqual({ status: 'ok', data: { fileId: 'F2' }, attempts: 2 });
+    expect(calls).toHaveLength(6);
+  });
+
+  it('reads a refusal to post as a refusal, final for a channel the bot is not in', async () => {
+    stubFetchSequence([
+      { ok: true, status: 200, body: { ok: true, upload_url: UPLOAD_URL, file_id: 'F123' } },
+      { ok: true, status: 200, body: 'OK - 24' },
+      { ok: true, status: 200, body: { ok: false, error: 'not_in_channel' } },
+    ]);
+    const result = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(result.error).toMatchObject({ code: 'slack_api_error', retryable: false });
+  });
+
+  it('never puts the token in an error', async () => {
+    stubFetchSequence([{ ok: false, status: 401, body: { ok: false, error: 'invalid_auth' } }]);
+    const result = await slackAdapter.execute(post(), 'xoxb-SECRET');
+    expect(JSON.stringify(result)).not.toContain('SECRET');
+  });
+});
+
+describe('slack adapter: postMessageWithImage, the answers it does not trust', () => {
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    Buffer.from('x'),
+  ]);
+  const post = (extra: Record<string, unknown> = {}) => ({
+    operation: 'postMessageWithImage',
+    input: { channel: 'C0123456789', text: 't', photoBase64: png.toString('base64'), ...extra },
+  });
+
+  it('reports a reply that is not an object as an unusable answer, not as a delivery', async () => {
+    stubFetchSequence([{ ok: true, status: 200, body: 'not an object' }]);
+    const result = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(result.status).toBe('error');
+    expect(result.error).toMatchObject({ code: 'slack_200', retryable: false });
+  });
+
+  it('refuses an empty picture and one over the size it will send', async () => {
+    const calls = stubFetchSequence([{ ok: true, status: 200, body: { ok: true } }]);
+    const empty = await slackAdapter.execute(post({ photoBase64: '' }), 'xoxb-token');
+    expect(empty.error?.code).toBe('slack_invalid_input');
+    const big = await slackAdapter.execute(
+      post({ photoBase64: Buffer.concat([png, Buffer.alloc(1_100_000)]).toString('base64') }),
+      'xoxb-token',
+    );
+    expect(big.error?.code).toBe('slack_invalid_photo');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('refuses a reply that names no upload address, and one that is not a URL', async () => {
+    stubFetchSequence([{ ok: true, status: 200, body: { ok: true, file_id: 'F1' } }]);
+    const none = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(none.error?.code).toBe('slack_200');
+    stubFetchSequence([
+      { ok: true, status: 200, body: { ok: true, upload_url: 'not a url', file_id: 'F1' } },
+    ]);
+    const bad = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(bad.error?.code).toBe('slack_invalid_upload_url');
+  });
+
+  it('refuses an upload address that is http, even on slack.com', async () => {
+    const calls = stubFetchSequence([
+      {
+        ok: true,
+        status: 200,
+        body: { ok: true, upload_url: 'http://files.slack.com/upload/x', file_id: 'F1' },
+      },
+    ]);
+    const result = await slackAdapter.execute(post(), 'xoxb-token');
+    expect(result.error?.code).toBe('slack_invalid_upload_url');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('titles the file by what the caller says, and by “chart” when it says nothing', async () => {
+    const reply = [
+      {
+        ok: true,
+        status: 200,
+        body: { ok: true, upload_url: 'https://files.slack.com/u', file_id: 'F1' },
+      },
+      { ok: true, status: 200, body: 'OK' },
+      { ok: true, status: 200, body: { ok: true } },
+    ];
+    const withTitle = stubFetchSequence(reply);
+    await slackAdapter.execute(post({ title: 'T'.repeat(300) }), 'xoxb-token');
+    const titled = JSON.parse(
+      new URLSearchParams(String(withTitle[2]?.init?.body)).get('files') as string,
+    ) as Array<{ title: string }>;
+    expect(titled[0]?.title).toHaveLength(100);
+    const without = stubFetchSequence(reply);
+    await slackAdapter.execute(post(), 'xoxb-token');
+    const plain = JSON.parse(
+      new URLSearchParams(String(without[2]?.init?.body)).get('files') as string,
+    ) as Array<{ title: string }>;
+    expect(plain[0]?.title).toBe('chart');
+  });
+});

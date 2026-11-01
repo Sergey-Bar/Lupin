@@ -1,4 +1,4 @@
-import { agentConfig, deploy, gate, upload, type Io } from './commands.js';
+import { agentConfig, deploy, gate, report, upload, type Io } from './commands.js';
 import { CliError, EXIT } from './errors.js';
 import { shard } from './shard-command.js';
 import { test } from './test-command.js';
@@ -12,6 +12,7 @@ Usage:
   lupin gate --branch <b> --commit <sha> [--pr <number>]
   lupin deploy --environment <name> --status success|failure [--sha <sha>] [--id <id>] [--url <url>]
   lupin agent-config [--branch <b>] [--commit <sha>] [--dir <path>]
+  lupin report --out <path> [--window 7d|release] [--branch <b>]
 
 \`test\` runs the command, sends its report, and exits with the command's own code, or 0 when
 every failure is an approved quarantined test. The command runs without a shell; on Windows,
@@ -19,6 +20,9 @@ write \`-- cmd /c npx playwright test\`.
 
 \`shard\` prints the files shard i of n should run, balanced by how long each took in recent
 runs. It never drops a file: if the plan cannot be had, it prints them all.
+
+\`report\` saves the cockpit as one HTML file that fetches nothing, to attach to a message or
+publish as a CI artifact. It writes the file only if the server answered with a page.
 
 Every command takes --project <id>, or reads LUPIN_PROJECT.
 Environment: LUPIN_URL (https://, or http:// to loopback only), LUPIN_TOKEN (lup_…).
@@ -36,6 +40,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   shard,
   gate,
   deploy,
+  report,
   'agent-config': agentConfig,
 };
 

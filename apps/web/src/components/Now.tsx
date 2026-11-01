@@ -5,21 +5,22 @@ import type { Run } from '../lib/api.js';
 import { isNew, rankAttention, type AttentionItem } from '../lib/attention.js';
 import { ago } from '../lib/health-view.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
-import { PageFrame, PageHeader } from './kit.js';
-import { StatusLine } from './StatusLine.js';
 
 /**
- * The page the dashboard opens on: what needs you now, and nothing else.
- *
- * At most five items, worst first, each with one button. "All clear" when there is
- * nothing, which is the answer most mornings and deserves to be said plainly. Anything
+ * What needs you now: at most five items, worst first, each with one button. "All clear" when
+ * there is nothing, which is the answer most mornings and deserves to be said plainly. Anything
  * that happened since the last visit is marked, so a returning person sees what changed
- * without reading everything again.
+ * without reading everything again. It is the section under the cockpit.
  */
 export interface NowSources {
   runs: () => Promise<Run[]>;
   portfolio: () => Promise<Portfolio>;
   deliveries: () => Promise<DeliverySummary[]>;
+}
+
+function sentenceOf(total: number): string {
+  if (total === 0) return 'Nothing needs you now';
+  return total === 1 ? '1 thing needs you now' : `${String(total)} things need you now`;
 }
 
 export const LAST_VISIT_KEY = 'lupin-now-last-visit';
@@ -54,17 +55,15 @@ async function readAttention(sources: NowSources, now: Date): Promise<Ready> {
   };
 }
 
-function toneOf(state: Ready): 'good' | 'caution' | 'bad' {
-  if (state.items.some((item) => item.severity === 'bad')) return 'bad';
-  return state.total > 0 ? 'caution' : 'good';
-}
-
-function sentenceOf(total: number): string {
-  if (total === 0) return 'Nothing needs you.';
-  return total === 1 ? 'thing needs you.' : 'things need you.';
-}
-
-export function NowPage({
+/**
+ * "Needs you now": the ranked list under the cockpit.
+ *
+ * It is a section of the cockpit and not a page of its own: the cockpit says whether the
+ * product is better or worse, and this says what is broken right now. It carries no
+ * `StatusLine` of its own, because two headline numbers on one screen ask the reader to
+ * choose which is the answer.
+ */
+export function AttentionSection({
   sources,
   navigate,
   now = () => new Date(),
@@ -100,24 +99,16 @@ export function NowPage({
 
   if (state === null) {
     return (
-      <PageFrame data-testid="now-loading">
-        <PageHeader title="Now" />
-        <Skeleton className="h-32 w-full" />
-      </PageFrame>
+      <section aria-label="Needs you now" data-testid="now-loading">
+        <Skeleton className="h-24 w-full" />
+      </section>
     );
   }
   return (
-    <PageFrame data-testid="now-page" className="h-auto gap-4 sm:gap-6">
-      <PageHeader title="Now" subtitle="What needs you, worst first." />
-      <StatusLine
-        data-testid="now-status"
-        value={String(state.total)}
-        tone={toneOf(state)}
-        sentence={sentenceOf(state.total)}
-        action={
-          first === undefined ? undefined : { label: first.action.label, onSelect: openFirst }
-        }
-      />
+    <section aria-labelledby="now-heading" data-testid="now-page" className="flex flex-col gap-3">
+      <h2 id="now-heading" className="text-sm font-medium text-fg">
+        {sentenceOf(state.total)}
+      </h2>
       <AttentionList items={state.items} lastVisit={lastVisit} navigate={navigate} />
       {state.total > state.items.length ? (
         <p className="text-sm text-fg-muted">
@@ -129,10 +120,9 @@ export function NowPage({
           Part of this could not be read, so the list may be incomplete.
         </p>
       ) : null}
-    </PageFrame>
+    </section>
   );
 }
-
 function AttentionList({
   items,
   lastVisit,

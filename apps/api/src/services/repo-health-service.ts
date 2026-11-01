@@ -4,6 +4,7 @@ import {
   CODEOWNERS_PATHS,
   evaluateHealthGate,
   grade,
+  GRADE_FORMULA_VERSION,
   type GateAgents,
   healthScannersFor,
   ownerOf,
@@ -664,7 +665,7 @@ export async function ingestParsedReport(
   if (VEX_REAPPLY_FORMATS.has(input.format)) await applyStoredVex(options, project.id, now);
 
   const current = await computeGrade(options, project, branch, now);
-  await recordSnapshot(options, project.id, branch, current, now);
+  await recordSnapshot(options, project.id, branch, current, now, commit ?? null);
   await options.onReport?.({
     projectId: project.id,
     project: project.name,
@@ -810,6 +811,8 @@ async function recordSnapshot(
   branch: string,
   current: HealthGrade,
   at: Date,
+  /** The commit of the report that caused this snapshot; null when a person did. */
+  commitSha: string | null = null,
 ): Promise<void> {
   await options.db.insert(healthSnapshots).values({
     workspaceId: options.workspaceId,
@@ -819,6 +822,8 @@ async function recordSnapshot(
     score: current.score,
     letter: current.letter,
     grade: current as unknown as Record<string, unknown>,
+    commitSha,
+    formulaVersion: GRADE_FORMULA_VERSION,
   });
 }
 

@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { collectAgentConfig } from './agent-config.js';
 import { optional, parseOptions, required } from './args.js';
@@ -175,5 +175,45 @@ export async function agentConfig(argv: readonly string[], io: Io): Promise<Exit
   io.out(
     `Sent ${String(files.length)} agent-config file(s): ${String(result?.findings ?? 0)} finding(s), ${String(result?.mcpServers ?? 0)} MCP server(s).`,
   );
+  return EXIT.ok;
+}
+
+/**
+ * `lupin report --out <path> [--window 7d|release] [--branch <b>]` — saves the cockpit as one
+ * HTML file: the snapshot to attach to a message or publish as a CI artifact.
+ *
+ * The page is rendered by the server, so this command carries no renderer and stays
+ * dependency-free. The branch is the one the cockpit is about and not the one CI is building,
+ * so it is read only from `--branch`: a pull request's branch has no history to compare.
+ * Nothing is written unless the answer is a page, so a proxy's error page never lands in an
+ * artifact that is then published as the report.
+ */
+export async function report(argv: readonly string[], io: Io): Promise<ExitCode> {
+  const parsed = parseOptions(argv, { values: ['project', 'out', 'window', 'branch'] });
+  const out = required(parsed, 'out');
+  const window = optional(parsed, 'window') ?? '7d';
+  if (window !== '7d' && window !== 'release') throw usage('--window is 7d or release');
+  const destination = target(io, parsed);
+  const page = await send(
+    io.fetch,
+    destination,
+    projectUrl(destination, '/cockpit/report.html', {
+      window,
+      branch: optional(parsed, 'branch'),
+    }),
+    { method: 'GET' },
+  );
+  if (typeof page !== 'string' || !/^<!doctype html/iu.test(page)) {
+    throw new CliError('The server did not answer with a report page.', EXIT.refused);
+  }
+  const file = path.resolve(io.cwd, out);
+  try {
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, page, 'utf8');
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new CliError(`Could not write ${out}: ${reason}`, EXIT.refused);
+  }
+  io.out(`Wrote the cockpit report to ${out} (${String(Buffer.byteLength(page, 'utf8'))} bytes).`);
   return EXIT.ok;
 }

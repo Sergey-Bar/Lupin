@@ -50,7 +50,27 @@ lupin deploy --environment production --status success --sha "$SHA"
 # AGENTS.md, CLAUDE.md, .cursor/rules, .mcp.json, SKILL.md … under a directory.
 # Needs a branch: --branch, LUPIN_BRANCH, or GitHub Actions' own
 lupin agent-config --dir .
+
+# The cockpit as one HTML file that fetches nothing: attach it, or publish it as a CI artifact.
+# Reads the project's default branch unless --branch names another; --window 7d|release.
+lupin report --out artifacts/cockpit.html
 ```
+
+`report` writes the file only if the server answered with a page, so a proxy's error page is never
+published as the report. Publishing it from GitHub Actions is one more step:
+
+```yaml
+- run: lupin report --out artifacts/cockpit.html
+- uses: actions/upload-artifact@v4
+  with:
+    name: cockpit
+    path: artifacts/cockpit.html
+```
+
+The file needs no account to open. It is a snapshot: it does not update, runs no script and makes
+no network request. Its only addresses are the GitHub links a reader follows. Anyone who can
+download the artifact can read the numbers in it, so publish it where the repository's own
+readers are.
 
 `upload` also takes `--source-root` (default `GITHUB_WORKSPACE`): the checkout a SARIF scanner ran
 in, so the absolute paths it wrote become repository-relative.

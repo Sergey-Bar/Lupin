@@ -23,6 +23,8 @@ import {
   type AgentRuntimeReport,
   type AiCodePullRequestList,
   type AiCodeReport,
+  type Cockpit,
+  type CockpitMetric,
   type DeliveryReport,
   type DeliverySource,
   type DiffCoverageStatus,
@@ -1505,4 +1507,143 @@ export function makePortfolioAiCode(overrides: Partial<PortfolioAiCode> = {}): P
     ],
     ...overrides,
   });
+}
+
+/** One cockpit metric that compared two readings and moved. */
+export function cockpitMetric(overrides: Partial<CockpitMetric> = {}): CockpitMetric {
+  return {
+    id: 'coverage',
+    label: 'Coverage',
+    unit: 'percent',
+    higherIsBetter: true,
+    value: 60,
+    baseline: 70,
+    delta: -10,
+    status: 'worse',
+    series: [
+      { at: '2026-10-18T12:00:00.000Z', value: 70 },
+      { at: '2026-10-25T12:00:00.000Z', value: 60 },
+    ],
+    drivers: [],
+    ...overrides,
+  };
+}
+
+/** A valid cockpit payload: the score fell, seven metrics, twelve weeks of pace. */
+export function cockpitFixture(overrides: Partial<Cockpit> = {}): Cockpit {
+  const metrics: CockpitMetric[] = [
+    cockpitMetric({
+      id: 'security',
+      label: 'Security',
+      unit: 'score',
+      value: 90,
+      baseline: 90,
+      delta: 0,
+      status: 'flat',
+    }),
+    cockpitMetric({
+      id: 'tests',
+      label: 'Tests',
+      unit: 'score',
+      value: 70,
+      baseline: 80,
+      delta: -10,
+      status: 'worse',
+    }),
+    cockpitMetric({
+      id: 'code-quality',
+      label: 'Code quality',
+      unit: 'score',
+      value: null,
+      baseline: null,
+      delta: null,
+      status: 'not_measured',
+      series: [],
+    }),
+    cockpitMetric({
+      id: 'dependencies',
+      label: 'Dependencies',
+      unit: 'score',
+      value: 85,
+      baseline: null,
+      delta: null,
+      status: 'no_baseline',
+    }),
+    cockpitMetric({
+      id: 'coverage',
+      label: 'Coverage',
+      drivers: [
+        {
+          kind: 'run',
+          ref: 'run-2',
+          label: 'Run on abc1234',
+          url: null,
+          candidate: true,
+          change: -10,
+          at: '2026-10-24T12:00:00.000Z',
+        },
+      ],
+    }),
+    cockpitMetric({
+      id: 'flaky-tests',
+      label: 'Flaky tests',
+      unit: 'count',
+      higherIsBetter: false,
+      value: 5,
+      baseline: 2,
+      delta: 3,
+      status: 'worse',
+    }),
+    cockpitMetric({
+      id: 'run-pass-rate',
+      label: 'Run pass rate',
+      value: 25,
+      baseline: 66.7,
+      delta: -41.7,
+      status: 'worse',
+    }),
+  ];
+  return {
+    projectId: '00000000-0000-4000-8000-000000000001',
+    projectName: 'Service',
+    branch: 'main',
+    window: '7d',
+    generatedAt: '2026-10-26T12:00:00.000Z',
+    since: '2026-10-19T12:00:00.000Z',
+    headline: 'Down 6 points since last week, mostly lower coverage and more flaky tests.',
+    overall: {
+      score: 74,
+      letter: 'C',
+      baseline: 80,
+      delta: -6,
+      status: 'worse',
+      drivers: [
+        {
+          kind: 'pull_request',
+          ref: '42',
+          label: 'PR #42: Rewrite the cache',
+          url: 'https://github.com/octo/service/pull/42',
+          candidate: false,
+          change: -6,
+          at: '2026-10-24T12:00:00.000Z',
+        },
+      ],
+    },
+    formulaBreak: null,
+    metrics,
+    pace: Array.from({ length: 12 }, (_, index) => ({
+      weekStart: new Date(Date.UTC(2026, 7, 10 + index * 7)).toISOString().slice(0, 10),
+      partial: index === 11,
+      merged: index % 4,
+      linesChanged: (index % 4) * 40,
+      aiAuthored: index % 2,
+      unattributed: 0,
+      aiShare: index % 4 === 0 ? null : 25,
+      score: index < 3 ? null : 70 + index,
+      formulaVersion: index < 3 ? null : 1,
+    })),
+    risks: { total: 0, items: [] },
+    repository: { owner: 'octo', repo: 'service' },
+    ...overrides,
+  };
 }

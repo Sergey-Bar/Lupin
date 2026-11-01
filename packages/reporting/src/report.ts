@@ -40,6 +40,8 @@ export interface ReportInput {
   scorecards?: readonly ReportCard[];
   /** Every project's grade fix-next items, each with the points fixing it is worth. */
   fixNext?: readonly ReportFix[];
+  /** The cockpit's headline and what moved. Absent when the workspace has no project to read. */
+  cockpit?: ReportCockpit;
 }
 
 /** One project's scorecard in one area, as the digest reads it: verdict, score and why. */
@@ -65,6 +67,19 @@ export interface ReportFix {
   gain: number;
 }
 
+/**
+ * The cockpit's answer, for the head of the digest: whether the product is better or worse
+ * than it was, in the cockpit's own sentence, and the few things that moved.
+ */
+export interface ReportCockpit {
+  /** "Down 6 points since last week, mostly lower coverage and more flaky tests." */
+  headline: string;
+  /** `bad` when the score fell, `good` when it rose or held, `caution` when it cannot be compared. */
+  tone: 'bad' | 'caution' | 'good';
+  /** The metrics that moved most, at most {@link MAX_CHANGES}, one line each. */
+  changes: readonly ReportLine[];
+}
+
 export interface ReportLine {
   /** `neutral` is news that is neither good nor bad, such as a change in the run count. */
   tone: 'bad' | 'caution' | 'neutral' | 'good';
@@ -84,12 +99,15 @@ export interface ReportModel {
   areas: ReportLine[];
   /** At most {@link MAX_ACTIONS}: the grade's best fixes first, then failing scorecards' reasons. */
   actions: string[];
+  /** The cockpit's headline and changes, led with; `null` when there is none. */
+  cockpit: { headline: string; tone: ReportCockpit['tone']; changes: ReportLine[] } | null;
   link: string | null;
 }
 
 export const MAX_ITEMS = 3;
 export const MAX_AREAS = 3;
 export const MAX_ACTIONS = 3;
+export const MAX_CHANGES = 3;
 
 const EMOJI: Record<ReportStatus, string> = { good: '🟢', caution: '🟡', bad: '🔴' };
 const TONE_RANK: Record<ReportLine['tone'], number> = { bad: 0, caution: 1, neutral: 2, good: 3 };
@@ -172,9 +190,25 @@ export function composeReport(input: ReportInput): ReportModel {
     .filter((area) => area.cards.length > 0)
     .slice(0, MAX_AREAS)
     .map(areaLine);
+  const cockpit =
+    input.cockpit === undefined
+      ? null
+      : {
+          headline: input.cockpit.headline,
+          tone: input.cockpit.tone,
+          changes: input.cockpit.changes.slice(0, MAX_CHANGES).map((line) => ({ ...line })),
+        };
+  // A fall in the score is never a green report, and a score that cannot be compared is not
+  // a pass either; but only an item that needs someone makes it red.
+  const cockpitLines: ReportLine[] =
+    cockpit === null
+      ? []
+      : [{ tone: cockpit.tone === 'good' ? 'good' : 'caution', text: cockpit.headline }];
   const status: ReportStatus = input.attention.some((item) => item.severity === 'bad')
     ? 'bad'
-    : [...lines, ...areas].some((line) => line.tone === 'bad' || line.tone === 'caution')
+    : [...lines, ...areas, ...cockpitLines].some(
+          (line) => line.tone === 'bad' || line.tone === 'caution',
+        )
       ? 'caution'
       : 'good';
   return {
@@ -186,6 +220,7 @@ export function composeReport(input: ReportInput): ReportModel {
     more: Math.max(0, lines.length - MAX_ITEMS),
     areas,
     actions: topActions(input),
+    cockpit,
     link: safeLink(input.link),
   };
 }
@@ -241,6 +276,14 @@ function plainLines(model: ReportModel): [string, ...string[]] {
   const more = moreText(model);
   return [
     `${model.emoji} ${model.title}`,
+    // The cockpit leads: whether the product is better or worse than it was is the news,
+    // and a platform's limit cuts the lines under it before it cuts this.
+    ...(model.cockpit === null
+      ? []
+      : [
+          model.cockpit.headline,
+          ...model.cockpit.changes.map((change) => `${BULLET[change.tone]} ${change.text}`),
+        ]),
     model.sentence,
     ...model.items.map((item) => `${BULLET[item.tone]} ${item.text}`),
     ...(more === null ? [] : [more]),
@@ -310,10 +353,31 @@ export interface TeamsMessage {
 }
 
 /**
+ * A picture for the card, as a `data:` address: a Teams webhook cannot be handed a file, and a
+ * public address would mean putting a local install on the internet to show a chart.
+ */
+export interface TeamsImage {
+  /** `data:image/png;base64,…`. */
+  dataUri: string;
+  alt: string;
+}
+
+/**
+ * The most a card's picture may weigh as a data address. A Workflows message is limited to
+ * about 28 KB in all, and the text of a full digest can take half of it, so a larger picture
+ * is left out rather than risk the whole card being refused.
+ */
+export const TEAMS_IMAGE_MAX_CHARS = 8_000;
+
+/**
  * Teams. The card is data rather than markup, so there is nothing to escape; each text block
  * is plain (`wrap`, no markdown) and kept under {@link PLATFORM_LIMITS.teamsBlock}.
+ *
+ * With an `image` the chart sits under the title. Whether Teams draws a data address in a
+ * card has not been checked against a tenant, which is why the picture comes with its text
+ * beside it and a card without one is a complete message.
  */
-export function renderTeams(model: ReportModel): TeamsMessage {
+export function renderTeams(model: ReportModel, image?: TeamsImage): TeamsMessage {
   const block = (text: string, extra: Record<string, unknown> = {}) => ({
     type: 'TextBlock',
     text: fit([text], (raw) => raw, PLATFORM_LIMITS.teamsBlock),
@@ -321,6 +385,12 @@ export function renderTeams(model: ReportModel): TeamsMessage {
     ...extra,
   });
   const [title, ...body] = plainLines(model);
+  const picture =
+    image !== undefined &&
+    image.dataUri.startsWith('data:image/png;base64,') &&
+    image.dataUri.length <= TEAMS_IMAGE_MAX_CHARS
+      ? [{ type: 'Image', url: image.dataUri, altText: image.alt, size: 'Stretch' }]
+      : [];
   return {
     type: 'message',
     attachments: [
@@ -332,6 +402,7 @@ export function renderTeams(model: ReportModel): TeamsMessage {
           version: '1.4',
           body: [
             block(title, { size: 'Large', weight: 'Bolder' }),
+            ...picture,
             ...body.map((line) => block(line)),
           ],
           ...(model.link === null

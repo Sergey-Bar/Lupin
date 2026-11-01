@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterEach, describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import * as schema from '@lupin/db';
 import { DomainError } from '../errors/domain-error.js';
 import {
@@ -761,5 +761,78 @@ describe('helpers', () => {
     expect(effectiveState('false_positive', past, now)).toBe('false_positive');
     expect(effectiveState('accepted', null, now)).toBe('accepted');
     expect(effectiveState('accepted', new Date('2026-11-01T00:00:00.000Z'), now)).toBe('accepted');
+  });
+});
+
+describe('health snapshots are traceable and comparable (cockpit, Task 1)', () => {
+  const snapshotsOf = async (
+    db: Awaited<ReturnType<typeof setup>>['db'],
+    projectId: string,
+  ): Promise<Array<{ commitSha: string | null; formulaVersion: number }>> =>
+    (
+      await db
+        .select({
+          commitSha: schema.healthSnapshots.commitSha,
+          formulaVersion: schema.healthSnapshots.formulaVersion,
+        })
+        .from(schema.healthSnapshots)
+        .where(eq(schema.healthSnapshots.projectId, projectId))
+        .orderBy(schema.healthSnapshots.takenAt)
+    ).map((row) => ({ commitSha: row.commitSha, formulaVersion: row.formulaVersion }));
+
+  it('records the commit of the report that triggered the snapshot, and the formula version', async () => {
+    const { db, options, projectId } = await setup();
+    await ingestHealthReport(options, {
+      projectId,
+      format: 'sarif',
+      bytes: semgrep('a'),
+      source: 'ci',
+      commitSha: 'abc1234',
+    });
+    expect(await snapshotsOf(db, projectId)).toEqual([{ commitSha: 'abc1234', formulaVersion: 1 }]);
+  });
+
+  it('records no commit when the report named none, rather than inventing one', async () => {
+    const { db, options, projectId } = await setup();
+    await ingestHealthReport(options, {
+      projectId,
+      format: 'sarif',
+      bytes: semgrep('a'),
+      source: 'ci',
+    });
+    expect(await snapshotsOf(db, projectId)).toEqual([{ commitSha: null, formulaVersion: 1 }]);
+  });
+
+  it('records no commit for a snapshot a person caused, because no commit changed the grade', async () => {
+    const { db, options, projectId } = await setup();
+    await ingestHealthReport(options, {
+      projectId,
+      format: 'sarif',
+      bytes: semgrep('a'),
+      source: 'ci',
+      commitSha: 'abc1234',
+    });
+    const [finding] = (await listFindings(options, projectId, { limit: 50, offset: 0 })).findings;
+    await triageFinding(
+      options,
+      projectId,
+      finding?.id ?? '',
+      { state: 'suppressed', reason: 'accepted for this test' },
+      'operator',
+    );
+    expect(await snapshotsOf(db, projectId)).toEqual([
+      { commitSha: 'abc1234', formulaVersion: 1 },
+      { commitSha: null, formulaVersion: 1 },
+    ]);
+  });
+
+  it('treats a snapshot written before the column existed as formula version 0', async () => {
+    const { db, projectId } = await setup();
+    // A row the way the old writer left it: no commit, and no version named.
+    await db.execute(
+      sql`insert into health_snapshots (workspace_id, project_id, branch, grade)
+          values ('ws-1', ${projectId}, 'main', '{}'::jsonb)`,
+    );
+    expect(await snapshotsOf(db, projectId)).toEqual([{ commitSha: null, formulaVersion: 0 }]);
   });
 });

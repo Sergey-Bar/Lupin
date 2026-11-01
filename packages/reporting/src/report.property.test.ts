@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_ACTIONS,
   MAX_AREAS,
+  MAX_CHANGES,
   composeReport,
   escapeTelegramHtml,
   renderPlain,
@@ -43,7 +44,7 @@ const card = fc.record({
   reasons: fc.array(hostile, { maxLength: 3 }),
 });
 
-const input: fc.Arbitrary<ReportInput> = fc.record({
+const baseInput: fc.Arbitrary<ReportInput> = fc.record({
   title: hostile,
   runs: fc.nat({ max: 10_000 }),
   passRate: fc.option(fc.double({ min: 0, max: 100, noNaN: true }), { nil: null }),
@@ -75,6 +76,23 @@ const input: fc.Arbitrary<ReportInput> = fc.record({
     { maxLength: 8 },
   ),
 });
+
+const line = fc.record({
+  tone: fc.constantFrom('bad' as const, 'caution' as const, 'neutral' as const, 'good' as const),
+  text: hostile,
+});
+
+/** The cockpit's head of the digest, as hostile as every other line: its sentence and changes. */
+const cockpitHead = fc.record({
+  headline: hostile,
+  tone: fc.constantFrom('bad' as const, 'caution' as const, 'good' as const),
+  changes: fc.array(line, { maxLength: 6 }),
+});
+
+/** Most digests have no cockpit and some do; every property below holds for both. */
+const input: fc.Arbitrary<ReportInput> = fc
+  .tuple(baseInput, fc.option(cockpitHead, { nil: null }))
+  .map(([base, cockpit]) => (cockpit === null ? base : { ...base, cockpit }));
 
 const limit = fc.integer({ min: 80, max: 5_000 });
 
@@ -122,6 +140,23 @@ describe('DIGEST-1: every rendering fits its platform limit', () => {
         expect(model.areas.length).toBeLessThanOrEqual(MAX_AREAS);
         expect(model.actions.length).toBeLessThanOrEqual(MAX_ACTIONS);
         expect(new Set(model.actions).size).toBe(model.actions.length);
+      }),
+      params,
+    );
+  });
+
+  it('never shows more than three cockpit changes, and leads with the headline when it fits', () => {
+    fc.assert(
+      fc.property(input, (raw) => {
+        const model = composeReport(raw);
+        expect(model.cockpit?.changes.length ?? 0).toBeLessThanOrEqual(MAX_CHANGES);
+        expect(model.cockpit === null).toBe(raw.cockpit === undefined);
+        // The plain rendering at a roomy limit carries the headline, whole, right after the title:
+        // it is the line a platform's limit cuts last.
+        if (model.cockpit !== null) {
+          const lines = renderPlain(model, 100_000).split('\n');
+          expect(lines.slice(1)).toContain(model.cockpit.headline.split('\n')[0]);
+        }
       }),
       params,
     );

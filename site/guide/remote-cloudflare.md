@@ -49,7 +49,9 @@ refuses a tunnel.
 
    The start script keeps the three tunnel values in `.env`, so a plain `./start.sh` later
    still starts the tunnel. It never prints the token. Put `LUPIN_PUBLIC_URL` in `.env`
-   too: links in reports and the cross-site check use it.
+   too: links in reports and the cross-site check use it. Without it, scheduled reports to
+   Slack, Teams and Telegram go out with no link, because a `localhost` link would not open
+   for the people reading them.
 
 5. Open `https://lupin.example.com`. Cloudflare asks you to sign in; Lupin then
    opens with the role your identity maps to.

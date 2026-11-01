@@ -5,7 +5,7 @@ Telegram, WhatsApp, Signal, or Lupin's own inbox. Open **Map → Reports**.
 
 ## What a report looks like
 
-The same five-second shape on every platform, and the same shape as the **Now** page:
+The same five-second shape on every platform, and the same shape as the **Cockpit** page:
 
 ```
 🔴 Weekly quality report
@@ -20,6 +20,41 @@ https://lupin.local:8443/dashboard/now
 A status you can see before you read, one sentence, at most three items worst first,
 how many more there are, and one link. A missed schedule — the server was off for a
 week — sends one catch-up report, never a backlog.
+
+### The cockpit at the head, and a chart
+
+When the workspace has a project, the report leads with the cockpit's own sentence, so a
+channel message and the screen cannot disagree about whether the week was good, and up to
+three of the things that moved most:
+
+```
+Down 6 points since last week, mostly lower coverage and more flaky tests.
+Coverage fell 10 pts (70% -> 60%)
+Flaky tests rose by 3 (2 -> 5)
+```
+
+Beside it, on Slack, Telegram and Teams, goes a picture of the last twelve weeks: pull
+requests merged each week as bars (the part an agent wrote in amber) above the score for
+the same weeks. A week with no score is a gap in the line, and a change of scoring formula
+breaks it rather than joining two scales. WhatsApp and Signal carry the text only. A
+workspace with no project gets the report it always did.
+
+If a platform refuses the picture before anything is sent, the same report goes out as
+text. A failure that may have delivered the message is not followed by a second one.
+
+### The link in a report
+
+The one link at the foot of a report opens the cockpit. It uses the address in
+`LUPIN_PUBLIC_URL` (`PUBLIC_APP_URL` outside the compose stack). While that address is a
+loopback one, such as the default `http://localhost:8080`, the report goes **without a
+link**, because the link would open the reader's own machine and not yours. Set it to the
+address people actually use, such as your [Cloudflare hostname](/guide/remote-cloudflare)
+or LAN name, and the link appears from the next report.
+
+The cockpit page also lists, under _Worth a look_, the pull requests that match one of
+three stated facts: a large change with no test file, a merge with no approval from a
+person, and an open AI-attributed change nobody has approved. It is a list with the reason
+beside each, not a score. It reads pull requests the GitHub sync has stored.
 
 ## Set it up in three steps
 
@@ -41,10 +76,10 @@ in the vault (`VAULT_SECRET` must be set) and never shown again.
 ### Slack
 
 1. At api.slack.com/apps, **Create New App → From scratch**.
-2. **OAuth & Permissions → Bot Token Scopes**: add `chat:write`.
+2. **OAuth & Permissions → Bot Token Scopes**: add `chat:write`, and `files:write` if you want the chart in the message.
 3. **Install to Workspace** and copy the **Bot User OAuth Token** (`xoxb-…`).
 4. In the Slack channel, `/invite @your-app`.
-5. In Lupin: Slack, channel `#your-channel`, paste the token.
+5. In Lupin: Slack, channel `#your-channel`, paste the token. To get the chart, give the channel's **id** (`C0123456789`: right-click the channel, **View channel details**, bottom of the dialog) instead of its name. With a name, or without `files:write`, the report goes out as text. The upload follows Slack's documented three-step flow and has not been run against a workspace here.
 
 ### Microsoft Teams
 
@@ -56,6 +91,9 @@ in the vault (`VAULT_SECRET` must be set) and never shown again.
 Office 365 "Incoming Webhook" connectors are retired by Microsoft; Workflows is the
 replacement. The URL is the credential — keep it like a password.
 
+The chart is placed in the card as an inline image. Whether Teams draws it has not been
+checked against a tenant; if it does not, the card still carries the whole report as text.
+
 ### Telegram
 
 1. Message **@BotFather**, send `/newbot`, and copy the token.
@@ -63,6 +101,9 @@ replacement. The URL is the credential — keep it like a password.
 3. Send any message in that chat, then open
    `https://api.telegram.org/bot<token>/getUpdates` and copy `chat.id` (groups start with `-100`).
 4. In Lupin: Telegram, chat id, paste the token.
+
+The chart is sent as a photo with the report as its caption (Telegram allows 1,024
+characters there). If Telegram refuses the photo, the full text is sent instead.
 
 ### WhatsApp
 

@@ -9,7 +9,7 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                   |
 | ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 64    | implemented and exercised, with the stated qualification.                 |
+| **real**     | 67    | implemented and exercised, with the stated qualification.                 |
 | **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
 | **missing**  | 1     | no usable implementation exists in the target.                            |
 | **deferred** | 6     | intentionally outside the launch scope pending a separate decision.       |
@@ -48,6 +48,9 @@ its source, then run `pnpm site:generate`.
 | Accessibility quality domain: **ingestion** of axe-core results                                     | `real`     |
 | Security and SARIF quality domain                                                                   | `deferred` |
 | Repository health grade, findings, triage and pull-request gate                                     | `real`     |
+| Cockpit: whether the product is better or worse than it was, and why                                | `real`     |
+| Cockpit: pull requests worth a look                                                                 | `real`     |
+| The cockpit as one self-contained HTML file                                                         | `real`     |
 | SBOM inventory, VEX, licence policy and build provenance                                            | `real`     |
 | Mutation-testing results as Test effectiveness                                                      | `real`     |
 | Diff coverage of a commit, and its pull-request gate                                                | `real`     |

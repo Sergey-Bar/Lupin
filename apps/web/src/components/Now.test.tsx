@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Run } from '../lib/api.js';
 import { MAX_ATTENTION, isNew, rankAttention } from '../lib/attention.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
-import { LAST_VISIT_KEY, NowPage, type NowSources } from './Now.js';
+import { AttentionSection, LAST_VISIT_KEY, type NowSources } from './Now.js';
 
 const NOW = new Date('2026-10-25T12:00:00.000Z');
 
@@ -171,34 +171,32 @@ afterEach(() => {
   localStorage.clear();
 });
 
-describe('NowPage', () => {
-  it('shows the one big number, the item, and opens it with its one action', async () => {
+describe('AttentionSection', () => {
+  it('says how many things need you, marks the new one, and opens it with its one action', async () => {
     const user = userEvent.setup();
     const navigate = vi.fn();
     localStorage.setItem(LAST_VISIT_KEY, '2026-10-25T10:00:00.000Z');
     const { container } = render(
-      <NowPage sources={sources()} navigate={navigate} now={() => NOW} />,
+      <AttentionSection sources={sources()} navigate={navigate} now={() => NOW} />,
     );
-    expect(await screen.findByTestId('now-status')).toHaveTextContent('1thing needs you.');
+    expect(await screen.findByRole('heading', { name: '1 thing needs you now' })).toBeTruthy();
     expect(screen.getByText('new')).toBeTruthy();
-    await user.click(screen.getAllByRole('button', { name: 'Open run' })[1] as HTMLElement);
-    expect(navigate).toHaveBeenCalledWith('/dashboard/runs/00000000-0000-4000-8000-000000000001');
     await user.click(screen.getAllByRole('button', { name: 'Open run' })[0] as HTMLElement);
-    expect(navigate).toHaveBeenCalledTimes(2);
+    expect(navigate).toHaveBeenCalledWith('/dashboard/runs/00000000-0000-4000-8000-000000000001');
     expect(localStorage.getItem(LAST_VISIT_KEY)).toBe(NOW.toISOString());
     await expectNoBlockingAxeViolations(container);
   });
 
   it('says all clear when nothing needs anyone', async () => {
     render(
-      <NowPage
+      <AttentionSection
         sources={sources({ runs: vi.fn(async () => []) })}
         navigate={vi.fn()}
         now={() => NOW}
       />,
     );
     expect(await screen.findByTestId('now-clear')).toHaveTextContent('All clear');
-    expect(screen.getByTestId('now-status')).toHaveTextContent('Nothing needs you.');
+    expect(screen.getByRole('heading', { name: 'Nothing needs you now' })).toBeTruthy();
   });
 
   it('counts what did not fit, and says when a source could not be read', async () => {
@@ -206,7 +204,7 @@ describe('NowPage', () => {
       run({ id: `${String(index)}`.repeat(8), suite: `suite ${String(index)}`, outcome: 'failed' }),
     );
     render(
-      <NowPage
+      <AttentionSection
         sources={sources({
           runs: vi.fn(async () => many),
           portfolio: vi.fn(async () => Promise.reject(new Error('offline'))),
@@ -217,13 +215,13 @@ describe('NowPage', () => {
     );
     expect(await screen.findByText('+2 more. Fix these first.')).toBeTruthy();
     expect(screen.getByText(/could not be read/u)).toBeTruthy();
-    expect(screen.getByTestId('now-status')).toHaveTextContent('7things need you.');
+    expect(screen.getByRole('heading', { name: '7 things need you now' })).toBeTruthy();
   });
 
   it('shows a loading state, and ignores an answer after unmount', async () => {
     let resolve: (value: Run[]) => void = () => undefined;
     const slow = sources({ runs: vi.fn(() => new Promise<Run[]>((done) => (resolve = done))) });
-    const { unmount } = render(<NowPage sources={slow} navigate={vi.fn()} />);
+    const { unmount } = render(<AttentionSection sources={slow} navigate={vi.fn()} />);
     expect(screen.getByTestId('now-loading')).toBeTruthy();
     unmount();
     resolve([]);

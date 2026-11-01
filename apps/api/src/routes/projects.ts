@@ -64,6 +64,7 @@ import {
   recordGateFindings,
 } from '../services/ai-code-service.js';
 import { createAiCodeRoutes } from './ai-code.js';
+import { createCockpitRoutes } from './cockpit.js';
 import { createScorecardRoutes } from './scorecards.js';
 import { createMcpRoutes } from './mcp.js';
 import { uploaderGuard } from '../http/uploader.js';
@@ -413,6 +414,16 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
   );
   // AI-written code: read-only scorecards over what the delivery sync attributed.
   app.route('/', createAiCodeRoutes({ db: options.db, workspaceId: options.workspaceId, access }));
+  // The cockpit: is the product better or worse than it was, and why. Read-only.
+  app.route(
+    '/',
+    createCockpitRoutes({
+      db: options.db,
+      workspaceId: options.workspaceId,
+      access,
+      ...(options.health?.now === undefined ? {} : { now: options.health.now }),
+    }),
+  );
   // A CI job's test report and the quarantine verdict `lupin test` acts on. Mounted
   // always, so the authz matrix lists it; without its stores it answers NOT_CONFIGURED.
   app.route(

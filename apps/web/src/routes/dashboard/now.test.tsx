@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from '../../router.js';
+import { cockpitFixture } from '../../test-utils.js';
 import { Route } from './now.js';
 
 /**
@@ -17,7 +18,9 @@ function stubFetch(): string[] {
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       asked.push(url);
-      return new Response('[]', { status: 200, headers: { 'Content-Type': 'application/json' } });
+      // The cockpit has its own shape; everything else the page reads is a list.
+      const body = url.includes('/api/v1/cockpit') ? JSON.stringify(cockpitFixture()) : '[]';
+      return new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } });
     }),
   );
   return asked;
@@ -33,7 +36,7 @@ describe('the Now route', () => {
   });
 
   it(
-    'is where / lands, and asks for the runs, the portfolio and the deliveries',
+    'is where / lands, and asks for the cockpit, the runs, the portfolio and the deliveries',
     async () => {
       const asked = stubFetch();
       window.scrollTo = () => undefined;
@@ -43,6 +46,7 @@ describe('the Now route', () => {
       });
       await waitFor(
         () => {
+          expect(asked.some((url) => url.includes('/api/v1/cockpit?window=7d'))).toBe(true);
           expect(asked.some((url) => url.includes('/runs'))).toBe(true);
           expect(asked.some((url) => url.includes('portfolio'))).toBe(true);
           expect(asked.some((url) => url.includes('deliveries'))).toBe(true);

@@ -194,6 +194,14 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
       'routes/ai-code.ts',
     ],
   },
+  // The cockpit: health and scan snapshots, runs, pull requests, deployments and delivery
+  // sources of one project. Every query filters on `workspace_id` before the project, and
+  // `cockpit.test.ts` proves another workspace's project is a 404, that its newer readings do
+  // not choose the default project, and that its readings never mix into a project's own.
+  {
+    family: 'cockpit',
+    files: ['services/cockpit-service.ts', 'routes/cockpit.ts'],
+  },
   // Agent quality: eval runs and cases, GenAI spans, the MCP inventory and eval datasets — five
   // tables, each hard-scoped in `0040_agent_quality.sql`. Each service test ends with a
   // `workspace isolation` case proving another workspace can neither read nor write them:
