@@ -288,9 +288,9 @@ export const pageGuidance = {
   prs: {
     purpose: 'See every open pull request across your repositories and decide what to do next.',
     steps: [
-      'Read how many are ready to merge, then choose Show them.',
-      'Look at Blocked: a requested change, a failing check or a conflict is stopping it.',
-      'Open a pull request on GitHub from its title.',
+      'Pick a pull request: the pane beside the list shows what stands in the way and what to do.',
+      'Use the counts on the filters (Ready, Blocked, Waiting) to see only one kind.',
+      'Merge or update a branch from the pane, or open the pull request on GitHub from its title.',
     ],
     remember:
       'A pull request GitHub has not said it can merge is Waiting, never Ready. The list is as fresh as the last sync.',
@@ -298,18 +298,18 @@ export const pageGuidance = {
   issues: {
     purpose: 'See open issues across your repositories and find the ones nobody has triaged.',
     steps: [
-      'Read how many open issues have no label and no assignee.',
-      'Choose Show them to list only those.',
-      'Open an issue on GitHub from its title.',
+      'Pick an issue: the pane beside the list shows who owns it and what has been said.',
+      'Choose the No label or assignee filter to list only the ones nobody has triaged.',
+      'Label, assign or close it from the pane, or open it on GitHub from its title.',
     ],
     remember: 'Pull requests are not listed here. Closed issues appear under the Closed filter.',
   },
   repos: {
     purpose: 'Check the health of every repository and turn on the sync for the ones not yet read.',
     steps: [
-      'Look for repositories with a critical or high finding.',
+      'Start at the top: repositories are listed worst first, and the pane shows every finding.',
       'Turn on sync for a repository that is Not graded.',
-      'Open Details to read each finding and the evidence behind it.',
+      'Follow a finding to the pull requests or issues it counts, or open Details for the full page.',
     ],
     remember: 'Not graded means not read. It is never a good grade.',
   },
