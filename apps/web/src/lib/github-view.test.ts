@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { GithubPullItem } from '@lupin/shared-contracts';
-import { bucketOf, countBuckets, sortByAttention } from './github-view.js';
+import {
+  bucketOf,
+  countBuckets,
+  primaryActionOf,
+  sortByAttention,
+  statusOf,
+} from './github-view.js';
 
 function pull(overrides: Partial<GithubPullItem> = {}): GithubPullItem {
   return {
@@ -103,5 +109,63 @@ describe('countBuckets', () => {
         pull(),
       ]),
     ).toEqual({ ready: 1, blocked: 1, waiting: 1, draft: 0, done: 0 });
+  });
+});
+
+describe('statusOf', () => {
+  it('names the problem first, so a blocked row says why', () => {
+    const status = statusOf(
+      pull({
+        reviewDecision: 'review_required',
+        checksState: 'failure',
+        mergeableState: 'dirty',
+      }),
+    );
+    expect(status).toMatchObject({ bucket: 'blocked', headline: 'Blocked', tone: 'danger' });
+    expect(status.reasons).toEqual(['Merge conflicts', 'Checks failing', 'Needs review']);
+  });
+
+  it('says what a ready pull request has going for it', () => {
+    expect(statusOf(pull({ reviewDecision: 'approved' }))).toEqual({
+      bucket: 'ready',
+      headline: 'Ready to merge',
+      tone: 'success',
+      reasons: ['Approved', 'Checks passing'],
+    });
+  });
+
+  it('reports a branch that fell behind and a check still running', () => {
+    const status = statusOf(
+      pull({ reviewDecision: 'approved', checksState: 'pending', mergeableState: 'behind' }),
+    );
+    expect(status.headline).toBe('Waiting');
+    expect(status.reasons).toEqual(['Checks running', 'Behind base', 'Approved']);
+  });
+
+  it('asks nothing of finished work except to remember what was decided', () => {
+    expect(
+      statusOf(pull({ state: 'merged', reviewDecision: 'review_required', checksState: null })),
+    ).toMatchObject({ headline: 'Merged', tone: 'outline', reasons: [] });
+    expect(
+      statusOf(pull({ state: 'closed', reviewDecision: 'approved', checksState: null })),
+    ).toMatchObject({ headline: 'Closed', reasons: ['Approved'] });
+  });
+
+  it('is a draft before it is anything else', () => {
+    expect(statusOf(pull({ draft: true, checksState: 'failure' }))).toMatchObject({
+      headline: 'Draft',
+      tone: 'outline',
+    });
+  });
+});
+
+describe('primaryActionOf', () => {
+  it('offers a merge for what is ready and an update for what fell behind, nothing else', () => {
+    expect(primaryActionOf(pull({ reviewDecision: 'approved' }))).toBe('merge');
+    expect(primaryActionOf(pull({ mergeableState: 'behind' }))).toBe('updateBranch');
+    expect(primaryActionOf(pull())).toBeNull();
+    expect(primaryActionOf(pull({ checksState: 'failure' }))).toBeNull();
+    expect(primaryActionOf(pull({ draft: true, mergeableState: 'behind' }))).toBeNull();
+    expect(primaryActionOf(pull({ state: 'merged' }))).toBeNull();
   });
 });

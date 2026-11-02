@@ -47,14 +47,12 @@ describe('IssuesPage', () => {
     ]);
     render(<IssuesPage github={github} now={() => NOW} />);
     await screen.findByText('Untriaged');
-    expect(screen.getByTestId('issues-status')).toHaveTextContent('1');
-    expect(screen.getByTestId('issues-status')).toHaveTextContent(
-      'open issue has no label and no assignee',
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: 'Show them' }));
+    // The count sits on the filter that shows them.
+    await userEvent.click(screen.getByRole('button', { name: 'No label or assignee 1' }));
     expect(screen.getAllByTestId('issue-row')).toHaveLength(1);
-    await userEvent.click(screen.getByRole('button', { name: 'Show all issues' }));
+    await userEvent.click(
+      within(screen.getByRole('group', { name: 'Show' })).getByRole('button', { name: 'All' }),
+    );
     expect(screen.getAllByTestId('issue-row')).toHaveLength(3);
   });
 

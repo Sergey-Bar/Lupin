@@ -296,3 +296,20 @@ describe('the table row and header states', () => {
     expect(header?.className).toMatch(/\bbg-surface\b/);
   });
 });
+
+describe('TableHead alignment', () => {
+  it('moves the words to the end of a column that is marked text-end', () => {
+    render(
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead className="text-end">Size</TableHead>
+          </TableRow>
+        </TableHeader>
+      </Table>,
+    );
+    expect(screen.getByText('Size').className).toContain('justify-end');
+    expect(screen.getByText('Name').className).not.toContain('justify-end');
+  });
+});

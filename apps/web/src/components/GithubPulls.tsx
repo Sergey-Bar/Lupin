@@ -21,14 +21,20 @@ import { subjectOfPull, type ActionKind, type Subject } from '../lib/github-acti
 import type { GithubClient } from '../lib/github-client.js';
 import type { HealthClient } from '../lib/health-client.js';
 import { canOperate } from '../lib/roles.js';
-import { bucketOf, countBuckets, sortByAttention, type Bucket } from '../lib/github-view.js';
+import {
+  bucketOf,
+  countBuckets,
+  primaryActionOf,
+  sortByAttention,
+  statusOf,
+  type Bucket,
+} from '../lib/github-view.js';
 import { formatRelative } from '../lib/intl.js';
 import { Bdi, UserText } from './Bidi.js';
 import { PageFrame, PageHeader, Panel, Quiet, Segmented } from './kit.js';
-import { RepositoryFilter, Verdict } from './GithubShared.js';
-import { GithubActionDialog } from './GithubActionDialog.js';
+import { RepositoryFilter } from './GithubShared.js';
+import { ACTION_LABEL, GithubActionDialog } from './GithubActionDialog.js';
 import { BulkBar, RowActions, subjectKey } from './GithubActionControls.js';
-import { StatusLine } from './StatusLine.js';
 
 /**
  * Open pull requests across every repository, ranked by what the reader can do with them:
@@ -49,7 +55,7 @@ const STATES = [
   { value: 'all', label: 'All' },
 ] as const;
 
-const BUCKETS = [
+const BUCKET_LABELS = [
   { value: 'all', label: 'All' },
   { value: 'ready', label: 'Ready' },
   { value: 'blocked', label: 'Blocked' },
@@ -57,17 +63,7 @@ const BUCKETS = [
   { value: 'draft', label: 'Drafts' },
 ] as const;
 
-const REVIEW = {
-  approved: { label: 'Approved', variant: 'success', Icon: CircleCheck },
-  changes_requested: { label: 'Changes requested', variant: 'danger', Icon: CircleAlert },
-  review_required: { label: 'Needs review', variant: 'outline', Icon: Timer },
-} as const;
-
-const CHECKS = {
-  success: { label: 'Passing', variant: 'success', Icon: CircleCheck },
-  failure: { label: 'Failing', variant: 'danger', Icon: CircleAlert },
-  pending: { label: 'Running', variant: 'warning', Icon: Timer },
-} as const;
+const STATUS_ICON = { ready: CircleCheck, blocked: CircleAlert, waiting: Timer } as const;
 
 export function PullRequestsPage({
   github,
@@ -111,9 +107,11 @@ export function PullRequestsPage({
 
   const items = list.status === 'ready' ? list.items : [];
   const counts = countBuckets(items);
+  // Buckets only describe open work, so a closed or merged view is never narrowed by one.
+  const activeBucket = state === 'open' ? bucket : 'all';
   const needle = query.trim().toLowerCase();
   const shown = sortByAttention(items).filter((item) => {
-    if (bucket !== 'all' && bucketOf(item) !== bucket) return false;
+    if (activeBucket !== 'all' && bucketOf(item) !== activeBucket) return false;
     if (needle === '') return true;
     return [item.title, item.author ?? '', item.repository].some((text) =>
       text.toLowerCase().includes(needle),
@@ -122,39 +120,38 @@ export function PullRequestsPage({
 
   return (
     <PageFrame>
-      <PageHeader
-        title="Pull requests"
-        subtitle="Open pull requests across every repository, ranked by what you can do with them."
-      />
-      <StatusLine
-        data-testid="pulls-status"
-        value={String(counts.ready)}
-        sentence={
-          counts.ready === 1 ? 'pull request ready to merge' : 'pull requests ready to merge'
-        }
-        tone={counts.ready > 0 ? 'good' : counts.blocked > 0 ? 'bad' : 'caution'}
-        action={
-          counts.ready > 0 && bucket !== 'ready'
-            ? { label: 'Show them', onSelect: () => setBucket('ready') }
-            : undefined
-        }
-      />
-      <div className="flex shrink-0 flex-wrap items-end gap-3">
-        <Segmented label="State" options={STATES} value={state} onChange={setState} />
-        <Segmented label="Show" options={BUCKETS} value={bucket} onChange={setBucket} />
-        <RepositoryFilter
-          id="pulls-repository"
-          repos={repos}
-          value={projectId}
-          onChange={setProjectId}
-        />
-        <div className="w-64">
-          <Input
-            aria-label="Search"
-            placeholder="Title, author or repository"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+      <PageHeader title="Pull requests" />
+      <div className="flex shrink-0 flex-wrap items-center gap-3">
+        {state === 'open' ? (
+          <Segmented
+            label="Show"
+            options={BUCKET_LABELS.map((option) => ({
+              value: option.value,
+              label:
+                option.value === 'all'
+                  ? option.label
+                  : `${option.label} ${String(counts[option.value === 'draft' ? 'draft' : option.value])}`,
+            }))}
+            value={bucket}
+            onChange={setBucket}
           />
+        ) : null}
+        <Segmented label="State" options={STATES} value={state} onChange={setState} />
+        <div className="flex flex-wrap items-center gap-3 sm:ms-auto">
+          <RepositoryFilter
+            id="pulls-repository"
+            repos={repos}
+            value={projectId}
+            onChange={setProjectId}
+          />
+          <div className="w-64">
+            <Input
+              aria-label="Search"
+              placeholder="Title, author or repository"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
         </div>
       </div>
       {operator ? (
@@ -164,7 +161,10 @@ export function PullRequestsPage({
           onClear={() => setSelected(new Set())}
         />
       ) : null}
-      <Panel title="Pull requests" className="flex-1">
+      <Panel
+        title={`${String(shown.length)} ${shown.length === 1 ? 'pull request' : 'pull requests'}`}
+        className="flex-1"
+      >
         {list.status === 'loading' ? (
           <Quiet role="status">Loading…</Quiet>
         ) : list.status === 'error' ? (
@@ -199,11 +199,8 @@ export function PullRequestsPage({
                     </TableHead>
                   ) : null}
                   <TableHead>Pull request</TableHead>
-                  <TableHead>Author</TableHead>
-                  <TableHead>Review</TableHead>
-                  <TableHead>Checks</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-end">Size</TableHead>
-                  <TableHead>Updated</TableHead>
                   {operator ? (
                     <TableHead>
                       <span className="sr-only">Actions</span>
@@ -281,14 +278,10 @@ function PullRow({
   onPick: (kind: ActionKind, subject: Subject) => void;
 }): React.ReactElement {
   const subject = subjectOfPull(item);
-  // A finished pull request is waiting for nothing: "needs review" and "no checks" would be
-  // stale advice. What was decided (approved, changes requested) still reads true.
-  const finished = item.state !== 'open';
-  const review =
-    item.reviewDecision === null || (finished && item.reviewDecision === 'review_required')
-      ? null
-      : REVIEW[item.reviewDecision];
-  const checks = item.checksState === null ? null : CHECKS[item.checksState];
+  const status = statusOf(item);
+  const primary = primaryActionOf(item);
+  const Icon =
+    status.bucket in STATUS_ICON ? STATUS_ICON[status.bucket as keyof typeof STATUS_ICON] : null;
   return (
     <TableRow data-testid="pull-row">
       {operator ? (
@@ -301,7 +294,7 @@ function PullRow({
           />
         </TableCell>
       ) : null}
-      <TableCell className="max-w-[24rem]">
+      <TableCell className="max-w-[32rem]">
         <div className="flex min-w-0 flex-col gap-1">
           {item.htmlUrl === null ? (
             <UserText className="truncate font-medium">{item.title}</UserText>
@@ -321,10 +314,13 @@ function PullRow({
             <Bdi className="font-mono">
               {item.repository}#{String(item.number)}
             </Bdi>
-            {item.headBranch === null ? null : <Bdi className="font-mono">{item.headBranch}</Bdi>}
-            {item.draft ? <Badge variant="outline">Draft</Badge> : null}
-            {item.mergeableState === 'dirty' ? <Badge variant="danger">Conflicts</Badge> : null}
-            {item.mergeableState === 'behind' ? <Badge variant="outline">Behind base</Badge> : null}
+            {item.headBranch === null ? null : (
+              <Bdi className="inline-block max-w-56 truncate align-bottom font-mono">
+                {item.headBranch}
+              </Bdi>
+            )}
+            {item.author === null ? null : <Bdi>{item.author}</Bdi>}
+            <span className="whitespace-nowrap">{formatRelative(item.lastActivityAt, now)}</span>
             {item.labels.map((label) => (
               <Badge key={label} variant="secondary">
                 <UserText>{label}</UserText>
@@ -333,25 +329,35 @@ function PullRow({
           </div>
         </div>
       </TableCell>
-      <TableCell>{item.author === null ? '—' : <Bdi>{item.author}</Bdi>}</TableCell>
-      <TableCell>{review === null ? '—' : <Verdict entry={review} />}</TableCell>
       <TableCell>
-        {checks === null ? (
-          <span className="text-fg-muted">{finished ? '-' : 'No checks'}</span>
-        ) : (
-          <Verdict entry={checks} />
-        )}
+        <div className="flex flex-col items-start gap-1">
+          <Badge variant={status.tone} className="gap-1 whitespace-nowrap">
+            {Icon === null ? null : <Icon size={12} aria-hidden="true" />}
+            {status.headline}
+          </Badge>
+          {status.reasons.length === 0 ? null : (
+            <span className="text-xs text-fg-muted">{status.reasons.join(' · ')}</span>
+          )}
+        </div>
       </TableCell>
-      <TableCell className="text-end tabular-nums">
+      <TableCell className="whitespace-nowrap text-end tabular-nums">
         <span className="text-success">+{item.additions}</span>{' '}
         <span className="text-danger">−{item.deletions}</span>
       </TableCell>
-      <TableCell className="whitespace-nowrap text-fg-muted">
-        {formatRelative(item.lastActivityAt, now)}
-      </TableCell>
       {operator ? (
         <TableCell>
-          <RowActions subject={subject} onPick={onPick} />
+          <div className="flex items-center justify-end gap-2">
+            {primary === null ? null : (
+              <Button
+                variant={primary === 'merge' ? 'default' : 'outline'}
+                aria-label={`${ACTION_LABEL[primary]} ${item.repository}#${String(item.number)}`}
+                onClick={() => onPick(primary, subject)}
+              >
+                {ACTION_LABEL[primary]}
+              </Button>
+            )}
+            <RowActions subject={subject} onPick={onPick} />
+          </div>
         </TableCell>
       ) : null}
     </TableRow>

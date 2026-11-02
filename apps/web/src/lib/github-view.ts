@@ -53,3 +53,57 @@ export function countBuckets(items: readonly GithubPullItem[]): Record<Bucket, n
   for (const item of items) counts[bucketOf(item)] += 1;
   return counts;
 }
+
+export interface PullStatus {
+  bucket: Bucket;
+  /** One word or phrase for the whole row: what a reader would say if asked "so?". */
+  headline: string;
+  tone: 'success' | 'danger' | 'warning' | 'outline';
+  /** Why, worst first. Short enough to read in one line under the headline. */
+  reasons: string[];
+}
+
+const HEADLINE: Record<Bucket, Pick<PullStatus, 'headline' | 'tone'>> = {
+  ready: { headline: 'Ready to merge', tone: 'success' },
+  blocked: { headline: 'Blocked', tone: 'danger' },
+  waiting: { headline: 'Waiting', tone: 'warning' },
+  draft: { headline: 'Draft', tone: 'outline' },
+  done: { headline: 'Closed', tone: 'outline' },
+};
+
+/**
+ * One status and its reasons for a pull request, so a row says what to do about it instead of
+ * leaving the reader to combine a review column, a checks column and a mergeable flag.
+ *
+ * A finished pull request is waiting for nothing, so "needs review" and "no checks" are left
+ * out; what was decided (approved, changes requested) still reads true.
+ */
+export function statusOf(pr: GithubPullItem): PullStatus {
+  const bucket = bucketOf(pr);
+  const base = HEADLINE[bucket];
+  const headline =
+    pr.state === 'merged' ? 'Merged' : pr.state === 'closed' ? 'Closed' : base.headline;
+  const reasons: string[] = [];
+  const open = pr.state === 'open';
+  if (open && pr.mergeableState === 'dirty') reasons.push('Merge conflicts');
+  if (pr.reviewDecision === 'changes_requested') reasons.push('Changes requested');
+  if (open && pr.checksState === 'failure') reasons.push('Checks failing');
+  if (open && pr.checksState === 'pending') reasons.push('Checks running');
+  if (open && pr.reviewDecision === 'review_required') reasons.push('Needs review');
+  if (open && pr.mergeableState === 'behind') reasons.push('Behind base');
+  if (pr.reviewDecision === 'approved') reasons.push('Approved');
+  if (open && pr.checksState === 'success') reasons.push('Checks passing');
+  if (open && pr.checksState === null) reasons.push('No checks');
+  return { bucket, headline, tone: pr.state === 'open' ? base.tone : 'outline', reasons };
+}
+
+/**
+ * The one action worth drawing as a button on the row: merge what is ready, and bring a branch
+ * that has fallen behind up to date. Everything else stays in the menu.
+ */
+export function primaryActionOf(pr: GithubPullItem): 'merge' | 'updateBranch' | null {
+  if (pr.state !== 'open' || pr.draft) return null;
+  if (bucketOf(pr) === 'ready') return 'merge';
+  if (pr.mergeableState === 'behind') return 'updateBranch';
+  return null;
+}

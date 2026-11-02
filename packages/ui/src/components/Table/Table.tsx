@@ -162,7 +162,16 @@ export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
             </span>
           </button>
         ) : (
-          <div className="flex items-center gap-1">{children}</div>
+          // The wrapper is a flex row, so a 	ext-end on the cell would align an empty box and not the
+          // words. A right-aligned column says so on the cell, and the row follows it.
+          <div
+            className={cn(
+              'flex items-center gap-1',
+              /(^|\s)text-end(\s|$)/u.test(className ?? '') && 'justify-end',
+            )}
+          >
+            {children}
+          </div>
         )}
       </th>
     );

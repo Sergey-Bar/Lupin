@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Badge,
   Button,
+  cn,
   CircleAlert,
   CircleCheck,
   Table,
@@ -25,7 +26,6 @@ import { Bdi, UserText } from './Bidi.js';
 import { PageFrame, PageHeader, Panel, Quiet } from './kit.js';
 import { GithubActionDialog } from './GithubActionDialog.js';
 import { BulkBar, RowActions } from './GithubActionControls.js';
-import { StatusLine } from './StatusLine.js';
 import { useToast } from './Toasts.js';
 
 /**
@@ -36,6 +36,15 @@ import { useToast } from './Toasts.js';
 const BAD = new Set(['critical', 'high']);
 const attention = (repo: GithubRepoItem) =>
   repo.health.findings.some((finding) => BAD.has(finding.severity));
+
+/** Serious findings first, then the lowest score; a repository nobody has read yet goes last. */
+function worstFirst(repos: readonly GithubRepoItem[]): GithubRepoItem[] {
+  return [...repos].sort(
+    (a, b) =>
+      Number(attention(b)) - Number(attention(a)) ||
+      (a.health.score ?? Infinity) - (b.health.score ?? Infinity),
+  );
+}
 
 const GRADE_VARIANT: Record<string, 'success' | 'warning' | 'danger'> = {
   A: 'success',
@@ -168,25 +177,12 @@ export function ReposPage({
   const repos = useResource((_signal) => github.listRepos(), [github, version]);
   const who = useResource((_signal) => health.whoami(), [health]);
   const operator = who.status === 'ready' && canOperate(who.value);
-  const items = repos.status === 'ready' ? repos.value.items : [];
+  const items = repos.status === 'ready' ? worstFirst(repos.value.items) : [];
   const flagged = items.filter(attention).length;
 
   return (
     <PageFrame>
-      <PageHeader
-        title="Repositories"
-        subtitle="Health and open work for every repository Lupin can read."
-      />
-      <StatusLine
-        data-testid="repos-status"
-        value={String(flagged)}
-        sentence={
-          flagged === 1
-            ? 'repository has a critical or high finding'
-            : 'repositories have a critical or high finding'
-        }
-        tone={flagged === 0 ? 'good' : 'bad'}
-      />
+      <PageHeader title="Repositories" />
       {operator ? (
         <BulkBar
           subjects={items.filter((repo) => selected.has(repo.projectId)).map(subjectOfRepo)}
@@ -194,7 +190,17 @@ export function ReposPage({
           onClear={() => setSelected(new Set())}
         />
       ) : null}
-      <Panel title="Repositories" className="flex-1">
+      <Panel
+        title={`${String(items.length)} ${items.length === 1 ? 'repository' : 'repositories'}`}
+        action={
+          flagged === 0 ? null : (
+            <Badge variant="danger">
+              {String(flagged)} {flagged === 1 ? 'needs' : 'need'} attention
+            </Badge>
+          )
+        }
+        className="flex-1"
+      >
         {repos.status === 'loading' ? (
           <Quiet role="status">Loading…</Quiet>
         ) : repos.status === 'error' ? (
@@ -229,6 +235,11 @@ export function ReposPage({
                   <TableHead className="text-end">Pull requests</TableHead>
                   <TableHead className="text-end">Issues</TableHead>
                   <TableHead>Sync</TableHead>
+                  {operator ? (
+                    <TableHead>
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  ) : null}
                   <TableHead>
                     <span className="sr-only">Details</span>
                   </TableHead>
@@ -253,7 +264,7 @@ export function ReposPage({
                           }
                         />
                       </TableCell>
-                    ) : null}{' '}
+                    ) : null}
                     <TableCell>
                       <div className="flex min-w-0 flex-col">
                         <UserText className="truncate font-medium">{repo.name}</UserText>
@@ -263,10 +274,23 @@ export function ReposPage({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <GradeBadge repo={repo} />
+                      <div className="flex flex-col items-start gap-1">
+                        <GradeBadge repo={repo} />
+                        {repo.health.findings[0] === undefined ? null : (
+                          <span className="max-w-64 truncate text-xs text-fg-muted">
+                            {repo.health.findings[0].title}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-end tabular-nums">
-                      {formatNumber(repo.openPullRequests)}
+                      <a
+                        href={`/dashboard/prs?project=${encodeURIComponent(repo.projectId)}`}
+                        aria-label={`Pull requests in ${repo.name}`}
+                        className="underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+                      >
+                        {formatNumber(repo.openPullRequests)}
+                      </a>
                       {repo.stalePullRequests > 0 ? (
                         <span className="block text-xs text-fg-muted">
                           {repo.stalePullRequests} stale
@@ -274,7 +298,13 @@ export function ReposPage({
                       ) : null}
                     </TableCell>
                     <TableCell className="text-end tabular-nums">
-                      {formatNumber(repo.openIssues)}
+                      <a
+                        href={`/dashboard/issues?project=${encodeURIComponent(repo.projectId)}`}
+                        aria-label={`Issues in ${repo.name}`}
+                        className="underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+                      >
+                        {formatNumber(repo.openIssues)}
+                      </a>
                     </TableCell>
                     <TableCell>
                       <SyncCell
@@ -337,6 +367,15 @@ const SEVERITY: Record<
   info: { label: 'Note', variant: 'outline' },
 };
 
+/** The findings that count pull requests or issues, and the list that shows exactly those. */
+const FINDING_LIST: Record<string, { path: 'prs' | 'issues'; label: string } | undefined> = {
+  'failing-pull-requests': { path: 'prs', label: 'See pull requests' },
+  'conflicted-pull-requests': { path: 'prs', label: 'See pull requests' },
+  'unreviewed-pull-requests': { path: 'prs', label: 'See pull requests' },
+  'stale-pull-requests': { path: 'prs', label: 'See pull requests' },
+  'untriaged-issues': { path: 'issues', label: 'See issues' },
+};
+
 /** One repository: its grade, why, and what is open. */
 export function RepoDetailPage({
   projectId,
@@ -379,52 +418,50 @@ export function RepoDetailPage({
       <PageHeader
         title={item.name}
         subtitle={
-          item.repository === null ? undefined : <Bdi className="font-mono">{item.repository}</Bdi>
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {item.repository === null ? null : <Bdi className="font-mono">{item.repository}</Bdi>}
+            <a
+              href="/dashboard/repos"
+              className="underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            >
+              All repositories
+            </a>
+          </span>
         }
         actions={
           <>
+            <span
+              data-testid="repo-score"
+              className="flex items-baseline gap-2 text-sm text-fg-muted"
+            >
+              {item.health.score === null || item.health.grade === null ? (
+                'Not graded: this repository has not been read yet'
+              ) : (
+                <>
+                  <span
+                    className={cn(
+                      'text-4xl font-semibold tabular-nums tracking-tight',
+                      item.health.score < 60
+                        ? 'text-danger'
+                        : item.health.score < 90
+                          ? 'text-warning'
+                          : 'text-success',
+                    )}
+                  >
+                    {item.health.score}
+                  </span>
+                  Grade {item.health.grade}
+                </>
+              )}
+            </span>
             {operator ? (
               <Button variant="outline" onClick={() => setPending('createRelease')}>
                 Create release
               </Button>
             ) : null}
-            <a
-              href={`/dashboard/repos`}
-              className="underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-            >
-              All repositories
-            </a>
-            <a
-              href={`/dashboard/prs?project=${encodeURIComponent(item.projectId)}`}
-              className="underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-            >
-              Pull requests
-            </a>
-            <a
-              href={`/dashboard/issues?project=${encodeURIComponent(item.projectId)}`}
-              className="underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-            >
-              Issues
-            </a>
           </>
         }
-      />
-      <StatusLine
-        data-testid="repo-score"
-        value={item.health.score === null ? '—' : String(item.health.score)}
-        sentence={
-          item.health.grade === null
-            ? 'not graded: this repository has not been read yet'
-            : `health score, grade ${item.health.grade}`
-        }
-        tone={
-          item.health.score === null || item.health.score < 60
-            ? 'bad'
-            : item.health.score < 90
-              ? 'caution'
-              : 'good'
-        }
-      />
+      />{' '}
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-3">
         <Panel title="Findings" className="lg:col-span-2">
           {item.health.findings.length === 0 ? (
@@ -440,6 +477,16 @@ export function RepoDetailPage({
                       <span className="font-medium">{finding.title}</span>
                     </div>
                     <p className="m-0 text-sm text-fg-muted">{finding.evidence}</p>
+                    {FINDING_LIST[finding.id] === undefined ? null : (
+                      <div>
+                        <a
+                          href={`/dashboard/${FINDING_LIST[finding.id]?.path ?? 'prs'}?project=${encodeURIComponent(item.projectId)}`}
+                          className="text-sm underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+                        >
+                          {FINDING_LIST[finding.id]?.label}
+                        </a>
+                      </div>
+                    )}
                     {operator && finding.fix === 'protect-branch' ? (
                       <div>
                         <Button variant="outline" onClick={() => setPending('protectBranch')}>
@@ -455,11 +502,25 @@ export function RepoDetailPage({
         </Panel>
         <Panel title="Open work">
           <dl className="m-0 grid grid-cols-[auto_auto] gap-x-4 gap-y-2 text-sm">
-            <dt className="text-fg-muted">Pull requests</dt>
+            <dt className="text-fg-muted">
+              <a
+                href={`/dashboard/prs?project=${encodeURIComponent(item.projectId)}`}
+                className="underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+              >
+                Pull requests
+              </a>
+            </dt>
             <dd className="m-0 text-end tabular-nums">{formatNumber(item.openPullRequests)}</dd>
             <dt className="text-fg-muted">Stale pull requests</dt>
             <dd className="m-0 text-end tabular-nums">{formatNumber(item.stalePullRequests)}</dd>
-            <dt className="text-fg-muted">Issues</dt>
+            <dt className="text-fg-muted">
+              <a
+                href={`/dashboard/issues?project=${encodeURIComponent(item.projectId)}`}
+                className="underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+              >
+                Issues
+              </a>
+            </dt>
             <dd className="m-0 text-end tabular-nums">{formatNumber(item.openIssues)}</dd>
             <dt className="text-fg-muted">Request budget</dt>
             <dd className="m-0 text-end">

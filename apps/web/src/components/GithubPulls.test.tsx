@@ -113,10 +113,9 @@ describe('PullRequestsPage writes', () => {
   it('lets an operator act on one pull request from its row, and reloads the list afterwards', async () => {
     const { runActions, listPulls } = writable('operator');
     await screen.findByText('First');
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'Actions for octo/service#1' }),
-      'merge',
-    );
+    // The approved one carries its own merge button; the one waiting on review does not.
+    expect(screen.queryByRole('button', { name: 'Merge octo/service#2' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Merge octo/service#1' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Merge' }));
     await waitFor(() => expect(runActions).toHaveBeenCalled());
     expect(runActions.mock.calls[0]?.[0].actions[0]).toMatchObject({
@@ -175,9 +174,11 @@ describe('PullRequestsPage', () => {
       'Blocked one',
       'Waiting one',
     ]);
-    const status = screen.getByTestId('pulls-status');
-    expect(status).toHaveTextContent('1');
-    expect(status).toHaveTextContent('pull request ready to merge');
+    // The count sits on the filter that shows them, and the panel says how many are listed.
+    expect(screen.getByRole('button', { name: 'Ready 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Blocked 1' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '3 pull requests' })).toBeInTheDocument();
+    expect(within(rows[0]!).getByText('Ready to merge')).toBeInTheDocument();
   });
 
   it('shows a verdict as a word as well as a colour, and relative age', async () => {
@@ -189,8 +190,9 @@ describe('PullRequestsPage', () => {
     ]);
     render(<PullRequestsPage github={github} now={() => NOW} />);
     const row = await screen.findByTestId('pull-row');
-    expect(within(row).getByText('Changes requested')).toBeInTheDocument();
-    expect(within(row).getByText('Failing')).toBeInTheDocument();
+    expect(within(row).getByText('Blocked')).toBeInTheDocument();
+    // The reasons are words, worst first, in one line.
+    expect(within(row).getByText('Changes requested · Checks failing')).toBeInTheDocument();
     expect(within(row).getByText('3 hours ago')).toBeInTheDocument();
   });
 
@@ -271,7 +273,7 @@ describe('PullRequestsPage', () => {
     expect(screen.queryByText('Other')).not.toBeInTheDocument();
   });
 
-  it('filters by bucket, and the status line can jump to the ready ones', async () => {
+  it('filters by bucket from the counted filter', async () => {
     const { github } = client([
       {
         items: [
@@ -283,9 +285,34 @@ describe('PullRequestsPage', () => {
     ]);
     render(<PullRequestsPage github={github} now={() => NOW} />);
     await screen.findByText('Waiting one');
-    await userEvent.click(screen.getByRole('button', { name: 'Show them' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ready 1' }));
     expect(screen.getAllByTestId('pull-row')).toHaveLength(1);
     expect(screen.getByText('Ready one')).toBeInTheDocument();
+  });
+
+  it('offers to bring a branch that fell behind up to date, and only for open work', async () => {
+    const { github } = client([
+      {
+        items: [
+          pull({ id: 'b', number: 5, title: 'Behind', mergeableState: 'behind' }),
+          pull({ id: 'm', number: 6, title: 'Gone', state: 'merged', mergeableState: 'behind' }),
+        ],
+        nextCursor: null,
+      },
+    ]);
+    const health = {
+      whoami: vi.fn(async () => ({ role: 'operator', actor: 'x', mode: 'enforced' })),
+    } as unknown as HealthClient;
+    render(
+      <ToastProvider>
+        <PullRequestsPage github={github} health={health} now={() => NOW} />
+      </ToastProvider>,
+    );
+    await screen.findByText('Behind');
+    expect(
+      screen.getByRole('button', { name: 'Update branch octo/service#5' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /octo\/service#6$/u })).not.toBeInTheDocument();
   });
 
   it('starts over when a filter changes, and pages forward on load more', async () => {

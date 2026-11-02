@@ -24,7 +24,6 @@ import { GithubActionDialog } from './GithubActionDialog.js';
 import { BulkBar, RowActions, subjectKey } from './GithubActionControls.js';
 import { RepositoryFilter } from './GithubShared.js';
 import { PageFrame, PageHeader, Panel, Quiet, Segmented } from './kit.js';
-import { StatusLine } from './StatusLine.js';
 
 /**
  * Open issues across every repository, with the ones nobody has labelled or assigned counted
@@ -96,26 +95,19 @@ export function IssuesPage({
 
   return (
     <PageFrame>
-      <PageHeader
-        title="Issues"
-        subtitle="Open issues across every repository, with the ones nobody has triaged counted first."
-      />
-      <StatusLine
-        data-testid="issues-status"
-        value={String(untriaged)}
-        sentence={
-          untriaged === 1
-            ? 'open issue has no label and no assignee'
-            : 'open issues have no label and no assignee'
-        }
-        tone={untriaged === 0 ? 'good' : 'caution'}
-        action={
-          untriaged > 0 && !untriagedOnly
-            ? { label: 'Show them', onSelect: () => setUntriagedOnly(true) }
-            : undefined
-        }
-      />
-      <div className="flex shrink-0 flex-wrap items-end gap-3">
+      <PageHeader title="Issues" />
+      <div className="flex shrink-0 flex-wrap items-center gap-3">
+        {state === 'open' ? (
+          <Segmented
+            label="Show"
+            options={[
+              { value: 'all', label: 'All' },
+              { value: 'untriaged', label: `No label or assignee ${String(untriaged)}` },
+            ]}
+            value={untriagedOnly ? 'untriaged' : 'all'}
+            onChange={(value) => setUntriagedOnly(value === 'untriaged')}
+          />
+        ) : null}
         <Segmented
           label="State"
           options={STATES}
@@ -125,25 +117,22 @@ export function IssuesPage({
             setUntriagedOnly(false);
           }}
         />
-        <RepositoryFilter
-          id="issues-repository"
-          repos={repos}
-          value={projectId}
-          onChange={setProjectId}
-        />
-        <div className="w-64">
-          <Input
-            aria-label="Search"
-            placeholder="Title, author or repository"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+        <div className="flex flex-wrap items-center gap-3 sm:ms-auto">
+          <RepositoryFilter
+            id="issues-repository"
+            repos={repos}
+            value={projectId}
+            onChange={setProjectId}
           />
+          <div className="w-64">
+            <Input
+              aria-label="Search"
+              placeholder="Title, author or repository"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
         </div>
-        {untriagedOnly ? (
-          <Button variant="outline" onClick={() => setUntriagedOnly(false)}>
-            Show all issues
-          </Button>
-        ) : null}
       </div>
       {operator ? (
         <BulkBar
@@ -152,7 +141,10 @@ export function IssuesPage({
           onClear={() => setSelected(new Set())}
         />
       ) : null}
-      <Panel title="Issues" className="flex-1">
+      <Panel
+        title={`${String(shown.length)} ${shown.length === 1 ? 'issue' : 'issues'}`}
+        className="flex-1"
+      >
         {list.status === 'loading' ? (
           <Quiet role="status">Loading…</Quiet>
         ) : list.status === 'error' ? (

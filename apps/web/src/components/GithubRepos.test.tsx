@@ -83,14 +83,18 @@ describe('ReposPage', () => {
     renderList(p);
     await screen.findByText('Healthy');
     const rows = screen.getAllByTestId('repo-row');
-    expect(within(rows[0] as HTMLElement).getByText(/Grade A/u)).toBeInTheDocument();
-    expect(within(rows[1] as HTMLElement).getByText(/Grade C/u)).toBeInTheDocument();
+    // Worst first: the one with a serious finding, then the healthy one, then the unread one.
+    expect(within(rows[0] as HTMLElement).getByText(/Grade C/u)).toBeInTheDocument();
+    expect(within(rows[0] as HTMLElement).getByText(UNPROTECTED.title)).toBeInTheDocument();
+    expect(within(rows[1] as HTMLElement).getByText(/Grade A/u)).toBeInTheDocument();
     expect(within(rows[2] as HTMLElement).getByText('Not graded')).toBeInTheDocument();
-    const status = screen.getByTestId('repos-status');
-    expect(status).toHaveTextContent('1');
-    expect(status).toHaveTextContent('repository has a critical or high finding');
-    expect(within(rows[0] as HTMLElement).getByText('1 stale')).toBeInTheDocument();
-    expect(within(rows[0] as HTMLElement).getByText('Synced 1 hour ago')).toBeInTheDocument();
+    expect(screen.getByText('1 needs attention')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '3 repositories' })).toBeInTheDocument();
+    expect(within(rows[1] as HTMLElement).getByText('1 stale')).toBeInTheDocument();
+    expect(within(rows[1] as HTMLElement).getByText('Synced 1 hour ago')).toBeInTheDocument();
+    expect(
+      within(rows[1] as HTMLElement).getByRole('link', { name: 'Pull requests in Healthy' }),
+    ).toHaveAttribute('href', '/dashboard/prs?project=p1');
   });
 
   it('offers to turn on sync to an operator only, then enables and queues the first read', async () => {
@@ -172,7 +176,7 @@ describe('RepoDetailPage', () => {
 
     const score = await screen.findByTestId('repo-score');
     expect(score).toHaveTextContent('83');
-    expect(score).toHaveTextContent('health score, grade B');
+    expect(score).toHaveTextContent('Grade B');
     const findings = screen.getAllByTestId('finding');
     expect(findings).toHaveLength(2);
     expect(within(findings[0] as HTMLElement).getByText('High')).toBeInTheDocument();
@@ -190,7 +194,7 @@ describe('RepoDetailPage', () => {
     const unread = pages([repo({ health: { score: null, grade: null, findings: [] } })]);
     const { unmount } = render(<RepoDetailPage projectId="p1" github={unread.github} />);
     expect(await screen.findByTestId('repo-score')).toHaveTextContent(
-      'not graded: this repository has not been read yet',
+      'Not graded: this repository has not been read yet',
     );
     unmount();
     const clean = pages([repo()]);
