@@ -81,7 +81,7 @@ describe('ReposPage', () => {
       }),
     ]);
     renderList(p);
-    await screen.findByText('Healthy');
+    await screen.findByTestId('repo-detail');
     const rows = screen.getAllByTestId('repo-row');
     // Worst first: the one with a serious finding, then the healthy one, then the unread one.
     expect(within(rows[0] as HTMLElement).getByText(/Grade C/u)).toBeInTheDocument();
@@ -90,11 +90,17 @@ describe('ReposPage', () => {
     expect(within(rows[2] as HTMLElement).getByText('Not graded')).toBeInTheDocument();
     expect(screen.getByText('1 needs attention')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '3 repositories' })).toBeInTheDocument();
-    expect(within(rows[1] as HTMLElement).getByText('1 stale')).toBeInTheDocument();
-    expect(within(rows[1] as HTMLElement).getByText('Synced 1 hour ago')).toBeInTheDocument();
-    expect(
-      within(rows[1] as HTMLElement).getByRole('link', { name: 'Pull requests in Healthy' }),
-    ).toHaveAttribute('href', '/dashboard/prs?project=p1');
+
+    // The selected repository is laid out beside the list; selecting another changes it.
+    await userEvent.click((rows[1] as HTMLElement).closest('button')!);
+    const detail = screen.getByTestId('repo-detail');
+    expect(detail).toHaveTextContent('Healthy');
+    expect(detail).toHaveTextContent(/Stale pull requests\s*1/u);
+    expect(within(detail).getByText('Synced 1 hour ago')).toBeInTheDocument();
+    expect(within(detail).getByRole('link', { name: 'Pull requests' })).toHaveAttribute(
+      'href',
+      '/dashboard/prs?project=p1',
+    );
   });
 
   it('offers to turn on sync to an operator only, then enables and queues the first read', async () => {
@@ -130,8 +136,11 @@ describe('ReposPage', () => {
 
   it('keeps an Arabic repository name in its own direction and the repository path left to right', async () => {
     renderList(pages([repo({ name: 'خدمة الدفع', repository: 'octo/payments' })]));
-    expect(await screen.findByText('خدمة الدفع')).toHaveAttribute('dir', 'auto');
-    expect(screen.getByText('octo/payments')).toHaveAttribute('dir', 'ltr');
+    await screen.findByTestId('repo-detail');
+    for (const element of screen.getAllByText('خدمة الدفع'))
+      expect(element).toHaveAttribute('dir', 'auto');
+    for (const element of screen.getAllByText('octo/payments'))
+      expect(element).toHaveAttribute('dir', 'ltr');
   });
 
   it('says so when there are none and when the load fails', async () => {
@@ -299,7 +308,7 @@ describe('repository writes', () => {
   it('protects several repositories only after a preview, and never offers a bulk release', async () => {
     const p = writable('operator', [risky('p1', 'Alpha'), risky('p2', 'Beta')]);
     renderList(p);
-    await screen.findByText('Alpha');
+    await screen.findByTestId('repo-detail');
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Select all repositories' }));
     const bar = screen.getByRole('region', { name: 'Bulk actions' });
     expect(within(bar).getByText('2 selected')).toBeInTheDocument();
@@ -318,5 +327,29 @@ describe('repository writes', () => {
       { action: 'protectBranch', projectId: 'p1' },
       { action: 'protectBranch', projectId: 'p2' },
     ]);
+  });
+  it('selects one repository at a time, clears the selection, and opens an action from the pane', async () => {
+    const p = writable('operator', [risky('p1', 'Alpha'), risky('p2', 'Beta')]);
+    renderList(p);
+    await screen.findByTestId('repo-detail');
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select Beta' }));
+    expect(
+      within(screen.getByRole('region', { name: 'Bulk actions' })).getByText('1 selected'),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select Beta' }));
+    expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select Alpha' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+    expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument();
+
+    // The pane carries the repository's own actions, and the dialog can be walked away from.
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Actions for octo/alpha#0' }),
+      'protectBranch',
+    );
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(p.runActions).not.toHaveBeenCalled();
   });
 });

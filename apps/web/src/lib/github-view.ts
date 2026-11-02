@@ -107,3 +107,74 @@ export function primaryActionOf(pr: GithubPullItem): 'merge' | 'updateBranch' | 
   if (pr.mergeableState === 'behind') return 'updateBranch';
   return null;
 }
+
+export interface Gate {
+  name: 'Review' | 'Checks' | 'Merge';
+  label: string;
+  tone: 'success' | 'danger' | 'warning' | 'outline';
+}
+
+/**
+ * The three things between an open pull request and a merge, each in a word and a tone: has
+ * someone approved it, are the checks green, and will GitHub let it merge. Finished work has
+ * none left to pass, so it has no gates.
+ */
+export function gatesOf(pr: GithubPullItem): Gate[] {
+  if (pr.state !== 'open') return [];
+  const review: Gate =
+    pr.reviewDecision === 'approved'
+      ? { name: 'Review', label: 'Approved', tone: 'success' }
+      : pr.reviewDecision === 'changes_requested'
+        ? { name: 'Review', label: 'Changes requested', tone: 'danger' }
+        : pr.reviewDecision === 'review_required'
+          ? { name: 'Review', label: 'Waiting for a review', tone: 'warning' }
+          : { name: 'Review', label: 'No review required', tone: 'outline' };
+  const checks: Gate =
+    pr.checksState === 'success'
+      ? { name: 'Checks', label: 'Passing', tone: 'success' }
+      : pr.checksState === 'failure'
+        ? { name: 'Checks', label: 'Failing', tone: 'danger' }
+        : pr.checksState === 'pending'
+          ? { name: 'Checks', label: 'Running', tone: 'warning' }
+          : { name: 'Checks', label: 'No checks', tone: 'outline' };
+  return [review, checks, { name: 'Merge', ...mergeGate(pr.mergeableState) }];
+}
+
+function mergeGate(state: string | null): Pick<Gate, 'label' | 'tone'> {
+  switch (state) {
+    case 'clean':
+    case 'has_hooks':
+      return { label: 'Can merge', tone: 'success' };
+    case 'unstable':
+      return { label: 'Can merge, a check that is not required fails', tone: 'warning' };
+    case 'dirty':
+      return { label: 'Conflicts with the base branch', tone: 'danger' };
+    case 'behind':
+      return { label: 'Behind the base branch', tone: 'warning' };
+    case 'blocked':
+      return { label: 'Blocked by the branch rules', tone: 'danger' };
+    default:
+      return { label: 'GitHub has not said yet', tone: 'outline' };
+  }
+}
+
+/**
+ * What to do about a pull request, as one or two sentences: the answer a reader would otherwise
+ * assemble from three badges. It names the gate that is in the way, never a guess.
+ */
+export function adviceOf(pr: GithubPullItem): string {
+  if (pr.state === 'merged') return 'This pull request was merged.';
+  if (pr.state === 'closed') return 'This pull request was closed without being merged.';
+  if (pr.draft) return 'A draft: it is not asking for a review yet.';
+  const bucket = bucketOf(pr);
+  if (bucket === 'ready') return 'Approved, green and mergeable. Nothing is in the way.';
+  const gates = gatesOf(pr);
+  const wanted = bucket === 'blocked' ? 'danger' : 'warning';
+  const sentences = gates
+    .filter((gate) => gate.tone === wanted || (bucket === 'blocked' && gate.tone === 'warning'))
+    .map((gate) => `${gate.name}: ${gate.label.charAt(0).toLowerCase()}${gate.label.slice(1)}.`);
+  if (bucket === 'blocked') return `Needs work before it can merge. ${sentences.join(' ')}`;
+  return sentences.length === 0
+    ? 'GitHub has not said yet whether this can merge.'
+    : `Not ready yet. ${sentences.join(' ')}`;
+}

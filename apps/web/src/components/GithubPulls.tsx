@@ -1,19 +1,5 @@
 import React from 'react';
-import {
-  Badge,
-  Button,
-  CircleAlert,
-  CircleCheck,
-  ExternalLink,
-  Input,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Timer,
-} from '@lupin/ui';
+import { Badge, Button, CircleAlert, CircleCheck, Input, Timer } from '@lupin/ui';
 import type { GithubPullItem } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import { usePagedList } from '../hooks/usePagedList.js';
@@ -24,17 +10,18 @@ import { canOperate } from '../lib/roles.js';
 import {
   bucketOf,
   countBuckets,
-  primaryActionOf,
   sortByAttention,
   statusOf,
   type Bucket,
 } from '../lib/github-view.js';
 import { formatRelative } from '../lib/intl.js';
 import { Bdi, UserText } from './Bidi.js';
-import { PageFrame, PageHeader, Panel, Quiet, Segmented } from './kit.js';
+import { PageFrame, Panel, Quiet, Segmented } from './kit.js';
 import { RepositoryFilter } from './GithubShared.js';
-import { ACTION_LABEL, GithubActionDialog } from './GithubActionDialog.js';
-import { BulkBar, RowActions, subjectKey } from './GithubActionControls.js';
+import { GithubActionDialog } from './GithubActionDialog.js';
+import { BulkBar, subjectKey } from './GithubActionControls.js';
+import { PullDetail } from './GithubPullDetail.js';
+import { MasterDetail } from './MasterDetail.js';
 
 /**
  * Open pull requests across every repository, ranked by what the reader can do with them:
@@ -120,7 +107,7 @@ export function PullRequestsPage({
 
   return (
     <PageFrame>
-      <PageHeader title="Pull requests" />
+      <h1 className="sr-only">Pull requests</h1>
       <div className="flex shrink-0 flex-wrap items-center gap-3">
         {state === 'open' ? (
           <Segmented
@@ -161,15 +148,16 @@ export function PullRequestsPage({
           onClear={() => setSelected(new Set())}
         />
       ) : null}
-      <Panel
-        title={`${String(shown.length)} ${shown.length === 1 ? 'pull request' : 'pull requests'}`}
-        className="flex-1"
-      >
-        {list.status === 'loading' ? (
+      {list.status === 'loading' ? (
+        <Panel title="Pull requests" className="flex-1">
           <Quiet role="status">Loading…</Quiet>
-        ) : list.status === 'error' ? (
+        </Panel>
+      ) : list.status === 'error' ? (
+        <Panel title="Pull requests" className="flex-1">
           <Quiet role="alert">Could not load this: {list.message}</Quiet>
-        ) : shown.length === 0 ? (
+        </Panel>
+      ) : shown.length === 0 ? (
+        <Panel title="0 pull requests" className="flex-1">
           <Quiet>
             {items.length === 0 &&
             repos.status === 'ready' &&
@@ -177,46 +165,23 @@ export function PullRequestsPage({
               ? 'Pull requests appear once a repository is being read. Turn on the sync for a project under Repositories.'
               : 'No pull requests match.'}
           </Quiet>
-        ) : (
-          <div className="min-h-0 flex-1 overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {operator ? (
-                    <TableHead className="w-10">
-                      <input
-                        type="checkbox"
-                        aria-label="Select all shown"
-                        checked={
-                          shown.length > 0 && shown.every((item) => selected.has(subjectKey(item)))
-                        }
-                        onChange={(event) =>
-                          setSelected(
-                            event.target.checked ? new Set(shown.map(subjectKey)) : new Set(),
-                          )
-                        }
-                      />
-                    </TableHead>
-                  ) : null}
-                  <TableHead>Pull request</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-end">Size</TableHead>
-                  {operator ? (
-                    <TableHead>
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  ) : null}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {shown.map((item) => (
-                  <PullRow
-                    key={item.id}
-                    item={item}
-                    now={now()}
-                    operator={operator}
-                    selected={selected.has(subjectKey(item))}
-                    onToggle={() =>
+        </Panel>
+      ) : (
+        <MasterDetail
+          label="pull requests"
+          title={`${String(shown.length)} ${shown.length === 1 ? 'pull request' : 'pull requests'}`}
+          items={shown}
+          getKey={subjectKey}
+          rowPx={64}
+          renderRow={(item) => <PullRowSummary item={item} now={now()} />}
+          renderLead={
+            operator
+              ? (item) => (
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${item.repository}#${String(item.number)}`}
+                    checked={selected.has(subjectKey(item))}
+                    onChange={() =>
                       setSelected((current) => {
                         const next = new Set(current);
                         const key = subjectKey(item);
@@ -225,26 +190,51 @@ export function PullRequestsPage({
                         return next;
                       })
                     }
-                    onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
                   />
-                ))}
-              </TableBody>
-            </Table>
-            {list.moreError === null ? null : (
-              <p role="alert" className="mt-2 text-sm text-danger">
-                Could not load more: {list.moreError}
-              </p>
-            )}
-            {list.hasMore ? (
-              <div className="mt-3">
-                <Button variant="outline" disabled={list.loadingMore} onClick={list.loadMore}>
-                  {list.loadingMore ? 'Loading…' : 'Load more'}
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        )}
-      </Panel>
+                )
+              : undefined
+          }
+          listHeader={
+            operator ? (
+              <label className="mb-2 flex shrink-0 items-center gap-3 ps-3 text-xs text-fg-muted">
+                <input
+                  type="checkbox"
+                  aria-label="Select all shown"
+                  checked={shown.every((item) => selected.has(subjectKey(item)))}
+                  onChange={(event) =>
+                    setSelected(event.target.checked ? new Set(shown.map(subjectKey)) : new Set())
+                  }
+                />
+                Select all shown
+              </label>
+            ) : undefined
+          }
+          footer={
+            <>
+              {list.moreError === null ? null : (
+                <p role="alert" className="mt-2 text-sm text-danger">
+                  Could not load more: {list.moreError}
+                </p>
+              )}
+              {list.hasMore ? (
+                <div className="mt-2">
+                  <Button variant="outline" disabled={list.loadingMore} onClick={list.loadMore}>
+                    {list.loadingMore ? 'Loading…' : 'Load more'}
+                  </Button>
+                </div>
+              ) : null}
+            </>
+          }
+          renderDetail={(item) => (
+            <PullDetail
+              item={item}
+              now={now()}
+              operator={operator}
+              onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
+            />
+          )}
+        />
+      )}
       {pending === null ? null : (
         <GithubActionDialog
           kind={pending.kind}
@@ -262,104 +252,27 @@ export function PullRequestsPage({
   );
 }
 
-function PullRow({
-  item,
-  now,
-  operator,
-  selected,
-  onToggle,
-  onPick,
-}: {
-  item: GithubPullItem;
-  now: Date;
-  operator: boolean;
-  selected: boolean;
-  onToggle: () => void;
-  onPick: (kind: ActionKind, subject: Subject) => void;
-}): React.ReactElement {
-  const subject = subjectOfPull(item);
+/** The one-line summary a row carries: what it is, who and when, and its status at the end. */
+function PullRowSummary({ item, now }: { item: GithubPullItem; now: Date }): React.ReactElement {
   const status = statusOf(item);
-  const primary = primaryActionOf(item);
   const Icon =
     status.bucket in STATUS_ICON ? STATUS_ICON[status.bucket as keyof typeof STATUS_ICON] : null;
   return (
-    <TableRow data-testid="pull-row">
-      {operator ? (
-        <TableCell>
-          <input
-            type="checkbox"
-            aria-label={`Select ${item.repository}#${String(item.number)}`}
-            checked={selected}
-            onChange={onToggle}
-          />
-        </TableCell>
-      ) : null}
-      <TableCell className="max-w-[32rem]">
-        <div className="flex min-w-0 flex-col gap-1">
-          {item.htmlUrl === null ? (
-            <UserText className="truncate font-medium">{item.title}</UserText>
-          ) : (
-            <a
-              href={item.htmlUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Open ${item.repository}#${String(item.number)} on GitHub`}
-              className="inline-flex min-w-0 items-center gap-1 font-medium underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-            >
-              <UserText className="truncate">{item.title}</UserText>
-              <ExternalLink size={12} aria-hidden="true" className="shrink-0 text-fg-muted" />
-            </a>
-          )}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-muted">
-            <Bdi className="font-mono">
-              {item.repository}#{String(item.number)}
-            </Bdi>
-            {item.headBranch === null ? null : (
-              <Bdi className="inline-block max-w-56 truncate align-bottom font-mono">
-                {item.headBranch}
-              </Bdi>
-            )}
-            {item.author === null ? null : <Bdi>{item.author}</Bdi>}
-            <span className="whitespace-nowrap">{formatRelative(item.lastActivityAt, now)}</span>
-            {item.labels.map((label) => (
-              <Badge key={label} variant="secondary">
-                <UserText>{label}</UserText>
-              </Badge>
-            ))}
-          </div>
-        </div>
-      </TableCell>
-      <TableCell>
-        <div className="flex flex-col items-start gap-1">
-          <Badge variant={status.tone} className="gap-1 whitespace-nowrap">
-            {Icon === null ? null : <Icon size={12} aria-hidden="true" />}
-            {status.headline}
-          </Badge>
-          {status.reasons.length === 0 ? null : (
-            <span className="text-xs text-fg-muted">{status.reasons.join(' · ')}</span>
-          )}
-        </div>
-      </TableCell>
-      <TableCell className="whitespace-nowrap text-end tabular-nums">
-        <span className="text-success">+{item.additions}</span>{' '}
-        <span className="text-danger">−{item.deletions}</span>
-      </TableCell>
-      {operator ? (
-        <TableCell>
-          <div className="flex items-center justify-end gap-2">
-            {primary === null ? null : (
-              <Button
-                variant={primary === 'merge' ? 'default' : 'outline'}
-                aria-label={`${ACTION_LABEL[primary]} ${item.repository}#${String(item.number)}`}
-                onClick={() => onPick(primary, subject)}
-              >
-                {ACTION_LABEL[primary]}
-              </Button>
-            )}
-            <RowActions subject={subject} onPick={onPick} />
-          </div>
-        </TableCell>
-      ) : null}
-    </TableRow>
+    <span data-testid="pull-row" className="flex h-full min-w-0 items-center gap-3">
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <UserText className="truncate font-medium">{item.title}</UserText>
+        <span className="flex min-w-0 items-center gap-2 text-xs text-fg-muted">
+          <Bdi className="truncate font-mono">
+            {item.repository}#{String(item.number)}
+          </Bdi>
+          {item.author === null ? null : <Bdi className="truncate">{item.author}</Bdi>}
+          <span className="whitespace-nowrap">{formatRelative(item.lastActivityAt, now)}</span>
+        </span>
+      </span>
+      <Badge variant={status.tone} className="shrink-0 gap-1 whitespace-nowrap">
+        {Icon === null ? null : <Icon size={12} aria-hidden="true" />}
+        {status.headline}
+      </Badge>
+    </span>
   );
 }

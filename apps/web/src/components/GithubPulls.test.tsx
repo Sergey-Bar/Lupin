@@ -66,6 +66,11 @@ function client(pages: Array<{ items: GithubPullItem[]; nextCursor: string | nul
   return { github, listPulls };
 }
 
+/** The row button for a title; the same words also head the detail, so a row is asked for by role. */
+const rowOf = (title: string) =>
+  screen.getAllByTestId('pull-row').find((row) => row.textContent?.includes(title))!;
+const openRow = (title: string) => userEvent.click(rowOf(title).closest('button')!);
+
 describe('PullRequestsPage writes', () => {
   const operatorHealth = (role: 'viewer' | 'operator') =>
     ({
@@ -105,16 +110,19 @@ describe('PullRequestsPage writes', () => {
 
   it('shows a viewer no way to write', async () => {
     writable('viewer');
-    await screen.findByText('First');
+    await screen.findByTestId('pull-detail');
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: /Actions for/u })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Merge octo/u })).not.toBeInTheDocument();
   });
 
-  it('lets an operator act on one pull request from its row, and reloads the list afterwards', async () => {
+  it('lets an operator act on the selected pull request, and reloads the list afterwards', async () => {
     const { runActions, listPulls } = writable('operator');
-    await screen.findByText('First');
-    // The approved one carries its own merge button; the one waiting on review does not.
+    await screen.findByTestId('pull-detail');
+    // The approved one is selected first and carries its own merge button; the other does not.
+    await openRow('Second');
     expect(screen.queryByRole('button', { name: 'Merge octo/service#2' })).not.toBeInTheDocument();
+    await openRow('First');
     await userEvent.click(screen.getByRole('button', { name: 'Merge octo/service#1' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Merge' }));
     await waitFor(() => expect(runActions).toHaveBeenCalled());
@@ -129,7 +137,7 @@ describe('PullRequestsPage writes', () => {
 
   it('offers only the actions that fit what is selected, never a merge, and acts on what is shown', async () => {
     const { runActions } = writable('operator');
-    await screen.findByText('First');
+    await screen.findByTestId('pull-detail');
     await userEvent.click(screen.getByRole('checkbox', { name: 'Select all shown' }));
     const bar = screen.getByRole('region', { name: 'Bulk actions' });
     expect(within(bar).getByText('2 selected')).toBeInTheDocument();
@@ -151,6 +159,31 @@ describe('PullRequestsPage writes', () => {
     await waitFor(() => expect(runActions).toHaveBeenCalled());
     expect(runActions.mock.calls[0]?.[0].actions).toHaveLength(1);
   });
+
+  it('selects one at a time, clears, walks away from a dialog, and narrows by repository', async () => {
+    const { runActions, listPulls } = writable('operator');
+    await screen.findByTestId('pull-detail');
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select octo/service#2' }));
+    expect(
+      within(screen.getByRole('region', { name: 'Bulk actions' })).getByText('1 selected'),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select octo/service#2' }));
+    expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select octo/service#1' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+    expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Merge octo/service#1' }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(runActions).not.toHaveBeenCalled();
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Repository' }), 'p1');
+    await waitFor(() =>
+      expect(listPulls).toHaveBeenLastCalledWith(expect.objectContaining({ projectId: 'p1' })),
+    );
+  });
 });
 
 describe('PullRequestsPage', () => {
@@ -167,36 +200,79 @@ describe('PullRequestsPage', () => {
     ]);
     render(<PullRequestsPage github={github} now={() => NOW} />);
 
-    await screen.findByText('Ready one');
+    await screen.findByTestId('pull-detail');
     const rows = screen.getAllByTestId('pull-row');
-    expect(rows.map((row) => within(row).getByRole('link').textContent)).toEqual([
-      'Ready one',
-      'Blocked one',
-      'Waiting one',
-    ]);
+    expect(rows[0]).toHaveTextContent('Ready one');
+    expect(rows[1]).toHaveTextContent('Blocked one');
+    expect(rows[2]).toHaveTextContent('Waiting one');
     // The count sits on the filter that shows them, and the panel says how many are listed.
     expect(screen.getByRole('button', { name: 'Ready 1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Blocked 1' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '3 pull requests' })).toBeInTheDocument();
     expect(within(rows[0]!).getByText('Ready to merge')).toBeInTheDocument();
+    // The best one is already open beside the list.
+    expect(screen.getByTestId('pull-detail')).toHaveTextContent('Ready one');
   });
 
-  it('shows a verdict as a word as well as a colour, and relative age', async () => {
+  it('lays the selected pull request out in full: the gates, the branch, the people and the size', async () => {
     const { github } = client([
       {
-        items: [pull({ reviewDecision: 'changes_requested', checksState: 'failure' })],
+        items: [
+          pull({
+            title: 'Fix login',
+            reviewDecision: 'changes_requested',
+            checksState: 'failure',
+            mergeableState: 'dirty',
+            requestedReviewers: ['bob'],
+            labels: ['bug'],
+            additions: 30,
+            deletions: 10,
+          }),
+        ],
         nextCursor: null,
       },
     ]);
     render(<PullRequestsPage github={github} now={() => NOW} />);
-    const row = await screen.findByTestId('pull-row');
+    const detail = await screen.findByTestId('pull-detail');
+    const gates = within(detail).getByRole('group', { name: 'Merge readiness' });
+    expect(within(gates).getByText('Changes requested')).toBeInTheDocument();
+    expect(within(gates).getByText('Failing')).toBeInTheDocument();
+    expect(within(gates).getByText('Conflicts with the base branch')).toBeInTheDocument();
+    expect(detail).toHaveTextContent('Needs work before it can merge.');
+    expect(within(detail).getByText('feature/login')).toBeInTheDocument();
+    expect(within(detail).getByText('main')).toBeInTheDocument();
+    expect(within(detail).getByText('bob')).toBeInTheDocument();
+    expect(within(detail).getByText('bug')).toBeInTheDocument();
+    expect(within(detail).getByText('+30')).toBeInTheDocument();
+    expect(within(detail).getByText('−10')).toBeInTheDocument();
+    expect(within(detail).getByText(/^3 days ago/u)).toBeInTheDocument();
+    // A row stays short: its status and its age.
+    const row = screen.getByTestId('pull-row');
     expect(within(row).getByText('Blocked')).toBeInTheDocument();
-    // The reasons are words, worst first, in one line.
-    expect(within(row).getByText('Changes requested · Checks failing')).toBeInTheDocument();
     expect(within(row).getByText('3 hours ago')).toBeInTheDocument();
   });
 
-  it('does not ask a finished pull request for a review or checks it will never get', async () => {
+  it('follows the selection: another row, another detail', async () => {
+    const { github } = client([
+      {
+        items: [pull({ id: 'a', title: 'One' }), pull({ id: 'b', number: 2, title: 'Two' })],
+        nextCursor: null,
+      },
+    ]);
+    render(<PullRequestsPage github={github} now={() => NOW} />);
+    await screen.findByTestId('pull-detail');
+    expect(screen.getByTestId('pull-detail')).toHaveTextContent('One');
+    await openRow('Two');
+    expect(screen.getByTestId('pull-detail')).toHaveTextContent('Two');
+    expect(rowOf('Two').closest('button')).toHaveAttribute('aria-current', 'true');
+    // Focus alone selects, which is how j and k browse.
+    const li = rowOf('One').closest('li')!;
+    li.tabIndex = -1; // as the app's j / k walk does before it focuses a row
+    li.focus();
+    await waitFor(() => expect(screen.getByTestId('pull-detail')).toHaveTextContent('One'));
+  });
+
+  it('asks nothing of a finished pull request, and says what happened to it', async () => {
     const { github } = client([
       {
         items: [
@@ -207,25 +283,17 @@ describe('PullRequestsPage', () => {
             reviewDecision: 'review_required',
             checksState: null,
           }),
-          pull({
-            id: 'a',
-            number: 2,
-            title: 'Merged and approved',
-            state: 'merged',
-            reviewDecision: 'approved',
-            checksState: null,
-          }),
         ],
         nextCursor: null,
       },
     ]);
     render(<PullRequestsPage github={github} now={() => NOW} />);
-    const rows = await screen.findAllByTestId('pull-row');
-    const [merged, approved] = rows as [HTMLElement, HTMLElement];
-    expect(within(merged).queryByText('Needs review')).not.toBeInTheDocument();
-    expect(within(merged).queryByText('No checks')).not.toBeInTheDocument();
-    // What actually happened is still worth showing.
-    expect(within(approved).getByText('Approved')).toBeInTheDocument();
+    const detail = await screen.findByTestId('pull-detail');
+    expect(detail).toHaveTextContent('This pull request was merged.');
+    expect(
+      within(detail).queryByRole('group', { name: 'Merge readiness' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Waiting for a review')).not.toBeInTheDocument();
   });
 
   it('gives Arabic and Hebrew titles their own direction and keeps identifiers left to right', async () => {
@@ -245,13 +313,16 @@ describe('PullRequestsPage', () => {
     ]);
     render(<PullRequestsPage github={github} now={() => NOW} />);
 
-    const arabic = await screen.findByText('إصلاح خطأ تسجيل الدخول');
-    expect(arabic).toHaveAttribute('dir', 'auto');
-    expect(screen.getByText('תיקון באג בהתחברות')).toHaveAttribute('dir', 'auto');
+    await screen.findByTestId('pull-detail');
+    for (const title of ['إصلاح خطأ تسجيل الدخول', 'תיקון באג בהתחברות']) {
+      for (const element of screen.getAllByText(title))
+        expect(element).toHaveAttribute('dir', 'auto');
+    }
     expect(screen.getByText('خطأ')).toHaveAttribute('dir', 'auto');
     // A repository, a number and a branch are identifiers: isolated and left to right.
     expect(screen.getAllByText('octo/service#1')[0]?.tagName).toBe('BDI');
     expect(screen.getAllByText('octo/service#1')[0]).toHaveAttribute('dir', 'ltr');
+    await openRow('תיקון באג בהתחברות');
     expect(screen.getByText('fix/התחברות').tagName).toBe('BDI');
     expect(screen.getByText('fix/התחברות')).toHaveAttribute('dir', 'ltr');
   });
@@ -287,7 +358,21 @@ describe('PullRequestsPage', () => {
     await screen.findByText('Waiting one');
     await userEvent.click(screen.getByRole('button', { name: 'Ready 1' }));
     expect(screen.getAllByTestId('pull-row')).toHaveLength(1);
-    expect(screen.getByText('Ready one')).toBeInTheDocument();
+    expect(screen.getAllByTestId('pull-row')[0]).toHaveTextContent('Ready one');
+  });
+
+  it('pages what does not fit, and says which rows are on the page', async () => {
+    const many = Array.from({ length: 11 }, (_, index) =>
+      pull({ id: `p${String(index)}`, number: index + 1, title: `Change ${String(index + 1)}` }),
+    );
+    const { github } = client([{ items: many, nextCursor: null }]);
+    render(<PullRequestsPage github={github} now={() => NOW} />);
+    await screen.findByTestId('pull-detail');
+    expect(screen.getAllByTestId('pull-row')).toHaveLength(8);
+    expect(screen.getByText('1–8 of 11')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Next pull requests page' }));
+    expect(screen.getAllByTestId('pull-row')).toHaveLength(3);
+    expect(screen.getByText('9–11 of 11')).toBeInTheDocument();
   });
 
   it('offers to bring a branch that fell behind up to date, and only for open work', async () => {
@@ -308,11 +393,12 @@ describe('PullRequestsPage', () => {
         <PullRequestsPage github={github} health={health} now={() => NOW} />
       </ToastProvider>,
     );
-    await screen.findByText('Behind');
+    await screen.findByTestId('pull-detail');
     expect(
       screen.getByRole('button', { name: 'Update branch octo/service#5' }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /octo\/service#6$/u })).not.toBeInTheDocument();
+    await openRow('Gone');
+    expect(screen.queryByRole('button', { name: /Update branch/u })).not.toBeInTheDocument();
   });
 
   it('starts over when a filter changes, and pages forward on load more', async () => {
@@ -325,14 +411,16 @@ describe('PullRequestsPage', () => {
       },
     ]);
     render(<PullRequestsPage github={github} now={() => NOW} />);
-    await screen.findByText('First page');
+    await screen.findByTestId('pull-detail');
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
     await screen.findByText('Second page');
-    expect(screen.getByText('First page')).toBeInTheDocument();
+    expect(rowOf('First page')).toBeInTheDocument();
     expect(listPulls).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: 'c1' }));
 
     await userEvent.click(screen.getByRole('button', { name: 'Merged' }));
-    await screen.findByText('Merged one');
+    await waitFor(() =>
+      expect(screen.getAllByTestId('pull-row')[0]).toHaveTextContent('Merged one'),
+    );
     expect(screen.queryByText('First page')).not.toBeInTheDocument();
     expect(listPulls).toHaveBeenLastCalledWith(
       expect.objectContaining({ state: 'merged', cursor: undefined }),

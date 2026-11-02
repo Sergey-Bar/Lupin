@@ -1,16 +1,5 @@
 import React from 'react';
-import {
-  Badge,
-  Button,
-  ExternalLink,
-  Input,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@lupin/ui';
+import { Badge, Button, Input } from '@lupin/ui';
 import type { GithubIssueItem } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import { usePagedList } from '../hooks/usePagedList.js';
@@ -21,9 +10,11 @@ import { canOperate } from '../lib/roles.js';
 import { formatRelative } from '../lib/intl.js';
 import { Bdi, UserText } from './Bidi.js';
 import { GithubActionDialog } from './GithubActionDialog.js';
-import { BulkBar, RowActions, subjectKey } from './GithubActionControls.js';
+import { IssueDetail } from './GithubIssueDetail.js';
+import { MasterDetail } from './MasterDetail.js';
+import { BulkBar, subjectKey } from './GithubActionControls.js';
 import { RepositoryFilter } from './GithubShared.js';
-import { PageFrame, PageHeader, Panel, Quiet, Segmented } from './kit.js';
+import { PageFrame, Panel, Quiet, Segmented } from './kit.js';
 
 /**
  * Open issues across every repository, with the ones nobody has labelled or assigned counted
@@ -95,7 +86,7 @@ export function IssuesPage({
 
   return (
     <PageFrame>
-      <PageHeader title="Issues" />
+      <h1 className="sr-only">Issues</h1>
       <div className="flex shrink-0 flex-wrap items-center gap-3">
         {state === 'open' ? (
           <Segmented
@@ -141,15 +132,16 @@ export function IssuesPage({
           onClear={() => setSelected(new Set())}
         />
       ) : null}
-      <Panel
-        title={`${String(shown.length)} ${shown.length === 1 ? 'issue' : 'issues'}`}
-        className="flex-1"
-      >
-        {list.status === 'loading' ? (
+      {list.status === 'loading' ? (
+        <Panel title="Issues" className="flex-1">
           <Quiet role="status">Loading…</Quiet>
-        ) : list.status === 'error' ? (
+        </Panel>
+      ) : list.status === 'error' ? (
+        <Panel title="Issues" className="flex-1">
           <Quiet role="alert">Could not load this: {list.message}</Quiet>
-        ) : shown.length === 0 ? (
+        </Panel>
+      ) : shown.length === 0 ? (
+        <Panel title="0 issues" className="flex-1">
           <Quiet>
             {items.length === 0 &&
             repos.status === 'ready' &&
@@ -157,48 +149,23 @@ export function IssuesPage({
               ? 'Issues appear once a repository is being read. Turn on the sync for a project under Repositories.'
               : 'No issues match.'}
           </Quiet>
-        ) : (
-          <div className="min-h-0 flex-1 overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {operator ? (
-                    <TableHead className="w-10">
-                      <input
-                        type="checkbox"
-                        aria-label="Select all shown"
-                        checked={
-                          shown.length > 0 &&
-                          shown.every((issue) => selected.has(subjectKey(issue)))
-                        }
-                        onChange={(event) =>
-                          setSelected(
-                            event.target.checked ? new Set(shown.map(subjectKey)) : new Set(),
-                          )
-                        }
-                      />
-                    </TableHead>
-                  ) : null}
-                  <TableHead>Issue</TableHead>
-                  <TableHead>Assignees</TableHead>
-                  <TableHead className="text-end">Comments</TableHead>
-                  <TableHead>Updated</TableHead>
-                  {operator ? (
-                    <TableHead>
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  ) : null}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {shown.map((issue) => (
-                  <IssueRow
-                    key={issue.id}
-                    issue={issue}
-                    now={now()}
-                    operator={operator}
-                    selected={selected.has(subjectKey(issue))}
-                    onToggle={() =>
+        </Panel>
+      ) : (
+        <MasterDetail
+          label="issues"
+          title={`${String(shown.length)} ${shown.length === 1 ? 'issue' : 'issues'}`}
+          items={shown}
+          getKey={subjectKey}
+          rowPx={64}
+          renderRow={(issue) => <IssueRowSummary issue={issue} now={now()} />}
+          renderLead={
+            operator
+              ? (issue) => (
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${issue.repository}#${String(issue.number)}`}
+                    checked={selected.has(subjectKey(issue))}
+                    onChange={() =>
                       setSelected((current) => {
                         const next = new Set(current);
                         const key = subjectKey(issue);
@@ -207,26 +174,51 @@ export function IssuesPage({
                         return next;
                       })
                     }
-                    onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
                   />
-                ))}
-              </TableBody>
-            </Table>
-            {list.moreError === null ? null : (
-              <p role="alert" className="mt-2 text-sm text-danger">
-                Could not load more: {list.moreError}
-              </p>
-            )}
-            {list.hasMore ? (
-              <div className="mt-3">
-                <Button variant="outline" disabled={list.loadingMore} onClick={list.loadMore}>
-                  {list.loadingMore ? 'Loading…' : 'Load more'}
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        )}
-      </Panel>
+                )
+              : undefined
+          }
+          listHeader={
+            operator ? (
+              <label className="mb-2 flex shrink-0 items-center gap-3 ps-3 text-xs text-fg-muted">
+                <input
+                  type="checkbox"
+                  aria-label="Select all shown"
+                  checked={shown.every((issue) => selected.has(subjectKey(issue)))}
+                  onChange={(event) =>
+                    setSelected(event.target.checked ? new Set(shown.map(subjectKey)) : new Set())
+                  }
+                />
+                Select all shown
+              </label>
+            ) : undefined
+          }
+          footer={
+            <>
+              {list.moreError === null ? null : (
+                <p role="alert" className="mt-2 text-sm text-danger">
+                  Could not load more: {list.moreError}
+                </p>
+              )}
+              {list.hasMore ? (
+                <div className="mt-2">
+                  <Button variant="outline" disabled={list.loadingMore} onClick={list.loadMore}>
+                    {list.loadingMore ? 'Loading…' : 'Load more'}
+                  </Button>
+                </div>
+              ) : null}
+            </>
+          }
+          renderDetail={(issue) => (
+            <IssueDetail
+              issue={issue}
+              now={now()}
+              operator={operator}
+              onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
+            />
+          )}
+        />
+      )}
       {pending === null ? null : (
         <GithubActionDialog
           kind={pending.kind}
@@ -244,82 +236,35 @@ export function IssuesPage({
   );
 }
 
-function IssueRow({
+/** The one-line summary a row carries: the title, who and when, and whether anyone owns it. */
+function IssueRowSummary({
   issue,
   now,
-  operator,
-  selected,
-  onToggle,
-  onPick,
 }: {
   issue: GithubIssueItem;
   now: Date;
-  operator: boolean;
-  selected: boolean;
-  onToggle: () => void;
-  onPick: (kind: ActionKind, subject: Subject) => void;
 }): React.ReactElement {
   return (
-    <TableRow data-testid="issue-row">
-      {operator ? (
-        <TableCell>
-          <input
-            type="checkbox"
-            aria-label={`Select ${issue.repository}#${String(issue.number)}`}
-            checked={selected}
-            onChange={onToggle}
-          />
-        </TableCell>
+    <span data-testid="issue-row" className="flex h-full min-w-0 items-center gap-3">
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <UserText className="truncate font-medium">{issue.title}</UserText>
+        <span className="flex min-w-0 items-center gap-2 text-xs text-fg-muted">
+          <Bdi className="truncate font-mono">
+            {issue.repository}#{String(issue.number)}
+          </Bdi>
+          {issue.author === null ? null : <Bdi className="truncate">{issue.author}</Bdi>}
+          <span className="whitespace-nowrap">{formatRelative(issue.lastActivityAt, now)}</span>
+        </span>
+      </span>
+      {issue.state === 'closed' ? (
+        <Badge variant="outline" className="shrink-0">
+          Closed
+        </Badge>
+      ) : issue.labels.length === 0 && issue.assignees.length === 0 ? (
+        <Badge variant="warning" className="shrink-0 whitespace-nowrap">
+          Untriaged
+        </Badge>
       ) : null}
-      <TableCell className="max-w-[28rem]">
-        <div className="flex min-w-0 flex-col gap-1">
-          {issue.htmlUrl === null ? (
-            <UserText className="truncate font-medium">{issue.title}</UserText>
-          ) : (
-            <a
-              href={issue.htmlUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Open ${issue.repository}#${String(issue.number)} on GitHub`}
-              className="inline-flex min-w-0 items-center gap-1 font-medium underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-            >
-              <UserText className="truncate">{issue.title}</UserText>
-              <ExternalLink size={12} aria-hidden="true" className="shrink-0 text-fg-muted" />
-            </a>
-          )}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-muted">
-            <Bdi className="font-mono">
-              {issue.repository}#{String(issue.number)}
-            </Bdi>
-            {issue.state === 'closed' ? <Badge variant="outline">Closed</Badge> : null}
-            {issue.labels.map((label) => (
-              <Badge key={label} variant="secondary">
-                <UserText>{label}</UserText>
-              </Badge>
-            ))}
-          </div>
-        </div>
-      </TableCell>
-      <TableCell>
-        {issue.assignees.length === 0 ? (
-          <span className="text-fg-muted">Unassigned</span>
-        ) : (
-          <span className="flex flex-wrap gap-x-2">
-            {issue.assignees.map((login) => (
-              <Bdi key={login}>{login}</Bdi>
-            ))}
-          </span>
-        )}
-      </TableCell>
-      <TableCell className="text-end tabular-nums">{issue.commentCount}</TableCell>
-      <TableCell className="whitespace-nowrap text-fg-muted">
-        {formatRelative(issue.lastActivityAt, now)}
-      </TableCell>
-      {operator ? (
-        <TableCell>
-          <RowActions subject={subjectOfIssue(issue)} onPick={onPick} />
-        </TableCell>
-      ) : null}
-    </TableRow>
+    </span>
   );
 }

@@ -6,13 +6,23 @@ outline: deep
 
 # GitHub command center
 
-Three pages under **GitHub** in the navigation:
+Three pages under **GitHub** in the navigation. Each is one screen with nothing to scroll: a list on
+the left, and everything known about the selected row on the right.
 
 - **Pull requests** lists open pull requests across every repository, ranked by what you can do
-  with them: what can be merged first, then what is stuck, then what is waiting.
-- **Issues** lists open issues and counts the ones nobody has labelled or assigned.
-- **Repositories** grades each repository, and **Details** shows every finding with the evidence
-  behind it.
+  with them: what can be merged first, then what is stuck, then what is waiting. The counts sit on
+  the filters (`Ready 2`, `Blocked 1`). The selected pull request shows its three gates (review,
+  checks, merge) in words, a sentence saying what stands in the way, its branches, people, labels
+  and size, and a **Merge** or **Update branch** button when one applies.
+- **Issues** lists open issues, with the ones nobody has labelled or assigned marked and counted on
+  the filter. The selected issue shows who owns it, its labels, comments and age.
+- **Repositories** grades each repository, worst first. The selected repository shows every finding
+  with the evidence behind it, a link to the list the finding counts, what is open, and the sync
+  state. **Details** opens the same on a page of its own.
+
+A list holds as many rows as fit the window and pages the rest (`1–8 of 11`). `j` and `k` move
+through the rows, the detail follows, and `Enter` selects. On a narrow screen a row opens its
+detail in place of the list, with a back button.
 
 Reading costs no GitHub requests. The pages read the database that the [delivery
 sync](/guide/delivery-performance) fills, so they are as fresh as the last sync (the repository

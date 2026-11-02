@@ -161,8 +161,12 @@ const NON_COLOR_ARGUMENTS = new Set([
   'e',
 ]);
 
-/** Argument shapes that are widths, not colours: `outline-offset-2`, `z-10`. */
-const NON_COLOR_SHAPES = [/^offset-\d+$/, /^z-\d+$/, /^gap-\d+$/];
+/**
+ * Argument shapes that are widths, not colours: outline-offset-2, z-10, and a side with a width such
+ * as border-s-2 or last:border-b-0. The side pattern is the eight sides and a number, so
+ * border-danger and border-s-surface still have to name a colour.
+ */
+const NON_COLOR_SHAPES = [/^offset-\d+$/, /^z-\d+$/, /^gap-\d+$/, /^(?:t|b|l|r|x|y|s|e)-\d+$/];
 
 /**
  * `text-` arguments that are `text-wrap` values rather than colours.

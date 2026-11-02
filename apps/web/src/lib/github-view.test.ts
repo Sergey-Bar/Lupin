@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { GithubPullItem } from '@lupin/shared-contracts';
 import {
+  adviceOf,
   bucketOf,
   countBuckets,
+  gatesOf,
   primaryActionOf,
   sortByAttention,
   statusOf,
@@ -167,5 +169,66 @@ describe('primaryActionOf', () => {
     expect(primaryActionOf(pull({ checksState: 'failure' }))).toBeNull();
     expect(primaryActionOf(pull({ draft: true, mergeableState: 'behind' }))).toBeNull();
     expect(primaryActionOf(pull({ state: 'merged' }))).toBeNull();
+  });
+});
+
+describe('gatesOf', () => {
+  it('names the review, the checks and the merge in words and tones', () => {
+    expect(gatesOf(pull({ reviewDecision: 'approved' }))).toEqual([
+      { name: 'Review', label: 'Approved', tone: 'success' },
+      { name: 'Checks', label: 'Passing', tone: 'success' },
+      { name: 'Merge', label: 'Can merge', tone: 'success' },
+    ]);
+  });
+
+  it('says what stands in the way', () => {
+    const gates = gatesOf(
+      pull({
+        reviewDecision: 'changes_requested',
+        checksState: 'failure',
+        mergeableState: 'dirty',
+      }),
+    );
+    expect(gates.map((gate) => gate.tone)).toEqual(['danger', 'danger', 'danger']);
+    expect(gates[2]?.label).toBe('Conflicts with the base branch');
+  });
+
+  it('does not pretend to know what GitHub has not said, and has no gates once finished', () => {
+    expect(
+      gatesOf(pull({ mergeableState: null, checksState: null, reviewDecision: null })),
+    ).toEqual([
+      { name: 'Review', label: 'No review required', tone: 'outline' },
+      { name: 'Checks', label: 'No checks', tone: 'outline' },
+      { name: 'Merge', label: 'GitHub has not said yet', tone: 'outline' },
+    ]);
+    expect(gatesOf(pull({ state: 'merged' }))).toEqual([]);
+    expect(gatesOf(pull({ mergeableState: 'behind' }))[2]?.tone).toBe('warning');
+    expect(gatesOf(pull({ mergeableState: 'blocked' }))[2]?.tone).toBe('danger');
+    expect(gatesOf(pull({ mergeableState: 'unstable' }))[2]?.tone).toBe('warning');
+  });
+});
+
+describe('adviceOf', () => {
+  it('says to merge what is ready and names the gate in the way of what is not', () => {
+    expect(adviceOf(pull({ reviewDecision: 'approved' }))).toBe(
+      'Approved, green and mergeable. Nothing is in the way.',
+    );
+    expect(adviceOf(pull({ checksState: 'failure', mergeableState: 'behind' }))).toBe(
+      'Needs work before it can merge. Review: waiting for a review. Checks: failing. Merge: behind the base branch.',
+    );
+    expect(adviceOf(pull({ reviewDecision: 'approved', mergeableState: 'behind' }))).toBe(
+      'Not ready yet. Merge: behind the base branch.',
+    );
+  });
+
+  it('does not guess when GitHub has not said, and has nothing to ask of finished work', () => {
+    expect(
+      adviceOf(pull({ reviewDecision: 'approved', mergeableState: null, checksState: null })),
+    ).toBe('GitHub has not said yet whether this can merge.');
+    expect(adviceOf(pull({ state: 'merged' }))).toBe('This pull request was merged.');
+    expect(adviceOf(pull({ state: 'closed' }))).toBe(
+      'This pull request was closed without being merged.',
+    );
+    expect(adviceOf(pull({ draft: true }))).toBe('A draft: it is not asking for a review yet.');
   });
 });
