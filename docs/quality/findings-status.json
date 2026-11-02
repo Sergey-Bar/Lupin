@@ -302,6 +302,9 @@
     "MNT-165": "fixed",
     "MNT-166": "fixed",
     "MNT-167": "fixed",
-    "MNT-168": "fixed"
+    "MNT-168": "fixed",
+    "UX-THEME-1": "fixed",
+    "UX-LOADING-1": "fixed",
+    "UX-LAYOUT-1": "fixed"
   }
 }
