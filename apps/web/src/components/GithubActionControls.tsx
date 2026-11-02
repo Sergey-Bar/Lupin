@@ -35,7 +35,7 @@ export function RowActions({
       onChange={(event) => {
         if (event.target.value !== '') onPick(event.target.value as ActionKind, subject);
       }}
-      className="h-9 rounded-md border border-border-strong bg-transparent px-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+      className="h-9 w-24 rounded-md border border-border-strong bg-transparent px-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
     >
       <option value="">Actions</option>
       {actionsFor(subject).map((kind) => (

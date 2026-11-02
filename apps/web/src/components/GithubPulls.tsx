@@ -301,7 +301,7 @@ function PullRow({
           />
         </TableCell>
       ) : null}
-      <TableCell className="max-w-[28rem]">
+      <TableCell className="max-w-[24rem]">
         <div className="flex min-w-0 flex-col gap-1">
           {item.htmlUrl === null ? (
             <UserText className="truncate font-medium">{item.title}</UserText>
