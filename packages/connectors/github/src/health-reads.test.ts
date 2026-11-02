@@ -74,7 +74,8 @@ describe('where each read goes', () => {
     ['getBranchProtection', { branch: 'main' }, `${B}/branches/main/protection`],
     ['getBranchProtection', { branch: 'release/1.0' }, `${B}/branches/release%2F1.0/protection`],
     ['listCheckRuns', { ref: 'abc123' }, `${B}/commits/abc123/check-runs?${PAGING}`],
-    ['listDependabotAlerts', {}, `${B}/dependabot/alerts?state=open&${PAGING}`],
+    // Dependabot alerts are cursor-paged: GitHub answers 400 to a `page` parameter (found live).
+    ['listDependabotAlerts', {}, `${B}/dependabot/alerts?state=open&per_page=100`],
     ['listCodeScanningAlerts', {}, `${B}/code-scanning/alerts?state=open&${PAGING}`],
     ['listSecretScanningAlerts', {}, `${B}/secret-scanning/alerts?state=open&${PAGING}`],
     ['getCommunityProfile', {}, `${B}/community/profile`],
@@ -177,5 +178,38 @@ describe('a feed the token may not be allowed to see', () => {
     expect((await run('listSecretScanningAlerts')).status).toBe('error');
     stub([{ status: 404 }]);
     expect((await run('getPullRequest', { number: '9' })).status).toBe('error');
+  });
+});
+
+describe('a cursor-paged feed (Dependabot alerts)', () => {
+  it('never sends a page number, because GitHub rejects it', async () => {
+    const urls = stub([{}]);
+    await run('listDependabotAlerts', { page: 3, perPage: 50 });
+    expect(urls[0]).toBe(`${B}/dependabot/alerts?state=open&per_page=50`);
+    expect(new URL(urls[0] as string).searchParams.has('page')).toBe(false);
+  });
+
+  it('still says there is more to read when GitHub links a next cursor', async () => {
+    const cursor = `${B}/dependabot/alerts?state=open&per_page=1&after=Y3Vyc29y`;
+    stub([{ body: [{ number: 1 }], headers: { link: `<${cursor}>; rel="next"` } }]);
+    const result = await run('listDependabotAlerts', { maxPages: 1 });
+    expect(result.data).toMatchObject({ items: [{ number: 1 }], pages: 1 });
+    // A number would be meaningless here; it is only the signal that the list was cut short.
+    expect((result.data as { nextPage: number | null }).nextPage).not.toBeNull();
+  });
+
+  it('follows the cursor link when asked for more pages', async () => {
+    const cursor = `${B}/dependabot/alerts?state=open&per_page=1&after=Y3Vyc29y`;
+    const urls = stub([
+      { body: [{ number: 1 }], headers: { link: `<${cursor}>; rel="next"` } },
+      { body: [{ number: 2 }] },
+    ]);
+    const result = await run('listDependabotAlerts', { maxPages: 2 });
+    expect(urls[1]).toBe(cursor);
+    expect(result.data).toEqual({
+      items: [{ number: 1 }, { number: 2 }],
+      pages: 2,
+      nextPage: null,
+    });
   });
 });

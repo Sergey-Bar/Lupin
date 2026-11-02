@@ -106,6 +106,12 @@ interface GitHubList {
   readonly orderedBy?: string;
   /** Items carrying this key are dropped: `/issues` lists pull requests, marked `pull_request`. */
   readonly exclude?: string;
+  /**
+   * The feed is paged by an opaque cursor in the `Link` header, not by number. GitHub answers
+   * 400 to a `page` parameter on these (Dependabot alerts: found live), so none is sent, and
+   * `nextPage` is only a signal that the walk stopped before the end.
+   */
+  readonly cursorPaged?: true;
 }
 
 interface ListParam {
@@ -319,7 +325,7 @@ const OPERATIONS: Record<string, GitHubOperation> = {
     method: 'GET',
     fields: [],
     bodyFields: [],
-    list: { query: { state: 'open' } },
+    list: { query: { state: 'open' }, cursorPaged: true },
     soft: true,
   },
   listCodeScanningAlerts: {
@@ -885,6 +891,7 @@ interface ListPlan {
   itemsKey: string | undefined;
   exclude: string | undefined;
   soft: boolean;
+  cursorPaged: boolean;
 }
 
 /** The first URL of a list and how far to walk it, every input refused before a request. */
@@ -898,7 +905,9 @@ function listPlan(
   const query = new URLSearchParams({
     ...list.query,
     per_page: String(boundedInteger(input, 'perPage', 1, 100, 100)),
-    page: String(boundedInteger(input, 'page', 1, 100_000, 1)),
+    ...(list.cursorPaged === true
+      ? {}
+      : { page: String(boundedInteger(input, 'page', 1, 100_000, 1)) }),
   });
   for (const param of list.params ?? []) {
     if (param.kind === 'timestamp') {
@@ -920,6 +929,7 @@ function listPlan(
     itemsKey: list.itemsKey,
     exclude: list.exclude,
     soft: operation.soft === true,
+    cursorPaged: list.cursorPaged === true,
   };
 }
 
@@ -963,7 +973,8 @@ async function readList(
   let rateLimit: RateLimit | undefined;
   while (cursor !== null) {
     if (pages >= plan.maxPages) {
-      nextPage = pageOf(cursor);
+      // A cursor link carries no page number; the walk still stopped early, which is the point.
+      nextPage = pageOf(cursor) ?? (plan.cursorPaged ? pages + 1 : null);
       break;
     }
     const url: string = cursor;
