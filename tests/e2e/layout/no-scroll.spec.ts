@@ -116,46 +116,70 @@ interface Overflow {
 /** Read the four overflow numbers from the page, and name what causes them. */
 async function measure(page: Page): Promise<Overflow> {
   return page.evaluate((): Overflow => {
-    const main = document.querySelector('main');
+    const reach = (element: Element): number => {
+      const box = element.getBoundingClientRect();
+      return Math.max(box.bottom - window.innerHeight, box.right - window.innerWidth);
+    };
+    const style = (element: Element): CSSStyleDeclaration => getComputedStyle(element);
+
+    /** An ancestor that clips or scrolls its content hides what overflows it. */
+    const hides = (ancestor: Element, element: Element): boolean => {
+      if (
+        !/(hidden|auto|scroll|clip)/.test(
+          `${style(ancestor).overflowY} ${style(ancestor).overflowX}`,
+        )
+      ) {
+        return false;
+      }
+      const box = ancestor.getBoundingClientRect();
+      const own = element.getBoundingClientRect();
+      return own.bottom > box.bottom + 1 || own.right > box.right + 1;
+    };
+    const clipped = (element: Element): boolean => {
+      for (let node = element.parentElement; node !== null; node = node.parentElement) {
+        if (hides(node, element)) return true;
+      }
+      return false;
+    };
+
+    /** Absolute boxes escape a clipping ancestor that is not their containing block. */
+    const visiblyOverflows = (element: Element): boolean => {
+      const { position } = style(element);
+      if (position === 'fixed' || element.getBoundingClientRect().height <= 0) return false;
+      if (reach(element) <= 1) return false;
+      return position === 'absolute' || !clipped(element);
+    };
+
+    /** `tag[testid].class.class`, without a branch: an empty piece is simply an empty string. */
+    const describe = (element: Element): string => {
+      const id = (element.getAttribute('data-testid') ?? '').replace(/^(.+)$/u, '[$1]');
+      const classes = (element.getAttribute('class') ?? '')
+        .split(/\s+/u)
+        .filter(Boolean)
+        .slice(0, 4)
+        .map((name) => `.${name}`)
+        .join('');
+      return `${element.tagName.toLowerCase()}${id}${classes}`;
+    };
+
     const root = document.documentElement;
+    // `main` is absent only when the shell never mounted, which `expectRendered` has already refused.
+    const main = document.querySelector('main') ?? root;
     const numbers = {
-      mainY: main === null ? 0 : main.scrollHeight - main.clientHeight,
-      mainX: main === null ? 0 : main.scrollWidth - main.clientWidth,
+      mainY: main.scrollHeight - main.clientHeight,
+      mainX: main.scrollWidth - main.clientWidth,
       documentY: root.scrollHeight - window.innerHeight,
       documentX: root.scrollWidth - window.innerWidth,
     };
     if (Math.max(...Object.values(numbers)) <= 1) return { ...numbers, culprits: [] };
 
-    /** An ancestor that clips or scrolls its content hides what overflows it. */
-    const clipped = (element: Element): boolean => {
-      for (let node = element.parentElement; node !== null; node = node.parentElement) {
-        const style = getComputedStyle(node);
-        if (/(hidden|auto|scroll|clip)/.test(`${style.overflowY} ${style.overflowX}`)) {
-          const box = node.getBoundingClientRect();
-          const own = element.getBoundingClientRect();
-          if (own.bottom > box.bottom + 1 || own.right > box.right + 1) return true;
-        }
-      }
-      return false;
-    };
-    const describe = (element: Element): string => {
-      const id = element.getAttribute('data-testid');
-      const classes = (element.getAttribute('class') ?? '').split(/\s+/).slice(0, 4).join('.');
-      return `${element.tagName.toLowerCase()}${id === null ? '' : `[${id}]`}${classes === '' ? '' : `.${classes}`}`;
-    };
-    const reaching = [...document.body.querySelectorAll('*')]
-      .map((element) => ({ element, box: element.getBoundingClientRect() }))
-      .filter(
-        ({ element, box }) =>
-          box.height > 0 &&
-          (box.bottom > window.innerHeight + 1 || box.right > window.innerWidth + 1) &&
-          (!clipped(element) || getComputedStyle(element).position === 'absolute') &&
-          getComputedStyle(element).position !== 'fixed',
-      )
-      .sort((a, b) => b.box.bottom - a.box.bottom)
+    const culprits = [...document.body.querySelectorAll('*')]
+      .filter(visiblyOverflows)
+      .map((element) => ({ element, bottom: element.getBoundingClientRect().bottom }))
+      .sort((a, b) => b.bottom - a.bottom)
       .slice(0, 3)
-      .map(({ element, box }) => `${describe(element)} (bottom ${String(Math.round(box.bottom))})`);
-    return { ...numbers, culprits: reaching };
+      .map(({ element, bottom }) => `${describe(element)} (bottom ${String(Math.round(bottom))})`);
+    return { ...numbers, culprits };
   });
 }
 
@@ -194,10 +218,7 @@ let seeded = false;
  * The project is registered through the endpoint the onboarding screen points a reader at,
  * and a `409` is not a failure: `reset-queue.mjs` deliberately leaves `projects` alone.
  */
-async function seedWorkspace(request: APIRequestContext): Promise<void> {
-  if (seeded) return;
-  seeded = true;
-
+async function registerProject(request: APIRequestContext): Promise<void> {
   const registered = await request.post(`${API_BASE}/api/v1/projects`, {
     headers: API_AUTH_HEADERS,
     data: {
@@ -210,39 +231,42 @@ async function seedWorkspace(request: APIRequestContext): Promise<void> {
     [201, 409],
     `the audit needs a project to render a dashboard: ${String(registered.status())}`,
   ).toContain(registered.status());
-
-  for (let index = 0; index < 30; index += 1) {
-    const failed = index % 4 === 0;
-    const runId = uniqueRunId();
-    await postReporterEvent(request, {
-      type: 'run:start',
-      runId,
-      payload: { total: 3, branch: index % 3 === 0 ? 'main' : `feat/audit-${String(index)}` },
-    });
-    for (const [offset, status] of (
-      ['passed', failed ? 'failed' : 'passed', 'passed'] as const
-    ).entries()) {
-      await reportTest(request, runId, {
-        testId: `${runId}-${String(offset)}`,
-        title: `audit fixture test ${String(index)}.${String(offset)}`,
-        file: `audit-${String(index % 5)}.spec.ts`,
-        status,
-        durationMs: 40 + index,
-      });
-    }
-    await postReporterEvent(request, {
-      type: 'run:end',
-      runId,
-      payload: {
-        status: failed ? 'failed' : 'passed',
-        passed: failed ? 2 : 3,
-        failed: failed ? 1 : 0,
-        branch: 'main',
-      },
-    });
-  }
 }
 
+/** One run of three tests, every fourth of which fails one, reported the way a reporter does. */
+async function reportRun(request: APIRequestContext, index: number): Promise<void> {
+  const failed = index % 4 === 0;
+  const outcomes = ['passed', failed ? 'failed' : 'passed', 'passed'] as const;
+  const runId = uniqueRunId();
+  const branch = index % 3 === 0 ? 'main' : `feat/audit-${String(index)}`;
+  await postReporterEvent(request, { type: 'run:start', runId, payload: { total: 3, branch } });
+  for (const [offset, status] of outcomes.entries()) {
+    await reportTest(request, runId, {
+      testId: `${runId}-${String(offset)}`,
+      title: `audit fixture test ${String(index)}.${String(offset)}`,
+      file: `audit-${String(index % 5)}.spec.ts`,
+      status,
+      durationMs: 40 + index,
+    });
+  }
+  await postReporterEvent(request, {
+    type: 'run:end',
+    runId,
+    payload: {
+      status: failed ? 'failed' : 'passed',
+      passed: failed ? 2 : 3,
+      failed: failed ? 1 : 0,
+      branch: 'main',
+    },
+  });
+}
+
+async function seedWorkspace(request: APIRequestContext): Promise<void> {
+  if (seeded) return;
+  seeded = true;
+  await registerProject(request);
+  for (let index = 0; index < 30; index += 1) await reportRun(request, index);
+}
 test.describe('no-scroll contract at lg and above', () => {
   test.beforeAll(async ({ request }) => {
     await seedWorkspace(request);
