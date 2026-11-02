@@ -14,6 +14,8 @@ interface Reply {
   status?: number;
   body?: unknown;
   headers?: Record<string, string>;
+  /** The body is not JSON, as when a proxy answers with an HTML error page. */
+  unreadable?: boolean;
 }
 
 function stub(replies: Reply[]) {
@@ -28,7 +30,10 @@ function stub(replies: Reply[]) {
       ok: status >= 200 && status < 300,
       status,
       headers: new Headers(reply.headers ?? {}),
-      json: () => Promise.resolve(reply.body ?? []),
+      json: () =>
+        reply.unreadable === true
+          ? Promise.reject(new SyntaxError('Unexpected token < in JSON at position 0'))
+          : Promise.resolve(reply.body ?? []),
     });
   });
   return urls;
@@ -159,6 +164,35 @@ describe('a feed the token may not be allowed to see', () => {
       status: 'ok',
       data: { unavailable: 'not_found', message: 'Branch not protected' },
     });
+  });
+
+  it('still reports a refusal when the body is not JSON, with no reason to quote', async () => {
+    // A proxy or a CDN in front of GitHub answers with an HTML page. The refusal is still a
+    // refusal, and a missing message must not turn it into a thrown parse error.
+    stub([{ status: 403, unreadable: true }]);
+    const result = await run('getBranchProtection', { branch: 'main' });
+    expect(result.status).toBe('ok');
+    expect(result).toMatchObject({ data: { unavailable: 'forbidden' } });
+    expect((result.data as { message?: string }).message).toBeUndefined();
+  });
+
+  it('reads a 204 and a 205 as no body, not as a JSON parse of nothing', async () => {
+    // A merge-queue removal or a deleted label answers with no content. The stub's body would
+    // throw if it were parsed, so a success here proves it was not.
+    for (const status of [204, 205]) {
+      stub([{ status, unreadable: true }]);
+      const result = await run('getPullRequest', { number: '9' });
+      expect(result, `status ${String(status)} was parsed as JSON`).toMatchObject({
+        status: 'ok',
+        data: null,
+      });
+    }
+  });
+  it('keeps no reason when GitHub’s message is not text', async () => {
+    stub([{ status: 404, body: { message: 42 } }]);
+    const result = await run('getBranchProtection', { branch: 'main' });
+    expect(result).toMatchObject({ status: 'ok', data: { unavailable: 'not_found' } });
+    expect((result.data as { message?: string }).message).toBeUndefined();
   });
 
   it('still reports a rate limit as a wait, because a 403 at the limit is not a permission', async () => {
