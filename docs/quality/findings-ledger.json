@@ -7261,6 +7261,90 @@
         }
       ],
       "resolution": "loweredFloors takes an optional old-path to new-path map, read only when the old key has left the baseline, and compares the new key against the old floor by the same rules as any package. The map lives in docs/quality/coverage-renames.json beside the baseline. The ratchet still cannot be loosened by naming a rename: the new floor must be at least the old one on every metric."
+    },
+    {
+      "id": "MNT-164",
+      "title": "a rate-limited GitHub write was reported as a permanent 403",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-11",
+      "summary": "The GitHub connector detected a rate limit only on paginated reads. A write that hit the limit (a merge, a comment, an issue) took the plain-status path, so a 403 with `x-ratelimit-remaining: 0` came back as `github_403`, `retryable: false`. A caller reads that as \"the token may not do this\" and gives up on something that works in an hour, and a batch of writes could not be told when to come back. Reads and writes now share one rate-limit decision, and a 403 with budget left is still a permission refusal.",
+      "confirmed": true,
+      "confirmedOn": "2026-11-02",
+      "confirmedBy": "Found while adding the write operations: a test that sent a 403 with an exhausted budget to `createIssue` expected `github_rate_limited` with a reset time and received `github_403`.",
+      "evidence": [
+        {
+          "path": "packages/connectors/github/src/base-url.test.ts",
+          "asserts": "A write answered 403 with no budget left is `github_rate_limited`, retryable, with the reset time; a 403 with budget left stays `github_403` and is not retryable."
+        }
+      ],
+      "resolution": "The single-request path calls `rateLimitOf` before building a rejection, as the list path always did."
+    },
+    {
+      "id": "MNT-165",
+      "title": "the delivery sync never saw an open pull request older than its backfill window, and a pending check never changed",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-11",
+      "summary": "The pull-request stream reads what was updated since a cursor, 90 days back on the first sync. An open pull request nobody had touched in that window was never stored, so an inbox built on it would omit exactly the stale work it exists to surface. And a check finishing, or GitHub finishing its mergeability calculation, does not change a pull request's `updated_at`, so a stored `pending` or `unknown` reading could never be corrected by the same stream.",
+      "confirmed": true,
+      "confirmedOn": "2026-11-02",
+      "confirmedBy": "Written as a test first: an open pull request last updated 300 days ago, and a check that completes with no activity on the pull request. Both were absent or stale until the open-pull-requests stream existed.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/delivery-syncer.test.ts",
+          "asserts": "An old open pull request is found by the open-list read, and a stored `pending` checks reading is re-read once it is older than ten minutes and becomes `success`."
+        }
+      ],
+      "resolution": "A stream lists the open pull requests, reads any not yet stored in full, and re-reads, oldest first and bounded per sync, the ones whose checks are pending or absent or whose mergeability is unknown. Checks, mergeability and issue reads tolerate a token without the scope; a rate limit, a 5xx or a transport failure still stop the sync."
+    },
+    {
+      "id": "MNT-166",
+      "title": "the interface assumed left-to-right text and nothing stopped it",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-11",
+      "summary": "A pull request title, an issue, a label or an author can be Arabic or Hebrew. The web app drew 103 physical-direction utility classes (`ml-*`, `pr-*`, `text-right`, `left-*`, `border-r`) that put content and controls on the wrong edge for right-to-left text, hardcoded `en-US` in three formatters and read the browser locale in a fourth, and mirrored no directional icon. Nothing in the gate chain would have caught the next one.",
+      "confirmed": true,
+      "confirmedOn": "2026-11-02",
+      "confirmedBy": "Counted by scanning `apps/web/src` and `packages/ui/src` for the utilities; the ESLint selector was added test-first and the probe that fires it is in `eslint-plugin-compatibility.test.mjs`.",
+      "evidence": [
+        {
+          "path": "scripts/lib/eslint-plugin-compatibility.test.mjs",
+          "asserts": "A probe with `ml-2`, `text-right`, `sm:left-4` and `border-r` is reported on exactly those lines; the logical twins, a symmetric `left-1/2` centring and words like `pr-reporting` are not."
+        },
+        {
+          "path": "apps/web/src/components/Bidi.test.tsx",
+          "asserts": "User-written text takes `dir=\"auto\"`; a repository or branch name is isolated and left to right."
+        },
+        {
+          "path": "apps/web/src/lib/intl.test.ts",
+          "asserts": "Number, date and relative-time output goes through one module."
+        }
+      ],
+      "resolution": "Every utility is its logical form; `PHYSICAL_DIRECTION_SELECTORS` in `eslint.config.js` is spread into every block that sets `no-restricted-syntax`; the directional icons mirror under `rtl:`; formatting lives in `lib/intl.ts`; `UserText` and `Bdi` give content its direction."
+    },
+    {
+      "id": "MNT-167",
+      "title": "tab keyboard navigation ignored the reading direction",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-11",
+      "summary": "ArrowRight always moved to the next tab and ArrowLeft to the previous one. In a right-to-left page the arrow that points along the reading line is ArrowLeft, so the keys moved the wrong way against what the eye sees.",
+      "confirmed": true,
+      "confirmedOn": "2026-11-02",
+      "confirmedBy": "Reproduced by a test that sets `dir=\"rtl\"` on the document and presses ArrowLeft: focus went to the previous tab.",
+      "evidence": [
+        {
+          "path": "packages/ui/src/components/Tabs/Tabs.test.tsx",
+          "asserts": "In a right-to-left page ArrowLeft moves to the next tab and ArrowRight to the previous one; in a left-to-right page it is unchanged."
+        }
+      ],
+      "resolution": "The key that moves forward is chosen from the nearest `dir` attribute."
     }
   ]
 }
