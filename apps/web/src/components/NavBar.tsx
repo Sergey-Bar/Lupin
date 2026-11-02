@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Activity, LayoutGrid, ListChecks, Network, cn } from '@lupin/ui';
+import { Activity, GitBranch, LayoutGrid, ListChecks, Network, cn } from '@lupin/ui';
 import { SECTIONS, routeFor, sectionOf, tabsOf, type SectionId } from '../route-manifest.js';
 import { ThemeToggle } from './ThemeToggle.js';
 
@@ -23,6 +23,7 @@ const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
   runs: ListChecks,
   insights: Activity,
   map: Network,
+  github: GitBranch,
 };
 
 const FOCUS =
@@ -148,7 +149,7 @@ export function BottomTabBar(): React.ReactElement {
       aria-label="Sections"
       className="shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {SECTIONS.map((section) => {
           const Icon = SECTION_ICONS[section.id];
           const active = section.id === current;

@@ -27,7 +27,7 @@ function makeRouter(initialPath = '/') {
   return router;
 }
 
-const SECTION_LABELS = ['Overview', 'Runs', 'Insights', 'Map'];
+const SECTION_LABELS = ['Overview', 'Runs', 'Insights', 'Map', 'GitHub'];
 
 describe('NavBar', () => {
   beforeEach(() => {
@@ -65,7 +65,7 @@ describe('NavBar', () => {
     expect(localStorage.getItem('lupin-theme')).toBe('light');
   });
 
-  it('draws the four sections, and nothing else, in the top bar', async () => {
+  it('draws the five sections, and nothing else, in the top bar', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
     const links = within(bar).getAllByRole('link');
@@ -109,7 +109,7 @@ describe('NavBar', () => {
     }
   });
 
-  it('gives the bottom bar four labelled, finger-sized targets', async () => {
+  it('gives the bottom bar five labelled, finger-sized targets', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bottom = await screen.findByTestId('bottom-tab-bar');
     expect(bottom).toHaveAttribute('aria-label', 'Sections');

@@ -285,6 +285,44 @@ export const pageGuidance = {
     ],
     remember: 'Channel management needs admin access; scheduling needs operator access.',
   },
+  prs: {
+    purpose: 'See every open pull request across your repositories and decide what to do next.',
+    steps: [
+      'Read how many are ready to merge, then choose Show them.',
+      'Look at Blocked: a requested change, a failing check or a conflict is stopping it.',
+      'Open a pull request on GitHub from its title.',
+    ],
+    remember:
+      'A pull request GitHub has not said it can merge is Waiting, never Ready. The list is as fresh as the last sync.',
+  },
+  issues: {
+    purpose: 'See open issues across your repositories and find the ones nobody has triaged.',
+    steps: [
+      'Read how many open issues have no label and no assignee.',
+      'Choose Show them to list only those.',
+      'Open an issue on GitHub from its title.',
+    ],
+    remember: 'Pull requests are not listed here. Closed issues appear under the Closed filter.',
+  },
+  repos: {
+    purpose: 'Check the health of every repository and turn on the sync for the ones not yet read.',
+    steps: [
+      'Look for repositories with a critical or high finding.',
+      'Turn on sync for a repository that is Not graded.',
+      'Open Details to read each finding and the evidence behind it.',
+    ],
+    remember: 'Not graded means not read. It is never a good grade.',
+  },
+  'repo-detail': {
+    purpose: 'Understand why a repository has the grade it has, and what is open in it.',
+    steps: [
+      'Read the score and its grade.',
+      'Work down the findings, worst first. Each one names what it counted.',
+      'Open the repository’s pull requests or issues from the header.',
+    ],
+    remember:
+      'A note is something the token could not read. It is not counted for or against the repository.',
+  },
   pair: {
     purpose: 'Connect this device using the installation’s pairing flow.',
     steps: [
