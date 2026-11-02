@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, lt, or, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, lt, or, sql, type SQL } from 'drizzle-orm';
 import { deliverySources, githubIssues, projects, pullRequests, repoGithubState } from '@lupin/db';
 import {
   GithubRepoStateSchema,
@@ -244,26 +244,15 @@ export async function listRepos(options: InboxOptions): Promise<{ items: GithubR
     .orderBy(projects.name);
   const repos = all.filter((project) => githubRepository(project.repositoryUrl) !== null);
   if (repos.length === 0) return { items: [] };
-  const ids = repos.map((project) => project.id);
   const [sources, states, pulls, issues] = await Promise.all([
     options.db
       .select()
       .from(deliverySources)
-      .where(
-        and(
-          eq(deliverySources.workspaceId, options.workspaceId),
-          inArray(deliverySources.projectId, ids),
-        ),
-      ),
+      .where(eq(deliverySources.workspaceId, options.workspaceId)),
     options.db
       .select()
       .from(repoGithubState)
-      .where(
-        and(
-          eq(repoGithubState.workspaceId, options.workspaceId),
-          inArray(repoGithubState.projectId, ids),
-        ),
-      ),
+      .where(eq(repoGithubState.workspaceId, options.workspaceId)),
     pullCounts(options, now),
     issueCounts(options),
   ]);
