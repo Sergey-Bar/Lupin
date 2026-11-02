@@ -13,9 +13,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const html = readFileSync(path.join(import.meta.dirname, '..', 'index.html'), 'utf8');
 
 function bootScript(): string {
-  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
-  expect(scripts, 'index.html has no inline theme script').toHaveLength(1);
-  return scripts[0]?.[1] ?? '';
+  // String search, not a regular expression: an HTML-matching regex is easy to get subtly wrong
+  // (case, attributes, spacing), and the file under test is ours with one known inline script.
+  const lower = html.toLowerCase();
+  const open = lower.indexOf('<script>');
+  expect(open, 'index.html has no inline theme script').toBeGreaterThan(-1);
+  expect(lower.indexOf('<script>', open + 1), 'index.html has a second inline script').toBe(-1);
+  const close = lower.indexOf('</script>', open);
+  expect(close, 'the inline theme script is never closed').toBeGreaterThan(open);
+  return html.slice(open + '<script>'.length, close);
 }
 
 function run(): string | null {
