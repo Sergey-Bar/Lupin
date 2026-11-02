@@ -24,10 +24,10 @@
   ],
   "whatDoesNotBlock": "Workspace-scoped tables without a hard boundary. That is real debt, counted and reported by `pnpm tenancy:check`, because failing on it would make the gate permanently red — and a permanently red gate stops catching the regressions above.",
   "tally": {
-    "total": 86,
+    "total": 88,
     "global": 12,
-    "workspaceScoped": 74,
-    "workspaceScopedWithHardBoundary": 74,
+    "workspaceScoped": 76,
+    "workspaceScopedWithHardBoundary": 76,
     "workspaceScopedNullable": 0,
     "workspaceScopedAbsent": 0,
     "note": "**Derived, not asserted.** An earlier version of this file carried a hand-written tally of 19 / 37 / 18, which was wrong in every field — the numbers had been written from memory rather than measured. `scripts/lib/tenancy-scope.test.mjs` now recomputes all six from the schema and this register and fails if any disagree, so they cannot drift again. That is the `no-second-authority` failure this repository records as `P-6` and `P-5`, committed by the author of the skill that describes it.",
@@ -423,6 +423,16 @@
       "scope": "workspace",
       "column": "not-null",
       "reason": "The high and critical findings the pull-request gate found new on each of a tenant's pull requests, upserted per pull request and bounded to 5000 per project; read by the AI-code outcomes. Hard-scoped from its first migration (`0039_ai_code_governance.sql`). Isolation: `apps/api/src/services/ai-code-service.test.ts`."
+    },
+    "github_issues": {
+      "scope": "workspace",
+      "column": "not-null",
+      "reason": "A tenant project's GitHub issues as the delivery sync last read them, for the triage inbox; pull requests are not stored here. Hard-scoped from its first migration (`0054_github_command_center.sql`). Isolation: `apps/api/src/services/github-inbox-service.test.ts`."
+    },
+    "repo_github_state": {
+      "scope": "workspace",
+      "column": "not-null",
+      "reason": "One row per tenant project: community profile, default-branch protection, open security alert counts and the request budget GitHub reported, replaced by every sync. Hard-scoped from its first migration (`0054_github_command_center.sql`). Isolation: `apps/api/src/services/github-inbox-service.test.ts`."
     },
     "eval_runs": {
       "scope": "workspace",

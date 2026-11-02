@@ -9,8 +9,8 @@
   ],
   "summary": {
     "admin": 24,
-    "viewer": 82,
-    "operator": 32,
+    "viewer": 86,
+    "operator": 33,
     "open": 16,
     "runner-credential": 9,
     "reporter-secret": 13,
@@ -370,6 +370,46 @@
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/health.test.ts",
       "composition": "always"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/github/actions",
+      "access": "operator",
+      "workspaceScoped": true,
+      "evidenceTest": "apps/api/src/routes/github.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/github/issues",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/github.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/github/prs",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/github.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/github/repos",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/github.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/github/repos/:id",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/github.test.ts",
+      "composition": "database"
     },
     {
       "method": "GET",

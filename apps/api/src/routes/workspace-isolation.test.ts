@@ -166,6 +166,20 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
     family: 'supply chain and diff coverage',
     files: ['services/supply-chain-service.ts', 'services/diff-coverage-service.ts'],
   },
+  // The GitHub command center: pull requests, issues and repositories across a workspace, and the
+  // one door that writes to GitHub. `github-inbox-service.test.ts` proves another workspace's
+  // pull requests, issues and repository state never appear in a list, a count or by project id;
+  // `github-actions-service.test.ts` that an action on another workspace's project is refused
+  // before anything is sent and that audit rows land only in the caller's workspace; and
+  // `routes/github.test.ts` that the same holds through HTTP.
+  {
+    family: 'github command center',
+    files: [
+      'services/github-inbox-service.ts',
+      'services/github-actions-service.ts',
+      'routes/github.ts',
+    ],
+  },
   // Delivery performance: sources, the sync queue and what it writes, the push door and the
   // GitHub webhook's replay store. `delivery-service.test.ts` proves another workspace can
   // neither read nor write a project's delivery data, `delivery-syncer.test.ts` that a sync

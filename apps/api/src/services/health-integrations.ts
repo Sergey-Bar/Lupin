@@ -25,13 +25,35 @@ import type { CommitTests } from './commit-tests.js';
 
 // ─── GitHub pull requests ─────────────────────────────────────────────────────
 
-/** `owner/repo` from a github.com URL in any of the three spellings, or `null`. */
+/** The host a repository URL must name: github.com, or a GitHub Enterprise Server's. */
+export function githubHostOf(apiUrl: string | undefined): string {
+  return apiUrl === undefined ? 'github.com' : new URL(apiUrl).hostname;
+}
+
+let repositoryPattern = patternFor('github.com');
+
+function patternFor(host: string): RegExp {
+  const escaped = host.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  return new RegExp(
+    `^(?:https://${escaped}/|ssh://git@${escaped}/|git@${escaped}:)([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\\.git)?/?$`,
+    'u',
+  );
+}
+
+/**
+ * Point repository-URL parsing at the configured GitHub API (`GITHUB_API_URL`), once, at boot.
+ * One install talks to one GitHub, with one token each call, so a URL on any other host is not
+ * one of its repositories. Module state because five services parse repository URLs and none of
+ * them has a configuration to ask.
+ */
+export function useGitHubApi(apiUrl: string | undefined): void {
+  repositoryPattern = patternFor(githubHostOf(apiUrl));
+}
+
+/** `owner/repo` from a repository URL on the configured GitHub host, in any of the three spellings, or `null`. */
 export function githubRepository(url: string | null): { owner: string; repo: string } | null {
   if (url === null) return null;
-  const match =
-    /^(?:https:\/\/github\.com\/|ssh:\/\/git@github\.com\/|git@github\.com:)([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/u.exec(
-      url,
-    );
+  const match = repositoryPattern.exec(url);
   return match === null ? null : { owner: match[1] as string, repo: match[2] as string };
 }
 

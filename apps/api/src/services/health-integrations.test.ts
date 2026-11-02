@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ConnectorAdapter, ConnectorRequest } from '@lupin/connectors-sdk';
 import {
   HEALTH_DIMENSIONS,
@@ -14,7 +14,9 @@ import {
   evalsSection,
   deliverAlerts,
   doraLine,
+  githubHostOf,
   githubRepository,
+  useGitHubApi,
   isAllowedWebhook,
   renderGateComment,
   reportToGitHub,
@@ -100,6 +102,27 @@ describe('githubRepository', () => {
     [null, null],
   ])('%s → %j', (url, expected) => {
     expect(githubRepository(url)).toEqual(expected);
+  });
+});
+
+describe('githubRepository on GitHub Enterprise Server', () => {
+  afterEach(() => {
+    useGitHubApi(undefined);
+  });
+
+  it('takes the host from the configured API base', () => {
+    expect(githubHostOf(undefined)).toBe('github.com');
+    expect(githubHostOf('https://ghe.example.com/api/v3')).toBe('ghe.example.com');
+  });
+
+  it('reads repositories on that host, and only that host: the token belongs to one API', () => {
+    useGitHubApi('https://ghe.example.com/api/v3');
+    expect(githubRepository('https://ghe.example.com/o/r.git')).toEqual({ owner: 'o', repo: 'r' });
+    expect(githubRepository('git@ghe.example.com:o/r.git')).toEqual({ owner: 'o', repo: 'r' });
+    expect(githubRepository('https://github.com/o/r')).toBeNull();
+    expect(githubRepository('https://ghe.example.com.evil.test/o/r')).toBeNull();
+    // A dot in the host is a dot, not "any character".
+    expect(githubRepository('https://gheXexample.com/o/r')).toBeNull();
   });
 });
 

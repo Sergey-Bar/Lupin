@@ -196,6 +196,17 @@ export const pullRequests = pgTable(
      * start of the next sync.
      */
     attributionVersion: text('attribution_version'),
+    // ─── The command center (`0054_github_command_center.sql`) ───
+    /** Where the pull request lives on GitHub: the link a person follows to act on it. */
+    htmlUrl: text('html_url'),
+    /** `approved`, `changes_requested` or `review_required`; `null` before the first read. */
+    reviewDecision: text('review_decision'),
+    /** The head commit's check runs rolled up: `success`, `failure` or `pending`; `null` for none. */
+    checksState: text('checks_state'),
+    /** GitHub's `mergeable_state` (`clean`, `dirty`, `blocked`, `behind`, `unstable`, `draft`, `unknown`). */
+    mergeableState: text('mergeable_state'),
+    /** Logins asked to review and not yet done. */
+    requestedReviewers: jsonb('requested_reviewers').$type<string[]>().notNull().default([]),
   },
   (table) => [
     uniqueIndex('pull_requests_external_idx').on(
@@ -212,6 +223,14 @@ export const pullRequests = pgTable(
     index('pull_requests_merge_idx').on(table.workspaceId, table.projectId, table.mergeCommitSha),
     index('pull_requests_number_idx').on(table.workspaceId, table.projectId, table.number),
     check('pull_requests_state_check', sql`${table.state} IN ('open', 'closed', 'merged')`),
+    check(
+      'pull_requests_review_decision_check',
+      sql`${table.reviewDecision} IS NULL OR ${table.reviewDecision} IN ('approved', 'changes_requested', 'review_required')`,
+    ),
+    check(
+      'pull_requests_checks_state_check',
+      sql`${table.checksState} IS NULL OR ${table.checksState} IN ('success', 'failure', 'pending')`,
+    ),
     check(
       'pull_requests_attribution_check',
       sql`${table.attribution} IN ('agent-authored', 'ai-assisted', 'human', 'unknown')`,

@@ -337,6 +337,14 @@ const EnvironmentSchema = z.object({
    * answers only with this set **and** `LUPIN_LAN_MODE` on; otherwise it is a 404.
    */
   GITHUB_WEBHOOK_SECRET: secretSchema('GITHUB_WEBHOOK_SECRET').optional(),
+  /**
+   * The GitHub REST API base, for GitHub Enterprise Server (`https://ghe.example.com/api/v3`).
+   * Unset: github.com. Https only, because every GitHub call carries the token to this address.
+   */
+  GITHUB_API_URL: z
+    .url()
+    .refine((value) => value.startsWith('https://'), 'GITHUB_API_URL must be an https URL')
+    .optional(),
   /** A Slack bot token for repository-health alerts. Unset: Slack alerts are not sent. */
   SLACK_BOT_TOKEN: z.string().min(1).optional(),
   SESSION_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
@@ -428,6 +436,8 @@ export type AppConfig = {
   healthWebhookSecret?: string;
   /** `GITHUB_WEBHOOK_SECRET`: the GitHub webhook receiver's HMAC key. */
   githubWebhookSecret?: string;
+  /** `GITHUB_API_URL`: the GitHub Enterprise Server API base. Absent: github.com. */
+  githubApiUrl?: string;
   slackBotToken?: string;
   sessionRetentionDays: number;
   sseReplayRetentionHours: number;
@@ -616,15 +626,21 @@ function oidcSignIn(parsed: z.infer<typeof EnvironmentSchema>): Pick<AppConfig, 
  */
 function optionalIntegrations(
   parsed: z.infer<typeof EnvironmentSchema>,
-): Pick<AppConfig, 'healthWebhookSecret' | 'githubWebhookSecret' | 'slackBotToken'> {
-  const optional: Pick<AppConfig, 'healthWebhookSecret' | 'githubWebhookSecret' | 'slackBotToken'> =
-    {};
+): Pick<
+  AppConfig,
+  'healthWebhookSecret' | 'githubWebhookSecret' | 'githubApiUrl' | 'slackBotToken'
+> {
+  const optional: Pick<
+    AppConfig,
+    'healthWebhookSecret' | 'githubWebhookSecret' | 'githubApiUrl' | 'slackBotToken'
+  > = {};
   if (parsed.HEALTH_WEBHOOK_SECRET !== undefined) {
     optional.healthWebhookSecret = parsed.HEALTH_WEBHOOK_SECRET;
   }
   if (parsed.GITHUB_WEBHOOK_SECRET !== undefined) {
     optional.githubWebhookSecret = parsed.GITHUB_WEBHOOK_SECRET;
   }
+  if (parsed.GITHUB_API_URL !== undefined) optional.githubApiUrl = parsed.GITHUB_API_URL;
   if (parsed.SLACK_BOT_TOKEN !== undefined) optional.slackBotToken = parsed.SLACK_BOT_TOKEN;
   return optional;
 }

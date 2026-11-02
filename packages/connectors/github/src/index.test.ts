@@ -26,6 +26,7 @@ function stubFetchSequence(responses: Array<{ ok: boolean; status: number; body:
     return Promise.resolve({
       ok: next.ok,
       status: next.status,
+      headers: new Headers(),
       json: () => Promise.resolve(next.body),
     });
   });

@@ -444,4 +444,16 @@ describe('repository-health settings', () => {
     expect(() => parseConfig({ GITHUB_WEBHOOK_SECRET: 'change-me' })).toThrow(/placeholder/u);
     expect(isSecretPlaceholder('GITHUB_WEBHOOK_SECRET', 'github-webhook-secret')).toBe(true);
   });
+
+  it('reads the GitHub API base only when set, and only as https', () => {
+    expect(parseConfig({}).githubApiUrl).toBeUndefined();
+    expect(parseConfig({ GITHUB_API_URL: 'https://ghe.example.com/api/v3' }).githubApiUrl).toBe(
+      'https://ghe.example.com/api/v3',
+    );
+    // The token travels to this address on every call.
+    expect(() => parseConfig({ GITHUB_API_URL: 'http://ghe.example.com/api/v3' })).toThrow(
+      /https/u,
+    );
+    expect(() => parseConfig({ GITHUB_API_URL: 'ghe.example.com' })).toThrow();
+  });
 });

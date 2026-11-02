@@ -84,9 +84,9 @@ import { poolCapabilities } from './services/runner-pool.js';
 import { readGitToken } from './services/git-credential-service.js';
 import { rotateVaultSecrets } from './services/vault-secrets.js';
 import { audit, authenticateToken } from './services/access-service.js';
-import { alertsFor, deliverAlerts } from './services/health-integrations.js';
+import { alertsFor, deliverAlerts, useGitHubApi } from './services/health-integrations.js';
 import type { ReportEvent } from './services/repo-health-service.js';
-import { githubAdapter } from '@lupin/connectors-github';
+import { createGitHubAdapter } from '@lupin/connectors-github';
 import { jiraAdapter } from '@lupin/connectors-jira';
 import { slackAdapter } from '@lupin/connectors-slack';
 import { signalAdapter } from '@lupin/connectors-signal';
@@ -163,6 +163,11 @@ import { S3ArtifactBytesStore } from './infrastructure/s3-artifact-bytes.js';
 import type { ArtifactBytesStore } from './execution/drizzle-execution-store.js';
 
 const runtimeConfig = getConfig();
+// GitHub.com unless GITHUB_API_URL names a GitHub Enterprise Server; a bad URL stops boot.
+const githubAdapter = createGitHubAdapter(
+  runtimeConfig.githubApiUrl === undefined ? {} : { apiBase: runtimeConfig.githubApiUrl },
+);
+useGitHubApi(runtimeConfig.githubApiUrl);
 /**
  * Session lifetimes, in milliseconds, read from configuration.
  *

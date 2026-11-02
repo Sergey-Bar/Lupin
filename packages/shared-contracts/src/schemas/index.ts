@@ -62,6 +62,7 @@ export * from './scorecard.js';
 export * from './notifications.js';
 export * from './supply-chain.js';
 export * from './delivery.js';
+export * from './github.js';
 export * from './ai-code.js';
 export * from './agent-quality.js';
 export * from './issue-tracking.js';
