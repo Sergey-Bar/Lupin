@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, CircleAlert, CircleCheck, Input, Timer } from '@lupin/ui';
+import { Badge, Button, Checkbox, CircleAlert, CircleCheck, Input, Timer } from '@lupin/ui';
 import type { GithubPullItem } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import { usePagedList } from '../hooks/usePagedList.js';
@@ -177,8 +177,7 @@ export function PullRequestsPage({
           renderLead={
             operator
               ? (item) => (
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     aria-label={`Select ${item.repository}#${String(item.number)}`}
                     checked={selected.has(subjectKey(item))}
                     onChange={() =>
@@ -197,8 +196,7 @@ export function PullRequestsPage({
           listHeader={
             operator ? (
               <label className="mb-2 flex shrink-0 items-center gap-3 ps-3 text-xs text-fg-muted">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label="Select all shown"
                   checked={shown.every((item) => selected.has(subjectKey(item)))}
                   onChange={(event) =>

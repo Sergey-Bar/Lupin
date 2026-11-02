@@ -30,7 +30,7 @@ import { formatDuration } from '../lib/insights.js';
 import type { QaClient } from '../lib/qa-client.js';
 import { canOperate, failureText } from '../lib/roles.js';
 import { formatMetricValue } from '../lib/scorecard-view.js';
-import { PageFrame, PageHeader, Panel, Quiet, Segmented } from './kit.js';
+import { PageFrame, PageBody, PageHeader, Panel, Quiet, Segmented } from './kit.js';
 import { Loaded, ProjectPage, type ProjectContext } from './ProjectPage.js';
 import { ScorecardCard } from './ScorecardCard.js';
 import { StatusLine } from './StatusLine.js';
@@ -87,7 +87,7 @@ function AgentsBody({
     [agents, project.id, branch],
   );
   return (
-    <PageFrame data-testid="agents-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="agents-page" className="gap-4 sm:gap-6">
       <PageHeader
         title="Agents"
         subtitle={`Evals, runtime and tools for ${project.name}`}
@@ -117,23 +117,25 @@ function AgentsBody({
           </>
         }
       />
-      <Loaded resource={evals} label="the evals" testId="evals">
-        {(value) => <EvalsView evals={value} onOpenRun={setOpenRun} />}
-      </Loaded>
-      <RuntimePanel agents={agents} projectId={project.id} days={Number(days)} />
-      <div className="grid gap-3 lg:grid-cols-2">
-        <McpPanel agents={agents} projectId={project.id} branch={branch} />
-        <DatasetsPanel agents={agents} projectId={project.id} operator={canOperate(who)} />
-      </div>
-      <ChatRuntimePanel agents={agents} days={Number(days)} />
-      {openRun === null ? null : (
-        <RunDrawer
-          agents={agents}
-          projectId={project.id}
-          runId={openRun}
-          onClose={() => setOpenRun(null)}
-        />
-      )}
+      <PageBody>
+        <Loaded resource={evals} label="the evals" testId="evals">
+          {(value) => <EvalsView evals={value} onOpenRun={setOpenRun} />}
+        </Loaded>
+        <RuntimePanel agents={agents} projectId={project.id} days={Number(days)} />
+        <div className="grid gap-3 lg:grid-cols-2">
+          <McpPanel agents={agents} projectId={project.id} branch={branch} />
+          <DatasetsPanel agents={agents} projectId={project.id} operator={canOperate(who)} />
+        </div>
+        <ChatRuntimePanel agents={agents} days={Number(days)} />
+        {openRun === null ? null : (
+          <RunDrawer
+            agents={agents}
+            projectId={project.id}
+            runId={openRun}
+            onClose={() => setOpenRun(null)}
+          />
+        )}
+      </PageBody>
     </PageFrame>
   );
 }

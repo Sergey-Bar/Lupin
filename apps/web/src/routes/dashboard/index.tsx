@@ -23,6 +23,7 @@ import {
   PageHeader,
   Panel,
   PagerControls,
+  ScrollRegion,
   usePager,
   useFitCount,
 } from '../../components/kit.js';
@@ -75,7 +76,12 @@ export function RunsListPage({ api = defaultApiClient }: { api?: ApiClient }) {
 
   if (isLoading) {
     return (
-      <div data-testid="runs-list-loading" className="space-y-3">
+      <div
+        data-testid="runs-list-loading"
+        role="status"
+        aria-label="Loading runs"
+        className="space-y-3"
+      >
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
@@ -240,10 +246,10 @@ export function RunsListPage({ api = defaultApiClient }: { api?: ApiClient }) {
         desktop={
           <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_20rem] gap-3">
             {table}
-            <div className="flex min-h-0 flex-col gap-3">
+            <ScrollRegion label="Release readiness and recent runs" className="flex flex-col gap-3">
               {readiness}
               {recent}
-            </div>
+            </ScrollRegion>
           </div>
         }
         panels={[

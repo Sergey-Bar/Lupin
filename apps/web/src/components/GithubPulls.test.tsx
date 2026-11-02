@@ -112,7 +112,7 @@ describe('PullRequestsPage writes', () => {
     writable('viewer');
     await screen.findByTestId('pull-detail');
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    expect(screen.queryByRole('combobox', { name: /Actions for/u })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Actions for/u })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Merge octo/u })).not.toBeInTheDocument();
   });
 

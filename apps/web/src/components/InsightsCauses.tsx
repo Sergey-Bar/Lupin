@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@lupin/ui';
+import { Button, Select } from '@lupin/ui';
 import type { ApiClient } from '../lib/api.js';
 import { formatDuration, shortDate } from '../lib/insights.js';
 import type { QaInsights } from '../lib/qa.js';
@@ -81,22 +81,19 @@ function CauseLabel({
       });
   };
   return (
-    <select
+    <Select
       aria-label="Label this cause"
       data-testid="cause-label"
+      containerClassName="w-auto"
+      className="h-11 text-xs"
       value={category}
+      placeholder="Unlabelled"
       onChange={(event) => choose(event.target.value as Category)}
-      className="min-h-11 rounded-md border border-border-default bg-surface px-2 text-xs text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-    >
-      <option value="" disabled>
-        Unlabelled
-      </option>
-      {(Object.keys(CATEGORY_LABEL) as Category[]).map((value) => (
-        <option key={value} value={value}>
-          {CATEGORY_LABEL[value]}
-        </option>
-      ))}
-    </select>
+      options={(Object.keys(CATEGORY_LABEL) as Category[]).map((value) => ({
+        value,
+        label: CATEGORY_LABEL[value],
+      }))}
+    />
   );
 }
 

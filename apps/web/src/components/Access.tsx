@@ -22,7 +22,7 @@ import {
   type WhoAmI,
 } from '../lib/health-client.js';
 import { ago } from '../lib/health-view.js';
-import { CopyButton, PageFrame, PageHeader, Panel, Quiet } from './kit.js';
+import { CopyButton, PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import { ConnectRunnerPanel, PairDevicePanel } from './Pairing.js';
 
 /**
@@ -41,7 +41,16 @@ export function AccessGate({
 }): React.ReactElement {
   const [version, setVersion] = React.useState(0);
   const who = useResource<WhoAmI>(() => health.whoami(), [health, version]);
-  if (who.status === 'loading') return <Skeleton className="h-40 w-full" />;
+  if (who.status === 'loading') {
+    // The status role is here because the skeleton is hidden from assistive technology: without
+    // it a screen-reader user is told nothing while the gate waits, and a browser sweep sees a
+    // blank page.
+    return (
+      <div role="status" aria-label="Loading" aria-busy="true">
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
   if (who.status === 'error') {
     return (
       <EmptyState headingLevel={2} title="Could not reach the API" description={who.message} />
@@ -192,7 +201,7 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
       .catch(describe);
   };
   return (
-    <PageFrame data-testid="access-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="access-page" className="gap-4 sm:gap-6">
       <PageHeader
         title="Access"
         subtitle={`Signed in as ${who.role ?? 'nobody'} · access control ${who.mode}`}
@@ -205,123 +214,125 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
           </Button>
         }
       />
-      {who.mode === 'open' ? (
-        <Quiet data-testid="access-open">
-          Access control is open: every caller is the operator. Set LUPIN_LAN_MODE=1 (or
-          ACCESS_CONTROL=enforced) to require sign-in.
-        </Quiet>
-      ) : null}
-      {who.role === 'admin' ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <PairDevicePanel health={health} />
-          <ConnectRunnerPanel origin={window.location.origin} />
-        </div>
-      ) : null}
-      <Panel title="Issue a token">
-        <form
-          onSubmit={create}
-          className="grid gap-2 sm:grid-cols-[2fr_1fr_2fr_auto] sm:items-end"
-          aria-label="Issue a token"
-        >
-          <Input
-            id={`${id}-name`}
-            label="Name"
-            value={name}
-            required
-            onChange={(event) => setName(event.target.value)}
-          />
-          <Select
-            id={`${id}-role`}
-            label="Role"
-            value={role}
-            onChange={(event) => setRole(event.target.value as TokenRole)}
-            options={TOKEN_ROLES.map((entry) => ({ value: entry, label: entry }))}
-          />
-          <Input
-            id={`${id}-project`}
-            label={role === 'uploader' ? 'Project id (required)' : 'Project id (uploader only)'}
-            value={projectId}
-            required={role === 'uploader'}
-            disabled={role !== 'uploader'}
-            onChange={(event) => setProjectId(event.target.value)}
-          />
-          <Button type="submit" className="min-h-10">
-            Issue
-          </Button>
-        </form>
-        {issued === null ? null : (
-          <div
-            data-testid="issued-token"
-            className="mt-3 flex items-center gap-2 rounded-lg border border-border-strong p-3 text-sm"
-          >
-            <span className="min-w-0 flex-1 truncate font-mono">{issued}</span>
-            <CopyButton text={issued} label="Copy token" />
-            <span className="text-xs text-fg-muted">Shown once.</span>
+      <PageBody>
+        {who.mode === 'open' ? (
+          <Quiet data-testid="access-open">
+            Access control is open: every caller is the operator. Set LUPIN_LAN_MODE=1 (or
+            ACCESS_CONTROL=enforced) to require sign-in.
+          </Quiet>
+        ) : null}
+        {who.role === 'admin' ? (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <PairDevicePanel health={health} />
+            <ConnectRunnerPanel origin={window.location.origin} />
           </div>
-        )}
-        {error === null ? null : (
-          <p role="alert" className="mt-2 text-sm text-danger">
-            {error}
-          </p>
-        )}
-      </Panel>
-      <Panel title="Tokens">
-        {tokens.status === 'loading' ? (
-          <Skeleton className="h-16 w-full" />
-        ) : tokens.status === 'error' ? (
-          <Quiet role="alert">{tokens.message}</Quiet>
-        ) : tokens.value.length === 0 ? (
-          <Quiet>No token has been issued.</Quiet>
-        ) : (
-          <Table aria-label="Access tokens">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="hidden md:table-cell">Token</TableHead>
-                <TableHead className="hidden sm:table-cell">Last used</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tokens.value.map((token) => (
-                <TableRow key={token.id} data-testid={`token-${token.id}`}>
-                  <TableCell>{token.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={token.revokedAt === null ? 'outline' : 'secondary'}>
-                      {token.revokedAt === null ? token.role : `${token.role} · revoked`}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden font-mono text-xs md:table-cell">
-                    {token.displayPrefix}…
-                  </TableCell>
-                  <TableCell className="hidden text-xs text-fg-muted sm:table-cell">
-                    {ago(token.lastUsedAt)}
-                  </TableCell>
-                  <TableCell>
-                    {token.revokedAt === null ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          health
-                            .revokeToken(token.id)
-                            .then(() => setVersion((value) => value + 1))
-                            .catch(describe);
-                        }}
-                      >
-                        Revoke
-                      </Button>
-                    ) : null}
-                  </TableCell>
+        ) : null}
+        <Panel title="Issue a token">
+          <form
+            onSubmit={create}
+            className="grid gap-2 sm:grid-cols-[2fr_1fr_2fr_auto] sm:items-end"
+            aria-label="Issue a token"
+          >
+            <Input
+              id={`${id}-name`}
+              label="Name"
+              value={name}
+              required
+              onChange={(event) => setName(event.target.value)}
+            />
+            <Select
+              id={`${id}-role`}
+              label="Role"
+              value={role}
+              onChange={(event) => setRole(event.target.value as TokenRole)}
+              options={TOKEN_ROLES.map((entry) => ({ value: entry, label: entry }))}
+            />
+            <Input
+              id={`${id}-project`}
+              label={role === 'uploader' ? 'Project id (required)' : 'Project id (uploader only)'}
+              value={projectId}
+              required={role === 'uploader'}
+              disabled={role !== 'uploader'}
+              onChange={(event) => setProjectId(event.target.value)}
+            />
+            <Button type="submit" className="min-h-10">
+              Issue
+            </Button>
+          </form>
+          {issued === null ? null : (
+            <div
+              data-testid="issued-token"
+              className="mt-3 flex items-center gap-2 rounded-lg border border-border-strong p-3 text-sm"
+            >
+              <span className="min-w-0 flex-1 truncate font-mono">{issued}</span>
+              <CopyButton text={issued} label="Copy token" />
+              <span className="text-xs text-fg-muted">Shown once.</span>
+            </div>
+          )}
+          {error === null ? null : (
+            <p role="alert" className="mt-2 text-sm text-danger">
+              {error}
+            </p>
+          )}
+        </Panel>
+        <Panel title="Tokens">
+          {tokens.status === 'loading' ? (
+            <Skeleton className="h-16 w-full" />
+          ) : tokens.status === 'error' ? (
+            <Quiet role="alert">{tokens.message}</Quiet>
+          ) : tokens.value.length === 0 ? (
+            <Quiet>No token has been issued.</Quiet>
+          ) : (
+            <Table aria-label="Access tokens">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="hidden md:table-cell">Token</TableHead>
+                  <TableHead className="hidden sm:table-cell">Last used</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Panel>
+              </TableHeader>
+              <TableBody>
+                {tokens.value.map((token) => (
+                  <TableRow key={token.id} data-testid={`token-${token.id}`}>
+                    <TableCell>{token.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={token.revokedAt === null ? 'outline' : 'secondary'}>
+                        {token.revokedAt === null ? token.role : `${token.role} · revoked`}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden font-mono text-xs md:table-cell">
+                      {token.displayPrefix}…
+                    </TableCell>
+                    <TableCell className="hidden text-xs text-fg-muted sm:table-cell">
+                      {ago(token.lastUsedAt)}
+                    </TableCell>
+                    <TableCell>
+                      {token.revokedAt === null ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            health
+                              .revokeToken(token.id)
+                              .then(() => setVersion((value) => value + 1))
+                              .catch(describe);
+                          }}
+                        >
+                          Revoke
+                        </Button>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Panel>
+      </PageBody>
     </PageFrame>
   );
 }

@@ -631,6 +631,9 @@ describe('shipped theme class resolution', () => {
   const TRANSLUCENT_LAYERS = [
     'packages/ui/src/components/CommandPalette/CommandPalette.tsx',
     'packages/ui/src/components/Dialog/Dialog.tsx',
+    // A menu button's list is a popover that opens from a row: it floats over content like the
+    // popover does, and is placed `fixed` so a scrolling panel cannot clip it.
+    'packages/ui/src/components/MenuButton/MenuButton.tsx',
     'packages/ui/src/components/Popover/Popover.tsx',
     'packages/ui/src/components/Toast/Toast.tsx',
   ];

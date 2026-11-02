@@ -166,7 +166,7 @@ describe('IssuesPage writes and paging', () => {
     writable('viewer');
     await screen.findByTestId('issue-detail');
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    expect(screen.queryByRole('combobox', { name: /Actions for/u })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Actions for/u })).not.toBeInTheDocument();
   });
 
   it('lets an operator select one issue or all of them, and close the selection after a preview', async () => {
@@ -195,10 +195,8 @@ describe('IssuesPage writes and paging', () => {
   it('acts on the selected issue from its own menu', async () => {
     const { runActions } = writable('operator');
     await screen.findByTestId('issue-detail');
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'Actions for octo/service#1' }),
-      'close',
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for octo/service#1' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Close item' }));
     const dialog = await screen.findByRole('dialog');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Close item' }));
     await waitFor(() => expect(runActions).toHaveBeenCalled());
@@ -243,10 +241,8 @@ describe('IssuesPage writes and paging', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: 'Select octo/service#2' }));
     await userEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
     expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument();
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'Actions for octo/service#2' }),
-      'close',
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for octo/service#2' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Close item' }));
     const dialog = await screen.findByRole('dialog');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());

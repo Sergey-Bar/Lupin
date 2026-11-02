@@ -21,7 +21,7 @@ import type {
 import { useResource } from '../hooks/useResource.js';
 import type { NotificationsClient } from '../lib/notifications-client.js';
 import { ago } from '../lib/health-view.js';
-import { PageFrame, PageHeader, Panel, Quiet } from './kit.js';
+import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import { useToast } from './Toasts.js';
 
 /**
@@ -546,58 +546,60 @@ export function NotificationsPage({
   const deliveries = useResource(() => client.listDeliveries(), [client, version]);
   const preview = useResource(() => client.preview('weekly'), [client, version]);
   return (
-    <PageFrame data-testid="notifications-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="notifications-page" className="gap-4 sm:gap-6">
       <PageHeader
         title="Reports"
         subtitle="Daily, weekly or on your schedule — to your inbox or chat."
       />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="1 · Where">
-          {channels.status === 'loading' ? (
-            <Skeleton className="h-24 w-full" />
-          ) : channels.status === 'error' ? (
-            <Quiet role="alert">{channels.message}</Quiet>
-          ) : (
-            <div className="grid gap-4">
-              <Channels client={client} channels={channels.value} onChanged={changed} />
-              <AddChannel client={client} onAdded={changed} />
-            </div>
-          )}
-        </Panel>
-        <Panel title="2 · When">
-          {channels.status === 'ready' ? (
-            <Schedules
-              client={client}
-              projects={projects}
-              channels={channels.value}
-              onChanged={changed}
-              version={version}
-            />
-          ) : (
-            <Skeleton className="h-24 w-full" />
-          )}
-        </Panel>
-        <Panel title="This week's report, as it would arrive">
-          {preview.status === 'ready' ? (
-            <pre data-testid="report-preview" className="whitespace-pre-wrap font-sans text-sm">
-              {preview.value.text}
-            </pre>
-          ) : preview.status === 'error' ? (
-            <Quiet role="alert">{preview.message}</Quiet>
-          ) : (
-            <Skeleton className="h-24 w-full" />
-          )}
-        </Panel>
-        <Panel title="3 · Did it arrive">
-          {deliveries.status === 'ready' ? (
-            <History deliveries={deliveries.value} />
-          ) : deliveries.status === 'error' ? (
-            <Quiet role="alert">{deliveries.message}</Quiet>
-          ) : (
-            <Skeleton className="h-24 w-full" />
-          )}
-        </Panel>
-      </div>
+      <PageBody>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Panel title="1 · Where">
+            {channels.status === 'loading' ? (
+              <Skeleton className="h-24 w-full" />
+            ) : channels.status === 'error' ? (
+              <Quiet role="alert">{channels.message}</Quiet>
+            ) : (
+              <div className="grid gap-4">
+                <Channels client={client} channels={channels.value} onChanged={changed} />
+                <AddChannel client={client} onAdded={changed} />
+              </div>
+            )}
+          </Panel>
+          <Panel title="2 · When">
+            {channels.status === 'ready' ? (
+              <Schedules
+                client={client}
+                projects={projects}
+                channels={channels.value}
+                onChanged={changed}
+                version={version}
+              />
+            ) : (
+              <Skeleton className="h-24 w-full" />
+            )}
+          </Panel>
+          <Panel title="This week's report, as it would arrive">
+            {preview.status === 'ready' ? (
+              <pre data-testid="report-preview" className="whitespace-pre-wrap font-sans text-sm">
+                {preview.value.text}
+              </pre>
+            ) : preview.status === 'error' ? (
+              <Quiet role="alert">{preview.message}</Quiet>
+            ) : (
+              <Skeleton className="h-24 w-full" />
+            )}
+          </Panel>
+          <Panel title="3 · Did it arrive">
+            {deliveries.status === 'ready' ? (
+              <History deliveries={deliveries.value} />
+            ) : deliveries.status === 'error' ? (
+              <Quiet role="alert">{deliveries.message}</Quiet>
+            ) : (
+              <Skeleton className="h-24 w-full" />
+            )}
+          </Panel>
+        </div>
+      </PageBody>
     </PageFrame>
   );
 }

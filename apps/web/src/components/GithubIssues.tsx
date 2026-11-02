@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, Input } from '@lupin/ui';
+import { Badge, Button, Checkbox, Input } from '@lupin/ui';
 import type { GithubIssueItem } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import { usePagedList } from '../hooks/usePagedList.js';
@@ -161,8 +161,7 @@ export function IssuesPage({
           renderLead={
             operator
               ? (issue) => (
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     aria-label={`Select ${issue.repository}#${String(issue.number)}`}
                     checked={selected.has(subjectKey(issue))}
                     onChange={() =>
@@ -181,8 +180,7 @@ export function IssuesPage({
           listHeader={
             operator ? (
               <label className="mb-2 flex shrink-0 items-center gap-3 ps-3 text-xs text-fg-muted">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label="Select all shown"
                   checked={shown.every((issue) => selected.has(subjectKey(issue)))}
                   onChange={(event) =>

@@ -18,7 +18,7 @@ import { letterTone } from '../lib/health-view.js';
 import type { QaClient } from '../lib/qa-client.js';
 import type { SupplyChainClient } from '../lib/supply-chain-client.js';
 import { repoHealthPath } from '../route-manifest.js';
-import { PageFrame, PageHeader, Panel, Quiet } from './kit.js';
+import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import { Loaded, ProjectPage, projectLink } from './ProjectPage.js';
 import { ScorecardCard } from './ScorecardCard.js';
 
@@ -147,57 +147,59 @@ function Repo360Body({
   const fixNext = rankFixNext(grade, sources, { gradeHref: repoHealthPath(projectId) });
   const link = (path: string) => projectLink(path, projectId);
   return (
-    <PageFrame data-testid="repo-360" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="repo-360" className="gap-4 sm:gap-6">
       <PageHeader
         title="Repository 360"
         subtitle={`${name}: the grade, every scorecard, and what to fix next`}
       />
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-        <Panel title="Grade" data-testid="repo-360-grade">
-          <Loaded resource={reads.health} label="the grade" testId="repo-360-grade">
-            {(value) => <GradeSummary health={value} href={repoHealthPath(projectId)} />}
-          </Loaded>
-        </Panel>
-        <FixNextPanel items={fixNext} settled={settled(reads)} />
-      </div>
-      <section aria-label="Scorecards" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <ReadCards
-          resource={reads.delivery}
-          label="delivery"
-          cards={(value) => [value.dora, value.flow]}
-          href={link('/dashboard/delivery')}
-        />
-        <ReadCards
-          resource={reads.aiCode}
-          label="AI-written code"
-          cards={(value) => [value.scorecard]}
-          href={link('/dashboard/ai-code')}
-        />
-        <ReadCards
-          resource={reads.runtime}
-          label="agent runtime"
-          cards={(value) => [value.scorecard]}
-          href={link('/dashboard/agents')}
-        />
-        <ReadCards
-          resource={reads.evals}
-          label="evals"
-          cards={(value) => value.suites.map((suite) => suite.scorecard)}
-          href={link('/dashboard/agents')}
-        />
-        <ReadCards
-          resource={reads.supplyChain}
-          label="supply chain"
-          cards={(value) => [value]}
-          href={link('/dashboard/supply-chain')}
-        />
-        <ReadCards
-          resource={reads.testEffectiveness}
-          label="test effectiveness"
-          cards={(value) => [value]}
-          href={repoHealthPath(projectId)}
-        />
-      </section>
+      <PageBody>
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+          <Panel title="Grade" data-testid="repo-360-grade">
+            <Loaded resource={reads.health} label="the grade" testId="repo-360-grade">
+              {(value) => <GradeSummary health={value} href={repoHealthPath(projectId)} />}
+            </Loaded>
+          </Panel>
+          <FixNextPanel items={fixNext} settled={settled(reads)} />
+        </div>
+        <section aria-label="Scorecards" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <ReadCards
+            resource={reads.delivery}
+            label="delivery"
+            cards={(value) => [value.dora, value.flow]}
+            href={link('/dashboard/delivery')}
+          />
+          <ReadCards
+            resource={reads.aiCode}
+            label="AI-written code"
+            cards={(value) => [value.scorecard]}
+            href={link('/dashboard/ai-code')}
+          />
+          <ReadCards
+            resource={reads.runtime}
+            label="agent runtime"
+            cards={(value) => [value.scorecard]}
+            href={link('/dashboard/agents')}
+          />
+          <ReadCards
+            resource={reads.evals}
+            label="evals"
+            cards={(value) => value.suites.map((suite) => suite.scorecard)}
+            href={link('/dashboard/agents')}
+          />
+          <ReadCards
+            resource={reads.supplyChain}
+            label="supply chain"
+            cards={(value) => [value]}
+            href={link('/dashboard/supply-chain')}
+          />
+          <ReadCards
+            resource={reads.testEffectiveness}
+            label="test effectiveness"
+            cards={(value) => [value]}
+            href={repoHealthPath(projectId)}
+          />
+        </section>
+      </PageBody>
     </PageFrame>
   );
 }

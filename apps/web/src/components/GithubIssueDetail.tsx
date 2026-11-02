@@ -65,6 +65,11 @@ export function IssueDetail({
                 : 'Labelled and assigned.'}
         </p>
       </header>
+      {operator ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <RowActions subject={subjectOfIssue(issue)} onPick={onPick} />
+        </div>
+      ) : null}
       <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 text-sm">
         <dt className="text-fg-muted">Reporter</dt>
         <dd className="m-0">{issue.author === null ? '—' : <Bdi>{issue.author}</Bdi>}</dd>
@@ -105,11 +110,6 @@ export function IssueDetail({
           </span>
         </dd>
       </dl>
-      {operator ? (
-        <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
-          <RowActions subject={subjectOfIssue(issue)} onPick={onPick} />
-        </div>
-      ) : null}
     </article>
   );
 }

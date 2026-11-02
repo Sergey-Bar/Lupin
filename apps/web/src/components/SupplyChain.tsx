@@ -28,7 +28,7 @@ import type { QaClient } from '../lib/qa-client.js';
 import { canAdminister, failureText } from '../lib/roles.js';
 import type { SupplyChainClient } from '../lib/supply-chain-client.js';
 import { listField } from './Delivery.js';
-import { PageFrame, PageHeader, Panel, Quiet } from './kit.js';
+import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import {
   Loaded,
   PageControls,
@@ -100,24 +100,26 @@ function SupplyChainBody({
     [health, project.id],
   );
   return (
-    <PageFrame data-testid="supply-chain-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="supply-chain-page" className="gap-4 sm:gap-6">
       <PageHeader
         title="Supply chain"
         subtitle={`What ${project.name} ships, and under which terms`}
         actions={switcher}
       />
-      <Loaded resource={licences} label="the licence findings" testId="licences">
-        {(page) => <LicenceStatus page={page} />}
-      </Loaded>
-      <div className="grid gap-3 lg:grid-cols-2">
-        <ProvenancePanel health={health} projectId={project.id} />
-        <LicenceFindings resource={licences} />
-        <VexAccepted health={health} projectId={project.id} />
-        <DiffCoverageLookup client={client} projectId={project.id} />
-      </div>
-      <Inventory client={client} projectId={project.id} />
-      <PolicyPanel client={client} projectId={project.id} admin={canAdminister(who)} />
-      <PortfolioSearch client={client} />
+      <PageBody>
+        <Loaded resource={licences} label="the licence findings" testId="licences">
+          {(page) => <LicenceStatus page={page} />}
+        </Loaded>
+        <div className="grid gap-3 lg:grid-cols-2">
+          <ProvenancePanel health={health} projectId={project.id} />
+          <LicenceFindings resource={licences} />
+          <VexAccepted health={health} projectId={project.id} />
+          <DiffCoverageLookup client={client} projectId={project.id} />
+        </div>
+        <Inventory client={client} projectId={project.id} />
+        <PolicyPanel client={client} projectId={project.id} admin={canAdminister(who)} />
+        <PortfolioSearch client={client} />
+      </PageBody>
     </PageFrame>
   );
 }
@@ -308,7 +310,7 @@ function DiffCoverageLookup({
           placeholder="abcdef1"
           onChange={(event) => setCommit(event.target.value)}
         />
-        <Button type="submit" variant="secondary" className="min-h-11">
+        <Button type="submit" variant="secondary" className="min-h-11 whitespace-nowrap">
           Look up
         </Button>
       </form>

@@ -53,8 +53,13 @@ export function FailureHeatmap({
     <figure data-testid="failure-heatmap" className="m-0 flex min-h-0 flex-1 flex-col gap-2">
       <div
         aria-hidden="true"
-        className="grid min-h-0 flex-1 grid-cols-[minmax(4rem,8rem)_minmax(0,1fr)] gap-x-2 gap-y-1"
-        style={{ gridTemplateRows: `repeat(${String(rows.length)}, minmax(0, 1fr)) auto` }}
+        className="grid flex-1 grid-cols-[minmax(4rem,8rem)_minmax(0,1fr)] gap-x-2 gap-y-1"
+        style={{
+          gridTemplateRows: `repeat(${String(rows.length)}, minmax(0, 1fr)) auto`,
+          // Never squeezed below a row of legible cells per suite plus the axis: the panel scrolls
+          // instead (Panel scrollLabel), because a collapsed grid draws labels over each other.
+          minHeight: `${String(rows.length * 20 + 28)}px`,
+        }}
         onPointerLeave={() => setActive(null)}
       >
         {rows.map((row, rowIndex) => (

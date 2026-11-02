@@ -25,7 +25,7 @@ import { ago } from '../lib/health-view.js';
 import type { QaClient } from '../lib/qa-client.js';
 import { canOperate, failureText } from '../lib/roles.js';
 import { formatMetricValue } from '../lib/scorecard-view.js';
-import { PageFrame, PageHeader, Panel, Quiet, Segmented } from './kit.js';
+import { PageFrame, PageBody, PageHeader, Panel, Quiet, Segmented } from './kit.js';
 import { Loaded, ProjectPage, type ProjectContext } from './ProjectPage.js';
 import { ScorecardCard } from './ScorecardCard.js';
 import { StatusLine } from './StatusLine.js';
@@ -81,7 +81,7 @@ function DeliveryBody({
   );
   const operator = canOperate(who);
   return (
-    <PageFrame data-testid="delivery-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="delivery-page" className="gap-4 sm:gap-6">
       <PageHeader
         title="Delivery"
         subtitle={`How ${project.name} ships, over the last ${days} days`}
@@ -95,10 +95,12 @@ function DeliveryBody({
           </>
         }
       />
-      <Loaded resource={report} label="delivery" testId="delivery">
-        {(value) => <DeliveryReportView report={value} />}
-      </Loaded>
-      <SourcePanel delivery={delivery} projectId={project.id} operator={operator} />
+      <PageBody>
+        <Loaded resource={report} label="delivery" testId="delivery">
+          {(value) => <DeliveryReportView report={value} />}
+        </Loaded>
+        <SourcePanel delivery={delivery} projectId={project.id} operator={operator} />
+      </PageBody>
     </PageFrame>
   );
 }

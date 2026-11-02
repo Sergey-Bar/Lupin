@@ -46,7 +46,7 @@ import {
   splitDimensions,
   whatIsGood,
 } from '../lib/health-view.js';
-import { PageFrame, PageHeader, Panel, Quiet, Segmented } from './kit.js';
+import { PageFrame, PageBody, PageHeader, Panel, Quiet, Segmented } from './kit.js';
 import { repo360Path } from '../route-manifest.js';
 import { ProjectQuarantine } from './ProjectQuarantine.js';
 
@@ -112,7 +112,7 @@ export function RepoHealth({
     );
   }
   return (
-    <PageFrame data-testid="repo-health" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="repo-health" className="gap-4 sm:gap-6">
       <PageHeader
         title={title}
         subtitle={
@@ -136,16 +136,18 @@ export function RepoHealth({
           </>
         }
       />
-      <GradeHero value={health.value} trend={history.status === 'ready' ? history.value : null} />
-      <DimensionStrip value={health.value} />
-      <div className="grid gap-3 lg:grid-cols-2">
-        <FixNext value={health.value} />
-        <WhatIsGood value={health.value} />
-      </div>
-      <Findings client={client} projectId={projectId} version={version} onChanged={reload} />
-      <ProjectQuarantine health={client} projectId={projectId} />
-      <Settings client={client} projectId={projectId} />
-      <Reports value={health.value} />
+      <PageBody>
+        <GradeHero value={health.value} trend={history.status === 'ready' ? history.value : null} />
+        <DimensionStrip value={health.value} />
+        <div className="grid gap-3 lg:grid-cols-2">
+          <FixNext value={health.value} />
+          <WhatIsGood value={health.value} />
+        </div>
+        <Findings client={client} projectId={projectId} version={version} onChanged={reload} />
+        <ProjectQuarantine health={client} projectId={projectId} />
+        <Settings client={client} projectId={projectId} />
+        <Reports value={health.value} />
+      </PageBody>
     </PageFrame>
   );
 }

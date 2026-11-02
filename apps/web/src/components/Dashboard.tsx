@@ -29,6 +29,7 @@ import {
   Delta,
   Kpi,
   PageFrame,
+  PageBody,
   PageHeader,
   Panel,
   Quiet,
@@ -135,7 +136,7 @@ function DashboardBody({
   const summary = overviewSummary(project.id, readiness, insights, snapshot);
 
   return (
-    <PageFrame data-testid="dashboard" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="dashboard" className="gap-4 sm:gap-6">
       <PageHeader
         title="Overview"
         subtitle={
@@ -162,27 +163,29 @@ function DashboardBody({
           </>
         }
       />
-      <VerdictHero
-        summary={readiness.status === 'ready' ? summary : null}
-        failure={readiness.status === 'error' ? readiness.message : null}
-      />
-      {summary === null || snapshot.status === 'loading' ? null : (
-        <FindingsColumns summary={summary} />
-      )}
-      {snapshot.status === 'ready' ? (
-        <DashboardGrid
-          snapshot={snapshot.value}
-          projectId={project.id}
-          trend={trend.status === 'ready' ? trend.value : null}
-          trendFailure={trend.status === 'error' ? trend.message : null}
+      <PageBody>
+        <VerdictHero
+          summary={readiness.status === 'ready' ? summary : null}
+          failure={readiness.status === 'error' ? readiness.message : null}
         />
-      ) : snapshot.status === 'error' ? (
-        <Quiet role="alert" data-testid="dashboard-load-error">
-          Could not read the dashboard: {snapshot.message}
-        </Quiet>
-      ) : (
-        <Quiet data-testid="dashboard-loading">Reading {project.name}…</Quiet>
-      )}
+        {summary === null || snapshot.status === 'loading' ? null : (
+          <FindingsColumns summary={summary} />
+        )}
+        {snapshot.status === 'ready' ? (
+          <DashboardGrid
+            snapshot={snapshot.value}
+            projectId={project.id}
+            trend={trend.status === 'ready' ? trend.value : null}
+            trendFailure={trend.status === 'error' ? trend.message : null}
+          />
+        ) : snapshot.status === 'error' ? (
+          <Quiet role="alert" data-testid="dashboard-load-error">
+            Could not read the dashboard: {snapshot.message}
+          </Quiet>
+        ) : (
+          <Quiet data-testid="dashboard-loading">Reading {project.name}…</Quiet>
+        )}
+      </PageBody>
     </PageFrame>
   );
 }

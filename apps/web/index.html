@@ -6,6 +6,34 @@
     <title>Lupin</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!--
+      The theme, chosen before the first paint.
+
+      `ThemeProvider` sets `data-theme` in an effect, which runs after the first paint. A reader
+      who saved the light theme (or whose system is light) therefore saw the dark default for a
+      frame and then watched every element transition to light. This script reads the same stored
+      value and writes the same attribute, synchronously, before the stylesheet is applied, so
+      the page is painted once and in the right theme. `ThemeProvider` still owns the setting
+      afterwards; this only removes the flash. The stored value is validated, not trusted, the
+      way the provider validates it. `theme-boot.test.ts` runs this exact text.
+    -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('lupin-theme');
+          var theme = stored === 'light' || stored === 'dark' ? stored : null;
+          if (theme === null) {
+            theme =
+              window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (_) {
+          /* Storage can be blocked; the provider sets the theme once it mounts. */
+        }
+      })();
+    </script>
+    <!--
       The two fonts, preloaded.
 
       `crossorigin` is required on a font preload even for a same-origin file,

@@ -85,7 +85,7 @@ export function TrendChart({
   };
 
   return (
-    <figure data-testid={testId} className="m-0 flex min-h-0 flex-1 flex-col">
+    <figure data-testid={testId} className="m-0 flex min-h-32 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 gap-2">
         <div
           aria-hidden="true"

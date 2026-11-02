@@ -3,7 +3,7 @@ import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } 
 import type { HealthClient, WhoAmI } from '../lib/health-client.js';
 import type { AdminClient } from '../lib/admin-client.js';
 import { AccessGate } from './Access.js';
-import { PageFrame, PageHeader, Panel } from './kit.js';
+import { PageFrame, PageBody, PageHeader, Panel } from './kit.js';
 import { StatusLine } from './StatusLine.js';
 import { WorkspacePanel } from './Workspaces.js';
 
@@ -79,75 +79,77 @@ function DeploymentBody({
   const profile: Profile = who.profile ?? 'solo';
   const current = describeProfile(profile);
   return (
-    <PageFrame data-testid="deployment-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="deployment-page" className="gap-4 sm:gap-6">
       <PageHeader title="Deployment" subtitle="What this install is for, and who it lets in" />
-      <StatusLine
-        data-testid="deployment-status"
-        value={current.label}
-        sentence={current.audience}
-        tone="good"
-        action={current.next}
-      />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Access control">
-          <p data-testid="deployment-access" className="text-sm">
-            Access control is <span className="font-mono">{who.mode}</span>.{' '}
-            {who.mode === 'open'
-              ? 'Anyone who can reach this install acts as the operator, which is why it stays on this machine.'
-              : 'Every request needs a credential, and each credential carries a role.'}
+      <PageBody>
+        <StatusLine
+          data-testid="deployment-status"
+          value={current.label}
+          sentence={current.audience}
+          tone="good"
+          action={current.next}
+        />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Panel title="Access control">
+            <p data-testid="deployment-access" className="text-sm">
+              Access control is <span className="font-mono">{who.mode}</span>.{' '}
+              {who.mode === 'open'
+                ? 'Anyone who can reach this install acts as the operator, which is why it stays on this machine.'
+                : 'Every request needs a credential, and each credential carries a role.'}
+            </p>
+          </Panel>
+          <Panel title="Sign-in">
+            <p data-testid="deployment-identity" className="text-sm">
+              {who.mode === 'open'
+                ? 'None: there is one person, and it is you.'
+                : who.source === 'cloudflare'
+                  ? 'You are signed in through Cloudflare Access; your role comes from the role map on this install. Access tokens, paired devices and the installation key work too.'
+                  : who.source === 'user'
+                    ? 'You are signed in with your own account, through single sign-on; your role is your membership in this workspace.'
+                    : 'Sign in with single sign-on when it is configured, access tokens issued by an admin, a paired device, or the installation key.'}
+            </p>
+          </Panel>
+        </div>
+        {admin === undefined ? null : (
+          <WorkspacePanel admin={admin} onChanged={() => window.location.reload()} />
+        )}
+        <Panel title="Profiles">
+          <Table aria-label="Deployment profiles">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Profile</TableHead>
+                <TableHead>For</TableHead>
+                <TableHead>Turns on</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {PROFILE_ORDER.map((candidate) => {
+                const description = describeProfile(candidate);
+                const isCurrent = candidate === profile;
+                return (
+                  <TableRow key={candidate} aria-current={isCurrent ? 'true' : undefined}>
+                    <TableCell className="font-medium">
+                      {description.label}
+                      {isCurrent ? (
+                        <Badge variant="outline" className="ms-2">
+                          current
+                        </Badge>
+                      ) : null}
+                    </TableCell>
+                    <TableCell>{description.audience}</TableCell>
+                    <TableCell>{description.adds}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          <p data-testid="deployment-change" className="mt-3 max-w-measure text-xs text-fg-muted">
+            To change the profile, run <span className="font-mono">./start.sh --profile team</span>{' '}
+            (or <span className="font-mono">.\start.cmd --profile team</span> on Windows) in the
+            install folder. Your data and secrets are kept.
           </p>
         </Panel>
-        <Panel title="Sign-in">
-          <p data-testid="deployment-identity" className="text-sm">
-            {who.mode === 'open'
-              ? 'None: there is one person, and it is you.'
-              : who.source === 'cloudflare'
-                ? 'You are signed in through Cloudflare Access; your role comes from the role map on this install. Access tokens, paired devices and the installation key work too.'
-                : who.source === 'user'
-                  ? 'You are signed in with your own account, through single sign-on; your role is your membership in this workspace.'
-                  : 'Sign in with single sign-on when it is configured, access tokens issued by an admin, a paired device, or the installation key.'}
-          </p>
-        </Panel>
-      </div>
-      {admin === undefined ? null : (
-        <WorkspacePanel admin={admin} onChanged={() => window.location.reload()} />
-      )}
-      <Panel title="Profiles">
-        <Table aria-label="Deployment profiles">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Profile</TableHead>
-              <TableHead>For</TableHead>
-              <TableHead>Turns on</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {PROFILE_ORDER.map((candidate) => {
-              const description = describeProfile(candidate);
-              const isCurrent = candidate === profile;
-              return (
-                <TableRow key={candidate} aria-current={isCurrent ? 'true' : undefined}>
-                  <TableCell className="font-medium">
-                    {description.label}
-                    {isCurrent ? (
-                      <Badge variant="outline" className="ms-2">
-                        current
-                      </Badge>
-                    ) : null}
-                  </TableCell>
-                  <TableCell>{description.audience}</TableCell>
-                  <TableCell>{description.adds}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        <p data-testid="deployment-change" className="mt-3 max-w-measure text-xs text-fg-muted">
-          To change the profile, run <span className="font-mono">./start.sh --profile team</span>{' '}
-          (or <span className="font-mono">.\start.cmd --profile team</span> on Windows) in the
-          install folder. Your data and secrets are kept.
-        </p>
-      </Panel>
+      </PageBody>
     </PageFrame>
   );
 }

@@ -22,7 +22,7 @@ import type { AiCodeClient } from '../lib/ai-code-client.js';
 import type { HealthClient } from '../lib/health-client.js';
 import { shortDate } from '../lib/insights.js';
 import type { QaClient } from '../lib/qa-client.js';
-import { PageFrame, PageHeader, Panel, Quiet, Segmented } from './kit.js';
+import { PageFrame, PageBody, PageHeader, Panel, Quiet, Segmented } from './kit.js';
 import { Loaded, PageControls, ProjectPage, type ProjectContext } from './ProjectPage.js';
 import { ScorecardCard } from './ScorecardCard.js';
 import { StatusLine } from './StatusLine.js';
@@ -94,7 +94,7 @@ function AiCodeBody({
     [aiCode, project.id, days],
   );
   return (
-    <PageFrame data-testid="ai-code-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="ai-code-page" className="gap-4 sm:gap-6">
       <PageHeader
         title="AI code"
         subtitle={`What AI wrote in ${project.name}, and what happened to it`}
@@ -105,10 +105,12 @@ function AiCodeBody({
           </>
         }
       />
-      <Loaded resource={report} label="AI-written code" testId="ai-code">
-        {(value) => <AiCodeReportView report={value} />}
-      </Loaded>
-      <PullRequests aiCode={aiCode} projectId={project.id} />
+      <PageBody>
+        <Loaded resource={report} label="AI-written code" testId="ai-code">
+          {(value) => <AiCodeReportView report={value} />}
+        </Loaded>
+        <PullRequests aiCode={aiCode} projectId={project.id} />
+      </PageBody>
     </PageFrame>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, cn, CircleAlert, CircleCheck, Timer } from '@lupin/ui';
+import { Badge, Button, Checkbox, cn, CircleAlert, CircleCheck, Timer } from '@lupin/ui';
 import type { GithubFinding, GithubRepoItem } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { DeliveryClient } from '../lib/delivery-client.js';
@@ -276,8 +276,7 @@ export function ReposPage({
           renderLead={
             operator
               ? (repo) => (
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     aria-label={`Select ${repo.name}`}
                     checked={selected.has(repo.projectId)}
                     onChange={() =>
@@ -295,8 +294,7 @@ export function ReposPage({
           listHeader={
             operator ? (
               <label className="mb-2 flex shrink-0 items-center gap-3 ps-3 text-xs text-fg-muted">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label="Select all repositories"
                   checked={items.every((repo) => selected.has(repo.projectId))}
                   onChange={(event) =>
