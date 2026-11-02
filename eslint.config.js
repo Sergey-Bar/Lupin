@@ -324,6 +324,13 @@ export default tseslint.config(
         'error',
         { tags: [], roles: ['tabpanel', 'region'], allowExpressionValues: true },
       ],
+      // `Checkbox` draws the design system's box around a real `<input type="checkbox">`, so a
+      // `<label>` that wraps one has a control. The rule only knows the DOM element names, and
+      // without this a wrapped `Checkbox` is reported as a label with nothing to label.
+      'jsx-a11y/label-has-associated-control': [
+        'error',
+        { controlComponents: ['Checkbox', 'Select'] },
+      ],
     },
   },
   {

@@ -88,6 +88,8 @@ export {
   Handshake,
   Eye,
   Workflow,
+  /** The menu button's chevron: it opens a list of actions below it. */
+  ChevronDown,
   Hammer,
   Database,
   BookOpen,

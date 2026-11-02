@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils.js';
 
 const selectVariants = cva(
-  'flex w-full rounded-md border bg-transparent appearance-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:opacity-50 h-11 px-3.5 py-2 text-sm',
+  'flex w-full rounded-md border bg-transparent appearance-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:opacity-50 h-11 ps-3.5 pe-9 py-2 text-sm',
   {
     variants: {
       variant: {
@@ -29,6 +29,8 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement>, Se
   error?: string;
   options: SelectOption[];
   placeholder?: string;
+  /** Classes for the wrapper. Defaults to full width; a toolbar or table cell wants w-auto. */
+  containerClassName?: string;
   'data-testid'?: string;
 }
 
@@ -41,6 +43,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       error,
       options,
       placeholder,
+      containerClassName,
       id,
       'data-testid': testId,
       disabled,
@@ -51,7 +54,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     const selectVariant = error ? 'error' : variant;
 
     return (
-      <div className="flex flex-col gap-1.5 w-full">
+      <div className={cn('flex flex-col gap-1.5', containerClassName ?? 'w-full')}>
         {label && (
           <label htmlFor={id} className="text-sm font-medium text-text-primary">
             {label}

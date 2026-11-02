@@ -48,6 +48,9 @@ import { Splitter } from './Splitter/Splitter.js';
 import { Stack } from './Stack/Stack.js';
 import { StatCard } from './StatCard/StatCard.js';
 import { StatusDot } from './StatusDot/StatusDot.js';
+import { CountUp } from './CountUp/CountUp.js';
+import { Checkbox } from './Checkbox/Checkbox.js';
+import { MenuButton } from './MenuButton/MenuButton.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './Table/Table.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs/Tabs.js';
 import { Textarea } from './Textarea/Textarea.js';
@@ -274,6 +277,21 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
     element: <StatCard title="Pass rate" value="98.4%" trend="up" description="Last 7 days" />,
   },
   { name: 'StatusDot', element: <StatusDot status="bad" label="Failing" /> },
+  { name: 'CountUp', element: <CountUp value={128} /> },
+  { name: 'Checkbox', element: <Checkbox aria-label="Select all" /> },
+  {
+    name: 'MenuButton',
+    element: (
+      <MenuButton
+        label="Actions for octo/service#1"
+        items={[
+          { value: 'comment', label: 'Comment' },
+          { value: 'close', label: 'Close' },
+        ]}
+        onSelect={() => undefined}
+      />
+    ),
+  },
   {
     name: 'Table',
     element: (
@@ -376,7 +394,7 @@ describe('axe sweep over every shipped component', () => {
   it('covers every component directory that ships a component', () => {
     const shipped = shippedComponentNames();
     const covered = CASES.map((testCase) => testCase.name).sort();
-    expect(shipped.length).toBe(32);
+    expect(shipped.length).toBe(35);
     // Guards the case list below: a missing or extra entry fails here, with the
     // diff, rather than as a silently smaller sweep.
     expect(covered).toEqual(shipped);
