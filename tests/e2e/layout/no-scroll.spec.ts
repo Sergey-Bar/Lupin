@@ -298,3 +298,97 @@ test.describe('no-scroll contract at lg and above', () => {
     }
   }
 });
+
+/**
+ * Below `lg` the panels stack and `<main>` is the one scroll container, so the contract changes:
+ * the page may scroll **down**, and may not scroll **across**. Content wider than a phone is
+ * clipped or needs a sideways drag, which WCAG 1.4.10 (reflow at 320 CSS px) rules out, and
+ * the document itself must still be exactly the viewport so there is one scrollbar, not two.
+ */
+const NARROW = [
+  { name: '390x844', width: 390, height: 844 },
+  { name: '820x1180', width: 820, height: 1180 },
+] as const;
+
+test.describe('reflow below lg', () => {
+  test.beforeAll(async ({ request }) => {
+    await seedWorkspace(request);
+  });
+
+  test.beforeEach(async ({ context, request }) => {
+    await authenticate(context, request);
+  });
+
+  for (const viewport of NARROW) {
+    for (const route of ROUTES) {
+      test(`${route.id} reflows at ${viewport.name}`, async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        if (route.id === 'prs' || route.id === 'issues') await mockGithubInbox(page);
+        await page.goto(`${WEB_BASE}${route.path}`);
+
+        const where = `${route.path} at ${viewport.name}`;
+        await expectRendered(page, where);
+        await settle(page);
+
+        const overflow = await measure(page);
+        expect(
+          Math.max(overflow.mainX, overflow.documentX),
+          `${where} scrolls sideways (${JSON.stringify(overflow)}). Something is wider than the ` +
+            'screen: let it wrap, truncate it, or give it its own horizontal scroll region.',
+        ).toBeLessThanOrEqual(TOLERANCE_PX);
+        expect(
+          overflow.documentY,
+          `${where} makes the document scroll (${JSON.stringify(overflow)}). <main> is the one ` +
+            'scroll container below lg; the document must not be a second one.',
+        ).toBeLessThanOrEqual(TOLERANCE_PX);
+      });
+    }
+  }
+});
+
+/**
+ * The same contract with the page set right-to-left. The interface is English, but a title, a
+ * branch or a label a person wrote can be in any script, and the product promises that the layout
+ * mirrors. Direction is set on `<html>` after load, which is what a language switch does, and the
+ * check is the one that matters most when text flips: nothing may start to scroll sideways, and a
+ * pinned control must not slide off the edge it was anchored to.
+ */
+test.describe('right-to-left', () => {
+  test.beforeAll(async ({ request }) => {
+    await seedWorkspace(request);
+  });
+
+  test.beforeEach(async ({ context, request }) => {
+    await authenticate(context, request);
+  });
+
+  for (const viewport of [VIEWPORTS[0], NARROW[0]] as const) {
+    for (const route of ROUTES) {
+      test(`${route.id} mirrors at ${viewport.name}`, async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        if (route.id === 'prs' || route.id === 'issues') await mockGithubInbox(page);
+        await page.goto(`${WEB_BASE}${route.path}`);
+
+        const where = `${route.path} at ${viewport.name} right-to-left`;
+        await expectRendered(page, where);
+        await page.evaluate(() => {
+          document.documentElement.dir = 'rtl';
+        });
+        await settle(page);
+
+        const overflow = await measure(page);
+        const wide = viewport.width >= 1024;
+        expect(
+          Math.max(
+            overflow.mainX,
+            overflow.documentX,
+            wide ? overflow.mainY : 0,
+            overflow.documentY,
+          ),
+          `${where} overflows once mirrored (${JSON.stringify(overflow)}). A physical ` +
+            '`left`/`right`/`ml`/`pr` utility is the usual cause; use the logical one.',
+        ).toBeLessThanOrEqual(TOLERANCE_PX);
+      });
+    }
+  }
+});

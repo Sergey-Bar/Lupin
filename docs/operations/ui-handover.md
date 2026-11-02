@@ -53,9 +53,14 @@ development server on 3000 or 5173:
 $env:DATABASE_URL = '<loopback postgres url>'
 $env:E2E_API_PORT = '3111'
 $env:E2E_WEB_PORT = '5273'
-pnpm exec playwright test --project=layout-fit      # no page scrolls: 210 tests
+pnpm exec playwright test --project=layout-fit      # layout contract, see below
 pnpm exec playwright test --project=accessibility   # axe, both themes, four states: 212 tests
 ```
+
+`layout-fit` is three suites over the same 35 routes. **Desktop** (1280, 1440 and 1920 wide): no
+page scrolls. **Reflow** (390 and 820 wide): the page may scroll down but never across, and the
+document is not a second scroll container. **Right-to-left** (1280 and 390 wide): nothing starts
+to scroll once the page is mirrored. A failure names the element that overflows.
 
 `UI_AUDIT_SHOTS=1` makes `layout-fit` also write a screenshot of every route to
 `test-results/evidence/ui-audit/`. Playwright empties `test-results/` at the start of every run,
@@ -89,8 +94,13 @@ Be explicit with the customer about these.
 
 - **No page has been scored against a design rubric.** The measured gates (no scroll, axe, render
   budget) pass; "10 out of 10" is a judgement that was not made page by page.
-- **Not reviewed visually:** every page in the light theme except Portfolio, right-to-left
-  layouts, and widths below 1280. The layout gate covers 1280, 1440 and 1920 only.
+- **Measured, not looked at:** right-to-left layouts and widths below 1280. The reflow and mirror
+  gates prove nothing overflows; nobody has judged whether those layouts look right.
+- **Light theme:** Portfolio, Pull requests, Insights, Toolbox and Supply chain were viewed. The
+  other pages pass axe contrast in both themes but were not viewed in light.
+- **Scroll cue:** a scrolling page body is cut mid-panel, with only a thin scrollbar to say there
+  is more. A CSS scroll-shadow was tried and does not show over opaque panels, so it was removed.
+  A cue that works needs a script or a panel redesign.
 - **Not built:** the shared-element morph from a pull request row to its detail, and a check of
   `j`/`k` row walking in the redesigned rows.
 - **Pages reviewed and fixed:** Pull requests, Issues, Insights, Supply chain, Deployment,
