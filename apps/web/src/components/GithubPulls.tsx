@@ -281,7 +281,13 @@ function PullRow({
   onPick: (kind: ActionKind, subject: Subject) => void;
 }): React.ReactElement {
   const subject = subjectOfPull(item);
-  const review = item.reviewDecision === null ? null : REVIEW[item.reviewDecision];
+  // A finished pull request is waiting for nothing: "needs review" and "no checks" would be
+  // stale advice. What was decided (approved, changes requested) still reads true.
+  const finished = item.state !== 'open';
+  const review =
+    item.reviewDecision === null || (finished && item.reviewDecision === 'review_required')
+      ? null
+      : REVIEW[item.reviewDecision];
   const checks = item.checksState === null ? null : CHECKS[item.checksState];
   return (
     <TableRow data-testid="pull-row">
@@ -331,7 +337,7 @@ function PullRow({
       <TableCell>{review === null ? '—' : <Verdict entry={review} />}</TableCell>
       <TableCell>
         {checks === null ? (
-          <span className="text-fg-muted">No checks</span>
+          <span className="text-fg-muted">{finished ? '-' : 'No checks'}</span>
         ) : (
           <Verdict entry={checks} />
         )}

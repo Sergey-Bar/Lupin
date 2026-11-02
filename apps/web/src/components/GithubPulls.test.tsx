@@ -194,6 +194,38 @@ describe('PullRequestsPage', () => {
     expect(within(row).getByText('3 hours ago')).toBeInTheDocument();
   });
 
+  it('does not ask a finished pull request for a review or checks it will never get', async () => {
+    const { github } = client([
+      {
+        items: [
+          pull({
+            id: 'm',
+            title: 'Already merged',
+            state: 'merged',
+            reviewDecision: 'review_required',
+            checksState: null,
+          }),
+          pull({
+            id: 'a',
+            number: 2,
+            title: 'Merged and approved',
+            state: 'merged',
+            reviewDecision: 'approved',
+            checksState: null,
+          }),
+        ],
+        nextCursor: null,
+      },
+    ]);
+    render(<PullRequestsPage github={github} now={() => NOW} />);
+    const rows = await screen.findAllByTestId('pull-row');
+    const [merged, approved] = rows as [HTMLElement, HTMLElement];
+    expect(within(merged).queryByText('Needs review')).not.toBeInTheDocument();
+    expect(within(merged).queryByText('No checks')).not.toBeInTheDocument();
+    // What actually happened is still worth showing.
+    expect(within(approved).getByText('Approved')).toBeInTheDocument();
+  });
+
   it('gives Arabic and Hebrew titles their own direction and keeps identifiers left to right', async () => {
     const { github } = client([
       {

@@ -7345,6 +7345,25 @@
         }
       ],
       "resolution": "The key that moves forward is chosen from the nearest `dir` attribute."
+    },
+    {
+      "id": "MNT-168",
+      "title": "Dependabot alerts were requested with a page number GitHub rejects, so they read as unreadable",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-11",
+      "summary": "Every paginated read sent `page=1`. GitHub's Dependabot alerts endpoint is cursor-paged and answers 400 to a `page` parameter, so the call failed. The sync tolerates a feed the token cannot read, so it did not fail: it recorded Dependabot as unreadable and graded the repository without it, silently dropping every Dependabot alert from the health score. Stubbed tests could not show this, because the stub accepted any query string.",
+      "confirmed": true,
+      "confirmedOn": "2026-11-02",
+      "confirmedBy": "A read-only run against a real repository: listDependabotAlerts returned github_400 while a direct request without `page` returned 200 and two open alerts.",
+      "evidence": [
+        {
+          "path": "packages/connectors/github/src/health-reads.test.ts",
+          "asserts": "A cursor-paged feed is requested without a page parameter whatever the caller passes, still reports that more exists when GitHub links a next cursor, and follows that link when asked for more pages."
+        }
+      ],
+      "resolution": "A list can be marked `cursorPaged`: it sends no `page`, and reports a non-null nextPage as the signal that the walk stopped early. Re-running against the real repository reads two medium alerts and the grade reflects them."
     }
   ]
 }
