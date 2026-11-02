@@ -160,7 +160,7 @@ export function RepoMap({
       if (move(node, event.key)) event.preventDefault();
     },
     className: cn(
-      'flex min-w-0 items-center gap-2.5 rounded-lg border bg-surface px-3 text-left transition-opacity duration-150 motion-reduce:transition-none hover:bg-surface-muted',
+      'flex min-w-0 items-center gap-2.5 rounded-lg border bg-surface px-3 text-start transition-opacity duration-150 motion-reduce:transition-none hover:bg-surface-muted',
       FOCUS,
       STATUS_BORDER[node.status],
       active !== null && !trace.nodes.has(node.id) && 'opacity-40',
@@ -211,7 +211,7 @@ export function RepoMap({
         <ul
           data-testid="map-legend"
           aria-label="Legend"
-          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted sm:ml-auto"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted sm:ms-auto"
         >
           {LEGEND.map(([status, word]) => (
             <li key={status} className="inline-flex items-center gap-1.5">
@@ -296,7 +296,7 @@ export function RepoMap({
             if (closed !== undefined) buttons.current.get(closed)?.focus();
           }, 0);
         }}
-        className="m-0 ml-auto h-dvh max-h-dvh w-full max-w-md rounded-none"
+        className="m-0 ms-auto h-dvh max-h-dvh w-full max-w-md rounded-none"
       >
         {selected === undefined ? null : <Detail node={selected} />}
       </Dialog>
@@ -338,7 +338,7 @@ function Canvas({
           aria-hidden="true"
           width={layout.width}
           height={layout.height}
-          className="absolute left-0 overflow-visible"
+          className="absolute start-0 overflow-visible"
           style={{ top: HEADER }}
         >
           {map.edges.map((edge) => {

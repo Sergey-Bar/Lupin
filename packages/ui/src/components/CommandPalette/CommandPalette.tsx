@@ -172,7 +172,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
               aria-controls={listboxId}
               aria-autocomplete="list"
               aria-activedescendant={activeId}
-              className="flex h-12 w-full bg-transparent py-3 pl-3 pr-2 text-sm placeholder:text-text-muted text-text-primary focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-border-focus"
+              className="flex h-12 w-full bg-transparent py-3 ps-3 pe-2 text-sm placeholder:text-text-muted text-text-primary focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-border-focus"
               placeholder="Type a command or search..."
               value={query}
               onChange={(e) => {
@@ -211,7 +211,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
                         handleSelect(action);
                       }}
                       className={cn(
-                        'flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-sm text-left transition-colors',
+                        'flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-sm text-start transition-colors',
                         isSelected
                           ? 'bg-brand-50 text-brand-700 font-medium'
                           : // `text-primary`, not `text-secondary`: the palette is glass over a

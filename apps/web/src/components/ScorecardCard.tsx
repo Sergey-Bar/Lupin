@@ -106,7 +106,7 @@ function ScoreLine({ scorecard }: { scorecard: Scorecard }): React.ReactElement 
         )}
       >
         {scorecard.score.toFixed(0)}
-        <span className="ml-1 text-sm font-normal text-fg-muted">/ 100</span>
+        <span className="ms-1 text-sm font-normal text-fg-muted">/ 100</span>
       </span>
       <span data-testid="scorecard-capped" className="text-xs text-fg-muted">
         {`Limited by ${limiter?.label ?? scorecard.cappedBy ?? 'nothing'}`}

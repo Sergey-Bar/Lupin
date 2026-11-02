@@ -257,7 +257,7 @@ export function DialogClose({
       title={label}
       onClick={close}
       className={cn(
-        'absolute right-2 top-2 inline-flex h-11 w-11 items-center justify-center rounded-full text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
+        'absolute end-2 top-2 inline-flex h-11 w-11 items-center justify-center rounded-full text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
         className,
       )}
     >
@@ -282,9 +282,9 @@ export const DialogHeader = forwardRef<HTMLDivElement, DialogHeaderProps>(
     <div
       ref={ref}
       className={cn(
-        'flex flex-col space-y-1.5 text-left mb-4',
+        'flex flex-col space-y-1.5 text-start mb-4',
         // Room for the close button, so a long title never runs under it.
-        showClose && 'pr-10',
+        showClose && 'pe-10',
         className,
       )}
       {...props}

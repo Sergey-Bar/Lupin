@@ -24,7 +24,7 @@ const toastVariants = cva(
    * `motion.vocabulary.test.ts` asserts that this file says which of those it is, because
    * an overlay that "animates" has no direction and the next one copies its neighbour.
    */
-  'pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 transition-[opacity,transform] duration-200 data-[state=entering]:animate-fade-in data-[state=leaving]:animate-fade-out',
+  'pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pe-8 transition-[opacity,transform] duration-200 data-[state=entering]:animate-fade-in data-[state=leaving]:animate-fade-out',
   {
     variants: {
       variant: {

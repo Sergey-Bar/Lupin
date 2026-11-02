@@ -29,6 +29,18 @@
  * the glyphs they replace were text with no name: a shape with neither an accessible
  * name nor a consistent appearance across platforms.
  */
+
+import { createElement, forwardRef } from 'react';
+import {
+  ArrowRight as ArrowRightBase,
+  ChevronLeft as ChevronLeftBase,
+  ChevronRight as ChevronRightBase,
+  PanelLeftClose as PanelLeftCloseBase,
+  PanelLeftOpen as PanelLeftOpenBase,
+  type LucideIcon,
+  type LucideProps,
+} from 'lucide-react';
+import { cn } from './lib/utils.js';
 export {
   /** Sort direction, ascending. Replaces `▲`, a geometric shape rather than a glyph. */
   ArrowUp,
@@ -42,20 +54,12 @@ export {
   Moon,
   /** The `light` theme. */
   Sun,
-  /** The sidebar is expanded; the control collapses it. Replaces the word "Collapse". */
-  PanelLeftClose,
-  /** The sidebar is collapsed; the control expands it. Replaces `›`. */
-  PanelLeftOpen,
   /** `StatCard` trend up. Replaces `↑`. */
   TrendingUp,
   /** `StatCard` trend down. Replaces `↓`. */
   TrendingDown,
   /** Runs a tool. The runner page's one primary action. */
   Play,
-  /** Pager: the previous page. */
-  ChevronLeft,
-  /** Pager: the next page. */
-  ChevronRight,
   /** Re-reads the repository rather than serving the cached scan. */
   RefreshCw,
   /** A capability the repository covers. */
@@ -117,8 +121,33 @@ export {
   LayoutGrid,
   ListChecks,
   Network,
-  /** A finding's next action: "Fix →", "Open →". */
-  ArrowRight,
   /** The repo map's "show the blocking path" toggle. */
   Route,
 } from 'lucide-react';
+
+/**
+ * The icons whose meaning is a direction along the reading line.
+ *
+ * Mirrored in a right-to-left page by the 
+tl: variant, so "next" still points the way a
+ * reader's eye travels. Done here, once, so a call site cannot forget. Icons about the screen
+ * rather than the reading line (the sort arrows, a trend) are not mirrored.
+ */
+function mirrored(Icon: LucideIcon): LucideIcon {
+  const Mirrored = forwardRef<SVGSVGElement, LucideProps>(({ className, ...props }, ref) =>
+    createElement(Icon, { ...props, ref, className: cn('rtl:-scale-x-100', className) }),
+  );
+  Mirrored.displayName = Icon.displayName ?? 'MirroredIcon';
+  return Mirrored;
+}
+
+/** The sidebar is expanded; the control collapses it. */
+export const PanelLeftClose = mirrored(PanelLeftCloseBase);
+/** The sidebar is collapsed; the control expands it. */
+export const PanelLeftOpen = mirrored(PanelLeftOpenBase);
+/** Pager: the previous page. */
+export const ChevronLeft = mirrored(ChevronLeftBase);
+/** Pager: the next page. */
+export const ChevronRight = mirrored(ChevronRightBase);
+/** A finding's next action: "Fix", "Open". */
+export const ArrowRight = mirrored(ArrowRightBase);

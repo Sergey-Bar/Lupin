@@ -244,7 +244,11 @@ function SuiteComparison({
               <li key={change.caseId} className="flex justify-between gap-2">
                 <span className="font-mono text-xs">{change.caseId}</span>
                 <span className="tabular-nums text-xs text-danger">
-                  {`${percent(change.baselinePassRate)} → ${percent(change.candidatePassRate)}`}
+                  {percent(change.baselinePassRate)}{' '}
+                  <span aria-hidden="true" className="inline-block rtl:-scale-x-100">
+                    →
+                  </span>{' '}
+                  {percent(change.candidatePassRate)}
                 </span>
               </li>
             ))}
@@ -515,7 +519,7 @@ function Loops({ loops }: { loops: AgentRuntimeReport['runtime']['loops'] }): Re
             <li key={`${loop.traceId}-${loop.toolArgsHash}`}>
               <span className="font-mono text-xs">{loop.agent}</span>
               {` called ${loop.toolName} ${String(loop.count)} times with the same arguments`}
-              <span className="ml-1 font-mono text-xs text-fg-muted">{`trace ${loop.traceId}`}</span>
+              <span className="ms-1 font-mono text-xs text-fg-muted">{`trace ${loop.traceId}`}</span>
             </li>
           ))}
         </ul>

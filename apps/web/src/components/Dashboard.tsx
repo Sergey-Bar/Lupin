@@ -452,16 +452,16 @@ function BeforeNow({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-fg-muted">
-                <th scope="col" className="pb-2 text-left font-normal">
+                <th scope="col" className="pb-2 text-start font-normal">
                   Metric
                 </th>
-                <th scope="col" className="pb-2 text-right font-normal">
+                <th scope="col" className="pb-2 text-end font-normal">
                   Before
                 </th>
-                <th scope="col" className="pb-2 text-right font-normal">
+                <th scope="col" className="pb-2 text-end font-normal">
                   Now
                 </th>
-                <th scope="col" className="pb-2 text-right font-normal">
+                <th scope="col" className="pb-2 text-end font-normal">
                   Change
                 </th>
               </tr>
@@ -473,16 +473,16 @@ function BeforeNow({
                   data-testid={`compare-${entry.key}`}
                   className="border-t border-border"
                 >
-                  <th scope="row" className="py-0.5 text-left font-normal">
+                  <th scope="row" className="py-0.5 text-start font-normal">
                     {entry.label}
                   </th>
-                  <td className="py-0.5 text-right tabular-nums text-fg-muted">
+                  <td className="py-0.5 text-end tabular-nums text-fg-muted">
                     {orDash(entry.before, entry.format)}
                   </td>
-                  <td className="py-0.5 text-right tabular-nums">
+                  <td className="py-0.5 text-end tabular-nums">
                     {orDash(entry.now, entry.format)}
                   </td>
-                  <td className="py-0.5 text-right">
+                  <td className="py-0.5 text-end">
                     <Delta
                       text={formatDelta(entry)}
                       verdict={entry.verdict}

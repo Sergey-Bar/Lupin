@@ -113,6 +113,23 @@ describe('Tabs keyboard and focus', () => {
     expect(screen.getByRole('tab', { name: 'Analytics' })).toHaveFocus();
   });
 
+  it('follows the reading direction: in a right-to-left page ArrowLeft moves to the next tab', async () => {
+    const user = userEvent.setup();
+    document.documentElement.dir = 'rtl';
+    try {
+      render(<TabsHarness />);
+      screen.getByRole('tab', { name: 'Runs' }).focus();
+
+      await user.keyboard('{ArrowLeft}');
+      expect(screen.getByRole('tab', { name: 'Quarantine' })).toHaveFocus();
+
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('tab', { name: 'Runs' })).toHaveFocus();
+    } finally {
+      document.documentElement.removeAttribute('dir');
+    }
+  });
+
   it('selects a tab with Enter and with Space', async () => {
     const user = userEvent.setup();
     render(<TabsHarness />);

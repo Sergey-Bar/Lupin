@@ -58,6 +58,47 @@ export const GLASS_PROPERTY_SELECTOR = {
     'utility from theme.css, which is the only place a backdrop filter is written.',
 };
 
+/**
+ * Physical direction in a class string, banned so the interface mirrors for Arabic and Hebrew.
+ *
+ * `ml-2` is the left margin in every language; `ms-2` is the margin at the start of the line,
+ * which is the right one in a right-to-left page. The ban catches the spacing, inset, text-align,
+ * border and radius utilities that have a logical twin. It deliberately does not catch:
+ * `left-1/2` (a centring that is symmetric), `translate-x-*`, or `origin-*`, which have no
+ * logical form and are written with an `rtl:` variant where they matter.
+ *
+ * The regex is bounded on the left so a word like `pr-reporting` or `html-left` is not a class,
+ * and on the right by a digit, `px`, `auto`, `full` or `[` so only utility shapes match. It has
+ * no `/`, because esquery ends a regex at the first one.
+ * `scripts/lib/eslint-plugin-compatibility.test.mjs` lints a probe and expects it to fire.
+ */
+const PHYSICAL_DIRECTION =
+  '(^|[\\s"\'`:\\[])-?(' +
+  '(ml|mr|pl|pr)-(\\d|px|auto|\\[)|' +
+  '(left|right)-(\\d+(\\.\\d+)?($|[\\s"\'`\\]])|px|auto|full|\\[)|' +
+  'text-(left|right)($|[\\s"\'`\\]])|' +
+  '(border|rounded)-[lr]($|[\\s"\'`\\]-])|' +
+  'rounded-[tb][lr]($|[\\s"\'`\\]-])|' +
+  '(float|clear)-(left|right)($|[\\s"\'`\\]])|' +
+  'scroll-(m|p)[lr]-)';
+
+const PHYSICAL_DIRECTION_MESSAGE =
+  'Use a logical utility, not a physical one: ms-/me-/ps-/pe-/start-/end-/text-start/text-end/' +
+  'border-s/border-e/rounded-s/rounded-e. The page mirrors for Arabic and Hebrew, and a physical ' +
+  'direction does not.';
+
+/** Spread into every block that sets `no-restricted-syntax`, for the reason `GLASS_SELECTOR` gives. */
+export const PHYSICAL_DIRECTION_SELECTORS = [
+  {
+    selector: `Literal[value=/${PHYSICAL_DIRECTION}/]`,
+    message: PHYSICAL_DIRECTION_MESSAGE,
+  },
+  {
+    selector: `TemplateElement[value.raw=/${PHYSICAL_DIRECTION}/]`,
+    message: PHYSICAL_DIRECTION_MESSAGE,
+  },
+];
+
 export default tseslint.config(
   {
     ignores: [
@@ -323,7 +364,12 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx}'],
     ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
     rules: {
-      'no-restricted-syntax': ['error', GLASS_SELECTOR, GLASS_PROPERTY_SELECTOR],
+      'no-restricted-syntax': [
+        'error',
+        GLASS_SELECTOR,
+        GLASS_PROPERTY_SELECTOR,
+        ...PHYSICAL_DIRECTION_SELECTORS,
+      ],
     },
   },
   {
@@ -353,6 +399,7 @@ export default tseslint.config(
         'error',
         GLASS_SELECTOR,
         GLASS_PROPERTY_SELECTOR,
+        ...PHYSICAL_DIRECTION_SELECTORS,
         {
           selector: 'TSAsExpression > TSAsExpression',
           message:

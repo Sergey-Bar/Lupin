@@ -14,7 +14,7 @@ export function PageGuide({ pathname }: { pathname: string }): React.ReactElemen
       data-chrome="secondary"
     >
       <summary className="cursor-pointer rounded-lg px-4 py-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
-        <span className="ml-2 inline-flex items-center gap-2">
+        <span className="ms-2 inline-flex items-center gap-2">
           <BookOpen size={16} aria-hidden="true" />
           <strong>How to use {route.label}</strong>
           <span className="hidden text-fg-muted sm:inline">Start here</span>

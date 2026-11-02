@@ -453,7 +453,7 @@ function ComponentTable({
               <TableCell>
                 <span className="text-sm">{component.name}</span>
                 {component.version === null ? null : (
-                  <span className="ml-1 font-mono text-xs text-fg-muted">{component.version}</span>
+                  <span className="ms-1 font-mono text-xs text-fg-muted">{component.version}</span>
                 )}
                 <span className="block break-all font-mono text-xs text-fg-muted">
                   {component.purl ?? 'no purl'}

@@ -188,7 +188,7 @@ describe('a numeric cell', () => {
 
   it('aligns figures to the right, in tabular numerals, in the reading face', () => {
     const cell = renderNumeric();
-    expect(cell).toHaveClass('tabular-nums', 'text-right', 'font-mono');
+    expect(cell).toHaveClass('tabular-nums', 'text-end', 'font-mono');
   });
 
   it('leaves a text cell alone', () => {
@@ -208,7 +208,7 @@ describe('a numeric cell', () => {
 
   it('lets a caller add a class without losing the three', () => {
     const cell = renderNumeric({ className: 'text-fg-muted' });
-    expect(cell).toHaveClass('tabular-nums', 'text-right', 'font-mono', 'text-fg-muted');
+    expect(cell).toHaveClass('tabular-nums', 'text-end', 'font-mono', 'text-fg-muted');
   });
 });
 

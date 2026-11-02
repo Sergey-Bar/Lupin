@@ -5,6 +5,7 @@ import type {
   ScorecardStatus,
 } from '@lupin/shared-contracts';
 import { formatDuration, type Verdict } from './insights.js';
+import { formatCompact, formatPlain } from './intl.js';
 
 /**
  * How a scorecard is read on screen, as pure functions.
@@ -15,15 +16,12 @@ import { formatDuration, type Verdict } from './insights.js';
  * falling lead time is green and a falling deploy frequency is red.
  */
 
-const COMPACT = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
-const PLAIN = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
-
 function fixed(value: number, digits: number): string {
   return value.toFixed(digits);
 }
 
 const FORMATTERS: Readonly<Record<MetricUnit, (value: number) => string>> = {
-  count: (value) => PLAIN.format(value),
+  count: (value) => formatPlain(value),
   percent: (value) => `${fixed(value, 1)}%`,
   // A ratio is 0–1 on the wire and read as a share.
   ratio: (value) => `${fixed(value * 100, 1)}%`,
@@ -33,7 +31,7 @@ const FORMATTERS: Readonly<Record<MetricUnit, (value: number) => string>> = {
   'per-day': (value) => `${fixed(value, 2)}/day`,
   'per-week': (value) => `${fixed(value, 1)}/week`,
   usd: (value) => `$${fixed(value, Math.abs(value) < 1 ? 4 : 2)}`,
-  tokens: (value) => `${COMPACT.format(value)} tokens`,
+  tokens: (value) => `${formatCompact(value)} tokens`,
   score: (value) => fixed(value, 0),
 };
 

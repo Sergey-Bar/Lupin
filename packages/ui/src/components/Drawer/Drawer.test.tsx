@@ -47,7 +47,7 @@ describe('Drawer', () => {
 
   it('applies position variants', () => {
     render(<Drawer data-testid="drawer-root" position="right" open />);
-    expect(screen.getByTestId('drawer-root')).toHaveClass('right-0');
+    expect(screen.getByTestId('drawer-root')).toHaveClass('end-0');
   });
 });
 

@@ -51,12 +51,12 @@ export function HistoryChart({ points }: { points: readonly ScanSnapshot[] }): R
       <div className="flex min-h-0 flex-1 gap-2">
         <div
           aria-hidden="true"
-          className="relative w-7 shrink-0 text-right text-xs tabular-nums text-fg-muted"
+          className="relative w-7 shrink-0 text-end text-xs tabular-nums text-fg-muted"
         >
           {GRID.map((value) => (
             <span
               key={value}
-              className="absolute right-0 -translate-y-1/2"
+              className="absolute end-0 -translate-y-1/2"
               style={{ top: `${String(100 - value)}%` }}
             >
               {value}
@@ -105,7 +105,7 @@ export function HistoryChart({ points }: { points: readonly ScanSnapshot[] }): R
           </svg>
         </div>
       </div>
-      <div aria-hidden="true" className="ml-9 mt-1 flex justify-between text-xs text-fg-muted">
+      <div aria-hidden="true" className="ms-9 mt-1 flex justify-between text-xs text-fg-muted">
         <span>{first === undefined ? '' : shortDate(first.at.slice(0, 10))}</span>
         <span>{last === undefined ? '' : shortDate(last.at.slice(0, 10))}</span>
       </div>

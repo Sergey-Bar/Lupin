@@ -1,4 +1,5 @@
 import type { TrendWindow } from './qa.js';
+import { formatMonthDay, formatNumber } from './intl.js';
 
 /**
  * "How we did before, and how we are doing now", as arithmetic the screens share.
@@ -92,7 +93,7 @@ export function formatPercent(value: number): string {
 }
 
 export function formatCount(value: number): string {
-  return Math.round(value).toLocaleString('en-US');
+  return formatNumber(value);
 }
 
 export function formatDuration(milliseconds: number): string {
@@ -119,9 +120,5 @@ export function formatDelta(comparison: Pick<Comparison, 'delta' | 'format'>): s
 
 /** `2026-10-20` → `Oct 20`, in UTC so the label matches the bucket it names. */
 export function shortDate(date: string): string {
-  return new Date(`${date}T00:00:00.000Z`).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
+  return formatMonthDay(date);
 }

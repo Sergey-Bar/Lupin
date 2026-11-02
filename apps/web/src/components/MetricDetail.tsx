@@ -304,7 +304,7 @@ function SeriesChart({ metric }: { metric: CockpitMetric }): React.ReactElement 
         <TableHeader>
           <TableRow>
             <TableHead>Recorded</TableHead>
-            <TableHead className="text-right">{metric.label}</TableHead>
+            <TableHead className="text-end">{metric.label}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -313,7 +313,7 @@ function SeriesChart({ metric }: { metric: CockpitMetric }): React.ReactElement 
               <TableCell className="tabular-nums">
                 {point.at.slice(0, 16).replace('T', ' ')}
               </TableCell>
-              <TableCell className="text-right tabular-nums">
+              <TableCell className="text-end tabular-nums">
                 {formatValue(metric.unit, point.value)}
               </TableCell>
             </TableRow>

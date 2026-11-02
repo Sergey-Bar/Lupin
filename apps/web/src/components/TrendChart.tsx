@@ -89,12 +89,12 @@ export function TrendChart({
       <div className="flex min-h-0 flex-1 gap-2">
         <div
           aria-hidden="true"
-          className="relative w-8 shrink-0 text-right text-xs tabular-nums text-fg-muted"
+          className="relative w-8 shrink-0 text-end text-xs tabular-nums text-fg-muted"
         >
           {GRID.map((value) => (
             <span
               key={value}
-              className="absolute right-0 -translate-y-1/2"
+              className="absolute end-0 -translate-y-1/2"
               style={{ top: `${String(100 - value)}%` }}
             >
               {value}%
@@ -241,17 +241,17 @@ export function TrendChart({
               <div className="font-medium text-fg">{shortDate(hovered.date)}</div>
               <dl className="m-0 mt-1 grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 tabular-nums">
                 <dt className="text-fg-muted">Runs</dt>
-                <dd className="m-0 text-right">{hovered.runs}</dd>
+                <dd className="m-0 text-end">{hovered.runs}</dd>
                 <dt className="text-success">Passed</dt>
-                <dd className="m-0 text-right">{hovered.passed}</dd>
+                <dd className="m-0 text-end">{hovered.passed}</dd>
                 <dt className="text-danger">Failed</dt>
-                <dd className="m-0 text-right">{hovered.failed}</dd>
+                <dd className="m-0 text-end">{hovered.failed}</dd>
                 <dt className="text-fg-muted">Flaky</dt>
-                <dd className="m-0 text-right">{hovered.flaky}</dd>
+                <dd className="m-0 text-end">{hovered.flaky}</dd>
                 <dt className="text-fg-muted">Pass rate</dt>
-                <dd className="m-0 text-right">{orDash(hovered.passRate, formatPercent)}</dd>
+                <dd className="m-0 text-end">{orDash(hovered.passRate, formatPercent)}</dd>
                 <dt className="text-fg-muted">Avg time</dt>
-                <dd className="m-0 text-right">{orDash(hovered.avgDurationMs, formatDuration)}</dd>
+                <dd className="m-0 text-end">{orDash(hovered.avgDurationMs, formatDuration)}</dd>
               </dl>
             </div>
           )}
@@ -260,15 +260,15 @@ export function TrendChart({
           aria-hidden="true"
           className="relative w-6 shrink-0 text-xs tabular-nums text-fg-muted"
         >
-          <span className="absolute left-0 -translate-y-1/2" style={{ top: '12%' }}>
+          <span className="absolute start-0 -translate-y-1/2" style={{ top: '12%' }}>
             {maxRuns}
           </span>
-          <span className="absolute left-0 -translate-y-1/2" style={{ top: '100%' }}>
+          <span className="absolute start-0 -translate-y-1/2" style={{ top: '100%' }}>
             0
           </span>
         </div>
       </div>
-      <div aria-hidden="true" className="relative ml-10 mr-8 mt-2 h-4 text-xs text-fg-muted">
+      <div aria-hidden="true" className="relative ms-10 me-8 mt-2 h-4 text-xs text-fg-muted">
         {ticks.map((index, position) => {
           const bucket = buckets[index];
           if (bucket === undefined) return null;

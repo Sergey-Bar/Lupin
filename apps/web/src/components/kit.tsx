@@ -307,7 +307,7 @@ export function PagerControls<T>({
   if (pager.total === 0) return null;
   return (
     <nav aria-label={`${label} pages`} className="flex shrink-0 items-center justify-end gap-1">
-      <span className="mr-1 tabular-nums text-xs text-fg-muted" aria-live="polite">
+      <span className="me-1 tabular-nums text-xs text-fg-muted" aria-live="polite">
         {`${String(pager.from)}–${String(pager.to)} of ${String(pager.total)}`}
       </span>
       <button
