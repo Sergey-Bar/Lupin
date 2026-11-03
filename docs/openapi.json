@@ -12403,7 +12403,12 @@
           },
           "weekday": { "default": 1, "type": "integer", "minimum": 0, "maximum": 6 },
           "cronExpr": { "type": "string", "maxLength": 100 },
-          "timezone": { "default": "UTC", "type": "string", "minLength": 1, "maxLength": 64 }
+          "timezone": { "default": "UTC", "type": "string", "minLength": 1, "maxLength": 64 },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
         },
         "required": ["channelId", "name", "cadence", "time", "weekday", "timezone"],
         "additionalProperties": false
@@ -24972,7 +24977,8 @@
           "timezone": { "type": "string" },
           "enabled": { "type": "boolean" },
           "describe": { "type": "string" },
-          "nextRunAt": { "type": ["string", "null"] }
+          "nextRunAt": { "type": ["string", "null"] },
+          "projectId": { "type": ["string", "null"] }
         },
         "required": [
           "id",
@@ -24983,7 +24989,8 @@
           "timezone",
           "enabled",
           "describe",
-          "nextRunAt"
+          "nextRunAt",
+          "projectId"
         ],
         "additionalProperties": false
       },

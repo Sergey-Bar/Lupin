@@ -24,9 +24,10 @@ export interface CockpitDigest {
 export async function loadCockpitDigest(
   options: CockpitOptions,
   onError?: (error: unknown) => void,
+  projectId?: string | null,
 ): Promise<CockpitDigest | null> {
   try {
-    const reading = await cockpit(options, { window: '7d' });
+    const reading = await cockpit(options, { window: '7d', projectId: projectId ?? undefined });
     return {
       cockpit: reportCockpitOf(reading),
       image: hasChartData(reading.pace) ? renderPaceChart(reading.pace) : null,

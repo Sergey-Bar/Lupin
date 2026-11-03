@@ -195,6 +195,43 @@ describe('subscriptions', () => {
     });
   });
 
+  it('keeps the project a report is about, and refuses one that is not this workspace’s', async () => {
+    const { db, options, other } = await setup();
+    const channel = await createChannel(options, { kind: 'inbox', name: 'Inbox', settings: {} });
+    const [mine, theirs] = await db
+      .insert(schema.projects)
+      .values([
+        { workspaceId: 'ws-1', name: 'Mine', slug: 'mine', defaultBranch: 'main' },
+        { workspaceId: 'ws-2', name: 'Theirs', slug: 'theirs', defaultBranch: 'main' },
+      ])
+      .returning({ id: schema.projects.id });
+    const base = {
+      channelId: channel.id,
+      name: 'x',
+      cadence: 'daily',
+      time: '09:00',
+      weekday: 1,
+      timezone: 'UTC',
+    } as const;
+    const withProject = await createSubscription(options, {
+      ...base,
+      projectId: (mine as { id: string }).id,
+    });
+    expect(withProject.projectId).toBe((mine as { id: string }).id);
+    expect((await createSubscription(options, base)).projectId).toBeNull();
+    expect((await listSubscriptions(options)).map((entry) => entry.projectId)).toEqual([
+      (mine as { id: string }).id,
+      null,
+    ]);
+    await expect(
+      createSubscription(options, { ...base, projectId: (theirs as { id: string }).id }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(
+      createSubscription(options, { ...base, projectId: '00000000-0000-4000-8000-0000000000aa' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(other.workspaceId).toBe('ws-2');
+  });
+
   it('deletes its schedule with it, and only in its own workspace', async () => {
     const { db, options, other } = await setup();
     const channel = await createChannel(options, { kind: 'inbox', name: 'Inbox', settings: {} });
