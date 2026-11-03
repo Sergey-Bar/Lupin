@@ -55,8 +55,8 @@ catalogs:
       specifier: ^5.0.5
       version: 5.0.5
     croner:
-      specifier: 10.0.1
-      version: 10.0.1
+      specifier: 11.0.0
+      version: 11.0.0
     drizzle-kit:
       specifier: ^0.31.11
       version: 0.31.11
@@ -276,7 +276,7 @@ importers:
         version: 11.9.0(rollup@4.64.12)
       croner:
         specifier: 'catalog:'
-        version: 10.0.1
+        version: 11.0.0
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@electric-sql/pglite@0.5.11)(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(pg@8.23.1)
@@ -502,7 +502,7 @@ importers:
         version: link:../../packages/shared-contracts
       croner:
         specifier: 'catalog:'
-        version: 10.0.1
+        version: 11.0.0
       pg:
         specifier: 'catalog:'
         version: 8.23.1
@@ -4798,8 +4798,8 @@ packages:
       typescript:
         optional: true
 
-  croner@10.0.1:
-    resolution: {integrity: sha512-ixNtAJndqh173VQ4KodSdJEI6nuioBWI0V1ITNKhZZsO0pEMoDxz539T4FTTbSZ/xIOSuDnzxLVRqBVSvPNE2g==}
+  croner@11.0.0:
+    resolution: {integrity: sha512-T17ADjdttrVToyzLpLq9Xb9xzcMwpQ/M3Qs9szhh0MVNTbv6NWQ9OFYa2qlzPYXFMn+uoDlnW1IpIv6cAvFtyA==}
     engines: {node: '>=18.0'}
 
   cross-spawn@7.0.6:
@@ -11708,7 +11708,7 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  croner@10.0.1: {}
+  croner@11.0.0: {}
 
   cross-spawn@7.0.6:
     dependencies:
