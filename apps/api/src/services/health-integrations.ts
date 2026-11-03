@@ -30,17 +30,19 @@ export function githubHostOf(apiUrl: string | undefined): string {
   return apiUrl === undefined ? 'github.com' : new URL(apiUrl).hostname;
 }
 
-let configuredHost = 'github.com';
+/** The host repository URLs must name; set once at boot by {@link useGitHubApi}. */
+let repositoryHost = githubHostOf(undefined);
+
+/** The three spellings of a repository URL on `host`; what follows each is `owner/repo`. */
+function prefixesFor(host: string): string[] {
+  return [`https://${host}/`, `ssh://git@${host}/`, `git@${host}:`];
+}
 
 /**
- * The three repository-URL spellings, as one fixed, fully-anchored pattern that captures the
- * host, the owner and the repo. The host is a capture group compared to the configured host by
- * exact string equality in {@link githubRepository} — it is never interpolated into the regex,
- * so there is no dynamically-built expression whose anchoring an analyzer (or a reader) has to
- * trust, and no sub- or super-domain can slip past the host check.
+ * `owner/repo`, optionally ending `.git` and/or `/`. One fixed pattern with no host in it: the host
+ * is matched as a plain prefix, so nothing interpolated is ever part of a regular expression.
  */
-const REPOSITORY_URL =
-  /^(?:https:\/\/([A-Za-z0-9.-]+)\/|ssh:\/\/git@([A-Za-z0-9.-]+)\/|git@([A-Za-z0-9.-]+):)([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/u;
+const OWNER_AND_REPO = /^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/u;
 
 /**
  * Point repository-URL parsing at the configured GitHub API (`GITHUB_API_URL`), once, at boot.
@@ -49,21 +51,17 @@ const REPOSITORY_URL =
  * them has a configuration to ask.
  */
 export function useGitHubApi(apiUrl: string | undefined): void {
-  configuredHost = githubHostOf(apiUrl);
+  repositoryHost = githubHostOf(apiUrl);
 }
 
 /** `owner/repo` from a repository URL on the configured GitHub host, in any of the three spellings, or `null`. */
 export function githubRepository(url: string | null): { owner: string; repo: string } | null {
   if (url === null) return null;
-  const match = REPOSITORY_URL.exec(url);
-  if (match === null) return null;
-  // Exactly one of the three host groups matched, by construction of the alternation; the host
-  // must equal the configured one, so a URL on any other host is not one of this install's.
-  const host = match[1] ?? match[2] ?? match[3];
-  if (host !== configuredHost) return null;
-  return { owner: match[4] as string, repo: match[5] as string };
+  const prefix = prefixesFor(repositoryHost).find((candidate) => url.startsWith(candidate));
+  if (prefix === undefined) return null;
+  const match = OWNER_AND_REPO.exec(url.slice(prefix.length));
+  return match === null ? null : { owner: match[1] as string, repo: match[2] as string };
 }
-
 /** The comment's first line, which is how the next report finds the comment to update. */
 export const COMMENT_MARKER = '<!-- lupin-health -->';
 export const STATUS_CONTEXT = 'lupin/health';

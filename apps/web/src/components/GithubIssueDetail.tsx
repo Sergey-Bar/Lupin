@@ -6,6 +6,38 @@ import { formatDateTime, formatNumber, formatRelative } from '../lib/intl.js';
 import { Bdi, UserText } from './Bidi.js';
 import { RowActions } from './GithubActionControls.js';
 
+/** One sentence on who owns an issue: nobody, nobody any more, or somebody. */
+function ownershipSentence(issue: GithubIssueItem, untriaged: boolean): string {
+  if (untriaged) return 'Nobody owns this yet: it has no label and no assignee.';
+  if (issue.state === 'closed') return 'This issue is closed.';
+  if (issue.assignees.length === 0) return 'Labelled, but nobody is assigned to it.';
+  return 'Labelled and assigned.';
+}
+
+/** Badges for a list of names, or a quiet word when there are none. */
+function BadgeList({
+  names,
+  empty,
+  variant,
+  render,
+}: {
+  names: readonly string[];
+  empty: string;
+  variant: 'outline' | 'secondary';
+  render: (name: string) => React.ReactNode;
+}): React.ReactElement {
+  if (names.length === 0) return <span className="text-fg-muted">{empty}</span>;
+  return (
+    <>
+      {names.map((name) => (
+        <Badge key={name} variant={variant}>
+          {render(name)}
+        </Badge>
+      ))}
+    </>
+  );
+}
+
 /**
  * Everything the dashboard knows about one issue: whether anyone owns it, who is involved, how
  * much has been said, and when. No `<li>` in here: `j` / `k` walk every `li` on the page.
@@ -56,13 +88,7 @@ export function IssueDetail({
           )}
         </h2>
         <p className="m-0 text-sm leading-relaxed text-fg-muted">
-          {untriaged
-            ? 'Nobody owns this yet: it has no label and no assignee.'
-            : issue.state === 'closed'
-              ? 'This issue is closed.'
-              : issue.assignees.length === 0
-                ? 'Labelled, but nobody is assigned to it.'
-                : 'Labelled and assigned.'}
+          {ownershipSentence(issue, untriaged)}
         </p>
       </header>
       {operator ? (
@@ -75,27 +101,21 @@ export function IssueDetail({
         <dd className="m-0">{issue.author === null ? '—' : <Bdi>{issue.author}</Bdi>}</dd>
         <dt className="text-fg-muted">Assignees</dt>
         <dd className="m-0 flex flex-wrap gap-1">
-          {issue.assignees.length === 0 ? (
-            <span className="text-fg-muted">Unassigned</span>
-          ) : (
-            issue.assignees.map((login) => (
-              <Badge key={login} variant="outline">
-                <Bdi>{login}</Bdi>
-              </Badge>
-            ))
-          )}
+          <BadgeList
+            names={issue.assignees}
+            empty="Unassigned"
+            variant="outline"
+            render={(login) => <Bdi>{login}</Bdi>}
+          />
         </dd>
         <dt className="text-fg-muted">Labels</dt>
         <dd className="m-0 flex flex-wrap gap-1">
-          {issue.labels.length === 0 ? (
-            <span className="text-fg-muted">None</span>
-          ) : (
-            issue.labels.map((label) => (
-              <Badge key={label} variant="secondary">
-                <UserText>{label}</UserText>
-              </Badge>
-            ))
-          )}
+          <BadgeList
+            names={issue.labels}
+            empty="None"
+            variant="secondary"
+            render={(label) => <UserText>{label}</UserText>}
+          />
         </dd>
         <dt className="text-fg-muted">Comments</dt>
         <dd className="m-0 tabular-nums">{formatNumber(issue.commentCount)}</dd>

@@ -1,12 +1,11 @@
 import React from 'react';
-import { Badge, Button, Checkbox, CircleAlert, CircleCheck, Input, Timer } from '@lupin/ui';
+import { Badge, CircleAlert, CircleCheck, Input, Timer } from '@lupin/ui';
 import type { GithubPullItem } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import { usePagedList } from '../hooks/usePagedList.js';
-import { subjectOfPull, type ActionKind, type Subject } from '../lib/github-actions.js';
+import { subjectOfPull } from '../lib/github-actions.js';
 import type { GithubClient } from '../lib/github-client.js';
 import type { HealthClient } from '../lib/health-client.js';
-import { canOperate } from '../lib/roles.js';
 import {
   bucketOf,
   countBuckets,
@@ -16,10 +15,20 @@ import {
 } from '../lib/github-view.js';
 import { formatRelative } from '../lib/intl.js';
 import { Bdi, UserText } from './Bidi.js';
-import { PageFrame, Panel, Quiet, Segmented } from './kit.js';
+import { PageFrame, Segmented } from './kit.js';
 import { RepositoryFilter } from './GithubShared.js';
 import { GithubActionDialog } from './GithubActionDialog.js';
 import { BulkBar, subjectKey } from './GithubActionControls.js';
+import {
+  LoadMoreFooter,
+  RowCheckbox,
+  SelectAllShown,
+  inboxNotice,
+  matchesQuery,
+  useOperator,
+  useSelection,
+  type PendingAction,
+} from './GithubInboxParts.js';
 import { PullDetail } from './GithubPullDetail.js';
 import { MasterDetail } from './MasterDetail.js';
 
@@ -52,6 +61,15 @@ const BUCKET_LABELS = [
 
 const STATUS_ICON = { ready: CircleCheck, blocked: CircleAlert, waiting: Timer } as const;
 
+/** The "Show" filter, with how many pull requests each bucket holds. */
+function bucketOptions(counts: ReturnType<typeof countBuckets>) {
+  return BUCKET_LABELS.map((option) => ({
+    value: option.value,
+    label:
+      option.value === 'all' ? option.label : `${option.label} ${String(counts[option.value])}`,
+  }));
+}
+
 export function PullRequestsPage({
   github,
   health,
@@ -70,17 +88,10 @@ export function PullRequestsPage({
   const [bucket, setBucket] = React.useState<BucketFilter>('all');
   const [query, setQuery] = React.useState('');
   const [version, setVersion] = React.useState(0);
-  const [selected, setSelected] = React.useState<ReadonlySet<string>>(new Set());
-  const [pending, setPending] = React.useState<{
-    kind: ActionKind;
-    subjects: readonly Subject[];
-  } | null>(null);
+  const [pending, setPending] = React.useState<PendingAction>(null);
+  const selection = useSelection();
   const repos = useResource((_signal) => github.listRepos(), [github]);
-  const who = useResource(
-    (_signal) => (health === undefined ? Promise.resolve(null) : health.whoami()),
-    [health],
-  );
-  const operator = who.status === 'ready' && who.value !== null && canOperate(who.value);
+  const operator = useOperator(health);
   const list = usePagedList(
     (cursor) =>
       github.listPulls({
@@ -93,16 +104,21 @@ export function PullRequestsPage({
   );
 
   const items = list.status === 'ready' ? list.items : [];
-  const counts = countBuckets(items);
   // Buckets only describe open work, so a closed or merged view is never narrowed by one.
   const activeBucket = state === 'open' ? bucket : 'all';
   const needle = query.trim().toLowerCase();
-  const shown = sortByAttention(items).filter((item) => {
-    if (activeBucket !== 'all' && bucketOf(item) !== activeBucket) return false;
-    if (needle === '') return true;
-    return [item.title, item.author ?? '', item.repository].some((text) =>
-      text.toLowerCase().includes(needle),
-    );
+  const shown = sortByAttention(items).filter(
+    (item) =>
+      (activeBucket === 'all' || bucketOf(item) === activeBucket) &&
+      matchesQuery(needle, [item.title, item.author, item.repository]),
+  );
+  const shownKeys = shown.map(subjectKey);
+  const notice = inboxNotice({
+    list,
+    repos,
+    noun: 'Pull requests',
+    total: items.length,
+    shown: shown.length,
   });
 
   return (
@@ -112,13 +128,7 @@ export function PullRequestsPage({
         {state === 'open' ? (
           <Segmented
             label="Show"
-            options={BUCKET_LABELS.map((option) => ({
-              value: option.value,
-              label:
-                option.value === 'all'
-                  ? option.label
-                  : `${option.label} ${String(counts[option.value === 'draft' ? 'draft' : option.value])}`,
-            }))}
+            options={bucketOptions(countBuckets(items))}
             value={bucket}
             onChange={setBucket}
           />
@@ -143,96 +153,45 @@ export function PullRequestsPage({
       </div>
       {operator ? (
         <BulkBar
-          subjects={shown.filter((item) => selected.has(subjectKey(item))).map(subjectOfPull)}
+          subjects={shown.filter((item) => selection.has(subjectKey(item))).map(subjectOfPull)}
           onPick={(kind, subjects) => setPending({ kind, subjects })}
-          onClear={() => setSelected(new Set())}
+          onClear={selection.clear}
         />
       ) : null}
-      {list.status === 'loading' ? (
-        <Panel title="Pull requests" className="flex-1">
-          <Quiet role="status">Loading…</Quiet>
-        </Panel>
-      ) : list.status === 'error' ? (
-        <Panel title="Pull requests" className="flex-1">
-          <Quiet role="alert">Could not load this: {list.message}</Quiet>
-        </Panel>
-      ) : shown.length === 0 ? (
-        <Panel title="0 pull requests" className="flex-1">
-          <Quiet>
-            {items.length === 0 &&
-            repos.status === 'ready' &&
-            repos.value.items.every((r) => !r.syncEnabled)
-              ? 'Pull requests appear once a repository is being read. Turn on the sync for a project under Repositories.'
-              : 'No pull requests match.'}
-          </Quiet>
-        </Panel>
-      ) : (
-        <MasterDetail
-          label="pull requests"
-          title={`${String(shown.length)} ${shown.length === 1 ? 'pull request' : 'pull requests'}`}
-          items={shown}
-          getKey={subjectKey}
-          rowPx={64}
-          renderRow={(item) => <PullRowSummary item={item} now={now()} />}
-          renderLead={
-            operator
-              ? (item) => (
-                  <Checkbox
-                    aria-label={`Select ${item.repository}#${String(item.number)}`}
-                    checked={selected.has(subjectKey(item))}
-                    onChange={() =>
-                      setSelected((current) => {
-                        const next = new Set(current);
-                        const key = subjectKey(item);
-                        if (next.has(key)) next.delete(key);
-                        else next.add(key);
-                        return next;
-                      })
-                    }
-                  />
-                )
-              : undefined
-          }
-          listHeader={
-            operator ? (
-              <label className="mb-2 flex shrink-0 items-center gap-3 ps-3 text-xs text-fg-muted">
-                <Checkbox
-                  aria-label="Select all shown"
-                  checked={shown.every((item) => selected.has(subjectKey(item)))}
-                  onChange={(event) =>
-                    setSelected(event.target.checked ? new Set(shown.map(subjectKey)) : new Set())
-                  }
-                />
-                Select all shown
-              </label>
-            ) : undefined
-          }
-          footer={
-            <>
-              {list.moreError === null ? null : (
-                <p role="alert" className="mt-2 text-sm text-danger">
-                  Could not load more: {list.moreError}
-                </p>
-              )}
-              {list.hasMore ? (
-                <div className="mt-2">
-                  <Button variant="outline" disabled={list.loadingMore} onClick={list.loadMore}>
-                    {list.loadingMore ? 'Loading…' : 'Load more'}
-                  </Button>
-                </div>
-              ) : null}
-            </>
-          }
-          renderDetail={(item) => (
-            <PullDetail
-              item={item}
-              now={now()}
-              operator={operator}
-              onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
-            />
-          )}
-        />
-      )}
+      {notice ??
+        (list.status === 'ready' && (
+          <MasterDetail
+            label="pull requests"
+            title={`${String(shown.length)} ${shown.length === 1 ? 'pull request' : 'pull requests'}`}
+            items={shown}
+            getKey={subjectKey}
+            rowPx={64}
+            renderRow={(item) => <PullRowSummary item={item} now={now()} />}
+            renderLead={
+              operator
+                ? (item) => (
+                    <RowCheckbox
+                      label={`${item.repository}#${String(item.number)}`}
+                      rowKey={subjectKey(item)}
+                      selection={selection}
+                    />
+                  )
+                : undefined
+            }
+            listHeader={
+              operator ? <SelectAllShown keys={shownKeys} selection={selection} /> : undefined
+            }
+            footer={<LoadMoreFooter list={list} />}
+            renderDetail={(item) => (
+              <PullDetail
+                item={item}
+                now={now()}
+                operator={operator}
+                onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
+              />
+            )}
+          />
+        ))}
       {pending === null ? null : (
         <GithubActionDialog
           kind={pending.kind}
@@ -241,7 +200,7 @@ export function PullRequestsPage({
           now={now}
           onClose={() => setPending(null)}
           onDone={() => {
-            setSelected(new Set());
+            selection.clear();
             setVersion((current) => current + 1);
           }}
         />

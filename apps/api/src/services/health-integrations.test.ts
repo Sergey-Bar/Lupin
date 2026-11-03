@@ -97,8 +97,16 @@ describe('githubRepository', () => {
     ['https://github.com/o/r', { owner: 'o', repo: 'r' }],
     ['git@github.com:o/r.git', { owner: 'o', repo: 'r' }],
     ['ssh://git@github.com/o/r.git', { owner: 'o', repo: 'r' }],
+    ['https://github.com/o/r/', { owner: 'o', repo: 'r' }],
     ['https://gitlab.com/o/r.git', null],
     ['https://github.com.evil.test/o/r', null],
+    // Whatever follows `owner/repo` is refused, not ignored: a deeper path is not a repository.
+    ['https://github.com/o/r/pull/1', null],
+    ['https://github.com/o', null],
+    ['https://github.com/', null],
+    // The host is a prefix, so a URL that merely contains it later is not on that host.
+    ['https://evil.test/https://github.com/o/r', null],
+    ['https://github.com@evil.test/o/r', null],
     [null, null],
   ])('%s → %j', (url, expected) => {
     expect(githubRepository(url)).toEqual(expected);

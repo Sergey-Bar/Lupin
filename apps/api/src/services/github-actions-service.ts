@@ -407,6 +407,104 @@ async function resolveTarget(options: ActionsOptions, action: GithubActionReques
     return { ok: false, target, message: 'No such project in this workspace.' };
   }
 }
+/** What happened to one action: where, what, and whether GitHub's rate limit now stops the rest. */
+interface Verdict {
+  target: string;
+  outcome: GithubActionResult['outcome'];
+  message: string;
+  retryAt: string | null;
+  /** Set when this action hit the rate limit, so every later one is skipped until then. */
+  limitedUntil?: string;
+}
+
+type FoundTarget = Extract<Awaited<ReturnType<typeof resolveTarget>>, { ok: true }>;
+
+const RATE_LIMIT_MESSAGE = 'GitHub’s rate limit was reached. Try again later.';
+
+/**
+ * What stops an action before GitHub is asked: a merge the list's own facts forbid, or a dry
+ * run, which only says what would happen. `null` means go on and do it.
+ */
+async function verdictBeforeRunning(
+  options: ActionsOptions,
+  action: GithubActionRequest,
+  target: string,
+  dryRun: boolean,
+): Promise<Verdict | null> {
+  if (action.action === 'merge') {
+    const blocker = await mergeBlocker(options, action.projectId, action.number);
+    if (blocker !== null) return { target, outcome: 'refused', message: blocker, retryAt: null };
+  }
+  if (dryRun) return { target, outcome: 'planned', message: planOf(action, target), retryAt: null };
+  return null;
+}
+
+/** Ask GitHub to do the action, and say what came of it. */
+async function verdictFromRunning(
+  options: ActionsOptions,
+  found: FoundTarget,
+  action: GithubActionRequest,
+  now: Date,
+): Promise<Verdict> {
+  const { resolved, branch, target } = found;
+  if (action.action === 'protectBranch') {
+    const done = await protectBranch(options, resolved, branch, action);
+    return {
+      target,
+      outcome: done.outcome,
+      message: done.message,
+      retryAt: done.retryAt ?? null,
+      ...(done.retryAt === undefined ? {} : { limitedUntil: done.retryAt }),
+    };
+  }
+  const call = callOf(action);
+  const request: ConnectorRequest = {
+    operation: call.operation,
+    input: { owner: resolved.owner, repo: resolved.repo, ...call.input },
+  };
+  const result = await options.adapter.execute(request, resolved.token);
+  if (result.status === 'ok') {
+    await applyLocally(options, action.projectId, action, now);
+    return { target, outcome: 'ok', message: 'Done.', retryAt: null };
+  }
+  if (result.error?.code === 'github_rate_limited') {
+    const limitedUntil = result.error.retryAt ?? new Date(now.getTime() + 60_000).toISOString();
+    return {
+      target,
+      outcome: 'failed',
+      message: RATE_LIMIT_MESSAGE,
+      retryAt: limitedUntil,
+      limitedUntil,
+    };
+  }
+  const refused = refusalOf(action, result);
+  return { target, outcome: refused.outcome, message: refused.message, retryAt: null };
+}
+
+/** One action, start to finish: find its target, check it may run, then run or plan it. */
+async function decide(
+  options: ActionsOptions,
+  body: GithubActionsBody,
+  action: GithubActionRequest,
+  limitedUntil: string | null,
+  now: Date,
+): Promise<Verdict> {
+  const found = await resolveTarget(options, action);
+  if (!found.ok) {
+    return { target: found.target, outcome: 'refused', message: found.message, retryAt: null };
+  }
+  if (limitedUntil !== null) {
+    return {
+      target: found.target,
+      outcome: 'failed',
+      message: `Skipped: ${RATE_LIMIT_MESSAGE}`,
+      retryAt: limitedUntil,
+    };
+  }
+  const early = await verdictBeforeRunning(options, action, found.target, body.dryRun);
+  return early ?? verdictFromRunning(options, found, action, now);
+}
+
 export async function runGithubActions(
   options: ActionsOptions,
   actor: string,
@@ -416,13 +514,10 @@ export async function runGithubActions(
   const results: GithubActionResult[] = [];
   let limitedUntil: string | null = null;
 
-  const record = async (
-    action: GithubActionRequest,
-    target: string,
-    outcome: GithubActionResult['outcome'],
-    message: string,
-    retryAt: string | null,
-  ): Promise<void> => {
+  for (const action of body.actions) {
+    const verdict = await decide(options, body, action, limitedUntil, now);
+    if (verdict.limitedUntil !== undefined) limitedUntil = verdict.limitedUntil;
+    const { target, outcome, message, retryAt } = verdict;
     results.push({ action: action.action, target, outcome, message, retryAt });
     await audit(options, {
       actor,
@@ -437,73 +532,6 @@ export async function runGithubActions(
         ...(outcome === 'ok' || outcome === 'planned' ? {} : { reason: message }),
       },
     });
-  };
-
-  for (const action of body.actions) {
-    const found = await resolveTarget(options, action);
-    if (!found.ok) {
-      await record(action, found.target, 'refused', found.message, null);
-      continue;
-    }
-    const { resolved, branch, target } = found;
-    if (limitedUntil !== null) {
-      await record(
-        action,
-        target,
-        'failed',
-        'Skipped: GitHub’s rate limit was reached. Try again later.',
-        limitedUntil,
-      );
-      continue;
-    }
-    if (action.action === 'merge') {
-      const blocker = await mergeBlocker(options, action.projectId, action.number);
-      if (blocker !== null) {
-        await record(action, target, 'refused', blocker, null);
-        continue;
-      }
-    }
-    if (body.dryRun) {
-      await record(action, target, 'planned', planOf(action, target), null);
-      continue;
-    }
-
-    if (action.action === 'protectBranch') {
-      const protectedResult = await protectBranch(options, resolved, branch, action);
-      if (protectedResult.retryAt !== undefined) limitedUntil = protectedResult.retryAt;
-      await record(
-        action,
-        target,
-        protectedResult.outcome,
-        protectedResult.message,
-        protectedResult.retryAt ?? null,
-      );
-      continue;
-    }
-    const call = callOf(action);
-    const request: ConnectorRequest = {
-      operation: call.operation,
-      input: { owner: resolved.owner, repo: resolved.repo, ...call.input },
-    };
-    const result = await options.adapter.execute(request, resolved.token);
-    if (result.status === 'ok') {
-      await applyLocally(options, action.projectId, action, now);
-      await record(action, target, 'ok', 'Done.', null);
-      continue;
-    }
-    if (result.error?.code === 'github_rate_limited') {
-      limitedUntil = result.error.retryAt ?? new Date(now.getTime() + 60_000).toISOString();
-      await record(
-        action,
-        target,
-        'failed',
-        'GitHub’s rate limit was reached. Try again later.',
-        limitedUntil,
-      );
-      continue;
-    }
-    const refused = refusalOf(action, result);
-    await record(action, target, refused.outcome, refused.message, null);
   }
   return { dryRun: body.dryRun, results };
 }

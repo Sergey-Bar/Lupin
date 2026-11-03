@@ -151,36 +151,41 @@ export function parseList(text: string): string[] {
 
 const TAG = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/u;
 
+type Validator = (subjects: readonly Subject[], form: Form) => string | null;
+
+/** One check per kind that has a precondition; a kind with none is always ready to run. */
+const VALIDATORS: Partial<Record<ActionKind, Validator>> = {
+  comment: (_subjects, form) => (form.text.trim() === '' ? 'Write the comment first.' : null),
+  requestReviewers: (_subjects, form) =>
+    parseList(form.text).length === 0 ? 'Name at least one reviewer.' : null,
+  review: (_subjects, form) =>
+    form.event !== 'APPROVE' && form.text.trim() === ''
+      ? 'Explain the review: a change request or a comment needs words.'
+      : null,
+  createRelease: (subjects, form) => {
+    if (subjects.length !== 1) return 'A release is made in one repository at a time.';
+    const valid = TAG.test(form.tag) && !form.tag.includes('..');
+    return valid
+      ? null
+      : 'Give the release a tag: letters, digits, dots, dashes and slashes, like v1.2.0.';
+  },
+  merge: (subjects) => {
+    if (subjects.length !== 1) return 'Pull requests are merged one at a time.';
+    const sha = subjects[0]?.headSha;
+    return sha === null || sha === undefined
+      ? 'No commit to merge yet: wait for the sync to read this pull request.'
+      : null;
+  },
+};
+
 /** The reason an action cannot run yet, in a sentence, or `null` when it can. */
 export function validate(
   kind: ActionKind,
   subjects: readonly Subject[],
   form: Form,
 ): string | null {
-  switch (kind) {
-    case 'comment':
-      return form.text.trim() === '' ? 'Write the comment first.' : null;
-    case 'requestReviewers':
-      return parseList(form.text).length === 0 ? 'Name at least one reviewer.' : null;
-    case 'review':
-      return form.event !== 'APPROVE' && form.text.trim() === ''
-        ? 'Explain the review: a change request or a comment needs words.'
-        : null;
-    case 'createRelease':
-      if (subjects.length !== 1) return 'A release is made in one repository at a time.';
-      return TAG.test(form.tag) && !form.tag.includes('..')
-        ? null
-        : 'Give the release a tag: letters, digits, dots, dashes and slashes, like v1.2.0.';
-    case 'merge':
-      if (subjects.length !== 1) return 'Pull requests are merged one at a time.';
-      return subjects[0]?.headSha === null || subjects[0]?.headSha === undefined
-        ? 'No commit to merge yet: wait for the sync to read this pull request.'
-        : null;
-    default:
-      return null;
-  }
+  return VALIDATORS[kind]?.(subjects, form) ?? null;
 }
-
 /** The API requests for one action over some items, one request per item. */
 export function buildActions(
   kind: ActionKind,
