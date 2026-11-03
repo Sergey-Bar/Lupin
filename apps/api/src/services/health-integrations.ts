@@ -25,14 +25,43 @@ import type { CommitTests } from './commit-tests.js';
 
 // ─── GitHub pull requests ─────────────────────────────────────────────────────
 
-/** `owner/repo` from a github.com URL in any of the three spellings, or `null`. */
+/** The host a repository URL must name: github.com, or a GitHub Enterprise Server's. */
+export function githubHostOf(apiUrl: string | undefined): string {
+  return apiUrl === undefined ? 'github.com' : new URL(apiUrl).hostname;
+}
+
+let configuredHost = 'github.com';
+
+/**
+ * The three repository-URL spellings, as one fixed, fully-anchored pattern that captures the
+ * host, the owner and the repo. The host is a capture group compared to the configured host by
+ * exact string equality in {@link githubRepository} — it is never interpolated into the regex,
+ * so there is no dynamically-built expression whose anchoring an analyzer (or a reader) has to
+ * trust, and no sub- or super-domain can slip past the host check.
+ */
+const REPOSITORY_URL =
+  /^(?:https:\/\/([A-Za-z0-9.-]+)\/|ssh:\/\/git@([A-Za-z0-9.-]+)\/|git@([A-Za-z0-9.-]+):)([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/u;
+
+/**
+ * Point repository-URL parsing at the configured GitHub API (`GITHUB_API_URL`), once, at boot.
+ * One install talks to one GitHub, with one token each call, so a URL on any other host is not
+ * one of its repositories. Module state because five services parse repository URLs and none of
+ * them has a configuration to ask.
+ */
+export function useGitHubApi(apiUrl: string | undefined): void {
+  configuredHost = githubHostOf(apiUrl);
+}
+
+/** `owner/repo` from a repository URL on the configured GitHub host, in any of the three spellings, or `null`. */
 export function githubRepository(url: string | null): { owner: string; repo: string } | null {
   if (url === null) return null;
-  const match =
-    /^(?:https:\/\/github\.com\/|ssh:\/\/git@github\.com\/|git@github\.com:)([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/u.exec(
-      url,
-    );
-  return match === null ? null : { owner: match[1] as string, repo: match[2] as string };
+  const match = REPOSITORY_URL.exec(url);
+  if (match === null) return null;
+  // Exactly one of the three host groups matched, by construction of the alternation; the host
+  // must equal the configured one, so a URL on any other host is not one of this install's.
+  const host = match[1] ?? match[2] ?? match[3];
+  if (host !== configuredHost) return null;
+  return { owner: match[4] as string, repo: match[5] as string };
 }
 
 /** The comment's first line, which is how the next report finds the comment to update. */

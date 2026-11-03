@@ -1,3 +1,5 @@
+import { formatDateTime } from './intl.js';
+
 /**
  * Date rendering shared by the dashboard routes.
  *
@@ -25,5 +27,5 @@ export function formatDate(value: string | null | undefined, emptyState: string)
   // which is neither a time nor the caller's claim about the field — so an
   // unparseable value falls back rather than rendering a sentence about a date.
   if (Number.isNaN(date.getTime())) return emptyState;
-  return `${date.toLocaleString(undefined, { timeZoneName: 'short' })}`;
+  return formatDateTime(date);
 }

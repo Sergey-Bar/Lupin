@@ -69,7 +69,7 @@ export function PairDevicePanel({ health }: { health: HealthClient }): React.Rea
             label={`Pairing link for ${issued.deviceName}`}
             className="size-40 shrink-0 rounded-lg bg-surface p-2 text-fg"
           />
-          <div className="space-y-2 text-center sm:text-left">
+          <div className="space-y-2 text-center sm:text-start">
             <p
               className="font-mono text-5xl font-semibold tracking-widest tabular-nums"
               aria-label={`Code ${issued.code.split('').join(' ')}`}

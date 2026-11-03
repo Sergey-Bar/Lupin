@@ -192,7 +192,11 @@ function TestEvidence({ tests }: { tests: Run['tests'] }) {
                     <span className="uppercase">{attempt.status}</span>
                   </div>
                   <div className="mt-1 text-xs text-fg-muted">
-                    {formatDate(attempt.startedAt)} → {formatDate(attempt.finishedAt)}
+                    {formatDate(attempt.startedAt)}{' '}
+                    <span aria-hidden="true" className="inline-block rtl:-scale-x-100">
+                      →
+                    </span>{' '}
+                    {formatDate(attempt.finishedAt)}
                   </div>
                   {attempt.error ? (
                     <div className="mt-2 text-danger">{attempt.error.message}</div>
@@ -572,7 +576,10 @@ function RunHeader({
           href="/dashboard/runs"
           className="inline-flex min-h-11 items-center rounded-sm text-sm text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
         >
-          ← Runs
+          <span aria-hidden="true" className="inline-block rtl:-scale-x-100">
+            ←
+          </span>{' '}
+          Runs
         </a>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">Run detail</h1>
         <div

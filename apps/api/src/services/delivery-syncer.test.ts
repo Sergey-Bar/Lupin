@@ -36,11 +36,10 @@ interface Reply {
   headers?: Record<string, string>;
 }
 
+type Routes = Record<string, Reply | ((url: URL) => Reply)>;
+
 /** The GitHub this test talks to. A route answering a function can count, vary or page. */
-function github(
-  routes: Record<string, Reply | ((url: URL) => Reply)>,
-  fallback: (url: URL) => Reply = () => ({ status: 404 }),
-) {
+function github(routes: Routes, fallback: (url: URL) => Reply = () => ({ status: 404 })) {
   const calls: string[] = [];
   vi.stubGlobal('fetch', (url: string) => {
     const parsed = new URL(url);
@@ -300,6 +299,15 @@ describe('a sync, end to end against a stubbed GitHub', () => {
       commits: { cursor: at(-20), syncedAt: NOW.toISOString(), incomplete: null },
       deployments: { cursor: at(-1), syncedAt: NOW.toISOString(), incomplete: null },
       workflowRuns: { cursor: at(-19.5), syncedAt: NOW.toISOString(), incomplete: null },
+      // The command-center streams. This repository's GitHub has no issues route, so the issue
+      // stream is skipped and its cursor stays at the backfill start.
+      issues: { cursor: at(-90 * 24), syncedAt: NOW.toISOString(), incomplete: null },
+      openPullRequests: {
+        cursor: NOW.toISOString(),
+        syncedAt: NOW.toISOString(),
+        incomplete: null,
+      },
+      repoState: { cursor: NOW.toISOString(), syncedAt: NOW.toISOString(), incomplete: null },
     });
     expect((await sync(db, syncId))?.stats).toEqual({
       reclassified: 0,
@@ -307,6 +315,9 @@ describe('a sync, end to end against a stubbed GitHub', () => {
       commits: 2,
       deployments: 1,
       workflowRuns: 1,
+      issues: 0,
+      openPullRequests: 0,
+      repoState: 1,
     });
   });
 
@@ -946,5 +957,240 @@ describe('claimBatchOf', () => {
 
   it('caps a configured batch, because the claimed ids go into one inArray', () => {
     expect(claimBatchOf(10_000)).toBe(MAX_CLAIM_BATCH);
+  });
+});
+
+/**
+ * The command-center streams: what a triage inbox sorts by. Same real migration graph and real
+ * adapter as above; only the routes GitHub answers differ.
+ */
+describe('the command-center facts', () => {
+  const headed = (pulls: unknown, head: Record<string, unknown>) =>
+    (pulls as Array<Record<string, unknown>>).map((pr) =>
+      pr['number'] === 12
+        ? {
+            ...pr,
+            head,
+            html_url: 'https://github.com/octo/service/pull/12',
+            requested_reviewers: [{ login: 'erin' }],
+          }
+        : pr,
+    );
+
+  const PULLS = headed(HAPPY[`${REPO}/pulls`]?.body, { ref: 'feature/wip', sha: 'BEEF12' });
+  const COMMAND: Routes = {
+    ...HAPPY,
+    [`${REPO}/pulls`]: ok(PULLS),
+    [`${REPO}/pulls/12`]: ok({
+      id: 902,
+      number: 12,
+      state: 'open',
+      title: 'Work in progress',
+      created_at: at(-30),
+      updated_at: at(-2),
+      mergeable_state: 'blocked',
+    }),
+    [`${REPO}/commits/BEEF12/check-runs`]: ok({
+      check_runs: [
+        { status: 'completed', conclusion: 'success' },
+        { status: 'completed', conclusion: 'failure' },
+      ],
+    }),
+    [`${REPO}/pulls/12/reviews`]: ok([
+      { user: { login: 'bob' }, state: 'CHANGES_REQUESTED', submitted_at: at(-3) },
+    ]),
+  };
+
+  it('stores review decision, checks, mergeability, reviewers and the link for an open pull request', async () => {
+    github(COMMAND);
+    const { db, syncer, queue } = await setup();
+    await queue();
+    await syncer.runOnce();
+
+    const open = (await db.select().from(schema.pullRequests)).find((pr) => pr.number === 12);
+    expect(open).toMatchObject({
+      htmlUrl: 'https://github.com/octo/service/pull/12',
+      reviewDecision: 'changes_requested',
+      checksState: 'failure',
+      mergeableState: 'blocked',
+      requestedReviewers: ['erin'],
+    });
+    // A merged pull request has no checks or mergeability to triage.
+    const merged = (await db.select().from(schema.pullRequests)).find((pr) => pr.number === 11);
+    expect(merged).toMatchObject({ checksState: null, mergeableState: null });
+    expect(merged?.reviewDecision).toBe('approved');
+  });
+
+  it('keeps syncing when the token cannot read checks or pull request detail', async () => {
+    github({
+      ...COMMAND,
+      [`${REPO}/pulls/12`]: { status: 403 },
+      [`${REPO}/commits/BEEF12/check-runs`]: { status: 403 },
+    });
+    const { db, syncer, queue } = await setup();
+    const { syncId } = await queue();
+    expect(await syncer.runOnce()).toEqual([{ id: syncId, status: 'done', errorCode: null }]);
+    const open = (await db.select().from(schema.pullRequests)).find((pr) => pr.number === 12);
+    expect(open).toMatchObject({ checksState: null, mergeableState: null });
+    expect(open?.reviewDecision).toBe('changes_requested');
+  });
+
+  it('does not tolerate a rate limit while reading checks: the sync waits for the reset', async () => {
+    const reset = String(Math.floor(NOW.getTime() / 1000) + 3600);
+    github({
+      ...COMMAND,
+      [`${REPO}/commits/BEEF12/check-runs`]: {
+        status: 403,
+        headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': reset },
+      },
+    });
+    const { syncer, queue } = await setup();
+    const { syncId } = await queue();
+    expect(await syncer.runOnce()).toEqual([
+      { id: syncId, status: 'queued', errorCode: 'github_rate_limited' },
+    ]);
+  });
+
+  it('reads issues, drops pull requests from them, and the old open backlog on the first sync', async () => {
+    const issue = (id: number, number: number, extra: Record<string, unknown> = {}) => ({
+      id,
+      number,
+      state: 'open',
+      title: `Issue ${String(number)}`,
+      user: { login: 'zed' },
+      labels: [{ name: 'bug' }, 'plain'],
+      assignees: [{ login: 'amy' }],
+      comments: 3,
+      html_url: `https://github.com/octo/service/issues/${String(number)}`,
+      created_at: at(-24 * 200),
+      updated_at: at(-1),
+      closed_at: null,
+      ...extra,
+    });
+    github({
+      ...COMMAND,
+      [`${REPO}/issues`]: (url: URL) =>
+        url.searchParams.get('state') === 'open'
+          ? ok([issue(1, 1, { updated_at: at(-24 * 150) }), issue(2, 2)])
+          : ok([issue(2, 2), issue(3, 3, { pull_request: { url: 'x' } })]),
+    });
+    const { db, syncer, queue } = await setup();
+    await queue();
+    await syncer.runOnce();
+
+    const stored = await db.select().from(schema.githubIssues);
+    expect(stored.map((row) => row.number).sort()).toEqual([1, 2]);
+    expect(stored.find((row) => row.number === 2)).toMatchObject({
+      state: 'open',
+      title: 'Issue 2',
+      authorLogin: 'zed',
+      labels: ['bug', 'plain'],
+      assignees: ['amy'],
+      commentCount: 3,
+      htmlUrl: 'https://github.com/octo/service/issues/2',
+    });
+  });
+
+  it('writes the repository state: community, protection, alerts and the budget', async () => {
+    const headers = {
+      'x-ratelimit-limit': '5000',
+      'x-ratelimit-remaining': '4900',
+      'x-ratelimit-reset': String(Math.floor(NOW.getTime() / 1000) + 3000),
+    };
+    github({
+      ...COMMAND,
+      [`${REPO}/community/profile`]: {
+        status: 200,
+        headers,
+        body: { health_percentage: 57, files: { license: { key: 'mit' }, readme: {} } },
+      },
+      [`${REPO}/branches/main/protection`]: {
+        status: 404,
+        body: { message: 'Branch not protected' },
+      },
+      [`${REPO}/dependabot/alerts`]: ok([
+        { security_advisory: { severity: 'critical' } },
+        { security_advisory: { severity: 'low' } },
+      ]),
+      [`${REPO}/code-scanning/alerts`]: { status: 403, body: { message: 'forbidden' } },
+    });
+    const { db, syncer, queue } = await setup();
+    await queue();
+    await syncer.runOnce();
+
+    const [state] = await db.select().from(schema.repoGithubState);
+    expect(state?.community).toMatchObject({ healthPercentage: 57, license: true, readme: true });
+    expect(state?.protection).toEqual({ state: 'unprotected' });
+    expect(state?.alerts).toMatchObject({
+      dependabot: { critical: 1, low: 1 },
+      // A feed the token cannot read is not "none".
+      codeScanning: { unavailable: 'forbidden' },
+    });
+    expect(state?.rateLimit).toMatchObject({ limit: 5000 });
+  });
+
+  it('re-reads a pending reading later, and finds an old open pull request the cursor never would', async () => {
+    const stale = {
+      id: 777,
+      number: 7,
+      state: 'open',
+      draft: false,
+      user: { login: 'old' },
+      head: { ref: 'ancient', sha: 'OLD777' },
+      base: { ref: 'main' },
+      labels: [],
+      title: 'Opened long ago',
+      body: null,
+      created_at: at(-24 * 400),
+      // Older than the 90-day backfill: the "updated since" stream does not return it.
+      updated_at: at(-24 * 300),
+      closed_at: null,
+      merged_at: null,
+    };
+    const open = [PULLS[0], stale];
+    github({
+      ...COMMAND,
+      [`${REPO}/pulls`]: (url: URL) =>
+        url.searchParams.get('state') === 'open' ? ok(open) : ok(PULLS.slice(0, 2)),
+      [`${REPO}/pulls/7`]: ok({ ...stale, mergeable_state: 'clean' }),
+      [`${REPO}/pulls/7/reviews`]: ok([]),
+      [`${REPO}/pulls/7/commits`]: ok([]),
+      [`${REPO}/pulls/7/files`]: ok([]),
+      [`${REPO}/commits/OLD777/check-runs`]: ok({
+        check_runs: [{ status: 'in_progress', conclusion: null }],
+      }),
+    });
+    const { db, syncer, queue } = await setup();
+    await queue();
+    await syncer.runOnce();
+    const found = (await db.select().from(schema.pullRequests)).find((pr) => pr.number === 7);
+    expect(found).toMatchObject({ state: 'open', checksState: 'pending', mergeableState: 'clean' });
+
+    // The check finishes without anyone touching the pull request. An hour later the sync
+    // re-reads it, because a stored `pending` cannot otherwise ever change.
+    github({
+      ...COMMAND,
+      [`${REPO}/pulls`]: (url: URL) =>
+        url.searchParams.get('state') === 'open' ? ok(open) : ok([]),
+      [`${REPO}/pulls/7`]: ok({ ...stale, mergeable_state: 'clean' }),
+      [`${REPO}/commits/old777/check-runs`]: ok({
+        check_runs: [{ status: 'completed', conclusion: 'success' }],
+      }),
+    });
+    const later = new Date(NOW.getTime() + 2 * HOUR);
+    const second = createDeliverySyncer({
+      db: db as never,
+      vaultSecret: undefined,
+      adapter: githubAdapter,
+      now: () => later,
+      tokenFor: async () => 'ghp_synthetic',
+    });
+    await requestDeliverySync(
+      { db: db as never, workspaceId: 'ws-1', now: () => later },
+      (await db.select().from(schema.projects))[0]?.id as string,
+    );
+    await second.runOnce();
+    const refreshed = (await db.select().from(schema.pullRequests)).find((pr) => pr.number === 7);
+    expect(refreshed?.checksState).toBe('success');
   });
 });

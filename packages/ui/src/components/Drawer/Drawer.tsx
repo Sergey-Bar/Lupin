@@ -47,8 +47,8 @@ const drawerVariants = cva(
   {
     variants: {
       position: {
-        right: 'inset-y-0 right-0 h-full w-3/4 sm:max-w-sm border-l border-border',
-        left: 'inset-y-0 left-0 h-full w-3/4 sm:max-w-sm border-r border-border',
+        right: 'inset-y-0 end-0 h-full w-3/4 sm:max-w-sm border-s border-border',
+        left: 'inset-y-0 start-0 h-full w-3/4 sm:max-w-sm border-e border-border',
         top: 'inset-x-0 top-0 w-full h-auto border-b border-border',
         bottom: 'inset-x-0 bottom-0 w-full h-auto border-t border-border mt-auto',
       },

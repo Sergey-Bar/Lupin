@@ -188,7 +188,7 @@ function PortfolioRow({
         <span className={cn('text-xl font-semibold tabular-nums', letterTone(entry.letter))}>
           {entry.letter ?? '—'}
         </span>
-        <span className="ml-2 text-xs tabular-nums text-fg-muted">{scoreText(entry)}</span>
+        <span className="ms-2 text-xs tabular-nums text-fg-muted">{scoreText(entry)}</span>
       </TableCell>
       <TableCell
         className="hidden max-w-[48ch] truncate text-sm text-fg-muted md:table-cell"

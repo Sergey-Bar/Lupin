@@ -206,10 +206,10 @@ function capabilityHint(entry: CapabilityEntry, state: ReturnType<typeof capabil
 
 function CapabilityMark({ state }: { state: ReturnType<typeof capabilityState> }) {
   if (state === 'covered') {
-    return <Check size={12} aria-hidden="true" className="ml-auto shrink-0 text-success" />;
+    return <Check size={12} aria-hidden="true" className="ms-auto shrink-0 text-success" />;
   }
   if (state === 'optional') return null;
-  return <X size={12} aria-hidden="true" className="ml-auto shrink-0 text-warning" />;
+  return <X size={12} aria-hidden="true" className="ms-auto shrink-0 text-warning" />;
 }
 
 function CapabilityTile({ entry }: { entry: CapabilityEntry }): React.ReactElement {
@@ -282,11 +282,11 @@ function Reports({
                 <span className="truncate text-sm" title={report.headline}>
                   {report.headline}
                 </span>
-                <Badge variant="outline" className="ml-auto shrink-0">
+                <Badge variant="outline" className="ms-auto shrink-0">
                   {report.kind}
                 </Badge>
               </div>
-              <div className="truncate pl-4 font-mono text-xs text-fg-muted" title={report.path}>
+              <div className="truncate ps-4 font-mono text-xs text-fg-muted" title={report.path}>
                 {report.path}
               </div>
             </li>

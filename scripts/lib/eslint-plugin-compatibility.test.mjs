@@ -145,6 +145,32 @@ test('the backdrop ban reports every backdrop filter class and nothing opaque', 
   assert.deepEqual(lines.sort(), [1, 2], `expected lines 1 and 2 only, got ${String(lines)}`);
 });
 
+/**
+ * The direction ban, live. Physical `ml-*`, `text-right`, `left-*` and friends are errors in a
+ * page that has to mirror; the logical twins and a symmetric centring (`left-1/2` with a
+ * translate) must stay clean. The selector is a regex in a string, so it is proved by linting.
+ */
+const DIRECTION_PROBE = `export const margin = 'flex ml-2 items-center';
+export const align = 'text-right tabular-nums';
+export const inset = 'absolute sm:left-4 top-0';
+export const edge = \`border-r px-3\`;
+export const logical = 'ms-2 text-end start-4 border-e px-3';
+export const centred = 'absolute left-1/2 -translate-x-1/2';
+export const word = 'pr-reporting html-left right';
+`;
+
+test('the direction ban reports physical direction classes and nothing logical', (t) => {
+  const file = path.join(probeDirectory, 'zz-direction-probe.ts');
+  writeFileSync(file, DIRECTION_PROBE, 'utf8');
+  t.after(() => rmSync(file, { force: true }));
+
+  const lines = lint(file)
+    .split('\n')
+    .filter((line) => /no-restricted-syntax/.test(line) && /logical/.test(line))
+    .map((line) => Number.parseInt(line.trim().split(':')[0], 10));
+  assert.deepEqual(lines.sort(), [1, 2, 3, 4], `expected lines 1-4 only, got ${String(lines)}`);
+});
+
 test('the plugin is loaded rather than absent, which the flat config would otherwise hide', () => {
   // `eslint.config.js` does `...jsxA11y.configs.recommended.rules` at module load. If
   // the plugin failed to load under ESLint 10 that spread would throw on `undefined`

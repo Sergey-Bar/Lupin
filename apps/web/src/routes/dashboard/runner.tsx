@@ -279,7 +279,7 @@ function RunnerGrid({
           <Search
             size={14}
             aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted"
+            className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-fg-muted"
           />
           <input
             type="search"
@@ -287,7 +287,7 @@ function RunnerGrid({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Filter by name or folder"
-            className="min-h-11 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            className="min-h-11 w-full rounded-lg border border-border bg-surface ps-9 pe-3 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
           />
         </label>
       </div>

@@ -44,7 +44,7 @@ for (const connector of CONNECTORS) {
       // The manifest block: `name: 'jira'` then the `operations: { … }` entries, up to
       // the closing of the object. Read once and reused, so both sides of the comparison
       // come from the same place.
-      const manifestBlock = /operations:\s*\{([\s\S]*?)\n\s{4}\},/.exec(source);
+      const manifestBlock = /operations:\s*\{([\s\S]*?)\n\s{2,4}\},/.exec(source);
       expect(manifestBlock, 'the manifest block was not found').not.toBeNull();
       const declared = [
         ...(manifestBlock?.[1] ?? '').matchAll(/^\s*([A-Za-z][A-Za-z0-9]*):/gm),

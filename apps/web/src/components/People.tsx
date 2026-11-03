@@ -89,7 +89,7 @@ function MembersBody({ admin }: { admin: AdminClient }): React.ReactElement {
                     <span className="font-medium">{member.displayName}</span>{' '}
                     <span className="text-fg-muted">{member.email}</span>
                     {member.disabled ? (
-                      <Badge variant="secondary" className="ml-2">
+                      <Badge variant="secondary" className="ms-2">
                         disabled
                       </Badge>
                     ) : null}
@@ -120,7 +120,7 @@ function MembersBody({ admin }: { admin: AdminClient }): React.ReactElement {
                   <TableCell className="text-fg-muted">
                     {member.lastLoginAt === null ? 'never' : ago(member.lastLoginAt)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     <Button
                       variant="ghost"
                       className="min-h-11"

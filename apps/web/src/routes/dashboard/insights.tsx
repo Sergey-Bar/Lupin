@@ -262,7 +262,7 @@ function FlakyPanel({
                 data-testid={`flaky-${String(index)}`}
                 className="flex items-center gap-2"
               >
-                <span className="w-5 shrink-0 text-right tabular-nums text-xs text-fg-muted">
+                <span className="w-5 shrink-0 text-end tabular-nums text-xs text-fg-muted">
                   {index + 1}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -407,7 +407,7 @@ function RecoveryPanel({ insights }: { insights: QaInsights }): React.ReactEleme
                 <span className="truncate font-mono" title={suite.suite}>
                   {suite.suite}
                 </span>
-                <span className="ml-auto shrink-0">
+                <span className="ms-auto shrink-0">
                   red since {shortDate((suite.openSince ?? '').slice(0, 10))}
                 </span>
               </li>

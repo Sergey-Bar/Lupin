@@ -70,12 +70,12 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
         const triggers = Array.from(triggerRefs.current.entries());
         const currentIndex = triggers.findIndex(([key]) => key === value);
 
-        let nextIndex = currentIndex;
-        if (e.key === 'ArrowRight') {
-          nextIndex = (currentIndex + 1) % triggers.length;
-        } else if (e.key === 'ArrowLeft') {
-          nextIndex = (currentIndex - 1 + triggers.length) % triggers.length;
-        }
+        // The arrow that points along the reading line moves to the next tab: in a
+        // right-to-left page that is ArrowLeft.
+        const rtl = e.currentTarget.closest('[dir]')?.getAttribute('dir') === 'rtl';
+        const forward = rtl ? 'ArrowLeft' : 'ArrowRight';
+        const step = e.key === forward ? 1 : -1;
+        const nextIndex = (currentIndex + step + triggers.length) % triggers.length;
 
         const nextTrigger = triggers[nextIndex];
         if (nextTrigger) {

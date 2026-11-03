@@ -188,7 +188,7 @@ describe('a numeric cell', () => {
 
   it('aligns figures to the right, in tabular numerals, in the reading face', () => {
     const cell = renderNumeric();
-    expect(cell).toHaveClass('tabular-nums', 'text-right', 'font-mono');
+    expect(cell).toHaveClass('tabular-nums', 'text-end', 'font-mono');
   });
 
   it('leaves a text cell alone', () => {
@@ -208,7 +208,7 @@ describe('a numeric cell', () => {
 
   it('lets a caller add a class without losing the three', () => {
     const cell = renderNumeric({ className: 'text-fg-muted' });
-    expect(cell).toHaveClass('tabular-nums', 'text-right', 'font-mono', 'text-fg-muted');
+    expect(cell).toHaveClass('tabular-nums', 'text-end', 'font-mono', 'text-fg-muted');
   });
 });
 
@@ -294,5 +294,22 @@ describe('the table row and header states', () => {
     expect(header?.className).toMatch(/\bsticky\b/);
     expect(header?.className).toMatch(/\btop-0\b/);
     expect(header?.className).toMatch(/\bbg-surface\b/);
+  });
+});
+
+describe('TableHead alignment', () => {
+  it('moves the words to the end of a column that is marked text-end', () => {
+    render(
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead className="text-end">Size</TableHead>
+          </TableRow>
+        </TableHeader>
+      </Table>,
+    );
+    expect(screen.getByText('Size').className).toContain('justify-end');
+    expect(screen.getByText('Name').className).not.toContain('justify-end');
   });
 });

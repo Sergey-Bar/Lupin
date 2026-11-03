@@ -29,8 +29,33 @@ export const GitHubPullSchema = z.object({
   closed_at: Instant.nullable().optional(),
   merged_at: Instant.nullable().optional(),
   merge_commit_sha: z.string().nullable().optional(),
+  html_url: z.string().optional(),
+  requested_reviewers: z.array(z.object({ login: z.string() })).optional(),
+  /** Only the single-pull read carries it; the list does not. */
+  mergeable_state: z.string().nullable().optional(),
 });
 export type GitHubPull = z.infer<typeof GitHubPullSchema>;
+
+export const GitHubIssueSchema = z.object({
+  id: z.number(),
+  number: z.number().int(),
+  state: z.enum(['open', 'closed']),
+  title: z.string(),
+  user: Login,
+  labels: z.array(z.union([z.string(), z.object({ name: z.string() })])).optional(),
+  assignees: z.array(z.object({ login: z.string() })).optional(),
+  comments: z.number().int().min(0).optional(),
+  html_url: z.string().optional(),
+  created_at: Instant,
+  updated_at: Instant,
+  closed_at: Instant.nullable().optional(),
+});
+export type GitHubIssue = z.infer<typeof GitHubIssueSchema>;
+
+export const GitHubCheckRunSchema = z.object({
+  status: z.string().nullable().optional(),
+  conclusion: z.string().nullable().optional(),
+});
 
 export const GitHubReviewSchema = z.object({
   user: Login,

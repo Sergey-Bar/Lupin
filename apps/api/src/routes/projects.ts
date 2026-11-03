@@ -69,6 +69,7 @@ import { createScorecardRoutes } from './scorecards.js';
 import { createMcpRoutes } from './mcp.js';
 import { uploaderGuard } from '../http/uploader.js';
 import { createDeliveryRoutes } from './delivery.js';
+import { createGitHubActionRoutes, createGitHubReadRoutes } from './github.js';
 import { createGitHubWebhookRoutes } from './github-webhook.js';
 import { createIssueTrackingRoutes } from './issue-tracking.js';
 import { createTestProposalRoutes } from './test-proposals.js';
@@ -496,6 +497,25 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
         requireReporterSecret: options.health?.requireReporterSecret,
       }),
       ...(options.delivery?.syncNow === undefined ? {} : { syncNow: options.delivery.syncNow }),
+    }),
+  );
+  // The GitHub command center: pull requests, issues and repositories across the workspace.
+  app.route(
+    '/',
+    createGitHubReadRoutes({ db: options.db, workspaceId: options.workspaceId, access }),
+  );
+  // Writes to GitHub, through the one action service. Always mounted so it is a row in the authz
+  // matrix; with no GitHub adapter or vault every item is refused for want of a token.
+  const github = options.health?.github;
+  app.route(
+    '/',
+    createGitHubActionRoutes({
+      db: options.db,
+      workspaceId: options.workspaceId,
+      access,
+      ...(github === undefined ? {} : { adapter: github.adapter }),
+      tokenFor: (_workspaceId, projectId) =>
+        github === undefined ? Promise.resolve(null) : github.tokenFor(projectId),
     }),
   );
   // The GitHub webhook: off unless LAN mode and a webhook secret are both configured.

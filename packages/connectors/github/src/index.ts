@@ -32,18 +32,54 @@ import {
  * answers 200, which is a read the caller believes and never made.
  */
 
-const API = 'https://api.github.com';
+const DEFAULT_API = 'https://api.github.com';
+
+/**
+ * The API origin and path prefix, from server configuration.
+ *
+ * It decides where the token is sent, so it is validated like a credential destination: HTTPS
+ * only, no embedded credentials, no query or fragment. It is never read from a request.
+ * `https://ghe.example.com/api/v3` is a GitHub Enterprise Server base; the default is github.com.
+ */
+function apiBaseOf(raw: string): string {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error(`GitHub API URL is not a URL: ${raw}`);
+  }
+  if (url.protocol !== 'https:') {
+    throw new Error('GitHub API URL must be https: the token travels with every request');
+  }
+  if (url.username !== '' || url.password !== '') {
+    throw new Error('GitHub API URL must not contain credentials');
+  }
+  if (url.search !== '' || url.hash !== '') {
+    throw new Error('GitHub API URL must not have a query string or fragment');
+  }
+  return `${url.origin}${url.pathname.replace(/\/+$/u, '')}`;
+}
 
 interface GitHubOperation {
   /** The path, from the owner, the repository and the validated input. */
   readonly path: (owner: string, repo: string, input: Record<string, unknown>) => string;
-  readonly method: 'GET' | 'POST' | 'PATCH';
+  readonly method: 'GET' | 'POST' | 'PATCH' | 'PUT';
   /** Required input fields beyond `owner` and `repo`. */
   readonly fields: readonly string[];
   /** Fields sent in the body, when there is a body. */
   readonly bodyFields: readonly string[];
+  /**
+   * The input field holding the whole body, for the one write whose body has required keys that
+   * are `null` (branch protection). Sent as given, after checking it is a plain object.
+   */
+  readonly bodyObject?: string;
   /** Set on a paginated read: see {@link GitHubList}. */
   readonly list?: GitHubList;
+  /**
+   * A 403 or 404 means "this token cannot see it" or "it is not there", and is returned as
+   * data (`unavailable`) instead of failing the call. For feeds a token may not be granted.
+   */
+  readonly soft?: true;
 }
 
 /**
@@ -68,6 +104,14 @@ interface GitHubList {
    * offers for lists that have no `since`.
    */
   readonly orderedBy?: string;
+  /** Items carrying this key are dropped: `/issues` lists pull requests, marked `pull_request`. */
+  readonly exclude?: string;
+  /**
+   * The feed is paged by an opaque cursor in the `Link` header, not by number. GitHub answers
+   * 400 to a `page` parameter on these (Dependabot alerts: found live), so none is sent, and
+   * `nextPage` is only a signal that the walk stopped before the end.
+   */
+  readonly cursorPaged?: true;
 }
 
 interface ListParam {
@@ -92,6 +136,9 @@ const repoPath = (owner: string, repo: string) =>
   `repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
 const pullPath = (owner: string, repo: string, input: Record<string, unknown>, tail: string) =>
   `${repoPath(owner, repo)}/pulls/${encodeURIComponent(String(input['number']))}/${tail}`;
+/** A path segment from validated input. Encoded, so `release/1.0` stays one segment. */
+const segment = (input: Record<string, unknown>, field: string) =>
+  encodeURIComponent(String(input[field]));
 
 const OPERATIONS: Record<string, GitHubOperation> = {
   getRepository: {
@@ -143,6 +190,7 @@ const OPERATIONS: Record<string, GitHubOperation> = {
     bodyFields: [],
     list: {
       query: { state: 'all', sort: 'updated', direction: 'desc' },
+      params: [{ field: 'state', query: 'state', kind: 'text' }],
       orderedBy: 'updated_at',
     },
   },
@@ -223,139 +271,350 @@ const OPERATIONS: Record<string, GitHubOperation> = {
       orderedBy: 'created_at',
     },
   },
-};
-
-export const githubAdapter: ConnectorAdapter = {
-  manifest: {
-    name: 'github',
-    version: '1.0.0',
-    operations: {
-      getRepository: { sideEffecting: false, idempotent: true, timeoutMs: 10_000 },
-      createIssue: { sideEffecting: true, idempotent: false, timeoutMs: 10_000 },
-      // A status for one context on one commit replaces the previous one: repeating it is safe.
-      createCommitStatus: { sideEffecting: true, idempotent: true, timeoutMs: 10_000 },
-      listIssueComments: { sideEffecting: false, idempotent: true, timeoutMs: 10_000 },
-      createIssueComment: { sideEffecting: true, idempotent: false, timeoutMs: 10_000 },
-      updateIssueComment: { sideEffecting: true, idempotent: true, timeoutMs: 10_000 },
-      // The delivery reads. The timeout is per page, as every attempt is one request.
-      listPullRequests: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
-      listPullRequestReviews: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
-      listPullRequestCommits: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
-      listPullRequestFiles: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
-      listCommits: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
-      listDeployments: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
-      listDeploymentStatuses: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
-      listReleases: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
-      listWorkflowRuns: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+  // ─── Repository-health reads ──────────────────────────────────────────────
+  getPullRequest: {
+    path: (owner, repo, input) => `${repoPath(owner, repo)}/pulls/${segment(input, 'number')}`,
+    method: 'GET',
+    fields: ['number'],
+    bodyFields: [],
+  },
+  listIssues: {
+    path: (owner, repo) => `${repoPath(owner, repo)}/issues`,
+    method: 'GET',
+    fields: [],
+    bodyFields: [],
+    list: {
+      query: { state: 'all', sort: 'updated', direction: 'desc' },
+      params: [{ field: 'state', query: 'state', kind: 'text' }],
+      orderedBy: 'updated_at',
+      exclude: 'pull_request',
     },
   },
+  listLabels: {
+    path: (owner, repo) => `${repoPath(owner, repo)}/labels`,
+    method: 'GET',
+    fields: [],
+    bodyFields: [],
+    list: {},
+  },
+  listBranches: {
+    path: (owner, repo) => `${repoPath(owner, repo)}/branches`,
+    method: 'GET',
+    fields: [],
+    bodyFields: [],
+    list: {},
+  },
+  getBranchProtection: {
+    path: (owner, repo, input) =>
+      `${repoPath(owner, repo)}/branches/${segment(input, 'branch')}/protection`,
+    method: 'GET',
+    fields: ['branch'],
+    bodyFields: [],
+    soft: true,
+  },
+  listCheckRuns: {
+    path: (owner, repo, input) =>
+      `${repoPath(owner, repo)}/commits/${segment(input, 'ref')}/check-runs`,
+    method: 'GET',
+    fields: ['ref'],
+    bodyFields: [],
+    list: { itemsKey: 'check_runs' },
+  },
+  listDependabotAlerts: {
+    path: (owner, repo) => `${repoPath(owner, repo)}/dependabot/alerts`,
+    method: 'GET',
+    fields: [],
+    bodyFields: [],
+    list: { query: { state: 'open' }, cursorPaged: true },
+    soft: true,
+  },
+  listCodeScanningAlerts: {
+    path: (owner, repo) => `${repoPath(owner, repo)}/code-scanning/alerts`,
+    method: 'GET',
+    fields: [],
+    bodyFields: [],
+    list: { query: { state: 'open' } },
+    soft: true,
+  },
+  listSecretScanningAlerts: {
+    path: (owner, repo) => `${repoPath(owner, repo)}/secret-scanning/alerts`,
+    method: 'GET',
+    fields: [],
+    bodyFields: [],
+    list: { query: { state: 'open' } },
+    soft: true,
+  },
+  getCommunityProfile: {
+    path: (owner, repo) => `${repoPath(owner, repo)}/community/profile`,
+    method: 'GET',
+    fields: [],
+    bodyFields: [],
+  },
+  // ─── Writes made from the command center ──────────────────────────────────
+  // Each declares exactly the fields it sends. `fields` are required strings, which are also the
+  // path parameters; `bodyFields` are optional and sent only when set.
+  updateIssue: {
+    // Issues and pull requests share this endpoint for state, labels and assignees.
+    path: (owner, repo, input) => `${repoPath(owner, repo)}/issues/${segment(input, 'number')}`,
+    method: 'PATCH',
+    fields: ['number'],
+    bodyFields: ['state', 'labels', 'assignees'],
+  },
+  requestReviewers: {
+    path: (owner, repo, input) => pullPath(owner, repo, input, 'requested_reviewers'),
+    method: 'POST',
+    fields: ['number'],
+    bodyFields: ['reviewers'],
+  },
+  createPullRequestReview: {
+    path: (owner, repo, input) => pullPath(owner, repo, input, 'reviews'),
+    method: 'POST',
+    fields: ['number', 'event'],
+    bodyFields: ['event', 'body', 'commit_id'],
+  },
+  mergePullRequest: {
+    path: (owner, repo, input) => pullPath(owner, repo, input, 'merge'),
+    method: 'PUT',
+    // `sha` is required: GitHub refuses the merge if the branch has moved since the caller looked.
+    fields: ['number', 'sha'],
+    bodyFields: ['sha', 'merge_method'],
+  },
+  updatePullRequestBranch: {
+    path: (owner, repo, input) => pullPath(owner, repo, input, 'update-branch'),
+    method: 'PUT',
+    fields: ['number'],
+    bodyFields: ['expected_head_sha'],
+  },
+  rerunWorkflow: {
+    path: (owner, repo, input) =>
+      `${repoPath(owner, repo)}/actions/runs/${segment(input, 'runId')}/rerun`,
+    method: 'POST',
+    fields: ['runId'],
+    bodyFields: [],
+  },
+  createRelease: {
+    path: (owner, repo) => `${repoPath(owner, repo)}/releases`,
+    method: 'POST',
+    fields: ['tag_name'],
+    bodyFields: ['tag_name', 'name', 'body', 'draft', 'prerelease', 'target_commitish'],
+  },
+  updateBranchProtection: {
+    path: (owner, repo, input) =>
+      `${repoPath(owner, repo)}/branches/${segment(input, 'branch')}/protection`,
+    method: 'PUT',
+    fields: ['branch'],
+    bodyFields: [],
+    bodyObject: 'protection',
+  },
+};
 
-  async execute(request: ConnectorRequest, secret: string): Promise<ConnectorResult> {
-    try {
-      // Every refusal happens before a request exists. A no-op request is not a GitHub
-      // request, it is a rate-limit counter, so the empty secret is refused here rather
-      // than becoming a 403 three calls later.
-      if (secret.trim() === '') {
-        throw new ConnectorInputError('invalid_input', 'a GitHub token is required');
-      }
-      const spec = operationSpecOf(request.operation);
-      const operation = OPERATIONS[request.operation];
-      const owner = requireString(request.input, 'owner');
-      const repo = requireString(request.input, 'repo');
-      const input = request.input as Record<string, unknown>;
-      // Required fields first: some are path parameters, so the path is built after them.
-      const body = requestBody(operation, input);
-      const path = operation.path(owner, repo, input);
+const MANIFEST: ConnectorAdapter['manifest'] = {
+  name: 'github',
+  version: '1.0.0',
+  operations: {
+    getRepository: { sideEffecting: false, idempotent: true, timeoutMs: 10_000 },
+    createIssue: { sideEffecting: true, idempotent: false, timeoutMs: 10_000 },
+    // A status for one context on one commit replaces the previous one: repeating it is safe.
+    createCommitStatus: { sideEffecting: true, idempotent: true, timeoutMs: 10_000 },
+    listIssueComments: { sideEffecting: false, idempotent: true, timeoutMs: 10_000 },
+    createIssueComment: { sideEffecting: true, idempotent: false, timeoutMs: 10_000 },
+    updateIssueComment: { sideEffecting: true, idempotent: true, timeoutMs: 10_000 },
+    // The delivery reads. The timeout is per page, as every attempt is one request.
+    listPullRequests: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listPullRequestReviews: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listPullRequestCommits: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listPullRequestFiles: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listCommits: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listDeployments: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listDeploymentStatuses: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listReleases: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listWorkflowRuns: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    // The repository-health reads.
+    getPullRequest: { sideEffecting: false, idempotent: true, timeoutMs: 10_000 },
+    listIssues: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listLabels: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listBranches: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    getBranchProtection: { sideEffecting: false, idempotent: true, timeoutMs: 10_000 },
+    listCheckRuns: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listDependabotAlerts: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listCodeScanningAlerts: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    listSecretScanningAlerts: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    getCommunityProfile: { sideEffecting: false, idempotent: true, timeoutMs: 10_000 },
+    // The writes. Repeating one of the first four sets the same state again; the rest do
+    // something each time they run, so a server error is never retried.
+    updateIssue: { sideEffecting: true, idempotent: true, timeoutMs: 10_000 },
+    requestReviewers: { sideEffecting: true, idempotent: true, timeoutMs: 10_000 },
+    updatePullRequestBranch: { sideEffecting: true, idempotent: true, timeoutMs: 15_000 },
+    updateBranchProtection: { sideEffecting: true, idempotent: true, timeoutMs: 10_000 },
+    createPullRequestReview: { sideEffecting: true, idempotent: false, timeoutMs: 10_000 },
+    mergePullRequest: { sideEffecting: true, idempotent: false, timeoutMs: 15_000 },
+    rerunWorkflow: { sideEffecting: true, idempotent: false, timeoutMs: 10_000 },
+    createRelease: { sideEffecting: true, idempotent: false, timeoutMs: 10_000 },
+  },
+};
 
-      if (operation.list !== undefined) {
-        const read = await readList(
-          listPlan(path, operation.list, input),
-          secret,
-          spec,
-          request.signal,
-        );
-        return { status: 'ok', data: read.value, attempts: read.attempts };
-      }
+/**
+ * The GitHub connector for one API base. `apiBase` is server configuration (GitHub Enterprise
+ * Server), never request input; it is validated here, once, and a bad one fails at startup.
+ */
+export function createGitHubAdapter(options: { apiBase?: string } = {}): ConnectorAdapter {
+  const api = apiBaseOf(options.apiBase ?? DEFAULT_API);
+  return {
+    manifest: MANIFEST,
+    execute: (request, secret) => executeOn(api, request, secret),
+  };
+}
 
-      const value = await executeWithRetry(
-        async (signal) => {
-          const response = await fetch(`${API}/${path}`, {
-            ...requestInit(operation, secret, body),
-            signal,
-          });
-          if (!response.ok) {
-            // A 4xx is a statement about the *request* and nothing was created, so it is a
-            // rejection: repeating it cannot duplicate anything. A 5xx is a statement
-            // about the response only, and for a create that is the ambiguous case.
-            const error =
-              response.status >= 400 && response.status < 500
-                ? new ConnectorRejectionError(response.status, 'GitHub request failed')
-                : new ConnectorHttpError(response.status, 'GitHub request failed');
-            throw error;
-          }
-          return response.json();
-        },
-        // From the manifest, which is where the operation's side-effecting claim lives.
-        {
-          retries: 2,
-          signal: request.signal,
-          idempotent: spec.idempotent,
-          attemptTimeoutMs: spec.timeoutMs,
-        },
+export const githubAdapter: ConnectorAdapter = createGitHubAdapter();
+
+async function executeOn(
+  api: string,
+  request: ConnectorRequest,
+  secret: string,
+): Promise<ConnectorResult> {
+  try {
+    // Every refusal happens before a request exists. A no-op request is not a GitHub
+    // request, it is a rate-limit counter, so the empty secret is refused here rather
+    // than becoming a 403 three calls later.
+    if (secret.trim() === '') {
+      throw new ConnectorInputError('invalid_input', 'a GitHub token is required');
+    }
+    const spec = operationSpecOf(request.operation);
+    const operation = OPERATIONS[request.operation];
+    const owner = requireString(request.input, 'owner');
+    const repo = requireString(request.input, 'repo');
+    const input = request.input as Record<string, unknown>;
+    // Required fields first: some are path parameters, so the path is built after them.
+    const body = requestBody(operation, input);
+    const path = operation.path(owner, repo, input);
+
+    if (operation.list !== undefined) {
+      const read = await readList(
+        listPlan(api, path, operation, operation.list, input),
+        secret,
+        spec,
+        request.signal,
       );
+      return {
+        status: 'ok',
+        data: read.value,
+        attempts: read.attempts,
+        ...(read.rateLimit === undefined ? {} : { rateLimit: read.rateLimit }),
+      };
+    }
 
-      return { status: 'ok', data: value.value, attempts: value.attempts };
-    } catch (error) {
-      if (error instanceof GitHubRateLimited) {
-        return {
-          status: 'error',
-          error: {
-            code: 'github_rate_limited',
-            // Retryable at `retryAt`, not now: the dispatcher waits until then.
-            retryable: true,
-            message: 'GitHub rate limit reached',
-            retryAt: error.retryAt.toISOString(),
-          },
-          attempts: error.attempts,
-        };
-      }
-      if (error instanceof ConnectorInputError) {
-        return {
-          status: 'error',
-          error: {
-            code: `github_${error.code}`,
-            retryable: false,
-            // The refusal's own message. See the same note in `jira`: these are
-            // authored here, and replacing them with a fixed phrase discards the
-            // actionable half — which operation names are real, which field was blank.
-            message: error.message,
-          },
-          attempts: 1,
-        };
-      }
+    const value = await executeWithRetry(
+      async (signal) => {
+        const response = await fetch(`${api}/${path}`, {
+          ...requestInit(operation, secret, body),
+          signal,
+        });
+        if (!response.ok) {
+          // A rate limit is not a rejection of this request: it is a wait, with a time.
+          // Writes meet it too (a merge at the limit), and calling it a plain 403 would
+          // tell the caller to give up on something that works in an hour.
+          const retryAt = rateLimitOf(response, Date.now());
+          if (retryAt !== null) throw new GitHubRateLimited(retryAt);
+          if (operation.soft === true) await softRefusal(response);
+          // A 4xx is a statement about the *request* and nothing was created, so it is a
+          // rejection: repeating it cannot duplicate anything. A 5xx is a statement
+          // about the response only, and for a create that is the ambiguous case.
+          const error =
+            response.status >= 400 && response.status < 500
+              ? new ConnectorRejectionError(response.status, 'GitHub request failed')
+              : new ConnectorHttpError(response.status, 'GitHub request failed');
+          throw error;
+        }
+        // 204 and 205 carry no body (a merge-queue removal, a deleted label).
+        const parsed: unknown =
+          response.status === 204 || response.status === 205 ? null : await response.json();
+        return { body: parsed, rateLimit: rateLimitOfBudget(response) };
+      },
+      // From the manifest, which is where the operation's side-effecting claim lives.
+      {
+        retries: 2,
+        signal: request.signal,
+        idempotent: spec.idempotent,
+        attemptTimeoutMs: spec.timeoutMs,
+      },
+    );
 
-      // No status at all: the remote never answered, so this is neither a rejection nor a
-      // confirmed outcome. Distinct from a real 500, which is a server that said it is
-      // unwell.
-      const status = error instanceof ConnectorHttpError ? error.status : undefined;
+    return {
+      status: 'ok',
+      data: value.value.body,
+      attempts: value.attempts,
+      ...(value.value.rateLimit === undefined ? {} : { rateLimit: value.value.rateLimit }),
+    };
+  } catch (error) {
+    if (error instanceof GitHubUnavailable) {
+      // A result, not a failure: the caller learns the feed is closed to it, which is a
+      // different fact from "it is empty", and the rest of a sync carries on.
+      const unavailable = {
+        unavailable: error.reason,
+        ...(error.detail === undefined ? {} : { message: error.detail }),
+      };
+      return {
+        status: 'ok',
+        data: isList(request.operation)
+          ? { items: [], pages: 0, nextPage: null, ...unavailable }
+          : unavailable,
+        attempts: error.attempts,
+      };
+    }
+    if (error instanceof GitHubRateLimited) {
       return {
         status: 'error',
         error: {
-          // `github_<status>`, so "the repository is not there" stays distinguishable from
-          // "your token cannot see it". Both were one prose string before.
-          code: status === undefined ? 'github_transport_failed' : `github_${String(status)}`,
-          // From the status, not from a literal. The old error called a 401 retryable.
-          // A separate `TRANSIENT` set used to be unioned in here; it was a strict
-          // subset of `isRetryableStatus`, so the `||` could never add anything, and
-          // two places to update one policy is one too many.
-          retryable: isRetryableStatus(status),
-          message: 'GitHub operation failed',
+          code: 'github_rate_limited',
+          // Retryable at `retryAt`, not now: the dispatcher waits until then.
+          retryable: true,
+          message: 'GitHub rate limit reached',
+          retryAt: error.retryAt.toISOString(),
         },
-        attempts: attemptsOf(error),
+        attempts: error.attempts,
       };
     }
-  },
-};
+    if (error instanceof ConnectorInputError) {
+      return {
+        status: 'error',
+        error: {
+          code: `github_${error.code}`,
+          retryable: false,
+          // The refusal's own message. See the same note in `jira`: these are
+          // authored here, and replacing them with a fixed phrase discards the
+          // actionable half — which operation names are real, which field was blank.
+          message: error.message,
+        },
+        attempts: 1,
+      };
+    }
+
+    // No status at all: the remote never answered, so this is neither a rejection nor a
+    // confirmed outcome. Distinct from a real 500, which is a server that said it is
+    // unwell.
+    const status = error instanceof ConnectorHttpError ? error.status : undefined;
+    return {
+      status: 'error',
+      error: {
+        // `github_<status>`, so "the repository is not there" stays distinguishable from
+        // "your token cannot see it". Both were one prose string before.
+        code: status === undefined ? 'github_transport_failed' : `github_${String(status)}`,
+        // From the status, not from a literal. The old error called a 401 retryable.
+        // A separate `TRANSIENT` set used to be unioned in here; it was a strict
+        // subset of `isRetryableStatus`, so the `||` could never add anything, and
+        // two places to update one policy is one too many.
+        retryable: isRetryableStatus(status),
+        message: 'GitHub operation failed',
+      },
+      attempts: attemptsOf(error),
+    };
+  }
+}
+
+/** Whether an operation answers `{ items, pages, nextPage }`. */
+function isList(operation: string): boolean {
+  return OPERATIONS[operation]?.list !== undefined;
+}
 
 /** The manifest's claim for an operation, or a refusal naming what is declared. */
 function operationSpecOf(operation: string): {
@@ -368,13 +627,13 @@ function operationSpecOf(operation: string): {
     throw new ConnectorInputError(
       'unknown_operation',
       `github does not declare an operation named "${operation}"; it declares: ${Object.keys(
-        githubAdapter.manifest.operations,
+        MANIFEST.operations,
       )
         .sort()
         .join(', ')}`,
     );
   }
-  return githubAdapter.manifest.operations[operation] as {
+  return MANIFEST.operations[operation] as {
     sideEffecting: boolean;
     idempotent: boolean;
     timeoutMs: number;
@@ -411,12 +670,25 @@ function requestBody(
 ): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   for (const field of operation.fields) body[field] = requireString(input, field);
+  if (operation.bodyObject !== undefined) {
+    const whole = input[operation.bodyObject];
+    if (typeof whole !== 'object' || whole === null || Array.isArray(whole)) {
+      throw new ConnectorInputError(
+        'invalid_input',
+        `input.${operation.bodyObject} must be an object`,
+      );
+    }
+    return { ...body, [BODY_OBJECT]: whole };
+  }
   for (const field of operation.bodyFields) {
     const value = optionalField(input, field);
     if (value !== undefined) body[field] = value;
   }
   return body;
 }
+
+/** Marks the whole-body input inside the collected fields; never sent as a key. */
+const BODY_OBJECT = Symbol('bodyObject');
 
 /**
  * The body GitHub reads: only the declared body fields.
@@ -429,6 +701,14 @@ function bodyOf(
   operation: GitHubOperation,
   body: Record<string, unknown>,
 ): Record<string, unknown> {
+  if (operation.bodyObject !== undefined) {
+    // `collectBody` always sets `[BODY_OBJECT]` when the operation declares a `bodyObject`
+    // (it validates the input is an object first), and `bodyOf` only ever reads a body that
+    // builder produced — so the symbol is present by construction. A non-null assertion rather
+    // than a `?? {}` fallback keeps that invariant in one place instead of adding a branch no
+    // call can reach.
+    return (body as Record<symbol, Record<string, unknown>>)[BODY_OBJECT];
+  }
   return Object.fromEntries(
     Object.entries(body).filter(([key]) => operation.bodyFields.includes(key)),
   );
@@ -477,6 +757,44 @@ class GitHubRateLimited extends Error {
 }
 
 /**
+ * A feed this token cannot see, or that is not there.
+ *
+ * Thrown for the `soft` reads on a 403 or 404 that is not a rate limit. Its own type, like
+ * {@link GitHubRateLimited}, so the retry policy stops at once: asking again will not grant access.
+ * `message` is GitHub's own, which is how "Branch not protected" is told apart from "no access".
+ */
+class GitHubUnavailable extends Error {
+  attempts = 1;
+  constructor(
+    readonly reason: 'forbidden' | 'not_found',
+    readonly detail: string | undefined,
+  ) {
+    super(`GitHub says ${reason}`);
+    this.name = 'GitHubUnavailable';
+  }
+}
+
+/** GitHub's `message` for a refused request, bounded, or `undefined` when there is none. */
+async function refusalMessage(response: Response): Promise<string | undefined> {
+  try {
+    const body = (await response.json()) as unknown;
+    const message = (Object(body) as Record<string, unknown>)['message'];
+    return typeof message === 'string' ? message.slice(0, 200) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Throws {@link GitHubUnavailable} for a refusal a `soft` read reports as data. */
+async function softRefusal(response: Response): Promise<void> {
+  if (response.status !== 403 && response.status !== 404) return;
+  throw new GitHubUnavailable(
+    response.status === 403 ? 'forbidden' : 'not_found',
+    await refusalMessage(response),
+  );
+}
+
+/**
  * The reset time when a refusal is a rate limit, or `null` when it is not.
  *
  * GitHub answers a primary limit with 403 or 429 and `x-ratelimit-remaining: 0` beside
@@ -502,14 +820,14 @@ function rateLimitOf(response: Response, now: number): Date | null {
  * link to any other origin is therefore not followed — the walk ends there — so a response
  * cannot send the credential somewhere the caller never named.
  */
-function nextLink(response: Response): string | null {
+function nextLink(response: Response, api: string): string | null {
   const header = response.headers.get('link');
   if (header === null) return null;
   for (const part of header.split(',')) {
     const match = /^\s*<([^>]+)>\s*;\s*rel="next"\s*$/u.exec(part);
     if (match !== null) {
       const url = match[1] as string;
-      return url.startsWith(`${API}/`) ? url : null;
+      return url.startsWith(`${api}/`) ? url : null;
     }
   }
   return null;
@@ -518,6 +836,23 @@ function nextLink(response: Response): string | null {
 function pageOf(url: string): number | null {
   const page = Number.parseInt(new URL(url).searchParams.get('page') ?? '', 10);
   return Number.isFinite(page) ? page : null;
+}
+
+interface RateLimit {
+  limit: number;
+  remaining: number;
+  resetAt: string;
+}
+
+/** The request budget GitHub reports on every answer, or `undefined` when it sent none. */
+function rateLimitOfBudget(response: Response): RateLimit | undefined {
+  const limit = Number.parseInt(response.headers.get('x-ratelimit-limit') ?? '', 10);
+  const remaining = Number.parseInt(response.headers.get('x-ratelimit-remaining') ?? '', 10);
+  const reset = Number.parseInt(response.headers.get('x-ratelimit-reset') ?? '', 10);
+  if (!Number.isFinite(limit) || !Number.isFinite(remaining) || !Number.isFinite(reset)) {
+    return undefined;
+  }
+  return { limit, remaining, resetAt: new Date(reset * 1000).toISOString() };
 }
 
 /** An optional whole number in `[min, max]`, from a number or a numeric string. */
@@ -552,19 +887,32 @@ function optionalInstant(input: Record<string, unknown>, field: string): Date | 
 }
 
 interface ListPlan {
+  /** The API base: a next link is followed only when it starts with this. */
+  api: string;
   url: string;
   maxPages: number;
   /** Items older than `at` by `field` are dropped, and the walk ends at the first one. */
   cutoff: { field: string; at: Date } | null;
   itemsKey: string | undefined;
+  exclude: string | undefined;
+  soft: boolean;
+  cursorPaged: boolean;
 }
 
 /** The first URL of a list and how far to walk it, every input refused before a request. */
-function listPlan(path: string, list: GitHubList, input: Record<string, unknown>): ListPlan {
+function listPlan(
+  api: string,
+  path: string,
+  operation: GitHubOperation,
+  list: GitHubList,
+  input: Record<string, unknown>,
+): ListPlan {
   const query = new URLSearchParams({
     ...list.query,
     per_page: String(boundedInteger(input, 'perPage', 1, 100, 100)),
-    page: String(boundedInteger(input, 'page', 1, 100_000, 1)),
+    ...(list.cursorPaged === true
+      ? {}
+      : { page: String(boundedInteger(input, 'page', 1, 100_000, 1)) }),
   });
   for (const param of list.params ?? []) {
     if (param.kind === 'timestamp') {
@@ -579,16 +927,24 @@ function listPlan(path: string, list: GitHubList, input: Record<string, unknown>
   }
   const newerThan = list.orderedBy === undefined ? undefined : optionalInstant(input, 'newerThan');
   return {
-    url: `${API}/${path}?${query.toString()}`,
+    api,
+    url: `${api}/${path}?${query.toString()}`,
     maxPages: boundedInteger(input, 'maxPages', 1, MAX_PAGES, DEFAULT_PAGES),
     cutoff: newerThan === undefined ? null : { field: list.orderedBy as string, at: newerThan },
     itemsKey: list.itemsKey,
+    exclude: list.exclude,
+    soft: operation.soft === true,
+    cursorPaged: list.cursorPaged === true,
   };
 }
 
 function itemsOf(body: unknown, key: string | undefined): unknown[] {
   const container = key === undefined ? body : (Object(body) as Record<string, unknown>)[key];
   return Array.isArray(container) ? container : [];
+}
+
+function hasKey(item: unknown, key: string): boolean {
+  return Object.hasOwn(Object(item) as object, key);
 }
 
 function isOlder(item: unknown, cutoff: { field: string; at: Date }): boolean {
@@ -612,19 +968,25 @@ async function readList(
 ): Promise<{
   value: { items: unknown[]; pages: number; nextPage: number | null };
   attempts: number;
+  rateLimit: RateLimit | undefined;
 }> {
   const items: unknown[] = [];
   let cursor: string | null = plan.url;
   let pages = 0;
   let attempts = 0;
   let nextPage: number | null = null;
+  let rateLimit: RateLimit | undefined;
   while (cursor !== null) {
     if (pages >= plan.maxPages) {
-      nextPage = pageOf(cursor);
+      // A cursor link carries no page number; the walk still stopped early, which is the point.
+      nextPage = pageOf(cursor) ?? (plan.cursorPaged ? pages + 1 : null);
       break;
     }
     const url: string = cursor;
-    let page: { value: { body: unknown; next: string | null }; attempts: number };
+    let page: {
+      value: { body: unknown; next: string | null; rateLimit: RateLimit | undefined };
+      attempts: number;
+    };
     try {
       page = await executeWithRetry(
         async (attemptSignal) => {
@@ -636,28 +998,38 @@ async function readList(
           if (!response.ok) {
             const retryAt = rateLimitOf(response, Date.now());
             if (retryAt !== null) throw new GitHubRateLimited(retryAt);
+            if (plan.soft) await softRefusal(response);
             throw response.status < 500
               ? new ConnectorRejectionError(response.status, 'GitHub request failed')
               : new ConnectorHttpError(response.status, 'GitHub request failed');
           }
-          return { body: (await response.json()) as unknown, next: nextLink(response) };
+          return {
+            body: (await response.json()) as unknown,
+            next: nextLink(response, plan.api),
+            rateLimit: rateLimitOfBudget(response),
+          };
         },
         { retries: 2, signal, idempotent: spec.idempotent, attemptTimeoutMs: spec.timeoutMs },
       );
     } catch (error) {
-      if (error instanceof ConnectorHttpError || error instanceof GitHubRateLimited) {
+      if (
+        error instanceof ConnectorHttpError ||
+        error instanceof GitHubRateLimited ||
+        error instanceof GitHubUnavailable
+      ) {
         error.attempts += attempts;
       }
       throw error;
     }
     attempts += page.attempts;
     pages += 1;
+    rateLimit = page.value.rateLimit ?? rateLimit;
     const all = itemsOf(page.value.body, plan.itemsKey);
-    const { cutoff } = plan;
-    const kept = cutoff === null ? all : all.filter((item) => !isOlder(item, cutoff));
-    items.push(...kept);
+    const { cutoff, exclude } = plan;
+    const fresh = cutoff === null ? all : all.filter((item) => !isOlder(item, cutoff));
+    items.push(...(exclude === undefined ? fresh : fresh.filter((item) => !hasKey(item, exclude))));
     // Ordered newest first: a page that reached an older item is the last one worth reading.
-    cursor = kept.length < all.length ? null : page.value.next;
+    cursor = fresh.length < all.length ? null : page.value.next;
   }
-  return { value: { items, pages, nextPage }, attempts };
+  return { value: { items, pages, nextPage }, attempts, rateLimit };
 }

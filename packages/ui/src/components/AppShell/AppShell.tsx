@@ -29,7 +29,7 @@ export const AppShell = forwardRef<HTMLDivElement, AppShellProps>(
         )}
         <div className="flex flex-1 overflow-hidden">
           {sidebar && (
-            <aside className="w-64 overflow-y-auto border-r border-border bg-surface">
+            <aside className="w-64 overflow-y-auto border-e border-border bg-surface">
               {sidebar}
             </aside>
           )}

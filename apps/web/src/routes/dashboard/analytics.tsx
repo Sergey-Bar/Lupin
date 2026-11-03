@@ -115,9 +115,9 @@ export function AnalyticsPage({ api, qa }: { api?: ApiClient; qa?: QaClient }) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Day</TableHead>
-                    <TableHead className="text-right">Runs</TableHead>
-                    <TableHead className="text-right">Pass rate</TableHead>
-                    <TableHead className="text-right">Failed tests</TableHead>
+                    <TableHead className="text-end">Runs</TableHead>
+                    <TableHead className="text-end">Pass rate</TableHead>
+                    <TableHead className="text-end">Failed tests</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

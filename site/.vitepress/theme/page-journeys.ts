@@ -87,6 +87,17 @@ export const pageJourneys: Record<string, Journey> = {
     ],
     takeaway: 'A missing event source limits the conclusions a delivery scorecard can support.',
   },
+  'guide/github-command-center.md': {
+    audience: 'Engineering leads and maintainers',
+    goal: 'Triage pull requests and issues across repositories, and act on GitHub from one place.',
+    stages: [
+      ['Turn on a repository', 'Give the project a token and turn on the sync so it can be read.'],
+      ['Read the queue', 'Work from what can be merged, to what is stuck, to what is waiting.'],
+      ['Act with care', 'Preview a bulk change, and let GitHub refuse a merge of a moved branch.'],
+    ],
+    takeaway:
+      'A repository that has not been read is not graded, and a merge names the commit you reviewed.',
+  },
   'guide/ai-code.md': {
     audience: 'Engineering leads · reviewers',
     goal: 'Understand attributed AI-written changes and their outcomes.',

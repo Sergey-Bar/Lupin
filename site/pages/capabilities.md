@@ -9,7 +9,7 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                   |
 | ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 67    | implemented and exercised, with the stated qualification.                 |
+| **real**     | 71    | implemented and exercised, with the stated qualification.                 |
 | **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
 | **missing**  | 1     | no usable implementation exists in the target.                            |
 | **deferred** | 6     | intentionally outside the launch scope pending a separate decision.       |
@@ -61,6 +61,10 @@ its source, then run `pnpm site:generate`.
 | Pull-request flow scorecard and stale pull requests                                                 | `real`     |
 | Scheduled and on-demand GitHub sync of pull requests, commits, deployments and deploy-workflow runs | `real`     |
 | Deployments and incidents pushed from CI or a pager                                                 | `real`     |
+| Pull request and issue inbox across every repository                                                | `real`     |
+| Repository health analysis with evidence for each finding                                           | `real`     |
+| Write to GitHub from the dashboard: triage, review, merge, release, branch protection               | `real`     |
+| Right-to-left text in an English, left-to-right interface                                           | `real`     |
 | GitHub webhook receiver that starts a delivery sync                                                 | `real`     |
 | AI attribution of pull requests from their own signals and their commits'                           | `real`     |
 | Outcomes of AI-written change against human change, per project and portfolio                       | `real`     |

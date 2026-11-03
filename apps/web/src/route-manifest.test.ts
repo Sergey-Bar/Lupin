@@ -43,12 +43,13 @@ describe('route manifest', () => {
     expect(routeManifest.some((route) => route.path === '/dashboard/runs')).toBe(true);
   });
 
-  it('has four sections, in the order the navigation draws them', () => {
+  it('has five sections, in the order the navigation draws them', () => {
     expect(SECTIONS.map((section) => section.label)).toEqual([
       'Overview',
       'Runs',
       'Insights',
       'Map',
+      'GitHub',
     ]);
     for (const section of SECTIONS) {
       expect(isApplicationPath(section.path), `${section.label} opens nowhere`).toBe(true);
@@ -75,6 +76,9 @@ describe('route manifest', () => {
       '/dashboard/audit',
       '/dashboard/deployment',
       '/dashboard/reports',
+      '/dashboard/prs',
+      '/dashboard/issues',
+      '/dashboard/repos',
     ]);
     expect(visibleRoutes.every((route) => isApplicationPath(route.path))).toBe(true);
   });

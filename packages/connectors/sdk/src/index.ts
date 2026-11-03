@@ -19,6 +19,11 @@ export interface ConnectorResult {
    */
   error?: { code: string; retryable: boolean; message: string; retryAt?: string };
   attempts: number;
+  /**
+   * What the platform said is left of the caller's request budget, when it said. Absent means
+   * the platform sent nothing, which is not the same as zero.
+   */
+  rateLimit?: { limit: number; remaining: number; resetAt: string };
 }
 
 export interface ConnectorAdapter {

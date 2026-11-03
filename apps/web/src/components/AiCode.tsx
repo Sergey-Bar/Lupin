@@ -239,7 +239,7 @@ function ShareChart({ weeks }: { weeks: readonly Week[] }): React.ReactElement {
                 ),
               )}
             </span>
-            <span className="w-8 shrink-0 text-right tabular-nums">{week.total}</span>
+            <span className="w-8 shrink-0 text-end tabular-nums">{week.total}</span>
           </li>
         ))}
       </ul>
@@ -522,7 +522,7 @@ function PullRequestTable({
                   {ATTRIBUTION_LABEL[pr.attribution]}
                 </Badge>
                 {pr.agent === null ? null : (
-                  <span className="ml-2 font-mono text-xs">{pr.agent}</span>
+                  <span className="ms-2 font-mono text-xs">{pr.agent}</span>
                 )}
               </TableCell>
               <TableCell numeric className="hidden md:table-cell">

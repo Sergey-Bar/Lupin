@@ -130,7 +130,7 @@ function DeploymentBody({
                   <TableCell className="font-medium">
                     {description.label}
                     {isCurrent ? (
-                      <Badge variant="outline" className="ml-2">
+                      <Badge variant="outline" className="ms-2">
                         current
                       </Badge>
                     ) : null}

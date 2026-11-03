@@ -112,7 +112,7 @@ export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
         ref={ref}
         aria-sort={ariaSort}
         className={cn(
-          'h-12 px-4 text-left align-middle font-medium text-text-secondary [&:has([role=checkbox])]:pr-0',
+          'h-12 px-4 text-start align-middle font-medium text-text-secondary [&:has([role=checkbox])]:pe-0',
           sortable && 'p-0',
           className,
         )}
@@ -131,7 +131,7 @@ export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
           <button
             type="button"
             onClick={onSortChange}
-            className="flex h-12 w-full items-center gap-1 px-4 text-left font-medium text-inherit hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            className="flex h-12 w-full items-center gap-1 px-4 text-start font-medium text-inherit hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
           >
             {children}
             {/*
@@ -162,7 +162,16 @@ export const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
             </span>
           </button>
         ) : (
-          <div className="flex items-center gap-1">{children}</div>
+          // The wrapper is a flex row, so a 	ext-end on the cell would align an empty box and not the
+          // words. A right-aligned column says so on the cell, and the row follows it.
+          <div
+            className={cn(
+              'flex items-center gap-1',
+              /(^|\s)text-end(\s|$)/u.test(className ?? '') && 'justify-end',
+            )}
+          >
+            {children}
+          </div>
         )}
       </th>
     );
@@ -187,15 +196,15 @@ export const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(
     <td
       ref={ref}
       className={cn(
-        'p-4 align-middle [&:has([role=checkbox])]:pr-0',
+        'p-4 align-middle [&:has([role=checkbox])]:pe-0',
         /*
          * `tabular-nums` because a digit is proportional by default and a column of scores
-         * shifts sideways every time one updates; `text-right` because a right edge is the
+         * shifts sideways every time one updates; `text-end` because a right edge is the
          * only alignment that puts the last digit in the same place on every row; and
          * `font-mono` because the design language sets Geist Mono for anything a
          * person compares character by character, which a column of scores is.
          */
-        numeric && 'tabular-nums text-right font-mono',
+        numeric && 'tabular-nums text-end font-mono',
         className,
       )}
       {...props}

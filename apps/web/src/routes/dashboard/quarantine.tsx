@@ -186,7 +186,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
                       <TableCell>
                         {entry.testTitle}
                         {isUnsaved(entry.id) ? (
-                          <span className="ml-2 text-xs text-fg-muted">Saving…</span>
+                          <span className="ms-2 text-xs text-fg-muted">Saving…</span>
                         ) : null}
                       </TableCell>
                       <TableCell className="font-mono text-xs">{entry.testFile}</TableCell>

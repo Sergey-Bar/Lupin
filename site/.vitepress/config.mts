@@ -113,6 +113,7 @@ export default defineConfig({
               { text: 'Choose a profile', link: '/guide/profiles' },
               { text: 'Repository health', link: '/guide/repository-health' },
               { text: 'Delivery performance', link: '/guide/delivery-performance' },
+              { text: 'GitHub command center', link: '/guide/github-command-center' },
               { text: 'AI-written code', link: '/guide/ai-code' },
               { text: 'Agent quality', link: '/guide/agents' },
               { text: 'Issues and test proposals', link: '/guide/issues-and-test-proposals' },

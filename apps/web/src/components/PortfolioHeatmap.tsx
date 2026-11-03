@@ -127,7 +127,7 @@ function HeatmapTable({ value }: { value: HeatmapPayload }): React.ReactElement 
         <TableBody>
           {value.projects.map((project) => (
             <TableRow key={project.projectId} data-testid={`heatmap-row-${project.slug}`}>
-              <th scope="row" className="px-4 py-2 text-left font-medium whitespace-nowrap">
+              <th scope="row" className="px-4 py-2 text-start font-medium whitespace-nowrap">
                 <a
                   href={repoHealthPath(project.projectId)}
                   className="underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"

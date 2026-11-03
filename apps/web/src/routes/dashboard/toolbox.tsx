@@ -225,7 +225,7 @@ function ToolboxCatalogue({
           <Search
             size={14}
             aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted"
+            className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-fg-muted"
           />
           <input
             type="search"
@@ -233,7 +233,7 @@ function ToolboxCatalogue({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search tools"
-            className="min-h-11 w-full rounded-lg border border-border bg-surface-raised pl-9 pr-3 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            className="min-h-11 w-full rounded-lg border border-border bg-surface-raised ps-9 pe-3 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
           />
         </label>
         <label className="flex items-center gap-2 text-sm text-fg-muted">
@@ -350,10 +350,7 @@ function ToolTile({
           {dot === null ? null : (
             <span
               aria-hidden="true"
-              className={cn(
-                'absolute -right-1 -top-1 h-3 w-3 rounded-full ring-2 ring-surface',
-                dot,
-              )}
+              className={cn('absolute -end-1 -top-1 h-3 w-3 rounded-full ring-2 ring-surface', dot)}
             />
           )}
         </span>
@@ -397,7 +394,7 @@ function ToolDialog({
                   {CAPABILITY_LABELS[entry.capability]} · {entry.priority} priority
                 </div>
               </div>
-              <Badge variant={STATUS_BADGE[entry.status]} className="ml-auto shrink-0">
+              <Badge variant={STATUS_BADGE[entry.status]} className="ms-auto shrink-0">
                 {STATUS_WORD[entry.status]}
               </Badge>
             </div>

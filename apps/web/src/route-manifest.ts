@@ -28,6 +28,7 @@ export const SECTIONS = [
   { id: 'runs', label: 'Runs', path: '/dashboard/runs' },
   { id: 'insights', label: 'Insights', path: '/dashboard/insights' },
   { id: 'map', label: 'Map', path: '/dashboard/map' },
+  { id: 'github', label: 'GitHub', path: '/dashboard/prs' },
 ] as const;
 
 export type SectionId = (typeof SECTIONS)[number]['id'];
@@ -263,6 +264,37 @@ export const routeManifest = [
     tab: 'Reports',
   },
   {
+    id: 'prs',
+    path: '/dashboard/prs',
+    label: 'Pull requests',
+    visible: true,
+    section: 'github',
+    tab: 'Pull requests',
+  },
+  {
+    id: 'issues',
+    path: '/dashboard/issues',
+    label: 'Issues',
+    visible: true,
+    section: 'github',
+    tab: 'Issues',
+  },
+  {
+    id: 'repos',
+    path: '/dashboard/repos',
+    label: 'Repositories',
+    visible: true,
+    section: 'github',
+    tab: 'Repositories',
+  },
+  {
+    id: 'repo-detail',
+    path: '/dashboard/repos/:projectId',
+    label: 'Repository',
+    visible: false,
+    section: 'github',
+  },
+  {
     id: 'pair',
     path: '/dashboard/pair',
     label: 'Pair this device',
@@ -361,6 +393,11 @@ export function runDetailPath(runId: string): string {
 
 export function repoHealthPath(projectId: string): string {
   return `/dashboard/repo/${encodeURIComponent(projectId)}`;
+}
+
+/** One repository's GitHub overview: its grade, findings and open work. */
+export function repoDetailPath(projectId: string): string {
+  return `/dashboard/repos/${encodeURIComponent(projectId)}`;
 }
 
 export function repo360Path(projectId: string): string {

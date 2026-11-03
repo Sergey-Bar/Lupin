@@ -1,10 +1,12 @@
-import { and, desc, eq, inArray, isNull, ne, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, lt, ne, notInArray, or, sql } from 'drizzle-orm';
 import {
   commits,
   deliverySources,
   deliverySyncs,
   deployments,
+  githubIssues,
   pullRequests,
+  repoGithubState,
   type DeliverySourceRow,
   type DeliverySyncRow,
 } from '@lupin/db';
@@ -19,10 +21,12 @@ import { healthPolicyOf } from './repo-health-service.js';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 import { productionEnvironmentsOf } from './delivery-service.js';
 import {
+  GitHubCheckRunSchema,
   GitHubCommitSchema,
   GitHubDeploymentSchema,
   GitHubDeploymentStatusSchema,
   GitHubFileSchema,
+  GitHubIssueSchema,
   GitHubPullSchema,
   GitHubReviewSchema,
   GitHubWorkflowRunSchema,
@@ -36,6 +40,7 @@ import {
   workflowRunDeployment,
   type GitHubCommit,
   type GitHubFile,
+  type GitHubIssue,
   type GitHubPull,
   type GitHubReview,
 } from './delivery-github.js';
@@ -46,6 +51,14 @@ import {
   classifyPullRequest,
 } from './ai-code-attribution.js';
 import type { AttributionOptions } from '@lupin/reporting';
+import {
+  alertCounts,
+  checksRollup,
+  type ChecksState,
+  communityFacts,
+  protectionFacts,
+  reviewDecision,
+} from './github-facts.js';
 
 /**
  * Runs the delivery syncs the worker, an operator or a webhook queued.
@@ -153,7 +166,12 @@ const BACKOFF_MS = [60_000, 5 * 60_000, 30 * 60_000];
 const DAY_MS = 86_400_000;
 
 const StreamsSchema = z.record(z.string(), DeliveryStreamSchema);
-const ListSchema = z.object({ items: z.array(z.unknown()), nextPage: z.number().nullable() });
+const ListSchema = z.object({
+  items: z.array(z.unknown()),
+  nextPage: z.number().nullable(),
+  /** Set when the token cannot read the feed (alerts): see the connector's soft reads. */
+  unavailable: z.enum(['forbidden', 'not_found']).optional(),
+});
 
 /** A stream read GitHub refused. `retryAt` is set for a rate limit. */
 export class StreamFailure extends Error {
@@ -181,6 +199,8 @@ interface StreamContext {
   commitRetention: number;
   /** The policy's attribution labels, read once per sync. */
   attribution: AttributionOptions;
+  /** The request budget GitHub last reported during this sync, kept for the repo state. */
+  rateLimit: { limit: number; remaining: number; resetAt: string } | null;
 }
 
 interface StreamResult {
@@ -205,13 +225,15 @@ interface StreamState {
 interface Listed {
   items: unknown[];
   nextPage: number | null;
+  unavailable?: 'forbidden' | 'not_found' | undefined;
 }
 
-async function list(
+/** One connector call; a refusal is a {@link StreamFailure}, and the request budget is noted. */
+async function call(
   context: StreamContext,
   operation: string,
   input: Record<string, unknown>,
-): Promise<Listed> {
+): Promise<unknown> {
   const result = await context.adapter.execute(
     { operation, input: { owner: context.owner, repo: context.repo, ...input } },
     context.token,
@@ -224,7 +246,16 @@ async function list(
       retryAt === undefined ? null : new Date(retryAt),
     );
   }
-  const parsed = ListSchema.safeParse(result.data);
+  if (result.rateLimit !== undefined) context.rateLimit = result.rateLimit;
+  return result.data;
+}
+
+async function list(
+  context: StreamContext,
+  operation: string,
+  input: Record<string, unknown>,
+): Promise<Listed> {
+  const parsed = ListSchema.safeParse(await call(context, operation, input));
   if (!parsed.success) throw new StreamFailure('github_malformed', false, null);
   return parsed.data;
 }
@@ -324,6 +355,7 @@ function pullRequestValues(
   context: StreamContext,
   pr: GitHubPull,
   read: { reviews: GitHubReview[]; commits: GitHubCommit[]; files: GitHubFile[] },
+  triage: { checksState: ChecksState | null; mergeableState: string | null },
 ) {
   const author = pr.user?.login ?? null;
   const state = stateOf(pr);
@@ -354,6 +386,12 @@ function pullRequestValues(
     ...reviewFacts(read.reviews, author),
     ...changeFacts(read.commits, read.files),
     ...attributionColumns(attribution),
+    // The command center: what a person sorts a pull request queue by.
+    htmlUrl: pr.html_url ?? null,
+    reviewDecision: reviewDecision(read.reviews, author),
+    checksState: triage.checksState,
+    mergeableState: triage.mergeableState,
+    requestedReviewers: (pr.requested_reviewers ?? []).map((reviewer) => reviewer.login),
     lastActivityAt: new Date(pr.updated_at),
     syncedAt: context.now,
   };
@@ -421,6 +459,46 @@ async function reclassifyStale(context: StreamContext): Promise<number> {
   return stale.length;
 }
 
+/**
+ * A read that may be refused without failing the sync.
+ *
+ * Checks need a scope not every token carries, and an issue list is a 410 where issues are off.
+ * Those are facts about this repository and this token, not outages: the answer is `null` and
+ * the rest of the sync goes on. A rate limit, a 5xx or a transport failure is not tolerated,
+ * because retrying them can succeed.
+ */
+async function tolerated<T>(read: () => Promise<T>): Promise<T | null> {
+  try {
+    return await read();
+  } catch (error) {
+    if (error instanceof StreamFailure && !error.retryable && error.retryAt === null) return null;
+    throw error;
+  }
+}
+
+/** Mergeability and the checks rollup of an open pull request; both `null` for a closed one. */
+async function triageFacts(
+  context: StreamContext,
+  pr: { state: string; number: number; head?: { sha?: string | undefined } | undefined },
+): Promise<{ checksState: ChecksState | null; mergeableState: string | null }> {
+  if (pr.state !== 'open') return { checksState: null, mergeableState: null };
+  const detail = await tolerated(async () =>
+    GitHubPullSchema.safeParse(
+      await call(context, 'getPullRequest', { number: String(pr.number) }),
+    ),
+  );
+  const sha = pr.head?.sha;
+  const runs =
+    sha === undefined
+      ? null
+      : await tolerated(() => list(context, 'listCheckRuns', { ref: sha, maxPages: 1 }));
+  return {
+    mergeableState: detail?.success === true ? (detail.data.mergeable_state ?? null) : null,
+    checksState:
+      runs === null ? null : checksRollup(parseItems(GitHubCheckRunSchema, runs.items).parsed),
+  };
+}
+
 /** Reads one pull request in full and writes it with its commits. */
 async function writePullRequest(context: StreamContext, pr: GitHubPull): Promise<void> {
   const number = String(pr.number);
@@ -436,7 +514,12 @@ async function writePullRequest(context: StreamContext, pr: GitHubPull): Promise
     GitHubFileSchema,
     (await list(context, 'listPullRequestFiles', { number, maxPages: 3 })).items,
   ).parsed;
-  const values = pullRequestValues(context, pr, { reviews, commits: prCommits, files });
+  const values = pullRequestValues(
+    context,
+    pr,
+    { reviews, commits: prCommits, files },
+    await triageFacts(context, pr),
+  );
   await context.db
     .insert(pullRequests)
     .values({
@@ -653,6 +736,212 @@ async function syncWorkflowRuns(context: StreamContext, state: StreamState): Pro
   return { ...advanceStream(state, page.nextPage, newest, null), written };
 }
 
+// ─── The command center streams ──────────────────────────────────────────────
+
+function issueValues(context: StreamContext, issue: GitHubIssue) {
+  return {
+    number: issue.number,
+    state: issue.state,
+    title: issue.title.slice(0, 500),
+    authorLogin: issue.user?.login ?? null,
+    labels: (issue.labels ?? []).map((label) => (typeof label === 'string' ? label : label.name)),
+    assignees: (issue.assignees ?? []).map((assignee) => assignee.login),
+    commentCount: issue.comments ?? 0,
+    htmlUrl: issue.html_url ?? null,
+    openedAt: new Date(issue.created_at),
+    closedAt:
+      issue.closed_at === null || issue.closed_at === undefined ? null : new Date(issue.closed_at),
+    lastActivityAt: new Date(issue.updated_at),
+    syncedAt: context.now,
+  };
+}
+
+async function upsertIssues(context: StreamContext, issues: readonly GitHubIssue[]): Promise<void> {
+  for (const issue of issues) {
+    const values = issueValues(context, issue);
+    await context.db
+      .insert(githubIssues)
+      .values({
+        workspaceId: context.workspaceId,
+        projectId: context.project.id,
+        externalId: String(issue.id),
+        ...values,
+      })
+      .onConflictDoUpdate({
+        target: [githubIssues.workspaceId, githubIssues.projectId, githubIssues.externalId],
+        set: values,
+      });
+  }
+}
+
+/**
+ * Issues updated since the cursor. The first time a project is read, the open backlog is read
+ * too: an issue nobody has touched in months is exactly what a triage list exists to show, and
+ * it would never be "updated since" a recent cursor.
+ *
+ * A repository with issues turned off answers 410, and a token without access 403 or 404. That
+ * is a fact about the repository, so the stream is skipped rather than failing the whole sync.
+ */
+async function syncIssues(context: StreamContext, state: StreamState): Promise<StreamResult> {
+  const first =
+    (
+      await context.db
+        .select({ id: githubIssues.id })
+        .from(githubIssues)
+        .where(
+          and(
+            eq(githubIssues.workspaceId, context.workspaceId),
+            eq(githubIssues.projectId, context.project.id),
+          ),
+        )
+        .limit(1)
+    ).length === 0;
+  const page = await tolerated(() =>
+    list(context, 'listIssues', {
+      newerThan: state.cursor,
+      perPage: 100,
+      page: pageOf(state),
+      maxPages: 2,
+    }),
+  );
+  if (page === null) return { cursor: state.cursor, written: 0, incomplete: state.incomplete };
+  const listed = parseItems(GitHubIssueSchema, page.items).parsed;
+  await upsertIssues(context, listed);
+  let written = listed.length;
+  if (first) {
+    const backlog = await tolerated(() =>
+      list(context, 'listIssues', { state: 'open', perPage: 100, maxPages: 5 }),
+    );
+    const open = parseItems(GitHubIssueSchema, backlog?.items ?? []).parsed;
+    await upsertIssues(context, open);
+    written += open.length;
+  }
+  const newest = newestOf(listed.map((issue) => new Date(issue.updated_at).toISOString()));
+  return { ...advanceStream(state, page.nextPage, newest, null), written };
+}
+
+/** How long a stored triage reading is trusted before it is read again. */
+export const TRIAGE_REFRESH_MS = 10 * 60_000;
+
+/**
+ * The open pull requests, kept honest.
+ *
+ * Two things the "updated since" stream cannot see. An open pull request nobody has touched in
+ * the backfill window never appears in it, so the open list is read and any pull request not
+ * stored yet is read in full. And a check finishing, or GitHub finishing its mergeability
+ * calculation, does not change a pull request's `updated_at`, so a stored `pending`, missing or
+ * `unknown` reading would stay that way forever; those are re-read, oldest first, a bounded
+ * number per sync.
+ */
+async function syncOpenPullRequests(context: StreamContext): Promise<StreamResult> {
+  const open = await list(context, 'listPullRequests', {
+    state: 'open',
+    perPage: 100,
+    maxPages: 1,
+  });
+  const listed = parseItems(GitHubPullSchema, open.items).parsed;
+  const scope = and(
+    eq(pullRequests.workspaceId, context.workspaceId),
+    eq(pullRequests.projectId, context.project.id),
+    eq(pullRequests.source, 'github'),
+  );
+  const stored =
+    listed.length === 0
+      ? []
+      : await context.db
+          .select({ externalId: pullRequests.externalId })
+          .from(pullRequests)
+          .where(
+            and(
+              scope,
+              inArray(
+                pullRequests.externalId,
+                listed.map((pr) => String(pr.id)),
+              ),
+            ),
+          );
+  const known = new Set(stored.map((row) => row.externalId));
+  const missing = listed
+    .filter((pr) => !known.has(String(pr.id)))
+    .slice(0, context.maxPullRequests);
+  for (const pr of missing) await writePullRequest(context, pr);
+
+  const stale = await context.db
+    .select({ id: pullRequests.id, number: pullRequests.number, headSha: pullRequests.headSha })
+    .from(pullRequests)
+    .where(
+      and(
+        scope,
+        eq(pullRequests.state, 'open'),
+        lt(pullRequests.syncedAt, new Date(context.now.getTime() - TRIAGE_REFRESH_MS)),
+        or(
+          isNull(pullRequests.checksState),
+          eq(pullRequests.checksState, 'pending'),
+          isNull(pullRequests.mergeableState),
+          eq(pullRequests.mergeableState, 'unknown'),
+        ),
+      ),
+    )
+    .orderBy(asc(pullRequests.syncedAt))
+    .limit(context.maxPullRequests);
+  for (const row of stale) {
+    const facts = await triageFacts(context, {
+      state: 'open',
+      number: row.number,
+      head: row.headSha === null ? undefined : { sha: row.headSha },
+    });
+    await context.db
+      .update(pullRequests)
+      .set({ ...facts, syncedAt: context.now })
+      .where(and(eq(pullRequests.workspaceId, context.workspaceId), eq(pullRequests.id, row.id)));
+  }
+  return {
+    cursor: context.now.toISOString(),
+    written: missing.length + stale.length,
+    incomplete: null,
+  };
+}
+
+const UNREADABLE = { items: [], nextPage: null, unavailable: 'forbidden' } as const;
+
+/**
+ * The repository as a whole, replaced each sync: its community profile, the default branch's
+ * protection, the open alerts, and the request budget GitHub last reported. Whatever the token
+ * cannot read is recorded as unavailable, which the health view shows as "not read" and never
+ * as "none".
+ */
+async function syncRepoState(context: StreamContext): Promise<StreamResult> {
+  const branch = context.project.defaultBranch ?? 'main';
+  const community = communityFacts(await tolerated(() => call(context, 'getCommunityProfile', {})));
+  const protection = protectionFacts(
+    (await tolerated(() => call(context, 'getBranchProtection', { branch }))) ?? {
+      unavailable: 'forbidden',
+    },
+  );
+  const feed = async (operation: string) =>
+    (await tolerated(() => list(context, operation, { perPage: 100, maxPages: 1 }))) ?? UNREADABLE;
+  const alerts = {
+    dependabot: alertCounts(await feed('listDependabotAlerts'), 'dependabot'),
+    codeScanning: alertCounts(await feed('listCodeScanningAlerts'), 'codeScanning'),
+    secretScanning: alertCounts(await feed('listSecretScanningAlerts'), 'secretScanning'),
+  };
+  const values = {
+    community,
+    protection,
+    alerts,
+    rateLimit: context.rateLimit,
+    syncedAt: context.now,
+  };
+  await context.db
+    .insert(repoGithubState)
+    .values({ workspaceId: context.workspaceId, projectId: context.project.id, ...values })
+    .onConflictDoUpdate({
+      target: [repoGithubState.workspaceId, repoGithubState.projectId],
+      set: values,
+    });
+  return { cursor: context.now.toISOString(), written: 1, incomplete: null };
+}
+
 const STREAMS: ReadonlyArray<{
   name: string;
   run: (context: StreamContext, state: StreamState) => Promise<StreamResult>;
@@ -666,6 +955,9 @@ const STREAMS: ReadonlyArray<{
     run: syncWorkflowRuns,
     applies: (source) => z.array(z.string()).catch([]).parse(source.deployWorkflows).length > 0,
   },
+  { name: 'issues', run: syncIssues, applies: () => true },
+  { name: 'openPullRequests', run: syncOpenPullRequests, applies: () => true },
+  { name: 'repoState', run: syncRepoState, applies: () => true },
 ];
 
 const rowsOf = (result: unknown): Array<Record<string, unknown>> =>
@@ -899,6 +1191,7 @@ export function createDeliverySyncer(options: DeliverySyncerOptions) {
       maxPullRequests: options.maxPullRequests ?? 30,
       commitRetention: options.commitRetention ?? COMMIT_RETENTION,
       attribution: attributionOptionsOf(healthPolicyOf(project)?.aiGovernance),
+      rateLimit: null,
     };
   }
 

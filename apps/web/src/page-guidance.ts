@@ -285,6 +285,44 @@ export const pageGuidance = {
     ],
     remember: 'Channel management needs admin access; scheduling needs operator access.',
   },
+  prs: {
+    purpose: 'See every open pull request across your repositories and decide what to do next.',
+    steps: [
+      'Pick a pull request: the pane beside the list shows what stands in the way and what to do.',
+      'Use the counts on the filters (Ready, Blocked, Waiting) to see only one kind.',
+      'Merge or update a branch from the pane, or open the pull request on GitHub from its title.',
+    ],
+    remember:
+      'A pull request GitHub has not said it can merge is Waiting, never Ready. The list is as fresh as the last sync.',
+  },
+  issues: {
+    purpose: 'See open issues across your repositories and find the ones nobody has triaged.',
+    steps: [
+      'Pick an issue: the pane beside the list shows who owns it and what has been said.',
+      'Choose the No label or assignee filter to list only the ones nobody has triaged.',
+      'Label, assign or close it from the pane, or open it on GitHub from its title.',
+    ],
+    remember: 'Pull requests are not listed here. Closed issues appear under the Closed filter.',
+  },
+  repos: {
+    purpose: 'Check the health of every repository and turn on the sync for the ones not yet read.',
+    steps: [
+      'Start at the top: repositories are listed worst first, and the pane shows every finding.',
+      'Turn on sync for a repository that is Not graded.',
+      'Follow a finding to the pull requests or issues it counts, or open Details for the full page.',
+    ],
+    remember: 'Not graded means not read. It is never a good grade.',
+  },
+  'repo-detail': {
+    purpose: 'Understand why a repository has the grade it has, and what is open in it.',
+    steps: [
+      'Read the score and its grade.',
+      'Work down the findings, worst first. Each one names what it counted.',
+      'Open the repository’s pull requests or issues from the header.',
+    ],
+    remember:
+      'A note is something the token could not read. It is not counted for or against the repository.',
+  },
   pair: {
     purpose: 'Connect this device using the installation’s pairing flow.',
     steps: [

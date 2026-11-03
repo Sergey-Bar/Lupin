@@ -40,7 +40,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
       <div
         role="region"
         aria-label="Notifications"
-        className="pointer-events-none fixed inset-x-4 bottom-20 z-toast flex flex-col gap-2 sm:left-auto sm:right-6 sm:bottom-6 sm:w-96"
+        className="pointer-events-none fixed inset-x-4 bottom-20 z-toast flex flex-col gap-2 sm:start-auto sm:end-6 sm:bottom-6 sm:w-96"
       >
         {shown.map((toast) => (
           <Toast key={toast.id} variant={toast.tone} data-state="entering" data-testid="toast">

@@ -110,8 +110,8 @@ export function GapsPage({ api, projectId }: ScreenProps): React.ReactElement {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Cell</TableHead>
-                    <TableHead className="hidden text-right sm:table-cell">Now</TableHead>
-                    <TableHead className="text-right">Worth</TableHead>
+                    <TableHead className="hidden text-end sm:table-cell">Now</TableHead>
+                    <TableHead className="text-end">Worth</TableHead>
                     <TableHead>What would close it</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -166,7 +166,7 @@ export function HollowPage({ api, projectId }: ScreenProps): React.ReactElement 
                 <TableRow>
                   <TableHead>Cell</TableHead>
                   <TableHead>Test fingerprints</TableHead>
-                  <TableHead className="text-right">Signal</TableHead>
+                  <TableHead className="text-end">Signal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -208,8 +208,8 @@ export function FlakyPage({ api, projectId }: ScreenProps): React.ReactElement {
                 <TableRow>
                   <TableHead>Cell</TableHead>
                   <TableHead>Fingerprints</TableHead>
-                  <TableHead className="text-right">Flake rate</TableHead>
-                  <TableHead className="text-right">Stability</TableHead>
+                  <TableHead className="text-end">Flake rate</TableHead>
+                  <TableHead className="text-end">Stability</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -273,7 +273,7 @@ export function StructurePage({ api, projectId }: ScreenProps): React.ReactEleme
                     <TableRow>
                       <TableHead>Finding</TableHead>
                       <TableHead>Statement</TableHead>
-                      <TableHead className="text-right">Impact</TableHead>
+                      <TableHead className="text-end">Impact</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
