@@ -17,6 +17,7 @@
     "@lupin/config": "workspace:*",
     "@lupin/connectors-github": "workspace:*",
     "@lupin/connectors-jira": "workspace:*",
+    "@lupin/connectors-email": "workspace:*",
     "@lupin/connectors-sdk": "workspace:*",
     "@lupin/connectors-signal": "workspace:*",
     "@lupin/connectors-slack": "workspace:*",

@@ -332,4 +332,58 @@ export const pageGuidance = {
     ],
     remember: 'Pair only devices you intend to authorize.',
   },
+  'settings-appearance': {
+    purpose: 'Make the product quieter and easier to read, the way that suits you.',
+    steps: [
+      'Choose a theme: dark, light, or whatever the system uses.',
+      'Turn on focus mode to hide secondary navigation, or compact density to fit more.',
+      'Reduce motion if movement is distracting.',
+    ],
+    remember: 'These settings are kept in this browser, so each device can read the way it needs.',
+  },
+  'settings-reports': {
+    purpose: 'Decide who a report is for, how detailed it is, and where it is sent.',
+    steps: [
+      'Add a channel: the in-app inbox, a chat platform, or email.',
+      'Schedule a report and choose its audience and how much detail it carries.',
+      'Check the history to confirm it arrived.',
+    ],
+    remember: 'A daily report covers the last day; a weekly report covers the last seven.',
+  },
+  'settings-access': {
+    purpose: 'Issue and revoke the access tokens and paired devices that reach this install.',
+    steps: [
+      'Issue a token with the least role that does the job.',
+      'Copy it once: it is shown only when it is created.',
+      'Revoke a token the moment it is no longer needed.',
+    ],
+    remember: 'A token carries a role, and a role is the most it can ever do.',
+  },
+  'settings-members': {
+    purpose: 'See who has signed in and decide what each person may do here.',
+    steps: [
+      'Find the person; they appear the first time they sign in.',
+      'Set their role to the least that does the job.',
+      'Disable or remove anyone who should no longer have access.',
+    ],
+    remember: 'A role here is this workspace only, not every workspace.',
+  },
+  'settings-audit': {
+    purpose: 'Read the tamper-evident record of every decision, and confirm the chain is intact.',
+    steps: [
+      'Read the verdict: whether every row still matches its hash.',
+      'Scan the newest events for anything unexpected.',
+      'Export the trail, and keep the head hash with it.',
+    ],
+    remember: 'The head hash proves later that the trail was not rewritten from that point.',
+  },
+  'settings-deployment': {
+    purpose: 'See what this install is for, how it lets people in, and how to change it.',
+    steps: [
+      'Read the current profile and what it turns on.',
+      'Check the access-control mode and how people sign in.',
+      'Follow the shown command to change the profile; your data is kept.',
+    ],
+    remember: 'The profile is changed from the install folder, not from this page.',
+  },
 } satisfies Record<ManifestRoute['id'], PageGuidance>;

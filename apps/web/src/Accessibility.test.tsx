@@ -13,7 +13,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectNoBlockingAxeViolations } from './test-axe.js';
 import { RunExplorer } from './components/dashboard/RunExplorer.js';
 import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@lupin/ui';
-import { RunList } from './components/RunList.js';
 import { ThemeToggle } from './components/ThemeToggle.js';
 import { NavBar } from './components/NavBar.js';
 import { ThemeProvider } from './theme/ThemeProvider.js';
@@ -58,26 +57,6 @@ describe('axe sweep over the client components', () => {
       </ThemeProvider>,
     );
     await waitFor(() => expect(screen.getByTestId('nav-bar')).toBeInTheDocument());
-    await expectNoBlockingAxeViolations(container);
-  });
-
-  it('reports no violations for a populated run list', async () => {
-    const { container } = render(
-      <RunList
-        api={makeApi({
-          getRuns: vi.fn().mockResolvedValue([
-            makeRun({ id: 'run-1', projectId: 'project-a', phase: 'running' }),
-            makeRun({
-              id: 'run-2',
-              projectId: 'project-b',
-              phase: 'complete',
-              outcome: 'passed',
-            }),
-          ]),
-        })}
-      />,
-    );
-    await waitFor(() => expect(screen.getByTestId('run-item-run-1')).toBeInTheDocument());
     await expectNoBlockingAxeViolations(container);
   });
 

@@ -7,11 +7,20 @@ import {
   LayoutGrid,
   ListChecks,
   Network,
+  Settings,
   cn,
   useSlidingIndicator,
 } from '@lupin/ui';
-import { SECTIONS, routeFor, sectionOf, tabsOf, type SectionId } from '../route-manifest.js';
+import {
+  SECTIONS,
+  routeFor,
+  sectionOf,
+  tabsOf,
+  visibleTabsOf,
+  type SectionId,
+} from '../route-manifest.js';
 import { ThemeToggle } from './ThemeToggle.js';
+import { useViewerRole } from '../hooks/useViewerRole.js';
 
 /**
  * The chrome: four sections, three surfaces.
@@ -33,6 +42,7 @@ const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
   insights: Activity,
   map: Network,
   github: GitBranch,
+  settings: Settings,
 };
 
 const FOCUS =
@@ -111,10 +121,12 @@ export function SectionTabs(): React.ReactElement | null {
   const path = useCurrentPath();
   const section = sectionOf(path);
   const page = routeFor(path);
-  // Called before the early returns below: hooks cannot follow a conditional exit.
+  // Called before the early returns below: hooks cannot follow a conditional exit. The role
+  // decides only which Settings tabs to draw; the API still enforces who may open each.
   const tabsRef = useSlidingIndicator<HTMLUListElement>(page?.id);
+  const role = useViewerRole();
   if (section === null || page === undefined || !('tab' in page)) return null;
-  const tabs = tabsOf(section);
+  const tabs = section === 'settings' ? visibleTabsOf(section, role) : tabsOf(section);
   if (tabs.length === 0) return null;
   const label = SECTIONS.find((entry) => entry.id === section)?.label ?? '';
   return (
@@ -165,7 +177,7 @@ export function BottomTabBar(): React.ReactElement {
       aria-label="Sections"
       className="shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {SECTIONS.map((section) => {
           const Icon = SECTION_ICONS[section.id];
           const active = section.id === current;

@@ -17,7 +17,7 @@ import type { AdminClient, AuditEvent, AuditVerification, Member } from '../lib/
 import type { HealthClient } from '../lib/health-client.js';
 import { ago } from '../lib/health-view.js';
 import { AccessGate } from './Access.js';
-import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
+import { PageFrame, PageBody, PageHeader, PagerControls, Panel, Quiet, usePager } from './kit.js';
 import { StatusLine } from './StatusLine.js';
 
 /**
@@ -287,33 +287,47 @@ function AuditEvents({
   if (page.status === 'loading') return <Skeleton className="h-16 w-full" />;
   if (page.status === 'error') return <Quiet role="alert">{page.message}</Quiet>;
   if (page.value.events.length === 0) return <Quiet>Nothing has been recorded yet.</Quiet>;
+  return <AuditEventsTable events={page.value.events} />;
+}
+
+/**
+ * The loaded events, paged into the viewport rather than grown down the page. The trail is
+ * long by nature, so a fixed page keeps the table bounded and the pager states its range.
+ */
+function AuditEventsTable({ events }: { events: readonly AuditEvent[] }): React.ReactElement {
+  const pager = usePager(events, 12);
   return (
-    <Table aria-label="Audit events">
-      <TableHeader>
-        <TableRow>
-          <TableHead>Row</TableHead>
-          <TableHead>When</TableHead>
-          <TableHead>Who</TableHead>
-          <TableHead>What</TableHead>
-          <TableHead>From</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {page.value.events.map((event) => (
-          <TableRow key={`${String(event.seq)}-${event.timestamp}`}>
-            <TableCell className="tabular-nums">{event.seq ?? '—'}</TableCell>
-            <TableCell className="text-fg-muted">{ago(event.timestamp)}</TableCell>
-            <TableCell className="font-mono text-xs">{event.actorId}</TableCell>
-            <TableCell>
-              <span className="font-mono text-xs">{event.action}</span>
-              {event.resourceId === null ? null : (
-                <span className="text-fg-muted"> · {event.resourceId}</span>
-              )}
-            </TableCell>
-            <TableCell className="font-mono text-xs text-fg-muted">{event.ip ?? '—'}</TableCell>
+    <>
+      <div className="mb-2 flex justify-end">
+        <PagerControls pager={pager} label="Audit events" />
+      </div>
+      <Table aria-label="Audit events">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Row</TableHead>
+            <TableHead>When</TableHead>
+            <TableHead>Who</TableHead>
+            <TableHead>What</TableHead>
+            <TableHead>From</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {pager.items.map((event) => (
+            <TableRow key={`${String(event.seq)}-${event.timestamp}`}>
+              <TableCell className="tabular-nums">{event.seq ?? '—'}</TableCell>
+              <TableCell className="text-fg-muted">{ago(event.timestamp)}</TableCell>
+              <TableCell className="font-mono text-xs">{event.actorId}</TableCell>
+              <TableCell>
+                <span className="font-mono text-xs">{event.action}</span>
+                {event.resourceId === null ? null : (
+                  <span className="text-fg-muted"> · {event.resourceId}</span>
+                )}
+              </TableCell>
+              <TableCell className="font-mono text-xs text-fg-muted">{event.ip ?? '—'}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </>
   );
 }

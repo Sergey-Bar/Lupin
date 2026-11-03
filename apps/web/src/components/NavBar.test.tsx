@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { NavBar, BottomTabBar, SectionTabs } from './NavBar';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { expectNoBlockingAxeViolations } from '../test-axe';
+import { resetViewerRoleCache } from '../hooks/useViewerRole';
 import {
   createMemoryHistory,
   RouterProvider,
@@ -27,11 +28,12 @@ function makeRouter(initialPath = '/') {
   return router;
 }
 
-const SECTION_LABELS = ['Overview', 'Runs', 'Insights', 'Map', 'GitHub'];
+const SECTION_LABELS = ['Overview', 'Runs', 'Insights', 'Map', 'GitHub', 'Settings'];
 
 describe('NavBar', () => {
   beforeEach(() => {
     localStorage.clear();
+    resetViewerRoleCache();
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401 });
   });
 
@@ -65,7 +67,7 @@ describe('NavBar', () => {
     expect(localStorage.getItem('lupin-theme')).toBe('light');
   });
 
-  it('draws the five sections, and nothing else, in the top bar', async () => {
+  it('draws the six sections, and nothing else, in the top bar', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
     const links = within(bar).getAllByRole('link');
@@ -109,7 +111,7 @@ describe('NavBar', () => {
     }
   });
 
-  it('gives the bottom bar five labelled, finger-sized targets', async () => {
+  it('gives the bottom bar six labelled, finger-sized targets', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bottom = await screen.findByTestId('bottom-tab-bar');
     expect(bottom).toHaveAttribute('aria-label', 'Sections');
@@ -167,6 +169,43 @@ describe('NavBar', () => {
     render(<RouterProvider router={makeRouter('/dashboard/runs/run-1')} />);
     await screen.findByTestId('nav-bar');
     expect(screen.queryByTestId('section-tabs')).toBeNull();
+  });
+
+  it('shows the settings tabs a signed-out reader may use, Appearance first', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
+    const tabs = await screen.findByTestId('section-tabs');
+    expect(tabs).toHaveAttribute('aria-label', 'Settings pages');
+    // fetch is mocked to 401, so `whoami` yields no role: a signed-out reader sees only the
+    // two tabs everyone may use, never the admin ones.
+    await waitFor(() =>
+      expect(
+        within(tabs)
+          .getAllByRole('link')
+          .map((link) => link.textContent),
+      ).toEqual(['Appearance', 'Reports']),
+    );
+    expect(within(tabs).getByRole('link', { name: 'Appearance' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
+  it('shows an admin every settings tab, including the admin surfaces', async () => {
+    resetViewerRoleCache();
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ actor: 'you', role: 'admin', mode: 'enforced' }),
+    });
+    render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
+    const tabs = await screen.findByTestId('section-tabs');
+    await waitFor(() =>
+      expect(
+        within(tabs)
+          .getAllByRole('link')
+          .map((link) => link.textContent),
+      ).toEqual(['Appearance', 'Reports', 'Access', 'Members', 'Audit', 'Deployment']),
+    );
   });
 
   it('has no serious or critical axe violations', async () => {

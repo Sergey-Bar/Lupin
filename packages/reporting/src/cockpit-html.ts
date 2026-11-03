@@ -73,7 +73,7 @@ export function escapeHtml(raw: string): string {
 }
 
 /** A link is followed only if it is `https:`; anything else is plain text. */
-function safeHref(url: string | null): string | null {
+export function safeHref(url: string | null): string | null {
   if (url === null) return null;
   try {
     return new URL(url).protocol === 'https:' ? new URL(url).href : null;
@@ -115,13 +115,13 @@ const TONE: Record<CockpitStatus, 'good' | 'bad' | 'caution'> = {
 
 const WINDOW_LABEL = { '7d': 'Last 7 days', release: 'Since the last release' } as const;
 
-function tokenBlock(values: Record<string, string>): string {
+export function tokenBlock(values: Record<string, string>): string {
   return Object.entries(values)
     .map(([name, value]) => `--lupin-${name}:${value};`)
     .join('');
 }
 
-const STYLE = `
+export const REPORT_STYLE = `
 :root{color-scheme:light dark;${tokenBlock(REPORT_TOKENS.light)}}
 @media (prefers-color-scheme:dark){:root{${tokenBlock(REPORT_TOKENS.dark)}}}
 *{box-sizing:border-box}
@@ -354,7 +354,7 @@ export function renderCockpitHtml(cockpit: Cockpit): string {
     `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">`,
     '<meta name="referrer" content="no-referrer">',
     `<title>${escapeHtml(title)}</title>`,
-    `<style>${STYLE}</style>`,
+    `<style>${REPORT_STYLE}</style>`,
     '</head>',
     '<body>',
     '<main>',

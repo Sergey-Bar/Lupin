@@ -174,6 +174,40 @@ describe('subscriptions', () => {
     expect((await listSubscriptions(options))[0]?.nextRunAt).toBe('2026-10-26T08:30:00.000Z');
   });
 
+  it('defaults a subscription to the general audience and the chat format, and keeps a chosen pair', async () => {
+    const { options } = await setup();
+    const channel = await createChannel(options, { kind: 'inbox', name: 'Inbox', settings: {} });
+    // Omitted: read back as the safe default, which is the report exactly as it was.
+    const plain = await createSubscription(options, {
+      channelId: channel.id,
+      name: 'Plain',
+      cadence: 'daily',
+      time: '09:00',
+      weekday: 1,
+      timezone: 'UTC',
+    });
+    expect(plain).toMatchObject({ audience: 'general', format: 'chat' });
+    // Chosen: persisted and returned, so the value the dispatcher's lens reads is the one set.
+    const tuned = await createSubscription(options, {
+      channelId: channel.id,
+      name: 'Tuned',
+      cadence: 'daily',
+      time: '09:00',
+      weekday: 1,
+      timezone: 'UTC',
+      audience: 'manager',
+      format: 'full',
+    });
+    expect(tuned).toMatchObject({ audience: 'manager', format: 'full' });
+    const listed = await listSubscriptions(options);
+    expect(listed.map((s) => [s.name, s.audience, s.format])).toEqual(
+      expect.arrayContaining([
+        ['Plain', 'general', 'chat'],
+        ['Tuned', 'manager', 'full'],
+      ]),
+    );
+  });
+
   it('refuses a cron that does not parse, a timezone that does not exist, and another workspace’s channel', async () => {
     const { options, other } = await setup();
     const channel = await createChannel(options, { kind: 'inbox', name: 'Inbox', settings: {} });
@@ -592,6 +626,24 @@ describe('each channel gets its own rendering', () => {
     expect(
       requestFor(channel('signal', { number: '+1', recipients: '+2' }), model).request?.operation,
     ).toBe('send');
+    // Email: the digest as text, with the full report's HTML as the alternative only when a
+    // full-format render is supplied; the settings carry from/to/subject.
+    const emailChat = requestFor(
+      channel('email', { from: 'a@x', to: 'b@x', subject: 'Report' }),
+      model,
+    );
+    expect(emailChat.request).toMatchObject({
+      operation: 'send',
+      input: { from: 'a@x', to: 'b@x', subject: 'Report', text: expect.stringContaining('Daily') },
+    });
+    expect(emailChat.request?.input).not.toHaveProperty('html');
+    const emailFull = requestFor(
+      channel('email', { from: 'a@x', to: 'b@x', subject: 'Report' }),
+      model,
+      null,
+      '<!doctype html><html><body>full</body></html>',
+    );
+    expect((emailFull.request?.input as { html: string }).html).toContain('<!doctype html>');
   });
 });
 
@@ -627,6 +679,25 @@ describe('the notification routes', () => {
       text: expect.stringContaining('Daily quality report'),
     });
     expect((await call('GET', '/api/v1/report-preview')).status).toBe(200);
+    // The preview reflects the chosen lens: an audience query is accepted and composed.
+    expect(
+      (await call('GET', '/api/v1/report-preview?window=weekly&audience=manager')).status,
+    ).toBe(200);
+    // The full report as HTML: viewer-gated, self-contained, and lensable by query.
+    const full = await call('GET', '/api/v1/report.html?window=daily');
+    expect(full.status).toBe(200);
+    expect(full.headers.get('content-type')).toContain('text/html');
+    expect(full.headers.get('content-security-policy')).toContain("default-src 'none'");
+    const html = await full.text();
+    expect(html).toContain('Daily quality report');
+    const download = await call(
+      'GET',
+      '/api/v1/report.html?window=weekly&audience=manager&download=1',
+    );
+    expect(download.status).toBe(200);
+    expect(download.headers.get('content-disposition')).toContain(
+      'attachment; filename="lupin-report-',
+    );
     expect(
       (await call('POST', '/api/v1/notification-channels', { kind: 'inbox', name: 'x' })).status,
     ).toBe(403);

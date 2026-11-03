@@ -24,7 +24,7 @@ import type { HealthClient } from '../lib/health-client.js';
 import { ago, dimensionLabel, letterTone } from '../lib/health-view.js';
 import { SCORECARD_STATUS_WORD } from '../lib/scorecard-view.js';
 import { repoHealthPath } from '../route-manifest.js';
-import { Delta, PageFrame, PageBody, PageHeader, Panel } from './kit.js';
+import { Delta, PageFrame, PageBody, PageHeader, PagerControls, Panel, usePager } from './kit.js';
 import { PortfolioHeatmap } from './PortfolioHeatmap.js';
 import { StatusLine } from './StatusLine.js';
 
@@ -122,8 +122,15 @@ function PortfolioTable({
   entries: readonly PortfolioEntry[];
   scorecards: PortfolioScorecards;
 }): React.ReactElement {
+  // Paged rather than grown: a large portfolio keeps the page within the viewport, and the
+  // pager states its range so "12 of 80" is never mistaken for the whole list.
+  const pager = usePager(entries, 12);
   return (
-    <Panel title="Repositories" data-testid="portfolio-table">
+    <Panel
+      title="Repositories"
+      data-testid="portfolio-table"
+      action={<PagerControls pager={pager} label="Repositories" />}
+    >
       <Table aria-label="Repositories">
         <TableHeader>
           <TableRow>
@@ -143,7 +150,7 @@ function PortfolioTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {entries.map((entry) => (
+          {pager.items.map((entry) => (
             <PortfolioRow key={entry.projectId} entry={entry} scorecards={scorecards} />
           ))}
         </TableBody>

@@ -8,7 +8,15 @@ import { z } from 'zod/v4';
  * the summaries below have no field that could hold it.
  */
 
-export const CHANNEL_KINDS = ['inbox', 'slack', 'teams', 'telegram', 'whatsapp', 'signal'] as const;
+export const CHANNEL_KINDS = [
+  'inbox',
+  'slack',
+  'teams',
+  'telegram',
+  'whatsapp',
+  'signal',
+  'email',
+] as const;
 export type ChannelKind = (typeof CHANNEL_KINDS)[number];
 
 const name = z.string().trim().min(1).max(80);
@@ -54,6 +62,20 @@ export const CreateChannelBodySchema = z.discriminatedUnion('kind', [
     // The bridge's base URL.
     secret,
   }),
+  z.object({
+    kind: z.literal('email'),
+    name,
+    settings: z.object({
+      // The envelope sender, a single address.
+      from: z.string().trim().email().max(254),
+      // One or more recipients, comma-separated addresses.
+      to: z.string().trim().min(3).max(1_000),
+      // The subject line; a default is supplied so the field may be left blank.
+      subject: z.string().trim().min(1).max(200).default('Lupin quality report'),
+    }),
+    // The email bridge's base URL.
+    secret,
+  }),
 ]);
 export type CreateChannelBody = z.infer<typeof CreateChannelBodySchema>;
 
@@ -84,6 +106,16 @@ export const CreateSubscriptionBodySchema = z
     timezone: z.string().trim().min(1).max(64).default('UTC'),
     /** The project the report's cockpit section is about; omitted, the one that reported last. */
     projectId: z.string().uuid().optional(),
+    /**
+     * Who the report is tuned for. `general` is the report as it always was; the others
+     * re-weight what leads. Omitted is read as `general`.
+     */
+    audience: z.enum(['general', 'manager', 'sdet', 'quality']).optional(),
+    /**
+     * How much the report carries. `chat` is the tiny digest; `full` is the richer HTML
+     * artifact, for a channel that can carry it. Omitted is read as `chat`.
+     */
+    format: z.enum(['chat', 'full']).optional(),
   })
   .refine((body) => body.cadence !== 'custom' || (body.cronExpr ?? '') !== '', {
     message: 'a custom cadence needs a cron expression',
@@ -105,6 +137,10 @@ export const SubscriptionSummarySchema = z.object({
   /** The project the cockpit section is about; 
 ull follows the one that reported last. */
   projectId: z.string().nullable(),
+  /** Who the report is tuned for; `general` is the report as it always was. */
+  audience: z.enum(['general', 'manager', 'sdet', 'quality']),
+  /** How much the report carries; `chat` is the tiny digest, `full` the HTML artifact. */
+  format: z.enum(['chat', 'full']),
 });
 export type SubscriptionSummary = z.infer<typeof SubscriptionSummarySchema>;
 

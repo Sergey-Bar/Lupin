@@ -4,7 +4,7 @@ import {
   CreateSubscriptionBodySchema,
   type ReportPreview,
 } from '@lupin/shared-contracts';
-import { composeReport, renderPlain } from '@lupin/reporting';
+import { renderFullReport, renderPlain } from '@lupin/reporting';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { callerOf, requireRole, type CallerResolver } from '../http/roles.js';
 import { audit } from '../services/access-service.js';
@@ -16,7 +16,7 @@ import {
   listChannels,
   listDeliveries,
   listSubscriptions,
-  loadReport,
+  composeWorkspaceReportModel,
   queueTestDelivery,
   type NotificationOptions,
 } from '../services/notification-service.js';
@@ -110,15 +110,57 @@ export function createNotificationRoutes(options: NotificationRouteOptions): Hon
 
   app.get('/api/v1/report-preview', viewer, async (context) => {
     const days = context.req.query('window') === 'daily' ? 1 : 7;
-    const model = composeReport(
-      await loadReport(options, {
-        title: days === 1 ? 'Daily quality report' : 'Weekly quality report',
-        windowDays: days,
-        link: options.link,
-      }),
-    );
+    const audienceParam = context.req.query('audience');
+    const audience =
+      audienceParam === 'manager' ||
+      audienceParam === 'sdet' ||
+      audienceParam === 'quality' ||
+      audienceParam === 'general'
+        ? audienceParam
+        : undefined;
+    const model = await composeWorkspaceReportModel(options, {
+      title: days === 1 ? 'Daily quality report' : 'Weekly quality report',
+      windowDays: days,
+      link: options.link,
+      audience,
+    });
     const preview: ReportPreview = { status: model.status, text: renderPlain(model, 2_000) };
     return context.json(preview);
+  });
+
+  // The full report as one self-contained HTML page — the `full` format, for a channel that
+  // can carry it and for a person who wants the whole thing rather than the digest. Viewer-gated
+  // like the preview and the cockpit report; `?window=daily|weekly`, `?audience=` tunes the
+  // lens, `?download=1` offers it as a file. The page fetches nothing and runs no script.
+  app.get('/api/v1/report.html', viewer, async (context) => {
+    const days = context.req.query('window') === 'daily' ? 1 : 7;
+    const audienceParam = context.req.query('audience');
+    const audience =
+      audienceParam === 'manager' ||
+      audienceParam === 'sdet' ||
+      audienceParam === 'quality' ||
+      audienceParam === 'general'
+        ? audienceParam
+        : undefined;
+    const model = await composeWorkspaceReportModel(options, {
+      title: days === 1 ? 'Daily quality report' : 'Weekly quality report',
+      windowDays: days,
+      link: options.link,
+      audience,
+    });
+    const html = renderFullReport(model, { generatedAt: new Date().toISOString() });
+    context.header(
+      'content-security-policy',
+      "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    );
+    context.header('x-content-type-options', 'nosniff');
+    context.header('referrer-policy', 'no-referrer');
+    context.header('cache-control', 'no-store');
+    if (context.req.query('download') === '1') {
+      const day = new Date().toISOString().slice(0, 10);
+      context.header('content-disposition', `attachment; filename="lupin-report-${day}.html"`);
+    }
+    return context.html(html);
   });
 
   return app;

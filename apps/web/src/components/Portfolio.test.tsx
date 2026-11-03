@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { PortfolioAiCode, PortfolioDelivery } from '@lupin/shared-contracts';
 import type { AiCodeClient } from '../lib/ai-code-client.js';
@@ -93,6 +93,27 @@ describe('the portfolio’s delivery and AI columns', () => {
     render(<Portfolio health={health()} />);
     expect(await screen.findByTestId('portfolio-row-service')).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'DORA' })).not.toBeInTheDocument();
+  });
+
+  it('pages a large portfolio so the table never grows past a bounded set of rows', async () => {
+    const many = Array.from({ length: 15 }, (_unused, index) => {
+      const n = String(index).padStart(2, '0');
+      return { ...ENTRY, projectId: `p-${n}`, name: `Repo ${n}`, slug: `repo-${n}` };
+    });
+    const manyHealth = makeHealthDouble('viewer', {
+      getPortfolio: vi.fn(async () => ({ projects: many })),
+    });
+    render(<Portfolio health={manyHealth} />);
+    // The first page shows twelve rows, not all fifteen, so a large install stays within the
+    // viewport instead of growing the document. Names are zero-padded so their sort order is
+    // the numeric one and `repo-14` is genuinely the last row, on the second page.
+    await screen.findByTestId('portfolio-row-repo-00');
+    const rows = screen.getAllByTestId(/^portfolio-row-/u);
+    expect(rows).toHaveLength(12);
+    expect(screen.queryByTestId('portfolio-row-repo-14')).toBeNull();
+    // The pager reaches the rest.
+    fireEvent.click(screen.getByRole('button', { name: 'Next Repositories page' }));
+    expect(await screen.findByTestId('portfolio-row-repo-14')).toBeInTheDocument();
   });
 
   it('writes a scorecard cell as its score and verdict, or the verdict alone', () => {

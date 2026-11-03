@@ -90,6 +90,7 @@ import { createGitHubAdapter } from '@lupin/connectors-github';
 import { jiraAdapter } from '@lupin/connectors-jira';
 import { slackAdapter } from '@lupin/connectors-slack';
 import { signalAdapter } from '@lupin/connectors-signal';
+import { emailAdapter } from '@lupin/connectors-email';
 import { teamsAdapter } from '@lupin/connectors-teams';
 import { telegramAdapter } from '@lupin/connectors-telegram';
 import { whatsappAdapter } from '@lupin/connectors-whatsapp';
@@ -448,6 +449,7 @@ const reportDispatcher = databaseResources
         telegram: telegramAdapter,
         whatsapp: whatsappAdapter,
         signal: signalAdapter,
+        email: emailAdapter,
       },
       link: publicLink(runtimeConfig.publicAppUrl, '/dashboard/now'),
     })

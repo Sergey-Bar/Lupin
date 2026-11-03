@@ -3,7 +3,7 @@ import { createRoute } from '@tanstack/react-router';
 import { Badge, Button, EmptyState, Sparkline, type BadgeProps } from '@lupin/ui';
 import type { TestHistory, TestHistoryEntry } from '@lupin/shared-contracts';
 import { Route as dashboardRoute } from '../dashboard.js';
-import { PageFrame, PageHeader, Panel, Quiet } from '../../components/kit.js';
+import { PageFrame, PageHeader, Paged, Panel, Quiet } from '../../components/kit.js';
 import { defaultApiClient, type ApiClient } from '../../lib/api.js';
 import { formatDate } from '../../lib/format.js';
 
@@ -175,7 +175,7 @@ export function TestHistoryPage({
   const signatures = mergeSignatures(pages);
 
   return (
-    <PageFrame data-testid="test-history-page" className="h-auto gap-4">
+    <PageFrame data-testid="test-history-page" className="gap-4">
       <PageHeader
         title={first?.title ?? 'Test history'}
         subtitle={<span className="font-mono text-xs">{testKey}</span>}
@@ -205,16 +205,26 @@ export function TestHistoryPage({
           <Panel title="Why it failed" data-testid="test-signatures">
             <Causes signatures={signatures} />
           </Panel>
-          <Panel title="Runs">
-            <ul className="divide-y divide-border">
-              {entries.map((entry) => (
-                <RunRow key={entry.runId} entry={entry} />
-              ))}
-            </ul>
+          {/*
+           * The runs are paged into what the viewport leaves rather than grown down the
+           * document: the page fits, and "Older runs" fetches the next server page rather
+           * than lengthening this one. `Paged` keeps the visible list bounded; the loader
+           * sits below its controls so it is reached without scrolling.
+           */}
+          <Panel title="Runs" className="flex min-h-0 flex-1 flex-col">
+            <Paged items={entries} reservedPx={360} rowPx={44} headerPx={0} label="Runs">
+              {(page) => (
+                <ul className="divide-y divide-border">
+                  {page.map((entry) => (
+                    <RunRow key={entry.runId} entry={entry} />
+                  ))}
+                </ul>
+              )}
+            </Paged>
             {last?.nextBefore ? (
               <Button
                 variant="outline"
-                className="mt-3 min-h-11"
+                className="mt-3 min-h-11 self-start"
                 data-testid="test-history-more"
                 disabled={state === 'loading'}
                 onClick={() => load(last.nextBefore ?? undefined)}

@@ -19,7 +19,7 @@ import type {
   DeliverySummary,
 } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
-import type { NotificationsClient } from '../lib/notifications-client.js';
+import type { NotificationsClient, SubscriptionDraft } from '../lib/notifications-client.js';
 import { ago } from '../lib/health-view.js';
 import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import { useToast } from './Toasts.js';
@@ -84,6 +84,16 @@ export const KIND_GUIDES: Record<ChannelKind, KindGuide> = {
     fields: [
       { key: 'number', label: 'Bridge account', placeholder: '+15551234567' },
       { key: 'recipients', label: 'Recipients (comma-separated)', placeholder: '+15557654321' },
+    ],
+    credentialLabel: 'Bridge URL',
+  },
+  email: {
+    label: 'Email',
+    help: 'Point this at an HTTP email bridge — your provider’s send API, or a small SMTP-bridge container that answers POST /send. Use its base URL as the bridge URL. The full format sends the rich HTML report; the chat format sends the digest.',
+    fields: [
+      { key: 'from', label: 'From', placeholder: 'lupin@your-company.com' },
+      { key: 'to', label: 'To (comma-separated)', placeholder: 'qa@your-company.com' },
+      { key: 'subject', label: 'Subject', placeholder: 'Lupin quality report' },
     ],
     credentialLabel: 'Bridge URL',
   },
@@ -324,6 +334,8 @@ function Schedules({
   const [time, setTime] = React.useState('09:00');
   const [cronExpr, setCronExpr] = React.useState('0 9 * * 1-5');
   const [timezone, setTimezone] = React.useState(browserTimezone);
+  const [audience, setAudience] = React.useState<SubscriptionDraft['audience']>('general');
+  const [format, setFormat] = React.useState<SubscriptionDraft['format']>('chat');
   const id = React.useId();
   const chosen = PRESETS.find((entry) => entry.id === preset) ?? PRESETS[0];
   const target = channelId === '' ? (channels[0]?.id ?? '') : channelId;
@@ -336,6 +348,8 @@ function Schedules({
         time,
         weekday: chosen?.weekday ?? 1,
         timezone,
+        audience,
+        format,
         ...(chosen?.cadence === 'custom' ? { cronExpr } : {}),
         ...(projectId === '' ? {} : { projectId }),
       })
@@ -428,6 +442,34 @@ function Schedules({
               value={timezone}
               required
               onChange={(event) => setTimezone(event.target.value)}
+            />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Select
+              id={`${id}-audience`}
+              label="Tuned for"
+              value={audience ?? 'general'}
+              onChange={(event) =>
+                setAudience(event.target.value as NonNullable<SubscriptionDraft['audience']>)
+              }
+              options={[
+                { value: 'general', label: 'Everyone (general)' },
+                { value: 'manager', label: 'Manager — delivery & readiness' },
+                { value: 'sdet', label: 'SDET — failing & flaky tests' },
+                { value: 'quality', label: 'Quality — effectiveness & supply chain' },
+              ]}
+            />
+            <Select
+              id={`${id}-format`}
+              label="Detail"
+              value={format ?? 'chat'}
+              onChange={(event) =>
+                setFormat(event.target.value as NonNullable<SubscriptionDraft['format']>)
+              }
+              options={[
+                { value: 'chat', label: 'Digest — short, for chat' },
+                { value: 'full', label: 'Full — rich HTML, for email' },
+              ]}
             />
           </div>
           <div>

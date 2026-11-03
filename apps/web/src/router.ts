@@ -34,6 +34,14 @@ import {
   Repo360Route,
   SupplyChainRoute,
 } from './routes/dashboard/scorecards.js';
+import {
+  SettingsAccessRoute,
+  SettingsAppearanceRoute,
+  SettingsAuditRoute,
+  SettingsDeploymentRoute,
+  SettingsMembersRoute,
+  SettingsReportsRoute,
+} from './routes/dashboard/settings.js';
 
 const dashboardTree = dashboardRoute.addChildren([
   nowRoute,
@@ -70,6 +78,12 @@ const dashboardTree = dashboardRoute.addChildren([
   IssuesRoute,
   ReposRoute,
   RepoDetailRoute,
+  SettingsAppearanceRoute,
+  SettingsReportsRoute,
+  SettingsAccessRoute,
+  SettingsMembersRoute,
+  SettingsAuditRoute,
+  SettingsDeploymentRoute,
 ]);
 
 /**

@@ -6374,11 +6374,15 @@
       "confirmedBy": "Read against the test and the CI log, which shows `project-1run-1queuedPENDING` at the `running` assertion.",
       "evidence": [
         {
-          "path": "apps/web/src/components/RunList.test.tsx",
-          "asserts": "The test waits for the subscription, then for the phase the event carries, before asserting the outcome is still pending."
+          "path": "apps/web/src/routes/dashboard/index.test.tsx",
+          "asserts": "The live runs list (`RunsListPage`, the routed replacement for the removed `RunList`) is driven by polling and event refetch here, and its reads settle on the change an event makes rather than on a text that was already true."
+        },
+        {
+          "path": "apps/web/src/Composition.test.tsx",
+          "asserts": "The composition corpus no longer lists `components/RunList.tsx`: the dead, unrouted component and its racing test were removed, so the original flaky test cannot recur."
         }
       ],
-      "resolution": "The wait is on the change the event makes, not on a text that was already true."
+      "resolution": "First fixed by waiting on the change the event makes, not on a text that was already true. Then superseded: `RunList` was dead code — unrouted, reachable only from its own test — and was removed in the Settings and no-scroll pass, so its test no longer exists. The live runs list is `RunsListPage`, whose event behaviour is covered by `routes/dashboard/index.test.tsx`. The row stays `fixed` with its proof re-pointed to the surviving code, because the ratchet fails on a vanished row and the removal is itself the strongest form of the fix."
     },
     {
       "id": "MKT-1",

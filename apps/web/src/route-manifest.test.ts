@@ -7,11 +7,13 @@ import {
   cockpitPath,
   repo360Path,
   reportPath,
+  roleMeets,
   routeManifest,
   runDetailPath,
   sectionOf,
   tabsOf,
   visibleRoutes,
+  visibleTabsOf,
 } from './route-manifest.js';
 
 /**
@@ -43,13 +45,14 @@ describe('route manifest', () => {
     expect(routeManifest.some((route) => route.path === '/dashboard/runs')).toBe(true);
   });
 
-  it('has five sections, in the order the navigation draws them', () => {
+  it('has six sections, in the order the navigation draws them', () => {
     expect(SECTIONS.map((section) => section.label)).toEqual([
       'Overview',
       'Runs',
       'Insights',
       'Map',
       'GitHub',
+      'Settings',
     ]);
     for (const section of SECTIONS) {
       expect(isApplicationPath(section.path), `${section.label} opens nowhere`).toBe(true);
@@ -79,6 +82,7 @@ describe('route manifest', () => {
       '/dashboard/prs',
       '/dashboard/issues',
       '/dashboard/repos',
+      '/dashboard/settings',
     ]);
     expect(visibleRoutes.every((route) => isApplicationPath(route.path))).toBe(true);
   });
@@ -119,6 +123,10 @@ describe('route manifest', () => {
     ['/dashboard/health', 'map'],
     ['/dashboard/toolbox', 'map'],
     ['/dashboard/deployment', 'map'],
+    ['/dashboard/settings', 'settings'],
+    ['/dashboard/settings/reports', 'settings'],
+    ['/dashboard/settings/access', 'settings'],
+    ['/dashboard/settings/deployment', 'settings'],
   ] as const)('resolves %s to the %s section', (path, section) => {
     expect(sectionOf(path)).toBe(section);
   });
@@ -143,6 +151,46 @@ describe('route manifest', () => {
       'Deployment',
       'Reports',
     ]);
+    expect(tabsOf('settings').map((tab) => tab.tab)).toEqual([
+      'Appearance',
+      'Reports',
+      'Access',
+      'Members',
+      'Audit',
+      'Deployment',
+    ]);
+  });
+
+  it('shows a viewer only the Settings tabs they may use, and an admin all of them', () => {
+    expect(visibleTabsOf('settings', 'viewer').map((tab) => tab.tab)).toEqual([
+      'Appearance',
+      'Reports',
+    ]);
+    expect(visibleTabsOf('settings', null).map((tab) => tab.tab)).toEqual([
+      'Appearance',
+      'Reports',
+    ]);
+    expect(visibleTabsOf('settings', 'operator').map((tab) => tab.tab)).toEqual([
+      'Appearance',
+      'Reports',
+    ]);
+    expect(visibleTabsOf('settings', 'admin').map((tab) => tab.tab)).toEqual([
+      'Appearance',
+      'Reports',
+      'Access',
+      'Members',
+      'Audit',
+      'Deployment',
+    ]);
+  });
+
+  it('meets an access floor only at or above it', () => {
+    expect(roleMeets(undefined, null)).toBe(true);
+    expect(roleMeets('admin', 'viewer')).toBe(false);
+    expect(roleMeets('admin', 'operator')).toBe(false);
+    expect(roleMeets('admin', 'admin')).toBe(true);
+    expect(roleMeets('operator', 'operator')).toBe(true);
+    expect(roleMeets('operator', 'viewer')).toBe(false);
   });
 
   it('registers a path for every manifest entry, so nothing is unreachable', () => {

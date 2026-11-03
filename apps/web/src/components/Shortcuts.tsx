@@ -17,6 +17,7 @@ export const GO_TO: Readonly<Record<string, { label: string; to: string }>> = {
   i: { label: 'Insights', to: '/dashboard/insights' },
   s: { label: 'Reports', to: '/dashboard/reports' },
   a: { label: 'Access', to: '/dashboard/access' },
+  ',': { label: 'Settings', to: '/dashboard/settings' },
 };
 
 /** The rows of the page itself — never the navigation around it. */
