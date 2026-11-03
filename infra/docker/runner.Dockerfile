@@ -1,4 +1,4 @@
-FROM node:24.22.1-bookworm-slim@sha256:be8204d4bd327363357f532187b752ff62759c31bedf98e9e18fc08c9cbd605c AS build
+FROM node:24.22.2-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS build
 WORKDIR /src
 # Corepack reads `packageManager` from package.json, so the image uses the repository's pnpm.
 RUN corepack enable
@@ -11,7 +11,7 @@ RUN pnpm install --frozen-lockfile \
   && pnpm --filter "@lupin/runner" --prod deploy --legacy /out
 
 
-FROM node:24.22.1-bookworm-slim@sha256:be8204d4bd327363357f532187b752ff62759c31bedf98e9e18fc08c9cbd605c AS k6
+FROM node:24.22.2-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS k6
 # k6, the load generator the runner's `k6` capability runs (`apps/runner/src/k6-execution.ts`).
 # Fetched and checked in a stage of its own so the download never reaches the runtime image:
 # only the one binary is copied across. An exact release, and a SHA-256 per architecture taken
@@ -35,7 +35,7 @@ RUN set -eu; \
   /usr/local/bin/k6 version
 
 
-FROM node:24.22.1-bookworm-slim@sha256:be8204d4bd327363357f532187b752ff62759c31bedf98e9e18fc08c9cbd605c AS runtime
+FROM node:24.22.2-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS runtime
 ARG LUPIN_VERSION=dev
 ARG LUPIN_REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
