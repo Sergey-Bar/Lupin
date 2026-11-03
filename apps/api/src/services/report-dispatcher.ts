@@ -12,7 +12,7 @@ import {
 } from '@lupin/reporting';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 import { loadCockpitDigest } from './cockpit-digest.js';
-import { channelWithSecret, loadReport } from './notification-service.js';
+import { channelWithSecret, loadReport, projectOfScope } from './notification-service.js';
 import type { TrendChart } from './trend-chart.js';
 
 /**
@@ -235,10 +235,13 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
     scoped: Scoped,
     subscription: Awaited<ReturnType<typeof subscriptionOf>>,
   ): Promise<{ model: ReportModel; image: TrendChart | null }> {
-    const digest = await loadCockpitDigest(scoped, (error) =>
-      options.log?.('cockpit digest unavailable', {
-        error: error instanceof Error ? error.message : String(error),
-      }),
+    const digest = await loadCockpitDigest(
+      scoped,
+      (error) =>
+        options.log?.('cockpit digest unavailable', {
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      projectOfScope(subscription?.projectScope),
     );
     const model = composeReport({
       ...(await loadReport(scoped, {

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { NotificationsClient } from '../lib/notifications-client.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
-import { KIND_GUIDES, NotificationsPage } from './Notifications.js';
+import { KIND_GUIDES, NotificationsPage, type ProjectChoices } from './Notifications.js';
 import { TOAST_MS, ToastProvider, useToast } from './Toasts.js';
 
 const INBOX = {
@@ -49,6 +49,7 @@ function client(overrides: Partial<NotificationsClient> = {}): NotificationsClie
         enabled: true,
         describe: 'Every day at 09:00',
         nextRunAt: null,
+        projectId: null,
       },
     ]),
     createSubscription: vi.fn(async () => ({
@@ -61,6 +62,7 @@ function client(overrides: Partial<NotificationsClient> = {}): NotificationsClie
       enabled: true,
       describe: 'Every Monday at 09:00',
       nextRunAt: null,
+      projectId: null,
     })),
     deleteSubscription: vi.fn(async () => undefined),
     listDeliveries: vi.fn(async () => [SENT]),
@@ -69,10 +71,10 @@ function client(overrides: Partial<NotificationsClient> = {}): NotificationsClie
   };
 }
 
-function page(api: NotificationsClient) {
+function page(api: NotificationsClient, projects?: ProjectChoices) {
   return render(
     <ToastProvider>
-      <NotificationsPage client={api} />
+      <NotificationsPage client={api} projects={projects} />
     </ToastProvider>,
   );
 }
@@ -243,6 +245,63 @@ describe('NotificationsPage', () => {
   });
 });
 
+describe('choosing the project a report is about', () => {
+  const PROJECTS = [
+    { id: 'p-1', name: 'Service' },
+    { id: 'p-2', name: 'Website' },
+  ];
+
+  it('offers the projects, sends the one chosen, and sends none by default', async () => {
+    const user = userEvent.setup();
+    const api = client();
+    page(api, async () => PROJECTS);
+    const select = await screen.findByLabelText('Project');
+    expect(select).toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(vi.mocked(api.createSubscription).mock.calls[0]?.[0]).not.toHaveProperty('projectId');
+    await user.selectOptions(select, 'p-2');
+    await user.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(api.createSubscription).toHaveBeenLastCalledWith(
+      expect.objectContaining({ projectId: 'p-2' }),
+    );
+  });
+
+  it('names the project beside a schedule that has one', async () => {
+    const api = client({
+      listSubscriptions: vi.fn(async () => [
+        {
+          id: 's1',
+          channelId: 'c1',
+          name: 'Daily',
+          cadence: 'daily' as const,
+          cronExpr: '0 9 * * *',
+          timezone: 'UTC',
+          enabled: true,
+          describe: 'Every day at 09:00',
+          nextRunAt: null,
+          projectId: 'p-2',
+        },
+      ]),
+    });
+    page(api, async () => PROJECTS);
+    const list = await screen.findByRole('list', { name: 'Scheduled reports' });
+    await waitFor(() => expect(list).toHaveTextContent('Website'));
+  });
+
+  it('offers no choice for one project, none given, or a list that cannot be read', async () => {
+    const { unmount } = page(client(), async () => [PROJECTS[0] as (typeof PROJECTS)[number]]);
+    await screen.findByText('Every day at 09:00');
+    expect(screen.queryByLabelText('Project')).toBeNull();
+    unmount();
+    const second = page(client());
+    await screen.findByText('Every day at 09:00');
+    expect(screen.queryByLabelText('Project')).toBeNull();
+    second.unmount();
+    page(client(), () => Promise.reject(new Error('offline')));
+    await screen.findByText('Every day at 09:00');
+    expect(screen.queryByLabelText('Project')).toBeNull();
+  });
+});
 describe('toasts', () => {
   function Trigger() {
     const toast = useToast();

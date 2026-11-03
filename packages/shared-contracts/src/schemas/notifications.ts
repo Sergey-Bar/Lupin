@@ -82,6 +82,8 @@ export const CreateSubscriptionBodySchema = z
     cronExpr: z.string().trim().max(100).optional(),
     /** An IANA zone, such as Europe/Berlin. */
     timezone: z.string().trim().min(1).max(64).default('UTC'),
+    /** The project the report's cockpit section is about; omitted, the one that reported last. */
+    projectId: z.string().uuid().optional(),
   })
   .refine((body) => body.cadence !== 'custom' || (body.cronExpr ?? '') !== '', {
     message: 'a custom cadence needs a cron expression',
@@ -100,6 +102,9 @@ export const SubscriptionSummarySchema = z.object({
   /** "Every day at 09:00", in words, so nobody has to read cron. */
   describe: z.string(),
   nextRunAt: z.string().nullable(),
+  /** The project the cockpit section is about; 
+ull follows the one that reported last. */
+  projectId: z.string().nullable(),
 });
 export type SubscriptionSummary = z.infer<typeof SubscriptionSummarySchema>;
 
