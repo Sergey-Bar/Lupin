@@ -13,8 +13,69 @@
     "gets worse (`scripts/lib/complexity-ratchet.mjs`). It used to compare only the number of files."
   ],
   "ceiling": 12,
-  "count": 0,
-  "offenders": [],
-  "measuredAt": "2026-10-22",
-  "worst": 0
+  "count": 12,
+  "offenders": [
+    {
+      "file": "apps/web/src/components/GithubIssues.tsx",
+      "line": 36,
+      "complexity": 48
+    },
+    {
+      "file": "apps/web/src/components/GithubPulls.tsx",
+      "line": 55,
+      "complexity": 47
+    },
+    {
+      "file": "apps/web/src/components/GithubActionDialog.tsx",
+      "line": 96,
+      "complexity": 35
+    },
+    {
+      "file": "apps/web/src/components/GithubRepos.tsx",
+      "line": 216,
+      "complexity": 33
+    },
+    {
+      "file": "packages/connectors/github/src/index.ts",
+      "line": 470,
+      "complexity": 22
+    },
+    {
+      "file": "apps/api/src/services/github-actions-service.ts",
+      "line": 410,
+      "complexity": 21
+    },
+    {
+      "file": "apps/web/src/lib/github-view.ts",
+      "line": 81,
+      "complexity": 20
+    },
+    {
+      "file": "apps/web/src/lib/github-actions.ts",
+      "line": 155,
+      "complexity": 17
+    },
+    {
+      "file": "packages/connectors/github/src/index.ts",
+      "line": 958,
+      "complexity": 17
+    },
+    {
+      "file": "apps/web/src/components/GithubIssueDetail.tsx",
+      "line": 13,
+      "complexity": 15
+    },
+    {
+      "file": "apps/web/src/lib/github-view.ts",
+      "line": 122,
+      "complexity": 13
+    },
+    {
+      "file": "packages/connectors/github/src/index.ts",
+      "line": 898,
+      "complexity": 13
+    }
+  ],
+  "measuredAt": "2026-11-03",
+  "worst": 48
 }

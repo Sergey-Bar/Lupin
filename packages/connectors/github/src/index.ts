@@ -702,7 +702,12 @@ function bodyOf(
   body: Record<string, unknown>,
 ): Record<string, unknown> {
   if (operation.bodyObject !== undefined) {
-    return (body as Record<symbol, Record<string, unknown>>)[BODY_OBJECT] ?? {};
+    // `collectBody` always sets `[BODY_OBJECT]` when the operation declares a `bodyObject`
+    // (it validates the input is an object first), and `bodyOf` only ever reads a body that
+    // builder produced — so the symbol is present by construction. A non-null assertion rather
+    // than a `?? {}` fallback keeps that invariant in one place instead of adding a branch no
+    // call can reach.
+    return (body as Record<symbol, Record<string, unknown>>)[BODY_OBJECT];
   }
   return Object.fromEntries(
     Object.entries(body).filter(([key]) => operation.bodyFields.includes(key)),

@@ -122,6 +122,62 @@ describe('github adapter', () => {
     });
   });
 
+  it('reads a soft refusal with an unreadable body as unavailable, with no message', async () => {
+    // A soft read (listDependabotAlerts) that a token cannot see answers 404 with a body that
+    // is not JSON. `refusalMessage` swallows the parse failure and returns no message, so the
+    // result is `unavailable` with no `message` field rather than a thrown error.
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve({
+        ok: false,
+        status: 404,
+        headers: new Headers(),
+        json: () => Promise.reject(new SyntaxError('Unexpected token < in JSON')),
+      }),
+    );
+    const result = await githubAdapter.execute(
+      { operation: 'listDependabotAlerts', input: { owner: 'octocat', repo: 'hello-world' } },
+      'ghp_token',
+    );
+    expect(result.status).toBe('ok');
+    expect(result.data).toMatchObject({ unavailable: 'not_found', items: [] });
+    expect(result.data as Record<string, unknown>).not.toHaveProperty('message');
+  });
+
+  it('reads a soft refusal whose JSON body has no message as unavailable, with no message', async () => {
+    // The other arm of refusalMessage: the body parses as JSON but carries no string `message`,
+    // so the refusal is reported with its reason and no message.
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve({
+        ok: false,
+        status: 403,
+        headers: new Headers(),
+        json: () => Promise.resolve({ documentation_url: 'https://docs.github.com' }),
+      }),
+    );
+    const result = await githubAdapter.execute(
+      { operation: 'listCodeScanningAlerts', input: { owner: 'octocat', repo: 'hello-world' } },
+      'ghp_token',
+    );
+    expect(result.status).toBe('ok');
+    expect(result.data).toMatchObject({ unavailable: 'forbidden' });
+    expect(result.data as Record<string, unknown>).not.toHaveProperty('message');
+  });
+
+  it('treats a 204 write as a success that carries no body', async () => {
+    // A write that answers 204 (no content) must not try to parse a body. updateBranchProtection
+    // sends a validated protection object and GitHub may answer 204.
+    const calls = stubFetchSequence([{ ok: true, status: 204, body: undefined }]);
+    const result = await githubAdapter.execute(
+      {
+        operation: 'updateBranchProtection',
+        input: { owner: 'octocat', repo: 'hello-world', branch: 'main', protection: {} },
+      },
+      'ghp_token',
+    );
+    expect(result).toMatchObject({ status: 'ok', data: null });
+    expect(calls).toHaveLength(1);
+  });
+
   it('reports the real attempt count after exhausting retries, not a hard-coded 1', async () => {
     // 1 initial attempt plus 2 retries: `retries: 2` in the adapter.
     const calls = stubFetchSequence([{ ok: false, status: 500, body: {} }]);
