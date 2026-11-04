@@ -262,4 +262,163 @@ describe('legacyReporterAdapter', () => {
       LegacyReporterAdapterContextSchema.safeParse({ ...context, occurredAt: 'invalid' }).success,
     ).toBe(false);
   });
+
+  // The adapter reads each canonical field from a list of legacy keys, in order. The mutation
+  // survivors here were every alternative key and every precedence that no test exercised: a
+  // mutant that dropped `timestamp` as a fallback, or swapped which summary key wins, still
+  // passed. Each case below pins one fallback or one order, so removing it fails.
+  describe('legacy key fallbacks and their precedence', () => {
+    it('reads the event timestamp from payload when no explicit or envelope time is given', () => {
+      const result = legacyReporterAdapter(
+        { type: 'run:start', runId: 'r', timestamp: '2026-01-02T03:04:05.000Z' },
+        { runId: 'c', sequence: 1 },
+      );
+      expect(result.occurredAt).toBe('2026-01-02T03:04:05.000Z');
+    });
+
+    it('prefers occurredAt over timestamp, and the context time over both', () => {
+      const payloadTimes = {
+        type: 'run:start',
+        runId: 'r',
+        occurredAt: '2026-02-02T00:00:00.000Z',
+        timestamp: '2026-01-01T00:00:00.000Z',
+      } as const;
+      expect(legacyReporterAdapter(payloadTimes, { runId: 'c', sequence: 1 }).occurredAt).toBe(
+        '2026-02-02T00:00:00.000Z',
+      );
+      expect(
+        legacyReporterAdapter(payloadTimes, {
+          runId: 'c',
+          sequence: 1,
+          occurredAt: '2026-03-03T00:00:00.000Z',
+        }).occurredAt,
+      ).toBe('2026-03-03T00:00:00.000Z');
+    });
+
+    it('counts a retry as one attempt higher, but an explicit attempt wins over it', () => {
+      const retried = adapt({
+        type: 'test:begin',
+        runId: 'r',
+        payload: { testId: 't', retry: 2 },
+      });
+      expect(retried.type).toBe('test.started');
+      if (retried.type === 'test.started') expect(retried.payload.attempt).toBe(3);
+      const explicit = adapt({
+        type: 'test:begin',
+        runId: 'r',
+        payload: { testId: 't', attempt: 5, retry: 2 },
+      });
+      if (explicit.type === 'test.started') expect(explicit.payload.attempt).toBe(5);
+    });
+
+    it('reads a test title from name, a file from any of its four keys, and a suite', () => {
+      const result = adapt({
+        type: 'test:end',
+        runId: 'r',
+        payload: { testId: 't', name: 'renders', specPath: 'e2e/a.spec.ts', suite: 'smoke' },
+      });
+      expect(result.type).toBe('test.completed');
+      if (result.type === 'test.completed') {
+        expect(result.payload.title).toBe('renders');
+        expect(result.payload.file).toBe('e2e/a.spec.ts');
+        expect(result.payload.suite).toBe('smoke');
+      }
+    });
+
+    it('builds an error from errorMessage, and takes the code only from the nested error', () => {
+      const flat = adapt({
+        type: 'test:end',
+        runId: 'r',
+        payload: { testId: 't', status: 'failed', errorMessage: 'boom' },
+      });
+      if (flat.type === 'test.completed') {
+        expect(flat.payload.error).toEqual({ code: 'legacy_error', message: 'boom' });
+      }
+      const nested = adapt({
+        type: 'test:end',
+        runId: 'r',
+        payload: { testId: 't', status: 'failed', error: { message: 'deep', code: 'E_DEEP' } },
+      });
+      if (nested.type === 'test.completed') {
+        expect(nested.payload.error).toEqual({ code: 'E_DEEP', message: 'deep' });
+      }
+    });
+
+    it('reads every summary count and duration from the nested summary, and from the flat payload', () => {
+      const nested = adapt({
+        type: 'run:end',
+        runId: 'r',
+        payload: {
+          outcome: 'passed',
+          summary: {
+            total: 9,
+            passed: 5,
+            failed: 1,
+            flaky: 1,
+            skipped: 1,
+            unknown: 1,
+            durationMs: 42,
+          },
+        },
+      });
+      if (nested.type === 'run.completed') {
+        expect(nested.payload.summary).toMatchObject({
+          total: 9,
+          passed: 5,
+          failed: 1,
+          flaky: 1,
+          skipped: 1,
+          unknown: 1,
+          durationMs: 42,
+        });
+      }
+      const flat = adapt({
+        type: 'run:end',
+        runId: 'r',
+        payload: { outcome: 'passed', total: 3, passed: 3, duration: 7 },
+      });
+      if (flat.type === 'run.completed') {
+        expect(flat.payload.summary).toMatchObject({ total: 3, passed: 3, durationMs: 7 });
+      }
+    });
+
+    it('reads the run outcome from a nested result when the top level has none', () => {
+      const result = adapt({
+        type: 'run:end',
+        runId: 'r',
+        payload: { result: { status: 'failure' } },
+      });
+      expect(result.payload).toMatchObject({ outcome: 'failed', phase: 'complete' });
+    });
+
+    it('reads run:start branch and commit from their alternative keys', () => {
+      const result = adapt({
+        type: 'run:start',
+        runId: 'r',
+        payload: { ref: 'release/1.0', commitSha: 'deadbee', testsTotal: 12 },
+      });
+      expect(result.payload).toMatchObject({ branch: 'release/1.0', commit: 'deadbee', total: 12 });
+    });
+
+    it('puts the test id and attempt into the deterministic event id, so they disambiguate replays', () => {
+      const first = adapt({
+        type: 'test:begin',
+        runId: 'r',
+        payload: { testId: 't1', attempt: 1 },
+      });
+      const sameTestRetry = adapt({
+        type: 'test:begin',
+        runId: 'r',
+        payload: { testId: 't1', attempt: 2 },
+      });
+      const otherTest = adapt({
+        type: 'test:begin',
+        runId: 'r',
+        payload: { testId: 't2', attempt: 1 },
+      });
+      expect(first.eventId).not.toBe(sameTestRetry.eventId);
+      expect(first.eventId).not.toBe(otherTest.eventId);
+      expect(first.eventId).toContain('t1');
+    });
+  });
 });
