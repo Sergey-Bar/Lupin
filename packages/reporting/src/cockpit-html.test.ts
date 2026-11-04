@@ -185,9 +185,7 @@ describe('renderCockpitHtml: what it says', () => {
   it('puts every number of the pace chart in a table', () => {
     const page = html();
     expect(page.match(/<tr>/gu)).toHaveLength(13);
-    expect(page).toContain(
-      '<th scope="row">2026-10-26 (this week)</th>'.replace('2026-10-26', '2026-10-26'),
-    );
+    expect(page).toContain('<th scope="row">2026-10-26 (this week)</th>');
     expect(page).toContain('none merged');
     expect(page).toContain('not measured');
     expect(page).toContain('role="img"');
