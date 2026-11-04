@@ -50,6 +50,10 @@ export default {
         'unified',
         'ci',
         'deps',
+        // Dependabot's own scope for a group that touches only devDependencies. It names
+        // a real thing (a dev-only update) and Dependabot has no setting to drop it, so
+        // without it every dev-only group fails this gate on a correct subject.
+        'deps-dev',
         'preflight',
         'workspace',
         'root',
