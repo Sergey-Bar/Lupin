@@ -103,7 +103,7 @@
     "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-security": "^4.2.0",
+    "eslint-plugin-security": "^4.2.1",
     "eslint-plugin-sonarjs": "^4.2.2",
     "husky": "^9.1.7",
     "jscpd": "^5.4.2",
