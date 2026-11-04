@@ -1,15 +1,26 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
-import { SettingsAppearancePage } from '../../components/Settings.js';
-import { NotificationsPage } from '../../components/Notifications.js';
+import { lazyPage } from '../../components/lazy-page.js';
+// Static: the sign-in gate already puts `Access.js` in the first bundle (see portfolio.tsx).
 import { AccessPage } from '../../components/Access.js';
-import { AuditPage, MembersPage } from '../../components/People.js';
-import { DeploymentPage } from '../../components/Deployment.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
 import { createHealthClient } from '../../lib/health-client.js';
 import { createAdminClient } from '../../lib/admin-client.js';
+
+// Loaded when the route is first opened; see `components/lazy-page.tsx`.
+const SettingsAppearancePage = lazyPage(
+  () => import('../../components/Settings.js'),
+  'SettingsAppearancePage',
+);
+const NotificationsPage = lazyPage(
+  () => import('../../components/Notifications.js'),
+  'NotificationsPage',
+);
+const AuditPage = lazyPage(() => import('../../components/People.js'), 'AuditPage');
+const MembersPage = lazyPage(() => import('../../components/People.js'), 'MembersPage');
+const DeploymentPage = lazyPage(() => import('../../components/Deployment.js'), 'DeploymentPage');
 
 /**
  * The Settings section's pages, each a tab of `/dashboard/settings`.

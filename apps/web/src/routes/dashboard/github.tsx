@@ -1,13 +1,20 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
-import { IssuesPage } from '../../components/GithubIssues.js';
-import { PullRequestsPage } from '../../components/GithubPulls.js';
-import { RepoDetailPage, ReposPage } from '../../components/GithubRepos.js';
+import { lazyPage } from '../../components/lazy-page.js';
 import { projectSearch } from '../../components/ProjectPage.js';
 import { createDeliveryClient } from '../../lib/delivery-client.js';
 import { createGithubClient } from '../../lib/github-client.js';
 import { createHealthClient } from '../../lib/health-client.js';
+
+// Loaded when the route is first opened; see `components/lazy-page.tsx`.
+const IssuesPage = lazyPage(() => import('../../components/GithubIssues.js'), 'IssuesPage');
+const PullRequestsPage = lazyPage(
+  () => import('../../components/GithubPulls.js'),
+  'PullRequestsPage',
+);
+const ReposPage = lazyPage(() => import('../../components/GithubRepos.js'), 'ReposPage');
+const RepoDetailPage = lazyPage(() => import('../../components/GithubRepos.js'), 'RepoDetailPage');
 
 /**
  * The GitHub section: pull requests and issues across every repository, the repositories with

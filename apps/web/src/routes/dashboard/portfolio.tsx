@@ -1,16 +1,22 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
-import { Portfolio } from '../../components/Portfolio.js';
-import { RepoHealth } from '../../components/RepoHealth.js';
+import { lazyPage } from '../../components/lazy-page.js';
 import { createHealthClient } from '../../lib/health-client.js';
 import { createAiCodeClient } from '../../lib/ai-code-client.js';
 import { createDeliveryClient } from '../../lib/delivery-client.js';
+// Static on purpose: the sign-in gate and `ProjectPage` import `Access.js` (and through it
+// `Pairing.js`), so both are in the first bundle whatever this file does.
 import { AccessGate, AccessPage } from '../../components/Access.js';
-import { DeploymentPage } from '../../components/Deployment.js';
-import { AuditPage, MembersPage } from '../../components/People.js';
 import { createAdminClient } from '../../lib/admin-client.js';
 import { PairPage } from '../../components/Pairing.js';
+
+// Loaded when the route is first opened; see `components/lazy-page.tsx`.
+const Portfolio = lazyPage(() => import('../../components/Portfolio.js'), 'Portfolio');
+const RepoHealth = lazyPage(() => import('../../components/RepoHealth.js'), 'RepoHealth');
+const DeploymentPage = lazyPage(() => import('../../components/Deployment.js'), 'DeploymentPage');
+const AuditPage = lazyPage(() => import('../../components/People.js'), 'AuditPage');
+const MembersPage = lazyPage(() => import('../../components/People.js'), 'MembersPage');
 
 /** The landing page: every repository's grade, worst first. */
 export const PortfolioRoute = createRoute({

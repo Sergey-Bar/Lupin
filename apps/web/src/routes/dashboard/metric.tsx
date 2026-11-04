@@ -2,8 +2,15 @@ import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import type { CockpitWindow } from '@lupin/shared-contracts';
 import { Route as dashboardRoute } from '../dashboard.js';
-import { MetricDetailPage, type MetricSources } from '../../components/MetricDetail.js';
+import type { MetricSources } from '../../components/MetricDetail.js';
+import { lazyPage } from '../../components/lazy-page.js';
 import { createCockpitClient } from '../../lib/cockpit-client.js';
+
+// Loaded when the route is first opened; see `components/lazy-page.tsx`.
+const MetricDetailPage = lazyPage(
+  () => import('../../components/MetricDetail.js'),
+  'MetricDetailPage',
+);
 
 /**
  * One metric of the cockpit, a level down. The window the person was looking at travels in the
