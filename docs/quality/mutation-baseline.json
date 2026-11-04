@@ -2,11 +2,11 @@
   "target": 75,
   "packages": {
     "packages/shared-contracts": {
-      "score": 92.29,
-      "measuredOn": "2026-10-28",
-      "killed": 2959,
+      "score": 93.54,
+      "measuredOn": "2026-11-04",
+      "killed": 3234,
       "timeout": 0,
-      "survived": 246,
+      "survived": 222,
       "noCoverage": 1
     },
     "packages/reporting": {

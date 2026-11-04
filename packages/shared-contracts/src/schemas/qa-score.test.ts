@@ -178,6 +178,25 @@ describe('the score contract', () => {
     expect(QaScoreSchema.safeParse(zeroed).success).toBe(true);
   });
 
+  it('names cappingValue, and says why, when a zero total has a positive limiter', () => {
+    // total 0 means some row contributed 0, which the geometric mean cannot be diluted
+    // out of; a positive cappingValue then contradicts the total. The refinement reports
+    // it on the cappingValue field.
+    const contradictory: QaScore = { ...validScore, total: 0, cappingValue: 1 };
+    const result = QaScoreSchema.safeParse(contradictory);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find(
+        (candidate) => candidate.path.join('.') === 'cappingValue',
+      );
+      expect(issue?.message).toContain('the two fields disagree about why');
+    }
+    // A zero total with a zero capping value is consistent, and allowed.
+    expect(QaScoreSchema.safeParse({ ...validScore, total: 0, cappingValue: 0 }).success).toBe(
+      true,
+    );
+  });
+
   it('marks an excluded cell rather than omitting it, so the matrix stays 6×3', () => {
     const withExcluded: QaScore = {
       ...validScore,

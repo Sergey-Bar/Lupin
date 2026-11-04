@@ -49,9 +49,32 @@ describe('the scorecard contract', () => {
     expect(result.success).toBe(false);
   });
 
+  it('names the value field, and says why, when an unmeasured metric carries a value', () => {
+    const result = ScorecardMetricSchema.safeParse(metric({ status: 'not_configured' }));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['value'], message: 'an unmeasured metric has no value' }),
+      );
+    }
+  });
+
   it('refuses a measured status with no value', () => {
     const result = ScorecardMetricSchema.safeParse(metric({ value: null }));
     expect(result.success).toBe(false);
+  });
+
+  it('names the status field, and says why, when a measured metric has no value', () => {
+    const result = ScorecardMetricSchema.safeParse(metric({ value: null }));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          path: ['status'],
+          message: 'a metric with no value is insufficient or not configured',
+        }),
+      );
+    }
   });
 
   it('accepts a not-configured metric with no value', () => {
@@ -65,11 +88,34 @@ describe('the scorecard contract', () => {
     expect(ScorecardSchema.safeParse({ ...card, cappedBy: null }).success).toBe(false);
   });
 
+  it('names cappedBy, and says why, when a scored scorecard does not name its cap', () => {
+    const result = ScorecardSchema.safeParse({ ...card, cappedBy: null });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          path: ['cappedBy'],
+          message: 'a scored scorecard always names what limited it',
+        }),
+      );
+    }
+  });
+
   it('refuses a failing scorecard that does not say why', () => {
     expect(ScorecardSchema.safeParse({ ...card, status: 'fail' }).success).toBe(false);
     expect(
       ScorecardSchema.safeParse({ ...card, status: 'fail', reasons: ['CFR 40% > 15%'] }).success,
     ).toBe(true);
+  });
+
+  it('names the reasons field, and says why, when a failing scorecard is silent', () => {
+    const result = ScorecardSchema.safeParse({ ...card, status: 'fail' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['reasons'], message: 'a failing scorecard says why' }),
+      );
+    }
   });
 
   it('accepts an unscored scorecard while nothing is measured', () => {

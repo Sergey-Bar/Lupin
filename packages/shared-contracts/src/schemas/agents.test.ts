@@ -8,7 +8,32 @@ import {
   AgentAcceptedRunSchema,
   BrowserRunInputSchema,
   ApiRunInputSchema,
+  isPlainHttpUrl,
 } from './agents.js';
+
+describe('isPlainHttpUrl', () => {
+  it('accepts plain http and https URLs', () => {
+    expect(isPlainHttpUrl('http://example.test/path')).toBe(true);
+    expect(isPlainHttpUrl('https://example.test')).toBe(true);
+  });
+
+  it('refuses a scheme that is not http or https', () => {
+    for (const url of ['ftp://example.test', 'file:///etc/passwd', 'ws://example.test']) {
+      expect(isPlainHttpUrl(url), url).toBe(false);
+    }
+  });
+
+  it('refuses a URL that carries credentials, since those would reach the target', () => {
+    expect(isPlainHttpUrl('http://user@example.test')).toBe(false);
+    expect(isPlainHttpUrl('http://user:pass@example.test')).toBe(false);
+    expect(isPlainHttpUrl('https://:secret@example.test')).toBe(false);
+  });
+
+  it('refuses a string that is not a URL at all', () => {
+    expect(isPlainHttpUrl('not a url')).toBe(false);
+    expect(isPlainHttpUrl('')).toBe(false);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // AgentDomainSchema
