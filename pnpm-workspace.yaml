@@ -157,18 +157,27 @@ overrides:
   # Removed 2026-10-21: `esbuild@>=0.27.3 <0.28.1: ^0.28.1`, through vitest. With vitest at
   # 4.1.12 the install resolves and `pnpm audit` reports nothing without it.
   esbuild@<=0.24.2: ^0.25.0
-  # **Four high advisories reached through `@usebruno/cli` 4.2.1** (the runner's API domain):
-  # axios <1.20 (also under `vitepress`), form-data <4.0.6, js-yaml <4.3.2 and
+  # **Four high advisories reached through `@usebruno/cli`** (4.3.0, the latest; the runner's API
+  # domain): axios <1.20 (also under `vitepress`), form-data <4.0.6, js-yaml <4.3.2 and
   # `@faker-js/faker` <=10.4. Each is forced to its patched release, and `api-run.test.ts` runs the
   # real CLI with them. The moderate advisories in the same tree are below `--audit-level=high`.
+  #
+  # Reviewed 2026-11-04, each override removed alone and `pnpm audit` run on the result: every
+  # override in this block is still needed. The line beside each says what resolved without it.
+  #
+  # Without it faker resolves 9.9.0: GHSA-qxc2-j82w-r537 (high). Review by 2026-12-04.
   '@faker-js/faker@<=10.4.0': ^10.5.0
+  # Without it axios resolves 1.18.0: twelve advisories, seven high. Review by 2026-12-04.
   axios@>=1.0.0 <1.20.0: ^1.20.0
+  # Without it form-data resolves 4.0.4: GHSA-hmw2-7cc7-3qxx (high). Review by 2026-12-04.
   form-data@>=4.0.0 <4.0.6: ^4.0.6
+  # Without it js-yaml resolves 4.3.1: GHSA-2883-xcg3-v3hh (high). Review by 2026-12-04.
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
   # GHSA-xcx6-jx8p-x3h5 (high): MSAL Node's authorization-code flow can disclose parameters to an
   # attacker-controlled endpoint. Reached only through the runner's Bruno CLI
   # (`@usebruno/cli > @usebruno/requests > @azure/identity`); the runner never signs in to Azure,
   # but `pnpm audit --audit-level=high` blocks every pull request until the tree carries 7.1.0.
+  # Reviewed 2026-11-04: still needed, msal-node resolves 6.0.1 without it. Review by 2026-12-04.
   '@azure/msal-node@>=5.0.0-beta.0 <7.1.0': ^7.1.0
   # Dependabot alerts of 2026-10-28, all transitive. `@usebruno/cli` 4.3.0 is the latest and
   # still declares the vulnerable ranges, so the fix has to be here until it moves.
@@ -182,9 +191,15 @@ overrides:
   #   major past the CLI's `^5.5.6`; its breaking changes (6.0.0: renamed options and error
   #   codes, the `lib/sync` path) do not touch the one call it makes, `parse(text, { columns:
   #   true, skip_empty_lines: true })`, and 7.0.0 has none. `apps/runner`'s Bruno tests run it.
+  # Reviewed 2026-11-04, each removed alone and audited: all four are still needed.
+  #
+  # Without it qs resolves 6.15.1: four moderate advisories. Review by 2026-12-04.
   'qs@<6.16.1': ^6.16.1
+  # Without it yaml resolves 2.3.4: GHSA-48c2-rrv3-qjmp (moderate). Review by 2026-12-04.
   'yaml@>=2.0.0 <2.8.3': ^2.8.3
+  # Without it uuid resolves 10.0.0: GHSA-w5hq-g745-h8pq (moderate). Review by 2026-12-04.
   'uuid@<11.1.1': ^11.1.1
+  # Without it csv-parse resolves 5.6.0: GHSA-8cw4-87c7-c6xx (moderate). Review by 2026-12-04.
   'csv-parse@<7.0.2': ^7.0.2
   # GHSA-mrwp-f3q8-3g9p, high: follow-redirects 1.16.0-1.16.1 discards cross-realm
   # `sensitiveHeaders` arrays, so custom credentials can follow a redirect. Reached through the
