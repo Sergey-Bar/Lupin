@@ -14,6 +14,14 @@ import { PageFrame, PageHeader, Panel, Quiet } from './kit.js';
 import { GithubActionDialog } from './GithubActionDialog.js';
 import { MasterDetail } from './MasterDetail.js';
 import { BulkBar, RowActions } from './GithubActionControls.js';
+import {
+  RowCheckbox,
+  SelectAllShown,
+  inboxNotice,
+  useOperator,
+  useSelection,
+  type PendingAction,
+} from './GithubInboxParts.js';
 import { useToast } from './Toasts.js';
 
 /**
@@ -225,104 +233,68 @@ export function ReposPage({
   now?: () => Date;
 }): React.ReactElement {
   const [version, setVersion] = React.useState(0);
-  const [selected, setSelected] = React.useState<ReadonlySet<string>>(new Set());
-  const [pending, setPending] = React.useState<{
-    kind: ActionKind;
-    subjects: readonly Subject[];
-  } | null>(null);
+  const [pending, setPending] = React.useState<PendingAction>(null);
+  const selection = useSelection();
   const repos = useResource((_signal) => github.listRepos(), [github, version]);
-  const who = useResource((_signal) => health.whoami(), [health]);
-  const operator = who.status === 'ready' && canOperate(who.value);
+  const operator = useOperator(health);
   const items = repos.status === 'ready' ? worstFirst(repos.value.items) : [];
   const flagged = items.filter(attention).length;
+  const notice = inboxNotice({
+    list: repos,
+    noun: 'Repositories',
+    total: items.length,
+    shown: items.length,
+    empty: 'No repositories yet. Add a project with a GitHub repository URL.',
+  });
 
   return (
     <PageFrame>
       <h1 className="sr-only">Repositories</h1>
       {operator ? (
         <BulkBar
-          subjects={items.filter((repo) => selected.has(repo.projectId)).map(subjectOfRepo)}
+          subjects={items.filter((repo) => selection.has(repo.projectId)).map(subjectOfRepo)}
           onPick={(kind, subjects) => setPending({ kind, subjects })}
-          onClear={() => setSelected(new Set())}
+          onClear={selection.clear}
         />
       ) : null}
-      {repos.status === 'loading' ? (
-        <Panel title="Repositories" className="flex-1">
-          <Quiet role="status">Loading…</Quiet>
-        </Panel>
-      ) : repos.status === 'error' ? (
-        <Panel title="Repositories" className="flex-1">
-          <Quiet role="alert">Could not load this: {repos.message}</Quiet>
-        </Panel>
-      ) : items.length === 0 ? (
-        <Panel title="0 repositories" className="flex-1">
-          <Quiet>No repositories yet. Add a project with a GitHub repository URL.</Quiet>
-        </Panel>
-      ) : (
-        <MasterDetail
-          label="repositories"
-          title={`${String(items.length)} ${items.length === 1 ? 'repository' : 'repositories'}`}
-          action={
-            flagged === 0 ? null : (
-              <Badge variant="danger">
-                {String(flagged)} {flagged === 1 ? 'needs' : 'need'} attention
-              </Badge>
-            )
-          }
-          items={items}
-          getKey={(repo) => repo.projectId}
-          rowPx={64}
-          renderRow={(repo) => <RepoRowSummary repo={repo} />}
-          renderLead={
-            operator
-              ? (repo) => (
-                  <input
-                    type="checkbox"
-                    aria-label={`Select ${repo.name}`}
-                    checked={selected.has(repo.projectId)}
-                    onChange={() =>
-                      setSelected((current) => {
-                        const next = new Set(current);
-                        if (next.has(repo.projectId)) next.delete(repo.projectId);
-                        else next.add(repo.projectId);
-                        return next;
-                      })
-                    }
-                  />
-                )
-              : undefined
-          }
-          listHeader={
-            operator ? (
-              <label className="mb-2 flex shrink-0 items-center gap-3 ps-3 text-xs text-fg-muted">
-                <input
-                  type="checkbox"
-                  aria-label="Select all repositories"
-                  checked={items.every((repo) => selected.has(repo.projectId))}
-                  onChange={(event) =>
-                    setSelected(
-                      event.target.checked
-                        ? new Set(items.map((repo) => repo.projectId))
-                        : new Set(),
-                    )
-                  }
+      {notice ??
+        (repos.status === 'ready' && (
+          <MasterDetail
+            label="repositories"
+            title={`${String(items.length)} ${items.length === 1 ? 'repository' : 'repositories'}`}
+            action={<AttentionBadge flagged={flagged} />}
+            items={items}
+            getKey={(repo) => repo.projectId}
+            rowPx={64}
+            renderRow={(repo) => <RepoRowSummary repo={repo} />}
+            renderLead={
+              operator
+                ? (repo) => (
+                    <RowCheckbox label={repo.name} rowKey={repo.projectId} selection={selection} />
+                  )
+                : undefined
+            }
+            listHeader={
+              operator ? (
+                <SelectAllShown
+                  label="Select all repositories"
+                  keys={items.map((repo) => repo.projectId)}
+                  selection={selection}
                 />
-                Select all repositories
-              </label>
-            ) : undefined
-          }
-          renderDetail={(repo) => (
-            <RepoPane
-              repo={repo}
-              now={now()}
-              operator={operator}
-              delivery={delivery}
-              onSynced={() => setVersion((current) => current + 1)}
-              onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
-            />
-          )}
-        />
-      )}
+              ) : undefined
+            }
+            renderDetail={(repo) => (
+              <RepoPane
+                repo={repo}
+                now={now()}
+                operator={operator}
+                delivery={delivery}
+                onSynced={() => setVersion((current) => current + 1)}
+                onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
+              />
+            )}
+          />
+        ))}
       {pending === null ? null : (
         <GithubActionDialog
           kind={pending.kind}
@@ -331,7 +303,7 @@ export function ReposPage({
           now={now}
           onClose={() => setPending(null)}
           onDone={() => {
-            setSelected(new Set());
+            selection.clear();
             setVersion((current) => current + 1);
           }}
         />
@@ -340,6 +312,15 @@ export function ReposPage({
   );
 }
 
+/** How many repositories need a look, or nothing when none do. */
+function AttentionBadge({ flagged }: { flagged: number }): React.ReactElement | null {
+  if (flagged === 0) return null;
+  return (
+    <Badge variant="danger">
+      {String(flagged)} {flagged === 1 ? 'needs' : 'need'} attention
+    </Badge>
+  );
+}
 const SEVERITY: Record<
   GithubFinding['severity'],
   { label: string; variant: 'danger' | 'warning' | 'outline' | 'secondary' }

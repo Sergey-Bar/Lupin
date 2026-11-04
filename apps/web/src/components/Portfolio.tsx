@@ -24,7 +24,7 @@ import type { HealthClient } from '../lib/health-client.js';
 import { ago, dimensionLabel, letterTone } from '../lib/health-view.js';
 import { SCORECARD_STATUS_WORD } from '../lib/scorecard-view.js';
 import { repoHealthPath } from '../route-manifest.js';
-import { Delta, PageFrame, PageHeader, Panel } from './kit.js';
+import { Delta, PageFrame, PageBody, PageHeader, PagerControls, Panel, usePager } from './kit.js';
 import { PortfolioHeatmap } from './PortfolioHeatmap.js';
 import { StatusLine } from './StatusLine.js';
 
@@ -72,43 +72,45 @@ export function Portfolio({
   const attention = entries.filter(needsAttention).length;
   const graded = entries.filter((entry) => entry.letter !== null).length;
   return (
-    <PageFrame data-testid="portfolio" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="portfolio" className="gap-4 sm:gap-6">
       <PageHeader
         title="Portfolio"
         subtitle={`${String(entries.length)} repositor${entries.length === 1 ? 'y' : 'ies'} · ${String(graded)} graded`}
       />
-      {entries.length === 0 ? (
-        <EmptyState
-          headingLevel={2}
-          data-testid="portfolio-empty"
-          title="No repository is registered"
-          description="Register a repository, then run a scan or upload its scanner reports from CI."
-        />
-      ) : (
-        <>
-          <StatusLine
-            data-testid="portfolio-attention"
-            value={String(attention)}
-            tone={attention > 0 ? 'caution' : 'good'}
-            sentence={
-              attention === 1
-                ? 'repository needs attention: graded C or below, or incomplete.'
-                : 'repositories need attention: graded C or below, or incomplete.'
-            }
-            action={
-              entries[0] !== undefined && attention > 0
-                ? { label: `Open ${entries[0].name}`, href: repoHealthPath(entries[0].projectId) }
-                : undefined
-            }
+      <PageBody>
+        {entries.length === 0 ? (
+          <EmptyState
+            headingLevel={2}
+            data-testid="portfolio-empty"
+            title="No repository is registered"
+            description="Register a repository, then run a scan or upload its scanner reports from CI."
           />
-          <p className="text-sm text-fg-muted" data-testid="portfolio-improving">
-            {String(entries.filter((entry) => (entry.trend ?? 0) > 0).length)} improving over 30
-            days
-          </p>
-          <PortfolioTable entries={entries} scorecards={scorecards} />
-          <PortfolioHeatmap health={health} />
-        </>
-      )}
+        ) : (
+          <>
+            <StatusLine
+              data-testid="portfolio-attention"
+              value={String(attention)}
+              tone={attention > 0 ? 'caution' : 'good'}
+              sentence={
+                attention === 1
+                  ? 'repository needs attention: graded C or below, or incomplete.'
+                  : 'repositories need attention: graded C or below, or incomplete.'
+              }
+              action={
+                entries[0] !== undefined && attention > 0
+                  ? { label: `Open ${entries[0].name}`, href: repoHealthPath(entries[0].projectId) }
+                  : undefined
+              }
+            />
+            <p className="text-sm text-fg-muted" data-testid="portfolio-improving">
+              {String(entries.filter((entry) => (entry.trend ?? 0) > 0).length)} improving over 30
+              days
+            </p>
+            <PortfolioTable entries={entries} scorecards={scorecards} />
+            <PortfolioHeatmap health={health} />
+          </>
+        )}
+      </PageBody>
     </PageFrame>
   );
 }
@@ -120,8 +122,15 @@ function PortfolioTable({
   entries: readonly PortfolioEntry[];
   scorecards: PortfolioScorecards;
 }): React.ReactElement {
+  // Paged rather than grown: a large portfolio keeps the page within the viewport, and the
+  // pager states its range so "12 of 80" is never mistaken for the whole list.
+  const pager = usePager(entries, 12);
   return (
-    <Panel title="Repositories" data-testid="portfolio-table">
+    <Panel
+      title="Repositories"
+      data-testid="portfolio-table"
+      action={<PagerControls pager={pager} label="Repositories" />}
+    >
       <Table aria-label="Repositories">
         <TableHeader>
           <TableRow>
@@ -141,7 +150,7 @@ function PortfolioTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {entries.map((entry) => (
+          {pager.items.map((entry) => (
             <PortfolioRow key={entry.projectId} entry={entry} scorecards={scorecards} />
           ))}
         </TableBody>

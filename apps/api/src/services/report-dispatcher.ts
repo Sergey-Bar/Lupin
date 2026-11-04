@@ -4,6 +4,8 @@ import type { ConnectorAdapter, ConnectorRequest, ConnectorResult } from '@lupin
 import type { ChannelKind, ChannelSummary } from '@lupin/shared-contracts';
 import {
   composeReport,
+  applyLens,
+  renderFullReport,
   renderPlain,
   renderSlack,
   renderTeams,
@@ -12,7 +14,13 @@ import {
 } from '@lupin/reporting';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 import { loadCockpitDigest } from './cockpit-digest.js';
-import { channelWithSecret, loadReport, projectOfScope } from './notification-service.js';
+import {
+  channelWithSecret,
+  loadReport,
+  projectOfScope,
+  audienceOf,
+  formatOf,
+} from './notification-service.js';
 import type { TrendChart } from './trend-chart.js';
 
 /**
@@ -67,11 +75,16 @@ const NOTHING_WAS_SENT =
 /**
  * The request for one channel, the text kept as history, and, when the primary request carries
  * a picture, the plain request to send if the picture is refused.
+ *
+ * `fullHtml` is the full-report HTML, supplied only for an email channel whose subscription
+ * chose `format: 'full'`; every other channel ignores it and sends the compact digest, which is
+ * the shape their length limits require.
  */
 export function requestFor(
   channel: ChannelSummary,
   model: ReportModel,
   image: TrendChart | null = null,
+  fullHtml: string | null = null,
 ): { request: ConnectorRequest | null; fallback?: ConnectorRequest; rendered: string } {
   const settings = channel.settings as Record<string, string>;
   const plain = renderPlain(model, 2_000);
@@ -153,6 +166,26 @@ export function requestFor(
         request: { operation: 'send', input: { ...settings, message: plain } },
         rendered: plain,
       };
+    case 'email': {
+      // `from`/`to`/`subject` come from the channel's settings; the body is the digest as text,
+      // with the full report's HTML as the alternative when the subscription chose `full`.
+      const subject = settings['subject'] ?? 'Lupin quality report';
+      return {
+        request: {
+          operation: 'send',
+          input: {
+            from: settings['from'],
+            to: settings['to'],
+            subject,
+            text: plain,
+            ...(fullHtml === null ? {} : { html: fullHtml }),
+          },
+        },
+        // The history keeps the text form: it is what the in-app inbox and the delivery list
+        // show, and the HTML is not a thing a person reads in a table.
+        rendered: plain,
+      };
+    }
   }
 }
 
@@ -234,7 +267,7 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
   async function composeFor(
     scoped: Scoped,
     subscription: Awaited<ReturnType<typeof subscriptionOf>>,
-  ): Promise<{ model: ReportModel; image: TrendChart | null }> {
+  ): Promise<{ model: ReportModel; image: TrendChart | null; fullHtml: string | null }> {
     const digest = await loadCockpitDigest(
       scoped,
       (error) =>
@@ -243,15 +276,29 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
         }),
       projectOfScope(subscription?.projectScope),
     );
-    const model = composeReport({
-      ...(await loadReport(scoped, {
-        title: subscription?.name ?? 'Test report from Lupin',
-        windowDays: subscription?.cadence === 'daily' ? 1 : 7,
-        link: options.link,
-      })),
-      ...(digest === null ? {} : { cockpit: digest.cockpit }),
-    });
-    return { model, image: digest?.image ?? null };
+    const model = composeReport(
+      applyLens(
+        {
+          ...(await loadReport(scoped, {
+            title: subscription?.name ?? 'Test report from Lupin',
+            windowDays: subscription?.cadence === 'daily' ? 1 : 7,
+            link: options.link,
+          })),
+          ...(digest === null ? {} : { cockpit: digest.cockpit }),
+        },
+        // The audience tunes which areas lead; a subscription from before the column existed,
+        // or a test send with no subscription, is `general` — the report exactly as it was.
+        audienceOf(subscription?.audience),
+      ),
+    );
+    // The full-report HTML is rendered only when the subscription asked for `full`; every other
+    // delivery carries the digest alone. `clock` is the one time in the page, so a redelivery of
+    // the same window is the same bytes.
+    const fullHtml =
+      formatOf(subscription?.format) === 'full'
+        ? renderFullReport(model, { generatedAt: clock().toISOString() })
+        : null;
+    return { model, image: digest?.image ?? null, fullHtml };
   }
 
   /**
@@ -302,8 +349,8 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
     }
     try {
       const { channel, secret } = await channelWithSecret(scoped, channelId);
-      const { model, image } = await composeFor(scoped, subscription);
-      const { request, fallback, rendered } = requestFor(channel, model, image);
+      const { model, image, fullHtml } = await composeFor(scoped, subscription);
+      const { request, fallback, rendered } = requestFor(channel, model, image, fullHtml);
       if (request === null) {
         const outcome = { id: row.id, status: 'sent' as const, errorCode: null };
         await finish(row, { ...outcome, rendered });

@@ -78,9 +78,21 @@ test.describe('rows', () => {
   test('j and k walk the rows of the page and never the navigation', async ({ page }) => {
     await page.goto(`${WEB_BASE}/dashboard/now`);
     await expect(page.locator('[data-page]')).toBeVisible();
+    // The page settles in stages: the cockpit fetch resolves, then a deferred
+    // `setTimeout(0)` lazy-loads the pace chart behind a Suspense boundary. Each stage
+    // reconciles the `[data-page]` subtree, and a reconcile that lands between the
+    // probe injection and a keypress detaches the focused row — the flake this test
+    // used to carry. The pace chart is the last thing to render, so waiting for it
+    // means no further re-render can steal focus mid-walk.
+    await expect(page.getByTestId('cockpit-pace')).toBeVisible();
     // The rows a screen shows depend on the data behind it. The key handling is the
-    // subject here, so give `[data-page]` a list of known size.
+    // subject here, so make `[data-page]` hold exactly a known list: the probe rows are
+    // the only `li`/`tr` the walker (`'[data-page] li, [data-page] tbody tr'`) can see,
+    // so three `j` presses land on the last row.
     await page.evaluate(() => {
+      const host = document.querySelector('[data-page]');
+      if (host === null) return;
+      for (const existing of host.querySelectorAll('li, tbody tr')) existing.remove();
       const list = document.createElement('ul');
       list.setAttribute('data-testid', 'probe-rows');
       for (const label of ['one', 'two', 'three']) {
@@ -88,18 +100,18 @@ test.describe('rows', () => {
         row.textContent = label;
         list.appendChild(row);
       }
-      document.querySelector('[data-page]')?.appendChild(list);
+      host.appendChild(list);
     });
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     const rows = page.getByTestId('probe-rows').locator('li');
+    await expect(rows).toHaveCount(3);
     const focusedRowText = () =>
       page.evaluate(() => document.activeElement?.closest('li')?.textContent ?? '');
 
-    // The page's own rows come first in document order, so walk to the probe list.
-    const total = await page.evaluate(
-      () => document.querySelectorAll('[data-page] li, [data-page] tbody tr').length,
-    );
-    for (let step = 0; step < total; step += 1) await page.keyboard.press('j');
+    // Three rows, so three presses reach the last and the fourth clamps there.
+    await page.keyboard.press('j');
+    await page.keyboard.press('j');
+    await page.keyboard.press('j');
     await expect(rows.nth(2)).toBeFocused();
     await page.keyboard.press('k');
     await expect(rows.nth(1)).toBeFocused();

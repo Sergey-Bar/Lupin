@@ -3,6 +3,7 @@ import {
   Badge,
   Button,
   Input,
+  Select,
   Skeleton,
   Table,
   TableBody,
@@ -16,7 +17,7 @@ import type { AdminClient, AuditEvent, AuditVerification, Member } from '../lib/
 import type { HealthClient } from '../lib/health-client.js';
 import { ago } from '../lib/health-view.js';
 import { AccessGate } from './Access.js';
-import { PageFrame, PageHeader, Panel, Quiet } from './kit.js';
+import { PageFrame, PageBody, PageHeader, PagerControls, Panel, Quiet, usePager } from './kit.js';
 import { StatusLine } from './StatusLine.js';
 
 /**
@@ -52,100 +53,98 @@ function MembersBody({ admin }: { admin: AdminClient }): React.ReactElement {
       .catch((failure: unknown) => setError(describe(failure)));
   };
   return (
-    <PageFrame data-testid="members-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="members-page" className="gap-4 sm:gap-6">
       <PageHeader title="Members" subtitle="The people who signed in, and what each may do here" />
-      {error === null ? null : (
-        <p role="alert" className="max-w-measure text-sm text-danger">
-          {error}
-        </p>
-      )}
-      <AddPerson onAdd={(email, role) => act(admin.addMember(email, role))} />
-      <Panel title="People">
-        {members.status === 'loading' ? (
-          <Skeleton className="h-16 w-full" />
-        ) : members.status === 'error' ? (
-          <Quiet role="alert">{members.message}</Quiet>
-        ) : members.value.length === 0 ? (
-          <Quiet data-testid="members-empty">
-            Nobody has signed in with single sign-on yet. People appear here the first time they
-            sign in; access tokens are on the Access page.
-          </Quiet>
-        ) : (
-          <Table aria-label="Members">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Person</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Last sign-in</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.value.map((member) => (
-                <TableRow key={member.userId}>
-                  <TableCell>
-                    <span className="font-medium">{member.displayName}</span>{' '}
-                    <span className="text-fg-muted">{member.email}</span>
-                    {member.disabled ? (
-                      <Badge variant="secondary" className="ms-2">
-                        disabled
-                      </Badge>
-                    ) : null}
-                  </TableCell>
-                  <TableCell>
-                    <label className="sr-only" htmlFor={`role-${member.userId}`}>
-                      Role for {member.email}
-                    </label>
-                    <select
-                      id={`role-${member.userId}`}
-                      value={member.role}
-                      onChange={(event) =>
-                        act(
-                          admin.updateMember(member.userId, {
-                            role: event.target.value as Member['role'],
-                          }),
-                        )
-                      }
-                      className="min-h-11 rounded-lg border border-border bg-surface px-2 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-                    >
-                      {ROLES.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
-                      ))}
-                    </select>
-                  </TableCell>
-                  <TableCell className="text-fg-muted">
-                    {member.lastLoginAt === null ? 'never' : ago(member.lastLoginAt)}
-                  </TableCell>
-                  <TableCell className="text-end">
-                    <Button
-                      variant="ghost"
-                      className="min-h-11"
-                      aria-label={`${member.disabled ? 'Enable' : 'Disable'} ${member.email}`}
-                      onClick={() =>
-                        act(admin.updateMember(member.userId, { disabled: !member.disabled }))
-                      }
-                    >
-                      {member.disabled ? 'Enable' : 'Disable'}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="min-h-11"
-                      aria-label={`Remove ${member.email}`}
-                      onClick={() => act(admin.removeMember(member.userId))}
-                    >
-                      Remove
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      <PageBody>
+        {error === null ? null : (
+          <p role="alert" className="max-w-measure text-sm text-danger">
+            {error}
+          </p>
         )}
-      </Panel>
+        <AddPerson onAdd={(email, role) => act(admin.addMember(email, role))} />
+        <Panel title="People">
+          {members.status === 'loading' ? (
+            <Skeleton className="h-16 w-full" />
+          ) : members.status === 'error' ? (
+            <Quiet role="alert">{members.message}</Quiet>
+          ) : members.value.length === 0 ? (
+            <Quiet data-testid="members-empty">
+              Nobody has signed in with single sign-on yet. People appear here the first time they
+              sign in; access tokens are on the Access page.
+            </Quiet>
+          ) : (
+            <Table aria-label="Members">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Person</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Last sign-in</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members.value.map((member) => (
+                  <TableRow key={member.userId}>
+                    <TableCell>
+                      <span className="font-medium">{member.displayName}</span>{' '}
+                      <span className="text-fg-muted">{member.email}</span>
+                      {member.disabled ? (
+                        <Badge variant="secondary" className="ms-2">
+                          disabled
+                        </Badge>
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      <label className="sr-only" htmlFor={`role-${member.userId}`}>
+                        Role for {member.email}
+                      </label>
+                      <Select
+                        id={`role-${member.userId}`}
+                        containerClassName="w-auto"
+                        className="h-11 text-sm"
+                        value={member.role}
+                        onChange={(event) =>
+                          act(
+                            admin.updateMember(member.userId, {
+                              role: event.target.value as Member['role'],
+                            }),
+                          )
+                        }
+                        options={ROLES.map((role) => ({ value: role, label: role }))}
+                      />
+                    </TableCell>
+                    <TableCell className="text-fg-muted">
+                      {member.lastLoginAt === null ? 'never' : ago(member.lastLoginAt)}
+                    </TableCell>
+                    <TableCell className="text-end">
+                      <Button
+                        variant="ghost"
+                        className="min-h-11"
+                        aria-label={`${member.disabled ? 'Enable' : 'Disable'} ${member.email}`}
+                        onClick={() =>
+                          act(admin.updateMember(member.userId, { disabled: !member.disabled }))
+                        }
+                      >
+                        {member.disabled ? 'Enable' : 'Disable'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="min-h-11"
+                        aria-label={`Remove ${member.email}`}
+                        onClick={() => act(admin.removeMember(member.userId))}
+                      >
+                        Remove
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Panel>
+      </PageBody>
     </PageFrame>
   );
 }
@@ -178,23 +177,13 @@ function AddPerson({
           required
           onChange={(event) => setEmail(event.target.value)}
         />
-        <div>
-          <label htmlFor={`${field}-role`} className="mb-1 block text-sm font-medium">
-            Role
-          </label>
-          <select
-            id={`${field}-role`}
-            value={role}
-            onChange={(event) => setRole(event.target.value as Member['role'])}
-            className="min-h-10 w-full rounded-lg border border-border bg-surface px-2 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-          >
-            {ROLES.map((entry) => (
-              <option key={entry} value={entry}>
-                {entry}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          id={`${field}-role`}
+          label="Role"
+          value={role}
+          onChange={(event) => setRole(event.target.value as Member['role'])}
+          options={ROLES.map((entry) => ({ value: entry, label: entry }))}
+        />
         <Button type="submit" className="min-h-10">
           Add
         </Button>
@@ -221,7 +210,7 @@ function AuditBody({ admin }: { admin: AdminClient }): React.ReactElement {
   const verdict = useResource<AuditVerification>(() => admin.verifyAudit(), [admin]);
   const page = useResource(() => admin.listAudit(), [admin]);
   return (
-    <PageFrame data-testid="audit-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="audit-page" className="gap-4 sm:gap-6">
       <PageHeader
         title="Audit trail"
         subtitle="Every decision, chained to the one before it"
@@ -242,10 +231,12 @@ function AuditBody({ admin }: { admin: AdminClient }): React.ReactElement {
           </>
         }
       />
-      <AuditVerdict verdict={verdict} />
-      <Panel title="Newest events">
-        <AuditEvents page={page} />
-      </Panel>
+      <PageBody>
+        <AuditVerdict verdict={verdict} />
+        <Panel title="Newest events">
+          <AuditEvents page={page} />
+        </Panel>
+      </PageBody>
     </PageFrame>
   );
 }
@@ -296,33 +287,47 @@ function AuditEvents({
   if (page.status === 'loading') return <Skeleton className="h-16 w-full" />;
   if (page.status === 'error') return <Quiet role="alert">{page.message}</Quiet>;
   if (page.value.events.length === 0) return <Quiet>Nothing has been recorded yet.</Quiet>;
+  return <AuditEventsTable events={page.value.events} />;
+}
+
+/**
+ * The loaded events, paged into the viewport rather than grown down the page. The trail is
+ * long by nature, so a fixed page keeps the table bounded and the pager states its range.
+ */
+function AuditEventsTable({ events }: { events: readonly AuditEvent[] }): React.ReactElement {
+  const pager = usePager(events, 12);
   return (
-    <Table aria-label="Audit events">
-      <TableHeader>
-        <TableRow>
-          <TableHead>Row</TableHead>
-          <TableHead>When</TableHead>
-          <TableHead>Who</TableHead>
-          <TableHead>What</TableHead>
-          <TableHead>From</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {page.value.events.map((event) => (
-          <TableRow key={`${String(event.seq)}-${event.timestamp}`}>
-            <TableCell className="tabular-nums">{event.seq ?? '—'}</TableCell>
-            <TableCell className="text-fg-muted">{ago(event.timestamp)}</TableCell>
-            <TableCell className="font-mono text-xs">{event.actorId}</TableCell>
-            <TableCell>
-              <span className="font-mono text-xs">{event.action}</span>
-              {event.resourceId === null ? null : (
-                <span className="text-fg-muted"> · {event.resourceId}</span>
-              )}
-            </TableCell>
-            <TableCell className="font-mono text-xs text-fg-muted">{event.ip ?? '—'}</TableCell>
+    <>
+      <div className="mb-2 flex justify-end">
+        <PagerControls pager={pager} label="Audit events" />
+      </div>
+      <Table aria-label="Audit events">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Row</TableHead>
+            <TableHead>When</TableHead>
+            <TableHead>Who</TableHead>
+            <TableHead>What</TableHead>
+            <TableHead>From</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {pager.items.map((event) => (
+            <TableRow key={`${String(event.seq)}-${event.timestamp}`}>
+              <TableCell className="tabular-nums">{event.seq ?? '—'}</TableCell>
+              <TableCell className="text-fg-muted">{ago(event.timestamp)}</TableCell>
+              <TableCell className="font-mono text-xs">{event.actorId}</TableCell>
+              <TableCell>
+                <span className="font-mono text-xs">{event.action}</span>
+                {event.resourceId === null ? null : (
+                  <span className="text-fg-muted"> · {event.resourceId}</span>
+                )}
+              </TableCell>
+              <TableCell className="font-mono text-xs text-fg-muted">{event.ip ?? '—'}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </>
   );
 }

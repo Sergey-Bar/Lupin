@@ -147,7 +147,12 @@ function InsightsGrid({
 }): React.ReactElement {
   const flaky = <FlakyPanel tests={insights.flakyLeaderboard} api={api} />;
   const heatmap = (
-    <Panel title="Failures by suite and day" data-testid="insights-heatmap" className="flex-1">
+    <Panel
+      title="Failures by suite and day"
+      scrollLabel="Failures by suite and day"
+      data-testid="insights-heatmap"
+      className="flex-1"
+    >
       {insights.failureHeatmap.length === 0 ? (
         <Quiet>No runs in this window.</Quiet>
       ) : (
@@ -158,7 +163,12 @@ function InsightsGrid({
   const slow = <SlowPanel tests={insights.slowestTests} />;
   const recovery = <RecoveryPanel insights={insights} />;
   const trends = (
-    <Panel title="Coverage and health over time" data-testid="insights-history" className="flex-1">
+    <Panel
+      title="Coverage and health over time"
+      scrollLabel="Coverage and health over time"
+      data-testid="insights-history"
+      className="flex-1"
+    >
       <HistoryBody history={history} failure={historyFailure} />
     </Panel>
   );
@@ -180,7 +190,7 @@ function InsightsGrid({
               {recovery}
               {trends}
             </div>
-            <div className="grid h-72 shrink-0 grid-cols-2 gap-3">
+            <div className="grid h-44 shrink-0 grid-cols-2 gap-3">
               {causes}
               {suggestions}
             </div>
@@ -367,16 +377,15 @@ function SlowPanel({ tests }: { tests: readonly SlowTest[] }): React.ReactElemen
 
 function RecoveryPanel({ insights }: { insights: QaInsights }): React.ReactElement {
   const { overall, suites } = insights.mttr;
-  // As many branches as the space left fits: a busy repository has dozens.
-  const [branchCount, branchRef] = useFitCount(34, 4);
   return (
     <Panel
       title="Recovery and branches"
+      scrollLabel="Recovery and branches"
       data-testid="insights-recovery"
       className="flex-1"
       action={<GitBranch size={14} aria-hidden="true" className="text-chart-1" />}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+      <div className="flex flex-col gap-3">
         <dl className="m-0 grid shrink-0 grid-cols-3 gap-2 text-xs">
           <div>
             <dt className="text-fg-muted">Median</dt>
@@ -413,17 +422,13 @@ function RecoveryPanel({ insights }: { insights: QaInsights }): React.ReactEleme
               </li>
             ))}
         </ul>
-        <ul
-          ref={branchRef}
-          className="min-h-0 flex-1 space-y-1.5 overflow-hidden"
-          aria-label="Pass rate by branch"
-        >
+        <ul className="space-y-1.5" aria-label="Pass rate by branch">
           {insights.passRateByBranch.length === 0 ? (
             <li>
               <Quiet>No runs in this window.</Quiet>
             </li>
           ) : (
-            insights.passRateByBranch.slice(0, branchCount).map((branch) => (
+            insights.passRateByBranch.slice(0, 12).map((branch) => (
               <li key={branch.branch} data-testid="branch-row" className="text-xs">
                 <div className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate font-mono" title={branch.branch}>

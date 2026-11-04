@@ -1,8 +1,26 @@
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Activity, GitBranch, LayoutGrid, ListChecks, Network, cn } from '@lupin/ui';
-import { SECTIONS, routeFor, sectionOf, tabsOf, type SectionId } from '../route-manifest.js';
+import {
+  Activity,
+  GitBranch,
+  INDICATOR_ACTIVE_ATTRIBUTE,
+  LayoutGrid,
+  ListChecks,
+  Network,
+  Settings,
+  cn,
+  useSlidingIndicator,
+} from '@lupin/ui';
+import {
+  SECTIONS,
+  routeFor,
+  sectionOf,
+  tabsOf,
+  visibleTabsOf,
+  type SectionId,
+} from '../route-manifest.js';
 import { ThemeToggle } from './ThemeToggle.js';
+import { useViewerRole } from '../hooks/useViewerRole.js';
 
 /**
  * The chrome: four sections, three surfaces.
@@ -24,6 +42,7 @@ const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
   insights: Activity,
   map: Network,
   github: GitBranch,
+  settings: Settings,
 };
 
 const FOCUS =
@@ -35,6 +54,7 @@ function useCurrentPath(): string {
 
 export function NavBar(): React.ReactElement {
   const current = sectionOf(useCurrentPath());
+  const listRef = useSlidingIndicator<HTMLUListElement>(current);
   return (
     <nav
       data-testid="nav-bar"
@@ -56,7 +76,11 @@ export function NavBar(): React.ReactElement {
           .
         </span>
       </span>
-      <ul className="hidden min-w-0 flex-1 items-center justify-center gap-x-1 lg:flex">
+      {/* The accent mark slides between sections (`indicator`, motion.css) rather than jumping. */}
+      <ul
+        ref={listRef}
+        className="relative hidden min-w-0 flex-1 items-center justify-center gap-x-1 lg:flex"
+      >
         {SECTIONS.map((section) => {
           const active = section.id === current;
           return (
@@ -65,12 +89,11 @@ export function NavBar(): React.ReactElement {
                 to={section.path}
                 activeOptions={{ exact: true }}
                 aria-current={active ? 'page' : undefined}
+                {...(active ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
                 className={cn(
-                  'inline-flex min-h-11 items-center rounded-md px-4 text-sm transition-colors',
+                  'inline-flex min-h-11 items-center rounded-md px-4 text-sm transition-colors duration-100 motion-reduce:transition-none',
                   FOCUS,
-                  active
-                    ? 'font-semibold text-fg underline decoration-accent decoration-2 underline-offset-[1.15rem]'
-                    : 'font-medium text-fg-muted hover:text-fg',
+                  active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
                 )}
               >
                 {section.label}
@@ -78,6 +101,7 @@ export function NavBar(): React.ReactElement {
             </li>
           );
         })}
+        <span aria-hidden="true" className="indicator" />
       </ul>
       {/* Below `lg` the sections are in the bottom bar; the top bar names where you are. */}
       <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg-muted lg:hidden">
@@ -97,8 +121,12 @@ export function SectionTabs(): React.ReactElement | null {
   const path = useCurrentPath();
   const section = sectionOf(path);
   const page = routeFor(path);
+  // Called before the early returns below: hooks cannot follow a conditional exit. The role
+  // decides only which Settings tabs to draw; the API still enforces who may open each.
+  const tabsRef = useSlidingIndicator<HTMLUListElement>(page?.id);
+  const role = useViewerRole();
   if (section === null || page === undefined || !('tab' in page)) return null;
-  const tabs = tabsOf(section);
+  const tabs = section === 'settings' ? visibleTabsOf(section, role) : tabsOf(section);
   if (tabs.length === 0) return null;
   const label = SECTIONS.find((entry) => entry.id === section)?.label ?? '';
   return (
@@ -108,7 +136,7 @@ export function SectionTabs(): React.ReactElement | null {
       aria-label={`${label} pages`}
       className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6"
     >
-      <ul className="flex gap-1">
+      <ul ref={tabsRef} className="relative flex gap-1">
         {tabs.map((tab) => {
           const active = tab.id === page.id;
           return (
@@ -117,12 +145,11 @@ export function SectionTabs(): React.ReactElement | null {
                 to={tab.path}
                 activeOptions={{ exact: true }}
                 aria-current={active ? 'page' : undefined}
+                {...(active ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
                 className={cn(
-                  '-mb-px inline-flex min-h-11 items-center border-b-2 px-3 text-sm transition-colors',
+                  'inline-flex min-h-11 items-center px-3 text-sm transition-colors duration-100 motion-reduce:transition-none',
                   FOCUS,
-                  active
-                    ? 'border-accent font-semibold text-fg'
-                    : 'border-transparent font-medium text-fg-muted hover:text-fg',
+                  active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
                 )}
               >
                 {tab.tab}
@@ -130,6 +157,7 @@ export function SectionTabs(): React.ReactElement | null {
             </li>
           );
         })}
+        <span aria-hidden="true" className="indicator" />
       </ul>
     </nav>
   );
@@ -149,7 +177,7 @@ export function BottomTabBar(): React.ReactElement {
       aria-label="Sections"
       className="shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {SECTIONS.map((section) => {
           const Icon = SECTION_ICONS[section.id];
           const active = section.id === current;

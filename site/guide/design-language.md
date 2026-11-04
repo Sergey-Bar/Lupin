@@ -173,6 +173,12 @@ Named durations, five easings and a press scale, declared in
   height, width, offset or box metric.
 - **Optimistic, not pending.** Adding a test to quarantine puts it in the list at once,
   marked "Saving…"; a refusal takes it out again and reopens the form with the text kept.
+- **Three roles for a list arriving, a selection moving and a number changing.**
+  `stagger-in` delays each row by its index, capped at the eighth so row thirty does not wait.
+  `indicator` slides the accent mark under the active tab or segment with `translate` and
+  `scale`. `count-up` counts a whole number to its value with a registered CSS `<integer>`;
+  the real number is rendered once for assistive technology and the animated copy is hidden.
+  A test fails if any of the three uses a literal time or a layout property.
 
 Every duration is `calc(<value> * var(--lupin-motion-scale))`. Under
 `prefers-reduced-motion`, or the product's own **Reduce motion** setting
@@ -181,13 +187,42 @@ clamped to `0.01ms`, and so are the view-transition pseudo-elements — which th
 selector never reaches. `0.01ms` rather than `0s`, because a zero duration can suppress the
 `animationend` a component waits on.
 
+## No page scrolls, from `lg` up
+
+From 1024px wide the page is exactly the viewport. The shell is `h-dvh` with `overflow-hidden`;
+a screen is composed to fit, and anything that can grow scrolls **inside its own component**.
+There are three ways to do that, in order of preference:
+
+1. **Page the list** to the height the panel has (`useFitCount`, `usePager`).
+2. **Put the long body in `PageBody`**, which keeps the page header fixed and scrolls the rest.
+3. **Name a panel's body as a scroll region** with `<Panel scrollLabel="…">` for a chart or a
+   table that is taller than its cell.
+
+A scroll region is focusable and named, so a keyboard can read it. Below `lg` the panels stack
+and `<main>` is the one scroll container, because reflow at narrow widths (WCAG 1.4.10) matters
+more than the rule. `tests/e2e/layout/no-scroll.spec.ts` measures every route at 1280, 1440 and
+1920 wide and fails on a page that scrolls; `pnpm exec playwright test --project=layout-fit` runs
+it, and `UI_AUDIT_SHOTS=1` also writes a screenshot of each route.
+
+The shell frame is `relative` on purpose. Screen-reader-only text is `position: absolute` and is
+clipped only by the frame that contains it; without `relative` it stretched the document past the
+viewport while every visible thing fit.
+
+## The theme is chosen before the first paint
+
+`apps/web/index.html` carries a small inline script that sets `data-theme` from the stored
+choice, or from the system, before the stylesheet is applied. `ThemeProvider` still owns the
+setting afterwards. Without the script a reader who saved the light theme saw the dark default
+for a frame and then every element transitioned to light. `theme-boot.test.ts` runs the script
+as it appears in the file.
+
 ## One translucent material, for what floats
 
 The plane is flat. What is admitted is one material, `surface-translucent`, for the layers
-that float over it: the command palette, dialogs, popovers and toasts. It is the only place
+that float over it: the command palette, dialogs, popovers, menus and toasts. It is the only place
 a `backdrop-filter` is written — `theme.test.ts` fails on one anywhere else in the
 stylesheet, ESLint refuses a `backdrop-*` utility class, and `theme-resolution.test.ts`
-limits the material to those four components.
+limits the material to those five components.
 
 - **Opaque first.** The first declaration is the raised plane step; the 90% tint and the
   16px blur are inside `@supports (backdrop-filter: …)`, so no browser shows a see-through

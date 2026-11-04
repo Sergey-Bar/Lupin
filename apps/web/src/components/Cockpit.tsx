@@ -17,7 +17,7 @@ import {
 } from '../lib/cockpit-view.js';
 import { metricPath, reportPath } from '../route-manifest.js';
 import { AttentionSection, type NowSources } from './Now.js';
-import { Delta, PageFrame, PageHeader, Panel, Segmented } from './kit.js';
+import { Delta, PageFrame, PageBody, PageHeader, Panel, Segmented } from './kit.js';
 import { StatusLine } from './StatusLine.js';
 
 /**
@@ -88,7 +88,7 @@ export function CockpitPage({
     },
   ]);
   return (
-    <PageFrame data-testid="cockpit-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="cockpit-page" className="gap-4 sm:gap-6">
       <PageHeader
         title="Cockpit"
         subtitle="Is the product better or worse than before, and why."
@@ -111,20 +111,22 @@ export function CockpitPage({
           </div>
         }
       />
-      {/* Keyed by the window and the reload, so a new read starts from loading and never shows
+      <PageBody>
+        {/* Keyed by the window and the reload, so a new read starts from loading and never shows
           the previous window's headline under the new window's label. */}
-      <CockpitReading
-        key={`${projectId ?? ''}:${window}:${String(reload)}`}
-        sources={sources}
-        window={window}
-        projectId={projectId}
-        onRetry={() => setReload((count) => count + 1)}
-      />
-      <AttentionSection
-        sources={sources.attention}
-        navigate={navigate}
-        {...(now === undefined ? {} : { now })}
-      />
+        <CockpitReading
+          key={`${projectId ?? ''}:${window}:${String(reload)}`}
+          sources={sources}
+          window={window}
+          projectId={projectId}
+          onRetry={() => setReload((count) => count + 1)}
+        />
+        <AttentionSection
+          sources={sources.attention}
+          navigate={navigate}
+          {...(now === undefined ? {} : { now })}
+        />
+      </PageBody>
     </PageFrame>
   );
 }
@@ -151,7 +153,13 @@ function CockpitReading({
 
   if (state.status === 'loading') {
     return (
-      <div data-testid="cockpit-loading" aria-busy="true" className="flex flex-col gap-4">
+      <div
+        data-testid="cockpit-loading"
+        role="status"
+        aria-label="Loading"
+        aria-busy="true"
+        className="flex flex-col gap-4"
+      >
         <Skeleton className="h-28 w-full" />
         <Skeleton className="h-40 w-full" />
       </div>

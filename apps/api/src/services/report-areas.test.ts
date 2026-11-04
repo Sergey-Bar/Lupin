@@ -48,10 +48,18 @@ async function seed() {
 }
 
 describe('loadReportAreas', () => {
-  it('reads the three areas and every failing reason, for this workspace only', async () => {
+  it('reads the areas and every failing reason, for this workspace only', async () => {
     const { db } = await seed();
     const areas = await loadReportAreas({ db: db as never, workspaceId: 'ws-1', now: () => NOW });
-    expect(areas.areas.map((area) => area.label)).toEqual(['DORA', 'AI code', 'Agent quality']);
+    // Test effectiveness and supply chain are now area lines of their own, so a lens can lead
+    // with them; they remain in `scorecards` too, so their failing reasons still drive actions.
+    expect(areas.areas.map((area) => area.label)).toEqual([
+      'DORA',
+      'AI code',
+      'Agent quality',
+      'Test effectiveness',
+      'Supply chain',
+    ]);
     // DORA and AI code are always read; with no delivery data they are unmeasured.
     expect(areas.areas[0]?.cards.map((card) => card.project)).toEqual(['checkout']);
     expect(areas.areas[2]?.cards).toEqual([]);

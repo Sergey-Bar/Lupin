@@ -41,12 +41,18 @@ function RootComponent() {
    * `overflow-y-auto` as a floor rather than a feature: below the `lg` breakpoint the
    * panels stack and reflow is what WCAG 1.4.10 requires, and clipping content that did
    * not fit would hide it rather than show it.
+   *
+   * The frame is `relative` on purpose. `sr-only` text is `position: absolute` with no offsets, and
+   * an absolute box is clipped only by an ancestor that is its containing block. Without
+   * `relative` here the initial containing block was, so screen-reader text sitting low in a long
+   * page stretched the *document* past the viewport (1054px on `/dashboard`) while every visible
+   * thing fit, and `overflow-hidden` on this frame could not stop it.
    */
   return (
     <ThemeProvider>
       <PreferencesProvider>
         <ToastProvider>
-          <div className="flex h-dvh flex-col overflow-hidden bg-surface-sunken text-fg">
+          <div className="relative flex h-dvh flex-col overflow-hidden bg-surface-sunken text-fg">
             <NavBar />
             <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 sm:px-6 sm:py-6">
               {/*

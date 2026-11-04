@@ -24,11 +24,25 @@ const GATE_TEXT = {
   warning: 'text-warning',
   outline: 'text-fg-muted',
 } as const;
+/** The rail on a gate's leading edge: the verdict at a glance, before the words are read. */
+const GATE_RAIL = {
+  success: 'bg-success',
+  danger: 'bg-danger',
+  warning: 'bg-warning',
+  outline: 'bg-border-strong',
+} as const;
 
 function GateRow({ gate }: { gate: Gate }): React.ReactElement {
   const Icon = GATE_ICON[gate.tone];
   return (
-    <div className="flex min-w-0 flex-col gap-1 rounded-md border border-border px-3 py-2 text-sm">
+    <div
+      data-tone={gate.tone}
+      className="relative flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-md border border-border bg-surface-muted py-2.5 ps-4 pe-3 text-sm"
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute inset-y-0 start-0 w-1 ${GATE_RAIL[gate.tone]}`}
+      />
       <span className="flex items-center gap-1.5 text-xs text-fg-muted">
         <span className={GATE_TEXT[gate.tone]}>
           {Icon === null ? (
@@ -127,6 +141,21 @@ export function PullDetail({
         </div>
       )}
 
+      {operator ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {primary === null ? null : (
+            <Button
+              variant={primary === 'merge' ? 'default' : 'outline'}
+              aria-label={`${ACTION_LABEL[primary]} ${item.repository}#${String(item.number)}`}
+              onClick={() => onPick(primary, subject)}
+            >
+              {ACTION_LABEL[primary]}
+            </Button>
+          )}
+          <RowActions subject={subject} onPick={onPick} />
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <GitBranch size={16} aria-hidden="true" className="text-fg-muted" />
         {item.headBranch === null ? (
@@ -180,21 +209,6 @@ export function PullDetail({
           <ChangeBar additions={item.additions} deletions={item.deletions} />
         </dd>
       </dl>
-
-      {operator ? (
-        <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
-          {primary === null ? null : (
-            <Button
-              variant={primary === 'merge' ? 'default' : 'outline'}
-              aria-label={`${ACTION_LABEL[primary]} ${item.repository}#${String(item.number)}`}
-              onClick={() => onPick(primary, subject)}
-            >
-              {ACTION_LABEL[primary]}
-            </Button>
-          )}
-          <RowActions subject={subject} onPick={onPick} />
-        </div>
-      ) : null}
     </article>
   );
 }

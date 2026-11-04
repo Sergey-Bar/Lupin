@@ -549,7 +549,11 @@ jobs:
     name: Product E2E
     needs: quality
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # The `layout-fit` project (250 viewport checks, ~7.5 min) runs in this job beside
+    # the accessibility matrix (~8.5 min), so `test:e2e` alone is ~19 min on one worker.
+    # At 20 the job was cancelled at test 548 of 585 with nothing failing; a ceiling the
+    # suite cannot finish inside is a red check that says nothing about the product.
+    timeout-minutes: 35
     services:
       postgres:
         image: postgres:16-alpine

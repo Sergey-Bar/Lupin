@@ -47,7 +47,8 @@ interface ProjectAreas {
   dora: ReportCard | null;
   aiCode: ReportCard | null;
   agents: ReportCard | null;
-  others: ReportCard[];
+  supply: ReportCard | null;
+  tests: ReportCard | null;
   fixNext: ReportFix[];
 }
 
@@ -69,7 +70,8 @@ async function projectAreas(options: Options, id: string, now: Date): Promise<Pr
     dora: dora === null ? null : cardOf(project.name, dora.dora),
     aiCode: ai === null ? null : cardOf(project.name, ai.scorecard),
     agents: agents === null ? null : cardOf(project.name, agents),
-    others: [supply, tests].flatMap((card) => (card === null ? [] : [cardOf(project.name, card)])),
+    supply: supply === null ? null : cardOf(project.name, supply),
+    tests: tests === null ? null : cardOf(project.name, tests),
     fixNext: (grade?.grade.fixNext ?? []).map((fix) => ({
       project: project.name,
       title: fix.title,
@@ -101,10 +103,15 @@ export async function loadReportAreas(
     { label: 'DORA', cards: present(read.map((entry) => entry.dora)) },
     { label: 'AI code', cards: present(read.map((entry) => entry.aiCode)) },
     { label: 'Agent quality', cards: present(read.map((entry) => entry.agents)) },
+    // Supply chain and test effectiveness are now area lines of their own, not reasons only, so
+    // a lens (the quality one especially) can lead with them. They stay in `scorecards` too, so
+    // a failing card still contributes its reasons to the top actions exactly as before.
+    { label: 'Test effectiveness', cards: present(read.map((entry) => entry.tests)) },
+    { label: 'Supply chain', cards: present(read.map((entry) => entry.supply)) },
   ];
   return {
     areas,
-    scorecards: read.flatMap((entry) => entry.others),
+    scorecards: present(read.flatMap((entry) => [entry.supply, entry.tests])),
     fixNext: read.flatMap((entry) => entry.fixNext),
   };
 }

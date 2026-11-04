@@ -156,9 +156,16 @@ async function expectNoSeriousOrCritical(page: Page, where: string): Promise<voi
 async function expectRendered(page: Page, where: string): Promise<void> {
   const main = page.locator('main');
   await expect(main, `${where} rendered no <main>, so the shell never mounted`).toBeVisible();
+  // Page content, not "any descendant": the first child of <main> is the page guide's zero-height
+  // wrapper (or the section tabs), which is chrome and is never visible on a route without tabs.
+  // A route that rendered only that is still an empty route. A loading or failed state counts,
+  // because those are states the route renders and they are exactly what this gate measures.
+  const content = main.locator(
+    ':is(h1, h2, section, p, ul, ol, table, form, dl, [role="status"], [role="alert"]):not([data-chrome="secondary"] *)',
+  );
   try {
     await expect(
-      main.locator('*').first(),
+      content.first(),
       `${where} rendered an empty <main>. A route with nothing on it passes axe trivially, ` +
         'which is not the same as an accessible route.',
     ).toBeVisible();

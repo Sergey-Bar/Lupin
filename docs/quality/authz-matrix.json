@@ -9,7 +9,7 @@
   ],
   "summary": {
     "admin": 24,
-    "viewer": 86,
+    "viewer": 87,
     "operator": 33,
     "open": 16,
     "runner-credential": 9,
@@ -1183,6 +1183,14 @@
       "method": "DELETE",
       "path": "/api/v1/report-subscriptions/:id",
       "access": "operator",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/services/notification-service.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/report.html",
+      "access": "viewer",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/services/notification-service.test.ts",
       "composition": "database"

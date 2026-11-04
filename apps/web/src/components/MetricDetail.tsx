@@ -33,7 +33,7 @@ import {
 } from '../lib/cockpit-view.js';
 import { cockpitPath } from '../route-manifest.js';
 import { safeHref } from './Cockpit.js';
-import { Delta, PageFrame, PageHeader, Panel, Segmented } from './kit.js';
+import { Delta, PageFrame, PageBody, PageHeader, Panel, Segmented } from './kit.js';
 
 /**
  * One metric, one level down: the level a QA engineer or SDET opens a card to reach.
@@ -79,16 +79,18 @@ export function MetricDetailPage({
   const [window, setWindow] = React.useState<CockpitWindow>(initialWindow);
   if (!parsed.success) {
     return (
-      <PageFrame data-testid="metric-unknown" className="h-auto gap-4">
+      <PageFrame data-testid="metric-unknown" className="gap-4">
         <PageHeader title="Unknown metric" subtitle={<BackToCockpit projectId={projectId} />} />
-        <p className="text-sm text-fg-muted">
-          The cockpit has no metric called “{metricId.slice(0, 60)}”. Open one from the cockpit.
-        </p>
+        <PageBody>
+          <p className="text-sm text-fg-muted">
+            The cockpit has no metric called “{metricId.slice(0, 60)}”. Open one from the cockpit.
+          </p>
+        </PageBody>
       </PageFrame>
     );
   }
   return (
-    <PageFrame data-testid="metric-page" className="h-auto gap-4 sm:gap-6">
+    <PageFrame data-testid="metric-page" className="gap-4 sm:gap-6">
       <PageHeader
         title={LABELS[parsed.data]}
         subtitle={<BackToCockpit projectId={projectId} />}
@@ -101,14 +103,16 @@ export function MetricDetailPage({
           />
         }
       />
-      {/* Keyed by the window so a new read starts from loading, as the cockpit does. */}
-      <MetricReading
-        key={window}
-        metricId={parsed.data}
-        window={window}
-        projectId={projectId}
-        sources={sources}
-      />
+      <PageBody>
+        {/* Keyed by the window so a new read starts from loading, as the cockpit does. */}
+        <MetricReading
+          key={window}
+          metricId={parsed.data}
+          window={window}
+          projectId={projectId}
+          sources={sources}
+        />
+      </PageBody>
     </PageFrame>
   );
 }
@@ -148,7 +152,13 @@ function MetricReading({
   const state = useCockpit(sources.cockpit, { window, projectId });
   if (state.status === 'loading') {
     return (
-      <div data-testid="metric-loading" aria-busy="true" className="flex flex-col gap-4">
+      <div
+        data-testid="metric-loading"
+        role="status"
+        aria-label="Loading"
+        aria-busy="true"
+        className="flex flex-col gap-4"
+      >
         <Skeleton className="h-28 w-full" />
         <Skeleton className="h-40 w-full" />
       </div>

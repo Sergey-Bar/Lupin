@@ -1,20 +1,29 @@
 import React from 'react';
-import { Badge, Button, Input } from '@lupin/ui';
+import { Badge, Input } from '@lupin/ui';
 import type { GithubIssueItem } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import { usePagedList } from '../hooks/usePagedList.js';
-import { subjectOfIssue, type ActionKind, type Subject } from '../lib/github-actions.js';
+import { subjectOfIssue } from '../lib/github-actions.js';
 import type { GithubClient } from '../lib/github-client.js';
 import type { HealthClient } from '../lib/health-client.js';
-import { canOperate } from '../lib/roles.js';
 import { formatRelative } from '../lib/intl.js';
 import { Bdi, UserText } from './Bidi.js';
 import { GithubActionDialog } from './GithubActionDialog.js';
 import { IssueDetail } from './GithubIssueDetail.js';
 import { MasterDetail } from './MasterDetail.js';
 import { BulkBar, subjectKey } from './GithubActionControls.js';
+import {
+  LoadMoreFooter,
+  RowCheckbox,
+  SelectAllShown,
+  inboxNotice,
+  matchesQuery,
+  useOperator,
+  useSelection,
+  type PendingAction,
+} from './GithubInboxParts.js';
 import { RepositoryFilter } from './GithubShared.js';
-import { PageFrame, Panel, Quiet, Segmented } from './kit.js';
+import { PageFrame, Segmented } from './kit.js';
 
 /**
  * Open issues across every repository, with the ones nobody has labelled or assigned counted
@@ -51,17 +60,10 @@ export function IssuesPage({
   const [untriagedOnly, setUntriagedOnly] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [version, setVersion] = React.useState(0);
-  const [selected, setSelected] = React.useState<ReadonlySet<string>>(new Set());
-  const [pending, setPending] = React.useState<{
-    kind: ActionKind;
-    subjects: readonly Subject[];
-  } | null>(null);
+  const [pending, setPending] = React.useState<PendingAction>(null);
+  const selection = useSelection();
   const repos = useResource((_signal) => github.listRepos(), [github]);
-  const who = useResource(
-    (_signal) => (health === undefined ? Promise.resolve(null) : health.whoami()),
-    [health],
-  );
-  const operator = who.status === 'ready' && who.value !== null && canOperate(who.value);
+  const operator = useOperator(health);
   const list = usePagedList(
     (cursor) =>
       github.listIssues({
@@ -74,14 +76,19 @@ export function IssuesPage({
   );
 
   const items = list.status === 'ready' ? list.items : [];
-  const untriaged = items.filter(isUntriaged).length;
   const needle = query.trim().toLowerCase();
-  const shown = items.filter((issue) => {
-    if (untriagedOnly && !isUntriaged(issue)) return false;
-    if (needle === '') return true;
-    return [issue.title, issue.author ?? '', issue.repository].some((text) =>
-      text.toLowerCase().includes(needle),
-    );
+  const shown = items.filter(
+    (issue) =>
+      (!untriagedOnly || isUntriaged(issue)) &&
+      matchesQuery(needle, [issue.title, issue.author, issue.repository]),
+  );
+  const shownKeys = shown.map(subjectKey);
+  const notice = inboxNotice({
+    list,
+    repos,
+    noun: 'Issues',
+    total: items.length,
+    shown: shown.length,
   });
 
   return (
@@ -93,7 +100,10 @@ export function IssuesPage({
             label="Show"
             options={[
               { value: 'all', label: 'All' },
-              { value: 'untriaged', label: `No label or assignee ${String(untriaged)}` },
+              {
+                value: 'untriaged',
+                label: `No label or assignee ${String(items.filter(isUntriaged).length)}`,
+              },
             ]}
             value={untriagedOnly ? 'untriaged' : 'all'}
             onChange={(value) => setUntriagedOnly(value === 'untriaged')}
@@ -127,98 +137,45 @@ export function IssuesPage({
       </div>
       {operator ? (
         <BulkBar
-          subjects={shown.filter((issue) => selected.has(subjectKey(issue))).map(subjectOfIssue)}
+          subjects={shown.filter((issue) => selection.has(subjectKey(issue))).map(subjectOfIssue)}
           onPick={(kind, subjects) => setPending({ kind, subjects })}
-          onClear={() => setSelected(new Set())}
+          onClear={selection.clear}
         />
       ) : null}
-      {list.status === 'loading' ? (
-        <Panel title="Issues" className="flex-1">
-          <Quiet role="status">Loading…</Quiet>
-        </Panel>
-      ) : list.status === 'error' ? (
-        <Panel title="Issues" className="flex-1">
-          <Quiet role="alert">Could not load this: {list.message}</Quiet>
-        </Panel>
-      ) : shown.length === 0 ? (
-        <Panel title="0 issues" className="flex-1">
-          <Quiet>
-            {items.length === 0 &&
-            repos.status === 'ready' &&
-            repos.value.items.every((r) => !r.syncEnabled)
-              ? 'Issues appear once a repository is being read. Turn on the sync for a project under Repositories.'
-              : 'No issues match.'}
-          </Quiet>
-        </Panel>
-      ) : (
-        <MasterDetail
-          label="issues"
-          title={`${String(shown.length)} ${shown.length === 1 ? 'issue' : 'issues'}`}
-          items={shown}
-          getKey={subjectKey}
-          rowPx={64}
-          renderRow={(issue) => <IssueRowSummary issue={issue} now={now()} />}
-          renderLead={
-            operator
-              ? (issue) => (
-                  <input
-                    type="checkbox"
-                    aria-label={`Select ${issue.repository}#${String(issue.number)}`}
-                    checked={selected.has(subjectKey(issue))}
-                    onChange={() =>
-                      setSelected((current) => {
-                        const next = new Set(current);
-                        const key = subjectKey(issue);
-                        if (next.has(key)) next.delete(key);
-                        else next.add(key);
-                        return next;
-                      })
-                    }
-                  />
-                )
-              : undefined
-          }
-          listHeader={
-            operator ? (
-              <label className="mb-2 flex shrink-0 items-center gap-3 ps-3 text-xs text-fg-muted">
-                <input
-                  type="checkbox"
-                  aria-label="Select all shown"
-                  checked={shown.every((issue) => selected.has(subjectKey(issue)))}
-                  onChange={(event) =>
-                    setSelected(event.target.checked ? new Set(shown.map(subjectKey)) : new Set())
-                  }
-                />
-                Select all shown
-              </label>
-            ) : undefined
-          }
-          footer={
-            <>
-              {list.moreError === null ? null : (
-                <p role="alert" className="mt-2 text-sm text-danger">
-                  Could not load more: {list.moreError}
-                </p>
-              )}
-              {list.hasMore ? (
-                <div className="mt-2">
-                  <Button variant="outline" disabled={list.loadingMore} onClick={list.loadMore}>
-                    {list.loadingMore ? 'Loading…' : 'Load more'}
-                  </Button>
-                </div>
-              ) : null}
-            </>
-          }
-          renderDetail={(issue) => (
-            <IssueDetail
-              issue={issue}
-              now={now()}
-              operator={operator}
-              onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
-            />
-          )}
-        />
-      )}
+      {notice ??
+        (list.status === 'ready' && (
+          <MasterDetail
+            label="issues"
+            title={`${String(shown.length)} ${shown.length === 1 ? 'issue' : 'issues'}`}
+            items={shown}
+            getKey={subjectKey}
+            rowPx={64}
+            renderRow={(issue) => <IssueRowSummary issue={issue} now={now()} />}
+            renderLead={
+              operator
+                ? (issue) => (
+                    <RowCheckbox
+                      label={`${issue.repository}#${String(issue.number)}`}
+                      rowKey={subjectKey(issue)}
+                      selection={selection}
+                    />
+                  )
+                : undefined
+            }
+            listHeader={
+              operator ? <SelectAllShown keys={shownKeys} selection={selection} /> : undefined
+            }
+            footer={<LoadMoreFooter list={list} />}
+            renderDetail={(issue) => (
+              <IssueDetail
+                issue={issue}
+                now={now()}
+                operator={operator}
+                onPick={(kind, subject) => setPending({ kind, subjects: [subject] })}
+              />
+            )}
+          />
+        ))}
       {pending === null ? null : (
         <GithubActionDialog
           kind={pending.kind}
@@ -227,12 +184,29 @@ export function IssuesPage({
           now={now}
           onClose={() => setPending(null)}
           onDone={() => {
-            setSelected(new Set());
+            selection.clear();
             setVersion((current) => current + 1);
           }}
         />
       )}
     </PageFrame>
+  );
+}
+
+/** What a row says about who owns it: closed, untriaged, or nothing. */
+function IssueOwnership({ issue }: { issue: GithubIssueItem }): React.ReactElement | null {
+  if (issue.state === 'closed') {
+    return (
+      <Badge variant="outline" className="shrink-0">
+        Closed
+      </Badge>
+    );
+  }
+  if (!isUntriaged(issue)) return null;
+  return (
+    <Badge variant="warning" className="shrink-0 whitespace-nowrap">
+      Untriaged
+    </Badge>
   );
 }
 
@@ -256,15 +230,7 @@ function IssueRowSummary({
           <span className="whitespace-nowrap">{formatRelative(issue.lastActivityAt, now)}</span>
         </span>
       </span>
-      {issue.state === 'closed' ? (
-        <Badge variant="outline" className="shrink-0">
-          Closed
-        </Badge>
-      ) : issue.labels.length === 0 && issue.assignees.length === 0 ? (
-        <Badge variant="warning" className="shrink-0 whitespace-nowrap">
-          Untriaged
-        </Badge>
-      ) : null}
+      <IssueOwnership issue={issue} />
     </span>
   );
 }

@@ -23,15 +23,18 @@ export function PageContent({
   return (
     <SessionGate health={health} bypass={pathname === '/dashboard/pair'}>
       {/*
-       * One relative wrapper holds the guide and the page, so `<main>`'s first child is a
-       * region with the real content in it rather than the guide's zero-height box. The guide
-       * is absolutely positioned against this wrapper exactly as it was against `<main>`, so it
-       * still sits as an icon in the padding above the page — but a route with no tab row no
-       * longer presents an empty first child to anything checking that it rendered (the
-       * route-level accessibility gate did, and failed on every such detail page). The guide
-       * stays outside `[data-page]`, so `j`/`k` still walk only the page's own list rows.
+       * One wrapper holds the guide and the page, so `<main>`'s first child is a region with
+       * the real content in it rather than the guide's zero-height box — a route with no tab
+       * row no longer presents an empty first child to anything checking that it rendered (the
+       * route-level accessibility gate did, and failed on every such detail page). The wrapper
+       * is deliberately **not** `relative`: an `sr-only` element inside a page is
+       * `position: absolute`, and a `relative` here would make this box its containing block and
+       * let it stretch the layout past the viewport — which is the no-scroll contract's failure.
+       * It anchors instead to the shell frame as before. The guide keeps its own `relative`
+       * wrapper for its `-top-6` anchor, and stays outside `[data-page]` so `j`/`k` walk only
+       * the page's own list rows.
        */}
-      <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <PageGuide pathname={pathname} />
         <div data-page className="flex min-h-0 flex-1 flex-col">
           {children}

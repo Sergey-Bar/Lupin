@@ -57,15 +57,15 @@ export function MasterDetail<T>({
       <Panel title={title} action={action} className={cn(showDetail && 'hidden lg:flex')}>
         {listHeader}
         <ul ref={setList} className="m-0 min-h-0 flex-1 list-none overflow-hidden p-0">
-          {pager.items.map((item) => {
+          {pager.items.map((item, index) => {
             const key = getKey(item);
             const isSelected = selected !== undefined && getKey(selected) === key;
             return (
               <li
                 key={key}
-                style={{ height: rowPx }}
+                style={{ height: rowPx, '--stagger-index': index } as React.CSSProperties}
                 onFocus={() => setSelectedKey(key)}
-                className="flex items-stretch border-b border-border last:border-b-0"
+                className="stagger-in flex items-stretch border-b border-border last:border-b-0"
               >
                 {renderLead === undefined ? null : (
                   <div className="flex w-10 shrink-0 items-center justify-center">
@@ -108,7 +108,18 @@ export function MasterDetail<T>({
           <ChevronLeft size={16} aria-hidden="true" />
           Back to the list
         </button>
-        {selected === undefined ? null : renderDetail(selected)}
+        {selected === undefined ? null : (
+          // Keyed by the item, so choosing another remounts the detail and it arrives again
+          // (`animate-fade-in`): the change of selection is something that happened, and the
+          // eye should see the panel answer it rather than have its text swapped underneath.
+          <div
+            key={getKey(selected)}
+            data-testid="master-detail-body"
+            className="flex min-h-0 flex-1 animate-fade-in flex-col"
+          >
+            {renderDetail(selected)}
+          </div>
+        )}
       </section>
     </div>
   );

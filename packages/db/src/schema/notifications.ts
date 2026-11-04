@@ -44,7 +44,7 @@ export const notificationChannels = pgTable(
     index('notification_channels_workspace_idx').on(table.workspaceId, table.createdAt),
     check(
       'notification_channels_kind_check',
-      sql`${table.kind} IN ('inbox', 'slack', 'teams', 'telegram', 'whatsapp', 'signal')`,
+      sql`${table.kind} IN ('inbox', 'slack', 'teams', 'telegram', 'whatsapp', 'signal', 'email')`,
     ),
   ],
 );
@@ -66,6 +66,17 @@ export const reportSubscriptions = pgTable(
     timezone: text('timezone').notNull(),
     /** Project ids the report covers; `null` is every project. */
     projectScope: jsonb('project_scope'),
+    /**
+     * Who the report is tuned for. `general` (the default and every pre-existing row) is the
+     * report as it always was; the others re-weight what leads. Null is read as `general`.
+     */
+    audience: text('audience'),
+    /**
+     * How much the report carries. `chat` (the default and every pre-existing row) is the tiny
+     * digest; `full` is the richer HTML artifact, for a channel that can carry it. Null is read
+     * as `chat`.
+     */
+    format: text('format'),
     enabled: boolean('enabled').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -75,6 +86,14 @@ export const reportSubscriptions = pgTable(
     check(
       'report_subscriptions_cadence_check',
       sql`${table.cadence} IN ('daily', 'weekly', 'custom')`,
+    ),
+    check(
+      'report_subscriptions_audience_check',
+      sql`${table.audience} IS NULL OR ${table.audience} IN ('general', 'manager', 'sdet', 'quality')`,
+    ),
+    check(
+      'report_subscriptions_format_check',
+      sql`${table.format} IS NULL OR ${table.format} IN ('chat', 'full')`,
     ),
   ],
 );

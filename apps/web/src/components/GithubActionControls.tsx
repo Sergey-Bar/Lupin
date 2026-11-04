@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@lupin/ui';
+import { Button, MenuButton } from '@lupin/ui';
 import { actionsFor, type ActionKind, type Subject } from '../lib/github-actions.js';
 import { ACTION_LABEL } from './GithubActionDialog.js';
 
@@ -7,8 +7,9 @@ import { ACTION_LABEL } from './GithubActionDialog.js';
  * The controls that start a write: a menu on every row, and a bar over a selection.
  *
  * Only an operator is shown either; the API enforces the role regardless, so these decide what
- * to draw and nothing else. Both are native `<select>`s and checkboxes, which are keyboard and
- * screen-reader complete by default and mirror in a right-to-left page without help.
+ * to draw and nothing else. The row menu is a menu button (keyboard and screen-reader complete,
+ * and it mirrors in a right-to-left page); the selection uses native checkboxes under the
+ * design system's `Checkbox`.
  */
 export const subjectKey = (subject: Pick<Subject, 'projectId' | 'number'>) =>
   `${subject.projectId}#${String(subject.number)}`;
@@ -29,21 +30,13 @@ export function RowActions({
   onPick: (kind: ActionKind, subject: Subject) => void;
 }): React.ReactElement {
   return (
-    <select
-      aria-label={`Actions for ${subject.repository}#${String(subject.number)}`}
-      value=""
-      onChange={(event) => {
-        if (event.target.value !== '') onPick(event.target.value as ActionKind, subject);
-      }}
-      className="h-9 w-24 rounded-md border border-border-strong bg-transparent px-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+    <MenuButton
+      label={`Actions for ${subject.repository}#${String(subject.number)}`}
+      items={actionsFor(subject).map((kind) => ({ value: kind, label: ACTION_LABEL[kind] }))}
+      onSelect={(value) => onPick(value as ActionKind, subject)}
     >
-      <option value="">Actions</option>
-      {actionsFor(subject).map((kind) => (
-        <option key={kind} value={kind}>
-          {ACTION_LABEL[kind]}
-        </option>
-      ))}
-    </select>
+      Actions
+    </MenuButton>
   );
 }
 

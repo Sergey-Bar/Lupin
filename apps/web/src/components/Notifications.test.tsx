@@ -50,6 +50,8 @@ function client(overrides: Partial<NotificationsClient> = {}): NotificationsClie
         describe: 'Every day at 09:00',
         nextRunAt: null,
         projectId: null,
+        audience: 'general' as const,
+        format: 'chat' as const,
       },
     ]),
     createSubscription: vi.fn(async () => ({
@@ -63,6 +65,8 @@ function client(overrides: Partial<NotificationsClient> = {}): NotificationsClie
       describe: 'Every Monday at 09:00',
       nextRunAt: null,
       projectId: null,
+      audience: 'general' as const,
+      format: 'chat' as const,
     })),
     deleteSubscription: vi.fn(async () => undefined),
     listDeliveries: vi.fn(async () => [SENT]),
@@ -181,6 +185,30 @@ describe('NotificationsPage', () => {
     );
   });
 
+  it('schedules a report tuned for an audience and in the full format', async () => {
+    const user = userEvent.setup();
+    const api = client();
+    page(api);
+    await screen.findByText('Every day at 09:00');
+    await user.selectOptions(screen.getByLabelText('Tuned for'), 'manager');
+    await user.selectOptions(screen.getByLabelText('Detail'), 'full');
+    await user.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(api.createSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ audience: 'manager', format: 'full' }),
+    );
+  });
+
+  it('defaults a new schedule to the general audience and the chat format', async () => {
+    const user = userEvent.setup();
+    const api = client();
+    page(api);
+    await screen.findByText('Every day at 09:00');
+    await user.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(api.createSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ audience: 'general', format: 'chat' }),
+    );
+  });
+
   it('removes a channel and a schedule, and says when it cannot', async () => {
     const user = userEvent.setup();
     const api = client({
@@ -280,6 +308,8 @@ describe('choosing the project a report is about', () => {
           describe: 'Every day at 09:00',
           nextRunAt: null,
           projectId: 'p-2',
+          audience: 'general' as const,
+          format: 'chat' as const,
         },
       ]),
     });

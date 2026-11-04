@@ -1,0 +1,77 @@
+/// <reference types="vitest/globals" />
+import React from 'react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
+import { SettingsAppearancePage } from './Settings';
+import { ThemeProvider } from '../theme/ThemeProvider';
+import { PreferencesProvider, PREFERENCES_KEY } from '../theme/preferences';
+import { expectNoBlockingAxeViolations } from '../test-axe';
+
+function renderAppearance() {
+  return render(
+    <ThemeProvider>
+      <PreferencesProvider>
+        <SettingsAppearancePage />
+      </PreferencesProvider>
+    </ThemeProvider>,
+  );
+}
+
+/** The pressed pill of a named segmented group. */
+function pressed(groupLabel: string): string | null {
+  const group = screen.getByRole('group', { name: groupLabel });
+  const active = within(group)
+    .getAllByRole('button')
+    .find((button) => button.getAttribute('aria-pressed') === 'true');
+  return active?.textContent ?? null;
+}
+
+describe('Settings · Appearance', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('data-density');
+    document.documentElement.removeAttribute('data-motion');
+    document.documentElement.removeAttribute('data-focus');
+  });
+
+  it('renders a titled Settings page on the no-scroll kit', () => {
+    renderAppearance();
+    expect(screen.getByTestId('settings-appearance-page')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+  });
+
+  it('reflects the stored theme and writes the chosen one to localStorage and <html>', () => {
+    localStorage.setItem('lupin-theme', 'light');
+    renderAppearance();
+    expect(pressed('Theme')).toBe('Light');
+    fireEvent.click(within(screen.getByRole('group', { name: 'Theme' })).getByText('Dark'));
+    expect(localStorage.getItem('lupin-theme')).toBe('dark');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('toggles focus mode and sets data-focus on <html>', () => {
+    renderAppearance();
+    expect(pressed('Focus mode')).toBe('Off');
+    fireEvent.click(within(screen.getByRole('group', { name: 'Focus mode' })).getByText('On'));
+    expect(document.documentElement.dataset['focus']).toBe('on');
+    expect(JSON.parse(localStorage.getItem(PREFERENCES_KEY) ?? '{}').focus).toBe(true);
+  });
+
+  it('sets compact density on <html> when chosen', () => {
+    renderAppearance();
+    expect(pressed('Density')).toBe('Comfortable');
+    fireEvent.click(within(screen.getByRole('group', { name: 'Density' })).getByText('Compact'));
+    expect(document.documentElement.dataset['density']).toBe('compact');
+  });
+
+  it('reduces motion on <html> when chosen', () => {
+    renderAppearance();
+    fireEvent.click(within(screen.getByRole('group', { name: 'Motion' })).getByText('Reduced'));
+    expect(document.documentElement.dataset['motion']).toBe('reduced');
+  });
+
+  it('has no serious or critical axe violations', async () => {
+    const { container } = renderAppearance();
+    await expectNoBlockingAxeViolations(container);
+  });
+});

@@ -47,7 +47,7 @@ export function HistoryChart({ points }: { points: readonly ScanSnapshot[] }): R
       ? 'No readings yet.'
       : `Coverage from ${orDash(first.coverage, (value) => `${value.toFixed(1)}%`)} to ${orDash(last.coverage, (value) => `${value.toFixed(1)}%`)}; health score from ${orDash(first.healthScore, (value) => value.toFixed(1))} to ${orDash(last.healthScore, (value) => value.toFixed(1))}.`;
   return (
-    <figure data-testid="history-chart" className="m-0 flex min-h-0 flex-1 flex-col">
+    <figure data-testid="history-chart" className="m-0 flex min-h-36 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 gap-2">
         <div
           aria-hidden="true"

@@ -343,10 +343,8 @@ describe('repository writes', () => {
     expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument();
 
     // The pane carries the repository's own actions, and the dialog can be walked away from.
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'Actions for octo/alpha#0' }),
-      'protectBranch',
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for octo/alpha#0' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Protect default branch' }));
     const dialog = await screen.findByRole('dialog');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());

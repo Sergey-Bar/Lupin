@@ -4,6 +4,7 @@ export * from './components/Select/Select.js';
 export * from './components/Toggle/Toggle.js';
 export * from './components/EmptyState/EmptyState.js';
 export * from './lib/utils.js';
+export * from './lib/use-sliding-indicator.js';
 /*
  * No token module is exported.
  *
@@ -20,6 +21,9 @@ export * from './lib/utils.js';
  */
 
 export * from './components/Card/Card.js';
+export * from './components/MenuButton/MenuButton.js';
+export * from './components/Checkbox/Checkbox.js';
+export * from './components/CountUp/CountUp.js';
 export * from './components/Badge/Badge.js';
 export * from './components/Avatar/Avatar.js';
 export * from './components/Textarea/Textarea.js';

@@ -53,6 +53,12 @@
     "functions": 100,
     "lines": 100
   },
+  "packages/connectors/email": {
+    "statements": 100,
+    "branches": 100,
+    "functions": 100,
+    "lines": 100
+  },
   "packages/connectors/jira": {
     "statements": 100,
     "branches": 100,

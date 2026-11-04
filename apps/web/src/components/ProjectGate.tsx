@@ -1,5 +1,5 @@
 import React from 'react';
-import { EmptyState } from '@lupin/ui';
+import { EmptyState, Select } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import type { QaClient } from '../lib/qa-client.js';
 import type { RegisteredProject } from '../lib/qa.js';
@@ -65,21 +65,17 @@ export function ProjectGate({
     projectId === undefined && projects.length > 1 ? (
       <label className="flex items-center gap-2 text-sm text-fg-muted">
         <span className="sr-only">Project</span>
-        <select
+        <Select
           data-testid="project-switcher"
+          aria-label="Project"
+          containerClassName="w-auto max-w-56"
           value={subject.id}
           onChange={(event) => {
             writeChoice(event.target.value);
             choose(event.target.value);
           }}
-          className="min-h-11 max-w-56 truncate rounded-md border border-border-strong bg-surface-raised px-3 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-        >
-          {projects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
-        </select>
+          options={projects.map((project) => ({ value: project.id, label: project.name }))}
+        />
       </label>
     ) : null;
   return <>{children(subject, switcher)}</>;

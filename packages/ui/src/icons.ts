@@ -88,6 +88,8 @@ export {
   Handshake,
   Eye,
   Workflow,
+  /** The menu button's chevron: it opens a list of actions below it. */
+  ChevronDown,
   Hammer,
   Database,
   BookOpen,
@@ -123,6 +125,8 @@ export {
   Network,
   /** The repo map's "show the blocking path" toggle. */
   Route,
+  /** The Settings section: a gear, the one place a reader changes how the product behaves. */
+  Settings,
 } from 'lucide-react';
 
 /**

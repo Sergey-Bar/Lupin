@@ -9,6 +9,7 @@ import {
   DialogTitle,
   ExternalLink,
   Search,
+  Select,
   cn,
 } from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
@@ -238,20 +239,17 @@ function ToolboxCatalogue({
         </label>
         <label className="flex items-center gap-2 text-sm text-fg-muted">
           <span className="hidden sm:inline">Capability</span>
-          <select
+          <Select
             data-testid="toolbox-capability"
             aria-label="Capability"
+            containerClassName="w-auto max-w-40 sm:max-w-none"
             value={capability}
             onChange={(event) => setCapability(event.target.value)}
-            className="min-h-11 max-w-40 rounded-lg border border-border bg-surface-raised px-3 text-sm text-fg sm:max-w-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-          >
-            <option value="all">All capabilities</option>
-            {capabilities.map((entry) => (
-              <option key={entry} value={entry}>
-                {CAPABILITY_LABELS[entry]}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: 'all', label: 'All capabilities' },
+              ...capabilities.map((entry) => ({ value: entry, label: CAPABILITY_LABELS[entry] })),
+            ]}
+          />
         </label>
         <div className="hidden lg:block">
           <Segmented
@@ -263,18 +261,17 @@ function ToolboxCatalogue({
         </div>
         <label className="lg:hidden">
           <span className="sr-only">Price</span>
-          <select
+          <Select
             data-testid="toolbox-pricing"
+            aria-label="Price"
+            containerClassName="w-auto"
             value={pricing}
             onChange={(event) => setPricing(event.target.value as PricingFilter)}
-            className="min-h-11 rounded-lg border border-border bg-surface-raised px-3 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-          >
-            {PRICING_FILTERS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={PRICING_FILTERS.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+          />
         </label>
       </div>
       <div aria-hidden="true" className="flex shrink-0 items-center gap-4 text-xs text-fg-muted">

@@ -1,5 +1,17 @@
 import React from 'react';
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Copy, Minus, cn } from '@lupin/ui';
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  CountUp,
+  INDICATOR_ACTIVE_ATTRIBUTE,
+  Minus,
+  cn,
+  useSlidingIndicator,
+} from '@lupin/ui';
 import type { Verdict } from '../lib/insights.js';
 
 /**
@@ -30,6 +42,73 @@ export function PageFrame({
     <div className={cn('flex h-full min-h-0 flex-col gap-3 sm:gap-4', className)} {...props}>
       {children}
     </div>
+  );
+}
+
+/**
+ * A region that scrolls inside its panel, so the page around it never does.
+ *
+ * It is a labelled, focusable region because a scroll container a keyboard cannot reach is
+ * content a keyboard cannot read (axe `scrollable-region-focusable`). It scrolls only from
+ * `lg` up: below that the panels stack, `<main>` is the one scroll container, and nesting a
+ * second one inside it would trap a touch scroll.
+ */
+export function ScrollRegion({
+  label,
+  className,
+  children,
+  ...props
+}: Omit<React.HTMLAttributes<HTMLDivElement>, 'role' | 'aria-label' | 'tabIndex'> & {
+  /** What the region holds, for the screen reader: "Test attempt list", "Page content". */
+  label: string;
+}): React.ReactElement {
+  return (
+    <div
+      role="region"
+      aria-label={label}
+      tabIndex={0}
+      className={cn(
+        'min-w-0 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus lg:min-h-0 lg:overflow-y-auto',
+        // A thin, token-coloured scrollbar: the visible cue that this region continues past its
+        // edge. Without one, a panel cut off mid-card reads as a clipped page, not a list.
+        '[scrollbar-color:var(--color-border-strong)_transparent] [scrollbar-width:thin]',
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * The part of a page under its header, for a page whose content is longer than a screen.
+ *
+ * The header stays where it is and the body scrolls beneath it, so from `lg` up the page is
+ * exactly the viewport and the document never scrolls. A page that can be composed to fit
+ * should be (panels paged with `usePager`, or each panel a `ScrollRegion`); this is the floor
+ * for the ones not yet composed that way.
+ */
+export function PageBody({
+  label = 'Page content',
+  className,
+  children,
+  ...props
+}: Omit<React.HTMLAttributes<HTMLDivElement>, 'role' | 'aria-label' | 'tabIndex'> & {
+  label?: string;
+}): React.ReactElement {
+  return (
+    <ScrollRegion
+      label={label}
+      // `[&>*]:shrink-0`: a panel is `min-h-0`, which lets a flex child shrink below its content.
+      // That is right in a fixed-height grid and wrong in a scroll container, where it squashes
+      // each panel until its contents draw over the next panel's title. Children keep their
+      // height here, and the region scrolls.
+      className={cn('flex flex-col gap-4 sm:gap-6 lg:flex-1 [&>*]:shrink-0', className)}
+      {...props}
+    >
+      {children}
+    </ScrollRegion>
   );
 }
 
@@ -66,12 +145,19 @@ export function PageHeader({
 export function Panel({
   title,
   action,
+  scrollLabel,
   children,
   className,
   ...props
 }: Omit<React.HTMLAttributes<HTMLElement>, 'title'> & {
   title: string;
   action?: React.ReactNode;
+  /**
+   * Name the panel's body as a scroll region. For a chart or a table that is taller than the cell
+   * the layout gives it: the body scrolls inside the panel, with a keyboard-reachable region,
+   * instead of spilling over the next panel's title.
+   */
+  scrollLabel?: string;
 }): React.ReactElement {
   const id = React.useId();
   return (
@@ -89,7 +175,13 @@ export function Panel({
         </h2>
         {action}
       </div>
-      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      {scrollLabel === undefined ? (
+        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      ) : (
+        <ScrollRegion label={scrollLabel} className="flex flex-1 flex-col">
+          {children}
+        </ScrollRegion>
+      )}
     </section>
   );
 }
@@ -184,7 +276,8 @@ export function Kpi({
             )}
             title={unit === undefined ? value : `${value} ${unit}`}
           >
-            {value}
+            {/* A whole number counts up to itself when it changes; anything else is drawn as-is. */}
+            <CountUp value={/^\d{1,9}$/u.test(value) ? Number(value) : value} />
           </span>
           {unit === undefined ? null : <span className="text-sm text-fg-muted">{unit}</span>}
         </div>
@@ -332,7 +425,12 @@ export function PagerControls<T>({
   );
 }
 
-/** A one-of-N choice drawn as a pill row, with `aria-pressed` carrying the state. */
+/**
+ * A one-of-N choice drawn as a pill row, with `aria-pressed` carrying the state.
+ *
+ * The accent mark under the chosen option slides to the new one (`indicator` in `motion.css`)
+ * so the eye follows the change; the chosen pill's fill changes with the 100 ms colour duration.
+ */
 export function Segmented<T extends string>({
   label,
   options,
@@ -344,20 +442,23 @@ export function Segmented<T extends string>({
   value: T;
   onChange: (value: T) => void;
 }): React.ReactElement {
+  const rowRef = useSlidingIndicator<HTMLDivElement>(value);
   return (
     <div
+      ref={rowRef}
       role="group"
       aria-label={label}
-      className="inline-flex rounded-lg border border-border bg-surface-muted p-0.5"
+      className="relative inline-flex rounded-lg border border-border bg-surface-muted p-0.5"
     >
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
           aria-pressed={option.value === value}
+          {...(option.value === value ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
           onClick={() => onChange(option.value)}
           className={cn(
-            'min-h-11 whitespace-nowrap rounded-md px-3 text-xs font-medium transition-colors duration-200 motion-reduce:transition-none sm:px-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
+            'min-h-11 whitespace-nowrap rounded-md px-3 text-xs font-medium transition-colors duration-100 motion-reduce:transition-none active:scale-press sm:px-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
             option.value === value
               ? 'bg-surface text-fg ring-1 ring-border'
               : 'text-fg-muted hover:text-fg',
@@ -366,6 +467,7 @@ export function Segmented<T extends string>({
           {option.label}
         </button>
       ))}
+      <span aria-hidden="true" className="indicator" />
     </div>
   );
 }

@@ -26,6 +26,10 @@ export interface SubscriptionDraft {
   timezone: string;
   /** The project the cockpit section is about; omitted, the one that reported last. */
   projectId?: string;
+  /** Who the report is tuned for; omitted is read as `general`. */
+  audience?: 'general' | 'manager' | 'sdet' | 'quality';
+  /** How much the report carries; omitted is read as `chat`. */
+  format?: 'chat' | 'full';
 }
 
 export interface NotificationsClient {
@@ -37,7 +41,10 @@ export interface NotificationsClient {
   createSubscription(draft: SubscriptionDraft): Promise<SubscriptionSummary>;
   deleteSubscription(id: string): Promise<void>;
   listDeliveries(): Promise<DeliverySummary[]>;
-  preview(window: 'daily' | 'weekly'): Promise<ReportPreview>;
+  preview(
+    window: 'daily' | 'weekly',
+    audience?: 'general' | 'manager' | 'sdet' | 'quality',
+  ): Promise<ReportPreview>;
 }
 
 const Ok = z.object({}).passthrough();
@@ -100,7 +107,11 @@ export function createNotificationsClient(
           z.object({ deliveries: z.array(DeliverySummarySchema) }),
         )
       ).deliveries,
-    preview: (window) =>
-      call('GET', `/api/v1/report-preview?window=${window}`, ReportPreviewSchema),
+    preview: (window, audience) =>
+      call(
+        'GET',
+        `/api/v1/report-preview?window=${window}${audience === undefined || audience === 'general' ? '' : `&audience=${audience}`}`,
+        ReportPreviewSchema,
+      ),
   };
 }

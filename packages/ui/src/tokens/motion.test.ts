@@ -306,3 +306,89 @@ describe('the in-app reduce-motion preference is as strong as the operating-syst
     );
   });
 });
+
+/**
+ * The three roles that answer a state change the first five did not: a list arriving, a
+ * selection moving, and a number changing.
+ *
+ * Each is held to the same two rules as the rest of the file. It takes every time from a scaled
+ * token, so reduced motion reaches it without a second edit; and it animates only what the
+ * compositor does for free, so it costs what a fade costs however long the list is.
+ */
+describe('stagger, indicator and count', () => {
+  const stagger = ruleBody(motionCss, '@utility stagger-in');
+  const indicator = ruleBody(motionCss, '@utility indicator');
+  const count = ruleBody(motionCss, '@utility count-up');
+
+  it('declares all three as utilities a component can write', () => {
+    expect(stagger, 'no stagger-in utility').not.toBe('');
+    expect(indicator, 'no indicator utility').not.toBe('');
+    expect(count, 'no count-up utility').not.toBe('');
+  });
+
+  it('takes the stagger step from the scale, so reduced motion removes the wait', () => {
+    const step = /--lupin-stagger-step:\s*([^;]+);/.exec(motionCss)?.[1] ?? '';
+    expect(step).toContain('var(--lupin-motion-scale)');
+    expect(step).toMatch(/^calc\(\d+ms \*/);
+    expect(stagger).toContain('var(--lupin-stagger-step)');
+  });
+
+  it('caps the stagger, so the thirtieth row does not wait most of a second', () => {
+    const max = Number(/--lupin-stagger-max:\s*(\d+)/.exec(motionCss)?.[1]);
+    const step = Number(/--lupin-stagger-step:\s*calc\((\d+)ms/.exec(motionCss)?.[1]);
+    expect(stagger).toContain('min(var(--stagger-index, 0), var(--lupin-stagger-max))');
+    // The longest any item waits, in ms, is a decision with a ceiling: past ~250ms the list
+    // reads as slow rather than as arriving in order.
+    expect(max * step).toBeLessThanOrEqual(250);
+  });
+
+  it('enters on the same keyframes and spring as every other arrival', () => {
+    expect(stagger).toContain('lupin-enter');
+    expect(stagger).toContain('var(--lupin-ease-spring)');
+    // `both` holds the first frame through the delay; without it a late item flashes visible.
+    expect(stagger).toMatch(/\bboth\b/);
+  });
+
+  it('moves the indicator with translate and scale, never with a box metric', () => {
+    expect(indicator).toContain('translate:');
+    expect(indicator).toContain('scale:');
+    const transitioned = /transition:([^;]+);/.exec(indicator)?.[1] ?? '';
+    expect(transitioned).toContain('translate');
+    expect(transitioned).toContain('scale');
+    // `left` and `width` are layout; one of them in a transition is a reflow per frame.
+    expect(transitioned).not.toMatch(/\b(left|width|height|top|margin)\b/);
+  });
+
+  it('times every indicator transition from the scaled tokens', () => {
+    const transitioned = /transition:([^;]+);/.exec(indicator)?.[1] ?? '';
+    for (const part of transitioned.split(',')) {
+      expect(part, `"${part.trim()}" has a literal time`).toContain('var(--lupin-duration-');
+    }
+  });
+
+  it('registers the count as an integer, so the browser can interpolate it', () => {
+    expect(motionCss).toMatch(/@property --lupin-count\s*\{[^}]*syntax:\s*'<integer>'/);
+    expect(motionCss).toContain('@keyframes lupin-count {');
+    expect(count).toContain('lupin-count');
+    expect(count).toContain('var(--lupin-duration-');
+  });
+
+  it('shows the target, not zero, in a browser that cannot animate the property', () => {
+    // Without `@property` support the animation is ignored and this declaration is what shows.
+    expect(count).toContain('--lupin-count: var(--count-to, 0);');
+  });
+
+  it('is reached by the reduced-motion clamp, because it uses no literal duration', () => {
+    // The clamp sets `animation-duration` on every element, and the scale zeroes the tokens;
+    // a literal `ms` in any of the three would survive both.
+    for (const [name, body] of [
+      ['stagger-in', stagger],
+      ['indicator', indicator],
+      ['count-up', count],
+    ] as const) {
+      // A time is digits then `ms` or `s`, not preceded by a name character (`--x-24ms`) or a dot.
+      const literalTimes = [...body.matchAll(/(?<![-\w.])(\d+)m?s\b/g)];
+      expect(literalTimes, `${name} hard-codes a time`).toEqual([]);
+    }
+  });
+});

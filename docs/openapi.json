@@ -1404,6 +1404,14 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/report.html": {
+      "get": {
+        "operationId": "getApiV1ReportHtml",
+        "tags": ["report.html"],
+        "x-source": "apps/api/src/routes/notifications.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/reporter/events": {
       "post": {
         "operationId": "postApiV1ReporterEvents",
@@ -11025,7 +11033,7 @@
           "id": { "type": "string" },
           "kind": {
             "type": "string",
-            "enum": ["inbox", "slack", "teams", "telegram", "whatsapp", "signal"]
+            "enum": ["inbox", "slack", "teams", "telegram", "whatsapp", "signal", "email"]
           },
           "name": { "type": "string" },
           "settings": {
@@ -12321,6 +12329,36 @@
             },
             "required": ["kind", "name", "settings", "secret"],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": { "type": "string", "const": "email" },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "settings": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "to": { "type": "string", "minLength": 3, "maxLength": 1000 },
+                  "subject": {
+                    "default": "Lupin quality report",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                },
+                "required": ["from", "to", "subject"],
+                "additionalProperties": false
+              },
+              "secret": { "type": "string", "minLength": 1, "maxLength": 2000 }
+            },
+            "required": ["kind", "name", "settings", "secret"],
+            "additionalProperties": false
           }
         ]
       },
@@ -12451,7 +12489,9 @@
             "type": "string",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          }
+          },
+          "audience": { "type": "string", "enum": ["general", "manager", "sdet", "quality"] },
+          "format": { "type": "string", "enum": ["chat", "full"] }
         },
         "required": ["channelId", "name", "cadence", "time", "weekday", "timezone"],
         "additionalProperties": false
@@ -26687,7 +26727,9 @@
           "enabled": { "type": "boolean" },
           "describe": { "type": "string" },
           "nextRunAt": { "type": ["string", "null"] },
-          "projectId": { "type": ["string", "null"] }
+          "projectId": { "type": ["string", "null"] },
+          "audience": { "type": "string", "enum": ["general", "manager", "sdet", "quality"] },
+          "format": { "type": "string", "enum": ["chat", "full"] }
         },
         "required": [
           "id",
@@ -26699,7 +26741,9 @@
           "enabled",
           "describe",
           "nextRunAt",
-          "projectId"
+          "projectId",
+          "audience",
+          "format"
         ],
         "additionalProperties": false
       },

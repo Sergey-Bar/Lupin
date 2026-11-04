@@ -29,9 +29,13 @@ export const SECTIONS = [
   { id: 'insights', label: 'Insights', path: '/dashboard/insights' },
   { id: 'map', label: 'Map', path: '/dashboard/map' },
   { id: 'github', label: 'GitHub', path: '/dashboard/prs' },
+  { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ] as const;
 
 export type SectionId = (typeof SECTIONS)[number]['id'];
+
+/** The least role a tab needs; absent means everyone, matching the API's own guard. */
+export type TabAccess = 'operator' | 'admin';
 
 interface ManifestEntry {
   readonly id: string;
@@ -40,6 +44,7 @@ interface ManifestEntry {
   readonly visible: boolean;
   readonly section: SectionId;
   readonly tab?: string;
+  readonly access?: TabAccess;
 }
 
 export const routeManifest = [
@@ -301,6 +306,62 @@ export const routeManifest = [
     visible: false,
     section: 'map',
   },
+  // Settings — the one place a reader changes how the product behaves. The landing is
+  // Appearance (the one visible entry, so the section appears once in the nav and the
+  // palette); the other tabs reuse the admin and report surfaces under `settings/*` and
+  // stay out of the palette (`visible: false`) while still drawing the section's tab row.
+  {
+    id: 'settings-appearance',
+    path: '/dashboard/settings',
+    label: 'Settings',
+    visible: true,
+    section: 'settings',
+    tab: 'Appearance',
+  },
+  {
+    id: 'settings-reports',
+    path: '/dashboard/settings/reports',
+    label: 'Report settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Reports',
+  },
+  {
+    id: 'settings-access',
+    path: '/dashboard/settings/access',
+    label: 'Access settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Access',
+    access: 'admin',
+  },
+  {
+    id: 'settings-members',
+    path: '/dashboard/settings/members',
+    label: 'Member settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Members',
+    access: 'admin',
+  },
+  {
+    id: 'settings-audit',
+    path: '/dashboard/settings/audit',
+    label: 'Audit settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Audit',
+    access: 'admin',
+  },
+  {
+    id: 'settings-deployment',
+    path: '/dashboard/settings/deployment',
+    label: 'Deployment settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Deployment',
+    access: 'admin',
+  },
 ] as const satisfies readonly ManifestEntry[];
 
 export type ManifestRoute = (typeof routeManifest)[number];
@@ -352,6 +413,31 @@ export type TabRoute = Extract<ManifestRoute, { tab: string }>;
 export function tabsOf(section: SectionId): TabRoute[] {
   const tabs = routeManifest.filter(
     (route): route is TabRoute => route.section === section && 'tab' in route,
+  );
+  return tabs.length > 1 ? tabs : [];
+}
+
+/** The three roles the API knows, least to most; `null` is "nobody signed in yet". */
+export type ViewerRole = 'viewer' | 'operator' | 'admin';
+const ROLE_RANK: Record<ViewerRole, number> = { viewer: 0, operator: 1, admin: 2 };
+
+/** Whether `role` meets a tab's `access` floor. An absent floor admits everyone. */
+export function roleMeets(access: TabAccess | undefined, role: ViewerRole | null): boolean {
+  if (access === undefined) return true;
+  if (role === null) return false;
+  return ROLE_RANK[role] >= ROLE_RANK[access];
+}
+
+/**
+ * A section's tabs that `role` may use, in manifest order.
+ *
+ * The API enforces access; this only decides which tabs to draw, so a viewer is not shown a
+ * tab that would answer 403. The length rule still applies to the *filtered* set: a section
+ * that leaves one tab after filtering shows no tab row, exactly as a one-page section does.
+ */
+export function visibleTabsOf(section: SectionId, role: ViewerRole | null): TabRoute[] {
+  const tabs = tabsOf(section).filter((tab) =>
+    roleMeets((tab as { access?: TabAccess }).access, role),
   );
   return tabs.length > 1 ? tabs : [];
 }

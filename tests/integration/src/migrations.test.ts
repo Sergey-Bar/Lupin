@@ -196,6 +196,8 @@ describe('migration graph', () => {
       '0052_audit_append_only',
       '0053_health_snapshot_commit',
       '0054_github_command_center',
+      '0055_report_audience_format',
+      '0056_email_channel',
     ]);
   });
 
@@ -304,6 +306,79 @@ describe('migration graph', () => {
         updatedAt: new Date(),
       }),
     ).rejects.toThrow();
+  });
+
+  it('gives a report subscription an optional audience and format, each fenced to its vocabulary', async () => {
+    // The daily-export upgrade: `audience` tunes who the report leads for and `format` how much
+    // it carries. Both are nullable — a pre-existing row reads as `general`/`chat` — and a
+    // value outside the vocabulary is refused by the database, not merely typed.
+    const columns = await columnNames(shared, 'report_subscriptions');
+    expect(columns).toContain('audience');
+    expect(columns).toContain('format');
+    const checks = await constraintNames(shared, 'report_subscriptions');
+    expect(checks).toContain('report_subscriptions_audience_check');
+    expect(checks).toContain('report_subscriptions_format_check');
+
+    const client = await createMigratedDatabase();
+    try {
+      await client.exec(`INSERT INTO workspaces (id, name, config_path, created_at)
+        VALUES ('ws-sub', 'default', 'config', now())`);
+      await client.exec(`INSERT INTO notification_channels (id, workspace_id, kind, name)
+        VALUES ('00000000-0000-4000-8000-0000000000c1', 'ws-sub', 'inbox', 'Inbox')`);
+      const insert = (id: string, audience: string | null, format: string | null) =>
+        client.exec(`INSERT INTO report_subscriptions
+          (id, workspace_id, channel_id, name, cadence, cron_expr, timezone, audience, format)
+          VALUES ('${id}', 'ws-sub', '00000000-0000-4000-8000-0000000000c1', 'r', 'daily',
+          '0 9 * * *', 'UTC', ${audience === null ? 'NULL' : `'${audience}'`},
+          ${format === null ? 'NULL' : `'${format}'`})`);
+      // Null (the pre-existing shape), and the named values, are accepted.
+      await expect(
+        insert('00000000-0000-4000-8000-0000000000a1', null, null),
+      ).resolves.toBeDefined();
+      await expect(
+        insert('00000000-0000-4000-8000-0000000000a2', 'manager', 'full'),
+      ).resolves.toBeDefined();
+      await expect(
+        insert('00000000-0000-4000-8000-0000000000a3', 'sdet', 'chat'),
+      ).resolves.toBeDefined();
+      // A value outside the vocabulary is refused by the CHECK.
+      await expect(insert('00000000-0000-4000-8000-0000000000a4', 'ceo', null)).rejects.toThrow();
+      await expect(insert('00000000-0000-4000-8000-0000000000a5', null, 'pdf')).rejects.toThrow();
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('keeps a report subscription inside its workspace, so one tenant never reads another’s', async () => {
+    // `report_subscriptions` is workspace-hard-scoped (0034). The new columns do not change
+    // that, and this is the cross-workspace isolation test the tenancy rule requires for a
+    // workspace-scoped read/write: a subscription in one workspace is invisible to a read
+    // scoped to another, and a row cannot reference a channel from a different workspace.
+    const client = await createMigratedDatabase();
+    try {
+      await client.exec(`INSERT INTO workspaces (id, name, config_path, created_at)
+        VALUES ('ws-a', 'a', 'config', now()), ('ws-b', 'b', 'config', now())`);
+      await client.exec(`INSERT INTO notification_channels (id, workspace_id, kind, name)
+        VALUES ('00000000-0000-4000-8000-0000000000d1', 'ws-a', 'inbox', 'A inbox')`);
+      await client.exec(`INSERT INTO report_subscriptions
+        (id, workspace_id, channel_id, name, cadence, cron_expr, timezone, audience, format)
+        VALUES ('00000000-0000-4000-8000-0000000000b1', 'ws-a',
+        '00000000-0000-4000-8000-0000000000d1', 'r', 'daily', '0 9 * * *', 'UTC', 'manager', 'full')`);
+
+      // A read scoped to the other workspace sees nothing.
+      const other = await client.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM report_subscriptions WHERE workspace_id = 'ws-b'`,
+      );
+      expect(other.rows[0]?.count).toBe('0');
+      const own = await client.query<{ audience: string | null; format: string | null }>(
+        `SELECT audience, format FROM report_subscriptions WHERE workspace_id = 'ws-a'`,
+      );
+      expect(own.rows).toHaveLength(1);
+      expect(own.rows[0]?.audience).toBe('manager');
+      expect(own.rows[0]?.format).toBe('full');
+    } finally {
+      await client.close();
+    }
   });
 
   it('keeps a run readable when its project is deleted, and stops the attribution', async () => {

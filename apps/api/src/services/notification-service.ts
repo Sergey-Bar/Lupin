@@ -20,10 +20,17 @@ import type {
   DeliverySummary,
   SubscriptionSummary,
 } from '@lupin/shared-contracts';
-import { buildDigest, type ReportInput } from '@lupin/reporting';
+import {
+  applyLens,
+  buildDigest,
+  composeReport,
+  type ReportInput,
+  type ReportModel,
+} from '@lupin/reporting';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { isAllowedWebhook } from './health-integrations.js';
 import { loadReportAreas } from './report-areas.js';
+import { loadCockpitDigest } from './cockpit-digest.js';
 import {
   deleteVaultSecret,
   readVaultSecret,
@@ -240,7 +247,21 @@ function subscriptionSummary(
     describe: describeCadence(row.cadence, row.cronExpr),
     nextRunAt,
     projectId: projectOfScope(row.projectScope),
+    // Null is the pre-existing shape, read as the safe default so an old subscription keeps
+    // the report it always sent.
+    audience: audienceOf(row.audience),
+    format: formatOf(row.format),
   };
+}
+
+/** A stored audience, or the default `general` for a row from before the column existed. */
+export function audienceOf(value: unknown): SubscriptionSummary['audience'] {
+  return value === 'manager' || value === 'sdet' || value === 'quality' ? value : 'general';
+}
+
+/** A stored format, or the default `chat` for a row from before the column existed. */
+export function formatOf(value: unknown): SubscriptionSummary['format'] {
+  return value === 'full' ? 'full' : 'chat';
 }
 
 /** The project a subscription's cockpit section is about: the first id in its scope, if any. */
@@ -278,6 +299,10 @@ export async function createSubscription(
       cronExpr,
       timezone: body.timezone,
       projectScope: body.projectId === undefined ? null : [body.projectId],
+      // Omitted stays null, which reads as the default (`general`/`chat`): the column
+      // distinguishes "unset" from a deliberate choice.
+      audience: body.audience ?? null,
+      format: body.format ?? null,
       createdAt: at,
       updatedAt: at,
     })
@@ -468,4 +493,39 @@ export async function loadReport(
     // DORA, AI code and agent quality across the projects, and the top actions' inputs.
     ...(await loadReportAreas(options)),
   };
+}
+
+/**
+ * The composed report model for a workspace, lensed for an audience — the one place both the
+ * dispatcher's chat digest and the full-report download get their model, so the two never
+ * disagree. The cockpit leads when the workspace has a project to read; a workspace with none
+ * gets the report it always was. Pure composition over the reads: no transport, no I/O beyond
+ * the same `loadReport`/`loadReportAreas`/`loadCockpitDigest` the dispatcher uses.
+ */
+export async function composeWorkspaceReportModel(
+  options: NotificationOptions,
+  input: {
+    title: string;
+    windowDays: number;
+    link: string | null;
+    audience?: SubscriptionSummary['audience'];
+    projectId?: string | null;
+  },
+): Promise<ReportModel> {
+  const digest = await loadCockpitDigest(options, undefined, input.projectId ?? null).catch(
+    () => null,
+  );
+  return composeReport(
+    applyLens(
+      {
+        ...(await loadReport(options, {
+          title: input.title,
+          windowDays: input.windowDays,
+          link: input.link,
+        })),
+        ...(digest === null ? {} : { cockpit: digest.cockpit }),
+      },
+      audienceOf(input.audience),
+    ),
+  );
 }

@@ -259,6 +259,128 @@
 }
 
 /*
+ * ## Three more roles: arrival order, selection, and a number changing
+ *
+ * The five roles above cover a thing appearing, leaving, being pressed and crossing the screen.
+ * Three jobs were still done by nothing, and each is a state change that deserves a duration.
+ *
+ * 6. **Stagger** — `stagger-in`. A list arriving is many things becoming available at once, and
+ *    arriving together reads as one slab. Each child is `lupin-enter` delayed by its index times
+ *    `--lupin-stagger-step` (24 ms, scaled), **capped at the eighth**: row thirty must not wait
+ *    most of a second to appear, and a page of rows longer than the screen is paged anyway.
+ * 7. **Indicator** — `indicator`. The mark under the active tab, or behind the active segment,
+ *    moves to the new one instead of vanishing from one and appearing at the other, so the eye
+ *    follows the selection. `translate` and `scale` only, never `left` or `width`.
+ * 8. **Count** — `count-up`. A figure that just changed counts to its new value. See below for
+ *    why it is CSS, and what it costs a reader who cannot see it.
+ *
+ * **Why none of these is decoration:** each has an input a person can name (a list arrived, a
+ * selection moved, a number changed). If there is no such input there is no class to write.
+ */
+
+/*
+ * The stagger step. Scaled like every duration, so under reduced motion all items arrive
+ * together at once (0.24 ms apart) rather than being held back by a delay the reader did not ask
+ * for. `--lupin-stagger-max` is the index after which an item no longer waits longer.
+ */
+:root {
+  --lupin-stagger-step: calc(24ms * var(--lupin-motion-scale));
+  --lupin-stagger-max: 8;
+}
+
+/*
+ * `stagger-in` — a list child arriving. Set `--stagger-index` on the child (`style` or a class);
+ * the delay is the lesser of that and `--lupin-stagger-max`, times the step. `both` fill holds the
+ * `from` frame during the delay, so a late item is not visible and then snapped back to
+ * transparent. Opacity and transform only: nothing here reflows the list.
+ */
+@utility stagger-in {
+  animation: lupin-enter var(--lupin-duration-200) var(--lupin-ease-spring) both;
+  animation-delay: calc(
+    min(var(--stagger-index, 0), var(--lupin-stagger-max)) * var(--lupin-stagger-step)
+  );
+}
+
+/*
+ * `indicator` — the moving mark. The element is 1px wide and anchored to the physical left of its
+ * positioned parent, and the component writes two custom properties: `--indicator-x`, the active
+ * item's `offsetLeft`, and `--indicator-w`, its `offsetWidth` as a bare number. The mark is moved
+ * with `translate` and stretched with `scale` from the left edge, which the compositor does for
+ * nothing; animating `left` or `width` would be a layout pass per frame.
+ *
+ * Physical `left` and `offsetLeft` are deliberate and correct in a right-to-left layout too: the
+ * measurement and the placement are both from the left edge, so they agree whichever way the text
+ * runs. A logical property would have to be paired with a logical measurement the DOM does not
+ * offer.
+ */
+@utility indicator {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 1px;
+  background-color: var(--lupin-accent);
+  transform-origin: left center;
+  translate: calc(var(--indicator-x, 0) * 1px) 0;
+  scale: var(--indicator-w, 0) 1;
+  transition:
+    translate var(--lupin-duration-200) var(--lupin-ease-spring),
+    scale var(--lupin-duration-200) var(--lupin-ease-spring),
+    opacity var(--lupin-duration-100) var(--lupin-ease-out);
+}
+
+/*
+ * `count-up` — a figure counting to its value.
+ *
+ * ## Why CSS, and the honest cost
+ *
+ * A JavaScript count-up is a `requestAnimationFrame` loop that writes text every frame, which
+ * is the per-frame main-thread cost this file refuses elsewhere. A registered `<integer>` custom
+ * property can be animated by the browser, and a CSS counter prints it, so the number changes
+ * with no script running.
+ *
+ * The cost is that generated content is not the number: it is not selectable, and assistive
+ * technology does not reliably read it. So `CountUp` renders the real number once, visually
+ * hidden, and marks the animated copy `aria-hidden`. The reader gets the value immediately and
+ * the sighted reader gets the count; neither waits for the other.
+ *
+ * Integers only. A percentage, a decimal or a duration is rendered as the plain string it
+ * already is, because a CSS counter prints integers and a formatted figure that flickers
+ * through unformatted intermediates is worse than one that does not count.
+ */
+@property --lupin-count {
+  syntax: '<integer>';
+  inherits: false;
+  initial-value: 0;
+}
+
+/*
+ * `lupin-count` — **role: count.** Interpolates the registered integer `--lupin-count` from
+ * `--count-from` to `--count-to`; the `count-up` utility prints it with a CSS counter. It changes
+ * no visible property of its own, which is why it is safe on any element: the only thing that
+ * moves is the digits.
+ */
+@keyframes lupin-count {
+  from {
+    --lupin-count: var(--count-from, 0);
+  }
+  to {
+    --lupin-count: var(--count-to);
+  }
+}
+
+@utility count-up {
+  /* At rest the figure is its target. A browser without `@property` skips the count and shows
+     this, rather than showing 0. */
+  --lupin-count: var(--count-to, 0);
+  animation: lupin-count calc(var(--lupin-duration-300) * 2) var(--lupin-ease-out) both;
+  counter-reset: lupin-count var(--lupin-count);
+  &::after {
+    content: counter(lupin-count);
+  }
+}
+
+/*
  * Route changes, as view transitions.
  *
  * The router calls `document.startViewTransition` on every navigation, and the browser

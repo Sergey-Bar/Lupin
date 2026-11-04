@@ -23,6 +23,7 @@ on a regression instead.
 | `packages/auth`                | 100        | 100      | 100       | 100   |
 | `packages/automation`          | 94.57      | 85.5     | 89.65     | 96.52 |
 | `packages/config`              | 92         | 96.29    | 100       | 95    |
+| `packages/connectors/email`    | 100        | 100      | 100       | 100   |
 | `packages/connectors/github`   | 100        | 100      | 100       | 100   |
 | `packages/connectors/jira`     | 100        | 100      | 100       | 100   |
 | `packages/connectors/sdk`      | 100        | 100      | 100       | 100   |

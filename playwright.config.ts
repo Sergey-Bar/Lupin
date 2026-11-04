@@ -144,6 +144,10 @@ const DEDICATED_SPECS = [
   // would add 66 page loads to every pull request to buy a number the product suite
   // does not read. It gets its own project below so `pnpm test:e2e` still runs it.
   'accessibility/routes.spec.ts',
+  // The no-scroll contract: every manifest route at three desktop sizes, against a seeded
+  // workspace. Its own project for the accessibility gate's reason, and because it seeds
+  // thirty runs through the reporter, which the `product` specs should not each pay for.
+  'layout/no-scroll.spec.ts',
   // The deployment profiles (plan task 19). It boots the API's own entry point once per profile
   // beside the suite's server, which is minutes of wall clock, and it has a required job of its
   // own (`Profile matrix`), so riding in the `product` run as well would run it twice.
@@ -178,7 +182,7 @@ const durablePathSpecFiles = specFiles.filter((file) => file.endsWith('durable-p
 const renderServe = process.env['LUPIN_RENDER_SERVE'] === 'preview';
 const webServerCommand = renderServe
   ? `pnpm --filter @lupin/unified-web exec vite preview --host 127.0.0.1 --port ${String(WEB_PORT)} --strictPort`
-  : 'pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1';
+  : `pnpm --filter @lupin/unified-web exec vite --host 127.0.0.1 --port ${String(WEB_PORT)} --strictPort`;
 
 const RENDER_PROJECT = 'rendering-budget';
 const PROFILE_MATRIX_PROJECT = 'profile-matrix';
@@ -306,6 +310,9 @@ export default defineConfig({
     {
       command: webServerCommand,
       url: webUrl,
+      // The dev server's `/api` proxy reads `PORT` (`apiProxyTarget`), so without this a suite
+      // started with `E2E_API_PORT` proxies the browser's calls to whatever is on 3000.
+      env: { PORT: String(apiPort) },
       reuseExistingServer: !process.env['CI'],
       timeout: 60_000,
     },
@@ -380,6 +387,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], reducedMotion: 'reduce' },
     },
     {
+      // The no-scroll contract. Motion is off for the reason the accessibility project's is:
+      // a panel measured mid-entrance reports a height it will not have a frame later.
+      name: 'layout-fit',
+      testMatch: '**/layout/no-scroll.spec.ts',
+      timeout: 60_000,
+      use: { ...devices['Desktop Chrome'], reducedMotion: 'reduce' },
+    },
+    {
       // The four deployment profiles, each booted from the API's own entry point against this
       // suite's PostgreSQL (`tests/e2e/profiles/profile-matrix.spec.ts`). Only in its own mode,
       // and with no browser: every case is HTTP against an API the spec starts itself.
@@ -417,6 +432,10 @@ for (const [name, matched] of [
   [
     'accessibility',
     specFiles.filter((file) => baseNameOf(file).endsWith('accessibility/routes.spec.ts')).length,
+  ],
+  [
+    'layout-fit',
+    specFiles.filter((file) => baseNameOf(file).endsWith('layout/no-scroll.spec.ts')).length,
   ],
   [
     PROFILE_MATRIX_PROJECT,

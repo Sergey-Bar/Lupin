@@ -93,6 +93,310 @@ const OUTCOME: Record<
 
 const SHOWN = 5;
 
+/** The dialog's heading: what is about to be done, and to how many. */
+function dialogTitle(label: string, subjects: readonly Subject[]): string {
+  const first = subjects[0];
+  const repo = first?.kind === 'repo';
+  if (subjects.length > 1) {
+    return `${label}: ${String(subjects.length)} ${repo ? 'repositories' : 'items'}`;
+  }
+  if (first?.kind === 'repo') return `${label}: ${first.repository}`;
+  return `${label} ${first?.repository ?? ''}#${String(first?.number ?? '')}`;
+}
+
+/** The sentence under the heading: how a bulk action is previewed, or what this one does. */
+function dialogDescription(kind: ActionKind, subjects: readonly Subject[]): string | undefined {
+  if (subjects.length > 1) {
+    return 'Preview first. A preview asks GitHub for nothing and shows what each item would do.';
+  }
+  if (kind === 'protectBranch') {
+    return 'Requires one approving review before anything is merged into the default branch. A branch that already has protection is left exactly as it is.';
+  }
+  return subjects[0]?.title;
+}
+
+/** What a target is called in the list: a repository, or `repository#number`. */
+function targetName(subject: Subject): string {
+  return subject.kind === 'repo'
+    ? subject.repository
+    : `${subject.repository}#${String(subject.number)}`;
+}
+
+function TargetList({ subjects }: { subjects: readonly Subject[] }): React.ReactElement {
+  return (
+    <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm" aria-label="Targets">
+      {subjects.slice(0, SHOWN).map((subject) => (
+        <li key={`${subject.projectId}#${String(subject.number)}`} className="flex gap-2">
+          <Bdi className="shrink-0 font-mono text-xs text-fg-muted">{targetName(subject)}</Bdi>
+          {subject.kind === 'repo' ? null : (
+            <UserText className="truncate">{subject.title}</UserText>
+          )}
+        </li>
+      ))}
+      {subjects.length > SHOWN ? (
+        <li className="text-fg-muted">and {String(subjects.length - SHOWN)} more</li>
+      ) : null}
+    </ul>
+  );
+}
+
+function Cautions({ cautions }: { cautions: readonly string[] }): React.ReactElement | null {
+  if (cautions.length === 0) return null;
+  return (
+    <div role="alert" className="rounded-md border border-warning p-3 text-sm">
+      <p className="m-0 font-medium">Merging this will go against what the list shows:</p>
+      <ul className="m-0 mt-1 list-disc ps-5">
+        {cautions.map((caution) => (
+          <li key={caution}>{caution}</li>
+        ))}
+      </ul>
+      <p className="m-0 mt-1 text-fg-muted">
+        GitHub still decides whether it can merge. This only tells you what you are choosing.
+      </p>
+    </div>
+  );
+}
+
+/** The fields one kind of action asks for. Most kinds ask for none or for one block of text. */
+function ActionFields({
+  kind,
+  form,
+  edit,
+}: {
+  kind: ActionKind;
+  form: Form;
+  edit: (change: Partial<Form>) => void;
+}): React.ReactElement {
+  const text = TEXT_LABEL[kind];
+  const isList = kind === 'labels' || kind === 'assign' || kind === 'requestReviewers';
+  return (
+    <>
+      {kind === 'merge' ? (
+        <Select
+          id="merge-method"
+          label="How to merge"
+          value={form.method}
+          onChange={(event) => edit({ method: event.target.value as Form['method'] })}
+          options={[
+            { value: 'squash', label: 'Squash and merge' },
+            { value: 'merge', label: 'Create a merge commit' },
+            { value: 'rebase', label: 'Rebase and merge' },
+          ]}
+        />
+      ) : null}
+      {kind === 'createRelease' ? <ReleaseFields form={form} edit={edit} /> : null}
+      {kind === 'review' ? (
+        <Select
+          id="review-event"
+          label="Decision"
+          value={form.event}
+          onChange={(event) => edit({ event: event.target.value as Form['event'] })}
+          options={[
+            { value: 'APPROVE', label: 'Approve' },
+            { value: 'REQUEST_CHANGES', label: 'Request changes' },
+            { value: 'COMMENT', label: 'Comment only' },
+          ]}
+        />
+      ) : null}
+      {needsInput(kind) && text !== undefined ? (
+        <Textarea
+          id="action-text"
+          label={text.label}
+          helperText={text.hint}
+          dir="auto"
+          rows={kind === 'comment' || kind === 'review' ? 5 : 2}
+          value={form.text}
+          onChange={(event) => edit({ text: event.target.value })}
+        />
+      ) : null}
+      {isList ? (
+        <p className="m-0 text-xs text-fg-muted">
+          {String(parseList(form.text).length)} in the list.
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function ReleaseFields({
+  form,
+  edit,
+}: {
+  form: Form;
+  edit: (change: Partial<Form>) => void;
+}): React.ReactElement {
+  return (
+    <>
+      <Input
+        id="release-tag"
+        label="Tag"
+        placeholder="v1.2.0"
+        dir="ltr"
+        value={form.tag}
+        onChange={(event) => edit({ tag: event.target.value })}
+      />
+      <Input
+        id="release-name"
+        label="Title (optional)"
+        dir="auto"
+        value={form.name}
+        onChange={(event) => edit({ name: event.target.value })}
+      />
+      <Select
+        id="release-type"
+        label="Type"
+        value={form.releaseType}
+        onChange={(event) => edit({ releaseType: event.target.value as Form['releaseType'] })}
+        options={[
+          { value: 'release', label: 'Release' },
+          { value: 'prerelease', label: 'Pre-release' },
+          { value: 'draft', label: 'Draft (not published)' },
+        ]}
+      />
+    </>
+  );
+}
+
+function ResultList({
+  results,
+  now,
+}: {
+  results: readonly GithubActionResult[];
+  now: () => Date;
+}): React.ReactElement {
+  return (
+    <ul className="m-0 flex list-none flex-col gap-2 p-0" aria-label="Results">
+      {results.map((result, index) => (
+        <li key={`${result.target}-${String(index)}`} className="flex flex-col gap-0.5 text-sm">
+          <div className="flex items-center gap-2">
+            <Badge variant={OUTCOME[result.outcome].variant}>{OUTCOME[result.outcome].word}</Badge>
+            <Bdi className="font-mono text-xs">{result.target}</Bdi>
+          </div>
+          <span className="text-fg-muted">
+            {result.message}
+            {result.retryAt === null ? '' : ` Try again ${formatRelative(result.retryAt, now())}.`}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Run an action, or preview it, and keep what came back.
+ *
+ * A preview (`dryRun`) marks the form as previewed so a bulk action can be applied; a real run
+ * reports how many items succeeded and asks the page to reload if any did.
+ */
+function useActionRun({
+  kind,
+  subjects,
+  form,
+  github,
+  label,
+  onDone,
+}: {
+  kind: ActionKind;
+  subjects: readonly Subject[];
+  form: Form;
+  github: GithubClient;
+  label: string;
+  onDone: () => void;
+}) {
+  const toast = useToast();
+  const [busy, setBusy] = React.useState(false);
+  const [previewed, setPreviewed] = React.useState(false);
+  const [results, setResults] = React.useState<GithubActionResult[] | null>(null);
+  const [dry, setDry] = React.useState(true);
+
+  /** Any change to the form makes the earlier preview stale: it described a different request. */
+  const invalidate = () => {
+    setPreviewed(false);
+    setResults(null);
+  };
+
+  const finish = (response: { results: GithubActionResult[] }, dryRun: boolean) => {
+    setResults(response.results);
+    setDry(dryRun);
+    if (dryRun) {
+      setPreviewed(true);
+      return;
+    }
+    const done = response.results.filter((result) => result.outcome === 'ok').length;
+    toast({
+      tone: done === response.results.length ? 'success' : 'info',
+      title: `${label}: ${String(done)} of ${String(response.results.length)} done`,
+    });
+    if (done > 0) onDone();
+  };
+
+  const run = (dryRun: boolean) => {
+    setBusy(true);
+    github
+      .runActions({ dryRun, actions: buildActions(kind, subjects, form) })
+      .then((response) => finish(response, dryRun))
+      .catch((error: unknown) =>
+        toast({
+          tone: 'danger',
+          title: `${label} failed`,
+          description: failureText(error, 'The request did not reach the server'),
+        }),
+      )
+      .finally(() => setBusy(false));
+  };
+
+  return { busy, previewed, results, applied: results !== null && !dry, run, invalidate };
+}
+
+/** The footer: close, preview when the action wants one, and the button that applies it. */
+function ActionButtons({
+  kind,
+  label,
+  count,
+  applied,
+  busy,
+  blocked,
+  needsPreview,
+  onClose,
+  onRun,
+}: {
+  kind: ActionKind;
+  label: string;
+  count: number;
+  applied: boolean;
+  busy: boolean;
+  /** The form is incomplete, so nothing can run yet. */
+  blocked: boolean;
+  needsPreview: boolean;
+  onClose: () => void;
+  onRun: (dryRun: boolean) => void;
+}): React.ReactElement {
+  const bulk = count > 1;
+  const applyLabel = bulk ? `Apply to ${String(count)} items` : label;
+  return (
+    <>
+      <Button variant="outline" onClick={onClose}>
+        {applied ? 'Done' : 'Cancel'}
+      </Button>
+      {applied ? null : (
+        <>
+          {bulk || kind === 'merge' ? (
+            <Button variant="outline" disabled={busy || blocked} onClick={() => onRun(true)}>
+              Preview
+            </Button>
+          ) : null}
+          <Button
+            disabled={busy || blocked || needsPreview}
+            onClick={() => onRun(false)}
+            title={needsPreview ? 'Preview this first' : undefined}
+          >
+            {busy ? 'Working…' : applyLabel}
+          </Button>
+        </>
+      )}
+    </>
+  );
+}
 export function GithubActionDialog({
   kind,
   subjects,
@@ -109,7 +413,6 @@ export function GithubActionDialog({
   /** Called once after anything was written, so the list can reload. */
   onDone: () => void;
 }): React.ReactElement {
-  const toast = useToast();
   const bulk = subjects.length > 1;
   const [form, setForm] = React.useState<Form>({
     text: '',
@@ -119,241 +422,56 @@ export function GithubActionDialog({
     name: '',
     releaseType: 'release',
   });
-  const [busy, setBusy] = React.useState(false);
-  const [previewed, setPreviewed] = React.useState(false);
-  const [results, setResults] = React.useState<GithubActionResult[] | null>(null);
-  const [dry, setDry] = React.useState(true);
-  const problem = validate(kind, subjects, form);
   const label = ACTION_LABEL[kind];
-  const text = TEXT_LABEL[kind];
-
-  // Any change to the form makes the earlier preview stale: it described a different request.
-  const edit = (change: Partial<Form>) => {
-    setForm((current) => ({ ...current, ...change }));
-    setPreviewed(false);
-    setResults(null);
-  };
-
-  const run = (dryRun: boolean) => {
-    setBusy(true);
-    github
-      .runActions({ dryRun, actions: buildActions(kind, subjects, form) })
-      .then((response) => {
-        setResults(response.results);
-        setDry(dryRun);
-        if (dryRun) {
-          setPreviewed(true);
-          return;
-        }
-        const done = response.results.filter((result) => result.outcome === 'ok').length;
-        toast({
-          tone: done === response.results.length ? 'success' : 'info',
-          title: `${label}: ${String(done)} of ${String(response.results.length)} done`,
-        });
-        if (done > 0) onDone();
-      })
-      .catch((error: unknown) =>
-        toast({
-          tone: 'danger',
-          title: `${label} failed`,
-          description: failureText(error, 'The request did not reach the server'),
-        }),
-      )
-      .finally(() => setBusy(false));
-  };
-
-  const applied = results !== null && !dry;
+  const { busy, previewed, results, applied, run, invalidate } = useActionRun({
+    kind,
+    subjects,
+    form,
+    github,
+    label,
+    onDone,
+  });
+  const problem = validate(kind, subjects, form);
   const cautions = kind === 'merge' && subjects[0] !== undefined ? cautionsFor(subjects[0]) : [];
   const needsPreview = bulk && !previewed;
+
+  const edit = (change: Partial<Form>) => {
+    setForm((current) => ({ ...current, ...change }));
+    invalidate();
+  };
 
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {bulk
-              ? `${label}: ${String(subjects.length)} ${subjects[0]?.kind === 'repo' ? 'repositories' : 'items'}`
-              : subjects[0]?.kind === 'repo'
-                ? `${label}: ${subjects[0].repository}`
-                : `${label} ${subjects[0]?.repository ?? ''}#${String(subjects[0]?.number ?? '')}`}
-          </DialogTitle>
-          <DialogDescription>
-            {bulk
-              ? 'Preview first. A preview asks GitHub for nothing and shows what each item would do.'
-              : kind === 'protectBranch'
-                ? 'Requires one approving review before anything is merged into the default branch. A branch that already has protection is left exactly as it is.'
-                : subjects[0]?.title}
-          </DialogDescription>
+          <DialogTitle>{dialogTitle(label, subjects)}</DialogTitle>
+          <DialogDescription>{dialogDescription(kind, subjects)}</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-3 px-6 pb-2">
-          <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm" aria-label="Targets">
-            {subjects.slice(0, SHOWN).map((subject) => (
-              <li key={`${subject.projectId}#${String(subject.number)}`} className="flex gap-2">
-                <Bdi className="shrink-0 font-mono text-xs text-fg-muted">
-                  {subject.kind === 'repo'
-                    ? subject.repository
-                    : `${subject.repository}#${String(subject.number)}`}
-                </Bdi>
-                {subject.kind === 'repo' ? null : (
-                  <UserText className="truncate">{subject.title}</UserText>
-                )}
-              </li>
-            ))}
-            {subjects.length > SHOWN ? (
-              <li className="text-fg-muted">and {String(subjects.length - SHOWN)} more</li>
-            ) : null}
-          </ul>
-
-          {cautions.length > 0 ? (
-            <div role="alert" className="rounded-md border border-warning p-3 text-sm">
-              <p className="m-0 font-medium">Merging this will go against what the list shows:</p>
-              <ul className="m-0 mt-1 list-disc ps-5">
-                {cautions.map((caution) => (
-                  <li key={caution}>{caution}</li>
-                ))}
-              </ul>
-              <p className="m-0 mt-1 text-fg-muted">
-                GitHub still decides whether it can merge. This only tells you what you are
-                choosing.
-              </p>
-            </div>
-          ) : null}
-
-          {kind === 'merge' ? (
-            <Select
-              id="merge-method"
-              label="How to merge"
-              value={form.method}
-              onChange={(event) => edit({ method: event.target.value as Form['method'] })}
-              options={[
-                { value: 'squash', label: 'Squash and merge' },
-                { value: 'merge', label: 'Create a merge commit' },
-                { value: 'rebase', label: 'Rebase and merge' },
-              ]}
-            />
-          ) : null}
-
-          {kind === 'createRelease' ? (
-            <>
-              <Input
-                id="release-tag"
-                label="Tag"
-                placeholder="v1.2.0"
-                dir="ltr"
-                value={form.tag}
-                onChange={(event) => edit({ tag: event.target.value })}
-              />
-              <Input
-                id="release-name"
-                label="Title (optional)"
-                dir="auto"
-                value={form.name}
-                onChange={(event) => edit({ name: event.target.value })}
-              />
-              <Select
-                id="release-type"
-                label="Type"
-                value={form.releaseType}
-                onChange={(event) =>
-                  edit({ releaseType: event.target.value as Form['releaseType'] })
-                }
-                options={[
-                  { value: 'release', label: 'Release' },
-                  { value: 'prerelease', label: 'Pre-release' },
-                  { value: 'draft', label: 'Draft (not published)' },
-                ]}
-              />
-            </>
-          ) : null}
-
-          {kind === 'review' ? (
-            <Select
-              id="review-event"
-              label="Decision"
-              value={form.event}
-              onChange={(event) => edit({ event: event.target.value as Form['event'] })}
-              options={[
-                { value: 'APPROVE', label: 'Approve' },
-                { value: 'REQUEST_CHANGES', label: 'Request changes' },
-                { value: 'COMMENT', label: 'Comment only' },
-              ]}
-            />
-          ) : null}
-
-          {needsInput(kind) && text !== undefined ? (
-            <Textarea
-              id="action-text"
-              label={text.label}
-              helperText={text.hint}
-              dir="auto"
-              rows={kind === 'comment' || kind === 'review' ? 5 : 2}
-              value={form.text}
-              onChange={(event) => edit({ text: event.target.value })}
-            />
-          ) : null}
-
-          {kind === 'labels' || kind === 'assign' || kind === 'requestReviewers' ? (
-            <p className="m-0 text-xs text-fg-muted">
-              {String(parseList(form.text).length)} in the list.
-            </p>
-          ) : null}
-
+          <TargetList subjects={subjects} />
+          <Cautions cautions={cautions} />
+          <ActionFields kind={kind} form={form} edit={edit} />
           {problem === null || results !== null ? null : (
             <p role="status" className="m-0 text-sm text-fg-muted">
               {problem}
             </p>
           )}
-
-          {results === null ? null : (
-            <ul className="m-0 flex list-none flex-col gap-2 p-0" aria-label="Results">
-              {results.map((result, index) => (
-                <li
-                  key={`${result.target}-${String(index)}`}
-                  className="flex flex-col gap-0.5 text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <Badge variant={OUTCOME[result.outcome].variant}>
-                      {OUTCOME[result.outcome].word}
-                    </Badge>
-                    <Bdi className="font-mono text-xs">{result.target}</Bdi>
-                  </div>
-                  <span className="text-fg-muted">
-                    {result.message}
-                    {result.retryAt === null
-                      ? ''
-                      : ` Try again ${formatRelative(result.retryAt, now())}.`}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          {results === null ? null : <ResultList results={results} now={now} />}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            {applied ? 'Done' : 'Cancel'}
-          </Button>
-          {applied ? null : (
-            <>
-              {bulk || kind === 'merge' ? (
-                <Button
-                  variant="outline"
-                  disabled={busy || problem !== null}
-                  onClick={() => run(true)}
-                >
-                  Preview
-                </Button>
-              ) : null}
-              <Button
-                disabled={busy || problem !== null || needsPreview}
-                onClick={() => run(false)}
-                title={needsPreview ? 'Preview this first' : undefined}
-              >
-                {busy ? 'Working…' : bulk ? `Apply to ${String(subjects.length)} items` : label}
-              </Button>
-            </>
-          )}
+          <ActionButtons
+            kind={kind}
+            label={label}
+            count={subjects.length}
+            applied={applied}
+            busy={busy}
+            blocked={problem !== null}
+            needsPreview={needsPreview}
+            onClose={onClose}
+            onRun={run}
+          />
         </DialogFooter>
       </DialogContent>
     </Dialog>

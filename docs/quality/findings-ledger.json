@@ -6374,11 +6374,15 @@
       "confirmedBy": "Read against the test and the CI log, which shows `project-1run-1queuedPENDING` at the `running` assertion.",
       "evidence": [
         {
-          "path": "apps/web/src/components/RunList.test.tsx",
-          "asserts": "The test waits for the subscription, then for the phase the event carries, before asserting the outcome is still pending."
+          "path": "apps/web/src/routes/dashboard/index.test.tsx",
+          "asserts": "The live runs list (`RunsListPage`, the routed replacement for the removed `RunList`) is driven by polling and event refetch here, and its reads settle on the change an event makes rather than on a text that was already true."
+        },
+        {
+          "path": "apps/web/src/Composition.test.tsx",
+          "asserts": "The composition corpus no longer lists `components/RunList.tsx`: the dead, unrouted component and its racing test were removed, so the original flaky test cannot recur."
         }
       ],
-      "resolution": "The wait is on the change the event makes, not on a text that was already true."
+      "resolution": "First fixed by waiting on the change the event makes, not on a text that was already true. Then superseded: `RunList` was dead code — unrouted, reachable only from its own test — and was removed in the Settings and no-scroll pass, so its test no longer exists. The live runs list is `RunsListPage`, whose event behaviour is covered by `routes/dashboard/index.test.tsx`. The row stays `fixed` with its proof re-pointed to the surviving code, because the ratchet fails on a vanished row and the removal is itself the strongest form of the fix."
     },
     {
       "id": "MKT-1",
@@ -7364,6 +7368,63 @@
         }
       ],
       "resolution": "A list can be marked `cursorPaged`: it sends no `page`, and reports a non-null nextPage as the signal that the walk stopped early. Re-running against the real repository reads two medium alerts and the grade reflects them."
+    },
+    {
+      "id": "UX-THEME-1",
+      "title": "The theme was applied after the first paint, so a saved light theme flashed dark and every element transitioned",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-11",
+      "confirmed": true,
+      "confirmedOn": "2026-11-02",
+      "summary": "`ThemeProvider` wrote `data-theme` in a React effect, which runs after the first paint. A reader who had saved the light theme (or whose system is light) saw the dark default for a frame, and every element then transitioned its colour to light. A browser contrast check sampled the page in the middle of that transition.",
+      "confirmedBy": "The route-level axe gate failed deterministically on /dashboard/portfolio in the light theme: contrast 1.09:1, foreground #f4f4f6 (the dark theme's) on #eaeae7 (light). With the inline script in apps/web/index.html the same test passes, and all 212 axe tests pass.",
+      "evidence": [
+        {
+          "path": "apps/web/src/theme-boot.test.ts",
+          "asserts": "The inline script in index.html, run as it appears in the file, applies a stored light or dark theme, follows the system when nothing valid is stored, refuses an unrecognised stored value, survives blocked storage, and runs before the module that mounts the app."
+        }
+      ],
+      "resolution": "An inline script in apps/web/index.html sets data-theme from the stored choice, or from the system, before the stylesheet is applied. ThemeProvider still owns the setting afterwards."
+    },
+    {
+      "id": "UX-LOADING-1",
+      "title": "Twelve pages showed nothing to a screen reader while they loaded",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-11",
+      "confirmed": true,
+      "confirmedOn": "2026-11-02",
+      "summary": "The access gate, the runs list, the cockpit and the metric page drew only skeletons while loading, and a skeleton is deliberately hidden from assistive technology. A person using a screen reader was told nothing while the page waited, and a browser sweep saw an empty page on twelve routes (access, agents, ai-code, audit, delivery, deployment, members, portfolio, repo health, repo 360, runs, supply-chain).",
+      "confirmedBy": "The accessibility sweep with the API never settling reported \"rendered an empty <main>\" on those twelve routes after its render check was corrected to look for real content. Each loading wrapper now carries role=\"status\"; all 212 tests pass.",
+      "evidence": [
+        {
+          "path": "tests/e2e/accessibility/routes.spec.ts",
+          "asserts": "Every manifest route renders page content or a status in the loading, empty, error and partial states, including a request that never settles, and has no serious or critical axe violation in both themes."
+        }
+      ],
+      "resolution": "The gate's loading skeleton and the three page-level loading wrappers carry role=\"status\" and an accessible name."
+    },
+    {
+      "id": "UX-LAYOUT-1",
+      "title": "Eleven pages scrolled at desktop sizes, and screen-reader text stretched the whole document",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "MAINT-2026-11",
+      "confirmed": true,
+      "confirmedOn": "2026-11-02",
+      "summary": "The shell is meant to be exactly the viewport from lg up, but fourteen pages opted out of fitting with `h-auto`, so eleven routes overflowed at 1280, 1440 or 1920 wide (worst /dashboard/delivery, 1287 px past the viewport). Separately, `sr-only` text is position: absolute and the shell frame was not `relative`, so it was clipped by nothing and stretched the document by up to 1054 px on /dashboard while every visible thing fit.",
+      "confirmedBy": "The new layout gate failed 46 of 210 tests on first run (docs/quality/ui-audit-baseline.md). After the change it passes: 245 tests, covering desktop sizes, reflow at 390 and 820 wide, and right-to-left.",
+      "evidence": [
+        {
+          "path": "tests/e2e/layout/no-scroll.spec.ts",
+          "asserts": "At 1280, 1440 and 1920 wide neither main nor the document scrolls on any of the 35 manifest routes; at 390 and 820 wide the page never scrolls sideways and the document is not a second scroll container; mirrored right-to-left, nothing starts to scroll. A failure names the overflowing element."
+        }
+      ],
+      "resolution": "PageBody and ScrollRegion give a long page a fixed header and a scrolling body, Panel scrollLabel scrolls a tall chart or table inside its panel, and the shell frame is relative."
     }
   ]
 }

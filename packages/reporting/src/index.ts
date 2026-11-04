@@ -4,6 +4,8 @@ export * from './kpi.js';
 export * from './quality-gates.js';
 export * from './readiness.js';
 export * from './report.js';
+export * from './report-lens.js';
+export * from './report-html.js';
 export * from './stats.js';
 export * from './licence.js';
 export * from './diff-coverage.js';

@@ -81,22 +81,51 @@ const HEADLINE: Record<Bucket, Pick<PullStatus, 'headline' | 'tone'>> = {
 export function statusOf(pr: GithubPullItem): PullStatus {
   const bucket = bucketOf(pr);
   const base = HEADLINE[bucket];
-  const headline =
-    pr.state === 'merged' ? 'Merged' : pr.state === 'closed' ? 'Closed' : base.headline;
-  const reasons: string[] = [];
-  const open = pr.state === 'open';
-  if (open && pr.mergeableState === 'dirty') reasons.push('Merge conflicts');
-  if (pr.reviewDecision === 'changes_requested') reasons.push('Changes requested');
-  if (open && pr.checksState === 'failure') reasons.push('Checks failing');
-  if (open && pr.checksState === 'pending') reasons.push('Checks running');
-  if (open && pr.reviewDecision === 'review_required') reasons.push('Needs review');
-  if (open && pr.mergeableState === 'behind') reasons.push('Behind base');
-  if (pr.reviewDecision === 'approved') reasons.push('Approved');
-  if (open && pr.checksState === 'success') reasons.push('Checks passing');
-  if (open && pr.checksState === null) reasons.push('No checks');
-  return { bucket, headline, tone: pr.state === 'open' ? base.tone : 'outline', reasons };
+  return {
+    bucket,
+    headline: FINISHED_HEADLINE[pr.state] ?? base.headline,
+    tone: pr.state === 'open' ? base.tone : 'outline',
+    reasons: reasonsOf(pr),
+  };
 }
 
+/** What a finished pull request is called, whatever bucket it sorted into. */
+const FINISHED_HEADLINE: Partial<Record<GithubPullItem['state'], string>> = {
+  merged: 'Merged',
+  closed: 'Closed',
+};
+
+/**
+ * Why a pull request has the status it has, worst first: one rule per reason, in the order a
+ * reader should meet them. A rule marked `open` only applies while the pull request is open;
+ * what was decided (approved, changes requested) still reads true afterwards.
+ */
+const REASON_RULES: ReadonlyArray<{
+  open: boolean;
+  text: string;
+  when: (pr: GithubPullItem) => boolean;
+}> = [
+  { open: true, text: 'Merge conflicts', when: (pr) => pr.mergeableState === 'dirty' },
+  {
+    open: false,
+    text: 'Changes requested',
+    when: (pr) => pr.reviewDecision === 'changes_requested',
+  },
+  { open: true, text: 'Checks failing', when: (pr) => pr.checksState === 'failure' },
+  { open: true, text: 'Checks running', when: (pr) => pr.checksState === 'pending' },
+  { open: true, text: 'Needs review', when: (pr) => pr.reviewDecision === 'review_required' },
+  { open: true, text: 'Behind base', when: (pr) => pr.mergeableState === 'behind' },
+  { open: false, text: 'Approved', when: (pr) => pr.reviewDecision === 'approved' },
+  { open: true, text: 'Checks passing', when: (pr) => pr.checksState === 'success' },
+  { open: true, text: 'No checks', when: (pr) => pr.checksState === null },
+];
+
+function reasonsOf(pr: GithubPullItem): string[] {
+  const open = pr.state === 'open';
+  return REASON_RULES.filter((rule) => (open || !rule.open) && rule.when(pr)).map(
+    (rule) => rule.text,
+  );
+}
 /**
  * The one action worth drawing as a button on the row: merge what is ready, and bring a branch
  * that has fallen behind up to date. Everything else stays in the menu.
@@ -121,25 +150,28 @@ export interface Gate {
  */
 export function gatesOf(pr: GithubPullItem): Gate[] {
   if (pr.state !== 'open') return [];
-  const review: Gate =
-    pr.reviewDecision === 'approved'
-      ? { name: 'Review', label: 'Approved', tone: 'success' }
-      : pr.reviewDecision === 'changes_requested'
-        ? { name: 'Review', label: 'Changes requested', tone: 'danger' }
-        : pr.reviewDecision === 'review_required'
-          ? { name: 'Review', label: 'Waiting for a review', tone: 'warning' }
-          : { name: 'Review', label: 'No review required', tone: 'outline' };
-  const checks: Gate =
-    pr.checksState === 'success'
-      ? { name: 'Checks', label: 'Passing', tone: 'success' }
-      : pr.checksState === 'failure'
-        ? { name: 'Checks', label: 'Failing', tone: 'danger' }
-        : pr.checksState === 'pending'
-          ? { name: 'Checks', label: 'Running', tone: 'warning' }
-          : { name: 'Checks', label: 'No checks', tone: 'outline' };
-  return [review, checks, { name: 'Merge', ...mergeGate(pr.mergeableState) }];
+  return [
+    { name: 'Review', ...(REVIEW_GATE[pr.reviewDecision ?? ''] ?? NO_REVIEW_REQUIRED) },
+    { name: 'Checks', ...(CHECKS_GATE[pr.checksState ?? ''] ?? NO_CHECKS) },
+    { name: 'Merge', ...mergeGate(pr.mergeableState) },
+  ];
 }
 
+type GateWords = Pick<Gate, 'label' | 'tone'>;
+
+const REVIEW_GATE: Record<string, GateWords> = {
+  approved: { label: 'Approved', tone: 'success' },
+  changes_requested: { label: 'Changes requested', tone: 'danger' },
+  review_required: { label: 'Waiting for a review', tone: 'warning' },
+};
+const NO_REVIEW_REQUIRED: GateWords = { label: 'No review required', tone: 'outline' };
+
+const CHECKS_GATE: Record<string, GateWords> = {
+  success: { label: 'Passing', tone: 'success' },
+  failure: { label: 'Failing', tone: 'danger' },
+  pending: { label: 'Running', tone: 'warning' },
+};
+const NO_CHECKS: GateWords = { label: 'No checks', tone: 'outline' };
 function mergeGate(state: string | null): Pick<Gate, 'label' | 'tone'> {
   switch (state) {
     case 'clean':

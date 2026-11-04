@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Input } from '@lupin/ui';
+import { Button, Input, Select } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import type { AdminClient, WorkspaceEntry } from '../lib/admin-client.js';
 import { Panel } from './kit.js';
@@ -52,21 +52,16 @@ export function WorkspacePanel({
   };
   return (
     <Panel title="Workspace">
-      <label htmlFor={`${field}-current`} className="mb-1 block text-sm font-medium">
-        Current workspace
-      </label>
-      <select
+      <Select
         id={`${field}-current`}
+        label="Current workspace"
         value={list.value.current}
         onChange={(event) => enter(event.target.value)}
-        className="min-h-11 w-full rounded-lg border border-border bg-surface px-2 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-      >
-        {list.value.workspaces.map((workspace) => (
-          <option key={workspace.id} value={workspace.id}>
-            {`${workspace.name} (${workspace.role})`}
-          </option>
-        ))}
-      </select>
+        options={list.value.workspaces.map((workspace) => ({
+          value: workspace.id,
+          label: `${workspace.name} (${workspace.role})`,
+        }))}
+      />
       <p className="mt-2 max-w-measure text-xs text-fg-muted">
         Each workspace has its own projects, runs, tokens, members and audit trail. Your role can
         differ from one to the next.
