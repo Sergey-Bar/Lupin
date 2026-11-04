@@ -264,8 +264,8 @@ test('a recorded ceiling has headroom over the observation it came from', () => 
   // which read the same bundle about 1.7-2x slower. A ceiling equal to the reading fails
   // the first run that is one frame slower.
   assert.equal(ceilingFor('lcpMs', 152), 460);
-  assert.equal(ceilingFor('inpMs', 32), 100, 'INP below the floor takes the floor');
-  assert.equal(ceilingFor('inpMs', 40), 120);
+  assert.equal(ceilingFor('inpMs', 32), 150, 'INP below the floor takes the floor');
+  assert.equal(ceilingFor('inpMs', 60), 180, '3x a reading above the floor clears it');
   assert.equal(ceilingFor('longTasks', 1), 3, 'a count gets additive headroom');
   assert.equal(ceilingFor('cls', 0.04), 0.08);
 });
@@ -273,10 +273,10 @@ test('a recorded ceiling has headroom over the observation it came from', () => 
 test('a reading of zero still records a ceiling something can meet', () => {
   // INP reads 0 when the interaction painted inside a frame, and CLS reads 0 on a stable
   // route. Multiplying either gives a ceiling of 0, and the next run's 8 ms fails it.
-  assert.equal(ceilingFor('inpMs', 0), 100);
+  assert.equal(ceilingFor('inpMs', 0), 150);
   assert.equal(ceilingFor('cls', 0), 0.05);
   assert.equal(ceilingFor('longTasks', 0), 2);
-  assert.equal(ceilingFor('lcpMs', 0), 300);
+  assert.equal(ceilingFor('lcpMs', 0), 460);
 });
 
 test('rounding only ever adds headroom', () => {
