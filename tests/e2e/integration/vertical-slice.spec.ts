@@ -24,7 +24,7 @@ import { test, expect, type APIRequestContext, type Page } from '@playwright/tes
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { API_AUTH_HEADERS, API_BASE, WEB_BASE } from '../support/config.js';
+import { API_AUTH_HEADERS, API_BASE, REPORTER_AUTH_HEADERS, WEB_BASE } from '../support/config.js';
 
 // ---------------------------------------------------------------------------
 // Evidence directories
@@ -136,7 +136,7 @@ test('vertical slice — reporter event reaches run list (API)', async ({ reques
 
   // Step 1: POST a run:start event
   const postRes = await request.post(`${API_BASE}/api/v1/reporter/events`, {
-    headers: API_AUTH_HEADERS,
+    headers: REPORTER_AUTH_HEADERS,
     data: {
       type: 'run:start',
       runId: RUN_ID,
@@ -173,7 +173,7 @@ test('vertical slice — invalid event rejected, no run created (API negative)',
 }) => {
   // POST invalid event (missing runId)
   const invalidRes = await request.post(`${API_BASE}/api/v1/reporter/events`, {
-    headers: API_AUTH_HEADERS,
+    headers: REPORTER_AUTH_HEADERS,
     data: { type: 'run:start', payload: { total: 1 } },
   });
   expect(invalidRes.status()).toBe(400);
@@ -248,7 +248,7 @@ test('vertical slice — browser shows exact seeded run-item (T29)', async ({ pa
   // Seed the run via Node.js fetch (not browser fetch)
   const seedRes = await fetch(`${API_BASE}/api/v1/reporter/events`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...API_AUTH_HEADERS },
+    headers: { 'Content-Type': 'application/json', ...REPORTER_AUTH_HEADERS },
     body: JSON.stringify({
       type: 'run:start',
       runId: RUN_ID,
@@ -291,7 +291,7 @@ test('vertical slice — SSE live update: run:end changes status to passed witho
   // Step 1: Seed run as running
   const seedRes = await fetch(`${API_BASE}/api/v1/reporter/events`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...API_AUTH_HEADERS },
+    headers: { 'Content-Type': 'application/json', ...REPORTER_AUTH_HEADERS },
     body: JSON.stringify({
       type: 'run:start',
       runId: RUN_ID,
@@ -315,7 +315,7 @@ test('vertical slice — SSE live update: run:end changes status to passed witho
   // Step 3: POST run:end via Node.js fetch (not via the browser — simulates reporter finishing)
   const endRes = await fetch(`${API_BASE}/api/v1/reporter/events`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...API_AUTH_HEADERS },
+    headers: { 'Content-Type': 'application/json', ...REPORTER_AUTH_HEADERS },
     body: JSON.stringify({
       type: 'run:end',
       runId: RUN_ID,

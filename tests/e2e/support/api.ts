@@ -7,7 +7,12 @@
  * do through the product's own boundary.
  */
 import { expect, type APIRequestContext } from '@playwright/test';
-import { API_AUTH_HEADERS, API_BASE, RUNNER_REGISTRATION_HEADERS } from './config.js';
+import {
+  API_AUTH_HEADERS,
+  API_BASE,
+  REPORTER_AUTH_HEADERS,
+  RUNNER_REGISTRATION_HEADERS,
+} from './config.js';
 
 export interface CanonicalRun {
   id: string;
@@ -77,7 +82,7 @@ export async function postReporterEvent(
   event: { type: string; runId: string; payload: Record<string, unknown> },
 ): Promise<void> {
   const response = await request.post(`${API_BASE}/api/v1/reporter/events`, {
-    headers: API_AUTH_HEADERS,
+    headers: REPORTER_AUTH_HEADERS,
     data: event,
   });
   expect(

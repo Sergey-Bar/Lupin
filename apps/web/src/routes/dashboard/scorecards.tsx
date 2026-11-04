@@ -1,18 +1,24 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
-import { AgentsPage } from '../../components/Agents.js';
-import { AiCodePage } from '../../components/AiCode.js';
-import { DeliveryPage } from '../../components/Delivery.js';
+import { lazyPage } from '../../components/lazy-page.js';
 import { projectSearch } from '../../components/ProjectPage.js';
-import { Repo360Page } from '../../components/Repo360.js';
-import { SupplyChainPage } from '../../components/SupplyChain.js';
 import { createAgentsClient } from '../../lib/agents-client.js';
 import { createAiCodeClient } from '../../lib/ai-code-client.js';
 import { createDeliveryClient } from '../../lib/delivery-client.js';
 import { createHealthClient } from '../../lib/health-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
 import { createSupplyChainClient } from '../../lib/supply-chain-client.js';
+
+// Loaded when the route is first opened; see `components/lazy-page.tsx`.
+const AgentsPage = lazyPage(() => import('../../components/Agents.js'), 'AgentsPage');
+const AiCodePage = lazyPage(() => import('../../components/AiCode.js'), 'AiCodePage');
+const DeliveryPage = lazyPage(() => import('../../components/Delivery.js'), 'DeliveryPage');
+const Repo360Page = lazyPage(() => import('../../components/Repo360.js'), 'Repo360Page');
+const SupplyChainPage = lazyPage(
+  () => import('../../components/SupplyChain.js'),
+  'SupplyChainPage',
+);
 
 /**
  * The scorecard pages: supply chain, delivery, AI-written code, agents, and the 360 that

@@ -50,13 +50,33 @@ function step(label, command, args, env) {
 }
 
 /**
+ * The environment every step of the run gets.
+ *
+ * **`NODE_ENV=production`, always.** The point of this module is to measure the bundle that
+ * ships, and Vite applies `NODE_ENV` from a `.env` file to `vite build`. A developer's `.env`
+ * sets `NODE_ENV=development`, so on the reference install, the one host `render:baseline` is
+ * meant to run on, the budget measured React's development build: a 1.5 MB entry against the
+ * shipped 1.1 MB, with a load-time long task on every route. CI has no `.env`, so it measured
+ * the production bundle, and the two hosts compared different programs against one ceiling.
+ * A value already in the environment wins over `.env` in Vite, so setting it here is enough,
+ * and it is set last so a caller cannot measure a development bundle by passing one in.
+ *
+ * @param {NodeJS.ProcessEnv} base the caller's environment
+ * @param {NodeJS.ProcessEnv} [extraEnv] added on top, e.g. the baseline writer's switch
+ * @returns {NodeJS.ProcessEnv}
+ */
+export function renderEnvironment(base, extraEnv = {}) {
+  return { ...base, ...extraEnv, [RENDER_SERVE_ENV]: 'preview', NODE_ENV: 'production' };
+}
+
+/**
  * Build the web bundle and its workspace dependencies, then run the budget project.
  *
  * @param {NodeJS.ProcessEnv} [extraEnv] added to the Playwright run, e.g. the baseline writer's switch
  * @returns {number} the exit status of the first step that failed, or 0
  */
 export function runRenderBudget(extraEnv = {}) {
-  const env = { ...process.env, ...extraEnv, [RENDER_SERVE_ENV]: 'preview' };
+  const env = renderEnvironment(process.env, extraEnv);
   const built = step(
     'render: web build',
     'pnpm',
