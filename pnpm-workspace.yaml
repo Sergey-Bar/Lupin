@@ -264,7 +264,10 @@ catalog:
   typescript: ^6.0.3
   # Pinned exactly: 8.72.1 runs `pnpm lint` out of a 4 GB heap (exit 134) on this tree,
   # where 8.72.0 lints it clean; bisected with every other bump of that group held in
-  # place. Return to a caret range on the first release that lints without the OOM.
+  # place. Upstream: typescript-eslint#13109 (open on 2026-11-04), "Single-run Programs for
+  # the project service (8.72.1) duplicate memory when tsconfigs overlap", which is this
+  # workspace's shape (a root tsconfig over every package's). Return to a caret range on
+  # the first release that fixes it and lints without the OOM.
   typescript-eslint: 8.72.0
   # QR codes for device pairing (apps/web). Zero dependencies; pinned exactly.
   uqr: 0.1.3
