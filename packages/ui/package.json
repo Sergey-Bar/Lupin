@@ -26,9 +26,9 @@
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
-    "@storybook/addon-docs": "^10.6.3",
-    "@storybook/react": "^10.6.3",
-    "@storybook/react-vite": "^10.6.3",
+    "@storybook/addon-docs": "^10.6.5",
+    "@storybook/react": "^10.6.5",
+    "@storybook/react-vite": "^10.6.5",
     "@tailwindcss/vite": "catalog:",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "catalog:",
