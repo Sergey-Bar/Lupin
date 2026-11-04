@@ -67,13 +67,23 @@
     "reading itself**: the ceilings are compared on the CI runner, which read the same bundle",
     "about 1.7-2x slower than the reference install on 2026-10-21 (LCP 236-264 ms against",
     "112-152 ms), so `CEILING_RULES` in scripts/lib/rendering-budget.mjs gives LCP and INP 3x",
-    "with floors of 300 ms and 100 ms, CLS 2x with a floor of 0.05, and long tasks +2. That",
-    "leaves ~1.7x over the slowest CI reading, so a doubling on CI still fails. Review the diff",
-    "before committing it — the point of recording the number once is that the next change",
-    "has to beat it."
+    "with floors of 460 ms and 150 ms, CLS 2x with a floor of 0.05, and long tasks +2.",
+    "",
+    "The LCP and INP floors were raised from 300/100 to 460/150 on 2026-11-04. For the four",
+    "primary routes the reference readings are low enough that `3x` falls under the floor, so",
+    "the floor — not the factor — is the binding ceiling on them. The old floors sat below the",
+    "CI runner's own clean range: across 23 CI runs `/dashboard` read LCP up to 404 ms and INP",
+    "up to 112 ms, so a third of runs failed on the gap between two machines rather than on any",
+    "regression. The floors now clear those observed CI maxima with margin. The `observed` block",
+    "below is still the 2026-10-21 reference reading; the metric keys are deliberately held at",
+    "those floors rather than at `ceilingFor(observed)`, because re-recording captures one noisy",
+    "run and bakes its `3x` into the ceiling (a single re-record read LCP 332 on one route and",
+    "would have set a 1000 ms ceiling). Review the diff before committing it — the point of",
+    "recording the number once is that the next change has to beat it, and a regression that",
+    "doubles a heavier route's reading still fails."
   ],
   "recorded": true,
-  "reason": "Recorded by `pnpm render:baseline` on 2026-10-21 on the reference install — a self-hosted single node (Intel Core i7-13650HX, 31.7 GB, Windows 11 Pro), PostgreSQL 16 in Docker, the web bundle under `vite preview`. Each route's `observed` block is the reading; the metric keys are `ceilingFor(observed)`. Closes PERF-1, and `test:render` is `pr-blocking` in the same commit.",
+  "reason": "Observations recorded by `pnpm render:baseline` on 2026-10-21 on the reference install — a self-hosted single node (Intel Core i7-13650HX, 31.7 GB, Windows 11 Pro), PostgreSQL 16 in Docker, the web bundle under `vite preview`. Each route's `observed` block is that reading. The metric-key ceilings are `ceilingFor(observed)` under the CEILING_RULES floors raised to LCP 460 / INP 150 on 2026-11-04 (see the `$comment` above for why the floor dominates these light routes and why a re-record was not taken). Closes PERF-1, and `test:render` is `pr-blocking`.",
   "recordedOn": "2026-10-21",
   "routes": {
     "/dashboard": {
