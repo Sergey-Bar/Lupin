@@ -28,11 +28,25 @@ const MAX_SHOWN = 3;
 export function ToastProvider({ children }: { children: React.ReactNode }): React.ReactElement {
   const [shown, setShown] = React.useState<Shown[]>([]);
   const next = React.useRef(0);
+  // Each toast's dismissal timer, so the ones still pending are cleared with the provider:
+  // a timer that outlives it calls setState on a tree (and in a test, a `window`) that is gone.
+  const timers = React.useRef(new Set<ReturnType<typeof setTimeout>>());
+  React.useEffect(() => {
+    const pending = timers.current;
+    return () => {
+      for (const timer of pending) clearTimeout(timer);
+      pending.clear();
+    };
+  }, []);
   const push = React.useCallback((message: ToastMessage) => {
     next.current += 1;
     const id = next.current;
     setShown((current) => [...current, { ...message, id }].slice(-MAX_SHOWN));
-    setTimeout(() => setShown((current) => current.filter((toast) => toast.id !== id)), TOAST_MS);
+    const timer = setTimeout(() => {
+      timers.current.delete(timer);
+      setShown((current) => current.filter((toast) => toast.id !== id));
+    }, TOAST_MS);
+    timers.current.add(timer);
   }, []);
   return (
     <ToastContext.Provider value={push}>
