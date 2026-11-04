@@ -7425,6 +7425,34 @@
         }
       ],
       "resolution": "PageBody and ScrollRegion give a long page a fixed header and a scrolling body, Panel scrollLabel scrolls a tall chart or table inside its panel, and the shell frame is relative."
+    },
+    {
+      "id": "MNT-169",
+      "title": "eslint-plugin-jsx-a11y calls minimatch's default export, which minimatch 11 (the only release fixing GHSA-g3hv-75wg-m249) no longer has",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "debt",
+      "wave": "MAINT-2026-11",
+      "owner": "Whoever next bumps `eslint-plugin-jsx-a11y`. 6.10.2 is the latest release (unchanged since 2024-10) and still declares `minimatch ^3.1.2`; the repository carries a two-line local patch, `patches/eslint-plugin-jsx-a11y@6.10.2.patch`, so the minimatch override can reach every copy.",
+      "removalCondition": "An `eslint-plugin-jsx-a11y` release that imports minimatch 10+ by its named export (or drops it) is adopted, its entry is removed from `patchedDependencies` in `pnpm-workspace.yaml`, the patch file is deleted, and `pnpm lint` passes with `jsx-a11y/label-has-associated-control` still reporting an unassociated label.",
+      "summary": "Dependabot alerts #8 (glob, GHSA-3g3m-2fjr-6pw4) and #9 (minimatch, GHSA-g3hv-75wg-m249) are fixed only on new majors, so `pnpm-workspace.yaml` overrides `glob@>=9.0.0 <14.0.2` and `minimatch@<11.0.1`. glob 10 was reached at run time through the runner's `@usebruno/cli` (google-auth-library > gaxios > rimraf 5). minimatch 9 and 10 export the same API in 11, and glob 7 uses only the `Minimatch` class, which 11 keeps. minimatch 3.1.5 contains none of the vulnerable code (`firstPhasePreProcess` and `optimizationLevel` do not exist in it) but the alert and OpenSSF Scorecard match by range, so it is overridden too. Its one incompatible consumer is eslint-plugin-jsx-a11y: `_interopRequireDefault(require('minimatch')).default` is undefined against minimatch 11, and with the override alone `pnpm lint` crashed with `TypeError: (0 , _minimatch.default) is not a function` in `jsx-a11y/label-has-associated-control`. The patch binds `default` to the named `minimatch` export in `lib/util/mayContainChildComponent.js` and `lib/util/mayHaveAccessibleLabel.js`, the only two files that import it.",
+      "confirmed": true,
+      "confirmedOn": "2026-11-04",
+      "confirmedBy": "Reproduced the lint crash with the override and without the patch. With the patch, `pnpm lint` passes and a probe file showed the rule still reports a bare `<label>` and not one wrapping an `<input>`. `pnpm audit` reports no known vulnerabilities; the lockfile resolves only minimatch 11.0.4 and glob 14.0.3 (plus glob 7.2.3, below the advisory's range). `pnpm build` (31 tasks), `pnpm test:runner`, `scripts/license-check.mjs` (glob 7 on minimatch 11) and a Storybook build (docgen on glob 14) pass.",
+      "evidence": [
+        {
+          "path": "patches/eslint-plugin-jsx-a11y@6.10.2.patch",
+          "asserts": "Both minimatch imports in eslint-plugin-jsx-a11y resolve `default` to minimatch's named export, so the rule calls a function on minimatch 11."
+        },
+        {
+          "path": "pnpm-workspace.yaml",
+          "asserts": "Overrides `glob@>=9.0.0 <14.0.2` to ^14.0.2 and `minimatch@<11.0.1` to ^11.0.1, each with its advisory, path and review date, and lists the jsx-a11y patch under `patchedDependencies`."
+        },
+        {
+          "path": "eslint.config.js",
+          "asserts": "Enables the jsx-a11y rules whose `label-has-associated-control` check crashes without the patch, so `pnpm lint` fails if the patch is dropped while the override stays."
+        }
+      ]
     }
   ]
 }
