@@ -79,8 +79,8 @@
     "/dashboard": {
       "$why": "The Overview: the first paint a person sees, and the screen that answers \"can I ship\". It replaced /login, which no longer exists (ADR-006). Opaque like everything else, so the glass depth is 0.",
       "glassStackDepth": 0,
-      "lcpMs": 380,
-      "inpMs": 100,
+      "lcpMs": 460,
+      "inpMs": 150,
       "cls": 0.05,
       "longTasks": 2,
       "observed": {
@@ -94,7 +94,7 @@
       "$why": "The runs list. The heaviest of the four: every row is a run, and a slow one here is a dashboard that appears to hang. Opaque rows on an opaque plane, so the glass depth is 0.",
       "glassStackDepth": 0,
       "lcpMs": 460,
-      "inpMs": 100,
+      "inpMs": 150,
       "cls": 0.05,
       "longTasks": 2,
       "observed": {
@@ -107,8 +107,8 @@
     "/dashboard/runs/:runId": {
       "$why": "Where a person decides whether a release is safe, so a rendering defect here is the most expensive one in the product. Evidence is never read through a translucent surface: the glass depth is 0.",
       "glassStackDepth": 0,
-      "lcpMs": 340,
-      "inpMs": 100,
+      "lcpMs": 460,
+      "inpMs": 150,
       "cls": 0.05,
       "longTasks": 2,
       "observed": {
@@ -121,8 +121,8 @@
     "/dashboard/quarantine": {
       "$why": "The filter surface, and the only primary flow whose content changes on every keystroke — so its INP is the reading most likely to catch an unthrottled re-render. Opaque, glass depth 0.",
       "glassStackDepth": 0,
-      "lcpMs": 400,
-      "inpMs": 100,
+      "lcpMs": 460,
+      "inpMs": 150,
       "cls": 0.05,
       "longTasks": 2,
       "observed": {

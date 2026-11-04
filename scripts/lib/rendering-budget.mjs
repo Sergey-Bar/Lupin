@@ -68,11 +68,20 @@ function isRecord(value) {
  *    route for the same reason.
  *  - `longTasks` is a count, so its headroom is additive rather than a multiple.
  *
+ * The INP and LCP floors were raised on 2026-11-04 after the floor, not the factor, turned
+ * out to be the binding constraint on the lightest routes. Across 23 CI runs `/dashboard`
+ * read INP up to 112 ms (avg 65) and LCP up to 404 ms (avg 263), while its reference
+ * readings (INP 32, LCP 124) put `3x` below the old floors of 100 and 300 — so the ceiling
+ * was the floor, pinned under the CI range, and a third of runs failed on nothing. A ceiling
+ * below what a clean CI run produces measures the runner, not the code. The floors now clear
+ * the observed CI maxima with margin (INP 150, LCP 460); a real regression that doubles
+ * either still fails, because `3x` the reference reading overtakes the floor well before that.
+ *
  * Every value is rounded *up*, so rounding can only add headroom, never remove it.
  */
 export const CEILING_RULES = {
-  lcpMs: { factor: 3, floor: 300, add: 0, step: 10 },
-  inpMs: { factor: 3, floor: 100, add: 0, step: 10 },
+  lcpMs: { factor: 3, floor: 460, add: 0, step: 10 },
+  inpMs: { factor: 3, floor: 150, add: 0, step: 10 },
   cls: { factor: 2, floor: 0.05, add: 0, step: 0.01 },
   longTasks: { factor: 1, floor: 0, add: 2, step: 1 },
 };
