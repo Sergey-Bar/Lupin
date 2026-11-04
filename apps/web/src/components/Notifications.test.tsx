@@ -365,6 +365,25 @@ describe('toasts', () => {
     await waitFor(() => expect(screen.queryAllByTestId('toast')).toHaveLength(0));
   });
 
+  it('leaves no dismissal timer running once the provider is gone', () => {
+    // A timer that outlives the provider calls setState after the tree (and, at the end of
+    // a test file, jsdom's `window`) is gone; in CI that surfaced as an unhandled
+    // "window is not defined" that failed a run whose every test had passed.
+    vi.useFakeTimers();
+    const view = render(
+      <ToastProvider>
+        <Trigger />
+      </ToastProvider>,
+    );
+    act(() => {
+      screen.getByRole('button', { name: 'go' }).click();
+    });
+    expect(vi.getTimerCount()).toBe(1);
+    view.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
+  });
+
   it('is a no-op without a provider', () => {
     render(<Trigger />);
     expect(() => screen.getByRole('button', { name: 'go' }).click()).not.toThrow();
