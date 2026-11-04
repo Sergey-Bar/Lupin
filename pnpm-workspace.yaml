@@ -191,6 +191,21 @@ overrides:
   # runner's `@usebruno/cli` (axios), which pins nothing newer. Fixed in 1.16.2, published
   # 2026-10-25. Added 2026-11-01. Review by 2026-12-01: drop it when `@usebruno/cli` takes the fix.
   follow-redirects@>=1.16.0 <=1.16.1: ^1.16.2
+  # Dependabot alerts #8 and #9 (2026-10-30), both transitive, both fixed only on a new major.
+  # - glob 9.0.0-14.0.1: GHSA-3g3m-2fjr-6pw4, an aborted walk keeps reading directories after
+  #   rejecting. glob 10 is reached at run time: the runner's `@usebruno/cli` >
+  #   google-auth-library > gaxios > rimraf 5. glob 13 comes through the Storybook docgen and
+  #   Sentry bundler plugins. 14 keeps the `glob`/`globSync` exports both import.
+  #   glob 7 (license-checker) is below the range and is not touched.
+  # - minimatch <11.0.1: GHSA-g3hv-75wg-m249, globParts amplification. 9 and 10 (eslint,
+  #   typescript-eslint, sonarjs, Stryker, glob) export the same API in 11. 3.1.5 has none of
+  #   the vulnerable code, but the alert matches by range, so it moves too: glob 7 uses only the
+  #   `Minimatch` class, which 11 keeps, and eslint-plugin-jsx-a11y, which calls the default
+  #   export 11 no longer has, is patched below (MNT-169).
+  # Added 2026-11-04. Review by 2026-12-04: drop each when its parents take the fix.
+  'glob@>=9.0.0 <14.0.2': ^14.0.2
+  # GHSA-g3hv-75wg-m249, described above. Added 2026-11-04. Review by 2026-12-04.
+  'minimatch@<11.0.1': ^11.0.1
   # Removed 2026-10-21: `uuid@<11.1.1: ^11.1.1`, through storybook. Storybook 10 no longer
   # depends on `uuid`, so nothing in the tree resolves it and the override matched nothing.
 
@@ -243,3 +258,4 @@ catalog:
   zod: ^4.6.7
 patchedDependencies:
   '@stryker-mutator/vitest-runner@10.0.0': patches/@stryker-mutator__vitest-runner@10.0.0.patch
+  eslint-plugin-jsx-a11y@6.10.2: patches/eslint-plugin-jsx-a11y@6.10.2.patch
