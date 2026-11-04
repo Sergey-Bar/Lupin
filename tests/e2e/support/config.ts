@@ -118,6 +118,24 @@ export const RUNNER_REGISTRATION_HEADERS = {
   'x-runner-registration-secret': RUNNER_REGISTRATION_SECRET,
 };
 
+/**
+ * The reporter secret the suite's API is booted with, and the header that carries it.
+ *
+ * The API loads the repository's `.env` at startup (`apps/api/src/instrument.ts`), and a
+ * value already in the environment wins over the file. CI has no `.env`, so the reporter
+ * routes ran open there and the specs sent the installation key, which an open route
+ * ignores. A developer's `.env` sets `REPORTER_SECRET`, so the same API refused every seeded
+ * run with `INVALID_REPORTER_TOKEN`, and the layout, rendering-budget and seeded product specs
+ * could not run outside CI. Booting the API with this value, and sending it, makes both hosts
+ * run the reporter's token check the same way, which is also the way production runs it.
+ *
+ * Assembled from parts, for the same reason as the key, and shared with `playwright.config.ts`.
+ */
+export const REPORTER_SECRET = ['e2e', 'reporter', 'secret', '32', 'characters', 'long'].join('-');
+
+/** Bearer credential for the reporter routes (`/api/v1/reporter/*`). */
+export const REPORTER_AUTH_HEADERS = { Authorization: `Bearer ${REPORTER_SECRET}` };
+
 /** The session cookie the API sets on a successful login. */
 export const SESSION_COOKIE = 'lupin_session';
 

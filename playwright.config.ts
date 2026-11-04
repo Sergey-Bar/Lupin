@@ -6,6 +6,7 @@ import {
   API_PORT,
   COOKIE_SECRET,
   INSTALLATION_KEY,
+  REPORTER_SECRET,
   RUNNER_REGISTRATION_SECRET,
   WEB_BASE,
   WEB_PORT,
@@ -284,6 +285,10 @@ export default defineConfig({
         // it treats a *missing* secret as a misconfiguration outside `NODE_ENV=test`, and
         // this lane runs as `development`.
         RUNNER_REGISTRATION_SECRET,
+        // Explicit, so it wins over the `.env` the API loads at startup: without it a
+        // developer's `REPORTER_SECRET` turned the reporter's token check on locally while CI
+        // ran it open, and every spec that seeds runs answered `INVALID_REPORTER_TOKEN` off CI.
+        REPORTER_SECRET,
         PUBLIC_APP_URL: webUrl,
         // **A project, so the cockpit has a subject to render.** The cockpit is
         // project-scoped: `Cockpit.tsx` reads `subject.id`, loads five endpoints for it,
