@@ -232,7 +232,10 @@ catalog:
   react-dom: ^19.3.1
   tailwindcss: ^4.3.3
   typescript: ^6.0.3
-  typescript-eslint: ^8.72.1
+  # Pinned exactly: 8.72.1 runs `pnpm lint` out of a 4 GB heap (exit 134) on this tree,
+  # where 8.72.0 lints it clean; bisected with every other bump of that group held in
+  # place. Return to a caret range on the first release that lints without the OOM.
+  typescript-eslint: 8.72.0
   # QR codes for device pairing (apps/web). Zero dependencies; pinned exactly.
   uqr: 0.1.3
   vite: ^8.3.5
