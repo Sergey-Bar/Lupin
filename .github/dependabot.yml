@@ -27,6 +27,10 @@ updates:
     ignore:
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
+      # 8.72.1 runs `pnpm lint` out of memory (the pin in pnpm-workspace.yaml says how
+      # that was found). Only that version is skipped, so the next patch is still proposed.
+      - dependency-name: 'typescript-eslint'
+        versions: ['8.72.1']
 
   - package-ecosystem: 'github-actions'
     directory: '/'
