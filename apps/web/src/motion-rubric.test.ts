@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -21,10 +21,16 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOTS = [here, path.resolve(here, '../../../packages/ui/src/components')];
 
 function sources(directory: string): Array<{ name: string; body: string }> {
-  return readdirSync(directory).flatMap((entry) => {
-    const full = path.join(directory, entry);
-    if (statSync(full).isDirectory()) return sources(full);
-    if (!entry.endsWith('.tsx') || entry.includes('.test.') || entry.includes('.stories.')) {
+  // `withFileTypes` rather than a `statSync` before the read: checking a path and then using
+  // it is a time-of-check/time-of-use race, which is what CodeQL flagged.
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(directory, entry.name);
+    if (entry.isDirectory()) return sources(full);
+    if (
+      !entry.name.endsWith('.tsx') ||
+      entry.name.includes('.test.') ||
+      entry.name.includes('.stories.')
+    ) {
       return [];
     }
     return [
