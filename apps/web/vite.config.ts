@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => {
           // come from, and the tests assert that the proxy and the API agree on the
           // value they *do* get rather than pretending the file path works.
           target: apiProxyTarget({
-            ...loadEnv(mode, path.resolve(__dirname, '../..'), ''),
+            ...loadEnv(mode, path.resolve(import.meta.dirname, '../..'), ''),
             ...process.env,
           }),
           changeOrigin: true,
