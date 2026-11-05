@@ -145,7 +145,7 @@ const scenario = computed(() => scenarios[selected.value]);
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   border-top: 1px solid var(--lupin-border);
-  animation: run-arrive 300ms var(--lupin-ease-out);
+  animation: run-arrive var(--lupin-duration-150) var(--lupin-ease-arrive);
 }
 .run-lab__timeline {
   display: flex;
@@ -218,7 +218,7 @@ const scenario = computed(() => scenarios[selected.value]);
 @keyframes run-arrive {
   from {
     opacity: 0;
-    transform: translateY(0.5rem);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
