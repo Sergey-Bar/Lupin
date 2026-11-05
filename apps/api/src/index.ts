@@ -1,3 +1,10 @@
+// Loaded first, for its side effects: it reads `.env` into `process.env` and initialises the
+// error reporter before any module below evaluates `process.env` or throws from a config or
+// startup-policy check. An ES import is hoisted and runs in source order, so this line is the
+// in-code equivalent of the `--import ./dist/instrument.js` preload the container used — and it
+// works identically under `tsx` in dev, where the forwarded `--import` flag did not register the
+// TypeScript loader for the preloaded module (tsx 4.23.x) and so could not resolve its imports.
+import './instrument.js';
 import {
   recordClientAddress,
   requestContext,

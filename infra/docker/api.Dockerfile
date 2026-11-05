@@ -33,7 +33,8 @@ RUN mkdir -p /var/lib/lupin/artifacts \
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=5s --retries=12 CMD node -e "fetch('http://127.0.0.1:3000/api/v1/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
-# `--import` preloads the Sentry SDK ahead of the module graph. Node re-runs
-# `--require` preloads on its module loader thread, so the SDK would never reach
-# the application; `--import` is the only form v11 supports.
-CMD ["node", "--import", "./dist/instrument.js", "dist/index.js"]
+# `dist/index.js` imports `./instrument.js` as its first statement, which preloads the Sentry
+# SDK and reads `.env` before the module graph evaluates — so no `--import` flag is needed, and
+# dev (`tsx src/index.ts`) and prod run the same entrypoint. `--require` would not work here:
+# Node runs it on the loader thread, where the SDK never reaches the application.
+CMD ["node", "dist/index.js"]

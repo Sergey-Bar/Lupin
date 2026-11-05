@@ -28,19 +28,29 @@ import { initSentry } from './observability/sentry.js';
  * explicit `LUPIN_ALLOW_DEV_SECRETS=1 pnpm dev` still overrides the file.
  */
 const here = path.dirname(fileURLToPath(import.meta.url));
-for (const candidate of [
-  path.resolve(here, '../../..', '.env'),
-  path.resolve(here, '../../.env'),
-  path.resolve(here, '../../../.env'),
-]) {
-  if (existsSync(candidate)) {
-    process.loadEnvFile(candidate);
-    break;
-  }
-}
 
-// Preloaded via `--import` so the SDK is live before the module graph is
-// evaluated. `getConfig()` and `checkProductionPolicy()` both throw on a
-// misconfigured deployment, and that failure happens while `index.ts` is still
-// importing, which is too early for a call made from inside it.
-initSentry();
+// Under Vitest this module is in the graph (it is imported at the top of `index.ts`), but a
+// test — and the authz-matrix generator, which imports `dist/index.js` with `NODE_ENV=test` —
+// owns its own environment: loading a developer's `.env` here would let the machine's
+// configuration decide the result. An open-mode reporter test would see a configured
+// `REPORTER_SECRET`; the route introspector would see a `DATABASE_URL` and register the
+// database-only routes, so the composed app would not match the committed authz matrix. Both
+// `VITEST` and `NODE_ENV=test` mark that context; outside it the preload is the whole point.
+const underTest = process.env['VITEST'] !== undefined || process.env['NODE_ENV'] === 'test';
+if (!underTest) {
+  for (const candidate of [
+    path.resolve(here, '../../..', '.env'),
+    path.resolve(here, '../../.env'),
+    path.resolve(here, '../../../.env'),
+  ]) {
+    if (existsSync(candidate)) {
+      process.loadEnvFile(candidate);
+      break;
+    }
+  }
+
+  // Preloaded so the SDK is live before the module graph is evaluated. `getConfig()` and
+  // `checkProductionPolicy()` both throw on a misconfigured deployment, and that failure happens
+  // while `index.ts` is still importing, which is too early for a call made from inside it.
+  initSentry();
+}
