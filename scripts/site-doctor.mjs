@@ -553,8 +553,14 @@ function checkSitePalette() {
  * @returns {string[]}
  */
 function literalMotion(source, label) {
-  const time = /(?<![-\w.])\d+(?:\.\d+)?m?s\b/;
-  const easing = /(?<![-\w])(?:ease(?:-in-out|-in|-out)?|cubic-bezier)\b(?!-)/;
+  const time = /(?<![-\w.])\d[\d.]*m?s\b/;
+  const EASINGS = new Set(['ease', 'ease-in', 'ease-out', 'ease-in-out', 'cubic-bezier']);
+  /** @param {string} line */
+  const bareEasing = (line) =>
+    line
+      .replace(/var\([^)]*\)/g, ' ')
+      .split(/[^\w-]+/)
+      .some((word) => EASINGS.has(word));
   // A component's template and script are prose and data; only its `<style>` is styling.
   // Lines outside a style block are blanked rather than dropped, so line numbers still match.
   const styled = label.endsWith('.vue')
@@ -566,7 +572,7 @@ function literalMotion(source, label) {
     .split(/\r?\n/)
     .map((line, index) => ({ line, number: index + 1 }))
     .filter(({ line }) => !line.trim().startsWith('*') && !line.trim().startsWith('//'))
-    .filter(({ line }) => time.test(line) || easing.test(line))
+    .filter(({ line }) => time.test(line) || bareEasing(line))
     .map(
       ({ line, number }) =>
         `\`${label}:${String(number)}\` has a literal duration or easing: ${line.trim()}`,
