@@ -119,7 +119,9 @@ describe('listPullRequests', () => {
       lastActivityAt: ago(30),
     });
     await pull(db, 'ws-1', beta, { title: 'c', state: 'closed', closedAt: ago(2) });
-    const ws = { db, workspaceId: 'ws-1' };
+    // The fixtures are dated from `NOW`, so the staleness cut-off must be too. On the wall
+    // clock `a` (active a day before `NOW`) turned 14 days stale on 2026-11-05 and this failed.
+    const ws = { db, workspaceId: 'ws-1', now: () => NOW };
     const titles = async (q: Record<string, unknown>) =>
       (await listPullRequests(ws, query(q))).items.map((item) => item.title).sort();
 
