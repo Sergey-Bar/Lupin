@@ -266,6 +266,26 @@ describe('the spring easing', () => {
   });
 });
 
+/**
+ * A `--lupin-duration-*` token is already `calc(value * scale)`. Multiplying it by the scale a
+ * second time squares the reduced-motion factor (0.01 becomes 0.0001), so the reduced duration
+ * is no longer the one `motion.ts` documents.
+ */
+describe('the published animations scale their duration once', () => {
+  const published = [...motionCss.matchAll(/(--animate-[\w-]+):\s*([^;]+);/g)];
+
+  it('publishes animations to check', () => {
+    expect(published.length).toBeGreaterThan(0);
+  });
+
+  it('never multiplies an already-scaled duration token by the scale again', () => {
+    for (const [, name, value] of published) {
+      if (!value?.includes('var(--lupin-duration-')) continue;
+      expect(value, `${name} scales its duration twice`).not.toContain('var(--lupin-motion-scale)');
+    }
+  });
+});
+
 /** The body of the rule whose selector list is exactly `selector`. */
 function ruleBody(css: string, selector: string): string {
   const start = css.indexOf(`${selector} {`);

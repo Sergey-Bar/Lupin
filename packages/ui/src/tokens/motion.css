@@ -126,18 +126,12 @@
    *
    * The last two are the roles that had no name before, named after what they are.
    */
-  --animate-fade-in: lupin-enter calc(var(--lupin-duration-200) * var(--lupin-motion-scale))
-    var(--lupin-ease-spring);
-  --animate-fade-out: lupin-exit calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
-    var(--lupin-ease-in);
-  --animate-zoom-in-95: lupin-zoom-in calc(var(--lupin-duration-200) * var(--lupin-motion-scale))
-    var(--lupin-ease-spring);
-  --animate-zoom-out-95: lupin-zoom-out calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
-    var(--lupin-ease-in);
-  --animate-lupin-slide-in: lupin-slide-in
-    calc(var(--lupin-duration-300) * var(--lupin-motion-scale)) var(--lupin-ease-in-out);
-  --animate-lupin-pulse: lupin-pulse calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
-    var(--lupin-ease-in-out);
+  --animate-fade-in: lupin-enter var(--lupin-duration-200) var(--lupin-ease-spring);
+  --animate-fade-out: lupin-exit var(--lupin-duration-100) var(--lupin-ease-in);
+  --animate-zoom-in-95: lupin-zoom-in var(--lupin-duration-200) var(--lupin-ease-spring);
+  --animate-zoom-out-95: lupin-zoom-out var(--lupin-duration-100) var(--lupin-ease-in);
+  --animate-lupin-slide-in: lupin-slide-in var(--lupin-duration-300) var(--lupin-ease-in-out);
+  --animate-lupin-pulse: lupin-pulse var(--lupin-duration-150) var(--lupin-ease-in-out);
 
   /* The press scale, so `active:scale-press` is the press feedback. */
   --scale-press: var(--lupin-press-scale);
