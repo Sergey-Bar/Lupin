@@ -5,6 +5,7 @@ import { NavBar, BottomTabBar, SectionTabs } from './NavBar';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { expectNoBlockingAxeViolations } from '../test-axe';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
+import { makeRun } from '../test-utils';
 import {
   createMemoryHistory,
   RouterProvider,
@@ -67,11 +68,92 @@ describe('NavBar', () => {
     expect(localStorage.getItem('lupin-theme')).toBe('light');
   });
 
-  it('draws the six sections, and nothing else, in the top bar', async () => {
+  it('draws the six sections in the sidebar, in order', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
-    const links = within(bar).getAllByRole('link');
+    const sections = within(bar).getByRole('list', { name: 'Sections' });
+    const links = within(sections).getAllByRole('link');
     expect(links.map((link) => link.textContent)).toEqual(SECTION_LABELS);
+  });
+
+  it('is a top header on a phone and a full-height left sidebar from lg', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
+    const bar = await screen.findByTestId('nav-bar');
+    expect(bar).toHaveClass('lg:h-full', 'lg:w-64', 'lg:flex-col');
+    // The sections, the section's pages and the recents are the sidebar's; a phone has the
+    // bottom bar and the tab row for those.
+    expect(within(bar).getByRole('list', { name: 'Sections' }).parentElement).toHaveClass(
+      'hidden',
+      'lg:flex',
+    );
+  });
+
+  it("lists the current section's pages under it, with the current page marked", async () => {
+    render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
+    const bar = await screen.findByTestId('nav-bar');
+    const pages = within(bar).getByRole('list', { name: 'Insights pages' });
+    expect(
+      within(pages)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Tests', 'Delivery', 'AI code']);
+    expect(within(pages).getByRole('link', { name: 'Tests' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
+  it('lists recent runs by short id, each linking to its detail page', async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) =>
+      String(input).includes('/api/v1/runs?limit=6')
+        ? new Response(
+            JSON.stringify([
+              makeRun({ id: 'abcdef12-3456-4789-8abc-def012345678', suite: null }),
+              makeRun({ id: 'run-two', suite: 'checkout' }),
+            ]),
+            { status: 200 },
+          )
+        : new Response('{}', { status: 401 }),
+    ) as typeof fetch;
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
+    const bar = await screen.findByTestId('nav-bar');
+    const recents = await within(bar).findByRole('list', { name: 'Recent runs' });
+    const links = within(recents).getAllByRole('link');
+    expect(links.map((link) => link.textContent)).toEqual([
+      expect.stringContaining('abcdef12'),
+      expect.stringContaining('checkout'),
+    ]);
+    expect(links[0]).toHaveAttribute(
+      'href',
+      '/dashboard/runs/abcdef12-3456-4789-8abc-def012345678',
+    );
+  });
+
+  it('collapses to an icon rail, keeps every section named, and remembers it', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
+    const bar = await screen.findByTestId('nav-bar');
+    fireEvent.click(within(bar).getByRole('button', { name: 'Collapse sidebar' }));
+    expect(bar).toHaveAttribute('data-collapsed', 'true');
+    expect(bar).toHaveClass('lg:w-16');
+    expect(localStorage.getItem('lupin-sidebar')).toBe('collapsed');
+    // Collapsed is a rail of icons, and each is still a named link for a screen reader.
+    const sections = within(bar).getByRole('list', { name: 'Sections' });
+    expect(
+      within(sections)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(SECTION_LABELS);
+    expect(within(bar).queryByRole('list', { name: 'Recent runs' })).toBeNull();
+    expect(within(bar).getByRole('button', { name: 'Expand sidebar' })).toBeDefined();
+  });
+
+  it('offers a new run from the top of the sidebar', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
+    const bar = await screen.findByTestId('nav-bar');
+    expect(within(bar).getByRole('link', { name: 'New run' })).toHaveAttribute(
+      'href',
+      '/dashboard/runner',
+    );
   });
 
   it('renders the product wordmark once, in the corner', async () => {
@@ -103,7 +185,7 @@ describe('NavBar', () => {
     render(<RouterProvider router={makeRouter(path)} />);
     const bar = await screen.findByTestId('nav-bar');
     const bottom = screen.getByTestId('bottom-tab-bar');
-    for (const nav of [bar, bottom]) {
+    for (const nav of [within(bar).getByRole('list', { name: 'Sections' }), bottom]) {
       const current = within(nav)
         .getAllByRole('link')
         .filter((link) => link.getAttribute('aria-current') === 'page');

@@ -52,9 +52,9 @@ function RootComponent() {
     <ThemeProvider>
       <PreferencesProvider>
         <ToastProvider>
-          <div className="relative flex h-dvh flex-col overflow-hidden bg-surface-sunken text-fg">
+          <div className="relative flex h-dvh flex-col overflow-hidden bg-surface-sunken text-fg lg:flex-row">
             <NavBar />
-            <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 sm:px-6 sm:py-6">
+            <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
               {/*
                * Secondary chrome: focus mode hides it (index.css). The attribute is on the
                * navs themselves, not on a wrapper here — a wrapper rendered on a page with
