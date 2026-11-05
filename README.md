@@ -6,6 +6,13 @@
     <a href="https://github.com/Sergey-Bar/Lupin/actions/workflows/unified-ci.yml"><img alt="CI" src="https://github.com/Sergey-Bar/Lupin/actions/workflows/unified-ci.yml/badge.svg?branch=main"></a>
     <a href="https://sergey-bar.github.io/Lupin/"><img alt="Docs" src="https://img.shields.io/badge/docs-site-555555"></a>
     <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-555555.svg"></a>
+    <!--
+      OpenSSF Best Practices badge. Register the project at https://www.bestpractices.dev
+      (GitHub sign-in; answers are in docs/OPENSSF-BADGE.md), then replace PROJECT_ID below
+      and uncomment the line. Left commented, not placeholdered, so nothing renders a broken
+      badge until the id is real. Then reopen the dismissed Scorecard CII-Best-Practices alert.
+      <a href="https://www.bestpractices.dev/projects/PROJECT_ID"><img alt="OpenSSF Best Practices" src="https://www.bestpractices.dev/projects/PROJECT_ID/badge"></a>
+    -->
   </p>
 </div>
 
