@@ -56,9 +56,11 @@ export default defineConfig({
         // a test fixture living in product source and measured as if it were
         // product, which is now fixed at the source rather than hidden here.
         'src/index.ts',
-        // A side-effect-only preload, like `src/index.ts`: it exists to run once
-        // under `node --import`, which no test drives. Its logic is covered in
-        // `src/observability/sentry.test.ts`.
+        // A side-effect-only module, like `src/index.ts`: `index.ts` imports it
+        // first, and under a test it takes the test branch only, so the branches
+        // that read `.env` and start Sentry run in no test. What it decides is
+        // `planStartupEnvironment` in `src/startup-environment.test.ts`, and
+        // the Sentry logic itself is `src/observability/sentry.test.ts`.
         'src/instrument.ts',
         // Test support. `synthetic-credentials.ts` used to live in
         // `src/infrastructure/`, where it was measured as product: a fixture no
