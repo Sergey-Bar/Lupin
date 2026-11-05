@@ -259,11 +259,7 @@ the page drawn from the accent, used on entry screens only — today, the first-
 
 **Four sections, and every old page is a tab.** Overview, Runs, Insights and Map are the
 only top-level destinations (`apps/web/src/route-manifest.ts`, `SECTIONS`). The console is a
-desktop product, and its one piece of chrome is a minimal left sidebar: the **Lupin.**
-wordmark, every section with all of its pages listed beneath it, always expanded, in one
-list that scrolls inside the sidebar, and the theme at the foot. Any page is one click away,
-and a reader scrolls from one category to the next without opening it first. There is no top
-bar, no tab row and no bottom bar.
+desktop product. Its chrome is a 64px icon rail on the start edge, one 44px icon per section with the name as a tooltip and as screen-reader text, the theme at its foot, and a tab row above the page for the section's pages. There is no top bar and no bottom bar.
 
 **The Overview answers in order and stops.** The verdict first — Go, Caution or No-go, in
 words and an icon as well as a colour — then _What's wrong_ beside _What's good_, each

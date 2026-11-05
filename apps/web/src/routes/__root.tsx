@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, createRootRoute, redirect, useRouterState } from '@tanstack/react-router';
-import { NavBar } from '../components/NavBar.js';
+import { NavBar, SectionTabs } from '../components/NavBar.js';
 import { ThemeProvider } from '../theme/ThemeProvider.js';
 import { GlobalCommandPalette } from '../components/GlobalCommandPalette.js';
 import { ToastProvider } from '../components/Toasts.js';
@@ -55,6 +55,7 @@ function RootComponent() {
           <div className="relative flex h-dvh flex-row overflow-hidden bg-surface-sunken text-fg">
             <NavBar />
             <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-10 py-8">
+              <SectionTabs />
               <PageContent health={health} pathname={pathname}>
                 <Outlet />
               </PageContent>

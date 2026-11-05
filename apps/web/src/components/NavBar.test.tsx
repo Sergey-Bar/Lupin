@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import { NavBar } from './NavBar';
+import { NavBar, SectionTabs } from './NavBar';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { expectNoBlockingAxeViolations } from '../test-axe';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
@@ -17,6 +17,7 @@ function makeRouter(initialPath = '/') {
     component: () => (
       <ThemeProvider>
         <NavBar />
+        <SectionTabs />
       </ThemeProvider>
     ),
   });
@@ -27,12 +28,6 @@ function makeRouter(initialPath = '/') {
 }
 
 const SECTION_LABELS = ['Overview', 'Runs', 'Insights', 'Map', 'GitHub', 'Settings'];
-
-/** The section links: the direct children of the Sections list, not the pages under them. */
-function sectionLinks(bar: HTMLElement): HTMLElement[] {
-  const sections = within(bar).getByRole('list', { name: 'Sections' });
-  return [...sections.children].map((item) => item.querySelector('a') as HTMLElement);
-}
 
 describe('NavBar', () => {
   beforeEach(() => {
@@ -71,66 +66,38 @@ describe('NavBar', () => {
     expect(localStorage.getItem('lupin-theme')).toBe('light');
   });
 
-  it('is a fixed-width, full-height sidebar at every width: the console is desktop only', async () => {
+  it('is a narrow icon rail, full height, at every width: the console is desktop only', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
-    expect(bar).toHaveClass('h-full', 'w-60', 'flex-col');
-    // No breakpoint hides or reshapes it, so no width shows a phone header instead.
+    expect(bar).toHaveClass('h-full', 'w-16', 'flex-col');
     expect(bar.className).not.toMatch(/\b(sm|md|lg|xl):/u);
   });
 
-  it('draws the six sections, in order', async () => {
+  it('draws the six sections as icons, each a named 44px link with a tooltip', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
-    expect(sectionLinks(bar).map((link) => link.textContent)).toEqual(SECTION_LABELS);
+    const links = within(within(bar).getByRole('list', { name: 'Sections' })).getAllByRole('link');
+    expect(links.map((link) => link.textContent)).toEqual(SECTION_LABELS);
+    for (const link of links) {
+      expect(link).toHaveClass('h-11', 'w-11');
+      expect(link).toHaveAttribute('title', link.textContent ?? '');
+      // The label is for a screen reader only: the rail shows icons.
+      expect(link.querySelector('.sr-only')?.textContent).toBe(link.textContent);
+    }
   });
 
-  it('lists every category with all its pages at once, not only the current one', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard/runs')} />);
+  it('is minimal: the sections and the theme, and nothing else', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
     const bar = await screen.findByTestId('nav-bar');
-    const pagesOf = (label: string) =>
-      within(within(bar).getByRole('list', { name: `${label} pages` }))
-        .getAllByRole('link')
-        .map((link) => link.textContent);
-    expect(pagesOf('Overview')).toEqual(['Cockpit', 'Portfolio', 'Project']);
-    expect(pagesOf('Runs')).toEqual(['Runs', 'Launch']);
-    expect(pagesOf('Insights')).toEqual(['Tests', 'Delivery', 'AI code']);
-    expect(pagesOf('GitHub')).toEqual(['Pull requests', 'Issues', 'Repositories']);
-  });
-
-  it('scrolls the list inside the sidebar, between the wordmark and the theme', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const bar = await screen.findByTestId('nav-bar');
-    const scroller = within(bar).getByTestId('nav-scroll');
-    expect(scroller).toHaveClass('overflow-y-auto', 'min-h-0', 'flex-1');
-    expect(within(scroller).getByRole('list', { name: 'Sections' })).toBeDefined();
-    // The wordmark and the theme stay put while the list scrolls.
-    expect(scroller).not.toContainElement(screen.getByTestId('nav-wordmark'));
-    expect(scroller).not.toContainElement(screen.getByTestId('theme-toggle'));
-  });
-
-  it('is minimal: no new-run action, no recents and no collapse control', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const bar = await screen.findByTestId('nav-bar');
-    expect(within(bar).queryByRole('link', { name: 'New run' })).toBeNull();
-    expect(within(bar).queryByRole('list', { name: 'Recent runs' })).toBeNull();
-    expect(within(bar).queryByRole('button', { name: /sidebar/u })).toBeNull();
+    expect(within(bar).getAllByRole('link')).toHaveLength(SECTION_LABELS.length);
     expect(within(bar).getAllByRole('button')).toHaveLength(1);
   });
 
-  it('renders the product wordmark once, in the corner', async () => {
-    render(<RouterProvider router={makeRouter()} />);
-    await screen.findByTestId('nav-bar');
-    expect(screen.getByTestId('nav-wordmark')).toHaveTextContent('Lupin');
-    // Exactly once. A second copy is the rename having half happened — which is
-    // what the retired-name gate in `scripts/lib/product-name.test.mjs` exists for.
-    expect(screen.getAllByText('Lupin')).toHaveLength(1);
-  });
-
-  it('draws the wordmark as the site does: the name in sentence case, and a dot in the accent', async () => {
+  it('renders the mark once, with the accent dot', async () => {
     render(<RouterProvider router={makeRouter()} />);
     const mark = await screen.findByTestId('nav-wordmark');
-    expect(mark.className).not.toMatch(/\buppercase\b/);
+    expect(mark).toHaveAttribute('title', 'Lupin');
+    expect(screen.getAllByTestId('nav-wordmark')).toHaveLength(1);
     const dot = mark.querySelector('[data-wordmark-dot]');
     expect(dot?.textContent).toBe('.');
     expect(dot?.className).toMatch(/\btext-accent\b/);
@@ -146,52 +113,46 @@ describe('NavBar', () => {
   ])('marks %s as inside the %s section', async (path, label) => {
     render(<RouterProvider router={makeRouter(path)} />);
     const bar = await screen.findByTestId('nav-bar');
-    const current = sectionLinks(bar).filter(
-      (link) => link.getAttribute('aria-current') === 'page',
-    );
+    const current = within(bar)
+      .getAllByRole('link')
+      .filter((link) => link.getAttribute('aria-current') === 'page');
     expect(current.map((link) => link.textContent)).toEqual([label]);
   });
 
-  it('marks the current page within its section', async () => {
+  it("shows the section's pages as a tab row, with the current page marked", async () => {
     render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
-    const bar = await screen.findByTestId('nav-bar');
-    const pages = within(bar).getByRole('list', { name: 'Insights pages' });
-    expect(within(pages).getByRole('link', { name: 'Tests' })).toHaveAttribute(
+    const tabs = await screen.findByTestId('section-tabs');
+    expect(tabs).toHaveAttribute('aria-label', 'Insights pages');
+    expect(
+      within(tabs)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Tests', 'Delivery', 'AI code']);
+    expect(within(tabs).getByRole('link', { name: 'Tests' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-    expect(within(pages).getByRole('link', { name: 'Delivery' })).not.toHaveAttribute(
-      'aria-current',
-    );
   });
 
-  it('marks no page on a detail page, and keeps its section current', async () => {
+  it('shows no tab row on a detail page', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/runs/run-1')} />);
-    const bar = await screen.findByTestId('nav-bar');
-    const pages = within(bar).getByRole('list', { name: 'Runs pages' });
-    expect(
-      within(pages)
-        .getAllByRole('link')
-        .filter((link) => link.getAttribute('aria-current') === 'page'),
-    ).toEqual([]);
-    expect(within(bar).getByRole('link', { name: 'Runs', current: false })).toBeDefined();
+    await screen.findByTestId('nav-bar');
+    expect(screen.queryByTestId('section-tabs')).toBeNull();
   });
 
-  it('shows the settings pages a signed-out reader may use, Appearance first', async () => {
+  it('shows the settings tabs a signed-out reader may use, Appearance first', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
-    const bar = await screen.findByTestId('nav-bar');
-    // fetch is mocked to 401, so `whoami` yields no role: a signed-out reader sees only the
-    // two pages everyone may use, never the admin ones.
+    const tabs = await screen.findByTestId('section-tabs');
     await waitFor(() =>
       expect(
-        within(within(bar).getByRole('list', { name: 'Settings pages' }))
+        within(tabs)
           .getAllByRole('link')
           .map((link) => link.textContent),
       ).toEqual(['Appearance', 'Reports']),
     );
   });
 
-  it('shows an admin every settings page, including the admin surfaces', async () => {
+  it('shows an admin every settings tab, including the admin surfaces', async () => {
     resetViewerRoleCache();
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -199,16 +160,15 @@ describe('NavBar', () => {
       json: async () => ({ actor: 'you', role: 'admin', mode: 'enforced' }),
     });
     render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
-    const bar = await screen.findByTestId('nav-bar');
+    const tabs = await screen.findByTestId('section-tabs');
     await waitFor(() =>
       expect(
-        within(within(bar).getByRole('list', { name: 'Settings pages' }))
+        within(tabs)
           .getAllByRole('link')
           .map((link) => link.textContent),
       ).toEqual(['Appearance', 'Reports', 'Access', 'Members', 'Audit', 'Deployment']),
     );
   });
-
   it('has no serious or critical axe violations', async () => {
     const { container } = render(<RouterProvider router={makeRouter('/dashboard/runner')} />);
     await screen.findByTestId('nav-bar');
