@@ -129,11 +129,6 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
-/** A run listing capped at `limit` rows server-side (`parsePageQuery`, `runs.routes.ts`). */
-export interface RunListOptions extends RequestOptions {
-  limit?: number;
-}
-
 function withSignal(init: RequestInit, signal: AbortSignal | undefined): RequestInit {
   return signal ? { ...init, signal } : init;
 }
@@ -265,7 +260,7 @@ export interface RunEventSubscription {
 }
 
 export interface ApiClient {
-  getRuns(options?: RunListOptions): Promise<Run[]>;
+  getRuns(options?: RequestOptions): Promise<Run[]>;
   getRun(id: string, options?: RequestOptions): Promise<Run>;
   createRun(request: CreateRunRequest, options?: RequestOptions): Promise<Run>;
   cancelRun(id: string, options?: RequestOptions): Promise<Run>;
@@ -580,14 +575,7 @@ export const defaultApiClient: ApiClient = {
       options,
     );
   },
-  getRuns: (options) =>
-    getJson(
-      options?.limit === undefined
-        ? '/api/v1/runs'
-        : `/api/v1/runs?limit=${String(Math.trunc(options.limit))}`,
-      z.array(NormalizedRunSchema),
-      options,
-    ),
+  getRuns: (options) => getJson('/api/v1/runs', z.array(NormalizedRunSchema), options),
   getRun: (id, options) =>
     getJson(`/api/v1/runs/${encodeURIComponent(id)}`, NormalizedRunSchema, options),
   createRun: async (requestBody, options) => {

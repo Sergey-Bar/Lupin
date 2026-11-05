@@ -1,11 +1,10 @@
 /// <reference types="vitest/globals" />
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import { NavBar, BottomTabBar, SectionTabs } from './NavBar';
+import { NavBar } from './NavBar';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { expectNoBlockingAxeViolations } from '../test-axe';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
-import { makeRun } from '../test-utils';
 import {
   createMemoryHistory,
   RouterProvider,
@@ -18,8 +17,6 @@ function makeRouter(initialPath = '/') {
     component: () => (
       <ThemeProvider>
         <NavBar />
-        <SectionTabs />
-        <BottomTabBar />
       </ThemeProvider>
     ),
   });
@@ -30,6 +27,12 @@ function makeRouter(initialPath = '/') {
 }
 
 const SECTION_LABELS = ['Overview', 'Runs', 'Insights', 'Map', 'GitHub', 'Settings'];
+
+/** The section links: the direct children of the Sections list, not the pages under them. */
+function sectionLinks(bar: HTMLElement): HTMLElement[] {
+  const sections = within(bar).getByRole('list', { name: 'Sections' });
+  return [...sections.children].map((item) => item.querySelector('a') as HTMLElement);
+}
 
 describe('NavBar', () => {
   beforeEach(() => {
@@ -68,92 +71,51 @@ describe('NavBar', () => {
     expect(localStorage.getItem('lupin-theme')).toBe('light');
   });
 
-  it('draws the six sections in the sidebar, in order', async () => {
+  it('is a fixed-width, full-height sidebar at every width: the console is desktop only', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
-    const sections = within(bar).getByRole('list', { name: 'Sections' });
-    const links = within(sections).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual(SECTION_LABELS);
+    expect(bar).toHaveClass('h-full', 'w-60', 'flex-col');
+    // No breakpoint hides or reshapes it, so no width shows a phone header instead.
+    expect(bar.className).not.toMatch(/\b(sm|md|lg|xl):/u);
   });
 
-  it('is a top header on a phone and a full-height left sidebar from lg', async () => {
+  it('draws the six sections, in order', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
-    expect(bar).toHaveClass('lg:h-full', 'lg:w-64', 'lg:flex-col');
-    // The sections, the section's pages and the recents are the sidebar's; a phone has the
-    // bottom bar and the tab row for those.
-    expect(within(bar).getByRole('list', { name: 'Sections' }).parentElement).toHaveClass(
-      'hidden',
-      'lg:flex',
-    );
+    expect(sectionLinks(bar).map((link) => link.textContent)).toEqual(SECTION_LABELS);
   });
 
-  it("lists the current section's pages under it, with the current page marked", async () => {
-    render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
+  it('lists every category with all its pages at once, not only the current one', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard/runs')} />);
     const bar = await screen.findByTestId('nav-bar');
-    const pages = within(bar).getByRole('list', { name: 'Insights pages' });
-    expect(
-      within(pages)
+    const pagesOf = (label: string) =>
+      within(within(bar).getByRole('list', { name: `${label} pages` }))
         .getAllByRole('link')
-        .map((link) => link.textContent),
-    ).toEqual(['Tests', 'Delivery', 'AI code']);
-    expect(within(pages).getByRole('link', { name: 'Tests' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+        .map((link) => link.textContent);
+    expect(pagesOf('Overview')).toEqual(['Cockpit', 'Portfolio', 'Project']);
+    expect(pagesOf('Runs')).toEqual(['Runs', 'Launch']);
+    expect(pagesOf('Insights')).toEqual(['Tests', 'Delivery', 'AI code']);
+    expect(pagesOf('GitHub')).toEqual(['Pull requests', 'Issues', 'Repositories']);
   });
 
-  it('lists recent runs by short id, each linking to its detail page', async () => {
-    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) =>
-      String(input).includes('/api/v1/runs?limit=6')
-        ? new Response(
-            JSON.stringify([
-              makeRun({ id: 'abcdef12-3456-4789-8abc-def012345678', suite: null }),
-              makeRun({ id: 'run-two', suite: 'checkout' }),
-            ]),
-            { status: 200 },
-          )
-        : new Response('{}', { status: 401 }),
-    ) as typeof fetch;
+  it('scrolls the list inside the sidebar, between the wordmark and the theme', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
-    const recents = await within(bar).findByRole('list', { name: 'Recent runs' });
-    const links = within(recents).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual([
-      expect.stringContaining('abcdef12'),
-      expect.stringContaining('checkout'),
-    ]);
-    expect(links[0]).toHaveAttribute(
-      'href',
-      '/dashboard/runs/abcdef12-3456-4789-8abc-def012345678',
-    );
+    const scroller = within(bar).getByTestId('nav-scroll');
+    expect(scroller).toHaveClass('overflow-y-auto', 'min-h-0', 'flex-1');
+    expect(within(scroller).getByRole('list', { name: 'Sections' })).toBeDefined();
+    // The wordmark and the theme stay put while the list scrolls.
+    expect(scroller).not.toContainElement(screen.getByTestId('nav-wordmark'));
+    expect(scroller).not.toContainElement(screen.getByTestId('theme-toggle'));
   });
 
-  it('collapses to an icon rail, keeps every section named, and remembers it', async () => {
+  it('is minimal: no new-run action, no recents and no collapse control', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
-    fireEvent.click(within(bar).getByRole('button', { name: 'Collapse sidebar' }));
-    expect(bar).toHaveAttribute('data-collapsed', 'true');
-    expect(bar).toHaveClass('lg:w-16');
-    expect(localStorage.getItem('lupin-sidebar')).toBe('collapsed');
-    // Collapsed is a rail of icons, and each is still a named link for a screen reader.
-    const sections = within(bar).getByRole('list', { name: 'Sections' });
-    expect(
-      within(sections)
-        .getAllByRole('link')
-        .map((link) => link.textContent),
-    ).toEqual(SECTION_LABELS);
+    expect(within(bar).queryByRole('link', { name: 'New run' })).toBeNull();
     expect(within(bar).queryByRole('list', { name: 'Recent runs' })).toBeNull();
-    expect(within(bar).getByRole('button', { name: 'Expand sidebar' })).toBeDefined();
-  });
-
-  it('offers a new run from the top of the sidebar', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const bar = await screen.findByTestId('nav-bar');
-    expect(within(bar).getByRole('link', { name: 'New run' })).toHaveAttribute(
-      'href',
-      '/dashboard/runner',
-    );
+    expect(within(bar).queryByRole('button', { name: /sidebar/u })).toBeNull();
+    expect(within(bar).getAllByRole('button')).toHaveLength(1);
   });
 
   it('renders the product wordmark once, in the corner', async () => {
@@ -181,98 +143,55 @@ describe('NavBar', () => {
     ['/dashboard/analytics', 'Insights'],
     ['/dashboard/flaky/project-1', 'Insights'],
     ['/dashboard/health', 'Map'],
-  ])('marks %s as inside the %s section, in both bars', async (path, label) => {
+  ])('marks %s as inside the %s section', async (path, label) => {
     render(<RouterProvider router={makeRouter(path)} />);
     const bar = await screen.findByTestId('nav-bar');
-    const bottom = screen.getByTestId('bottom-tab-bar');
-    for (const nav of [within(bar).getByRole('list', { name: 'Sections' }), bottom]) {
-      const current = within(nav)
-        .getAllByRole('link')
-        .filter((link) => link.getAttribute('aria-current') === 'page');
-      expect(current.map((link) => link.textContent)).toEqual([label]);
-    }
-  });
-
-  it('gives the bottom bar six labelled, finger-sized targets', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const bottom = await screen.findByTestId('bottom-tab-bar');
-    expect(bottom).toHaveAttribute('aria-label', 'Sections');
-    const links = within(bottom).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual(SECTION_LABELS);
-    for (const link of links) expect(link).toHaveClass('min-h-14');
-    // Hidden from `lg` up, where the top bar carries the sections.
-    expect(bottom).toHaveClass('lg:hidden');
-  });
-
-  it('navigates from the bottom bar', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const bottom = await screen.findByTestId('bottom-tab-bar');
-    fireEvent.click(within(bottom).getByRole('link', { name: 'Insights' }));
-    await waitFor(() =>
-      expect(within(bottom).getByRole('link', { name: 'Insights' })).toHaveAttribute(
-        'aria-current',
-        'page',
-      ),
+    const current = sectionLinks(bar).filter(
+      (link) => link.getAttribute('aria-current') === 'page',
     );
+    expect(current.map((link) => link.textContent)).toEqual([label]);
   });
 
-  it('shows the section tabs for a section with more than one page', async () => {
+  it('marks the current page within its section', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
-    const tabs = await screen.findByTestId('section-tabs');
-    expect(tabs).toHaveAttribute('aria-label', 'Insights pages');
-    const links = within(tabs).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual(['Tests', 'Delivery', 'AI code']);
-    expect(within(tabs).getByRole('link', { name: 'Tests' })).toHaveAttribute(
+    const bar = await screen.findByTestId('nav-bar');
+    const pages = within(bar).getByRole('list', { name: 'Insights pages' });
+    expect(within(pages).getByRole('link', { name: 'Tests' })).toHaveAttribute(
       'aria-current',
       'page',
     );
+    expect(within(pages).getByRole('link', { name: 'Delivery' })).not.toHaveAttribute(
+      'aria-current',
+    );
   });
 
-  it('shows no tab row on a page that left the tab row, and keeps its section current', async () => {
-    // Trends is reached from the run pass rate now, so it is a detail page: a bookmark still
-    // opens it, in Insights, with no tab row above it that would mark nothing as current.
-    render(<RouterProvider router={makeRouter('/dashboard/analytics')} />);
-    await screen.findByTestId('nav-bar');
-    expect(screen.queryByTestId('section-tabs')).toBeNull();
-    expect(
-      within(screen.getByTestId('nav-bar')).getByRole('link', { name: 'Insights' }),
-    ).toHaveAttribute('aria-current', 'page');
-  });
-
-  it('shows the cockpit, portfolio and project tabs on the overview, and none on a detail page', async () => {
-    const { unmount } = render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const tabs = await screen.findByTestId('section-tabs');
-    expect(
-      within(tabs)
-        .getAllByRole('link')
-        .map((link) => link.textContent),
-    ).toEqual(['Cockpit', 'Portfolio', 'Project']);
-    unmount();
+  it('marks no page on a detail page, and keeps its section current', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/runs/run-1')} />);
-    await screen.findByTestId('nav-bar');
-    expect(screen.queryByTestId('section-tabs')).toBeNull();
+    const bar = await screen.findByTestId('nav-bar');
+    const pages = within(bar).getByRole('list', { name: 'Runs pages' });
+    expect(
+      within(pages)
+        .getAllByRole('link')
+        .filter((link) => link.getAttribute('aria-current') === 'page'),
+    ).toEqual([]);
+    expect(within(bar).getByRole('link', { name: 'Runs', current: false })).toBeDefined();
   });
 
-  it('shows the settings tabs a signed-out reader may use, Appearance first', async () => {
+  it('shows the settings pages a signed-out reader may use, Appearance first', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
-    const tabs = await screen.findByTestId('section-tabs');
-    expect(tabs).toHaveAttribute('aria-label', 'Settings pages');
+    const bar = await screen.findByTestId('nav-bar');
     // fetch is mocked to 401, so `whoami` yields no role: a signed-out reader sees only the
-    // two tabs everyone may use, never the admin ones.
+    // two pages everyone may use, never the admin ones.
     await waitFor(() =>
       expect(
-        within(tabs)
+        within(within(bar).getByRole('list', { name: 'Settings pages' }))
           .getAllByRole('link')
           .map((link) => link.textContent),
       ).toEqual(['Appearance', 'Reports']),
     );
-    expect(within(tabs).getByRole('link', { name: 'Appearance' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
   });
 
-  it('shows an admin every settings tab, including the admin surfaces', async () => {
+  it('shows an admin every settings page, including the admin surfaces', async () => {
     resetViewerRoleCache();
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -280,10 +199,10 @@ describe('NavBar', () => {
       json: async () => ({ actor: 'you', role: 'admin', mode: 'enforced' }),
     });
     render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
-    const tabs = await screen.findByTestId('section-tabs');
+    const bar = await screen.findByTestId('nav-bar');
     await waitFor(() =>
       expect(
-        within(tabs)
+        within(within(bar).getByRole('list', { name: 'Settings pages' }))
           .getAllByRole('link')
           .map((link) => link.textContent),
       ).toEqual(['Appearance', 'Reports', 'Access', 'Members', 'Audit', 'Deployment']),
@@ -292,7 +211,7 @@ describe('NavBar', () => {
 
   it('has no serious or critical axe violations', async () => {
     const { container } = render(<RouterProvider router={makeRouter('/dashboard/runner')} />);
-    await screen.findByTestId('section-tabs');
+    await screen.findByTestId('nav-bar');
     await expectNoBlockingAxeViolations(container);
   });
 });

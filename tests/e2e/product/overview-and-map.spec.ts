@@ -123,15 +123,15 @@ test.describe('the repo map', () => {
   });
 });
 
-test.describe('on a phone', () => {
-  test.use({ viewport: { width: 390, height: 844 } });
+test.describe('the sidebar', () => {
+  test.use({ viewport: { width: 1280, height: 720 } });
 
-  test('every section is a thumb away, and the map becomes a list', async ({ page }) => {
+  test('lists every category, scrolls to the last one, and navigates from it', async ({ page }) => {
     await page.goto(`${WEB_BASE}/dashboard`);
-    const bottom = page.getByTestId('bottom-tab-bar');
-    await expect(bottom).toBeVisible({ timeout: 20_000 });
-    // The top bar's section links are hidden at this width; the bottom bar carries them.
-    await expect(page.getByTestId('nav-bar').getByRole('link', { name: 'Map' })).toBeHidden();
+    const bar = page.getByTestId('nav-bar');
+    await expect(bar).toBeVisible({ timeout: 20_000 });
+    // Desktop only: the phone chrome is gone.
+    await expect(page.getByTestId('bottom-tab-bar')).toHaveCount(0);
 
     for (const [label, path] of [
       ['Runs', '/dashboard/runs'],
@@ -140,23 +140,27 @@ test.describe('on a phone', () => {
       // Overview's section path is Now: what needs attention, worst first.
       ['Overview', '/dashboard/now'],
     ] as const) {
-      await bottom.getByRole('link', { name: label }).click();
+      const section = bar.getByRole('list', { name: 'Sections' }).getByRole('link', {
+        name: label,
+        exact: true,
+      });
+      await section.first().click();
       await expect(page).toHaveURL(`${WEB_BASE}${path}`);
-      await expect(bottom.getByRole('link', { name: label })).toHaveAttribute(
-        'aria-current',
-        'page',
-      );
+      await expect(section.first()).toHaveAttribute('aria-current', 'page');
     }
 
-    await bottom.getByRole('link', { name: 'Map' }).click();
-    await expect(page.getByTestId('map-list')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByTestId('map-canvas')).toHaveCount(0);
-
-    // Nothing is wider than the screen.
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    // The last category's pages are reached by scrolling the sidebar, not the page.
+    const scroller = bar.getByTestId('nav-scroll');
+    const last = bar.getByRole('list', { name: 'Settings pages' }).getByRole('link').last();
+    await last.scrollIntoViewIfNeeded();
+    await expect(last).toBeInViewport();
+    const pageScroll = await page.evaluate(
+      () => document.documentElement.scrollHeight - document.documentElement.clientHeight,
     );
-    expect(overflow, 'the page scrolls sideways on a phone').toBeLessThanOrEqual(0);
-    await page.screenshot({ path: `test-results/${EVIDENCE}/phone-map.png`, fullPage: true });
+    expect(pageScroll, 'scrolling the sidebar scrolled the page').toBeLessThanOrEqual(1);
+    expect(await scroller.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+      true,
+    );
+    await page.screenshot({ path: `test-results/${EVIDENCE}/sidebar.png` });
   });
 });

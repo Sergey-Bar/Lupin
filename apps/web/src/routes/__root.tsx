@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, createRootRoute, redirect, useRouterState } from '@tanstack/react-router';
-import { BottomTabBar, NavBar, SectionTabs } from '../components/NavBar.js';
+import { NavBar } from '../components/NavBar.js';
 import { ThemeProvider } from '../theme/ThemeProvider.js';
 import { GlobalCommandPalette } from '../components/GlobalCommandPalette.js';
 import { ToastProvider } from '../components/Toasts.js';
@@ -52,20 +52,13 @@ function RootComponent() {
     <ThemeProvider>
       <PreferencesProvider>
         <ToastProvider>
-          <div className="relative flex h-dvh flex-col overflow-hidden bg-surface-sunken text-fg lg:flex-row">
+          <div className="relative flex h-dvh flex-row overflow-hidden bg-surface-sunken text-fg">
             <NavBar />
-            <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
-              {/*
-               * Secondary chrome: focus mode hides it (index.css). The attribute is on the
-               * navs themselves, not on a wrapper here — a wrapper rendered on a page with
-               * no tab row was an empty first child of <main>.
-               */}
-              <SectionTabs />
+            <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-10 py-8">
               <PageContent health={health} pathname={pathname}>
                 <Outlet />
               </PageContent>
             </main>
-            <BottomTabBar />
           </div>
           <GlobalCommandPalette />
           <Shortcuts />

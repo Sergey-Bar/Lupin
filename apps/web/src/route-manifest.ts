@@ -7,7 +7,7 @@
  * Runs, Insights, Map — and the eight became **tabs** of those sections rather than
  * being merged or redirected, so a bookmark to `/dashboard/analytics` opens the same
  * page it always did, now inside Insights. `section` is the one place that decision is
- * written; `NavBar`, `BottomTabBar`, `SectionTabs` and the command palette all read it.
+ * written; the sidebar (`NavBar`) and the command palette both read it.
  *
  * `label` is the page's own name (the palette says "Go to Trends"); `tab` is the short
  * label on its section's tab row. A page with no `tab` is a detail page — reachable from
