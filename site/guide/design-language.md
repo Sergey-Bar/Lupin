@@ -72,8 +72,9 @@ WCAG 2.5.5 target and the site's button height — and one test holds `Button`, 
 
 ### Elevation
 
-Depth on the page comes from the plane step and a hairline; a panel carries no shadow. A
-shadow is for something that floats, and each step is a **stack of neutral layers** — a
+Depth on the page comes from the plane step and the space around a surface; a panel carries
+no shadow and no outline, and a figure is a number on the page rather than a number in a
+box. A shadow is for something that floats, and each step is a **stack of neutral layers** — a
 tight contact shadow and a wide soft one, the way light from above falls — with each higher
 step adding a layer and reaching further. Step 1 is rare, step 2 is a popover or a toast,
 step 3 a dialog or the command palette. The light theme re-declares all three at low alpha,
@@ -119,7 +120,9 @@ large plane and never a verdict.
 Every run state is at least half as saturated again as info, the three run states keep 20
 degrees or more of hue between them, and each lands within 3 degrees of its decided hue.
 **A status is never colour alone**: a verdict is a dot _and_ a word, a trend an icon _and_
-a screen-reader label. Status colours are also body text in `Alert` and `Toast`, so they owe
+a screen-reader label. **Monochrome first**: a `Badge` is a word in the foreground with a
+6px dot beside it, and only the dot carries the run-state colour, so a list of runs reads as
+text with a few points of colour rather than a field of filled pills. Status colours are also body text in `Alert` and `Toast`, so they owe
 4.5:1 against their own 10% tint, measured as the blend the browser paints.
 
 ## Two borders, because 1.4.11 is not about every border
@@ -149,6 +152,15 @@ cut would make is made in the type ladder: every step carries its own letter-spa
 closing up as the size grows (+0.01em at 12px to −0.035em at the display step), and the
 steps from 24px up carry a heading weight between 550 and 650. `theme.test.ts` asserts both
 relations rather than a list of values.
+
+### Type on the page
+
+A page leads with its title at display size: `PageHeader` sets the `h1` at `text-3xl`,
+`text-4xl` from `sm` and `text-5xl` from `lg`, with a one-line subtitle at body size. Panel
+titles are `text-base` semibold, figures are `text-3xl`/`text-4xl`, and the one hero figure
+a screen may have is a step larger. Pages and panels breathe at 16–24px gaps.
+`apps/web/src/components/kit.test.tsx` fails on a page title below display size, a figure
+in a box, or a panel with an outline.
 
 ### The fallback faces
 

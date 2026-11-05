@@ -39,7 +39,7 @@ export function PageFrame({
   // Fitted to the viewport at every width. Wide screens lay their panels out side by side;
   // narrow ones show the same panels as tabs (`Responsive`), so no width needs a scroll.
   return (
-    <div className={cn('flex h-full min-h-0 flex-col gap-3 sm:gap-4', className)} {...props}>
+    <div className={cn('flex h-full min-h-0 flex-col gap-4 sm:gap-6', className)} {...props}>
       {children}
     </div>
   );
@@ -125,10 +125,12 @@ export function PageHeader({
   return (
     <header className="flex shrink-0 flex-wrap items-end justify-between gap-x-3 gap-y-2">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{title}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+          {title}
+        </h1>
         {subtitle === undefined ? null : (
           <div
-            className="mt-0.5 max-w-measure text-sm leading-relaxed text-fg-muted"
+            className="mt-1.5 max-w-measure text-base leading-relaxed text-fg-muted"
             title={typeof subtitle === 'string' ? subtitle : undefined}
           >
             {subtitle}
@@ -164,13 +166,15 @@ export function Panel({
     <section
       aria-labelledby={id}
       className={cn(
-        'flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-surface p-4 sm:p-5',
+        // No outline: a panel is separated from the page by its plane step and the space
+        // around it. A border round every rectangle is the chrome a flat page does without.
+        'flex min-h-0 min-w-0 flex-col rounded-lg bg-surface p-5 sm:p-6',
         className,
       )}
       {...props}
     >
-      <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
-        <h2 id={id} className="text-sm font-medium text-fg">
+      <div className="mb-4 flex shrink-0 items-center justify-between gap-2">
+        <h2 id={id} className="text-base font-semibold text-fg">
           {title}
         </h2>
         {action}
@@ -256,8 +260,9 @@ export function Kpi({
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-col justify-between rounded-lg border bg-surface px-4 py-3 sm:px-5 sm:py-4',
-        hero ? 'border-border-strong' : 'border-border',
+        // A figure is a number on the page, not a number in a box. The hero is told apart by
+        // size alone.
+        'flex min-w-0 flex-col justify-between py-1',
       )}
       data-hero={hero ? '' : undefined}
       {...props}
@@ -270,9 +275,7 @@ export function Kpi({
           <span
             className={cn(
               'truncate tabular-nums tracking-tight',
-              hero
-                ? 'text-3xl font-semibold sm:text-4xl xl:text-5xl'
-                : 'text-2xl font-semibold sm:text-3xl',
+              hero ? 'text-4xl font-semibold sm:text-5xl' : 'text-3xl font-semibold sm:text-4xl',
             )}
             title={unit === undefined ? value : `${value} ${unit}`}
           >
