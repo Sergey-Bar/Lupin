@@ -321,7 +321,7 @@ export function RecentRuns({ runs, isLive }: { runs: Run[]; isLive: boolean }) {
                 title={run.suite ?? run.id}
                 style={{ viewTransitionName: runTransitionName(run.id) }}
               >
-                {run.suite ?? run.id}
+                {run.suite ?? run.id.slice(0, 8)}
               </div>
               <div className="text-xs text-fg-muted">{formatRequiredDate(run.createdAt)}</div>
             </div>

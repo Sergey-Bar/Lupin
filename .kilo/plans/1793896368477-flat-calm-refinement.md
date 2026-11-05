@@ -47,17 +47,17 @@ reduced motion, so R1–R5 are decided by the gates, not the images.
 | -------------------------- | --------------- | ---------------------------------- |
 | Motion, all surfaces       | R1, R2, R3, R5 fail | R1–R5 pass (gated)             |
 | Overlays (toast, tooltip)  | R6 fail         | R6 pass                            |
-| Runs list                  | R7 fail         | R7–R10 pass; R11 pass              |
+| Runs list                  | R7, R12 fail    | R7–R12 pass (F3 fixed)             |
 | Every heading              | R8 partial      | R8 pass                            |
-| Run detail, 390 wide       | R12 fail        | **R12 still fails** (see F1); R11 partial (F2) |
+| Run detail, 390 wide       | R11, R12 fail   | R11, R12 pass (F1, F2 fixed)       |
 | Overview, Cockpit, Insights, Map, GitHub, Settings | R6–R10 pass | unchanged pass             |
 | Site home                  | R4, R5 fail     | R1–R11 pass                        |
 
-## Follow-ups (outside refine scope, not done)
+## Follow-ups, now done
 
-- **F1.** Run detail at 390px truncates the Created/Started/Finished timestamps with an
-  ellipsis. Needs a shorter date format or a one-column metadata list.
-- **F2.** Run detail's phase timeline draws nine outlined chips; a single step line would carry
-  the same information with less chrome.
-- **F3.** Runs list at 1440: "Recent executions" truncates run ids mid-string; the id column could
-  show the short id the table already uses.
+- **F1.** Run-detail context values wrap instead of truncating, so the Created, Started and
+  Finished times show in full at 390px. Test: `run-detail.test.tsx` "wraps a context value".
+- **F2.** The phase timeline is a step line: a dot and a word per phase, the current one in
+  the accent with `aria-current="step"`, no outlined chips. Test: "a quiet step line".
+- **F3.** "Recent executions" names a run with no suite by its 8-character short id, the one
+  the runs table uses. Test: `dashboard.test.tsx` "names a run with no suite by its short id".
