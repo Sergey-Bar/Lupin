@@ -69,6 +69,23 @@
     font: inherit;
   }
 
+  /*
+   * A heading breaks into lines of even length rather than leaving one word alone on the
+   * second, and a figure in a table sits in tabular numerals so a column of numbers lines up
+   * and a counting value does not jitter sideways. Owned here so no heading has to remember.
+   */
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  td,
+  th {
+    font-variant-numeric: tabular-nums;
+  }
+
   a {
     color: inherit;
   }

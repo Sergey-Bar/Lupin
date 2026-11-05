@@ -141,14 +141,14 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       filteredActions.length > 0 ? `${listboxId}-option-${selectedIndex}` : undefined;
 
     return (
-      <div className="fixed inset-0 z-modal bg-black/50 flex items-start justify-center pt-[20vh] p-4 animate-fade-in duration-200">
+      <div className="fixed inset-0 z-modal bg-black/50 flex items-start justify-center pt-[20vh] p-4 animate-fade-in">
         <div
           ref={ref}
           role="dialog"
           aria-modal="true"
           aria-label="Command palette"
           className={cn(
-            'w-full max-w-xl overflow-hidden rounded-xl border border-border-default animate-zoom-in-95 duration-200',
+            'w-full max-w-xl overflow-hidden rounded-xl border border-border-default animate-zoom-in-95',
             'surface-translucent shadow-elevation-3',
             className,
           )}

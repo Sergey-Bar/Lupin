@@ -80,7 +80,7 @@ export function MasterDetail<T>({
                     setShowDetail(true);
                   }}
                   className={cn(
-                    'min-w-0 flex-1 border-s-2 px-3 text-start transition-colors duration-200 motion-reduce:transition-none hover:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-focus',
+                    'min-w-0 flex-1 border-s-2 px-3 text-start transition-colors duration-100 motion-reduce:transition-none hover:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-focus',
                     isSelected ? 'border-primary bg-surface-muted' : 'border-transparent',
                   )}
                 >
