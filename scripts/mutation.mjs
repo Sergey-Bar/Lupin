@@ -14,6 +14,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MUTATION_PACKAGES } from './lib/mutation-ratchet.mjs';
+import { strykerEnvironment } from './lib/mutation-environment.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const requested = process.argv.slice(2);
@@ -44,6 +45,7 @@ for (const name of targets) {
   const result = spawnSync(process.execPath, [stryker, 'run', config], {
     cwd: path.join(root, name),
     stdio: 'inherit',
+    env: strykerEnvironment(process.env),
   });
   if (result.status !== 0) {
     console.error(`stryker exited ${String(result.status)} for ${name}`);
