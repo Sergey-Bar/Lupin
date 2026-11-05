@@ -341,7 +341,7 @@ function RunVerdict({
     <section
       aria-label="What failed"
       data-testid="run-what-failed"
-      className="shrink-0 rounded-lg border border-border bg-surface px-5 py-4"
+      className="shrink-0 rounded-lg bg-surface px-5 py-4"
     >
       <h2 className="inline-flex items-center gap-2 text-lg font-semibold text-danger">
         <StatusDot status="bad" />
@@ -590,7 +590,9 @@ function RunHeader({
           </span>{' '}
           Runs
         </a>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Run detail</h1>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+          Run detail
+        </h1>
         <div
           className="mt-1 flex min-w-0 items-center gap-2 text-sm text-fg-muted"
           style={{ viewTransitionName: runTransitionName(run.id) }}
@@ -678,7 +680,7 @@ function readinessTone(decision: string): 'success' | 'danger' | 'warning' {
 function SummaryPanels({ run }: { run: Run }) {
   return (
     <>
-      <div className="shrink-0 rounded-lg border border-border bg-surface-raised px-4 py-3">
+      <div className="shrink-0 rounded-lg bg-surface px-4 py-3">
         <PhaseTimeline phase={run.phase} />
       </div>
 
@@ -703,10 +705,7 @@ function SummaryPanels({ run }: { run: Run }) {
           hint={run.summary.durationMs == null ? 'Not reported' : undefined}
         />
       </section>
-      <section
-        aria-label="Run context"
-        className="shrink-0 rounded-lg border border-border bg-surface-raised px-4 py-3"
-      >
+      <section aria-label="Run context" className="shrink-0 rounded-lg bg-surface px-4 py-3">
         <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3 xl:grid-cols-9">
           {/*
             Project, environment and release are omitted when the run never had them — a
@@ -926,7 +925,7 @@ function Figure({
   hint?: string;
 }) {
   return (
-    <div className="min-w-0 rounded-lg border border-border bg-surface-raised px-3 py-2 sm:px-4 sm:py-3">
+    <div className="min-w-0 rounded-lg bg-surface px-3 py-2 sm:px-4 sm:py-3">
       <div className="truncate text-xs font-medium text-fg-muted" title={label}>
         {label}
       </div>
