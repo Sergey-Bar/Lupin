@@ -44,7 +44,7 @@ const reduced = reducedMotionBlock(motionCss);
 describe('motion tokens', () => {
   it('still ships the durations and easings it always did', () => {
     expect(Object.keys(motion.duration)).toEqual(['75', '100', '150', '200', '300']);
-    expect(Object.keys(motion.easing)).toEqual(['linear', 'in', 'out', 'in-out', 'spring']);
+    expect(Object.keys(motion.easing)).toEqual(['linear', 'in', 'out', 'in-out', 'arrive']);
   });
 
   it('publishes every easing, so the animation shorthand names one', () => {
@@ -54,8 +54,8 @@ describe('motion tokens', () => {
     // this table already owns — or to leave the animation at its default curve,
     // which is why every overlay in this product used to arrive with the same
     // unconsidered easing.
-    // Compared with whitespace collapsed, because Prettier wraps the long `linear()` spring
-    // over several lines and the value is the same value either way.
+    // Compared with whitespace collapsed, because Prettier wraps the long `linear()` arrival
+    // curve over several lines and the value is the same value either way.
     const flat = (css: string): string =>
       css.replace(/\s+/g, ' ').replace(/\(\s+/g, '(').replace(/\s+\)/g, ')');
     const published = flat(motionCss);
@@ -214,17 +214,16 @@ describe('the shipped stylesheet honours prefers-reduced-motion', () => {
 });
 
 /**
- * The spring, as a CSS `linear()` easing rather than a JavaScript physics loop.
+ * The arrival curve, as a CSS `linear()` easing rather than a JavaScript physics loop.
  *
- * `linear()` samples a curve the browser interpolates on the compositor, so a spring costs
- * what a cubic-bezier costs — nothing per frame on the main thread — which is what made it
- * admissible beside a recorded rendering budget. The assertions are on the shape: it has to
- * start at rest, settle exactly on the target, and overshoot only a little, because a
- * console panel that bounces 20% past its edge reads as a toy.
+ * `linear()` samples a curve the browser interpolates on the compositor, so it costs what a
+ * cubic-bezier costs. The curve decelerates and lands: it starts at rest, rises without ever
+ * passing its target, and settles exactly on it. A panel that goes past its edge and comes
+ * back is a bounce, and a calm, flat interface has no bounce in it.
  */
-describe('the spring easing', () => {
+describe('the arrival easing', () => {
   // Whitespace is collapsed: Prettier wraps a long `linear()` across lines.
-  const declared = (/--lupin-ease-spring:\s*linear\(([^;]+)\);/.exec(motionCss)?.[1] ?? '')
+  const declared = (/--lupin-ease-arrive:\s*linear\(([^;]+)\);/.exec(motionCss)?.[1] ?? '')
     .replace(/\s+/g, ' ')
     .trim();
   const stops = declared
@@ -233,8 +232,8 @@ describe('the spring easing', () => {
     .filter((value) => Number.isFinite(value));
 
   it('is published, and is the same value the token table owns', () => {
-    expect(declared, 'motion.css publishes no --lupin-ease-spring').not.toBe('');
-    const owned = /^linear\((.*)\)$/.exec(motion.easing.spring)?.[1]?.replace(/\s+/g, ' ').trim();
+    expect(declared, 'motion.css publishes no --lupin-ease-arrive').not.toBe('');
+    const owned = /^linear\((.*)\)$/.exec(motion.easing.arrive)?.[1]?.replace(/\s+/g, ' ').trim();
     expect(owned).toBe(declared);
   });
 
@@ -244,25 +243,132 @@ describe('the spring easing', () => {
     expect(stops.at(-1)).toBe(1);
   });
 
-  it('overshoots by no more than 4%', () => {
-    expect(Math.max(...stops)).toBeGreaterThan(1);
-    expect(Math.max(...stops)).toBeLessThanOrEqual(1.04);
+  it('never overshoots, and never moves backwards', () => {
+    expect(Math.max(...stops)).toBeLessThanOrEqual(1);
+    for (let index = 1; index < stops.length; index += 1) {
+      expect(stops[index], `stop ${index} moves backwards`).toBeGreaterThanOrEqual(
+        stops[index - 1] ?? 0,
+      );
+    }
+  });
+
+  it('decelerates: it covers more ground in its first half than in its second', () => {
+    const middle = stops[Math.floor(stops.length / 2)] ?? 0;
+    expect(middle).toBeGreaterThan(0.5);
   });
 
   it('is what an anchored panel and an arriving panel enter on', () => {
     for (const name of ['--animate-fade-in', '--animate-zoom-in-95']) {
       const declaration = new RegExp(`${name}:\\s*([^;]+);`).exec(motionCss)?.[1] ?? '';
-      expect(declaration, `${name} does not enter on the spring`).toContain(
-        'var(--lupin-ease-spring)',
+      expect(declaration, `${name} does not enter on the arrival curve`).toContain(
+        'var(--lupin-ease-arrive)',
       );
     }
   });
 
-  it('is never an exit: something leaving accelerates away and does not bounce', () => {
+  it('is never an exit: something leaving accelerates away', () => {
     for (const name of ['--animate-fade-out', '--animate-zoom-out-95']) {
       const declaration = new RegExp(`${name}:\\s*([^;]+);`).exec(motionCss)?.[1] ?? '';
-      expect(declaration).not.toContain('spring');
+      expect(declaration).toContain('var(--lupin-ease-in)');
     }
+  });
+
+  it('has no spring left anywhere: no easing token passes its target', () => {
+    expect(motionCss).not.toContain('--lupin-ease-spring');
+    expect(Object.keys(motion.easing)).not.toContain('spring');
+    for (const [name, value] of Object.entries(motion.easing)) {
+      const bezier = /cubic-bezier\(([^)]+)\)/.exec(value)?.[1];
+      if (!bezier) continue;
+      const [, y1, , y2] = bezier.split(',').map(Number);
+      expect(y1, `${name} overshoots`).toBeLessThanOrEqual(1);
+      expect(y2, `${name} overshoots`).toBeLessThanOrEqual(1);
+      expect(y1, `${name} undershoots`).toBeGreaterThanOrEqual(0);
+      expect(y2, `${name} undershoots`).toBeGreaterThanOrEqual(0);
+    }
+  });
+});
+
+/**
+ * A `--lupin-duration-*` token is already `calc(value * scale)`. Multiplying it by the scale a
+ * second time squares the reduced-motion factor (0.01 becomes 0.0001), so the reduced duration
+ * is no longer the one `motion.ts` documents.
+ */
+describe('the published animations scale their duration once', () => {
+  const published = [...motionCss.matchAll(/(--animate-[\w-]+):\s*([^;]+);/g)];
+
+  it('publishes animations to check', () => {
+    expect(published.length).toBeGreaterThan(0);
+  });
+
+  it('never multiplies an already-scaled duration token by the scale again', () => {
+    for (const [, name, value] of published) {
+      if (!value?.includes('var(--lupin-duration-')) continue;
+      expect(value, `${name} scales its duration twice`).not.toContain('var(--lupin-motion-scale)');
+    }
+  });
+});
+
+/** The body of the `@keyframes` block called `name`. */
+function keyframesBody(css: string, name: string): string {
+  const start = css.indexOf(`@keyframes ${name} {`);
+  if (start === -1) return '';
+  // A keyframes block nests one level, so the body ends at the first `}` on its own line.
+  const end = css.indexOf('\n}', start);
+  return css.slice(start, end);
+}
+
+/**
+ * Calm motion: quick, short and still.
+ *
+ * An arrival is a fact being reported, so it is over before the reader has to wait for it, it
+ * travels a few pixels rather than a share of its own height (a tall panel rising 4% moved 30px),
+ * and a route change is a crossfade with no movement at all.
+ */
+describe('calm motion', () => {
+  const durationMs = (declaration: string): number =>
+    Number(/var\(--lupin-duration-(\d+)\)/.exec(declaration)?.[1] ?? Number.NaN);
+
+  it('finishes every arrival within 150ms', () => {
+    for (const name of ['--animate-fade-in', '--animate-zoom-in-95']) {
+      const declaration = new RegExp(`${name}:\\s*([^;]+);`).exec(motionCss)?.[1] ?? '';
+      expect(durationMs(declaration), `${name} is slower than 150ms`).toBeLessThanOrEqual(150);
+    }
+    const stagger = ruleBody(motionCss, '@utility stagger-in');
+    expect(durationMs(stagger), 'stagger-in is slower than 150ms').toBeLessThanOrEqual(150);
+  });
+
+  it('rises a few fixed pixels on arrival, never a percentage of its own height', () => {
+    const enter = keyframesBody(motionCss, 'lupin-enter');
+    const rise = /translateY\(([^)]+)\)/.exec(enter)?.[1] ?? '';
+    expect(rise, 'lupin-enter moves by a percentage of its own height').toMatch(/^\d+px$/);
+    expect(Number.parseInt(rise, 10)).toBeLessThanOrEqual(6);
+  });
+
+  it('grows from at least 97% when anchored, so it opens rather than zooms', () => {
+    const zoom = keyframesBody(motionCss, 'lupin-zoom-in');
+    const from = Number(/scale\(([\d.]+)\)/.exec(zoom)?.[1]);
+    expect(from).toBeGreaterThanOrEqual(0.97);
+    expect(from).toBeLessThan(1);
+  });
+
+  it('holds the last row of a list back by no more than 128ms', () => {
+    const max = Number(/--lupin-stagger-max:\s*(\d+)/.exec(motionCss)?.[1]);
+    const step = Number(/--lupin-stagger-step:\s*calc\((\d+)ms/.exec(motionCss)?.[1]);
+    expect(max * step).toBeLessThanOrEqual(128);
+  });
+
+  it('crossfades a route change with no movement', () => {
+    const entering = ruleBody(motionCss, '::view-transition-new(root)');
+    const keyframes = /animation:\s*([\w-]+)/.exec(entering)?.[1] ?? '';
+    expect(keyframes, 'the new page enters on no keyframes').not.toBe('');
+    expect(keyframesBody(motionCss, keyframes), `${keyframes} moves the page`).not.toMatch(
+      /transform|translate|scale/,
+    );
+  });
+
+  it('slides the indicator and the shared elements on the arrival curve', () => {
+    expect(ruleBody(motionCss, '@utility indicator')).toContain('var(--lupin-ease-arrive)');
+    expect(ruleBody(motionCss, '::view-transition-group(*)')).toContain('var(--lupin-ease-arrive)');
   });
 });
 
@@ -342,9 +448,9 @@ describe('stagger, indicator and count', () => {
     expect(max * step).toBeLessThanOrEqual(250);
   });
 
-  it('enters on the same keyframes and spring as every other arrival', () => {
+  it('enters on the same keyframes and arrival curve as every other arrival', () => {
     expect(stagger).toContain('lupin-enter');
-    expect(stagger).toContain('var(--lupin-ease-spring)');
+    expect(stagger).toContain('var(--lupin-ease-arrive)');
     // `both` holds the first frame through the delay; without it a late item flashes visible.
     expect(stagger).toMatch(/\bboth\b/);
   });

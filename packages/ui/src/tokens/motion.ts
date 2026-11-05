@@ -29,12 +29,13 @@ export const motion = {
     out: 'cubic-bezier(0, 0, 0.2, 1)',
     'in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
     /**
-     * A damped spring (damping ratio 0.78) sampled into 17 stops: it overshoots by 2% and
-     * settles. `linear()` is interpolated by the browser like any other easing, so it costs
-     * nothing per frame on the main thread. For arrivals only — an exit never bounces.
+     * The arrival curve: a quartic ease-out, `1 - (1 - t)^4`, sampled into 17 even stops. It
+     * decelerates hard and lands on its target without passing it — no overshoot, no settle.
+     * `linear()` is interpolated by the browser like any other easing, so it costs nothing per
+     * frame on the main thread. For arrivals only; an exit accelerates away on `in`.
      */
-    spring:
-      'linear(0, 0.102, 0.309, 0.526, 0.708, 0.842, 0.93, 0.982, 1.008, 1.018, 1.02, 1.017, 1.012, 1.008, 1.005, 1.003, 1)',
+    arrive:
+      'linear(0, 0.2275, 0.4138, 0.5642, 0.6836, 0.7766, 0.8474, 0.8999, 0.9375, 0.9634, 0.9802, 0.9905, 0.9961, 0.9988, 0.9998, 0.99998, 1)',
   },
 };
 

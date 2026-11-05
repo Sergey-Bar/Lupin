@@ -1,6 +1,6 @@
 ---
 title: The design language
-description: A flat plane, the Lupin violet, Geist, spring motion and one translucent material for what floats — and the numbers every token has to clear.
+description: A flat plane, the Lupin violet, Geist, calm motion and one translucent material for what floats — and the numbers every token has to clear.
 ---
 
 # The design language
@@ -162,13 +162,17 @@ against each fallback (102.20% and 100.19%).
 Named durations, five easings and a press scale, declared in
 `packages/ui/src/tokens/motion.css`, and every animation is reporting a state change.
 
-- **Arrivals settle on a spring.** `--lupin-ease-spring` is a damped spring sampled into a
-  CSS `linear()` easing: it overshoots by 2% and settles. A `linear()` easing is
-  interpolated by the browser like a cubic-bezier, so it costs nothing per frame on the main
-  thread. Exits never spring — something leaving accelerates away.
+- **Arrivals land, they do not bounce.** `--lupin-ease-arrive` is a quartic ease-out sampled
+  into a CSS `linear()` easing: it decelerates and stops on its target without passing it. An
+  arrival is 150ms and rises 4px, an anchored panel opens from 97%, and a list staggers 16ms a
+  row up to the eighth. A `linear()` easing is interpolated by the browser like a
+  cubic-bezier, so it costs nothing per frame on the main thread. Exits accelerate away on
+  `ease-in`. `motion.test.ts` fails on an overshooting easing, a percentage rise or an arrival
+  slower than 150ms.
 - **Navigation is a view transition.** The router runs every route change through
-  `document.startViewTransition`, and a run's label in the list and its heading on the
-  detail page share one `view-transition-name`, so opening a run carries the eye.
+  `document.startViewTransition`. The page crossfades with no movement, and a run's label in
+  the list and its heading on the detail page share one `view-transition-name`, so opening a
+  run carries the eye.
 - **Only compositor properties move**: opacity and transform. A test fails on an animated
   height, width, offset or box metric.
 - **Optimistic, not pending.** Adding a test to quarantine puts it in the list at once,

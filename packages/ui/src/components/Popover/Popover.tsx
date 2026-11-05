@@ -169,7 +169,7 @@ export const PopoverContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivE
          * opening. `origin-top` is set here rather than in the keyframe because the origin
          * belongs to the anchor and only the component knows which edge it is on.
          */
-        'absolute z-popover mt-2 w-72 origin-top rounded-md border border-border p-4 text-fg outline-none animate-zoom-in-95 duration-150',
+        'absolute z-popover mt-2 w-72 origin-top rounded-md border border-border p-4 text-fg outline-none animate-zoom-in-95',
         'surface-translucent shadow-elevation-2',
         className,
       )}

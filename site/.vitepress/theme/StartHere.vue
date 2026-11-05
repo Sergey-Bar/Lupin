@@ -212,7 +212,7 @@ const path = computed(() => paths[selected.value]);
   border: 1px solid var(--lupin-border);
   border-radius: 0.4rem;
   overflow: hidden;
-  animation: path-enter 250ms var(--lupin-ease-out);
+  animation: path-enter var(--lupin-duration-150) var(--lupin-ease-arrive);
 }
 .start-here__intro {
   padding: clamp(1.5rem, 4vw, 3rem);
@@ -285,7 +285,7 @@ const path = computed(() => paths[selected.value]);
 @keyframes path-enter {
   from {
     opacity: 0;
-    transform: translateY(0.5rem);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;

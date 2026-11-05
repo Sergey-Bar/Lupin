@@ -389,6 +389,27 @@ describe('RunDetailPage', () => {
     expect(screen.getByText(/No events have been observed/iu)).toBeInTheDocument();
   });
 
+  it('wraps a context value rather than cutting it off, so a time is never "18:30:53 …"', async () => {
+    render(<RunDetailPage id="unknown" api={detailApi(makeRun({ id: 'unknown' }))} />);
+    await waitFor(() => expect(screen.getByTestId('run-detail-page')).toBeInTheDocument());
+    const context = screen.getByRole('region', { name: 'Run context' });
+    for (const value of context.querySelectorAll('dd')) {
+      expect(value.className).not.toMatch(/\btruncate\b/);
+    }
+  });
+
+  it('draws the phase timeline as a quiet step line, not a row of outlined chips', async () => {
+    render(
+      <RunDetailPage id="unknown" api={detailApi(makeRun({ id: 'unknown', phase: 'running' }))} />,
+    );
+    await waitFor(() => expect(screen.getByTestId('run-detail-page')).toBeInTheDocument());
+    const timeline = screen.getByRole('list', { name: 'Run phase timeline' });
+    for (const step of timeline.querySelectorAll('li')) {
+      expect(step.className).not.toMatch(/\b(border|rounded-full)\b/);
+    }
+    expect(screen.getByTestId('phase-running')).toHaveAttribute('aria-current', 'step');
+  });
+
   /**
    * An artifact with no `name` is labelled by its kind.
    *
