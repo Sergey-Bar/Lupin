@@ -1,5 +1,11 @@
 import React from 'react';
-import { Outlet, createRootRoute, redirect, useRouterState } from '@tanstack/react-router';
+import {
+  Outlet,
+  createRootRoute,
+  redirect,
+  useNavigate,
+  useRouterState,
+} from '@tanstack/react-router';
 import { NavBar, SectionTabs } from '../components/NavBar.js';
 import { ThemeProvider } from '../theme/ThemeProvider.js';
 import { GlobalCommandPalette } from '../components/GlobalCommandPalette.js';
@@ -8,6 +14,8 @@ import { Shortcuts } from '../components/Shortcuts.js';
 import { PreferencesProvider } from '../theme/preferences.js';
 import { createHealthClient } from '../lib/health-client.js';
 import { PageContent } from '../components/PageContent.js';
+import { useSectionWheel } from '../hooks/useSectionWheel.js';
+import { sectionOf } from '../route-manifest.js';
 
 export const Route = createRootRoute({
   /**
@@ -34,6 +42,11 @@ export const Route = createRootRoute({
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const health = React.useMemo(() => createHealthClient(), []);
+  const navigate = useNavigate();
+  // One wheel step at the edge of a screen snaps to the next or previous category.
+  const wheelRef = useSectionWheel<HTMLElement>(sectionOf(pathname), (to) => {
+    void navigate({ to });
+  });
   /*
    * **The viewport is the page.** `h-dvh` and `overflow-hidden` on the frame, and each
    * screen is laid out into what is left — `PageFrame` fills it and panels page their
@@ -54,7 +67,10 @@ function RootComponent() {
         <ToastProvider>
           <div className="relative flex h-dvh flex-row overflow-hidden bg-surface-sunken text-fg">
             <NavBar />
-            <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-10 py-8">
+            <main
+              ref={wheelRef}
+              className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-10 py-8"
+            >
               <SectionTabs />
               <PageContent health={health} pathname={pathname}>
                 <Outlet />

@@ -259,7 +259,7 @@ the page drawn from the accent, used on entry screens only — today, the first-
 
 **Four sections, and every old page is a tab.** Overview, Runs, Insights and Map are the
 only top-level destinations (`apps/web/src/route-manifest.ts`, `SECTIONS`). The console is a
-desktop product. Its chrome is a 64px icon rail on the start edge, one 44px icon per section with the name as a tooltip and as screen-reader text, the theme at its foot, and a tab row above the page for the section's pages. There is no top bar and no bottom bar.
+desktop product. Its chrome is a 64px icon rail on the start edge, one 44px icon per section with the name as a tooltip and as screen-reader text, the theme at its foot, and a tab row above the page for the section's pages. There is no top bar and no bottom bar. **The wheel snaps between categories:** each category is one screen, and one wheel step at the edge of it moves to the next or previous category in rail order, crossfaded like a click. A list or table scrolls first and the step waits for its end; a text field never moves the screen; one trackpad flick moves once (`apps/web/src/hooks/useSectionWheel.ts`).
 
 **The Overview answers in order and stops.** The verdict first — Go, Caution or No-go, in
 words and an icon as well as a colour — then _What's wrong_ beside _What's good_, each
