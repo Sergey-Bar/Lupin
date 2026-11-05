@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { initSentry } from './observability/sentry.js';
+import { dotEnvCandidates, planStartupEnvironment } from './startup-environment.js';
 
 /**
  * Load `.env` before anything reads `process.env`.
@@ -29,28 +30,15 @@ import { initSentry } from './observability/sentry.js';
  */
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-// Under Vitest this module is in the graph (it is imported at the top of `index.ts`), but a
-// test — and the authz-matrix generator, which imports `dist/index.js` with `NODE_ENV=test` —
-// owns its own environment: loading a developer's `.env` here would let the machine's
-// configuration decide the result. An open-mode reporter test would see a configured
-// `REPORTER_SECRET`; the route introspector would see a `DATABASE_URL` and register the
-// database-only routes, so the composed app would not match the committed authz matrix. Both
-// `VITEST` and `NODE_ENV=test` mark that context; outside it the preload is the whole point.
-const underTest = process.env['VITEST'] !== undefined || process.env['NODE_ENV'] === 'test';
-if (!underTest) {
-  for (const candidate of [
-    path.resolve(here, '../../..', '.env'),
-    path.resolve(here, '../../.env'),
-    path.resolve(here, '../../../.env'),
-  ]) {
-    if (existsSync(candidate)) {
-      process.loadEnvFile(candidate);
-      break;
-    }
-  }
-
-  // Preloaded so the SDK is live before the module graph is evaluated. `getConfig()` and
-  // `checkProductionPolicy()` both throw on a misconfigured deployment, and that failure happens
-  // while `index.ts` is still importing, which is too early for a call made from inside it.
-  initSentry();
+// Under Vitest this module is in the graph (it is imported at the top of `index.ts`), but a test
+// owns its own environment; `planStartupEnvironment` says when, and is tested on its own.
+const plan = planStartupEnvironment(process.env);
+if (plan.loadDotEnv) {
+  const found = dotEnvCandidates(here).find((candidate) => existsSync(candidate));
+  if (found !== undefined) process.loadEnvFile(found);
 }
+
+// Run before the rest of the module graph is evaluated. `getConfig()` and
+// `checkProductionPolicy()` both throw on a misconfigured deployment, and that failure happens
+// while `index.ts` is still importing, which is too early for a call made from inside it.
+if (plan.initErrorReporter) initSentry();

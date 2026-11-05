@@ -84,24 +84,20 @@ run('apply migrations', ['--filter', '@lupin/db', 'db:migrate']);
 // The key the scenario sends as a bearer token. The load profile has to
 // authenticate the way a real reporter does, or it measures the 401 path and
 // calls it a fast endpoint.
-const api = spawn(
-  'pnpm',
-  ['--filter', '@lupin/api', 'exec', 'tsx', '--import', './src/instrument.ts', 'src/index.ts'],
-  {
-    cwd: root,
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-    env: {
-      ...process.env,
-      DATABASE_URL: databaseUrl,
-      LUPIN_API_KEY: process.env['LUPIN_API_KEY'] ?? 'e2e-installation-key-32-characters-long',
-      COOKIE_SECRET: process.env['COOKIE_SECRET'] ?? 'performance-gate-cookie-secret-32-chars',
-      PUBLIC_APP_URL: process.env['PUBLIC_APP_URL'] ?? 'http://127.0.0.1:5173',
-      PORT: port,
-      NODE_ENV: process.env['NODE_ENV'] ?? 'development',
-    },
+const api = spawn('pnpm', ['--filter', '@lupin/api', 'exec', 'tsx', 'src/index.ts'], {
+  cwd: root,
+  stdio: 'inherit',
+  shell: process.platform === 'win32',
+  env: {
+    ...process.env,
+    DATABASE_URL: databaseUrl,
+    LUPIN_API_KEY: process.env['LUPIN_API_KEY'] ?? 'e2e-installation-key-32-characters-long',
+    COOKIE_SECRET: process.env['COOKIE_SECRET'] ?? 'performance-gate-cookie-secret-32-chars',
+    PUBLIC_APP_URL: process.env['PUBLIC_APP_URL'] ?? 'http://127.0.0.1:5173',
+    PORT: port,
+    NODE_ENV: process.env['NODE_ENV'] ?? 'development',
   },
-);
+});
 
 // The literal union rather than a bare string: `process.on` takes a
 // `NodeJS.Signals`, and a signal name Node does not recognise throws at

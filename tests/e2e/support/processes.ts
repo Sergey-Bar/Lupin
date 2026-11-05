@@ -39,7 +39,7 @@ interface Spawned {
  *
  * @param env the whole environment of the child: nothing is inherited, so a variable the
  *   service reads that this call does not name is absent, not silently taken from the developer's
- *   shell
+ *   shell or `.env` (`LUPIN_SKIP_DOTENV=1` keeps the API from loading the file)
  */
 function spawnApp(
   app: 'api' | 'worker' | 'runner',
@@ -48,7 +48,12 @@ function spawnApp(
 ): Spawned {
   const child = spawn(process.execPath, ['--import', 'tsx', entry], {
     cwd: path.join(REPOSITORY_ROOT, 'apps', app),
-    env: { PATH: process.env['PATH'] ?? '', SystemRoot: process.env['SystemRoot'] ?? '', ...env },
+    env: {
+      PATH: process.env['PATH'] ?? '',
+      SystemRoot: process.env['SystemRoot'] ?? '',
+      LUPIN_SKIP_DOTENV: '1',
+      ...env,
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
   });

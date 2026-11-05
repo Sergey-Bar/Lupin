@@ -41,7 +41,7 @@ maps each answer to its evidence so the registration is copy-paste.
 | Static analysis                      | Met    | `pnpm security:static` (semgrep + gitleaks) in the CI `security` job; CodeQL workflow |
 | Secured delivery (signed/HTTPS)      | Met    | SHA-pinned GitHub Actions; npm publish via `npm-publish.yml`; OCI image provenance    |
 | Dependencies monitored for vulns     | Met    | Dependabot (`.github/dependabot.yml`); `pnpm audit` in `security:verify`              |
-| Crypto practices (if applicable)     | Met    | Vault uses AES-256-GCM + PBKDF2 (`packages/auth`, documented)                         |
+| Crypto practices (if applicable)     | Met    | Vault uses AES-256-GCM + PBKDF2 (`apps/api/src/infrastructure/vault-crypto.ts`)       |
 
 ## Why no badge is committed yet
 
