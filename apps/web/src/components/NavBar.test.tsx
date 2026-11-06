@@ -27,7 +27,7 @@ function makeRouter(initialPath = '/') {
   return router;
 }
 
-const SECTION_LABELS = ['Overview', 'Runs', 'Insights', 'Map', 'GitHub', 'Settings'];
+const SECTION_LABELS = ['Overview', 'Runs', 'Insights', 'Map', 'GitHub', 'Connections', 'Settings'];
 
 describe('NavBar', () => {
   beforeEach(() => {
@@ -73,7 +73,7 @@ describe('NavBar', () => {
     expect(bar.className).not.toMatch(/\b(sm|md|lg|xl):/u);
   });
 
-  it('draws the six sections as icons, each a named 44px link with a tooltip', async () => {
+  it('draws the seven sections as icons, each a named 44px link with a tooltip', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
     const links = within(within(bar).getByRole('list', { name: 'Sections' })).getAllByRole('link');

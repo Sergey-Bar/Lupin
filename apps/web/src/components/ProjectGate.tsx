@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import React from 'react';
 import { EmptyState, Select } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
@@ -113,8 +114,14 @@ function Onboarding({ title }: { title: string }): React.ReactElement {
       <div className="flex flex-1 items-center justify-center rounded-lg bg-ambient">
         <div className="max-w-measure space-y-3 rounded-lg border border-border bg-surface-raised p-8">
           <h2 className="text-xl font-semibold">Point Lupin at a repository</h2>
+          <Link
+            to="/dashboard/connections"
+            className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-on-fill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+          >
+            Add a repository
+          </Link>
           <p className="max-w-measure text-pretty text-sm text-fg-muted">
-            Set <span className="font-mono">LUPIN_PROJECT_ROOT</span> to the checkout you want
+            Or set <span className="font-mono">LUPIN_PROJECT_ROOT</span> to the checkout you want
             analysed and restart the API. It registers that folder at boot, scans every tool and
             report in it, and this screen fills in. This is an empty install, not a failure.
           </p>

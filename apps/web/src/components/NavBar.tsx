@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   ListChecks,
   Network,
+  Plug,
   Settings,
   cn,
   useSlidingIndicator,
@@ -41,6 +42,7 @@ const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
   insights: Activity,
   map: Network,
   github: GitBranch,
+  connections: Plug,
   settings: Settings,
 };
 

@@ -45,13 +45,14 @@ describe('route manifest', () => {
     expect(routeManifest.some((route) => route.path === '/dashboard/runs')).toBe(true);
   });
 
-  it('has six sections, in the order the navigation draws them', () => {
+  it('has seven sections, in the order the navigation draws them', () => {
     expect(SECTIONS.map((section) => section.label)).toEqual([
       'Overview',
       'Runs',
       'Insights',
       'Map',
       'GitHub',
+      'Connections',
       'Settings',
     ]);
     for (const section of SECTIONS) {
@@ -83,6 +84,10 @@ describe('route manifest', () => {
       '/dashboard/issues',
       '/dashboard/repos',
       '/dashboard/settings',
+      '/dashboard/connections',
+      '/dashboard/connections/github',
+      '/dashboard/connections/chat',
+      '/dashboard/connections/ci',
     ]);
     expect(visibleRoutes.every((route) => isApplicationPath(route.path))).toBe(true);
   });

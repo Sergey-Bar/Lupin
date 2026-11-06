@@ -458,6 +458,7 @@ export function makeQa(overrides: Partial<QaClient> = {}): QaClient {
   };
   return {
     listProjects: vi.fn(async () => [TEST_PROJECT]),
+    registerProject: vi.fn(never),
     getProject: vi.fn(never),
     getScore: vi.fn(never),
     getGaps: vi.fn(async () => ({ gaps: [], cappedBy: 'unit' })),

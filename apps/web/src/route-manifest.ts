@@ -29,6 +29,7 @@ export const SECTIONS = [
   { id: 'insights', label: 'Insights', path: '/dashboard/insights' },
   { id: 'map', label: 'Map', path: '/dashboard/map' },
   { id: 'github', label: 'GitHub', path: '/dashboard/prs' },
+  { id: 'connections', label: 'Connections', path: '/dashboard/connections' },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ] as const;
 
@@ -317,6 +318,38 @@ export const routeManifest = [
     visible: true,
     section: 'settings',
     tab: 'Appearance',
+  },
+  {
+    id: 'connections',
+    path: '/dashboard/connections',
+    label: 'Repositories',
+    visible: true,
+    section: 'connections',
+    tab: 'Repositories',
+  },
+  {
+    id: 'connections-github',
+    path: '/dashboard/connections/github',
+    label: 'GitHub connection',
+    visible: true,
+    section: 'connections',
+    tab: 'GitHub',
+  },
+  {
+    id: 'connections-chat',
+    path: '/dashboard/connections/chat',
+    label: 'Chat apps',
+    visible: true,
+    section: 'connections',
+    tab: 'Chat apps',
+  },
+  {
+    id: 'connections-ci',
+    path: '/dashboard/connections/ci',
+    label: 'CI',
+    visible: true,
+    section: 'connections',
+    tab: 'CI',
   },
   {
     id: 'settings-reports',
