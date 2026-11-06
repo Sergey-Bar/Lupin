@@ -104,3 +104,58 @@ describe('CiPage', () => {
     expect(screen.getByTestId('connections-ci')).toHaveTextContent('LUPIN_URL=https://lupin.local');
   });
 });
+
+describe('RepositoriesPage, the edges', () => {
+  it('says so when the list cannot be read', async () => {
+    const qa = makeQa({
+      listProjects: vi.fn(async () => {
+        throw new Error('API answered 503');
+      }),
+    });
+    render(<RepositoriesPage qa={qa} health={health()} />);
+    expect(await screen.findByText(/could not be read: API answered 503/u)).toBeDefined();
+  });
+
+  it('reports a scan that could not start, and keeps the list', async () => {
+    const qa = makeQa({ listProjects: vi.fn(async () => [PROJECT]) });
+    const h = {
+      startScan: vi.fn(async () => {
+        throw new Error('runner offline');
+      }),
+    } as unknown as HealthClient;
+    render(<RepositoriesPage qa={qa} health={h} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Scan now' }));
+    expect(h.startScan).toHaveBeenCalled();
+    expect(screen.getByRole('list', { name: 'Registered repositories' })).toBeDefined();
+  });
+
+  it('switches back from Git URL to a folder and asks for the URL when it is empty', async () => {
+    const qa = makeQa({ listProjects: vi.fn(async () => []) });
+    render(<RepositoriesPage qa={qa} health={health()} />);
+    await userEvent.click(screen.getByRole('radio', { name: 'Git URL' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add repository' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter the repository URL.');
+    await userEvent.click(screen.getByRole('radio', { name: 'Local folder' }));
+    expect(screen.getByRole('radio', { name: 'Local folder' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+});
+
+describe('RepositoriesPage, naming', () => {
+  it('sends the name a person typed, and a slug made from it', async () => {
+    const register = vi.fn(async () => PROJECT);
+    const qa = makeQa({ listProjects: vi.fn(async () => []), registerProject: register });
+    render(<RepositoriesPage qa={qa} health={health()} />);
+    await userEvent.type(screen.getByLabelText('Folder path'), '/srv/x');
+    await userEvent.type(screen.getByLabelText('Name (optional)'), 'Web Shop');
+    await userEvent.click(screen.getByRole('button', { name: 'Add repository' }));
+    expect(register).toHaveBeenCalledWith({
+      name: 'Web Shop',
+      slug: 'web-shop',
+      repoPath: '/srv/x',
+    });
+  });
+});
