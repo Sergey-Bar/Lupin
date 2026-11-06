@@ -226,6 +226,23 @@ describe('every method of the client reaches its own endpoint', () => {
     expect(calls.pop()).toBe('/api/v1/projects');
   });
 
+  it('registers a project and unwraps it from the 201 body', async () => {
+    const project = {
+      id: 'p9',
+      workspaceId: 'w',
+      name: 'Shop',
+      slug: 'shop',
+      repoPath: '/srv/shop',
+      detectorVersion: 1,
+      createdAt: AT,
+    };
+    body = { project, commands: [] };
+    await expect(
+      client().registerProject({ name: 'Shop', slug: 'shop', repoPath: '/srv/shop' }),
+    ).resolves.toEqual(project);
+    expect(calls.pop()).toBe('/api/v1/projects');
+  });
+
   it('reads one project with its commands', async () => {
     body = {
       project: {

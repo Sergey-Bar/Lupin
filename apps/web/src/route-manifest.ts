@@ -7,7 +7,7 @@
  * Runs, Insights, Map — and the eight became **tabs** of those sections rather than
  * being merged or redirected, so a bookmark to `/dashboard/analytics` opens the same
  * page it always did, now inside Insights. `section` is the one place that decision is
- * written; `NavBar`, `BottomTabBar`, `SectionTabs` and the command palette all read it.
+ * written; the sidebar (`NavBar`) and the command palette both read it.
  *
  * `label` is the page's own name (the palette says "Go to Trends"); `tab` is the short
  * label on its section's tab row. A page with no `tab` is a detail page — reachable from
@@ -29,6 +29,7 @@ export const SECTIONS = [
   { id: 'insights', label: 'Insights', path: '/dashboard/insights' },
   { id: 'map', label: 'Map', path: '/dashboard/map' },
   { id: 'github', label: 'GitHub', path: '/dashboard/prs' },
+  { id: 'connections', label: 'Connections', path: '/dashboard/connections' },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ] as const;
 
@@ -317,6 +318,38 @@ export const routeManifest = [
     visible: true,
     section: 'settings',
     tab: 'Appearance',
+  },
+  {
+    id: 'connections',
+    path: '/dashboard/connections',
+    label: 'Repositories',
+    visible: true,
+    section: 'connections',
+    tab: 'Repositories',
+  },
+  {
+    id: 'connections-github',
+    path: '/dashboard/connections/github',
+    label: 'GitHub connection',
+    visible: true,
+    section: 'connections',
+    tab: 'GitHub',
+  },
+  {
+    id: 'connections-chat',
+    path: '/dashboard/connections/chat',
+    label: 'Chat apps',
+    visible: true,
+    section: 'connections',
+    tab: 'Chat apps',
+  },
+  {
+    id: 'connections-ci',
+    path: '/dashboard/connections/ci',
+    label: 'CI',
+    visible: true,
+    section: 'connections',
+    tab: 'CI',
   },
   {
     id: 'settings-reports',

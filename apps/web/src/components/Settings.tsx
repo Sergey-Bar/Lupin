@@ -8,7 +8,7 @@ import { usePreferences } from '../theme/preferences.js';
  *
  * A destination, not a floating modal, so it reuses the no-scroll shell, the manifest,
  * the command palette and the section tab row that every other section uses. The tabs
- * are drawn by `SectionTabs` from the manifest; each tab is its own page under
+ * are listed by the sidebar (`NavBar`) from the manifest; each tab is its own page under
  * `/dashboard/settings/*`. Appearance is the landing, because it is the one surface every
  * reader may change regardless of role.
  */

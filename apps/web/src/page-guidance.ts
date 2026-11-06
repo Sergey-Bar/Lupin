@@ -386,4 +386,40 @@ export const pageGuidance = {
     ],
     remember: 'The profile is changed from the install folder, not from this page.',
   },
+  connections: {
+    purpose: 'Add the code Lupin reads: a folder on this machine or a Git URL.',
+    steps: [
+      'Choose Local folder or Git URL and enter where the code is.',
+      'Press Add repository; it appears in the list on the left.',
+      'Press Scan now to read its tools and reports.',
+    ],
+    remember: 'A token for a private repository is sealed in the vault and never shown again.',
+  },
+  'connections-github': {
+    purpose: 'Sync pull requests, issues and deployments from GitHub for each repository.',
+    steps: [
+      'Find the repository in the list.',
+      'Turn on sync for it.',
+      'Open Pull requests or Issues under GitHub to see what came in.',
+    ],
+    remember: 'Only a repository added with a GitHub URL can sync.',
+  },
+  'connections-chat': {
+    purpose: 'Send reports and alerts to Slack, Teams, Telegram, WhatsApp or Signal.',
+    steps: [
+      'Add a channel and paste its token.',
+      'Send a test message to check it.',
+      'Subscribe the channel to the reports it should get.',
+    ],
+    remember: 'Tokens are sealed in the vault and never shown again.',
+  },
+  'connections-ci': {
+    purpose: 'Send test results from your pipeline and fail a build on a no-go verdict.',
+    steps: [
+      'Create an uploader token under Settings, Access.',
+      'Copy the commands into your pipeline.',
+      'Run it once and watch the run arrive under Runs.',
+    ],
+    remember: 'Keep the token in your CI secrets, never in the repository.',
+  },
 } satisfies Record<ManifestRoute['id'], PageGuidance>;

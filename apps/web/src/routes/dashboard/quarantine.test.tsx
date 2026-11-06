@@ -259,9 +259,9 @@ describe('QuarantinePage', () => {
    * pass — and a reader scanning for red found the one entry that had been approved.
    */
   it.each([
-    ['approved', 'bg-success'],
-    ['rejected', 'bg-danger'],
-    ['pending', 'bg-warning'],
+    ['approved', 'before:bg-success'],
+    ['rejected', 'before:bg-danger'],
+    ['pending', 'before:bg-warning'],
   ] as const)('paints %s in the %s tone', async (status, tone) => {
     render(
       <QuarantinePage
@@ -273,10 +273,10 @@ describe('QuarantinePage', () => {
     await waitFor(() => expect(screen.getByTestId('quarantine-status-q-1')).toBeInTheDocument());
     const element = screen.getByTestId('quarantine-status-q-1');
     expect(element).toHaveClass(tone);
-    // The other two tones, by name. `Badge` paints a verdict as a filled pill, so asserting
+    // The other two tones, by name. `Badge` draws a verdict as a coloured dot, so asserting
     // one tone is not enough: a badge carrying both `bg-success` and `bg-danger` would pass
     // the check above and tell the reader two things at once.
-    for (const other of ['bg-success', 'bg-danger', 'bg-warning'].filter(
+    for (const other of ['before:bg-success', 'before:bg-danger', 'before:bg-warning'].filter(
       (candidate) => candidate !== tone,
     )) {
       expect(element.className, 'a verdict carries exactly one tone').not.toContain(other);
@@ -302,7 +302,7 @@ describe('QuarantinePage', () => {
     await waitFor(() => expect(screen.getByTestId('quarantine-status-q-1')).toBeInTheDocument());
     const element = screen.getByTestId('quarantine-status-q-1');
     expect(element.textContent?.trim()).toBe('approved');
-    expect(element).toHaveClass('bg-success');
+    expect(element).toHaveClass('before:bg-success');
   });
 
   it('does not paint a verdict it does not recognise', async () => {

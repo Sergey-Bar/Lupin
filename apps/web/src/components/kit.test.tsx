@@ -1,6 +1,31 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { PageBody, ScrollRegion } from './kit.js';
+import { Kpi, PageBody, PageHeader, Panel, ScrollRegion } from './kit.js';
+
+/**
+ * Big type, lots of air, less chrome. A page leads with a display-size title; a figure is a
+ * number on the page rather than a number in a box; a panel is grouped by its plane step and
+ * its spacing, with no outline drawn round it.
+ */
+describe('the flat page', () => {
+  it('titles a page at display size from lg up', () => {
+    render(<PageHeader title="Runs" />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveClass('lg:text-5xl');
+  });
+
+  it('draws a figure with no box round it', () => {
+    render(<Kpi data-testid="kpi" label="Total runs" value="5" />);
+    const classes = screen.getByTestId('kpi').className;
+    expect(classes).not.toMatch(/(?<![:\w-])(border|bg-surface)\b/);
+  });
+
+  it('separates a panel by its plane step, not by an outline', () => {
+    render(<Panel title="All runs">rows</Panel>);
+    const panel = screen.getByRole('region', { name: 'All runs' });
+    expect(panel).toHaveClass('bg-surface');
+    expect(panel.className).not.toMatch(/(?<![:\w-])border\b/);
+  });
+});
 
 describe('ScrollRegion', () => {
   it('is a labelled region a keyboard can reach', () => {

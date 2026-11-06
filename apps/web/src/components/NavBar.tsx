@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   ListChecks,
   Network,
+  Plug,
   Settings,
   cn,
   useSlidingIndicator,
@@ -23,17 +24,16 @@ import { ThemeToggle } from './ThemeToggle.js';
 import { useViewerRole } from '../hooks/useViewerRole.js';
 
 /**
- * The chrome: four sections, three surfaces.
+ * The chrome: an icon-only rail and a tab row. The console is a desktop product, so there is no
+ * phone header and no bottom bar.
  *
- * - `NavBar` — the top bar. The wordmark, the four sections from `lg` up, the theme.
- * - `SectionTabs` — the tab row under it, for a section with more than one page.
- * - `BottomTabBar` — the four sections as a thumb-reach tab bar below `lg`.
+ * - `NavBar` — a narrow rail on the start edge: the wordmark's dot, one icon per section, the
+ *   theme at the foot. Each icon is a named link (visually hidden label plus a `title` tooltip),
+ *   so the rail is minimal to the eye and complete to a screen reader.
+ * - `SectionTabs` — the current section's pages, as a tab row above the page.
  *
- * All three read `SECTIONS` and `sectionOf` from the manifest, so there is one answer to
- * "where am I". The current section is marked with `aria-current="page"` **and** with
- * weight and a rule, never with colour alone.
- *
- * **No Logout button.** The install is open, so there is no session to end.
+ * Both read `SECTIONS` and `sectionOf` from the manifest, so there is one answer to "where am
+ * I". The current section carries `aria-current="page"` **and** a filled tile, never colour alone.
  */
 
 const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
@@ -42,6 +42,7 @@ const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
   insights: Activity,
   map: Network,
   github: GitBranch,
+  connections: Plug,
   settings: Settings,
 };
 
@@ -54,34 +55,32 @@ function useCurrentPath(): string {
 
 export function NavBar(): React.ReactElement {
   const current = sectionOf(useCurrentPath());
-  const listRef = useSlidingIndicator<HTMLUListElement>(current);
   return (
     <nav
       data-testid="nav-bar"
       aria-label="Primary navigation"
-      className="relative flex h-14 shrink-0 items-center gap-x-6 border-b border-border bg-surface px-4 sm:px-6"
+      className="flex h-full w-16 shrink-0 flex-col items-center border-e border-border bg-surface py-4"
     >
       {/*
-        The product's name, and the only place it appears in the chrome: "Lupin." with the
-        dot in the accent, the same mark as the site's footer. `aria-hidden` because the
-        page's `h1` already names the screen.
+        The product's mark, and the only place it appears in the chrome. The rail is too narrow
+        for the name, so it is the initial with the accent dot. `aria-hidden` because the page's
+        `h1` already names the screen.
       */}
       <span
         data-testid="nav-wordmark"
         aria-hidden="true"
-        className="shrink-0 text-lg font-semibold tracking-tight text-fg"
+        title="Lupin"
+        className="mb-6 shrink-0 text-lg font-semibold tracking-tight text-fg"
       >
-        <span>Lupin</span>
+        <span>L</span>
         <span data-wordmark-dot className="text-accent">
           .
         </span>
       </span>
-      {/* The accent mark slides between sections (`indicator`, motion.css) rather than jumping. */}
-      <ul
-        ref={listRef}
-        className="relative hidden min-w-0 flex-1 items-center justify-center gap-x-1 lg:flex"
-      >
+
+      <ul aria-label="Sections" className="flex min-h-0 flex-1 flex-col items-center gap-1">
         {SECTIONS.map((section) => {
+          const Icon = SECTION_ICONS[section.id];
           const active = section.id === current;
           return (
             <li key={section.id}>
@@ -89,40 +88,38 @@ export function NavBar(): React.ReactElement {
                 to={section.path}
                 activeOptions={{ exact: true }}
                 aria-current={active ? 'page' : undefined}
-                {...(active ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
+                title={section.label}
                 className={cn(
-                  'inline-flex min-h-11 items-center rounded-md px-4 text-sm transition-colors duration-100 motion-reduce:transition-none',
+                  'flex h-11 w-11 items-center justify-center rounded-lg transition-colors duration-100 motion-reduce:transition-none',
                   FOCUS,
-                  active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
+                  active
+                    ? 'bg-surface-muted text-fg'
+                    : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
                 )}
               >
-                {section.label}
+                <Icon size={20} strokeWidth={active ? 2.25 : 1.75} aria-hidden="true" />
+                <span className="sr-only">{section.label}</span>
               </Link>
             </li>
           );
         })}
-        <span aria-hidden="true" className="indicator" />
       </ul>
-      {/* Below `lg` the sections are in the bottom bar; the top bar names where you are. */}
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg-muted lg:hidden">
-        {SECTIONS.find((section) => section.id === current)?.label}
-      </span>
+
       <ThemeToggle />
     </nav>
   );
 }
 
 /**
- * The section's pages, as an underline row. Shown only when the current page is one of
- * the section's tabs — a run detail or a score deep-dive is reached by a link, and a tab
- * row above it would mark nothing as current.
+ * The section's pages, as an underline row above the page. Shown only when the current page is
+ * one of the section's tabs — a run detail is reached by a link, and a tab row above it would
+ * mark nothing as current.
  */
 export function SectionTabs(): React.ReactElement | null {
   const path = useCurrentPath();
   const section = sectionOf(path);
   const page = routeFor(path);
-  // Called before the early returns below: hooks cannot follow a conditional exit. The role
-  // decides only which Settings tabs to draw; the API still enforces who may open each.
+  // Called before the early returns below: hooks cannot follow a conditional exit.
   const tabsRef = useSlidingIndicator<HTMLUListElement>(page?.id);
   const role = useViewerRole();
   if (section === null || page === undefined || !('tab' in page)) return null;
@@ -134,7 +131,7 @@ export function SectionTabs(): React.ReactElement | null {
       data-testid="section-tabs"
       data-chrome="secondary"
       aria-label={`${label} pages`}
-      className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6"
+      className="-mx-10 mb-6 shrink-0 overflow-x-auto border-b border-border px-10"
     >
       <ul ref={tabsRef} className="relative flex gap-1">
         {tabs.map((tab) => {
@@ -158,47 +155,6 @@ export function SectionTabs(): React.ReactElement | null {
           );
         })}
         <span aria-hidden="true" className="indicator" />
-      </ul>
-    </nav>
-  );
-}
-
-/**
- * The four sections within thumb reach, below `lg`. A flex child of the shell rather than
- * `position: fixed`, so it never covers the last row of a page, with the safe-area inset
- * added beneath it for a phone with a home indicator.
- */
-export function BottomTabBar(): React.ReactElement {
-  const current = sectionOf(useCurrentPath());
-  return (
-    <nav
-      data-testid="bottom-tab-bar"
-      data-chrome="secondary"
-      aria-label="Sections"
-      className="shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
-    >
-      <ul className="grid grid-cols-6">
-        {SECTIONS.map((section) => {
-          const Icon = SECTION_ICONS[section.id];
-          const active = section.id === current;
-          return (
-            <li key={section.id}>
-              <Link
-                to={section.path}
-                activeOptions={{ exact: true }}
-                aria-current={active ? 'page' : undefined}
-                className={cn(
-                  'flex min-h-14 flex-col items-center justify-center gap-1 text-xs transition-colors',
-                  FOCUS,
-                  active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
-                )}
-              >
-                <Icon size={20} strokeWidth={active ? 2.25 : 1.75} aria-hidden="true" />
-                {section.label}
-              </Link>
-            </li>
-          );
-        })}
       </ul>
     </nav>
   );

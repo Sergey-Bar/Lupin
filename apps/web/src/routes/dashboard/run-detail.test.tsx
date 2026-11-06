@@ -398,6 +398,19 @@ describe('RunDetailPage', () => {
     }
   });
 
+  it('draws the run page flat: a display title and no outlined boxes', async () => {
+    render(<RunDetailPage id="unknown" api={detailApi(makeRun({ id: 'unknown' }))} />);
+    await waitFor(() => expect(screen.getByTestId('run-detail-page')).toBeInTheDocument());
+    expect(screen.getByRole('heading', { level: 1 })).toHaveClass('lg:text-5xl');
+    const context = screen.getByRole('region', { name: 'Run context' });
+    expect(context.className).not.toMatch(/(?<![:\w-])border\b/);
+    const timeline = screen.getByRole('list', { name: 'Run phase timeline' }).parentElement;
+    expect(timeline?.className ?? '').not.toMatch(/(?<![:\w-])border\b/);
+    expect(screen.getByTestId('run-duration').closest('.rounded-lg')?.className ?? '').not.toMatch(
+      /(?<![:\w-])border\b/,
+    );
+  });
+
   it('draws the phase timeline as a quiet step line, not a row of outlined chips', async () => {
     render(
       <RunDetailPage id="unknown" api={detailApi(makeRun({ id: 'unknown', phase: 'running' }))} />,

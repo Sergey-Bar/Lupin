@@ -97,6 +97,8 @@ export {
   Wrench,
   /** Copies a command or a link. */
   Copy,
+  /** The Connections section: repositories, GitHub, chat apps and CI. */
+  Plug,
   /** Opens the navigation on a narrow screen. */
   Menu,
   /** Pins a tool to the top of the runner. */

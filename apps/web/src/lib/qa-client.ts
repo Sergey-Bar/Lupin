@@ -11,6 +11,7 @@ import {
   QaHollowResponseSchema,
   QaScoreSchema,
   QaStructureResponseSchema,
+  RegisteredProjectSchema,
   ReleaseReadinessCardSchema,
   RepoScanSchema,
   type AnalyticsTrend,
@@ -46,6 +47,8 @@ import {
 
 export interface QaClient {
   listProjects(): Promise<RegisteredProject[]>;
+  /** Operator only. A local folder (`repoPath`) or a Git URL, never both; `token` only with a URL. */
+  registerProject(body: RegisterProjectBody): Promise<RegisteredProject>;
   getProject(projectId: string): Promise<ProjectDetailResponse>;
   getScore(projectId: string): Promise<QaScore>;
   getGaps(projectId: string): Promise<QaGapsResponse>;
@@ -69,6 +72,18 @@ export interface QaClient {
     idempotencyKey: string,
   ): Promise<{ runId: string }>;
 }
+
+/** The body `POST /api/v1/projects` accepts (`RegisterProjectBodySchema` in the API). */
+export interface RegisterProjectBody {
+  name: string;
+  slug: string;
+  repoPath?: string;
+  gitUrl?: string;
+  defaultBranch?: string;
+  token?: string;
+}
+
+const RegisterProjectResponseSchema = z.object({ project: RegisteredProjectSchema });
 
 /** What a response must look like for `getJson` to accept it. */
 type Schema<T> = z.ZodType<T>;
@@ -112,6 +127,8 @@ export function createQaClient(baseUrl = '', fetchImpl: typeof fetch = fetch): Q
 
   return {
     listProjects: async () => (await get('/api/v1/projects', ProjectListResponseSchema)).projects,
+    registerProject: async (body) =>
+      (await post('/api/v1/projects', body, RegisterProjectResponseSchema)).project,
     getProject: (projectId) =>
       get(`/api/v1/projects/${encodeURIComponent(projectId)}`, ProjectDetailResponseSchema),
     getScore: (projectId) =>
