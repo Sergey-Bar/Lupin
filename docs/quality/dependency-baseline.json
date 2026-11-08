@@ -28,7 +28,7 @@
     "unused dependency would otherwise hide. Each entry is named rather than matched by",
     "pattern, because a list of exemptions that grows by pattern stops being reviewed."
   ],
-  "reviewedOn": "2026-11-04",
+  "reviewedOn": "2026-11-08",
   "entries": [
     {
       "name": "@axe-core/playwright",
@@ -44,7 +44,7 @@
     },
     {
       "name": "@electric-sql/pglite",
-      "version": "0.5.14"
+      "version": "0.5.15"
     },
     {
       "name": "@eslint/js",
@@ -52,7 +52,7 @@
     },
     {
       "name": "@hono/node-server",
-      "version": "2.1.5"
+      "version": "2.1.6"
     },
     {
       "name": "@modelcontextprotocol/sdk",
@@ -60,31 +60,31 @@
     },
     {
       "name": "@playwright/test",
-      "version": "1.64.1"
+      "version": "1.65.0"
     },
     {
       "name": "@sentry/node",
-      "version": "11.10.0"
+      "version": "11.11.0"
     },
     {
       "name": "@sentry/react",
-      "version": "11.10.0"
+      "version": "11.11.0"
     },
     {
       "name": "@sentry/vite-plugin",
-      "version": "11.10.0"
+      "version": "11.11.0"
     },
     {
       "name": "@storybook/addon-docs",
-      "version": "10.6.5"
+      "version": "10.6.6"
     },
     {
       "name": "@storybook/react",
-      "version": "10.6.5"
+      "version": "10.6.6"
     },
     {
       "name": "@storybook/react-vite",
-      "version": "10.6.5"
+      "version": "10.6.6"
     },
     {
       "name": "@stryker-mutator/core",
@@ -96,7 +96,7 @@
     },
     {
       "name": "@tailwindcss/vite",
-      "version": "4.3.3"
+      "version": "4.3.5"
     },
     {
       "name": "@tanstack/react-router",
@@ -144,11 +144,11 @@
     },
     {
       "name": "@vitejs/plugin-react",
-      "version": "6.1.2"
+      "version": "6.2.1"
     },
     {
       "name": "@vitest/coverage-v8",
-      "version": "5.0.5"
+      "version": "5.1.0"
     },
     {
       "name": "ajv",
@@ -184,7 +184,7 @@
     },
     {
       "name": "effect",
-      "version": "4.1.1"
+      "version": "4.1.2"
     },
     {
       "name": "eslint",
@@ -208,7 +208,7 @@
     },
     {
       "name": "hono",
-      "version": "4.13.16"
+      "version": "4.13.17"
     },
     {
       "name": "husky",
@@ -228,11 +228,11 @@
     },
     {
       "name": "lucide-react",
-      "version": "1.66.0"
+      "version": "1.70.0"
     },
     {
       "name": "openid-client",
-      "version": "6.8.8"
+      "version": "6.8.9"
     },
     {
       "name": "pg",
@@ -256,7 +256,7 @@
     },
     {
       "name": "storybook",
-      "version": "10.6.5"
+      "version": "10.6.6"
     },
     {
       "name": "tailwind-merge",
@@ -264,7 +264,7 @@
     },
     {
       "name": "tailwindcss",
-      "version": "4.3.3"
+      "version": "4.3.5"
     },
     {
       "name": "tsx",
@@ -280,7 +280,7 @@
     },
     {
       "name": "typescript-eslint",
-      "version": "8.72.0"
+      "version": "8.72.1"
     },
     {
       "name": "uqr",
@@ -288,7 +288,7 @@
     },
     {
       "name": "vite",
-      "version": "8.3.5"
+      "version": "8.3.6"
     },
     {
       "name": "vitepress",
@@ -296,7 +296,7 @@
     },
     {
       "name": "vitest",
-      "version": "5.0.5"
+      "version": "5.1.0"
     },
     {
       "name": "vitest-axe",
@@ -304,7 +304,7 @@
     },
     {
       "name": "vue",
-      "version": "3.5.44"
+      "version": "3.5.45"
     },
     {
       "name": "zod",

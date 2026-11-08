@@ -69,6 +69,9 @@ const ceiling = baseline.ceiling;
 const run = spawnSync(
   process.execPath,
   [
+    // The whole tree exhausts Node's default 4 GB heap; the root `lint` script carries
+    // the same flag for the same reason.
+    '--max-old-space-size=6144',
     eslintBin,
     'apps',
     'packages',

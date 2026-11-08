@@ -226,11 +226,11 @@ overrides:
 
 catalog:
   '@eslint/js': ^10.0.1
-  '@playwright/test': ^1.64.1
-  '@sentry/node': ^11.10.0
-  '@sentry/react': ^11.10.0
-  '@sentry/vite-plugin': ^11.10.0
-  '@tailwindcss/vite': ^4.3.3
+  '@playwright/test': ^1.65.0
+  '@sentry/node': ^11.11.0
+  '@sentry/react': ^11.11.0
+  '@sentry/vite-plugin': ^11.11.0
+  '@tailwindcss/vite': ^4.3.5
   '@testing-library/dom': ^10.4.2
   '@testing-library/react': ^16.3.3
   '@types/node': ^24.19.2
@@ -241,13 +241,13 @@ catalog:
   croner: 11.0.0
   '@stryker-mutator/core': 10.0.0
   '@stryker-mutator/vitest-runner': 10.0.0
-  '@vitest/coverage-v8': ^5.0.5
+  '@vitest/coverage-v8': ^5.1.0
   drizzle-kit: ^0.31.11
   drizzle-orm: ^0.45.4
   eslint: ^10.14.0
   fast-check: ^4.10.2
   jsdom: ^30.1.3
-  lucide-react: ^1.66.0
+  lucide-react: ^1.70.0
   # The read-only MCP server (apps/api/src/mcp): Streamable HTTP and stdio transports.
   # Pinned exactly: it carries its own transitive tree (express, hono, ajv, jose), so a
   # minor bump is a reviewed change rather than one that arrives with an install.
@@ -255,12 +255,12 @@ catalog:
   # OIDC sign-in for the team profile (apps/api/src/services/oidc-service.ts, ADR-014).
   # Certified, by the author of the jose the MCP SDK already brings; pinned exactly so an
   # authentication library never changes with an install.
-  openid-client: 6.8.8
+  openid-client: 6.8.9
   pg: ^8.23.1
   prettier: ^3.9.10
   react: ^19.3.1
   react-dom: ^19.3.1
-  tailwindcss: ^4.3.3
+  tailwindcss: ^4.3.5
   typescript: ^6.0.3
   # Pinned exactly: 8.72.1 runs `pnpm lint` out of a 4 GB heap (exit 134) on this tree,
   # where 8.72.0 lints it clean; bisected with every other bump of that group held in
@@ -268,11 +268,11 @@ catalog:
   # the project service (8.72.1) duplicate memory when tsconfigs overlap", which is this
   # workspace's shape (a root tsconfig over every package's). Return to a caret range on
   # the first release that fixes it and lints without the OOM.
-  typescript-eslint: 8.72.0
+  typescript-eslint: 8.72.1
   # QR codes for device pairing (apps/web). Zero dependencies; pinned exactly.
   uqr: 0.1.3
-  vite: ^8.3.5
-  vitest: ^5.0.5
+  vite: ^8.3.6
+  vitest: ^5.1.0
   zod: ^4.6.7
 patchedDependencies:
   '@stryker-mutator/vitest-runner@10.0.0': patches/@stryker-mutator__vitest-runner@10.0.0.patch

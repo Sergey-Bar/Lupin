@@ -11,9 +11,9 @@
     "lint": "eslint --max-warnings=0 src/"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "@lupin/db": "workspace:*",
     "@lupin/shared-contracts": "workspace:*",
-    "@electric-sql/pglite": "^0.5.14",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {

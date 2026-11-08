@@ -26,7 +26,7 @@
     "oci:smoke": "node ./scripts/oci-smoke.mjs",
     "typecheck": "pnpm typecheck:scripts && pnpm typecheck:e2e && turbo run typecheck",
     "typecheck:e2e": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "node --max-old-space-size=6144 node_modules/eslint/bin/eslint.js . --max-warnings=0",
     "test:e2e": "playwright test",
     "test:e2e:api": "playwright test --project=vertical-slice --grep \"API\"",
     "test:e2e:vertical": "playwright test --project=vertical-slice",
