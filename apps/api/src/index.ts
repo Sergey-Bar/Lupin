@@ -82,6 +82,7 @@ import {
 } from './routes/identity-settings.js';
 import {
   createIdentityDrafts,
+  fingerprint,
   oidcConfigFrom,
   roleUnderDraft,
 } from './services/identity-settings.js';
@@ -260,7 +261,7 @@ async function refreshNumeric(key: string): Promise<void> {
   const value = await settingsService.resolve(key);
   if (typeof value === 'number') numericSettings.set(key, value);
 }
-for (const key of ['sessions.ttlHours', 'retention.sessionDays']) {
+for (const key of ['sessions.ttlHours', 'retention.sessionDays', 'retention.sseReplayHours']) {
   inBackground(refreshNumeric(key), 'read a session setting');
 }
 async function followGitHubApi(): Promise<void> {
@@ -307,6 +308,21 @@ async function refreshIdentity(): Promise<void> {
       : runtimeConfig.ssoEnforced === true;
 }
 inBackground(refreshIdentity(), 'read sign-in settings');
+
+/**
+ * How a save on one API instance reaches the others: every instance re-reads the saved
+ * settings on this interval and tells its subscribers which keys moved, so a revoked role or a
+ * newly enforced sign-in applies everywhere within the interval, not at the next restart.
+ */
+const SETTINGS_POLL_MS = 15_000;
+const settingsPoll =
+  databaseResources === undefined
+    ? undefined
+    : setInterval(
+        () => inBackground(settingsService.refresh(), 'refresh saved settings'),
+        SETTINGS_POLL_MS,
+      );
+settingsPoll?.unref();
 const HOUR_MS = 60 * 60 * 1000;
 const liveSessionTtlMs = () =>
   (numericSettings.get('sessions.ttlHours') ?? runtimeConfig.sessionTtlHours ?? 24) * HOUR_MS;
@@ -971,7 +987,11 @@ function buildWorkspace(workspaceId: string) {
     durableRealtimeBus = new DurableRealtimeBus(
       realtimeFeed,
       workspaceId,
-      runtimeConfig.sseReplayRetentionHours,
+      // Read per event, so a replay window saved from Settings applies to the next one.
+      () =>
+        numericSettings.get('retention.sseReplayHours') ??
+        runtimeConfig.sseReplayRetentionHours ??
+        24,
     );
     realtimeBus = durableRealtimeBus;
   } else {
@@ -1121,15 +1141,18 @@ function buildWorkspace(workspaceId: string) {
     );
     target.route('/', createChatRoutes({ gateway: gateways.chat }));
     // Settings → AI, Integrations, Identity, Sessions & retention. Installation-wide, so every
-    // workspace's composition serves the one service; writes need an installation admin.
+    // workspace's composition serves the one service; writes need an installation admin (or,
+    // while single sign-on is enforced, an admin of the home workspace).
+    const home = workspaceId === (runtimeConfig.workspaceId ?? DEFAULT_WORKSPACE_ID);
     target.route(
       '/',
-      createSettingsRoutes({ access, settings: settingsService, testers: settingTesters }),
+      createSettingsRoutes({ access, settings: settingsService, testers: settingTesters, home }),
     );
     target.route(
       '/',
       createIdentitySettingsRoutes({
         access,
+        home,
         settings: settingsService,
         drafts: identityDrafts,
         publicAppUrl: installationPublicUrl,
@@ -1534,17 +1557,29 @@ app.route(
         const merged = { ...(await currentIdentity(settingsService)), ...draft.values };
         return oidcConfigFrom(merged, installationPublicUrl);
       },
-      onResult: (draftId, identity, reason) => {
+      onResult: async (draftId, identity, reason) => {
         const draft = identityDrafts.get(draftId);
         if (draft === undefined) return;
         if (identity === null) {
           logger.warn('identity test sign-in failed', { reason: reason ?? 'unknown' });
           return;
         }
-        void currentIdentity(settingsService).then((current) => {
-          const config = oidcConfigFrom({ ...current, ...draft.values }, installationPublicUrl);
-          identityDrafts.verify(draftId, { ...identity, role: roleUnderDraft(config, identity) });
-        });
+        try {
+          const current = await currentIdentity(settingsService);
+          const merged = { ...current, ...draft.values };
+          const config = oidcConfigFrom(merged, installationPublicUrl);
+          identityDrafts.verify(draftId, {
+            ...identity,
+            role: roleUnderDraft(config, identity),
+            basis: fingerprint(merged),
+          });
+        } catch (error) {
+          // The draft no longer builds (a value changed under it): it stays unverified, and the
+          // page asks for another test rather than applying something untested.
+          logger.warn('identity test sign-in could not be recorded', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       },
     },
     ...(databaseResources === undefined ? {} : { db: databaseResources.db as never }),
@@ -1683,6 +1718,7 @@ if (runtimeConfig.nodeEnv !== 'test') {
     });
   });
   if (databaseResources) lifecycle.add('database pool', () => databaseResources.close());
+  if (settingsPoll) lifecycle.add('settings poll', () => clearInterval(settingsPoll));
   if (retentionSweep) lifecycle.add('outbox retention sweep', () => retentionSweep.stop());
   if (spanRetentionSweep) {
     lifecycle.add('genai span retention sweep', () => spanRetentionSweep.stop());
@@ -1702,9 +1738,18 @@ if (runtimeConfig.nodeEnv !== 'test') {
       deliverySyncer.start(typeof interval === 'number' ? interval : 60_000);
     };
     inBackground(startSyncer(), 'start the delivery syncer');
+    let restarting: Promise<void> = Promise.resolve();
     settingsService.subscribe((key) => {
       if (key !== 'integrations.deliverySyncIntervalMs') return;
-      inBackground(deliverySyncer.stop().then(startSyncer), 'restart the delivery syncer');
+      // Serialised, so two quick saves cannot interleave a stop with a start.
+      restarting = restarting
+        .then(() => deliverySyncer.stop())
+        .then(startSyncer)
+        .catch((error: unknown) =>
+          logger.warn('could not restart the delivery syncer', {
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
     });
     lifecycle.add('delivery syncer', () => deliverySyncer.stop());
   }

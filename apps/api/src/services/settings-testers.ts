@@ -30,7 +30,14 @@ export function createSettingTesters(fetchImpl: typeof fetch = fetch): SettingTe
     async ai(values): Promise<SettingTestResult> {
       const resolution = resolveAiGateway(aiEnvironment(values));
       if (resolution.kind === 'none') {
-        return { ok: false, message: `Not ready yet: ${resolution.reason}.` };
+        const newAddress =
+          values['ai.gatewayUrl'] !== undefined && values['ai.apiKey'] === undefined;
+        return {
+          ok: false,
+          message: newAddress
+            ? 'A new gateway address is tested only with a key you enter: save the address and key together, then press Test.'
+            : `Not ready yet: ${resolution.reason}.`,
+        };
       }
       const models = await resolution.gateway.listModels();
       return {

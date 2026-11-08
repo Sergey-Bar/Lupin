@@ -138,6 +138,60 @@ describe('settings routes', () => {
     );
   });
 
+  it('never sends a stored key to an address other than the one in effect', async () => {
+    const tester = vi.fn(async () => ({ ok: true, message: 'ok' }));
+    const { call, settings } = await setup(INSTALL_ADMIN, {}, { ai: tester });
+    await settings.put('ai.gatewayUrl', 'https://kilo.test', 'session');
+    await settings.put('ai.apiKey', KEY, 'session');
+    await call('POST', '/api/v1/settings/ai.gatewayUrl/test', { value: 'https://elsewhere.test' });
+    expect(tester).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        'ai.gatewayUrl': 'https://elsewhere.test',
+        'ai.apiKey': undefined,
+      }),
+    );
+    // The address already in effect is tested with its saved key.
+    await call('POST', '/api/v1/settings/ai.gatewayUrl/test', { value: 'https://kilo.test' });
+    expect(tester).toHaveBeenLastCalledWith(expect.objectContaining({ 'ai.apiKey': KEY }));
+    await call('POST', '/api/v1/settings/ai.gatewayUrl/test', { value: '' });
+    expect(tester).toHaveBeenLastCalledWith(expect.objectContaining({ 'ai.apiKey': KEY }));
+  });
+
+  it('lets an admin of the home workspace who signed in through the provider change settings only while SSO is enforced', async () => {
+    const PERSON: Caller = { actor: 'user:alice', role: 'admin', uploaderFor: null };
+    const { db, close } = await migratedDatabase();
+    closers.push(close);
+    const settings = createSettingsService({
+      db: db as never,
+      workspaceId: 'ws-1',
+      vaultSecret: syntheticVaultSecret(),
+      env: {},
+    });
+    const app = (ssoEnforced: boolean, home: boolean) =>
+      withErrorBoundary(
+        createSettingsRoutes({
+          access: {
+            mode: 'enforced',
+            ssoEnforced,
+            authenticateToken: async () => PERSON,
+            hasSession: async () => false,
+          },
+          settings,
+          testers: {},
+          home,
+        }),
+      );
+    const put = (target: Hono) =>
+      target.request('/api/v1/settings/sessions.ttlHours', {
+        method: 'PUT',
+        headers: { authorization: 'Bearer t', 'content-type': 'application/json' },
+        body: JSON.stringify({ value: 8 }),
+      });
+    expect((await put(app(false, true))).status).toBe(403);
+    expect((await put(app(true, false))).status).toBe(403);
+    expect((await put(app(true, true))).status).toBe(200);
+  });
+
   it('reports a draft the schema refuses as a failed test, not a 500', async () => {
     const { call } = await setup(INSTALL_ADMIN);
     const response = await call('POST', '/api/v1/settings/integrations.githubApiUrl/test', {

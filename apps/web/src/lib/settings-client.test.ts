@@ -160,5 +160,16 @@ describe('the settings client', () => {
     expect(canAdministerInstallation({ role: 'admin', source: 'user' })).toBe(false);
     expect(canAdministerInstallation({ role: 'admin' })).toBe(true);
     expect(canAdministerInstallation({ role: 'operator', source: 'installation' })).toBe(false);
+    // The API's answer wins: an SSO admin of the home workspace while sign-on is enforced.
+    expect(
+      canAdministerInstallation({ role: 'admin', source: 'user', installationAdmin: true }),
+    ).toBe(true);
+    expect(
+      canAdministerInstallation({
+        role: 'admin',
+        source: 'installation',
+        installationAdmin: false,
+      }),
+    ).toBe(false);
   });
 });

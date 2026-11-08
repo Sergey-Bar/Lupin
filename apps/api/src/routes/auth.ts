@@ -114,8 +114,23 @@ function sessionResponse(record: SessionRecord) {
  * only through a caller-supplied backend proves nothing about the default path, and
  * the default path is the one a development deployment actually runs.
  */
-export function memoryBackend(secret: string, ttlMs: number, now?: () => Date): AuthSessionBackend {
-  const service = new InMemorySessionService(secret, ttlMs, now);
+export function memoryBackend(
+  secret: string,
+  ttl: number | (() => number),
+  now?: () => Date,
+): AuthSessionBackend {
+  // One store per lifetime, so a lifetime saved from Settings applies to the next sign-in
+  // while sessions issued under the old one keep their own expiry. Reads ask every store.
+  const services = new Map<number, InMemorySessionService>();
+  const serviceFor = (ms: number): InMemorySessionService => {
+    let service = services.get(ms);
+    if (service === undefined) {
+      service = new InMemorySessionService(secret, ms, now);
+      services.set(ms, service);
+    }
+    return service;
+  };
+  serviceFor(ttlOf(ttl));
   return {
     // The in-process store has no `users` table to name a person against, so a person's
     // sign-in is refused rather than issued as the installation's (admin) session.
@@ -123,12 +138,23 @@ export function memoryBackend(secret: string, ttlMs: number, now?: () => Date): 
       if (userId !== undefined) {
         throw new Error('In-memory sessions cannot sign a person in; a database is required');
       }
-      return service.issue(installationId);
+      return serviceFor(ttlOf(ttl)).issue(installationId);
     },
-    validate: async (token) => service.validate(token),
-    revoke: async (id) => service.revoke(id),
+    validate: async (token) => {
+      for (const service of services.values()) {
+        const record = service.validate(token);
+        if (record !== undefined) return record;
+      }
+      return undefined;
+    },
+    revoke: async (id) => {
+      let revoked = false;
+      for (const service of services.values()) revoked = service.revoke(id) || revoked;
+      return revoked;
+    },
     sweep: async () => {
-      const removed = service.deleteExpired();
+      let removed = 0;
+      for (const service of services.values()) removed += service.deleteExpired();
       return { removed };
     },
   };
@@ -137,7 +163,7 @@ export function memoryBackend(secret: string, ttlMs: number, now?: () => Date): 
 export function createAuthRoutes(options: AuthRouteOptions) {
   const sessions =
     options.sessionBackend ??
-    memoryBackend(options.cookieSecret, ttlOf(options.sessionTtlMs), options.now);
+    memoryBackend(options.cookieSecret, options.sessionTtlMs, options.now);
   const app = new Hono();
   const loginLimiter = createRateLimiter({
     limit: options.loginRateLimit?.limit ?? DEFAULT_LOGIN_LIMIT,

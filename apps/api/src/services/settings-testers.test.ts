@@ -11,7 +11,10 @@ describe('setting testers', () => {
     const result = await createSettingTesters(fetchImpl).ai?.({
       'ai.gatewayUrl': 'https://kilo.test',
     });
-    expect(result).toMatchObject({ ok: false, message: expect.stringContaining('both be set') });
+    expect(result).toMatchObject({
+      ok: false,
+      message: expect.stringContaining('save the address and key together'),
+    });
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 

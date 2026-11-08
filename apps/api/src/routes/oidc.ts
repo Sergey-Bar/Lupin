@@ -46,7 +46,7 @@ export interface OidcRouteOptions extends Partial<Pick<ProjectRegistryServiceOpt
       draftId: string,
       identity: { email: string; groups: string[] } | null,
       reason?: string,
-    ): void;
+    ): Promise<void> | void;
   };
   workspaceId: string;
   sessions: AuthSessionBackend;
@@ -203,7 +203,7 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
       config = await configuration(oidc);
     } catch (error) {
       if (draft !== undefined) {
-        options.test?.onResult(draft, null, 'provider-unreachable');
+        await options.test?.onResult(draft, null, 'provider-unreachable');
         return context.redirect('/dashboard/settings/identity?test=unreachable', 302);
       }
       // The provider is down or misconfigured: back to the sign-in screen, as a failed
@@ -287,15 +287,19 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
     if (oidc === undefined) return back('expired');
     try {
       const claims = await exchange(oidc, flow, context.req.url);
-      const email = typeof claims['email'] === 'string' ? claims['email'].toLowerCase() : '';
-      if (email === '' || unverified(claims['email_verified'])) {
-        options.test?.onResult(draft, null, 'no-verified-email');
-        return back('failed');
+      // The same checks a real sign-in makes, so a draft whose rules would refuse this person
+      // (an unverified email, a domain outside the allow-list) fails its test instead of
+      // passing it and locking them out on apply.
+      const checked = checkClaims(claims, oidc.allowedDomains);
+      if ('refused' in checked) {
+        await options.test?.onResult(draft, null, checked.refused);
+        return back(checked.refused === 'domain' ? 'domain' : 'failed');
       }
-      options.test?.onResult(draft, { email, groups: groupsOf(claims) });
+      // Recorded before the browser is sent back, so the page reads the verdict, not a race.
+      await options.test?.onResult(draft, { email: checked.email, groups: groupsOf(claims) });
       return back('done');
     } catch (error) {
-      options.test?.onResult(draft, null, error instanceof Error ? error.name : 'error');
+      await options.test?.onResult(draft, null, error instanceof Error ? error.name : 'error');
       return back('failed');
     }
   };

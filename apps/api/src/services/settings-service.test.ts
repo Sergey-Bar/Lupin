@@ -100,13 +100,13 @@ describe('settings service', () => {
 
   it('serves a cached value until a write invalidates it', async () => {
     const { db, service } = await setup();
-    await service.put('retention.auditDays', 400, 'alice');
-    expect(await service.resolve('retention.auditDays')).toBe(400);
+    await service.put('retention.sseReplayHours', 400, 'alice');
+    expect(await service.resolve('retention.sseReplayHours')).toBe(400);
     // Behind the service's back: the cache must not notice.
     await db.update(schema.installationSettings).set({ value: { value: 1 } });
-    expect(await service.resolve('retention.auditDays')).toBe(400);
-    await service.put('retention.auditDays', 500, 'alice');
-    expect(await service.resolve('retention.auditDays')).toBe(500);
+    expect(await service.resolve('retention.sseReplayHours')).toBe(400);
+    await service.put('retention.sseReplayHours', 500, 'alice');
+    expect(await service.resolve('retention.sseReplayHours')).toBe(500);
   });
 
   it('audits a change by key, never by value', async () => {
@@ -130,11 +130,11 @@ describe('settings service', () => {
     const { service } = await setup();
     const seen: string[] = [];
     const stop = service.subscribe((key) => seen.push(key));
-    await service.put('retention.auditDays', 400, 'alice');
-    await service.revert('retention.auditDays', 'alice');
+    await service.put('retention.sseReplayHours', 400, 'alice');
+    await service.revert('retention.sseReplayHours', 'alice');
     stop();
-    await service.put('retention.auditDays', 401, 'alice');
-    expect(seen).toEqual(['retention.auditDays', 'retention.auditDays']);
+    await service.put('retention.sseReplayHours', 401, 'alice');
+    expect(seen).toEqual(['retention.sseReplayHours', 'retention.sseReplayHours']);
   });
 
   it('keeps notifying the others when one subscriber throws', async () => {
@@ -144,8 +144,65 @@ describe('settings service', () => {
       throw new Error('boom');
     });
     service.subscribe((key) => seen.push(key));
-    await service.put('retention.auditDays', 400, 'alice');
-    expect(seen).toEqual(['retention.auditDays']);
+    await service.put('retention.sseReplayHours', 400, 'alice');
+    expect(seen).toEqual(['retention.sseReplayHours']);
+  });
+
+  it('does not miss another instance change made after a local save', async () => {
+    const { db, service } = await setup();
+    const other = createSettingsService({
+      db: db as never,
+      workspaceId: 'ws-1',
+      vaultSecret: VAULT,
+      env: {},
+    });
+    const seen: string[] = [];
+    await service.refresh();
+    service.subscribe((key) => seen.push(key));
+    await other.put('retention.sessionDays', 7, 'bob');
+    await service.put('sessions.ttlHours', 8, 'alice');
+    expect(await service.refresh()).toContain('retention.sessionDays');
+    expect(seen).toContain('retention.sessionDays');
+  });
+
+  it('tells this instance about a change another instance saved, once', async () => {
+    const { db, service } = await setup();
+    const other = createSettingsService({
+      db: db as never,
+      workspaceId: 'ws-1',
+      vaultSecret: VAULT,
+      env: {},
+    });
+    const seen: string[] = [];
+    service.subscribe((key) => seen.push(key));
+    expect(await service.resolve('retention.sessionDays')).toBe(30);
+    expect(await service.refresh()).toEqual([]);
+    await other.put('retention.sessionDays', 7, 'bob');
+    // Still the cached value until the poll runs.
+    expect(await service.resolve('retention.sessionDays')).toBe(30);
+    expect(await service.refresh()).toEqual(['retention.sessionDays']);
+    expect(await service.resolve('retention.sessionDays')).toBe(7);
+    expect(seen).toEqual(['retention.sessionDays']);
+    expect(await service.refresh()).toEqual([]);
+    await other.revert('retention.sessionDays', 'bob');
+    expect(await service.refresh()).toEqual(['retention.sessionDays']);
+    expect(await service.resolve('retention.sessionDays')).toBe(30);
+  });
+
+  it('re-opens a secret another instance replaced', async () => {
+    const { db, service } = await setup();
+    const other = createSettingsService({
+      db: db as never,
+      workspaceId: 'ws-1',
+      vaultSecret: VAULT,
+      env: {},
+    });
+    await service.put('ai.apiKey', KEY, 'alice');
+    expect(await service.resolve('ai.apiKey')).toBe(KEY);
+    const next = ['sk', '-live-', 'zzzzzzzz', 'qqqq'].join('');
+    await other.put('ai.apiKey', next, 'bob');
+    await service.refresh();
+    expect(await service.resolve('ai.apiKey')).toBe(next);
   });
 
   it('answers from the environment and defaults alone with no database', async () => {

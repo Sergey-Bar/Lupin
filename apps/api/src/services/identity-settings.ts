@@ -35,6 +35,21 @@ export interface VerifiedIdentity {
   email: string;
   groups: readonly string[];
   role: AccessRole | null;
+  /**
+   * The full configuration the test signed in against, as `fingerprint` writes it. Apply
+   * refuses when what is in effect now would produce a different one, so the configuration
+   * applied is always the one that was tested.
+   */
+  basis?: string;
+}
+
+/** A stable fingerprint of identity values, for comparing what was tested with what is applied. */
+export function fingerprint(values: IdentityValues): string {
+  return JSON.stringify(
+    Object.keys(values)
+      .sort()
+      .map((key) => [key, values[key] ?? '']),
+  );
 }
 
 const text = (value: SettingValue | undefined): string | undefined =>

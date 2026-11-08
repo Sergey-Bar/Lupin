@@ -100,7 +100,7 @@ test.describe('onboarding', () => {
     // not pin, so the spec holds whatever a developer's `.env` sets.
     const free = [
       'retention.sseReplayHours',
-      'retention.auditDays',
+      'retention.sessionDays',
       'integrations.deliverySyncIntervalMs',
     ]
       .map((key) => settings.settings.find((setting) => setting.key === key))

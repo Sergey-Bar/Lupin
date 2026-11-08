@@ -313,6 +313,7 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
     createAccessRoutes({
       db: options.db,
       workspaceId: options.workspaceId,
+      defaultWorkspace: options.defaultWorkspace,
       access,
       ...(options.secureCookies === undefined ? {} : { secureCookies: options.secureCookies }),
       ...(options.trustProxy === undefined ? {} : { trustProxy: options.trustProxy }),

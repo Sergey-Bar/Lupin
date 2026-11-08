@@ -3,17 +3,13 @@ import { z } from 'zod/v4';
 import { SETTINGS, SETTINGS_ERROR_FIXES } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { guard } from '../http/access.js';
-import {
-  callerOf,
-  isInstallationAdmin,
-  requireRole,
-  sourceOf,
-  type CallerResolver,
-} from '../http/roles.js';
+import { callerOf, requireRole, sourceOf, type CallerResolver } from '../http/roles.js';
+import { mayChangeInstallation } from './settings.js';
 import {
   CLOUDFLARE_KEYS,
   OIDC_KEYS,
   changed,
+  fingerprint,
   lockoutProblem,
   oidcConfigFrom,
   validateIdentityValues,
@@ -32,6 +28,8 @@ export interface IdentitySettingsRouteOptions {
   drafts: IdentityDrafts;
   publicAppUrl: string;
   breakGlass: boolean;
+  /** Whether this is the home workspace's composition; see mayChangeInstallation. */
+  home?: boolean;
 }
 
 const IDENTITY_KEYS = SETTINGS.filter((setting) => setting.group === 'identity').map(
@@ -44,11 +42,11 @@ const DraftBodySchema = z.object({
 const ApplyBodySchema = z.object({ draftId: z.string().min(1) });
 
 /** An admin whose credential is the installation's own; the guard every identity route uses. */
-export function installationAdminGuard(access: CallerResolver): MiddlewareHandler {
+export function installationAdminGuard(access: CallerResolver, home = true): MiddlewareHandler {
   const admin = requireRole('admin', access);
   return guard('admin', async (context, next) => {
     await admin(context, async () => {
-      if (!isInstallationAdmin(await callerOf(context, access))) {
+      if (!mayChangeInstallation(await callerOf(context, access), access, home)) {
         throw new DomainError(
           ErrorCode.INSTALLATION_ADMIN_REQUIRED,
           'Only an installation admin can change sign-in settings.',
@@ -69,7 +67,7 @@ export async function currentIdentity(settings: SettingsService): Promise<Identi
 
 export function createIdentitySettingsRoutes(options: IdentitySettingsRouteOptions): Hono {
   const app = new Hono();
-  const installAdmin = installationAdminGuard(options.access);
+  const installAdmin = installationAdminGuard(options.access, options.home ?? true);
 
   async function body<T>(context: Context, schema: z.ZodType<T>): Promise<T> {
     const parsed = schema.safeParse(await context.req.json().catch(() => null));
@@ -130,7 +128,9 @@ export function createIdentitySettingsRoutes(options: IdentitySettingsRouteOptio
     const draft = options.drafts.get(context.req.param('id'));
     if (draft === undefined) {
       throw new DomainError(ErrorCode.NOT_FOUND, 'This draft has expired.', {
-        details: { fix: 'Save the changes again, then test sign-in within ten minutes.' },
+        details: {
+          fix: 'Save the changes again and test sign-in within ten minutes. With several API instances, route Settings to one of them (sticky sessions): a draft lives on the instance that saved it.',
+        },
       });
     }
     return context.json({
@@ -151,7 +151,9 @@ export function createIdentitySettingsRoutes(options: IdentitySettingsRouteOptio
     const draft = options.drafts.get(draftId);
     if (draft === undefined) {
       throw new DomainError(ErrorCode.NOT_FOUND, 'This draft has expired or was already applied.', {
-        details: { fix: 'Save the changes again, then test sign-in within ten minutes.' },
+        details: {
+          fix: 'Save the changes again and test sign-in within ten minutes. With several API instances, route Settings to one of them (sticky sessions): a draft lives on the instance that saved it.',
+        },
       });
     }
     const caller = await callerOf(context, options.access);
@@ -169,6 +171,14 @@ export function createIdentitySettingsRoutes(options: IdentitySettingsRouteOptio
       const code =
         problem.code === 'WOULD_LOCK_OUT' ? ErrorCode.WOULD_LOCK_OUT : ErrorCode.NOT_VERIFIED;
       throw new DomainError(code, problem.message, { details: { fix: problem.fix } });
+    }
+    const basis = draft.verified?.basis;
+    if (basis !== undefined && basis !== fingerprint(merged)) {
+      throw new DomainError(
+        ErrorCode.NOT_VERIFIED,
+        'Sign-in settings changed after your test, so what would be applied is not what was tested.',
+        { details: { fix: 'Press Test sign-in again, then apply.' } },
+      );
     }
     for (const [key, value] of Object.entries(draft.values)) {
       if (value === '' || value === undefined) await options.settings.revert(key, caller.actor);

@@ -28,7 +28,11 @@ export function failureText(error: unknown, fallback: string): string {
  * API's `isInstallationAdmin` is the rule; this mirrors it so a workspace admin is told who
  * can change a setting instead of being offered a Save that answers 403.
  */
-export function canAdministerInstallation(who: Pick<WhoAmI, 'role' | 'source'>): boolean {
+export function canAdministerInstallation(
+  who: Pick<WhoAmI, 'role' | 'source' | 'installationAdmin'>,
+): boolean {
+  // The API's own answer when it gives one (it also covers single sign-on being enforced).
+  if (who.installationAdmin !== undefined) return who.installationAdmin;
   if (who.role !== 'admin') return false;
   // An API older than `source` only had the installation's admin.
   if (who.source === undefined) return true;

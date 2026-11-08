@@ -48,6 +48,12 @@ export interface SettingsService {
   lockedBy(key: string): string | null;
   /** Called with the key after every save or revert through this service. Returns an unsubscribe. */
   subscribe(listener: (key: string) => void): () => void;
+  /**
+   * Re-reads the saved values and notifies subscribers of every key that changed since the
+   * last read — including a change another API instance made. Run on a timer, it is how a
+   * save on one instance reaches the others.
+   */
+  refresh(): Promise<string[]>;
 }
 
 interface StoredRow {
@@ -113,8 +119,15 @@ export function createSettingsService(options: SettingsServiceOptions): Settings
       }
     }
     cache = next;
+    // The baseline `refresh` compares against: what this instance first read.
+    seen ??= stampsOf(next);
     return next;
   }
+
+  /** The saved state last read, keyed by setting: what `refresh` compares against. */
+  let seen: Map<string, string> | null = null;
+  const stampsOf = (rows: Map<string, StoredRow>) =>
+    new Map([...rows].map(([key, row]) => [key, stamp(row)]));
 
   function invalidate(key: string): void {
     cache = null;
@@ -131,6 +144,42 @@ export function createSettingsService(options: SettingsServiceOptions): Settings
   function subscribe(listener: (key: string) => void): () => void {
     listeners.add(listener);
     return () => listeners.delete(listener);
+  }
+
+  /** What identifies one saved state of a key: a change anywhere moves it. */
+  const stamp = (row: StoredRow): string =>
+    [
+      row.updatedAt,
+      row.updatedBy,
+      JSON.stringify(row.value),
+      String(row.sealed),
+      row.last4 ?? '',
+    ].join('|');
+
+  async function refresh(): Promise<string[]> {
+    if (options.db === undefined) return [];
+    const before = seen;
+    cache = null;
+    seen = null;
+    const now = stampsOf(await stored());
+    // Nothing was ever read, so nothing is cached or opened that could be stale.
+    if (before === null) return [];
+    const changed = [...new Set([...before.keys(), ...now.keys()])].filter(
+      // A key this instance saved is announced again here. Every subscriber re-reads, so a
+      // second notice is harmless, and skipping it could hide another instance's later save.
+      (key) => before.get(key) !== now.get(key),
+    );
+    for (const key of changed) {
+      opened.delete(key);
+      for (const listener of [...listeners]) {
+        try {
+          listener(key);
+        } catch {
+          // As in `invalidate`: one consumer failing must not stop the others.
+        }
+      }
+    }
+    return changed;
   }
 
   function requireDb(): NonNullable<SettingsServiceOptions['db']> {
@@ -289,5 +338,5 @@ export function createSettingsService(options: SettingsServiceOptions): Settings
     return Promise.all(keys.map((setting) => read(setting.key)));
   }
 
-  return { read, list, resolve, put, revert, lockedBy, subscribe };
+  return { read, list, resolve, put, revert, lockedBy, subscribe, refresh };
 }

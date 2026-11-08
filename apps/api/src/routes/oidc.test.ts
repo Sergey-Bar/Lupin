@@ -381,7 +381,7 @@ describe('the test sign-in behind Settings → Identity', () => {
         },
       }),
     );
-    return { app, idp, db, results };
+    return { app, idp, db, results, draft };
   }
 
   it('reports who signed in to the draft, and signs nobody in', async () => {
@@ -406,6 +406,25 @@ describe('the test sign-in behind Settings → Identity', () => {
       { draftId: 'draft-1', identity: { email: 'ana@example.com', groups: ['qa'] } },
     ]);
     expect(await h.db.select().from(schema.users)).toHaveLength(0);
+  });
+
+  it('fails a test sign-in whose email the draft would refuse by domain', async () => {
+    const h = await testHarness(true);
+    h.draft.allowedDomains.push('corp.io');
+    const start = await h.app.request('/api/v1/auth/oidc/test?draft=draft-1');
+    const authorize = new URL(start.headers.get('location') ?? '');
+    const flow = (start.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
+    const code = randomUUID();
+    h.idp.grants.set(code, {
+      challenge: authorize.searchParams.get('code_challenge') ?? '',
+      claims: { nonce: authorize.searchParams.get('nonce'), ...ANA },
+    });
+    const callback = await h.app.request(
+      `/api/v1/auth/oidc/callback?code=${code}&state=${encodeURIComponent(authorize.searchParams.get('state') ?? '')}`,
+      { headers: { cookie: flow } },
+    );
+    expect(callback.headers.get('location')).toBe('/dashboard/settings/identity?test=domain');
+    expect(h.results).toEqual([{ draftId: 'draft-1', identity: null }]);
   });
 
   it('refuses to start without the guard, and sends an expired draft back to Settings', async () => {

@@ -42,6 +42,21 @@ async function body(context: Context): Promise<unknown> {
   return context.req.json().catch(() => null);
 }
 
+/**
+ * Whether a thrown value is a row still referenced by another: `restrict_violation` (23001,
+ * what an ON DELETE RESTRICT key raises) or `foreign_key_violation` (23503), through Drizzle's
+ * wrapping.
+ */
+export function isForeignKeyViolation(error: unknown): boolean {
+  let current: unknown = error;
+  for (let depth = 0; depth <= 3 && current !== null && current !== undefined; depth += 1) {
+    const code = (current as { code?: unknown }).code;
+    if (code === '23001' || code === '23503') return true;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return false;
+}
+
 function invalid(issues: unknown, fix: string): DomainError {
   return new DomainError(ErrorCode.INVALID_REQUEST_BODY, 'Invalid request', {
     details: { issues, fix },
@@ -103,19 +118,26 @@ export function createProjectAdminRoutes(options: ProjectAdminRouteOptions): Hon
         `Type the project name, ${row.name}, to confirm.`,
       );
     }
+    const who = await actor(context);
     try {
-      await options.db
-        .delete(projects)
-        .where(and(eq(projects.workspaceId, options.workspaceId), eq(projects.id, row.id)));
-    } catch {
-      // A `restrict` key (a run still leased against the project) refuses the delete.
+      // One transaction: the project and its sealed token go together, or neither does, so a
+      // vault failure can never leave a deleted project with an orphaned credential.
+      await options.db.transaction(async (tx) => {
+        await tx
+          .delete(projects)
+          .where(and(eq(projects.workspaceId, options.workspaceId), eq(projects.id, row.id)));
+        await deleteGitToken({ ...vault(who), db: tx as never }, row.id);
+      });
+    } catch (error) {
+      // Only a `restrict` key (a run still leased against the project) means "still in use";
+      // anything else is a real failure and reaches the boundary as itself.
+      if (!isForeignKeyViolation(error)) throw error;
       throw new DomainError(ErrorCode.CONFLICT, 'This project still has runs that must be kept.', {
         details: { fix: 'Wait for its running jobs to finish, then delete it again.' },
       });
     }
-    await deleteGitToken(vault(await actor(context)), row.id);
     await audit(options, {
-      actor: await actor(context),
+      actor: who,
       action: 'project.delete',
       resourceType: 'project',
       resourceId: row.id,

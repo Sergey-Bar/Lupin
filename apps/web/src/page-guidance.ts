@@ -444,9 +444,9 @@ export const pageGuidance = {
     purpose: 'Decide how long people stay signed in and how long records are kept.',
     steps: [
       'Set how long a sign-in lasts.',
-      'Set how long sessions, live events and the audit log are kept.',
+      'Set how long expired sessions and live-event replay are kept.',
       'Save; retention applies at the next clean-up.',
     ],
-    remember: 'Check your compliance policy before shortening the audit log.',
+    remember: 'Each value applies at the next sign-in, event or clean-up; no restart is needed.',
   },
 } satisfies Record<ManifestRoute['id'], PageGuidance>;

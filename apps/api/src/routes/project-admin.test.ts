@@ -11,7 +11,7 @@ import {
   syntheticGithubToken,
   syntheticVaultSecret,
 } from '../test-support/synthetic-credentials.js';
-import { createProjectAdminRoutes } from './project-admin.js';
+import { createProjectAdminRoutes, isForeignKeyViolation } from './project-admin.js';
 
 const VAULT = syntheticVaultSecret();
 const closers: Array<() => Promise<void>> = [];
@@ -149,5 +149,40 @@ describe('project administration', () => {
       (await call(other, 'admin', 'DELETE', `/api/v1/projects/${id}`, { confirm: 'Shop' })).status,
     ).toBe(404);
     expect(await db.select().from(schema.projects)).toHaveLength(1);
+  });
+});
+
+describe('deleting a project that is still in use', () => {
+  it('names a foreign-key refusal, and lets any other failure through as itself', () => {
+    expect(isForeignKeyViolation({ message: 'Failed query', cause: { code: '23503' } })).toBe(true);
+    expect(isForeignKeyViolation({ cause: { code: '23001' } })).toBe(true);
+    expect(isForeignKeyViolation({ code: '08006' })).toBe(false);
+    expect(isForeignKeyViolation(new Error('connection lost'))).toBe(false);
+    expect(isForeignKeyViolation(null)).toBe(false);
+  });
+
+  it('keeps the project and its token when a release still references it, and says why', async () => {
+    const { db, app, call } = await setup();
+    const id = await project(db, 'ws-1', 'Shop');
+    const token = syntheticGithubToken();
+    await call(app, 'admin', 'PUT', `/api/v1/projects/${id}/git-token`, { token });
+    // `releases.project_id` is a `restrict` key: a release keeps its project.
+    await db
+      .insert(schema.releases)
+      .values({ workspaceId: 'ws-1', projectId: id, name: 'r', version: '1.0.0' });
+    const refused = await call(app, 'admin', 'DELETE', `/api/v1/projects/${id}`, {
+      confirm: 'Shop',
+    });
+    expect(refused.status).toBe(409);
+    expect(await refused.json()).toMatchObject({
+      error: { code: 'CONFLICT', details: { fix: expect.any(String) } },
+    });
+    expect(await db.select().from(schema.projects)).toHaveLength(1);
+    // The token went nowhere: the delete and the vault removal are one transaction.
+    expect(
+      await readGitToken({ db: db as never, workspaceId: 'ws-1', vaultSecret: VAULT }, id),
+    ).toBe(token);
+    const audit = await db.select().from(schema.auditEvents);
+    expect(audit.some((row) => row.action === 'project.delete')).toBe(false);
   });
 });

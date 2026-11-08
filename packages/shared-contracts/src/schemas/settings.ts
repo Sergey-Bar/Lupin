@@ -218,34 +218,6 @@ export const SETTINGS: readonly SettingDefinition[] = [
     defaultValue: 24,
     schema: positive(24 * 30),
   }),
-  define({
-    key: 'retention.auditDays',
-    scope: 'install',
-    group: 'sessions-retention',
-    kind: 'integer',
-    envVar: 'AUDIT_RETENTION_DAYS',
-    secret: false,
-    label: 'Keep the audit log for',
-    help: 'Audit entries older than this are deleted. Check your compliance policy before shortening it.',
-    apply: 'live',
-    unit: 'days',
-    defaultValue: 365,
-    schema: positive(3_650),
-  }),
-  define({
-    key: 'retention.sweepIntervalSeconds',
-    scope: 'install',
-    group: 'sessions-retention',
-    kind: 'integer',
-    envVar: 'RETENTION_SWEEP_INTERVAL_SECONDS',
-    secret: false,
-    label: 'Clean up every',
-    help: 'How often old records are deleted.',
-    apply: 'live',
-    unit: 'seconds',
-    defaultValue: 3_600,
-    schema: positive(86_400),
-  }),
   // Identity
   define({
     key: 'identity.oidcIssuer',
@@ -403,6 +375,11 @@ export const INFRA_ENV_ALLOW_LIST: readonly string[] = [
   'LUPIN_LAN_MODE',
   'LUPIN_BIND',
   'ALLOWED_CLIENT_CIDRS',
+  // Parsed, but read by nothing yet, so not offered in the interface: a setting that saves and
+  // changes nothing reads as broken. The audit log is append-only and hash-chained, so deleting
+  // old entries is a design decision of its own, not a slider.
+  'AUDIT_RETENTION_DAYS',
+  'RETENTION_SWEEP_INTERVAL_SECONDS',
   // Replaced by "Connect a repository"; kept for installs that register a folder at boot.
   'LUPIN_PROJECT_ROOT',
 ];
