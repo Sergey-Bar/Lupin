@@ -40,28 +40,31 @@ export interface VerifiedIdentity {
 const text = (value: SettingValue | undefined): string | undefined =>
   typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
 
+/** Why one identity value is refused, or `null` when it is fine. */
+function identityProblem(key: string, value: SettingValue | undefined): string | null {
+  const definition = settingByKey(key);
+  if (definition === undefined || definition.group !== 'identity') {
+    return `${key} is not a sign-in setting.`;
+  }
+  if (value === undefined || value === '') return null;
+  const parsed = definition.schema.safeParse(value);
+  if (!parsed.success)
+    return parsed.error.issues[0]?.message ?? `${definition.label} is not valid.`;
+  if (!key.endsWith('RoleMap')) return null;
+  try {
+    parseRoleMap(definition.envVar, String(value));
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+}
+
 /** Every value checked by its registry schema and, for a role map, by the parser sign-in uses. */
 export function validateIdentityValues(values: IdentityValues): Record<string, string> {
   const problems: Record<string, string> = {};
   for (const [key, value] of Object.entries(values)) {
-    const definition = settingByKey(key);
-    if (definition === undefined || definition.group !== 'identity') {
-      problems[key] = `${key} is not a sign-in setting.`;
-      continue;
-    }
-    if (value === undefined || value === '') continue;
-    const parsed = definition.schema.safeParse(value);
-    if (!parsed.success) {
-      problems[key] = parsed.error.issues[0]?.message ?? `${definition.label} is not valid.`;
-      continue;
-    }
-    if (key.endsWith('RoleMap')) {
-      try {
-        parseRoleMap(definition.envVar, String(value));
-      } catch (error) {
-        problems[key] = error instanceof Error ? error.message : String(error);
-      }
-    }
+    const problem = identityProblem(key, value);
+    if (problem !== null) problems[key] = problem;
   }
   return problems;
 }

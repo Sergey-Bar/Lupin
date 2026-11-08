@@ -110,6 +110,27 @@ function unverified(claim: unknown): boolean {
   return claim === false || (typeof claim === 'string' && claim.trim().toLowerCase() === 'false');
 }
 
+/**
+ * The person the claims name, or why they are refused: no email or subject, an email the
+ * provider says is unverified, or a domain outside the allowed list.
+ */
+function checkClaims(
+  claims: Record<string, unknown>,
+  allowedDomains: readonly string[],
+):
+  | { email: string; subject: string }
+  | { refused: 'failed' | 'unverified' | 'domain'; fields?: Record<string, unknown> } {
+  const email = typeof claims['email'] === 'string' ? claims['email'].toLowerCase() : '';
+  const subject = typeof claims['sub'] === 'string' ? claims['sub'] : '';
+  if (email === '' || subject === '') return { refused: 'failed' };
+  if (unverified(claims['email_verified'])) return { refused: 'unverified' };
+  const domain = email.slice(email.lastIndexOf('@') + 1);
+  if (allowedDomains.length > 0 && !allowedDomains.includes(domain)) {
+    return { refused: 'domain', fields: { domain } };
+  }
+  return { email, subject };
+}
+
 export function createOidcRoutes(options: OidcRouteOptions): Hono {
   const app = new Hono();
   const limiter = createRateLimiter({ limit: 20, windowMs: 60_000 });
@@ -235,6 +256,28 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
     });
   }
 
+  /**
+   * Exchanges the code the provider returned for its verified claims. `openid-client` checks
+   * the state, the nonce, the PKCE verifier and the ID token. The URL is rebuilt on the
+   * registered redirect URI: behind the edge, the request URL this process sees names the
+   * proxy, not the public origin the provider redirected to.
+   */
+  const exchange = async (
+    oidc: OidcConfig,
+    flow: Flow,
+    requestUrl: string,
+  ): Promise<Record<string, unknown>> => {
+    const returned = new URL(oidc.redirectUri);
+    returned.search = new URL(requestUrl).search;
+    const tokens = await client.authorizationCodeGrant(await configuration(oidc), returned, {
+      pkceCodeVerifier: flow.verifier,
+      expectedState: flow.state,
+      expectedNonce: flow.nonce,
+      idTokenExpected: true,
+    });
+    return (tokens.claims() ?? {}) as Record<string, unknown>;
+  };
+
   /** The end of a test sign-in: who came back, reported to the draft; no session is issued. */
   const finishTest = async (context: Context, flow: Flow, draft: string) => {
     deleteCookie(context, SIGN_IN_FLOW, { path: '/api/v1/auth/oidc' });
@@ -242,16 +285,8 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
       context.redirect(`/dashboard/settings/identity?test=${outcome}`, 302);
     const oidc = await options.test?.configFor(draft);
     if (oidc === undefined) return back('expired');
-    const returned = new URL(oidc.redirectUri);
-    returned.search = new URL(context.req.url).search;
     try {
-      const tokens = await client.authorizationCodeGrant(await configuration(oidc), returned, {
-        pkceCodeVerifier: flow.verifier,
-        expectedState: flow.state,
-        expectedNonce: flow.nonce,
-        idTokenExpected: true,
-      });
-      const claims = (tokens.claims() ?? {}) as Record<string, unknown>;
+      const claims = await exchange(oidc, flow, context.req.url);
       const email = typeof claims['email'] === 'string' ? claims['email'].toLowerCase() : '';
       if (email === '' || unverified(claims['email_verified'])) {
         options.test?.onResult(draft, null, 'no-verified-email');
@@ -273,32 +308,17 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
     if (flow?.draft !== undefined) return finishTest(context, flow, flow.draft);
     const { oidc, db } = await configured();
     if (flow === null) return redirectWith(context, 'expired');
-    // The URL the provider redirected to, as the provider saw it: behind the edge, the
-    // request URL this process sees names the proxy, not the public origin.
-    const current = new URL(oidc.redirectUri);
-    current.search = new URL(context.req.url).search;
     let claims: Record<string, unknown>;
     try {
-      const tokens = await client.authorizationCodeGrant(await configuration(oidc), current, {
-        pkceCodeVerifier: flow.verifier,
-        expectedState: flow.state,
-        expectedNonce: flow.nonce,
-        idTokenExpected: true,
-      });
-      claims = (tokens.claims() ?? {}) as Record<string, unknown>;
+      claims = await exchange(oidc, flow, context.req.url);
     } catch (error) {
       return redirectWith(context, 'failed', {
         error: error instanceof Error ? error.name : 'error',
       });
     }
-    const email = typeof claims['email'] === 'string' ? claims['email'].toLowerCase() : '';
-    const subject = typeof claims['sub'] === 'string' ? claims['sub'] : '';
-    if (email === '' || subject === '') return redirectWith(context, 'failed');
-    if (unverified(claims['email_verified'])) return redirectWith(context, 'unverified');
-    const domain = email.slice(email.lastIndexOf('@') + 1);
-    if (oidc.allowedDomains.length > 0 && !oidc.allowedDomains.includes(domain)) {
-      return redirectWith(context, 'domain', { domain });
-    }
+    const checked = checkClaims(claims, oidc.allowedDomains);
+    if ('refused' in checked) return redirectWith(context, checked.refused, checked.fields);
+    const { email, subject } = checked;
     const scope = { db, workspaceId: options.workspaceId };
     const outcome = await signInPerson(
       scope,

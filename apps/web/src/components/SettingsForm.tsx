@@ -78,6 +78,187 @@ function SourceNote({
   return <p className="text-xs text-fg-muted">Not set.</p>;
 }
 
+/** What to test with: the typed value, or `''` to test what is in effect (the server fills it in). */
+function testValue(
+  definition: SettingDefinition | undefined,
+  raw: string | boolean | undefined,
+): string | number | boolean {
+  if (definition === undefined || raw === undefined || String(raw).trim() === '') return '';
+  return typed(definition, raw);
+}
+
+/** An empty text field means "clear it", not "save an empty value". */
+function isCleared(definition: SettingDefinition, raw: string | boolean): boolean {
+  return definition.kind !== 'boolean' && String(raw).trim() === '';
+}
+
+/** The fields the person changed: never one the environment pins, and a secret only once typed. */
+function dirtyOf(
+  definitions: readonly SettingDefinition[],
+  draft: Draft,
+  byKey: ReadonlyMap<string, SettingRead>,
+): SettingDefinition[] {
+  return definitions.filter((definition) => {
+    const now = draft[definition.key];
+    if (now === undefined || byKey.get(definition.key)?.source === 'environment') return false;
+    if (definition.secret) return typeof now === 'string' && now.trim() !== '';
+    return now !== initial(definition, byKey.get(definition.key));
+  });
+}
+
+/** The changed values as the API takes them; an empty string clears a setting. */
+function changedValues(
+  dirty: readonly SettingDefinition[],
+  draft: Draft,
+): Record<string, string | number | boolean> {
+  const values: Record<string, string | number | boolean> = {};
+  for (const definition of dirty) {
+    const raw = draft[definition.key] ?? '';
+    values[definition.key] = isCleared(definition, raw) ? '' : typed(definition, raw);
+  }
+  return values;
+}
+
+/** Saves each changed field on its own, so one refusal leaves the others saved. */
+async function saveEach(
+  client: SettingsClient,
+  dirty: readonly SettingDefinition[],
+  draft: Draft,
+): Promise<Record<string, string>> {
+  const failed: Record<string, string> = {};
+  for (const definition of dirty) {
+    const raw = draft[definition.key] ?? '';
+    try {
+      if (isCleared(definition, raw)) await client.revertSetting(definition.key);
+      else await client.putSetting(definition.key, typed(definition, raw));
+    } catch (error) {
+      failed[definition.key] = explain(error, 'The setting could not be saved.');
+    }
+  }
+  return failed;
+}
+
+function announce(
+  toast: ReturnType<typeof useToast>,
+  saved: number,
+  failed: Record<string, string>,
+): void {
+  if (saved > 0) {
+    toast({
+      tone: 'success',
+      title: saved === 1 ? 'Setting saved' : `${String(saved)} settings saved`,
+    });
+  }
+  const reasons = Object.values(failed);
+  if (reasons.length > 0) {
+    toast({ tone: 'danger', title: 'Some settings were not saved', description: reasons[0] });
+  }
+}
+
+/** The submit button's words: nothing to save, one change, several, or the caller's label. */
+function submitText(count: number, label: string | undefined): string {
+  if (count === 0) return 'No changes';
+  if (label !== undefined) return label;
+  return count === 1 ? 'Save change' : `Save ${String(count)} changes`;
+}
+
+interface ControlProps {
+  id: string;
+  definition: SettingDefinition;
+  read: SettingRead | undefined;
+  label: string;
+  value: string | boolean;
+  locked: boolean;
+  onChange: (value: string | boolean) => void;
+}
+
+/** A stored secret: its last four characters, and the way to replace it. */
+function StoredSecret({
+  id,
+  definition,
+  read,
+  label,
+  locked,
+  onReplace,
+}: Omit<ControlProps, 'value' | 'onChange'> & { onReplace: () => void }): React.ReactElement {
+  return (
+    <div className="grid gap-1.5">
+      <span className="text-sm font-medium text-fg" id={`${id}-label`}>
+        {label}
+      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="secondary" data-testid={`secret-${definition.key}`}>
+          Saved · ending {read?.secret?.last4 ?? '····'}
+        </Badge>
+        {locked ? null : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onReplace}
+            aria-describedby={`${id}-label`}
+          >
+            Replace
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function inputType(definition: SettingDefinition): 'password' | 'number' | 'text' {
+  if (definition.secret) return 'password';
+  return definition.kind === 'integer' ? 'number' : 'text';
+}
+
+/** The control a setting's kind calls for: a switch, a role picker, or a text field. */
+function Control({
+  id,
+  definition,
+  label,
+  value,
+  locked,
+  onChange,
+}: ControlProps): React.ReactElement {
+  const shared = { id, disabled: locked, 'aria-describedby': `${id}-help` };
+  if (definition.kind === 'boolean') {
+    return (
+      <Toggle
+        {...shared}
+        label={definition.label}
+        checked={value === true}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+    );
+  }
+  if (definition.kind === 'role') {
+    return (
+      <Select
+        {...shared}
+        label={label}
+        value={String(value)}
+        onChange={(event) => onChange(event.target.value)}
+        options={ROLE_OPTIONS}
+      />
+    );
+  }
+  return (
+    <Input
+      {...shared}
+      label={label}
+      value={String(value)}
+      type={inputType(definition)}
+      inputMode={definition.kind === 'integer' ? 'numeric' : undefined}
+      autoComplete="off"
+      spellCheck={false}
+      placeholder={
+        definition.defaultValue === undefined ? undefined : String(definition.defaultValue)
+      }
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+}
+
 function Field({
   definition,
   read,
@@ -96,80 +277,20 @@ function Field({
   disabled: boolean;
 }): React.ReactElement {
   const id = `setting-${definition.key.replace(/\./gu, '-')}`;
-  const locked = read?.source === 'environment' || disabled;
-  const label =
-    definition.unit === undefined ? definition.label : `${definition.label} (${definition.unit})`;
-  const storedSecret = definition.secret && read?.secret?.set === true;
-  let control: React.ReactNode;
-  if (definition.kind === 'boolean') {
-    control = (
-      <Toggle
-        id={id}
-        label={definition.label}
-        checked={value === true}
-        disabled={locked}
-        aria-describedby={`${id}-help`}
-        onChange={(event) => onChange(event.target.checked)}
-      />
-    );
-  } else if (definition.kind === 'role') {
-    control = (
-      <Select
-        id={id}
-        label={label}
-        value={String(value)}
-        disabled={locked}
-        aria-describedby={`${id}-help`}
-        onChange={(event) => onChange(event.target.value)}
-        options={ROLE_OPTIONS}
-      />
-    );
-  } else if (storedSecret && !replacing) {
-    control = (
-      <div className="grid gap-1.5">
-        <span className="text-sm font-medium text-fg" id={`${id}-label`}>
-          {label}
-        </span>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary" data-testid={`secret-${definition.key}`}>
-            Saved · ending {read?.secret?.last4 ?? '····'}
-          </Badge>
-          {locked ? null : (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onReplace}
-              aria-describedby={`${id}-label`}
-            >
-              Replace
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  } else {
-    control = (
-      <Input
-        id={id}
-        label={label}
-        value={String(value)}
-        disabled={locked}
-        aria-describedby={`${id}-help`}
-        type={definition.secret ? 'password' : definition.kind === 'integer' ? 'number' : 'text'}
-        inputMode={definition.kind === 'integer' ? 'numeric' : undefined}
-        autoComplete="off"
-        spellCheck={false}
-        placeholder={
-          definition.defaultValue === undefined ? undefined : String(definition.defaultValue)
-        }
-        onChange={(event) => onChange(event.target.value)}
-      />
-    );
-  }
+  const props: ControlProps = {
+    id,
+    definition,
+    read,
+    value,
+    onChange,
+    locked: read?.source === 'environment' || disabled,
+    label:
+      definition.unit === undefined ? definition.label : `${definition.label} (${definition.unit})`,
+  };
+  const storedSecret = definition.secret && read?.secret?.set === true && !replacing;
   return (
     <div className="grid gap-1.5" data-testid={`field-${definition.key}`}>
-      {control}
+      {storedSecret ? <StoredSecret {...props} onReplace={onReplace} /> : <Control {...props} />}
       <p id={`${id}-help`} className="text-sm text-pretty text-fg-muted">
         {definition.help}
         {definition.apply === 'next-sign-in' ? ' Applies from the next sign-in.' : ''}
@@ -247,67 +368,35 @@ export function SettingsForm({
   for (const definition of definitions) {
     draft[definition.key] = edits[definition.key] ?? initial(definition, byKey.get(definition.key));
   }
-  const dirty = definitions.filter((definition) => {
-    const now = draft[definition.key];
-    if (now === undefined || byKey.get(definition.key)?.source === 'environment') return false;
-    if (definition.secret) return typeof now === 'string' && now.trim() !== '';
-    return now !== initial(definition, byKey.get(definition.key));
-  });
+  const dirty = dirtyOf(definitions, draft, byKey);
+
+  async function submitDraft(): Promise<void> {
+    if (onSubmitValues === undefined) return;
+    try {
+      await onSubmitValues(changedValues(dirty, draft));
+    } catch (error) {
+      toast({
+        tone: 'danger',
+        title: 'The changes were not saved',
+        description: explain(error, 'The request failed.'),
+      });
+    }
+  }
 
   async function save(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     setSaving(true);
     setErrors({});
     if (onSubmitValues !== undefined) {
-      const values: Record<string, string | number | boolean> = {};
-      for (const definition of dirty) {
-        const raw = draft[definition.key] ?? '';
-        values[definition.key] =
-          definition.kind !== 'boolean' && String(raw).trim() === '' ? '' : typed(definition, raw);
-      }
-      try {
-        await onSubmitValues(values);
-      } catch (error) {
-        toast({
-          tone: 'danger',
-          title: 'The changes were not saved',
-          description: explain(error, 'The request failed.'),
-        });
-      } finally {
-        setSaving(false);
-      }
+      await submitDraft();
+      setSaving(false);
       return;
     }
-    const failed: Record<string, string> = {};
-    for (const definition of dirty) {
-      const raw = draft[definition.key] ?? '';
-      try {
-        if (definition.kind !== 'boolean' && String(raw).trim() === '') {
-          await client.revertSetting(definition.key);
-        } else {
-          await client.putSetting(definition.key, typed(definition, raw));
-        }
-      } catch (error) {
-        failed[definition.key] = explain(error, 'The setting could not be saved.');
-      }
-    }
+    const failed = await saveEach(client, dirty, draft);
     setSaving(false);
     setErrors(failed);
-    const saved = dirty.length - Object.keys(failed).length;
-    if (saved > 0) {
-      toast({
-        tone: 'success',
-        title: saved === 1 ? 'Setting saved' : `${String(saved)} settings saved`,
-      });
-      onSaved?.();
-    }
-    if (Object.keys(failed).length > 0) {
-      toast({
-        tone: 'danger',
-        title: 'Some settings were not saved',
-        description: Object.values(failed)[0],
-      });
-    }
+    announce(toast, dirty.length - Object.keys(failed).length, failed);
+    if (dirty.length > Object.keys(failed).length) onSaved?.();
     // A field that saved now reads from the server; one that failed keeps what was typed.
     setEdits((current) =>
       Object.fromEntries(Object.entries(current).filter(([key]) => key in failed)),
@@ -323,12 +412,7 @@ export function SettingsForm({
     setTesting(true);
     setResult(null);
     try {
-      // An unchanged or locked field is tested with what is in effect: the server fills it in.
-      const value =
-        definition !== undefined && raw !== undefined && String(raw).trim() !== ''
-          ? typed(definition, raw)
-          : '';
-      setResult(await client.testSetting(testKey, value));
+      setResult(await client.testSetting(testKey, testValue(definition, raw)));
     } catch (error) {
       setResult({ ok: false, message: explain(error, 'The test could not run.') });
     } finally {
@@ -373,33 +457,64 @@ export function SettingsForm({
           )}
         </div>
       ))}
-      <div className="flex flex-wrap items-center gap-3">
-        {canEdit ? (
-          <Button type="submit" disabled={dirty.length === 0} loading={saving} className="min-h-10">
-            {dirty.length === 0
-              ? 'No changes'
-              : (submitLabel ??
-                (dirty.length === 1 ? 'Save change' : `Save ${String(dirty.length)} changes`))}
-          </Button>
-        ) : null}
-        {testKey === undefined || !canEdit ? null : (
-          <Button
-            type="button"
-            variant="outline"
-            loading={testing}
-            onClick={() => void test()}
-            className="min-h-10"
-          >
-            Test connection
-          </Button>
-        )}
-        <p role="status" aria-live="polite" className="text-sm" data-testid="setting-test-result">
-          {result === null ? null : (
-            <span className={result.ok ? 'text-success' : 'text-danger'}>{result.message}</span>
-          )}
-        </p>
-      </div>
+      <Actions
+        canEdit={canEdit}
+        count={dirty.length}
+        saving={saving}
+        submitLabel={submitLabel}
+        canTest={testKey !== undefined}
+        testing={testing}
+        onTest={() => void test()}
+        result={result}
+      />
     </form>
+  );
+}
+
+/** Save, Test, and the test's answer, announced politely to assistive technology. */
+function Actions({
+  canEdit,
+  count,
+  saving,
+  submitLabel,
+  canTest,
+  testing,
+  onTest,
+  result,
+}: {
+  canEdit: boolean;
+  count: number;
+  saving: boolean;
+  submitLabel: string | undefined;
+  canTest: boolean;
+  testing: boolean;
+  onTest: () => void;
+  result: SettingTestResult | null;
+}): React.ReactElement {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      {canEdit ? (
+        <Button type="submit" disabled={count === 0} loading={saving} className="min-h-10">
+          {submitText(count, submitLabel)}
+        </Button>
+      ) : null}
+      {canTest && canEdit ? (
+        <Button
+          type="button"
+          variant="outline"
+          loading={testing}
+          onClick={onTest}
+          className="min-h-10"
+        >
+          Test connection
+        </Button>
+      ) : null}
+      <p role="status" aria-live="polite" className="text-sm" data-testid="setting-test-result">
+        {result === null ? null : (
+          <span className={result.ok ? 'text-success' : 'text-danger'}>{result.message}</span>
+        )}
+      </p>
+    </div>
   );
 }
 

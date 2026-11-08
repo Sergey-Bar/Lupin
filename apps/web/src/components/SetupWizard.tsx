@@ -120,7 +120,7 @@ function FirstRun({ qa, who }: { qa: QaClient; who: WhoAmI }): React.ReactElemen
   if (projects.status === 'loading') {
     return (
       <p role="status" className="text-sm text-fg-muted">
-        Reading projects�
+        Reading projects…
       </p>
     );
   }
@@ -259,6 +259,57 @@ function StepBody({
   }
 }
 
+function Finished({
+  steps,
+  done,
+  total,
+  heading,
+}: {
+  steps: Onboarding['steps'];
+  done: number;
+  total: number;
+  heading: React.RefObject<HTMLHeadingElement | null>;
+}): React.ReactElement {
+  const left = steps.filter((step) => step.state !== 'done');
+  return (
+    <Panel title="Setup">
+      <div className="grid gap-4" data-testid="setup-finished">
+        <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold text-fg outline-none">
+          {left.length === 0 ? 'You’re set up' : 'You’re ready to go'}
+        </h2>
+        <p className="text-sm text-fg-muted">
+          {done} of {total} steps done.{' '}
+          {left.length === 0
+            ? 'Everything is connected.'
+            : 'The cockpit keeps a checklist of what is left, so you can finish later.'}
+        </p>
+        {left.length === 0 ? null : (
+          <ul className="grid gap-1 text-sm">
+            {left.map((step) => (
+              <li key={step.id}>
+                <a
+                  className="text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+                  href={step.href}
+                >
+                  {STEP_COPY[step.id].title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div>
+          <a
+            href="/dashboard/now"
+            className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-on-fill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+          >
+            Go to the cockpit
+          </a>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React.ReactElement {
   const toast = useToast();
   const [version, setVersion] = React.useState(0);
@@ -303,44 +354,7 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
   const refresh = () => setVersion((count) => count + 1);
 
   if (current >= steps.length) {
-    const left = steps.filter((step) => step.state !== 'done');
-    return (
-      <Panel title="Setup">
-        <div className="grid gap-4" data-testid="setup-finished">
-          <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold text-fg outline-none">
-            {left.length === 0 ? 'You’re set up' : 'You’re ready to go'}
-          </h2>
-          <p className="text-sm text-fg-muted">
-            {done} of {total} steps done.{' '}
-            {left.length === 0
-              ? 'Everything is connected.'
-              : 'The cockpit keeps a checklist of what is left, so you can finish later.'}
-          </p>
-          {left.length === 0 ? null : (
-            <ul className="grid gap-1 text-sm">
-              {left.map((step) => (
-                <li key={step.id}>
-                  <a
-                    className="text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-                    href={step.href}
-                  >
-                    {STEP_COPY[step.id].title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div>
-            <a
-              href="/dashboard/now"
-              className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-on-fill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-            >
-              Go to the cockpit
-            </a>
-          </div>
-        </div>
-      </Panel>
-    );
+    return <Finished steps={steps} done={done} total={total} heading={heading} />;
   }
 
   const step = steps[current];

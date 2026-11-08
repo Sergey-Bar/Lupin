@@ -119,6 +119,223 @@ export function SessionsSettingsPage(props: {
 
 // ─── Projects ───────────────────────────────────────────────────────────────
 
+/** Runs one project action: a toast either way, and a refresh after success. */
+type RunAction = (
+  action: () => Promise<unknown>,
+  success: string,
+  failure: string,
+) => Promise<void>;
+
+function RenameForm({
+  project,
+  client,
+  busy,
+  run,
+}: {
+  project: RegisteredProject;
+  client: SettingsClient;
+  busy: boolean;
+  run: RunAction;
+}): React.ReactElement {
+  const id = React.useId();
+  const [name, setName] = React.useState(project.name);
+  const next = name.trim();
+  return (
+    <form
+      aria-label={`Rename ${project.name}`}
+      className="flex flex-wrap items-end gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void run(
+          () => client.updateProject(project.id, { name: next }),
+          'Project renamed',
+          'Could not rename',
+        );
+      }}
+    >
+      <Input
+        id={`${id}-name`}
+        label="New name"
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+      />
+      <Button
+        type="submit"
+        size="sm"
+        loading={busy}
+        disabled={next === '' || next === project.name}
+      >
+        Save name
+      </Button>
+    </form>
+  );
+}
+
+function TokenForm({
+  project,
+  client,
+  busy,
+  run,
+  hasToken,
+}: {
+  project: RegisteredProject;
+  client: SettingsClient;
+  busy: boolean;
+  run: RunAction;
+  hasToken: boolean;
+}): React.ReactElement {
+  const id = React.useId();
+  const [token, setToken] = React.useState('');
+  return (
+    <form
+      aria-label={`Access token for ${project.name}`}
+      className="grid gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void run(
+          () => client.putGitToken(project.id, token.trim()),
+          'Token saved',
+          'Could not save the token',
+        );
+      }}
+    >
+      <Input
+        id={`${id}-token`}
+        label={hasToken ? 'Replace the access token' : 'Access token'}
+        type="password"
+        autoComplete="off"
+        helperText="For a private repository. Stored encrypted and only handed to the runner that clones it."
+        value={token}
+        onChange={(event) => setToken(event.target.value)}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" size="sm" loading={busy} disabled={token.trim() === ''}>
+          Save token
+        </Button>
+        {hasToken ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              void run(
+                () => client.deleteGitToken(project.id),
+                'Token removed',
+                'Could not remove the token',
+              )
+            }
+          >
+            Remove token
+          </Button>
+        ) : null}
+      </div>
+    </form>
+  );
+}
+
+function DeleteForm({
+  project,
+  client,
+  busy,
+  run,
+}: {
+  project: RegisteredProject;
+  client: SettingsClient;
+  busy: boolean;
+  run: RunAction;
+}): React.ReactElement {
+  const id = React.useId();
+  const [confirm, setConfirm] = React.useState('');
+  return (
+    <form
+      aria-label={`Delete ${project.name}`}
+      className="grid gap-2 rounded-md border border-danger p-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void run(
+          () => client.deleteProject(project.id, confirm),
+          'Project deleted',
+          'Could not delete',
+        );
+      }}
+    >
+      <p className="text-sm text-fg">
+        This deletes the project and all of its history: runs, scores and health reports. It cannot
+        be undone.
+      </p>
+      <Input
+        id={`${id}-confirm`}
+        label={`Type ${project.name} to confirm`}
+        value={confirm}
+        autoComplete="off"
+        onChange={(event) => setConfirm(event.target.value)}
+      />
+      <div>
+        <Button
+          type="submit"
+          size="sm"
+          variant="destructive"
+          loading={busy}
+          disabled={confirm !== project.name}
+        >
+          Delete project
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+type RowMode = 'view' | 'rename' | 'token' | 'delete';
+
+/** The buttons a role may use on a project: operators rename and re-scan, admins also token and delete. */
+function RowActions({
+  project,
+  who,
+  busy,
+  mode,
+  toggle,
+  onRescan,
+}: {
+  project: RegisteredProject;
+  who: WhoAmI;
+  busy: boolean;
+  mode: RowMode;
+  toggle: (mode: RowMode) => void;
+  onRescan: () => void;
+}): React.ReactElement {
+  return (
+    <>
+      {canOperate(who) ? (
+        <>
+          <Button size="sm" variant="outline" onClick={() => toggle('rename')}>
+            Rename
+          </Button>
+          {project.repoPath === null ? null : (
+            <Button
+              size="sm"
+              variant="outline"
+              loading={busy && mode === 'view'}
+              onClick={onRescan}
+            >
+              Re-scan
+            </Button>
+          )}
+        </>
+      ) : null}
+      {canAdminister(who) ? (
+        <>
+          <Button size="sm" variant="outline" onClick={() => toggle('token')}>
+            Access token
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => toggle('delete')}>
+            Delete
+          </Button>
+        </>
+      ) : null}
+    </>
+  );
+}
+
 function ProjectRow({
   project,
   client,
@@ -131,31 +348,21 @@ function ProjectRow({
   onChanged: () => void;
 }): React.ReactElement {
   const toast = useToast();
-  const id = React.useId();
-  const [mode, setMode] = React.useState<'view' | 'rename' | 'token' | 'delete'>('view');
-  const [name, setName] = React.useState(project.name);
-  const [token, setToken] = React.useState('');
-  const [confirm, setConfirm] = React.useState('');
+  const [mode, setMode] = React.useState<RowMode>('view');
   const [busy, setBusy] = React.useState(false);
   const [tokenVersion, setTokenVersion] = React.useState(0);
   const tokenState = useResource(
     () => client.gitTokenState(project.id),
     [client, project.id, tokenVersion],
   );
-  const admin = canAdminister(who);
+  const hasToken = tokenState.status === 'ready' && tokenState.value;
 
-  async function run(
-    action: () => Promise<unknown>,
-    success: string,
-    failure: string,
-  ): Promise<void> {
+  const run: RunAction = async (action, success, failure) => {
     setBusy(true);
     try {
       await action();
       toast({ tone: 'success', title: success });
       setMode('view');
-      setToken('');
-      setConfirm('');
       setTokenVersion((count) => count + 1);
       onChanged();
     } catch (error) {
@@ -163,7 +370,17 @@ function ProjectRow({
     } finally {
       setBusy(false);
     }
-  }
+  };
+  const rescan = () =>
+    void run(
+      async () => {
+        const found = await client.detectProject(project.id);
+        toast({ tone: 'info', title: `Found ${String(found)} command${found === 1 ? '' : 's'}` });
+      },
+      'Repository re-scanned',
+      'Could not re-scan the repository',
+    );
+  const forms = { project, client, busy, run };
 
   return (
     <li
@@ -180,177 +397,20 @@ function ProjectRow({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {tokenState.status === 'ready' && tokenState.value ? (
-            <Badge variant="secondary">Token saved</Badge>
-          ) : null}
-          {canOperate(who) ? (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setMode(mode === 'rename' ? 'view' : 'rename')}
-              >
-                Rename
-              </Button>
-              {project.repoPath === null ? null : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  loading={busy && mode === 'view'}
-                  onClick={() =>
-                    void run(
-                      async () => {
-                        const found = await client.detectProject(project.id);
-                        toast({
-                          tone: 'info',
-                          title: `Found ${String(found)} command${found === 1 ? '' : 's'}`,
-                        });
-                      },
-                      'Repository re-scanned',
-                      'Could not re-scan the repository',
-                    )
-                  }
-                >
-                  Re-scan
-                </Button>
-              )}
-            </>
-          ) : null}
-          {admin ? (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setMode(mode === 'token' ? 'view' : 'token')}
-              >
-                Access token
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setMode(mode === 'delete' ? 'view' : 'delete')}
-              >
-                Delete
-              </Button>
-            </>
-          ) : null}
+          {hasToken ? <Badge variant="secondary">Token saved</Badge> : null}
+          <RowActions
+            project={project}
+            who={who}
+            busy={busy}
+            mode={mode}
+            toggle={(next) => setMode(mode === next ? 'view' : next)}
+            onRescan={rescan}
+          />
         </div>
       </div>
-      {mode === 'rename' ? (
-        <form
-          aria-label={`Rename ${project.name}`}
-          className="flex flex-wrap items-end gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void run(
-              () => client.updateProject(project.id, { name: name.trim() }),
-              'Project renamed',
-              'Could not rename',
-            );
-          }}
-        >
-          <Input
-            id={`${id}-name`}
-            label="New name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-          <Button
-            type="submit"
-            size="sm"
-            loading={busy}
-            disabled={name.trim() === '' || name.trim() === project.name}
-          >
-            Save name
-          </Button>
-        </form>
-      ) : null}
-      {mode === 'token' ? (
-        <form
-          aria-label={`Access token for ${project.name}`}
-          className="grid gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void run(
-              () => client.putGitToken(project.id, token.trim()),
-              'Token saved',
-              'Could not save the token',
-            );
-          }}
-        >
-          <Input
-            id={`${id}-token`}
-            label={
-              tokenState.status === 'ready' && tokenState.value
-                ? 'Replace the access token'
-                : 'Access token'
-            }
-            type="password"
-            autoComplete="off"
-            helperText="For a private repository. Stored encrypted and only handed to the runner that clones it."
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-          />
-          <div className="flex flex-wrap gap-2">
-            <Button type="submit" size="sm" loading={busy} disabled={token.trim() === ''}>
-              Save token
-            </Button>
-            {tokenState.status === 'ready' && tokenState.value ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  void run(
-                    () => client.deleteGitToken(project.id),
-                    'Token removed',
-                    'Could not remove the token',
-                  )
-                }
-              >
-                Remove token
-              </Button>
-            ) : null}
-          </div>
-        </form>
-      ) : null}
-      {mode === 'delete' ? (
-        <form
-          aria-label={`Delete ${project.name}`}
-          className="grid gap-2 rounded-md border border-danger p-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void run(
-              () => client.deleteProject(project.id, confirm),
-              'Project deleted',
-              'Could not delete',
-            );
-          }}
-        >
-          <p className="text-sm text-fg">
-            This deletes the project and all of its history: runs, scores and health reports. It
-            cannot be undone.
-          </p>
-          <Input
-            id={`${id}-confirm`}
-            label={`Type ${project.name} to confirm`}
-            value={confirm}
-            autoComplete="off"
-            onChange={(event) => setConfirm(event.target.value)}
-          />
-          <div>
-            <Button
-              type="submit"
-              size="sm"
-              variant="destructive"
-              loading={busy}
-              disabled={confirm !== project.name}
-            >
-              Delete project
-            </Button>
-          </div>
-        </form>
-      ) : null}
+      {mode === 'rename' ? <RenameForm {...forms} /> : null}
+      {mode === 'token' ? <TokenForm {...forms} hasToken={hasToken} /> : null}
+      {mode === 'delete' ? <DeleteForm {...forms} /> : null}
     </li>
   );
 }

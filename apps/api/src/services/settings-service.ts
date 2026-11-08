@@ -156,15 +156,21 @@ export function createSettingsService(options: SettingsServiceOptions): Settings
     };
   }
 
+  /** The read model's secret field: present for a secret setting only, never its value. */
+  function secretField(definition: SettingDefinition, set: boolean, last4: string | null) {
+    return definition.secret ? { secret: { set, last4 } } : {};
+  }
+
   async function read(key: string): Promise<SettingRead> {
     const definition = definitionOf(key);
+    const masked = (value: SettingValue | null) => (definition.secret ? null : value);
     const fromEnv = envValue(definition);
     if (fromEnv !== undefined) {
       return {
         key,
         source: 'environment',
-        value: definition.secret ? null : fromEnvironment(definition, fromEnv),
-        ...(definition.secret ? { secret: { set: true, last4: fromEnv.slice(-4) } } : {}),
+        value: masked(fromEnvironment(definition, fromEnv)),
+        ...secretField(definition, true, fromEnv.slice(-4)),
         updatedAt: null,
         updatedBy: null,
       };
@@ -174,18 +180,18 @@ export function createSettingsService(options: SettingsServiceOptions): Settings
       return {
         key,
         source: 'ui',
-        value: definition.secret ? null : row.value,
-        ...(definition.secret ? { secret: { set: row.sealed, last4: row.last4 } } : {}),
+        value: masked(row.value),
+        ...secretField(definition, row.sealed, row.last4),
         updatedAt: row.updatedAt,
         updatedBy: row.updatedBy,
       };
     }
-    const fallback = definition.defaultValue;
+    const fallback = definition.defaultValue ?? null;
     return {
       key,
-      source: fallback === undefined ? 'unset' : 'default',
-      value: definition.secret ? null : (fallback ?? null),
-      ...(definition.secret ? { secret: { set: false, last4: null } } : {}),
+      source: fallback === null ? 'unset' : 'default',
+      value: masked(fallback),
+      ...secretField(definition, false, null),
       updatedAt: null,
       updatedBy: null,
     };

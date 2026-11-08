@@ -277,7 +277,13 @@ async function refreshIdentity(): Promise<void> {
       error: error instanceof Error ? error.message : String(error),
     });
   }
-  liveSsoEnforced = values['identity.ssoEnforced'] === true;
+  // Explicit (environment or saved) wins; otherwise the profile's own default stands — the
+  // enterprise profile turns single sign-on on without AUTH_SSO_ENFORCED being set.
+  const sso = await settingsService.read('identity.ssoEnforced');
+  liveSsoEnforced =
+    sso.source === 'environment' || sso.source === 'ui'
+      ? values['identity.ssoEnforced'] === true
+      : runtimeConfig.ssoEnforced === true;
 }
 void refreshIdentity();
 const HOUR_MS = 60 * 60 * 1000;

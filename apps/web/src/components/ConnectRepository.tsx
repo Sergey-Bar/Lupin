@@ -4,6 +4,7 @@ import {
   explain,
   nameFromSource,
   slugFor,
+  type ConnectRepositoryBody,
   type RegisteredProject,
   type SettingsClient,
 } from '../lib/settings-client.js';
@@ -25,6 +26,73 @@ const SOURCES: ReadonlyArray<{ value: Source; label: string }> = [
   { value: 'folder', label: 'A folder on this machine' },
   { value: 'git', label: 'A git repository' },
 ];
+
+/** What the form still needs, said as the next thing to type, or `null` when it is complete. */
+function missingField(source: Source, location: string, name: string): string | null {
+  if (location.trim() === '') {
+    return source === 'folder' ? 'Enter the folder path.' : 'Enter the repository URL.';
+  }
+  return name === '' ? 'Give the project a name.' : null;
+}
+
+/** The registration body: a folder, or a git URL with its optional branch and token. */
+function registration(
+  source: Source,
+  name: string,
+  location: string,
+  branch: string,
+  token: string,
+): ConnectRepositoryBody {
+  const base = { name, slug: slugFor(name) };
+  if (source === 'folder') return { ...base, repoPath: location.trim() };
+  return {
+    ...base,
+    gitUrl: location.trim(),
+    ...(branch.trim() === '' ? {} : { defaultBranch: branch.trim() }),
+    ...(token.trim() === '' ? {} : { token: token.trim() }),
+  };
+}
+
+/** What a connected repository was found to have: the commands Lupin can run, or none yet. */
+function foundSentence(commands: RegisteredProject['commands']): string {
+  const count = commands.length;
+  if (count === 0)
+    return 'No test commands were detected yet. You can still upload results from CI.';
+  const shown = commands
+    .slice(0, 3)
+    .map((command) => command.label)
+    .join(', ');
+  return `Found ${String(count)} command${count === 1 ? '' : 's'} Lupin can run: ${shown}${count > 3 ? ', …' : ''}.`;
+}
+
+function Connected({
+  registered,
+  onAnother,
+}: {
+  registered: RegisteredProject;
+  onAnother: () => void;
+}): React.ReactElement {
+  return (
+    <div
+      role="status"
+      className="grid gap-2 rounded-md border border-border bg-surface p-4"
+      data-testid="repository-connected"
+    >
+      <p className="flex items-center gap-2 text-sm font-medium text-fg">
+        <CircleCheck aria-hidden className="size-4 text-success" />
+        <span>
+          Connected <UserText>{registered.project.name}</UserText>.
+        </span>
+      </p>
+      <p className="text-sm text-fg-muted">{foundSentence(registered.commands)}</p>
+      <div>
+        <Button type="button" variant="outline" size="sm" onClick={onAnother}>
+          Connect another
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function ConnectRepository({
   client,
@@ -50,27 +118,16 @@ export function ConnectRepository({
 
   async function submit(event: React.FormEvent): Promise<void> {
     event.preventDefault();
-    if (location.trim() === '') {
-      setError(source === 'folder' ? 'Enter the folder path.' : 'Enter the repository URL.');
-      return;
-    }
-    if (effectiveName === '') {
-      setError('Give the project a name.');
+    const missing = missingField(source, location, effectiveName);
+    if (missing !== null) {
+      setError(missing);
       return;
     }
     setBusy(true);
     setError(null);
     try {
-      const base = { name: effectiveName, slug: slugFor(effectiveName) };
       const project = await client.registerProject(
-        source === 'folder'
-          ? { ...base, repoPath: location.trim() }
-          : {
-              ...base,
-              gitUrl: location.trim(),
-              ...(branch.trim() === '' ? {} : { defaultBranch: branch.trim() }),
-              ...(token.trim() === '' ? {} : { token: token.trim() }),
-            },
+        registration(source, effectiveName, location, branch, token),
       );
       setConnected(project);
       setToken('');
@@ -83,34 +140,7 @@ export function ConnectRepository({
   }
 
   if (connected !== null) {
-    const count = connected.commands.length;
-    return (
-      <div
-        role="status"
-        className="grid gap-2 rounded-md border border-border bg-surface p-4"
-        data-testid="repository-connected"
-      >
-        <p className="flex items-center gap-2 text-sm font-medium text-fg">
-          <CircleCheck aria-hidden className="size-4 text-success" />
-          <span>
-            Connected <UserText>{connected.project.name}</UserText>.
-          </span>
-        </p>
-        <p className="text-sm text-fg-muted">
-          {count === 0
-            ? 'No test commands were detected yet. You can still upload results from CI.'
-            : `Found ${String(count)} command${count === 1 ? '' : 's'} Lupin can run: ${connected.commands
-                .slice(0, 3)
-                .map((command) => command.label)
-                .join(', ')}${count > 3 ? ', …' : ''}.`}
-        </p>
-        <div>
-          <Button type="button" variant="outline" size="sm" onClick={() => setConnected(null)}>
-            Connect another
-          </Button>
-        </div>
-      </div>
-    );
+    return <Connected registered={connected} onAnother={() => setConnected(null)} />;
   }
 
   return (

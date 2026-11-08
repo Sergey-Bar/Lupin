@@ -48,6 +48,12 @@ const RETURN_MESSAGES: Record<string, string> = {
   expired: 'The draft expired. Save your changes again and test within ten minutes.',
 };
 
+/** Why a test sign-in did not complete, or `null` when there is nothing to say. */
+function returnMessage(returned: string | null): string | null {
+  if (returned === null || returned === 'done') return null;
+  return RETURN_MESSAGES[returned] ?? RETURN_MESSAGES['failed'] ?? null;
+}
+
 function Verdict({ status }: { status: IdentityDraftStatus }): React.ReactElement | null {
   const verified = status.verified;
   if (verified === null) return null;
@@ -176,68 +182,26 @@ export function IdentitySettingsPage({
                   />
                 </Panel>
                 <Panel title="2. Test, then 3. Apply">
-                  <div className="grid gap-4" aria-live="polite">
-                    {returned !== null && returned !== 'done' ? (
-                      <p role="alert" className="text-sm text-danger">
-                        {RETURN_MESSAGES[returned] ?? RETURN_MESSAGES['failed']}
-                      </p>
-                    ) : null}
-                    {draftId === null ? (
-                      <p className="text-sm text-fg-muted" data-testid="identity-no-draft">
-                        Change a setting and save it as a draft. Nothing changes for anyone until
-                        you apply it.
-                      </p>
-                    ) : (
-                      <>
-                        {status === null ? null : <Verdict status={status} />}
-                        {needsTest && verified === null ? (
-                          <p className="text-sm text-fg">
-                            Sign in through your provider with the draft. You will come back here;
-                            nobody is signed in or out by the test.
-                          </p>
-                        ) : null}
-                        <div className="flex flex-wrap gap-3">
-                          {needsTest ? (
-                            <Button
-                              type="button"
-                              variant={verified === null ? 'primary' : 'outline'}
-                              className="min-h-10"
-                              onClick={() =>
-                                go(
-                                  testUrl ??
-                                    `/api/v1/auth/oidc/test?draft=${encodeURIComponent(draftId)}`,
-                                )
-                              }
-                            >
-                              {verified === null ? 'Test sign-in' : 'Test again'}
-                            </Button>
-                          ) : null}
-                          <Button
-                            type="button"
-                            className="min-h-10"
-                            variant={canApply ? 'primary' : 'outline'}
-                            disabled={!canApply}
-                            loading={applying}
-                            onClick={() => void apply()}
-                          >
-                            Apply changes
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="min-h-10"
-                            onClick={() => {
-                              storeDraft(null);
-                              setDraftId(null);
-                              setStatus(null);
-                            }}
-                          >
-                            Discard draft
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <DraftPanel
+                    returned={returned}
+                    draftId={draftId}
+                    status={status}
+                    needsTest={needsTest}
+                    canApply={canApply}
+                    applying={applying}
+                    onTest={() =>
+                      go(
+                        testUrl ??
+                          `/api/v1/auth/oidc/test?draft=${encodeURIComponent(draftId ?? '')}`,
+                      )
+                    }
+                    onApply={() => void apply()}
+                    onDiscard={() => {
+                      storeDraft(null);
+                      setDraftId(null);
+                      setStatus(null);
+                    }}
+                  />
                 </Panel>
               </div>
             )
@@ -245,5 +209,88 @@ export function IdentitySettingsPage({
         </AccessGate>
       </PageBody>
     </PageFrame>
+  );
+}
+
+interface DraftProps {
+  status: IdentityDraftStatus | null;
+  needsTest: boolean;
+  canApply: boolean;
+  applying: boolean;
+  onTest: () => void;
+  onApply: () => void;
+  onDiscard: () => void;
+}
+
+/** A saved draft: what its test showed, and Test, Apply and Discard. */
+function DraftActions({
+  status,
+  needsTest,
+  canApply,
+  applying,
+  onTest,
+  onApply,
+  onDiscard,
+}: DraftProps): React.ReactElement {
+  const untested = (status?.verified ?? null) === null;
+  return (
+    <>
+      {status === null ? null : <Verdict status={status} />}
+      {needsTest && untested ? (
+        <p className="text-sm text-fg">
+          Sign in through your provider with the draft. You will come back here; nobody is signed in
+          or out by the test.
+        </p>
+      ) : null}
+      <div className="flex flex-wrap gap-3">
+        {needsTest ? (
+          <Button
+            type="button"
+            variant={untested ? 'primary' : 'outline'}
+            className="min-h-10"
+            onClick={onTest}
+          >
+            {untested ? 'Test sign-in' : 'Test again'}
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          className="min-h-10"
+          variant={canApply ? 'primary' : 'outline'}
+          disabled={!canApply}
+          loading={applying}
+          onClick={onApply}
+        >
+          Apply changes
+        </Button>
+        <Button type="button" variant="ghost" className="min-h-10" onClick={onDiscard}>
+          Discard draft
+        </Button>
+      </div>
+    </>
+  );
+}
+
+function DraftPanel({
+  returned,
+  draftId,
+  ...draft
+}: DraftProps & { returned: string | null; draftId: string | null }): React.ReactElement {
+  const message = returnMessage(returned);
+  return (
+    <div className="grid gap-4" aria-live="polite">
+      {message === null ? null : (
+        <p role="alert" className="text-sm text-danger">
+          {message}
+        </p>
+      )}
+      {draftId === null ? (
+        <p className="text-sm text-fg-muted" data-testid="identity-no-draft">
+          Change a setting and save it as a draft. Nothing changes for anyone until you apply it.
+        </p>
+      ) : (
+        <DraftActions {...draft} />
+      )}
+    </div>
   );
 }
