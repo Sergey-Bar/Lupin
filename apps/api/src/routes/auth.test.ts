@@ -191,3 +191,29 @@ describe('auth routes', () => {
     });
   });
 });
+
+describe('the in-memory session backend', () => {
+  it('issues the next session under a lifetime saved after it was created', async () => {
+    let clock = new Date('2026-01-01T00:00:00.000Z');
+    let ttl = 1_000;
+    const backend = memoryBackend(
+      'm'.repeat(32),
+      () => ttl,
+      () => clock,
+    );
+    const first = await backend.issue('installation-1');
+    ttl = 10_000;
+    const second = await backend.issue('installation-1');
+    expect(first.record.expiresAt.getTime() - clock.getTime()).toBe(1_000);
+    expect(second.record.expiresAt.getTime() - clock.getTime()).toBe(10_000);
+    // Both validate, revoke and sweep through the one backend.
+    expect(await backend.validate(first.token)).toBeDefined();
+    expect(await backend.validate(second.token)).toBeDefined();
+    clock = new Date(clock.getTime() + 5_000);
+    expect(await backend.validate(first.token)).toBeUndefined();
+    expect(await backend.validate(second.token)).toBeDefined();
+    expect(await backend.revoke(second.record.id)).toBe(true);
+    expect(await backend.validate(second.token)).toBeUndefined();
+    expect((await backend.sweep?.())?.removed).toBeGreaterThanOrEqual(1);
+  });
+});

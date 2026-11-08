@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono';
 import {
   CreateChannelBodySchema,
   CreateSubscriptionBodySchema,
+  UpdateChannelBodySchema,
   type ReportPreview,
 } from '@lupin/shared-contracts';
 import { renderFullReport, renderPlain } from '@lupin/reporting';
@@ -18,6 +19,7 @@ import {
   listSubscriptions,
   composeWorkspaceReportModel,
   queueTestDelivery,
+  updateChannel,
   type NotificationOptions,
 } from '../services/notification-service.js';
 
@@ -69,6 +71,20 @@ export function createNotificationRoutes(options: NotificationRouteOptions): Hon
       details: { kind: channel.kind },
     });
     return context.json(channel, 201);
+  });
+
+  app.patch('/api/v1/notification-channels/:id', admin, async (context) => {
+    const parsed = UpdateChannelBodySchema.safeParse(await body(context));
+    if (!parsed.success) throw invalid(parsed.error.issues);
+    const channel = await updateChannel(options, context.req.param('id'), parsed.data);
+    await audit(options, {
+      actor: await actor(context),
+      action: 'notification-channel.update',
+      resourceType: 'notification_channel',
+      resourceId: channel.id,
+      details: { fields: Object.keys(parsed.data) },
+    });
+    return context.json(channel);
   });
 
   app.delete('/api/v1/notification-channels/:id', admin, async (context) => {

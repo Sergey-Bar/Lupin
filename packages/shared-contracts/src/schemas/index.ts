@@ -70,3 +70,4 @@ export * from './test-proposals.js';
 export * from './mcp.js';
 export * from './test-identity.js';
 export * from './test-reports.js';
+export * from './settings.js';

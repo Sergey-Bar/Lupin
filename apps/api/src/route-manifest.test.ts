@@ -236,6 +236,8 @@ const CANONICAL_API_ROUTES: Array<[string, string]> = [
   ['GET', '/api/v1/dashboard/quality-gates'],
   ['POST', '/api/v1/dashboard/quality-gates'],
   ['GET', '/api/v1/dashboard/quality-gates/:id'],
+  ['PATCH', '/api/v1/dashboard/quality-gates/:id'],
+  ['DELETE', '/api/v1/dashboard/quality-gates/:id'],
   // Legacy process-local control plane.
   ['POST', '/api/v1/runner/v1/enroll'],
   ['POST', '/api/v1/runner/v1/sync'],

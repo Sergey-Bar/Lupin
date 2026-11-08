@@ -16,28 +16,38 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** What the stubbed API answers, by path; the first entry whose test matches wins. */
+const ANSWERS: ReadonlyArray<readonly [(url: string) => boolean, unknown]> = [
+  [
+    (url) => url.endsWith('/api/v1/auth/whoami'),
+    { actor: 'anonymous', role: 'admin', mode: 'open' },
+  ],
+  [(url) => url.includes('/api/v1/notification-channels'), { channels: [] }],
+  [(url) => url.includes('/api/v1/report-subscriptions'), { subscriptions: [] }],
+  [(url) => url.includes('/api/v1/report-deliveries'), { deliveries: [] }],
+  [
+    (url) => url.includes('/api/v1/report-preview'),
+    { status: 'good', text: '🟢 Weekly quality report' },
+  ],
+  [(url) => url.includes('/api/v1/access-tokens'), { tokens: [] }],
+  [(url) => url.includes('/api/v1/members'), { members: [] }],
+  [(url) => url.includes('/api/v1/audit/verify'), { intact: true, breaks: [], head: null }],
+  [(url) => url.includes('/api/v1/audit'), { events: [], next: null }],
+  [(url) => url.includes('/api/v1/workspaces'), { current: 'w', workspaces: [], canCreate: false }],
+  [(url) => url.includes('/api/v1/settings'), { settings: [] }],
+  [(url) => url.includes('/api/v1/onboarding'), { steps: [], done: 1, total: 6, dismissed: false }],
+  [(url) => url.includes('/api/v1/dashboard/quality-gates'), []],
+  [(url) => url.endsWith('/api/v1/projects'), { projects: [] }],
+  [(url) => url.includes('/api/v1/projects'), []],
+];
+
 function stubAdminApi(): void {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
-      const reply = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
-      if (url.endsWith('/api/v1/auth/whoami'))
-        return reply({ actor: 'anonymous', role: 'admin', mode: 'open' });
-      if (url.includes('/api/v1/notification-channels')) return reply({ channels: [] });
-      if (url.includes('/api/v1/report-subscriptions')) return reply({ subscriptions: [] });
-      if (url.includes('/api/v1/report-deliveries')) return reply({ deliveries: [] });
-      if (url.includes('/api/v1/report-preview'))
-        return reply({ status: 'good', text: '🟢 Weekly quality report' });
-      if (url.includes('/api/v1/access-tokens')) return reply({ tokens: [] });
-      if (url.includes('/api/v1/members')) return reply({ members: [] });
-      if (url.includes('/api/v1/audit/verify'))
-        return reply({ intact: true, breaks: [], head: null });
-      if (url.includes('/api/v1/audit')) return reply({ events: [], next: null });
-      if (url.includes('/api/v1/workspaces'))
-        return reply({ current: 'w', workspaces: [], canCreate: false });
-      if (url.includes('/api/v1/projects')) return reply([]);
-      return reply({});
+      const body = ANSWERS.find(([matches]) => matches(url))?.[1] ?? {};
+      return new Response(JSON.stringify(body), { status: 200 });
     }),
   );
 }
@@ -84,5 +94,18 @@ describe('the settings routes', () => {
     expect(
       await screen.findByTestId('deployment-page', {}, { timeout: 10_000 }),
     ).toBeInTheDocument();
+  });
+  it.each([
+    ['/dashboard/settings/projects', 'settings-projects'],
+    ['/dashboard/settings/quality-gates', 'settings-quality-gates'],
+    ['/dashboard/settings/ai', 'settings-ai'],
+    ['/dashboard/settings/integrations', 'settings-integrations'],
+    ['/dashboard/settings/identity', 'settings-identity'],
+    ['/dashboard/settings/sessions', 'settings-sessions-retention'],
+    ['/dashboard/setup', 'setup-page'],
+  ])('opens %s', async (path, testId) => {
+    stubAdminApi();
+    render(<MemoryRouter initialEntries={[path]} />);
+    expect(await screen.findByTestId(testId, {}, { timeout: 10_000 })).toBeInTheDocument();
   });
 });

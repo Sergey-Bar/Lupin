@@ -1,6 +1,7 @@
 import React from 'react';
 import { EmptyState, Select } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
+import { useViewerRole } from '../hooks/useViewerRole.js';
 import type { QaClient } from '../lib/qa-client.js';
 import type { RegisteredProject } from '../lib/qa.js';
 import { PageFrame, PageHeader, Quiet } from './kit.js';
@@ -106,23 +107,48 @@ function writeChoice(projectId: string): void {
   }
 }
 
+/**
+ * An empty registry, said as a next step. An operator or admin gets the way in — setup, or
+ * straight to connecting a repository — and a viewer is told who can do it, because a viewer
+ * offered a button that answers 403 learns nothing. `onboarding` stays the test id, so the
+ * screens that render this are still asserted the same way.
+ */
 function Onboarding({ title }: { title: string }): React.ReactElement {
+  const role = useViewerRole();
+  const canConnect = role === 'operator' || role === 'admin';
   return (
     <PageFrame data-testid="onboarding">
-      <PageHeader title={title} subtitle="No project is registered yet." />
+      <PageHeader title={title} subtitle="No project is connected yet." />
       <div className="flex flex-1 items-center justify-center rounded-lg bg-ambient">
-        <div className="max-w-measure space-y-3 rounded-lg border border-border bg-surface-raised p-8">
-          <h2 className="text-xl font-semibold">Point Lupin at a repository</h2>
-          <p className="max-w-measure text-pretty text-sm text-fg-muted">
-            Set <span className="font-mono">LUPIN_PROJECT_ROOT</span> to the checkout you want
-            analysed and restart the API. It registers that folder at boot, scans every tool and
-            report in it, and this screen fills in. This is an empty install, not a failure.
+        <div className="grid max-w-measure gap-4 rounded-lg border border-border bg-surface-raised p-8">
+          <h2 className="text-xl font-semibold">Connect your first repository</h2>
+          <p className="text-pretty text-sm text-fg-muted">
+            Lupin scans a repository for its tests, coverage and reports, and this screen fills in.
+            This is an empty install, not a failure.
           </p>
-          <p className="max-w-measure text-pretty text-sm text-fg-muted">
-            Or register one by hand with <span className="font-mono">POST /api/v1/projects</span>{' '}
-            and a <span className="font-mono">name</span>, <span className="font-mono">slug</span>{' '}
-            and <span className="font-mono">repoPath</span>.
-          </p>
+          {canConnect ? (
+            <div className="flex flex-wrap gap-3">
+              <a
+                href={role === 'admin' ? '/dashboard/setup' : '/dashboard/settings/projects'}
+                data-testid="onboarding-connect"
+                className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-on-fill hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+              >
+                {role === 'admin' ? 'Start setup' : 'Connect a repository'}
+              </a>
+              {role === 'admin' ? (
+                <a
+                  href="/dashboard/settings/projects"
+                  className="inline-flex min-h-10 items-center text-sm text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+                >
+                  Just connect a repository
+                </a>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-sm text-fg" data-testid="onboarding-ask">
+              Ask an operator or admin of this workspace to connect a repository.
+            </p>
+          )}
         </div>
       </div>
     </PageFrame>

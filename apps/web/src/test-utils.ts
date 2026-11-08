@@ -1,4 +1,6 @@
 import { vi } from 'vitest';
+import type { SettingRead } from '@lupin/shared-contracts';
+import type { SettingsClient } from './lib/settings-client.js';
 import {
   AgentRuntimeReportSchema,
   AiCodePullRequestListSchema,
@@ -45,7 +47,7 @@ import {
   type SupplyChainPolicyRecord,
 } from '@lupin/shared-contracts';
 import type { EvalDatasetList } from './lib/agents-client.js';
-import type { HealthClient } from './lib/health-client.js';
+import type { HealthClient, WhoAmI } from './lib/health-client.js';
 import type { ApiClient, QuarantineEntry, Run } from './lib/api.js';
 import type { QaClient } from './lib/qa-client.js';
 import {
@@ -1646,4 +1648,70 @@ export function cockpitFixture(overrides: Partial<Cockpit> = {}): Cockpit {
     repository: { owner: 'octo', repo: 'service' },
     ...overrides,
   };
+}
+
+/** Fixtures for the settings, setup and identity screens' tests. */
+export const read = (key: string, patch: Partial<SettingRead> = {}): SettingRead => ({
+  key,
+  source: 'unset',
+  value: null,
+  updatedAt: null,
+  updatedBy: null,
+  ...patch,
+});
+
+/** A settings client whose every method is a mock; the ones a test does not expect throw. */
+export function settingsClient(overrides: Partial<SettingsClient> = {}): SettingsClient {
+  const unused = vi.fn(async () => {
+    throw new Error('not used here');
+  });
+  return {
+    listSettings: vi.fn(async () => [
+      read('ai.gatewayUrl', { source: 'environment', value: 'https://kilo.test' }),
+      read('ai.apiKey', {
+        source: 'ui',
+        secret: { set: true, last4: 'wxyz' },
+        updatedAt: '2026-11-01T00:00:00.000Z',
+        updatedBy: 'alice',
+      }),
+      read('ai.ollamaBaseUrl'),
+      read('sessions.ttlHours', { source: 'default', value: 24 }),
+    ]),
+    putSetting: vi.fn(async (key: string, value: string | number | boolean) =>
+      read(key, { source: 'ui', value }),
+    ),
+    revertSetting: vi.fn(async (key: string) => read(key, { source: 'default' })),
+    testSetting: vi.fn(async () => ({ ok: true, message: 'Connected: 3 models available.' })),
+    getOnboarding: unused,
+    dismissStep: unused,
+    resetOnboarding: unused,
+    registerProject: unused,
+    updateProject: unused,
+    deleteProject: unused,
+    detectProject: unused,
+    gitTokenState: vi.fn(async () => false),
+    putGitToken: unused,
+    deleteGitToken: unused,
+    listGates: unused,
+    createGate: unused,
+    updateGate: unused,
+    deleteGate: unused,
+    identityDraft: unused,
+    identityDraftStatus: unused,
+    identityApply: unused,
+    ...overrides,
+  } as SettingsClient;
+}
+
+/** A health client that answers `whoami` with an installation admin, or `who`. */
+export function health(who: Partial<WhoAmI> = {}): HealthClient {
+  return {
+    whoami: vi.fn(async () => ({
+      actor: 'session',
+      role: 'admin',
+      mode: 'enforced',
+      source: 'installation',
+      ...who,
+    })),
+  } as unknown as HealthClient;
 }

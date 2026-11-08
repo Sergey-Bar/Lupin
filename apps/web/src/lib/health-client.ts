@@ -107,6 +107,8 @@ export const WhoAmISchema = z.object({
   source: z.enum(['token', 'user', 'cloudflare', 'installation', 'anonymous']).optional(),
   /** The workspace this request is in. Absent from an API older than several workspaces. */
   workspace: z.string().optional(),
+  /** Whether this caller may change installation-wide settings. Absent from an older API. */
+  installationAdmin: z.boolean().optional(),
 });
 export type WhoAmI = z.infer<typeof WhoAmISchema>;
 

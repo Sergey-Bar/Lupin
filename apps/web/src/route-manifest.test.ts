@@ -153,9 +153,15 @@ describe('route manifest', () => {
     ]);
     expect(tabsOf('settings').map((tab) => tab.tab)).toEqual([
       'Appearance',
+      'Projects',
       'Reports',
-      'Access',
+      'Quality gates',
       'Members',
+      'AI provider',
+      'Integrations',
+      'Identity',
+      'Sessions & retention',
+      'Access',
       'Audit',
       'Deployment',
     ]);
@@ -164,21 +170,33 @@ describe('route manifest', () => {
   it('shows a viewer only the Settings tabs they may use, and an admin all of them', () => {
     expect(visibleTabsOf('settings', 'viewer').map((tab) => tab.tab)).toEqual([
       'Appearance',
+      'Projects',
       'Reports',
+      'Quality gates',
     ]);
     expect(visibleTabsOf('settings', null).map((tab) => tab.tab)).toEqual([
       'Appearance',
+      'Projects',
       'Reports',
+      'Quality gates',
     ]);
     expect(visibleTabsOf('settings', 'operator').map((tab) => tab.tab)).toEqual([
       'Appearance',
+      'Projects',
       'Reports',
+      'Quality gates',
     ]);
     expect(visibleTabsOf('settings', 'admin').map((tab) => tab.tab)).toEqual([
       'Appearance',
+      'Projects',
       'Reports',
-      'Access',
+      'Quality gates',
       'Members',
+      'AI provider',
+      'Integrations',
+      'Identity',
+      'Sessions & retention',
+      'Access',
       'Audit',
       'Deployment',
     ]);

@@ -30,7 +30,11 @@ import {
  */
 export interface GitHubWebhookRouteOptions extends DeliveryOptions {
   lanMode: boolean | undefined;
-  secret: string | undefined;
+  /**
+   * The HMAC secret, or a reader for it. A reader is called per request, so a secret saved
+   * from Settings takes effect without a restart; still a 404 while it returns nothing.
+   */
+  secret: string | undefined | (() => Promise<string | undefined>);
   /** The client address the budget is keyed on. `defaultClientKey` in production. */
   clientKey: (context: Context) => string;
   /** Runs queued syncs now rather than at the next interval. */
@@ -60,17 +64,19 @@ export function createGitHubWebhookRoutes(options: GitHubWebhookRouteOptions): H
   const app = new Hono();
   const limiter = createRateLimiter(PER_CLIENT);
 
-  const configured: MiddlewareHandler = async (_context, next) => {
+  const SECRET = 'lupin.github-webhook-secret';
+  const configured: MiddlewareHandler = async (context, next) => {
     // A presence check, not a comparison: whether a secret is configured says nothing about
     // its bytes. Read into a local so the check is on a value, not on a secret-named member.
-    const { secret } = options;
+    const secret = typeof options.secret === 'function' ? await options.secret() : options.secret;
     if (options.lanMode !== true || secret === undefined || secret.length === 0) {
       throw new DomainError(
         ErrorCode.WEBHOOK_NOT_CONFIGURED,
         'The GitHub webhook receiver is off: it needs LUPIN_LAN_MODE=1 or ' +
-          'LUPIN_REMOTE=cloudflare, and GITHUB_WEBHOOK_SECRET',
+          'LUPIN_REMOTE=cloudflare, and a GitHub webhook secret (Settings → Integrations)',
       );
     }
+    context.set(SECRET as never, secret as never);
     await next();
   };
 
@@ -99,7 +105,7 @@ export function createGitHubWebhookRoutes(options: GitHubWebhookRouteOptions): H
       const raw = new Uint8Array(await context.req.arrayBuffer());
       if (
         !verifyGitHubSignature(
-          options.secret as string,
+          context.get(SECRET as never) as string,
           raw,
           context.req.header('x-hub-signature-256'),
         )

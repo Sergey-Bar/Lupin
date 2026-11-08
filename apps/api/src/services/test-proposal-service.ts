@@ -33,8 +33,12 @@ import { projectRow, type HealthStoreOptions } from './health-findings.js';
 export interface TestProposalOptions extends HealthStoreOptions {
   /** The configured gateway, or `null` when no model provider is configured. */
   gateway: AiGateway | null;
-  /** The gateway's provider name, stored with the proposal. */
-  provider: string | null;
+  /**
+   * The gateway's provider name, stored with the proposal, or a reader for the one in effect
+   * now (a provider saved from Settings applies without a restart). 
+ull: none configured.
+   */
+  provider: string | null | (() => Promise<string | null>);
   /** The model to ask; absent, the gateway's first listed model. */
   model?: string | undefined;
   timeoutMs?: number;
@@ -319,10 +323,12 @@ export async function proposeTest(
   actor: string,
 ): Promise<TestProposal> {
   const gateway = options.gateway;
-  if (gateway === null || options.provider === null) {
+  const provider =
+    typeof options.provider === 'function' ? await options.provider() : options.provider;
+  if (gateway === null || provider === null) {
     throw new DomainError(
       ErrorCode.NOT_CONFIGURED,
-      'No model provider is configured, so no test can be proposed. Set KILO_GATEWAY_URL and KILO_API_KEY, or OLLAMA_BASE_URL.',
+      'No model provider is configured, so no test can be proposed. Connect one in Settings ? AI provider.',
       { callerSafe: true },
     );
   }
@@ -369,7 +375,7 @@ export async function proposeTest(
       patch,
       rationale: extracted.rationale.slice(0, RATIONALE_MAX),
       model,
-      provider: options.provider,
+      provider,
       inputTokens: answer.inputTokens,
       outputTokens: answer.outputTokens,
       createdBy: actor,

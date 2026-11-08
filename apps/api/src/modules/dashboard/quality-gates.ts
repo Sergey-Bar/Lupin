@@ -11,7 +11,7 @@ import { Hono } from 'hono';
 import { DomainError } from '../../errors/domain-error.js';
 import { randomUUID } from 'node:crypto';
 import { InMemoryAuditSink, type AuditEntry, type WriteContext } from './audit-sink.js';
-import { CreateQualityGateBodySchema } from './schemas.js';
+import { CreateQualityGateBodySchema, UpdateQualityGateBodySchema } from './schemas.js';
 import { currentRequestId } from '../../observability/request-context.js';
 
 // ---------------------------------------------------------------------------
@@ -37,7 +37,18 @@ export interface QualityGateStore {
   list(): Promise<QualityGate[]>;
   add(gate: NewQualityGate, context?: WriteContext): Promise<QualityGate>;
   get(id: string): Promise<QualityGate | null>;
+  /** The updated gate, or `null` when there is none with this id. */
+  update(
+    id: string,
+    patch: Partial<NewQualityGate>,
+    context?: WriteContext,
+  ): Promise<QualityGate | null>;
+  /** Whether a gate was removed. */
+  remove(id: string, context?: WriteContext): Promise<boolean>;
 }
+
+/** The installation-wide default gate: edited, never removed, because every evaluation falls back to it. */
+export const DEFAULT_GATE_ID = 'global';
 
 export class InMemoryQualityGateStore implements QualityGateStore {
   private readonly _gates = new Map<string, QualityGate>();
@@ -73,6 +84,37 @@ export class InMemoryQualityGateStore implements QualityGateStore {
 
   async get(id: string): Promise<QualityGate | null> {
     return this._gates.get(id) ?? null;
+  }
+
+  async update(
+    id: string,
+    patch: Partial<NewQualityGate>,
+    context?: WriteContext,
+  ): Promise<QualityGate | null> {
+    const existing = this._gates.get(id);
+    if (existing === undefined) return null;
+    const next = { ...existing, ...patch };
+    this._gates.set(id, next);
+    await this.audit.record({
+      action: 'quality_gate.updated',
+      resourceType: 'quality_gate',
+      resourceId: id,
+      ...(context ?? { actorId: 'system', actorType: 'system' as const }),
+      details: { ...patch },
+    });
+    return next;
+  }
+
+  async remove(id: string, context?: WriteContext): Promise<boolean> {
+    if (!this._gates.delete(id)) return false;
+    await this.audit.record({
+      action: 'quality_gate.deleted',
+      resourceType: 'quality_gate',
+      resourceId: id,
+      ...(context ?? { actorId: 'system', actorType: 'system' as const }),
+      details: {},
+    });
+    return true;
   }
 }
 
@@ -141,6 +183,39 @@ export function createDashboardQualityGatesRoutes(options: DashboardQualityGates
       throw new DomainError('QUALITY_GATE_NOT_FOUND', 'Quality gate not found');
     }
     return c.json(gate);
+  });
+
+  // PATCH /api/v1/dashboard/quality-gates/:id
+  app.patch('/api/v1/dashboard/quality-gates/:id', async (c) => {
+    const parsed = UpdateQualityGateBodySchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      throw new DomainError('INVALID_QUALITY_GATE', 'Invalid quality gate', {
+        details: { issues: parsed.error.issues, fix: 'Use a pass rate between 0 and 100.' },
+      });
+    }
+    const patch: Partial<NewQualityGate> = {
+      ...(parsed.data.name === undefined ? {} : { name: parsed.data.name }),
+      ...(parsed.data.passRateThreshold === undefined
+        ? {}
+        : { passRateThreshold: parsed.data.passRateThreshold }),
+    };
+    const gate = await options.store.update(c.req.param('id'), patch, contextFor(c));
+    if (!gate) throw new DomainError('QUALITY_GATE_NOT_FOUND', 'Quality gate not found');
+    return c.json(gate);
+  });
+
+  // DELETE /api/v1/dashboard/quality-gates/:id
+  app.delete('/api/v1/dashboard/quality-gates/:id', async (c) => {
+    const id = c.req.param('id');
+    if (id === DEFAULT_GATE_ID) {
+      throw new DomainError('CONFLICT', 'The installation default gate cannot be removed.', {
+        details: { fix: 'Change its threshold instead; every evaluation falls back to it.' },
+      });
+    }
+    if (!(await options.store.remove(id, contextFor(c)))) {
+      throw new DomainError('QUALITY_GATE_NOT_FOUND', 'Quality gate not found');
+    }
+    return c.json({ ok: true });
   });
 
   return app;

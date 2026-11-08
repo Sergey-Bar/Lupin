@@ -198,6 +198,7 @@ describe('migration graph', () => {
       '0054_github_command_center',
       '0055_report_audience_format',
       '0056_email_channel',
+      '0057_settings_onboarding',
     ]);
   });
 

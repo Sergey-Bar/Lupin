@@ -79,6 +79,21 @@ export const CreateChannelBodySchema = z.discriminatedUnion('kind', [
 ]);
 export type CreateChannelBody = z.infer<typeof CreateChannelBodySchema>;
 
+/**
+ * An edit to an existing channel. The kind cannot change; `secret`, when sent, replaces the
+ * stored credential, and when absent the stored one is kept — so editing a name never asks a
+ * person to paste a token again.
+ */
+export const UpdateChannelBodySchema = z
+  .object({
+    name: name.optional(),
+    enabled: z.boolean().optional(),
+    settings: z.record(z.string(), z.unknown()).optional(),
+    secret: secret.optional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, { message: 'Send at least one field to change' });
+export type UpdateChannelBody = z.infer<typeof UpdateChannelBodySchema>;
+
 export const ChannelSummarySchema = z.object({
   id: z.string(),
   kind: z.enum(CHANNEL_KINDS),

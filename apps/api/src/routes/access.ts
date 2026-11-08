@@ -13,6 +13,7 @@ import {
 } from '../http/roles.js';
 import { createRateLimiter } from '../middleware/rate-limit.js';
 import { defaultClientKey } from './auth.js';
+import { mayChangeInstallation } from './settings.js';
 import { isSecureFor, type SecureCookies } from '../http/secure-cookies.js';
 import {
   CreateAccessTokenBodySchema,
@@ -44,6 +45,8 @@ export interface AccessRouteOptions extends Pick<
   'db' | 'workspaceId'
 > {
   access: CallerResolver;
+  /** The installation's home workspace, for `whoami`'s `installationAdmin`. */
+  defaultWorkspace?: string;
   secureCookies?: SecureCookies;
   /**
    * Whether a proxy in front of the API wrote `X-Forwarded-For`. Off by default, and read
@@ -90,6 +93,13 @@ export function createAccessRoutes(options: AccessRouteOptions): Hono {
       profile: options.access.profile ?? 'solo',
       source: sourceOf(caller),
       workspace: options.workspaceId,
+      // The API's own answer to "may this caller change installation-wide settings", so a
+      // screen offers Save exactly when the write would be accepted.
+      installationAdmin: mayChangeInstallation(
+        caller,
+        options.access,
+        options.workspaceId === options.defaultWorkspace,
+      ),
     });
   });
 

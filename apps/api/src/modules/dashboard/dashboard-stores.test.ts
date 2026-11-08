@@ -322,3 +322,31 @@ describe('DrizzleQuarantineStore', () => {
     expect(await auditRowsFor(id)).toHaveLength(rows.length);
   });
 });
+
+describe('DrizzleQualityGateStore edits', () => {
+  it('updates and removes a gate in one transaction with its audit row', async () => {
+    const gate = await gates.add({ name: 'edit-me', passRateThreshold: 80 });
+    expect(await gates.update(gate.id, { passRateThreshold: 85 })).toMatchObject({
+      id: gate.id,
+      name: 'edit-me',
+      passRateThreshold: 85,
+    });
+    expect((await gates.get(gate.id))?.passRateThreshold).toBe(85);
+    expect(await gates.remove(gate.id)).toBe(true);
+    expect(await gates.get(gate.id)).toBeNull();
+    const actions = (await auditRowsFor(gate.id)).map((row) => row.action);
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        'quality_gate.created',
+        'quality_gate.updated',
+        'quality_gate.deleted',
+      ]),
+    );
+  });
+
+  it('answers null and false for a gate that is not there, writing no audit row', async () => {
+    expect(await gates.update('missing-gate', { name: 'x' })).toBeNull();
+    expect(await gates.remove('missing-gate')).toBe(false);
+    expect(await auditRowsFor('missing-gate')).toEqual([]);
+  });
+});

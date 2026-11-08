@@ -7,6 +7,7 @@ import { createCockpitClient } from '../../lib/cockpit-client.js';
 import { createHealthClient } from '../../lib/health-client.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
+import { createSettingsClient } from '../../lib/settings-client.js';
 
 /** The landing page: is the product better or worse than before, and what needs you. `/` lands here. */
 export const Route = createRoute({
@@ -24,6 +25,7 @@ export const Route = createRoute({
       const health = createHealthClient();
       const notifications = createNotificationsClient();
       const qa = createQaClient();
+      const settings = createSettingsClient();
       return {
         cockpit: (query, signal) => cockpit.getCockpit(query, signal),
         projects: async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name })),
@@ -31,6 +33,11 @@ export const Route = createRoute({
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),
           deliveries: () => notifications.listDeliveries(),
+        },
+        setup: {
+          load: () => settings.getOnboarding(),
+          dismiss: () => settings.dismissStep('checklist'),
+          role: async () => (await health.whoami()).role,
         },
       };
     }, []);

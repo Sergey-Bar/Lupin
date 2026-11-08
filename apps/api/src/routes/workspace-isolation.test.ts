@@ -69,6 +69,19 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
     files: ['index.ts'],
   },
   { family: 'execution routes', files: ['routes/execution.ts'] },
+  // Installation settings are global (`installation_settings`), but a secret setting is sealed
+  // in the home workspace's vault, which is the only workspace this module names. A workspace
+  // admin who is not an installation admin cannot write them (`routes/settings.test.ts`), and
+  // `services/settings-service.test.ts` proves the sealed value never appears in any read.
+  { family: 'installation settings', files: ['services/settings-service.ts'] },
+  // `services/onboarding-service.test.ts` proves another workspace's projects, channels, runs
+  // and skips are not counted; `routes/project-admin.test.ts` that another workspace's
+  // project is a 404 to every edit.
+  {
+    family: 'onboarding',
+    files: ['services/onboarding-service.ts', 'routes/onboarding.ts'],
+  },
+  { family: 'project administration', files: ['routes/project-admin.ts'] },
   // The one function that turns a run request into a queued run in a workspace. Both
   // `POST /api/v1/runs` and `browser.run` call it; `agents/browser-adapter.test.ts` and
   // `routes/agents-browser.test.ts` prove a run accepted for one workspace is invisible to

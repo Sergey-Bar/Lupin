@@ -61,7 +61,8 @@ export class DurableRealtimeBus implements RealtimeBus {
   constructor(
     private readonly feed: DurableRealtimeWriter,
     private readonly workspaceId: string,
-    private readonly retentionHours = 24,
+    /** Hours a published event stays replayable, or a reader for the value in effect now. */
+    private readonly retentionHours: number | (() => number) = 24,
     private readonly maxAttempts = 3,
     private readonly retryDelayMs = 25,
   ) {}
@@ -129,7 +130,11 @@ export class DurableRealtimeBus implements RealtimeBus {
     for (let attempt = 1; attempt <= this.maxAttempts; attempt += 1) {
       try {
         const row = await this.feed.append(
-          toAppend(sanitized, this.workspaceId, this.retentionHours),
+          toAppend(
+            sanitized,
+            this.workspaceId,
+            typeof this.retentionHours === 'function' ? this.retentionHours() : this.retentionHours,
+          ),
         );
         if (!row) {
           this.publishFailure = null;

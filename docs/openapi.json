@@ -129,6 +129,14 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/auth/oidc/test": {
+      "get": {
+        "operationId": "getApiV1AuthOidcTest",
+        "tags": ["auth"],
+        "x-source": "apps/api/src/routes/oidc.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/auth/session": {
       "get": {
         "operationId": "getApiV1AuthSession",
@@ -265,8 +273,26 @@
       }
     },
     "/api/v1/dashboard/quality-gates/{id}": {
+      "delete": {
+        "operationId": "deleteApiV1DashboardQualityGatesId",
+        "tags": ["dashboard"],
+        "x-source": "apps/api/src/modules/dashboard/quality-gates.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
       "get": {
         "operationId": "getApiV1DashboardQualityGatesId",
+        "tags": ["dashboard"],
+        "x-source": "apps/api/src/modules/dashboard/quality-gates.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "patch": {
+        "operationId": "patchApiV1DashboardQualityGatesId",
         "tags": ["dashboard"],
         "x-source": "apps/api/src/modules/dashboard/quality-gates.ts",
         "parameters": [
@@ -586,6 +612,15 @@
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "patch": {
+        "operationId": "patchApiV1NotificationChannelsId",
+        "tags": ["notification-channels"],
+        "x-source": "apps/api/src/routes/notifications.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
     "/api/v1/notification-channels/{id}/test": {
@@ -596,6 +631,33 @@
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/onboarding": {
+      "get": {
+        "operationId": "getApiV1Onboarding",
+        "tags": ["onboarding"],
+        "x-source": "apps/api/src/routes/onboarding.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/onboarding/{step}/dismiss": {
+      "post": {
+        "operationId": "postApiV1OnboardingStepDismiss",
+        "tags": ["onboarding"],
+        "x-source": "apps/api/src/routes/onboarding.ts",
+        "parameters": [
+          { "name": "step", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/onboarding/reset": {
+      "post": {
+        "operationId": "postApiV1OnboardingReset",
+        "tags": ["onboarding"],
+        "x-source": "apps/api/src/routes/onboarding.ts",
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
@@ -670,10 +732,28 @@
       }
     },
     "/api/v1/projects/{id}": {
+      "delete": {
+        "operationId": "deleteApiV1ProjectsId",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/project-admin.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
       "get": {
         "operationId": "getApiV1ProjectsId",
         "tags": ["projects"],
         "x-source": "apps/api/src/routes/projects.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "patch": {
+        "operationId": "patchApiV1ProjectsId",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/project-admin.ts",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -883,6 +963,35 @@
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
           { "name": "runId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/projects/{id}/git-token": {
+      "delete": {
+        "operationId": "deleteApiV1ProjectsIdGitToken",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/project-admin.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "get": {
+        "operationId": "getApiV1ProjectsIdGitToken",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/project-admin.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "put": {
+        "operationId": "putApiV1ProjectsIdGitToken",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/project-admin.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
@@ -1659,6 +1768,72 @@
         "operationId": "deleteApiV1ScimTokensId",
         "tags": ["scim-tokens"],
         "x-source": "apps/api/src/routes/scim.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "operationId": "getApiV1Settings",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/settings.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/settings/{key}": {
+      "delete": {
+        "operationId": "deleteApiV1SettingsKey",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/settings.ts",
+        "parameters": [
+          { "name": "key", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "put": {
+        "operationId": "putApiV1SettingsKey",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/settings.ts",
+        "parameters": [
+          { "name": "key", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/settings/{key}/test": {
+      "post": {
+        "operationId": "postApiV1SettingsKeyTest",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/settings.ts",
+        "parameters": [
+          { "name": "key", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/settings/identity/apply": {
+      "post": {
+        "operationId": "postApiV1SettingsIdentityApply",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/identity-settings.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/settings/identity/draft": {
+      "post": {
+        "operationId": "postApiV1SettingsIdentityDraft",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/identity-settings.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/settings/identity/draft/{id}": {
+      "get": {
+        "operationId": "getApiV1SettingsIdentityDraftId",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/identity-settings.ts",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -21354,6 +21529,56 @@
         ],
         "additionalProperties": false
       },
+      "OnboardingSchema": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "workspace",
+                    "repository",
+                    "ai",
+                    "notifications",
+                    "teammates",
+                    "first-run"
+                  ]
+                },
+                "state": { "type": "string", "enum": ["done", "todo", "skipped"] },
+                "who": { "type": "string", "enum": ["viewer", "operator", "admin"] },
+                "title": { "type": "string" },
+                "href": { "type": "string" }
+              },
+              "required": ["id", "state", "who", "title", "href"],
+              "additionalProperties": false
+            }
+          },
+          "done": { "type": "integer", "minimum": -9007199254740991, "maximum": 9007199254740991 },
+          "total": { "type": "integer", "minimum": -9007199254740991, "maximum": 9007199254740991 },
+          "dismissed": { "type": "boolean" }
+        },
+        "required": ["steps", "done", "total", "dismissed"],
+        "additionalProperties": false
+      },
+      "OnboardingStepSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": ["workspace", "repository", "ai", "notifications", "teammates", "first-run"]
+          },
+          "state": { "type": "string", "enum": ["done", "todo", "skipped"] },
+          "who": { "type": "string", "enum": ["viewer", "operator", "admin"] },
+          "title": { "type": "string" },
+          "href": { "type": "string" }
+        },
+        "required": ["id", "state", "who", "title", "href"],
+        "additionalProperties": false
+      },
       "OtlpExportResponseSchema": {
         "type": "object",
         "properties": {
@@ -23107,6 +23332,12 @@
           "title": { "type": "string", "minLength": 1, "maxLength": 500 }
         },
         "required": ["externalId", "source", "openedAt", "title"],
+        "additionalProperties": false
+      },
+      "PutSettingBodySchema": {
+        "type": "object",
+        "properties": { "value": { "type": ["string", "number", "boolean"] } },
+        "required": ["value"],
         "additionalProperties": false
       },
       "PyramidShapeSchema": {
@@ -26609,6 +26840,62 @@
         "required": ["serviceId", "serviceName", "keyHash", "permissions", "createdAt"],
         "additionalProperties": false
       },
+      "SettingReadSchema": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "string" },
+          "source": { "type": "string", "enum": ["environment", "ui", "default", "unset"] },
+          "value": { "type": ["string", "number", "boolean", "null"] },
+          "secret": {
+            "type": "object",
+            "properties": { "set": { "type": "boolean" }, "last4": { "type": ["string", "null"] } },
+            "required": ["set", "last4"],
+            "additionalProperties": false
+          },
+          "updatedAt": { "type": ["string", "null"] },
+          "updatedBy": { "type": ["string", "null"] }
+        },
+        "required": ["key", "source", "value", "updatedAt", "updatedBy"],
+        "additionalProperties": false
+      },
+      "SettingTestResultSchema": {
+        "type": "object",
+        "properties": { "ok": { "type": "boolean" }, "message": { "type": "string" } },
+        "required": ["ok", "message"],
+        "additionalProperties": false
+      },
+      "SettingValueSchema": { "type": ["string", "number", "boolean", "null"] },
+      "SettingsListSchema": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "source": { "type": "string", "enum": ["environment", "ui", "default", "unset"] },
+                "value": { "type": ["string", "number", "boolean", "null"] },
+                "secret": {
+                  "type": "object",
+                  "properties": {
+                    "set": { "type": "boolean" },
+                    "last4": { "type": ["string", "null"] }
+                  },
+                  "required": ["set", "last4"],
+                  "additionalProperties": false
+                },
+                "updatedAt": { "type": ["string", "null"] },
+                "updatedBy": { "type": ["string", "null"] }
+              },
+              "required": ["key", "source", "value", "updatedAt", "updatedBy"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["settings"],
+        "additionalProperties": false
+      },
       "ShardPlanBodySchema": {
         "type": "object",
         "properties": {
@@ -28006,6 +28293,20 @@
           "expiresAt": { "type": "string" }
         },
         "required": ["sessionId", "userId", "permissions", "createdAt", "expiresAt"],
+        "additionalProperties": false
+      },
+      "UpdateChannelBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "enabled": { "type": "boolean" },
+          "settings": {
+            "type": "object",
+            "propertyNames": { "type": "string" },
+            "additionalProperties": {}
+          },
+          "secret": { "type": "string", "minLength": 1, "maxLength": 2000 }
+        },
         "additionalProperties": false
       }
     }

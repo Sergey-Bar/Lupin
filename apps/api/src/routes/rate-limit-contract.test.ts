@@ -74,6 +74,12 @@ const UNAUTHENTICATED_ROUTES: ReadonlyArray<{
     why: 'each callback is a token exchange with the provider; a client replaying codes should run out of attempts, not of the provider’s patience',
   },
   {
+    method: 'GET',
+    path: '/api/v1/auth/oidc/test',
+    limited: true,
+    why: 'the test sign-in behind Settings → Identity: admin-guarded, and on the same per-client budget as a start, because it makes the process discover a provider and sign a flow cookie',
+  },
+  {
     method: 'POST',
     path: '/api/v1/auth/logout',
     limited: false,
