@@ -236,24 +236,45 @@ const settingsService = createSettingsService({
   vaultSecret: runtimeConfig.vaultSecret,
   env: process.env,
 });
+/**
+ * Runs a settings refresh without awaiting it, and logs a failure instead of letting it become
+ * an unhandled rejection: an API that cannot read its settings at boot (no database yet) keeps
+ * serving with the environment and defaults. The log sink is read when the failure arrives,
+ * after the module has finished composing.
+ */
+function inBackground(task: Promise<unknown>, what: string): void {
+  task.catch((error: unknown) => {
+    try {
+      logger.warn(`could not ${what}`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } catch {
+      // Boot was refused before the log sink existed; the refusal is the error that matters.
+    }
+  });
+}
+
 /** A setting as a number, for the consumers that need one synchronously. Refreshed on save. */
 const numericSettings = new Map<string, number>();
 async function refreshNumeric(key: string): Promise<void> {
   const value = await settingsService.resolve(key);
   if (typeof value === 'number') numericSettings.set(key, value);
 }
-for (const key of ['sessions.ttlHours', 'retention.sessionDays']) void refreshNumeric(key);
+for (const key of ['sessions.ttlHours', 'retention.sessionDays']) {
+  inBackground(refreshNumeric(key), 'read a session setting');
+}
 async function followGitHubApi(): Promise<void> {
   const url = await settingsService.resolve('integrations.githubApiUrl');
   const apiUrl = typeof url === 'string' && url !== '' ? url : undefined;
   githubInner = createGitHubAdapter(apiUrl === undefined ? {} : { apiBase: apiUrl });
   useGitHubApi(apiUrl);
 }
-void followGitHubApi();
+inBackground(followGitHubApi(), 'read the GitHub API address');
 settingsService.subscribe((key) => {
-  void refreshNumeric(key);
-  if (key === 'integrations.githubApiUrl') void followGitHubApi();
-  if (key.startsWith('identity.')) void refreshIdentity();
+  inBackground(refreshNumeric(key), 'refresh a numeric setting');
+  if (key === 'integrations.githubApiUrl')
+    inBackground(followGitHubApi(), 'read the GitHub API address');
+  if (key.startsWith('identity.')) inBackground(refreshIdentity(), 'refresh sign-in');
 });
 
 /**
@@ -285,7 +306,7 @@ async function refreshIdentity(): Promise<void> {
       ? values['identity.ssoEnforced'] === true
       : runtimeConfig.ssoEnforced === true;
 }
-void refreshIdentity();
+inBackground(refreshIdentity(), 'read sign-in settings');
 const HOUR_MS = 60 * 60 * 1000;
 const liveSessionTtlMs = () =>
   (numericSettings.get('sessions.ttlHours') ?? runtimeConfig.sessionTtlHours ?? 24) * HOUR_MS;
@@ -363,17 +384,20 @@ const otlpExporter =
 const liveAi = createLiveAiGateway(settingsService);
 const settingTesters = createSettingTesters();
 const aiGateway = liveAi.gateway;
-void liveAi.provider().then((provider) => {
-  if (provider === null) {
-    // Named at startup, because "chat 404s with a permission error" is a much longer
-    // diagnosis than "no model provider is configured".
-    logger.warn('chat is unconfigured and will refuse requests until a provider is saved', {
-      fix: 'Settings → AI provider',
-    });
-  } else {
-    logger.info('chat provider selected', { provider });
-  }
-});
+inBackground(
+  liveAi.provider().then((provider) => {
+    if (provider === null) {
+      // Named at startup, because "chat 404s with a permission error" is a much longer
+      // diagnosis than "no model provider is configured".
+      logger.warn('chat is unconfigured and will refuse requests until a provider is saved', {
+        fix: 'Settings → AI provider',
+      });
+    } else {
+      logger.info('chat provider selected', { provider });
+    }
+  }),
+  'read the AI provider',
+);
 
 /**
  * Self-instrumentation: with a database, every chat completion is recorded as one GenAI
@@ -818,9 +842,10 @@ async function followCloudflareRules(): Promise<void> {
     cloudflareAccess.defaultRole = role;
   }
 }
-void followCloudflareRules();
+inBackground(followCloudflareRules(), 'read Cloudflare Access rules');
 settingsService.subscribe((key) => {
-  if (key.startsWith('identity.cfAccess')) void followCloudflareRules();
+  if (key.startsWith('identity.cfAccess'))
+    inBackground(followCloudflareRules(), 'read Cloudflare Access rules');
 });
 const accessLog = (message: string, fields: Record<string, unknown>) =>
   logger.warn(message, fields);
@@ -1676,10 +1701,10 @@ if (runtimeConfig.nodeEnv !== 'test') {
       const interval = await settingsService.resolve('integrations.deliverySyncIntervalMs');
       deliverySyncer.start(typeof interval === 'number' ? interval : 60_000);
     };
-    void startSyncer();
+    inBackground(startSyncer(), 'start the delivery syncer');
     settingsService.subscribe((key) => {
       if (key !== 'integrations.deliverySyncIntervalMs') return;
-      void deliverySyncer.stop().then(startSyncer);
+      inBackground(deliverySyncer.stop().then(startSyncer), 'restart the delivery syncer');
     });
     lifecycle.add('delivery syncer', () => deliverySyncer.stop());
   }
