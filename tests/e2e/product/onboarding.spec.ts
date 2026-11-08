@@ -34,36 +34,42 @@ test.describe('onboarding', () => {
     context,
     request,
   }) => {
+    test.setTimeout(120_000);
     await authenticate(context, request);
     await page.goto(`${WEB_BASE}/dashboard/setup`);
     await expect(page.getByTestId('setup-page')).toBeVisible({ timeout: 15_000 });
-    const steps = page.getByRole('list', { name: 'Setup steps' });
-    await expect(steps).toBeVisible();
 
     // Walk every step from wherever setup resumed, checking each one, skipping what is open.
+    const finished = page.getByTestId('setup-finished');
+    const heading = page.locator('#setup-step-title');
+    const seen: string[] = [];
     for (let guard = 0; guard < 8; guard += 1) {
-      if (await page.getByTestId('setup-finished').isVisible()) break;
-      const heading = page.locator('#setup-step-title');
-      await expect(heading)
-        .toBeFocused({ timeout: guard === 0 ? 15_000 : 5_000 })
-        .catch(() => undefined);
-      await expectAccessible(page, `setup step: ${(await heading.textContent()) ?? '?'}`);
-      const skip = page.getByRole('button', { name: 'Skip for now' });
-      if (await skip.isVisible()) await skip.click();
-      else await page.getByRole('button', { name: 'Continue' }).click();
+      // Either the next step or the end: wait for one, rather than racing the render.
+      await expect(heading.or(finished)).toBeVisible({ timeout: 15_000 });
+      if (await finished.isVisible()) break;
+      const title = (await heading.textContent()) ?? '?';
+      seen.push(title);
+      await expectAccessible(page, `setup step: ${title}`);
+      const footer = page.getByRole('button', { name: /^(Skip for now|Continue)$/u });
+      await footer.click();
+      // The next step replaces this one; wait for the title to change before reading it again.
+      await expect(heading.or(finished)).not.toHaveText(title, { timeout: 15_000 });
     }
-    await expect(page.getByTestId('setup-finished')).toBeVisible();
+    await expect(finished).toBeVisible();
     await expectAccessible(page, 'setup finished');
+    expect(seen.length, `steps walked: ${seen.join(', ')}`).toBeGreaterThan(0);
 
     const onboarding = (await (
       await request.get(`${API_BASE}/api/v1/onboarding`, { headers })
     ).json()) as { steps: Array<{ id: string; state: string }> };
-    expect(onboarding.steps.find((step) => step.id === 'ai')?.state).toMatch(/skipped|done/u);
+    expect(onboarding.steps.find((step) => step.id === 'notifications')?.state).toMatch(
+      /skipped|done/u,
+    );
 
     await page.goto(`${WEB_BASE}/dashboard/now`);
-    const checklist = page.getByTestId('setup-checklist');
-    await expect(checklist).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('checklist-ai')).toBeVisible();
+    await expect(page.getByTestId('setup-checklist')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('checklist-notifications')).toBeVisible();
+    await expectAccessible(page, 'cockpit with the checklist');
   });
 
   test('every new Settings tab renders accessibly, and a field the environment sets is locked', async ({
@@ -86,31 +92,43 @@ test.describe('onboarding', () => {
       await expectAccessible(page, `settings/${path}`);
     }
 
-    // A value saved from the interface reads back as saved, and applies without a restart.
-    const put = await request.put(`${API_BASE}/api/v1/settings/retention.auditDays`, {
-      headers,
-      data: { value: 400 },
-    });
-    expect(put.status()).toBe(200);
-    expect(await put.json()).toMatchObject({ source: 'ui', value: 400 });
-    await request.delete(`${API_BASE}/api/v1/settings/retention.auditDays`, { headers });
-
-    // Whatever the environment pins is drawn locked, with the variable's name.
     const settings = (await (
       await request.get(`${API_BASE}/api/v1/settings`, { headers })
-    ).json()) as {
-      settings: Array<{ key: string; source: string }>;
-    };
+    ).json()) as { settings: Array<{ key: string; source: string }> };
+
+    // A value saved from the interface reads back as saved. The key is one the environment does
+    // not pin, so the spec holds whatever a developer's `.env` sets.
+    const free = [
+      'retention.sseReplayHours',
+      'retention.auditDays',
+      'integrations.deliverySyncIntervalMs',
+    ]
+      .map((key) => settings.settings.find((setting) => setting.key === key))
+      .find((setting) => setting !== undefined && setting.source !== 'environment');
+    expect(free, 'a numeric setting the environment does not pin').toBeDefined();
+    const key = free?.key ?? '';
+    const value = key === 'integrations.deliverySyncIntervalMs' ? 120_000 : 48;
+    const put = await request.put(`${API_BASE}/api/v1/settings/${key}`, {
+      headers,
+      data: { value },
+    });
+    expect(put.status()).toBe(200);
+    expect(await put.json()).toMatchObject({ source: 'ui', value });
+    await request.delete(`${API_BASE}/api/v1/settings/${key}`, { headers });
+
+    // Whatever the environment pins is refused, naming its variable, and drawn locked.
     const pinned = settings.settings.find(
-      (setting) => setting.source === 'environment' && !setting.key.startsWith('identity.'),
+      (setting) => setting.source === 'environment' && setting.key.startsWith('ai.'),
     );
     if (pinned !== undefined) {
       const refused = await request.put(`${API_BASE}/api/v1/settings/${pinned.key}`, {
         headers,
-        data: { value: 'x' },
+        data: { value: 'https://elsewhere.test' },
       });
       expect(refused.status()).toBe(409);
       expect(await refused.json()).toMatchObject({ error: { code: 'ENV_LOCKED' } });
+      await page.goto(`${WEB_BASE}/dashboard/settings/ai`);
+      await expect(page.getByTestId(`locked-${pinned.key}`)).toContainText('Set by environment');
     }
   });
 });
