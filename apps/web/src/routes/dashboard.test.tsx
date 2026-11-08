@@ -207,7 +207,7 @@ describe('dashboard routes', () => {
     expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('READY');
     expect(screen.getByTestId('release-readiness')).toHaveTextContent('browserPASSED');
     expect(screen.getByTestId('release-readiness')).toHaveTextContent('apiNOT_CONFIGURED');
-    expect(screen.getByRole('link', { name: /recent-run/iu })).toHaveAttribute(
+    expect(screen.getByTestId('run-item-recent-run')).toHaveAttribute(
       'href',
       '/dashboard/runs/recent-run',
     );
@@ -299,6 +299,26 @@ describe('dashboard routes', () => {
     expect(status).toHaveAttribute('role', 'status');
     expect(status).toHaveAttribute('aria-live', 'polite');
     expect(status).toHaveTextContent('queued');
+  });
+
+  it('names a run with no suite by its short id, the one the runs table uses', async () => {
+    const id = 'abcdef12-3456-4789-8abc-def012345678';
+    const runs = [makeRun({ id, suite: null })];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith('/api/v1/auth/session')) return new Response('{}', { status: 200 });
+        if (url.endsWith('/api/v1/runs'))
+          return new Response(JSON.stringify(runs), { status: 200 });
+        return new Response(JSON.stringify({ error: { message: 'not found' } }), { status: 404 });
+      }),
+    );
+    render(<MemoryRouter initialEntries={['/dashboard/runs']} />);
+    await waitFor(() => expect(screen.getByTestId(`run-item-${id}`)).toBeInTheDocument());
+    const card = screen.getByTestId(`run-item-${id}`);
+    expect(card).toHaveTextContent('abcdef12');
+    expect(card).not.toHaveTextContent(id);
   });
 
   it('confines the live region to the status badge, not the whole run card', async () => {

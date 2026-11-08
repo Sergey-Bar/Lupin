@@ -506,10 +506,10 @@ function checkSitePalette() {
       `\`${SITE_THEME_CSS}\` imports no token stylesheet, so the site is shipping its own palette.`,
     );
   } else {
-    // One direction, not equality. **The site importing fewer token files is correct,
-    // not drift**: it animates nothing, so it has no use for `motion.css`, and
+    // One direction, not equality. **The site importing fewer token files would be correct,
+    // not drift**: a site that animated nothing would have no use for `motion.css`, and
     // demanding the file would be demanding dead weight so that a comparison could be
-    // an equality.
+    // an equality. Today it imports all three.
     const foreign = siteTokens.filter((name) => !productTokens.includes(name));
     if (foreign.length > 0) {
       problems.push(
@@ -532,7 +532,61 @@ function checkSitePalette() {
   for (const file of siteStylesheets()) {
     problems.push(...literalColours(read(file), file));
   }
+  // The same rule for motion. The site imports `motion.css`, and a literal `300ms` or a bare
+  // `ease` beside it is a second motion policy: the reduced-motion scale cannot reach it and
+  // nothing holds its curve to the product's. Read in the `.vue` files too, because that is
+  // where the site's component styles live.
+  for (const file of siteMotionSources()) {
+    problems.push(...literalMotion(read(file), file));
+  }
   return problems;
+}
+
+/**
+ * Every literal duration or easing in a stylesheet or component, as problems.
+ *
+ * A time not preceded by a name character (`--lupin-duration-150` is a token, `300ms` is not),
+ * and an easing keyword written bare rather than through `var(--lupin-ease-*)`.
+ *
+ * @param {string} source
+ * @param {string} label
+ * @returns {string[]}
+ */
+function literalMotion(source, label) {
+  const time = /(?<![-\w.])\d[\d.]*m?s\b/;
+  const EASINGS = new Set(['ease', 'ease-in', 'ease-out', 'ease-in-out', 'cubic-bezier']);
+  /** @param {string} line */
+  const bareEasing = (line) =>
+    line
+      .replace(/var\([^)]*\)/g, ' ')
+      .split(/[^\w-]+/)
+      .some((word) => EASINGS.has(word));
+  // A component's template and script are prose and data; only its `<style>` is styling.
+  // Lines outside a style block are blanked rather than dropped, so line numbers still match.
+  const styled = label.endsWith('.vue')
+    ? source.replace(/^[\s\S]*?(?=<style)|<\/style>[\s\S]*?(?=<style|$)/g, (outside) =>
+        outside.replace(/[^\n]/g, ''),
+      )
+    : source;
+  return styled
+    .split(/\r?\n/)
+    .map((line, index) => ({ line, number: index + 1 }))
+    .filter(({ line }) => !line.trim().startsWith('*') && !line.trim().startsWith('//'))
+    .filter(({ line }) => time.test(line) || bareEasing(line))
+    .map(
+      ({ line, number }) =>
+        `\`${label}:${String(number)}\` has a literal duration or easing: ${line.trim()}`,
+    );
+}
+
+/** The site theme's stylesheets and components, sorted. */
+function siteMotionSources() {
+  const directory = path.join(ROOT, SITE_THEME_DIR);
+  if (!existsSync(directory)) return [];
+  return readdirSync(directory)
+    .filter((name) => name.endsWith('.css') || name.endsWith('.vue'))
+    .sort()
+    .map((name) => `${SITE_THEME_DIR}/${name}`);
 }
 
 /**

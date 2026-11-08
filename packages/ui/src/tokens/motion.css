@@ -3,8 +3,9 @@
  *
  * ## Why this file exists
  *
- * Every UI library ships a spring. Motion here is a set of **named durations, four named
- * easings, six keyframes and one press scale**, and the reason to say that is the criterion:
+ * Every UI library ships a spring; this one does not. Motion here is a set of **named
+ * durations, five named easings, a handful of described keyframes and one press scale**, and
+ * the reason to say that is the criterion:
  * motion here is never only decoration. Nothing in this repository moves to be looked at. There is
  * no animation that is not reporting a state change — a panel opening, a row changing, a
  * button being pressed, a number updating — and a duration is spent drawing attention to
@@ -37,14 +38,14 @@
  * Two selectors, one value, and no component has to know either of them exists.
  * `prefers-reduced-motion: reduce` is the one that matters.
  *
- * ## The spring, and why it is admissible now
+ * ## Calm, and why there is no spring
  *
- * Arrivals settle on a spring: `--lupin-ease-spring`, a damped curve sampled into a CSS
- * `linear()` easing that overshoots by 2%. Earlier this file refused a spring because a
- * physics loop's cost depends on the frame budget, and that budget was unrecorded. A
- * `linear()` easing is not a loop — the browser interpolates it on the compositor exactly
- * as it does a cubic-bezier — so it adds feel without adding a per-frame cost. Exits never
- * spring: something leaving accelerates away.
+ * Arrivals land on `--lupin-ease-arrive`, a quartic ease-out sampled into a CSS `linear()`
+ * easing: it decelerates and stops on its target without passing it. An earlier version of
+ * this file used a damped spring that overshot by 2%, and the overshoot was the one thing
+ * on screen that moved for its own sake — in a flat, quiet interface a panel that goes past
+ * its edge and comes back reads as a bounce. Arrivals are 150 ms, travel 4 px, and a route
+ * change is a crossfade with no movement. Exits accelerate away on `in`.
  */
 
 :root {
@@ -89,27 +90,27 @@
   --lupin-ease-out: cubic-bezier(0, 0, 0.2, 1);
   --lupin-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   /*
-   * `spring` for anything arriving that should feel physical: a panel, a popover, a palette.
-   * A damped spring sampled into `linear()` stops, overshooting by 2% and settling; see
-   * `motion.ts` for the parameters and `motion.test.ts` for the shape it is held to.
+   * `arrive` for anything arriving: a panel, a popover, a palette, the indicator. A quartic
+   * ease-out sampled into `linear()` stops; it decelerates and lands with no overshoot. See
+   * `motion.ts` for the curve and `motion.test.ts` for the shape it is held to.
    */
-  --lupin-ease-spring: linear(
+  --lupin-ease-arrive: linear(
     0,
-    0.102,
-    0.309,
-    0.526,
-    0.708,
-    0.842,
-    0.93,
-    0.982,
-    1.008,
-    1.018,
-    1.02,
-    1.017,
-    1.012,
-    1.008,
-    1.005,
-    1.003,
+    0.2275,
+    0.4138,
+    0.5642,
+    0.6836,
+    0.7766,
+    0.8474,
+    0.8999,
+    0.9375,
+    0.9634,
+    0.9802,
+    0.9905,
+    0.9961,
+    0.9988,
+    0.9998,
+    0.99998,
     1
   );
 }
@@ -120,24 +121,18 @@
    *
    * The first four are the class names components already write, kept so that no component
    * has to know which role a name maps to. `fade-*` is `lupin-enter` / `lupin-exit` —
-   * an arrival with a 4% rise rather than a plain opacity fade, because an element that
+   * an arrival with a 4px rise rather than a plain opacity fade, because an element that
    * arrives from the same pixel position reads as a new object rather than as this
    * control's panel opening.
    *
    * The last two are the roles that had no name before, named after what they are.
    */
-  --animate-fade-in: lupin-enter calc(var(--lupin-duration-200) * var(--lupin-motion-scale))
-    var(--lupin-ease-spring);
-  --animate-fade-out: lupin-exit calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
-    var(--lupin-ease-in);
-  --animate-zoom-in-95: lupin-zoom-in calc(var(--lupin-duration-200) * var(--lupin-motion-scale))
-    var(--lupin-ease-spring);
-  --animate-zoom-out-95: lupin-zoom-out calc(var(--lupin-duration-100) * var(--lupin-motion-scale))
-    var(--lupin-ease-in);
-  --animate-lupin-slide-in: lupin-slide-in
-    calc(var(--lupin-duration-300) * var(--lupin-motion-scale)) var(--lupin-ease-in-out);
-  --animate-lupin-pulse: lupin-pulse calc(var(--lupin-duration-150) * var(--lupin-motion-scale))
-    var(--lupin-ease-in-out);
+  --animate-fade-in: lupin-enter var(--lupin-duration-150) var(--lupin-ease-arrive);
+  --animate-fade-out: lupin-exit var(--lupin-duration-100) var(--lupin-ease-in);
+  --animate-zoom-in-95: lupin-zoom-in var(--lupin-duration-150) var(--lupin-ease-arrive);
+  --animate-zoom-out-95: lupin-zoom-out var(--lupin-duration-100) var(--lupin-ease-in);
+  --animate-lupin-slide-in: lupin-slide-in var(--lupin-duration-300) var(--lupin-ease-in-out);
+  --animate-lupin-pulse: lupin-pulse var(--lupin-duration-150) var(--lupin-ease-in-out);
 
   /* The press scale, so `active:scale-press` is the press feedback. */
   --scale-press: var(--lupin-press-scale);
@@ -146,15 +141,15 @@
 /*
  * `lupin-enter` — **role: enter.** A panel or a card arriving.
  *
- * Opacity from 0, translated up by 4%. Four percent rather than a slide from the edge,
- * because this is *arrival* and not *travel*: the element is coming into existence in place
- * and the reader's eye is somewhere else on the page. A translation large enough to read as
- * travel pulls the eye before the content does.
+ * Opacity from 0, translated up by 4px. A fixed 4px rather than a share of the element's
+ * height, because a percentage made a tall panel travel 30px while a chip moved one: this is
+ * *arrival* and not *travel*, the element is coming into existence in place, and a
+ * translation large enough to read as travel pulls the eye before the content does.
  */
 @keyframes lupin-enter {
   from {
     opacity: 0;
-    transform: translateY(4%);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -185,7 +180,7 @@
  *
  * From 95%, not from 0: the element is anchored to a control the reader has just pressed,
  * and a scale from zero reads as a new object appearing rather than as that control's panel
- * opening. 95% is the smallest difference that reads as growth at a glance.
+ * opening. 97% reads as the panel opening; 95% read as a zoom.
  *
  * `transform-origin` is set by the *component*, not here, because the origin belongs to the
  * anchor and only the component knows which edge it is on. A global origin would be wrong
@@ -194,7 +189,7 @@
 @keyframes lupin-zoom-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
   to {
     opacity: 1;
@@ -213,7 +208,7 @@
   }
   to {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
 }
 
@@ -266,7 +261,7 @@
  *
  * 6. **Stagger** — `stagger-in`. A list arriving is many things becoming available at once, and
  *    arriving together reads as one slab. Each child is `lupin-enter` delayed by its index times
- *    `--lupin-stagger-step` (24 ms, scaled), **capped at the eighth**: row thirty must not wait
+ *    `--lupin-stagger-step` (16 ms, scaled), **capped at the eighth**: row thirty must not wait
  *    most of a second to appear, and a page of rows longer than the screen is paged anyway.
  * 7. **Indicator** — `indicator`. The mark under the active tab, or behind the active segment,
  *    moves to the new one instead of vanishing from one and appearing at the other, so the eye
@@ -284,7 +279,7 @@
  * for. `--lupin-stagger-max` is the index after which an item no longer waits longer.
  */
 :root {
-  --lupin-stagger-step: calc(24ms * var(--lupin-motion-scale));
+  --lupin-stagger-step: calc(16ms * var(--lupin-motion-scale));
   --lupin-stagger-max: 8;
 }
 
@@ -295,7 +290,7 @@
  * transparent. Opacity and transform only: nothing here reflows the list.
  */
 @utility stagger-in {
-  animation: lupin-enter var(--lupin-duration-200) var(--lupin-ease-spring) both;
+  animation: lupin-enter var(--lupin-duration-150) var(--lupin-ease-arrive) both;
   animation-delay: calc(
     min(var(--stagger-index, 0), var(--lupin-stagger-max)) * var(--lupin-stagger-step)
   );
@@ -324,8 +319,8 @@
   translate: calc(var(--indicator-x, 0) * 1px) 0;
   scale: var(--indicator-w, 0) 1;
   transition:
-    translate var(--lupin-duration-200) var(--lupin-ease-spring),
-    scale var(--lupin-duration-200) var(--lupin-ease-spring),
+    translate var(--lupin-duration-200) var(--lupin-ease-arrive),
+    scale var(--lupin-duration-200) var(--lupin-ease-arrive),
     opacity var(--lupin-duration-100) var(--lupin-ease-out);
 }
 
@@ -392,15 +387,29 @@
  */
 ::view-transition-group(*) {
   animation-duration: var(--lupin-duration-200);
-  animation-timing-function: var(--lupin-ease-spring);
+  animation-timing-function: var(--lupin-ease-arrive);
 }
 
 ::view-transition-old(root) {
   animation: lupin-exit var(--lupin-duration-100) var(--lupin-ease-in) both;
 }
 
+/*
+ * `lupin-fade-in` — **role: enter, in place.** The new page of a route change. Opacity only:
+ * the page is not arriving from anywhere, it is replacing the one that was there, so a
+ * route change is a crossfade with no movement.
+ */
+@keyframes lupin-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 ::view-transition-new(root) {
-  animation: lupin-enter var(--lupin-duration-200) var(--lupin-ease-spring) both;
+  animation: lupin-fade-in var(--lupin-duration-150) var(--lupin-ease-arrive) both;
 }
 
 /*

@@ -224,7 +224,7 @@ function next(): void {
             v-for="(row, index) in examples[selected].rows"
             :key="row"
             class="story__example-row"
-            :style="{ animationDelay: `${index * 70}ms` }"
+            :style="{ '--row-index': index }"
           >
             <span>0{{ index + 1 }}</span
             >{{ row }}
@@ -248,7 +248,7 @@ function next(): void {
             ><strong>{{ kind === 'upload' ? 'Test report' : 'Run request' }}</strong>
           </div>
           <div class="story__line">
-            <span :style="{ width: `${((selected + 1) / story.scenes.length) * 100}%` }"></span>
+            <span :style="{ '--progress': (selected + 1) / story.scenes.length }"></span>
           </div>
           <div class="story__destination">
             <span>LUPIN</span><strong>{{ current.title }}</strong
@@ -301,7 +301,7 @@ function next(): void {
   padding: 1.2rem;
   background: var(--lupin-surface);
   border: 1px solid var(--lupin-border-strong);
-  animation: scene-enter 300ms var(--lupin-ease-out);
+  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-arrive);
 }
 .story__example-label {
   display: block;
@@ -331,7 +331,10 @@ function next(): void {
   padding: 0.65rem 0;
   border-top: 1px solid var(--lupin-border);
   font-size: 0.8rem;
-  animation: scene-enter 300ms var(--lupin-ease-out) both;
+  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-arrive) both;
+  animation-delay: calc(
+    min(var(--row-index, 0), var(--lupin-stagger-max)) * var(--lupin-stagger-step)
+  );
 }
 .story__example-row > span {
   color: var(--lupin-fg-muted);
@@ -492,7 +495,7 @@ function next(): void {
   color: var(--lupin-fg);
 }
 .story__destination strong {
-  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-out);
+  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-arrive);
 }
 .story__destination small {
   font-size: 0.7rem;
@@ -508,7 +511,13 @@ function next(): void {
   display: block;
   height: 100%;
   background: var(--lupin-accent);
-  transition: width 0.4s var(--lupin-ease-out);
+  /* Scaled, not resized: a width transition is a layout pass per frame. */
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left center;
+  transition: transform var(--lupin-duration-200) var(--lupin-ease-arrive);
+}
+.story__line span:dir(rtl) {
+  transform-origin: right center;
 }
 .story__explanation {
   display: flex;
@@ -522,14 +531,14 @@ function next(): void {
   line-height: 1.2;
   letter-spacing: -0.025em;
   color: var(--lupin-fg);
-  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-out);
+  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-arrive);
 }
 .story__explanation p {
   margin: 0.8rem 0 0;
   font-size: 0.95rem;
   line-height: 1.6;
   color: var(--lupin-fg-muted);
-  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-out);
+  animation: scene-enter var(--lupin-duration-150) var(--lupin-ease-arrive);
 }
 .story__explanation button {
   align-self: start;
@@ -603,7 +612,7 @@ function next(): void {
 @keyframes scene-enter {
   from {
     opacity: 0;
-    transform: translateY(0.35rem);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;

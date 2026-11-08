@@ -180,3 +180,31 @@ test('check 8 reads every stylesheet in the site theme, not only custom.css', ()
   }
   assert.equal(readFileSync(lupinTheme, 'utf8'), original, 'lupin.css was not restored');
 });
+
+test('check 8 catches a literal duration or easing in a site component style', () => {
+  // The site imports `motion.css`, so a `300ms` or a bare `ease` in a component is a second
+  // motion policy the reduced-motion scale cannot reach. Six components carried one.
+  const component = path.join(sitePackage, '.vitepress', 'theme', 'PageJourney.vue');
+  const original = readFileSync(component, 'utf8');
+  for (const rogue of [
+    '.rogue { animation: x 300ms ease; }',
+    '.rogue { transition: opacity 0.4s; }',
+  ]) {
+    try {
+      writeFileSync(component, original.replace('</style>', `${rogue}\n</style>`), 'utf8');
+      assert.match(
+        runDoctor(),
+        /PageJourney\.vue:\d+` has a literal duration or easing/,
+        `a literal motion value in a component style passed check 8: ${rogue}`,
+      );
+    } finally {
+      writeFileSync(component, original, 'utf8');
+    }
+  }
+  assert.equal(readFileSync(component, 'utf8'), original, 'PageJourney.vue was not restored');
+});
+
+test('check 8 does not read a component template or script as motion', () => {
+  // `steps: [` and "the next three steps" are prose and data, not easings.
+  assert.doesNotMatch(built, /has a literal duration or easing/);
+});

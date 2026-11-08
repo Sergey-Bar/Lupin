@@ -155,7 +155,7 @@ const stage = computed(() => props.journey.stages[selected.value]);
   margin: 0.4rem 0 0;
   font-size: 1rem;
   line-height: 1.6;
-  animation: journey-enter 150ms var(--lupin-ease-out);
+  animation: journey-enter var(--lupin-duration-150) var(--lupin-ease-arrive);
 }
 .page-journey > details {
   border-top: 1px solid var(--lupin-border);
@@ -180,7 +180,7 @@ const stage = computed(() => props.journey.stages[selected.value]);
 @keyframes journey-enter {
   from {
     opacity: 0;
-    transform: translateY(0.25rem);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;

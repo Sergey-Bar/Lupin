@@ -85,21 +85,28 @@ function PhaseTimeline({ phase }: { phase: RunPhase }) {
   const currentIndex = PHASES.indexOf(phase);
 
   return (
-    <ol className="flex flex-wrap gap-2" aria-label="Run phase timeline">
+    <ol
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
+      aria-label="Run phase timeline"
+    >
       {PHASES.map((item, index) => {
         const complete = currentIndex >= index && currentIndex >= 0;
+        const current = item === phase;
         return (
           <li
             key={item}
             data-testid={`phase-${item}`}
-            className={`rounded-full border px-3 py-1 text-xs ${
-              item === phase
-                ? 'border-accent bg-accent text-on-fill'
-                : complete
-                  ? 'border-success text-success'
-                  : 'border-border-default text-fg-muted'
+            {...(current ? { 'aria-current': 'step' as const } : {})}
+            className={`inline-flex items-center gap-1.5 ${
+              current ? 'font-semibold text-accent' : complete ? 'text-fg' : 'text-fg-muted'
             }`}
           >
+            <span
+              aria-hidden="true"
+              className={`size-1.5 rounded-full ${
+                current ? 'bg-accent' : complete ? 'bg-success' : 'bg-border-strong'
+              }`}
+            />
             {item.replace('_', ' ')}
           </li>
         );
@@ -107,8 +114,10 @@ function PhaseTimeline({ phase }: { phase: RunPhase }) {
       {!active && !PHASES.includes(phase) ? (
         <li
           data-testid={`phase-${phase}`}
-          className="rounded-full border border-danger bg-danger px-3 py-1 text-xs text-on-fill"
+          aria-current="step"
+          className="inline-flex items-center gap-1.5 font-semibold text-danger"
         >
+          <span aria-hidden="true" className="size-1.5 rounded-full bg-danger" />
           {phase.replace('_', ' ')}
         </li>
       ) : null}
@@ -937,7 +946,7 @@ function ContextItem({ label, value, testId }: { label: string; value: string; t
   return (
     <div className="min-w-0">
       <dt className="truncate text-xs text-fg-muted">{label}</dt>
-      <dd data-testid={testId} className="m-0 truncate" title={value}>
+      <dd data-testid={testId} className="m-0 break-words" title={value}>
         {value}
       </dd>
     </div>
