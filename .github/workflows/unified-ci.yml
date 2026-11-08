@@ -31,7 +31,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -125,7 +125,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -171,7 +171,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -229,7 +229,7 @@ jobs:
           # record that survives the pull request is history.
           fetch-depth: 0
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -270,7 +270,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -315,7 +315,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -385,7 +385,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -472,7 +472,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -518,7 +518,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -578,7 +578,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -638,7 +638,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -668,7 +668,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
@@ -715,7 +715,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
         with:
           run_install: false
       - name: Set up Node
