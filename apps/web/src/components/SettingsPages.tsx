@@ -1,0 +1,623 @@
+import React from 'react';
+import { Badge, Button, Input } from '@lupin/ui';
+import type { SettingGroup } from '@lupin/shared-contracts';
+import { useResource } from '../hooks/useResource.js';
+import type { HealthClient, WhoAmI } from '../lib/health-client.js';
+import type { RegisteredProject } from '../lib/qa.js';
+import type { QaClient } from '../lib/qa-client.js';
+import { canAdminister, canAdministerInstallation, canOperate } from '../lib/roles.js';
+import { explain, type QualityGate, type SettingsClient } from '../lib/settings-client.js';
+import { AccessGate } from './Access.js';
+import { Bdi, UserText } from './Bidi.js';
+import { ConnectRepository } from './ConnectRepository.js';
+import { PageBody, PageFrame, PageHeader, Panel } from './kit.js';
+import { SettingsForm } from './SettingsForm.js';
+import { useToast } from './Toasts.js';
+
+/**
+ * The Settings tabs that used to be environment variables, and the workspace tabs that had an
+ * API and no screen. Each page is one subject, one sentence of why, and the form.
+ */
+interface GroupPage {
+  group: SettingGroup;
+  title: string;
+  subtitle: string;
+  sections: ReadonlyArray<{ title: string; keys?: readonly string[] }>;
+  testKey?: string;
+}
+
+const GROUP_PAGES: Record<'ai' | 'integrations' | 'sessions-retention', GroupPage> = {
+  ai: {
+    group: 'ai',
+    title: 'AI provider',
+    subtitle:
+      'The model behind chat, test proposals and evals. Use a gateway with an API key, or a local Ollama server so prompts stay on your network.',
+    sections: [{ title: 'Provider' }],
+    testKey: 'ai.gatewayUrl',
+  },
+  integrations: {
+    group: 'integrations',
+    title: 'Integrations',
+    subtitle:
+      'GitHub, Slack and webhooks. Every secret is stored encrypted and is never shown again.',
+    sections: [{ title: 'Connections' }],
+    testKey: 'integrations.githubApiUrl',
+  },
+  'sessions-retention': {
+    group: 'sessions-retention',
+    title: 'Sessions & retention',
+    subtitle:
+      'How long people stay signed in, and how long records are kept before they are deleted.',
+    sections: [{ title: 'Lifetimes' }],
+  },
+};
+
+function InstallationGroupPage({
+  page,
+  health,
+  client,
+}: {
+  page: GroupPage;
+  health: HealthClient;
+  client: SettingsClient;
+}): React.ReactElement {
+  return (
+    <PageFrame data-testid={`settings-${page.group}`}>
+      <PageHeader title={page.title} subtitle={page.subtitle} />
+      <PageBody>
+        <AccessGate health={health}>
+          {(who) =>
+            canAdminister(who) ? (
+              <Panel title={page.sections[0]?.title ?? page.title}>
+                <SettingsForm
+                  client={client}
+                  group={page.group}
+                  title={page.title}
+                  canEdit={canAdministerInstallation(who)}
+                  {...(page.testKey === undefined ? {} : { testKey: page.testKey })}
+                />
+              </Panel>
+            ) : (
+              <AskAnAdmin who={who} />
+            )
+          }
+        </AccessGate>
+      </PageBody>
+    </PageFrame>
+  );
+}
+
+function AskAnAdmin({ who }: { who: WhoAmI }): React.ReactElement {
+  return (
+    <p role="note" className="max-w-measure text-sm text-fg-muted" data-testid="ask-an-admin">
+      You have the {who.role ?? 'guest'} role here. Ask an admin of this workspace to change these
+      settings.
+    </p>
+  );
+}
+
+export function AiSettingsPage(props: {
+  health: HealthClient;
+  client: SettingsClient;
+}): React.ReactElement {
+  return <InstallationGroupPage page={GROUP_PAGES.ai} {...props} />;
+}
+
+export function IntegrationsSettingsPage(props: {
+  health: HealthClient;
+  client: SettingsClient;
+}): React.ReactElement {
+  return <InstallationGroupPage page={GROUP_PAGES.integrations} {...props} />;
+}
+
+export function SessionsSettingsPage(props: {
+  health: HealthClient;
+  client: SettingsClient;
+}): React.ReactElement {
+  return <InstallationGroupPage page={GROUP_PAGES['sessions-retention']} {...props} />;
+}
+
+// ─── Projects ───────────────────────────────────────────────────────────────
+
+function ProjectRow({
+  project,
+  client,
+  who,
+  onChanged,
+}: {
+  project: RegisteredProject;
+  client: SettingsClient;
+  who: WhoAmI;
+  onChanged: () => void;
+}): React.ReactElement {
+  const toast = useToast();
+  const id = React.useId();
+  const [mode, setMode] = React.useState<'view' | 'rename' | 'token' | 'delete'>('view');
+  const [name, setName] = React.useState(project.name);
+  const [token, setToken] = React.useState('');
+  const [confirm, setConfirm] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [tokenVersion, setTokenVersion] = React.useState(0);
+  const tokenState = useResource(
+    () => client.gitTokenState(project.id),
+    [client, project.id, tokenVersion],
+  );
+  const admin = canAdminister(who);
+
+  async function run(
+    action: () => Promise<unknown>,
+    success: string,
+    failure: string,
+  ): Promise<void> {
+    setBusy(true);
+    try {
+      await action();
+      toast({ tone: 'success', title: success });
+      setMode('view');
+      setToken('');
+      setConfirm('');
+      setTokenVersion((count) => count + 1);
+      onChanged();
+    } catch (error) {
+      toast({ tone: 'danger', title: failure, description: explain(error, 'The request failed.') });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <li
+      className="grid gap-3 border-b border-border py-4 last:border-b-0"
+      data-testid={`project-${project.id}`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="grid min-w-0 gap-0.5">
+          <UserText className="truncate font-medium text-fg">{project.name}</UserText>
+          {project.repoPath === null ? (
+            <span className="text-xs text-fg-muted">Cloned from git for each scan</span>
+          ) : (
+            <Bdi className="truncate font-mono text-xs text-fg-muted">{project.repoPath}</Bdi>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {tokenState.status === 'ready' && tokenState.value ? (
+            <Badge variant="secondary">Token saved</Badge>
+          ) : null}
+          {canOperate(who) ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setMode(mode === 'rename' ? 'view' : 'rename')}
+              >
+                Rename
+              </Button>
+              {project.repoPath === null ? null : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  loading={busy && mode === 'view'}
+                  onClick={() =>
+                    void run(
+                      async () => {
+                        const found = await client.detectProject(project.id);
+                        toast({
+                          tone: 'info',
+                          title: `Found ${String(found)} command${found === 1 ? '' : 's'}`,
+                        });
+                      },
+                      'Repository re-scanned',
+                      'Could not re-scan the repository',
+                    )
+                  }
+                >
+                  Re-scan
+                </Button>
+              )}
+            </>
+          ) : null}
+          {admin ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setMode(mode === 'token' ? 'view' : 'token')}
+              >
+                Access token
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setMode(mode === 'delete' ? 'view' : 'delete')}
+              >
+                Delete
+              </Button>
+            </>
+          ) : null}
+        </div>
+      </div>
+      {mode === 'rename' ? (
+        <form
+          aria-label={`Rename ${project.name}`}
+          className="flex flex-wrap items-end gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void run(
+              () => client.updateProject(project.id, { name: name.trim() }),
+              'Project renamed',
+              'Could not rename',
+            );
+          }}
+        >
+          <Input
+            id={`${id}-name`}
+            label="New name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+          <Button
+            type="submit"
+            size="sm"
+            loading={busy}
+            disabled={name.trim() === '' || name.trim() === project.name}
+          >
+            Save name
+          </Button>
+        </form>
+      ) : null}
+      {mode === 'token' ? (
+        <form
+          aria-label={`Access token for ${project.name}`}
+          className="grid gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void run(
+              () => client.putGitToken(project.id, token.trim()),
+              'Token saved',
+              'Could not save the token',
+            );
+          }}
+        >
+          <Input
+            id={`${id}-token`}
+            label={
+              tokenState.status === 'ready' && tokenState.value
+                ? 'Replace the access token'
+                : 'Access token'
+            }
+            type="password"
+            autoComplete="off"
+            helperText="For a private repository. Stored encrypted and only handed to the runner that clones it."
+            value={token}
+            onChange={(event) => setToken(event.target.value)}
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" size="sm" loading={busy} disabled={token.trim() === ''}>
+              Save token
+            </Button>
+            {tokenState.status === 'ready' && tokenState.value ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  void run(
+                    () => client.deleteGitToken(project.id),
+                    'Token removed',
+                    'Could not remove the token',
+                  )
+                }
+              >
+                Remove token
+              </Button>
+            ) : null}
+          </div>
+        </form>
+      ) : null}
+      {mode === 'delete' ? (
+        <form
+          aria-label={`Delete ${project.name}`}
+          className="grid gap-2 rounded-md border border-danger p-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void run(
+              () => client.deleteProject(project.id, confirm),
+              'Project deleted',
+              'Could not delete',
+            );
+          }}
+        >
+          <p className="text-sm text-fg">
+            This deletes the project and all of its history: runs, scores and health reports. It
+            cannot be undone.
+          </p>
+          <Input
+            id={`${id}-confirm`}
+            label={`Type ${project.name} to confirm`}
+            value={confirm}
+            autoComplete="off"
+            onChange={(event) => setConfirm(event.target.value)}
+          />
+          <div>
+            <Button
+              type="submit"
+              size="sm"
+              variant="destructive"
+              loading={busy}
+              disabled={confirm !== project.name}
+            >
+              Delete project
+            </Button>
+          </div>
+        </form>
+      ) : null}
+    </li>
+  );
+}
+
+export function ProjectsSettingsPage({
+  health,
+  client,
+  qa,
+}: {
+  health: HealthClient;
+  client: SettingsClient;
+  qa: QaClient;
+}): React.ReactElement {
+  const [version, setVersion] = React.useState(0);
+  const projects = useResource(() => qa.listProjects(), [qa, version]);
+  const refresh = () => setVersion((count) => count + 1);
+  return (
+    <PageFrame data-testid="settings-projects">
+      <PageHeader
+        title="Projects"
+        subtitle="The repositories Lupin analyses. Connect one to fill every dashboard."
+      />
+      <PageBody>
+        <AccessGate health={health}>
+          {(who) => (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Panel title="Connected repositories">
+                {projects.status === 'loading' ? (
+                  <p role="status" className="text-sm text-fg-muted">
+                    Reading projects…
+                  </p>
+                ) : projects.status === 'error' ? (
+                  <p role="alert" className="text-sm text-danger">
+                    {projects.message}
+                  </p>
+                ) : projects.value.length === 0 ? (
+                  <p className="text-sm text-fg-muted" data-testid="no-projects">
+                    No repository is connected yet. Connect one to see scores, gaps and runs.
+                  </p>
+                ) : (
+                  <ul aria-label="Projects" className="grid">
+                    {projects.value.map((project) => (
+                      <ProjectRow
+                        key={project.id}
+                        project={project}
+                        client={client}
+                        who={who}
+                        onChanged={refresh}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </Panel>
+              <Panel title="Connect a repository">
+                {canOperate(who) ? (
+                  <ConnectRepository client={client} onConnected={refresh} />
+                ) : (
+                  <AskAnAdmin who={who} />
+                )}
+              </Panel>
+            </div>
+          )}
+        </AccessGate>
+      </PageBody>
+    </PageFrame>
+  );
+}
+
+// ─── Quality gates ──────────────────────────────────────────────────────────
+
+/** The rule in words, so a threshold is never just a number. */
+export function describeGate(gate: Pick<QualityGate, 'passRateThreshold'>): string {
+  const rate = gate.passRateThreshold;
+  if (rate >= 100) return 'A run passes only when every test passes.';
+  if (rate <= 0) return 'Every run passes, whatever its tests do.';
+  return `A run passes when at least ${String(rate)}% of its tests pass.`;
+}
+
+function GateRow({
+  gate,
+  client,
+  canEdit,
+  onChanged,
+}: {
+  gate: QualityGate;
+  client: SettingsClient;
+  canEdit: boolean;
+  onChanged: () => void;
+}): React.ReactElement {
+  const toast = useToast();
+  const id = React.useId();
+  const [threshold, setThreshold] = React.useState(String(gate.passRateThreshold));
+  const [busy, setBusy] = React.useState(false);
+  const value = Number(threshold);
+  const valid = threshold.trim() !== '' && Number.isFinite(value) && value >= 0 && value <= 100;
+  const changed = valid && value !== gate.passRateThreshold;
+  async function act(action: () => Promise<unknown>, success: string): Promise<void> {
+    setBusy(true);
+    try {
+      await action();
+      toast({ tone: 'success', title: success });
+      onChanged();
+    } catch (error) {
+      toast({
+        tone: 'danger',
+        title: 'The gate was not changed',
+        description: explain(error, 'The request failed.'),
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <li
+      className="grid gap-2 border-b border-border py-4 last:border-b-0"
+      data-testid={`gate-${gate.id}`}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <UserText className="font-medium text-fg">
+          {gate.id === 'global' ? 'Default gate' : gate.name}
+        </UserText>
+        <span className="text-sm text-fg-muted">
+          {describeGate({ passRateThreshold: valid ? value : gate.passRateThreshold })}
+        </span>
+      </div>
+      {canEdit ? (
+        <form
+          aria-label={`Edit ${gate.name}`}
+          className="flex flex-wrap items-end gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void act(
+              () => client.updateGate(gate.id, { passRateThreshold: value }),
+              'Gate updated',
+            );
+          }}
+        >
+          <Input
+            id={`${id}-rate`}
+            label="Minimum pass rate (%)"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={100}
+            value={threshold}
+            error={valid ? undefined : 'Use a number from 0 to 100.'}
+            onChange={(event) => setThreshold(event.target.value)}
+          />
+          <Button type="submit" size="sm" loading={busy} disabled={!changed}>
+            Save
+          </Button>
+          {gate.id === 'global' ? null : (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => void act(() => client.deleteGate(gate.id), 'Gate removed')}
+            >
+              Remove
+            </Button>
+          )}
+        </form>
+      ) : null}
+    </li>
+  );
+}
+
+export function QualityGatesSettingsPage({
+  health,
+  client,
+}: {
+  health: HealthClient;
+  client: SettingsClient;
+}): React.ReactElement {
+  const toast = useToast();
+  const id = React.useId();
+  const [version, setVersion] = React.useState(0);
+  const gates = useResource(() => client.listGates(), [client, version]);
+  const [name, setName] = React.useState('');
+  const [rate, setRate] = React.useState('90');
+  const refresh = () => setVersion((count) => count + 1);
+  return (
+    <PageFrame data-testid="settings-quality-gates">
+      <PageHeader
+        title="Quality gates"
+        subtitle="What counts as a passing run. A run that misses its gate is marked failed."
+      />
+      <PageBody>
+        <AccessGate health={health}>
+          {(who) => (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Panel title="Gates">
+                {gates.status === 'loading' ? (
+                  <p role="status" className="text-sm text-fg-muted">
+                    Reading gates…
+                  </p>
+                ) : gates.status === 'error' ? (
+                  <p role="alert" className="text-sm text-danger">
+                    {gates.message}
+                  </p>
+                ) : (
+                  <ul aria-label="Quality gates" className="grid">
+                    {gates.value.map((gate) => (
+                      <GateRow
+                        key={`${gate.id}:${String(gate.passRateThreshold)}`}
+                        gate={gate}
+                        client={client}
+                        canEdit={canAdminister(who)}
+                        onChanged={refresh}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </Panel>
+              {canAdminister(who) ? (
+                <Panel title="Add a gate">
+                  <form
+                    aria-label="Add a gate"
+                    className="grid gap-3"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      client
+                        .createGate({ name: name.trim(), passRateThreshold: Number(rate) })
+                        .then(() => {
+                          toast({ tone: 'success', title: 'Gate added' });
+                          setName('');
+                          refresh();
+                        })
+                        .catch((error: unknown) =>
+                          toast({
+                            tone: 'danger',
+                            title: 'Could not add the gate',
+                            description: explain(error, 'The request failed.'),
+                          }),
+                        );
+                    }}
+                  >
+                    <Input
+                      id={`${id}-name`}
+                      label="Name"
+                      placeholder="Release gate"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                    />
+                    <Input
+                      id={`${id}-rate`}
+                      label="Minimum pass rate (%)"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={100}
+                      helperText={describeGate({ passRateThreshold: Number(rate) })}
+                      value={rate}
+                      onChange={(event) => setRate(event.target.value)}
+                    />
+                    <div>
+                      <Button type="submit" disabled={name.trim() === ''} className="min-h-10">
+                        Add gate
+                      </Button>
+                    </div>
+                  </form>
+                </Panel>
+              ) : null}
+            </div>
+          )}
+        </AccessGate>
+      </PageBody>
+    </PageFrame>
+  );
+}

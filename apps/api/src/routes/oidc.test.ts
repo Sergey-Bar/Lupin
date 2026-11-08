@@ -339,3 +339,85 @@ describe('OIDC sign-in', () => {
     }
   });
 });
+
+describe('the test sign-in behind Settings → Identity', () => {
+  async function testHarness(authorized: boolean) {
+    const idp = await provider();
+    closers.push(idp.close);
+    const { db, close } = await migratedDatabase();
+    closers.push(close);
+    const sessions = new DrizzleAuthSessionBackend(
+      new DrizzleSessionStore(db as never),
+      COOKIE_SECRET,
+      3_600_000,
+      86_400_000,
+    );
+    const draft: OidcConfig = {
+      issuer: idp.issuer,
+      clientId: 'lupin',
+      clientSecret: CLIENT_SECRET,
+      redirectUri: 'https://lupin.example.com/api/v1/auth/oidc/callback',
+      allowedDomains: [],
+      roleMap: [],
+      defaultRole: null,
+    };
+    const results: Array<{ draftId: string; identity: unknown }> = [];
+    const app = withErrorBoundary(
+      createOidcRoutes({
+        db: db as never,
+        workspaceId: 'ws-1',
+        sessions,
+        installationId: INSTALLATION,
+        cookieSecret: COOKIE_SECRET,
+        sessionTtlMs: 3_600_000,
+        secureCookies: false,
+        test: {
+          authorize: async (context, next) => {
+            if (!authorized) return context.json({ error: { code: 'FORBIDDEN' } }, 403);
+            await next();
+          },
+          configFor: async (draftId) => (draftId === 'draft-1' ? draft : undefined),
+          onResult: (draftId, identity) => void results.push({ draftId, identity }),
+        },
+      }),
+    );
+    return { app, idp, db, results };
+  }
+
+  it('reports who signed in to the draft, and signs nobody in', async () => {
+    const h = await testHarness(true);
+    const start = await h.app.request('/api/v1/auth/oidc/test?draft=draft-1');
+    expect(start.status).toBe(302);
+    const authorize = new URL(start.headers.get('location') ?? '');
+    expect(authorize.origin).toBe(h.idp.issuer);
+    const flow = (start.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
+    const code = randomUUID();
+    h.idp.grants.set(code, {
+      challenge: authorize.searchParams.get('code_challenge') ?? '',
+      claims: { nonce: authorize.searchParams.get('nonce'), ...ANA, groups: ['qa'] },
+    });
+    const callback = await h.app.request(
+      `/api/v1/auth/oidc/callback?code=${code}&state=${encodeURIComponent(authorize.searchParams.get('state') ?? '')}`,
+      { headers: { cookie: flow } },
+    );
+    expect(callback.headers.get('location')).toBe('/dashboard/settings/identity?test=done');
+    expect(callback.headers.get('set-cookie') ?? '').not.toContain('lupin_session=');
+    expect(h.results).toEqual([
+      { draftId: 'draft-1', identity: { email: 'ana@example.com', groups: ['qa'] } },
+    ]);
+    expect(await h.db.select().from(schema.users)).toHaveLength(0);
+  });
+
+  it('refuses to start without the guard, and sends an expired draft back to Settings', async () => {
+    const refused = await testHarness(false);
+    expect((await refused.app.request('/api/v1/auth/oidc/test?draft=draft-1')).status).toBe(403);
+    const h = await testHarness(true);
+    const expired = await h.app.request('/api/v1/auth/oidc/test?draft=gone');
+    expect(expired.headers.get('location')).toBe('/dashboard/settings/identity?test=expired');
+  });
+
+  it('answers a normal sign-in with a coded 404 while the live configuration is empty', async () => {
+    const h = await testHarness(true);
+    expect((await h.app.request('/api/v1/auth/oidc/start')).status).toBe(404);
+  });
+});

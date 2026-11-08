@@ -34,6 +34,12 @@ export const CreateQualityGateBodySchema = z
 
 export type CreateQualityGateBody = z.infer<typeof CreateQualityGateBodySchema>;
 
+/** An edit to a gate: either field, or both. */
+export const UpdateQualityGateBodySchema = CreateQualityGateBodySchema.partial().refine(
+  (body) => body.name !== undefined || body.passRateThreshold !== undefined,
+  { message: 'Send a name or a passRateThreshold to change' },
+);
+
 export const AddQuarantineEntryBodySchema = z
   .object({
     testTitle: z.string().trim().min(1).max(500),

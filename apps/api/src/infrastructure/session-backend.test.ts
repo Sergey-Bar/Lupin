@@ -2,6 +2,39 @@ import { describe, expect, it } from 'vitest';
 import { DrizzleAuthSessionBackend } from './session-backend.js';
 
 describe('DrizzleAuthSessionBackend', () => {
+  it('reads a live lifetime per sign-in and per sweep', async () => {
+    const created: Array<{ expiresAt: Date }> = [];
+    const cutoffs: Date[] = [];
+    const store = {
+      ensureInstallation: async () => undefined,
+      create: async (input: { expiresAt: Date; id: string }) => {
+        created.push(input);
+        return input.id;
+      },
+      deleteExpired: async (cutoff: Date) => {
+        cutoffs.push(cutoff);
+        return 0;
+      },
+    };
+    let ttl = 1_000;
+    let retention = 10_000;
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    const backend = new DrizzleAuthSessionBackend(
+      store as never,
+      's'.repeat(32),
+      () => ttl,
+      () => retention,
+      () => now,
+    );
+    await backend.issue('installation-1');
+    ttl = 5_000;
+    await backend.issue('installation-1');
+    expect(created.map((row) => row.expiresAt.getTime() - now.getTime())).toEqual([1_000, 5_000]);
+    retention = 20_000;
+    await backend.sweep();
+    expect(cutoffs[0]?.getTime()).toBe(now.getTime() - 20_000);
+  });
+
   it('hashes issued tokens, adapts rows, revokes and sweeps sessions', async () => {
     const created: Array<Record<string, unknown>> = [];
     const cutoffs: Date[] = [];

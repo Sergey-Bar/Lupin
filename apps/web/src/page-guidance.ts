@@ -386,4 +386,67 @@ export const pageGuidance = {
     ],
     remember: 'The profile is changed from the install folder, not from this page.',
   },
+  setup: {
+    purpose: 'Go from an empty install to your first run, one step at a time.',
+    steps: [
+      'Connect the repository you want analysed.',
+      'Optionally connect an AI provider and choose where reports go.',
+      'Invite your team, then run your first check.',
+    ],
+    remember: 'Skip anything; the cockpit keeps a checklist of what is left.',
+  },
+  'settings-projects': {
+    purpose: 'Connect, rename, re-scan and remove the repositories Lupin analyses.',
+    steps: [
+      'Connect a folder on this machine or a git repository.',
+      'Re-scan after you change a package manifest.',
+      'Replace a private repository’s token when it expires.',
+    ],
+    remember: 'Deleting a project deletes its history, and asks you to type its name first.',
+  },
+  'settings-quality-gates': {
+    purpose: 'Decide what pass rate a run needs to count as passing.',
+    steps: [
+      'Read each gate’s rule in words beside its number.',
+      'Change a threshold and save it.',
+      'Add a gate for a stricter release check.',
+    ],
+    remember: 'The default gate cannot be removed: every evaluation falls back to it.',
+  },
+  'settings-ai': {
+    purpose: 'Connect the model behind chat, test proposals and evals.',
+    steps: [
+      'Enter a gateway address and API key, or a local Ollama address.',
+      'Press Test connection to check it answers.',
+      'Save; it applies without a restart.',
+    ],
+    remember: 'A field set by an environment variable is locked here and says which variable.',
+  },
+  'settings-integrations': {
+    purpose: 'Connect GitHub, Slack and webhooks.',
+    steps: [
+      'Set a GitHub Enterprise address only if you do not use github.com.',
+      'Paste the secrets each service gave you.',
+      'Test, then save.',
+    ],
+    remember: 'A saved secret is never shown again, only its last four characters.',
+  },
+  'settings-identity': {
+    purpose: 'Set up single sign-on and decide who gets which role.',
+    steps: [
+      'Edit the provider and role rules, and save them as a draft.',
+      'Press Test sign-in and sign in through your provider.',
+      'Apply, once the test shows you are still an admin.',
+    ],
+    remember: 'A change that would remove your own admin access is refused.',
+  },
+  'settings-sessions': {
+    purpose: 'Decide how long people stay signed in and how long records are kept.',
+    steps: [
+      'Set how long a sign-in lasts.',
+      'Set how long sessions, live events and the audit log are kept.',
+      'Save; retention applies at the next clean-up.',
+    ],
+    remember: 'Check your compliance policy before shortening the audit log.',
+  },
 } satisfies Record<ManifestRoute['id'], PageGuidance>;

@@ -9,7 +9,7 @@ import {
   verifyCredential,
   type SessionRecord,
 } from '@lupin/auth';
-import type { AuthSessionBackend } from '../infrastructure/session-backend.js';
+import { ttlOf, type AuthSessionBackend } from '../infrastructure/session-backend.js';
 import { createRateLimiter } from '../middleware/rate-limit.js';
 import { isSecureFor, type SecureCookies } from '../http/secure-cookies.js';
 
@@ -29,7 +29,8 @@ export interface AuthRouteOptions {
   cookieSecret: string;
   installationId: string;
   installationKeyHash: string;
-  sessionTtlMs: number;
+  /** A number, or a reader so a lifetime saved from Settings applies to the next sign-in. */
+  sessionTtlMs: number | (() => number);
   /** Fixed, or decided per request from `X-Forwarded-Proto`. See `http/secure-cookies.ts`. */
   secureCookies: SecureCookies;
   now?: () => Date;
@@ -136,7 +137,7 @@ export function memoryBackend(secret: string, ttlMs: number, now?: () => Date): 
 export function createAuthRoutes(options: AuthRouteOptions) {
   const sessions =
     options.sessionBackend ??
-    memoryBackend(options.cookieSecret, options.sessionTtlMs, options.now);
+    memoryBackend(options.cookieSecret, ttlOf(options.sessionTtlMs), options.now);
   const app = new Hono();
   const loginLimiter = createRateLimiter({
     limit: options.loginRateLimit?.limit ?? DEFAULT_LOGIN_LIMIT,
@@ -182,7 +183,7 @@ export function createAuthRoutes(options: AuthRouteOptions) {
       sameSite: 'Lax',
       secure: isSecureFor(options.secureCookies, context),
       path: '/',
-      maxAge: Math.floor(options.sessionTtlMs / 1000),
+      maxAge: Math.floor(ttlOf(options.sessionTtlMs) / 1000),
     });
     return context.json(sessionResponse(issued.record));
   });

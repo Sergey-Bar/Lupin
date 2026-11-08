@@ -182,7 +182,7 @@ describe('NavBar', () => {
         within(tabs)
           .getAllByRole('link')
           .map((link) => link.textContent),
-      ).toEqual(['Appearance', 'Reports']),
+      ).toEqual(['Appearance', 'Projects', 'Reports', 'Quality gates']),
     );
     expect(within(tabs).getByRole('link', { name: 'Appearance' })).toHaveAttribute(
       'aria-current',
@@ -204,7 +204,20 @@ describe('NavBar', () => {
         within(tabs)
           .getAllByRole('link')
           .map((link) => link.textContent),
-      ).toEqual(['Appearance', 'Reports', 'Access', 'Members', 'Audit', 'Deployment']),
+      ).toEqual([
+        'Appearance',
+        'Projects',
+        'Reports',
+        'Quality gates',
+        'Members',
+        'AI provider',
+        'Integrations',
+        'Identity',
+        'Sessions & retention',
+        'Access',
+        'Audit',
+        'Deployment',
+      ]),
     );
   });
 

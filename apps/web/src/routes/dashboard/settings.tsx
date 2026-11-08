@@ -8,6 +8,18 @@ import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
 import { createHealthClient } from '../../lib/health-client.js';
 import { createAdminClient } from '../../lib/admin-client.js';
+import { createSettingsClient } from '../../lib/settings-client.js';
+
+const pages = () => import('../../components/SettingsPages.js');
+const ProjectsSettingsPage = lazyPage(pages, 'ProjectsSettingsPage');
+const QualityGatesSettingsPage = lazyPage(pages, 'QualityGatesSettingsPage');
+const AiSettingsPage = lazyPage(pages, 'AiSettingsPage');
+const IntegrationsSettingsPage = lazyPage(pages, 'IntegrationsSettingsPage');
+const SessionsSettingsPage = lazyPage(pages, 'SessionsSettingsPage');
+const IdentitySettingsPage = lazyPage(
+  () => import('../../components/IdentitySettings.js'),
+  'IdentitySettingsPage',
+);
 
 // Loaded when the route is first opened; see `components/lazy-page.tsx`.
 const SettingsAppearancePage = lazyPage(
@@ -76,4 +88,79 @@ export const SettingsDeploymentRoute = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/settings/deployment',
   component: () => <DeploymentPage health={createHealthClient()} admin={createAdminClient()} />,
+});
+
+/** One client per page load: the settings screens share no state but the API's. */
+const settingsClient = () => createSettingsClient();
+
+export const SettingsProjectsRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '/settings/projects',
+  component: function SettingsProjects() {
+    const clients = React.useMemo(
+      () => ({ health: createHealthClient(), client: settingsClient(), qa: createQaClient() }),
+      [],
+    );
+    return <ProjectsSettingsPage {...clients} />;
+  },
+});
+
+export const SettingsQualityGatesRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '/settings/quality-gates',
+  component: function SettingsQualityGates() {
+    const clients = React.useMemo(
+      () => ({ health: createHealthClient(), client: settingsClient() }),
+      [],
+    );
+    return <QualityGatesSettingsPage {...clients} />;
+  },
+});
+
+export const SettingsAiRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '/settings/ai',
+  component: function SettingsAi() {
+    const clients = React.useMemo(
+      () => ({ health: createHealthClient(), client: settingsClient() }),
+      [],
+    );
+    return <AiSettingsPage {...clients} />;
+  },
+});
+
+export const SettingsIntegrationsRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '/settings/integrations',
+  component: function SettingsIntegrations() {
+    const clients = React.useMemo(
+      () => ({ health: createHealthClient(), client: settingsClient() }),
+      [],
+    );
+    return <IntegrationsSettingsPage {...clients} />;
+  },
+});
+
+export const SettingsIdentityRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '/settings/identity',
+  component: function SettingsIdentity() {
+    const clients = React.useMemo(
+      () => ({ health: createHealthClient(), client: settingsClient() }),
+      [],
+    );
+    return <IdentitySettingsPage {...clients} />;
+  },
+});
+
+export const SettingsSessionsRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '/settings/sessions',
+  component: function SettingsSessions() {
+    const clients = React.useMemo(
+      () => ({ health: createHealthClient(), client: settingsClient() }),
+      [],
+    );
+    return <SessionsSettingsPage {...clients} />;
+  },
 });

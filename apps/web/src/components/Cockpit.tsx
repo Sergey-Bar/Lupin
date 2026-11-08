@@ -18,6 +18,7 @@ import {
 import { metricPath, reportPath } from '../route-manifest.js';
 import { AttentionSection, type NowSources } from './Now.js';
 import { Delta, PageFrame, PageBody, PageHeader, Panel, Segmented } from './kit.js';
+import { SetupChecklist, type SetupChecklistSource } from './SetupChecklist.js';
 import { StatusLine } from './StatusLine.js';
 
 /**
@@ -38,6 +39,8 @@ export interface CockpitSources {
   /** The projects the person may choose between. */
   projects: () => Promise<ReadonlyArray<{ id: string; name: string }>>;
   attention: NowSources;
+  /** The setup checklist; absent in a composition that has none (most tests). */
+  setup?: SetupChecklistSource;
 }
 
 const PaceChart = React.lazy(() => import('./CockpitPaceChart.js'));
@@ -112,6 +115,7 @@ export function CockpitPage({
         }
       />
       <PageBody>
+        {sources.setup === undefined ? null : <SetupChecklist source={sources.setup} />}
         {/* Keyed by the window and the reload, so a new read starts from loading and never shows
           the previous window's headline under the new window's label. */}
         <CockpitReading

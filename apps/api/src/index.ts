@@ -26,7 +26,7 @@ import { createReporterRoutes } from './routes/reporter.js';
 import { createAuthRoutes, defaultClientKey } from './routes/auth.js';
 import { createOidcRoutes } from './routes/oidc.js';
 import { callerForUser } from './services/user-service.js';
-import { isLoopbackBind } from '@lupin/config';
+import { isLoopbackBind, parseCloudflareRoleMap, type OidcConfig } from '@lupin/config';
 import {
   browserCredentialsCount,
   callerOf,
@@ -71,7 +71,20 @@ import { registerApiAgent } from './agents/api-adapter.js';
 import { registerBrowserAgent } from './agents/browser-adapter.js';
 import { registerLoadAgent } from './agents/load-adapter.js';
 import { createChatRoutes } from './routes/chat.js';
-import { aiGatewayOrUnconfigured, resolveAiGateway } from './observability/ai-gateway.js';
+import { createLiveAiGateway } from './observability/live-ai-gateway.js';
+import { createSettingsService } from './services/settings-service.js';
+import { createSettingTesters } from './services/settings-testers.js';
+import { createSettingsRoutes } from './routes/settings.js';
+import {
+  createIdentitySettingsRoutes,
+  currentIdentity,
+  installationAdminGuard,
+} from './routes/identity-settings.js';
+import {
+  createIdentityDrafts,
+  oidcConfigFrom,
+  roleUnderDraft,
+} from './services/identity-settings.js';
 import { InMemoryExecutionStore } from './execution/in-memory-execution-store.js';
 import { DrizzleExecutionStore } from './execution/drizzle-execution-store.js';
 import type { ExecutionStore } from './execution/types.js';
@@ -171,10 +184,16 @@ import { S3ArtifactBytesStore } from './infrastructure/s3-artifact-bytes.js';
 import type { ArtifactBytesStore } from './execution/drizzle-execution-store.js';
 
 const runtimeConfig = getConfig();
-// GitHub.com unless GITHUB_API_URL names a GitHub Enterprise Server; a bad URL stops boot.
-const githubAdapter = createGitHubAdapter(
+// GitHub.com unless GITHUB_API_URL (or Settings → Integrations) names a GitHub Enterprise
+// Server; a bad environment URL stops boot. Delegating, so a saved address swaps the adapter
+// in place and every holder of `githubAdapter` follows it.
+let githubInner = createGitHubAdapter(
   runtimeConfig.githubApiUrl === undefined ? {} : { apiBase: runtimeConfig.githubApiUrl },
 );
+const githubAdapter: typeof githubInner = {
+  manifest: githubInner.manifest,
+  execute: (request, secret) => githubInner.execute(request, secret),
+};
 useGitHubApi(runtimeConfig.githubApiUrl);
 /**
  * Session lifetimes, in milliseconds, read from configuration.
@@ -187,8 +206,8 @@ useGitHubApi(runtimeConfig.githubApiUrl);
  * schema's own defaults, so the value is unchanged for a default deployment and
  * *does* follow the setting when there is one.
  */
-const sessionTtlMs = (runtimeConfig.sessionTtlHours ?? 24) * 60 * 60 * 1000;
-const sessionRetentionMs = (runtimeConfig.sessionRetentionDays ?? 30) * 24 * 60 * 60 * 1000;
+// Read live from the settings service below (`liveSessionTtlMs`, `liveSessionRetentionMs`),
+// with these same configuration values as the fallback.
 // Production policy is validated before any composition: no database client, no
 // in-memory fallback, and no secret literal is constructed before this point.
 checkProductionPolicy(runtimeConfig);
@@ -205,6 +224,69 @@ const databaseUrl = runtimeConfig.databaseUrl;
  * `DATABASE_URL` — and exhausting them was a matter of traffic, not scale.
  */
 const databaseResources = databaseUrl ? createDbResources(databaseUrl) : undefined;
+
+/**
+ * The installation's settings: environment first, then what an admin saved from Settings,
+ * then the default. One instance for the process, so a save invalidates the one cache every
+ * consumer reads. Secret settings are sealed in the home workspace's vault.
+ */
+const settingsService = createSettingsService({
+  ...(databaseResources === undefined ? {} : { db: databaseResources.db as never }),
+  workspaceId: runtimeConfig.workspaceId ?? DEFAULT_WORKSPACE_ID,
+  vaultSecret: runtimeConfig.vaultSecret,
+  env: process.env,
+});
+/** A setting as a number, for the consumers that need one synchronously. Refreshed on save. */
+const numericSettings = new Map<string, number>();
+async function refreshNumeric(key: string): Promise<void> {
+  const value = await settingsService.resolve(key);
+  if (typeof value === 'number') numericSettings.set(key, value);
+}
+for (const key of ['sessions.ttlHours', 'retention.sessionDays']) void refreshNumeric(key);
+async function followGitHubApi(): Promise<void> {
+  const url = await settingsService.resolve('integrations.githubApiUrl');
+  const apiUrl = typeof url === 'string' && url !== '' ? url : undefined;
+  githubInner = createGitHubAdapter(apiUrl === undefined ? {} : { apiBase: apiUrl });
+  useGitHubApi(apiUrl);
+}
+void followGitHubApi();
+settingsService.subscribe((key) => {
+  void refreshNumeric(key);
+  if (key === 'integrations.githubApiUrl') void followGitHubApi();
+  if (key.startsWith('identity.')) void refreshIdentity();
+});
+
+/**
+ * Sign-in, as Settings → Identity (or the environment) says now. Read synchronously by the
+ * caller resolver, the auth routes and the features probe, so it is a snapshot refreshed on
+ * every identity save rather than a lookup per request.
+ */
+const identityDrafts = createIdentityDrafts();
+const installationPublicUrl = runtimeConfig.publicAppUrl ?? 'http://localhost:5173';
+let liveOidc: OidcConfig | undefined = runtimeConfig.oidc;
+let liveSsoEnforced = runtimeConfig.ssoEnforced === true;
+async function refreshIdentity(): Promise<void> {
+  const values = await currentIdentity(settingsService);
+  try {
+    liveOidc = oidcConfigFrom(values, installationPublicUrl);
+  } catch (error) {
+    // A saved value that no longer builds (it was valid when applied): sign-in is off until
+    // fixed, and the log says why, rather than a half-configured provider.
+    liveOidc = undefined;
+    logger.warn('single sign-on is off: the saved configuration is incomplete', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  liveSsoEnforced = values['identity.ssoEnforced'] === true;
+}
+void refreshIdentity();
+const HOUR_MS = 60 * 60 * 1000;
+const liveSessionTtlMs = () =>
+  (numericSettings.get('sessions.ttlHours') ?? runtimeConfig.sessionTtlHours ?? 24) * HOUR_MS;
+const liveSessionRetentionMs = () =>
+  (numericSettings.get('retention.sessionDays') ?? runtimeConfig.sessionRetentionDays ?? 30) *
+  24 *
+  HOUR_MS;
 
 function createRunRepository(workspaceId: string): RunRepository {
   if (databaseResources) {
@@ -263,51 +345,54 @@ const otlpExporter =
     : undefined;
 
 /**
- * The one model provider decision, made here because this is the only place that
- * knows which providers exist.
+ * The one model provider decision, made **per call** from the settings in effect, so a
+ * provider saved from Settings → AI applies without a restart. `observability/live-ai-gateway.ts`
+ * re-resolves only when the configuration changed.
  *
  * Unconfigured is a gateway that refuses with a coded 503, not a missing one: an
  * optional feature that is switched off should not be a deployment that will not
  * start, and a client deserves a claim it can act on rather than a `null` the
  * route has to guess about.
  */
-const gatewayResolution = resolveAiGateway();
-const aiGateway = aiGatewayOrUnconfigured(gatewayResolution);
-if (gatewayResolution.kind === 'none') {
-  // Named at startup, because "chat 404s with a permission error" is a much longer
-  // diagnosis than "no model provider is configured".
-  logger.warn('chat is unconfigured and will refuse requests', {
-    reason: gatewayResolution.reason,
-  });
-} else {
-  logger.info('chat provider selected', { provider: gatewayResolution.kind });
-}
+const liveAi = createLiveAiGateway(settingsService);
+const settingTesters = createSettingTesters();
+const aiGateway = liveAi.gateway;
+void liveAi.provider().then((provider) => {
+  if (provider === null) {
+    // Named at startup, because "chat 404s with a permission error" is a much longer
+    // diagnosis than "no model provider is configured".
+    logger.warn('chat is unconfigured and will refuse requests until a provider is saved', {
+      fix: 'Settings → AI provider',
+    });
+  } else {
+    logger.info('chat provider selected', { provider });
+  }
+});
 
 /**
- * Self-instrumentation: with a database and a provider, every chat completion is recorded as
- * one GenAI `chat` span — model, tokens, duration, outcome; never content — with no project
+ * Self-instrumentation: with a database, every chat completion is recorded as one GenAI
+ * `chat` span — model, tokens, duration, outcome; never content — with no project
  * (`source = 'self'`, agent `lupin-chat`), read by `GET /api/v1/chat/runtime`. A test
  * proposal asks the same provider, instrumented the same way, under the agent name
- * `lupin-test-proposals` so the runtime page tells them from chat. The adapters are
- * unchanged: the decorator wraps whichever one was chosen.
+ * `lupin-test-proposals` so the runtime page tells them from chat. Each resolved provider is
+ * decorated with its own name, so a span records the provider that actually answered.
  *
  * **Built per workspace** (ADR-014), so a workspace's spans are written in that workspace,
- * where its runtime page reads them; module-level gateways wrote every workspace's usage into
- * the default. Unconfigured chat refuses every request, so there is nothing to measure, and
- * test proposals are `null` — the route answers `NOT_CONFIGURED`.
+ * where its runtime page reads them. Unconfigured, both refuse each request with the reason.
  */
 function selfGateways(workspaceId: string): { chat: AiGateway; testProposals: AiGateway | null } {
-  if (gatewayResolution.kind === 'none') return { chat: aiGateway, testProposals: null };
   if (databaseResources === undefined) return { chat: aiGateway, testProposals: aiGateway };
   const spans = { db: databaseResources.db as never, workspaceId };
-  const provider = gatewayResolution.kind;
+  const instrumented = (agent: string, what: string) =>
+    createLiveAiGateway(settingsService, {
+      decorate: (gateway, provider) =>
+        selfInstrumented(spans, gateway, provider, agent, (error) =>
+          logger.warn(`${what} span could not be recorded`, { error: String(error) }),
+        ),
+    }).gateway;
   return {
-    chat: selfInstrumented(spans, aiGateway, provider, SELF_AGENT_NAME, (error) =>
-      logger.warn('chat span could not be recorded', { error: String(error) }),
-    ),
-    testProposals: selfInstrumented(spans, aiGateway, provider, TEST_PROPOSAL_AGENT_NAME, (error) =>
-      logger.warn('test proposal span could not be recorded', { error: String(error) }),
-    ),
+    chat: instrumented(SELF_AGENT_NAME, 'chat'),
+    testProposals: instrumented(TEST_PROPOSAL_AGENT_NAME, 'test proposal'),
   };
 }
 
@@ -483,11 +568,11 @@ if (databaseResources) {
   sessionBackend = new DrizzleAuthSessionBackend(
     new DrizzleSessionStore(databaseResources.db),
     authCookieSecret,
-    sessionTtlMs,
+    liveSessionTtlMs,
     // The retention window, which was parsed and mapped and read by nothing until
     // the sweep had something to sweep with. It is longer than the TTL on purpose:
     // a row outlives its validity so that "was this ever valid" still has an answer.
-    sessionRetentionMs,
+    liveSessionRetentionMs,
   );
 } else {
   // createAuthRoutes falls back to a process-local session store without this.
@@ -542,12 +627,15 @@ const authRoutes = createAuthRoutes({
   cookieSecret: authCookieSecret,
   installationId,
   installationKeyHash,
-  sessionTtlMs,
+  sessionTtlMs: liveSessionTtlMs,
   secureCookies: resolveSecureCookies(),
   trustProxy: runtimeConfig.trustProxy,
   sessionBackend,
   sso: {
-    enforced: runtimeConfig.ssoEnforced === true,
+    // Read per request, so requiring single sign-on from Settings ? Identity applies live.
+    get enforced() {
+      return liveSsoEnforced;
+    },
     breakGlass: runtimeConfig.breakGlass === true,
     // Every break-glass sign-in is loud: a warning in the log and a row in the audit trail.
     onBreakGlass: (context) => {
@@ -630,13 +718,15 @@ function resolveAllowedOrigins(): string[] {
  */
 const dashboardUrl = (projectId: string): string =>
   `${(runtimeConfig.publicAppUrl ?? 'http://localhost:5173').replace(/\/$/u, '')}/dashboard/repo/${encodeURIComponent(projectId)}`;
-const healthAlertChannels = {
-  slack:
-    runtimeConfig.slackBotToken === undefined
-      ? undefined
-      : { adapter: slackAdapter, token: runtimeConfig.slackBotToken },
-  webhookSecret: runtimeConfig.healthWebhookSecret,
-};
+/** Read per report, so a Slack token or signing secret saved from Settings applies to the next one. */
+async function healthAlertChannels() {
+  const token = await settingsService.resolve('integrations.slackBotToken');
+  const secret = await settingsService.resolve('integrations.healthWebhookSecret');
+  return {
+    slack: typeof token === 'string' && token !== '' ? { adapter: slackAdapter, token } : undefined,
+    webhookSecret: typeof secret === 'string' && secret !== '' ? secret : undefined,
+  };
+}
 const healthHooks = {
   readRepositoryFile: async (repoPath: string, path: string) => fileSystemView(repoPath).read(path),
   onReport: async (event: ReportEvent) => {
@@ -647,7 +737,7 @@ const healthHooks = {
       onDefaultBranch: event.onDefaultBranch,
     });
     if (alerts.length === 0) return;
-    const outcomes = await deliverAlerts(healthAlertChannels, event.settings.alerts ?? {}, {
+    const outcomes = await deliverAlerts(await healthAlertChannels(), event.settings.alerts ?? {}, {
       projectId: event.projectId,
       project: event.project,
       branch: event.branch,
@@ -668,8 +758,9 @@ const messageOf = (error: unknown): string =>
  * runner and test proposals report, the installation's own links, the scheduled-report and
  * delivery hooks, and the SCIM default role. None of it depends on the workspace.
  */
-const chatProvider = gatewayResolution.kind === 'none' ? null : gatewayResolution.kind;
-const evalGateway = gatewayResolution.kind === 'none' ? null : aiGateway;
+// Live: the provider in effect at the moment a run or a proposal starts.
+const chatProvider = () => liveAi.provider();
+const evalGateway = aiGateway;
 const installationUrl = runtimeConfig.publicAppUrl ?? 'http://localhost:8080';
 const dispatchNowHook =
   reportDispatcher === undefined ? {} : { dispatchNow: () => reportDispatcher.runOnce() };
@@ -681,9 +772,11 @@ const deliveryHooks = {
   // `lanMode` here means "reachable by GitHub": LAN mode, or a Cloudflare tunnel whose Access
   // application bypasses the receiver's path (ADR-014). The HMAC is the credential.
   lanMode: runtimeConfig.lanMode === true || runtimeConfig.remote === 'cloudflare',
-  ...(runtimeConfig.githubWebhookSecret === undefined
-    ? {}
-    : { webhookSecret: runtimeConfig.githubWebhookSecret }),
+  // Read per request, so a secret saved from Settings → Integrations turns the receiver on.
+  webhookSecret: async () => {
+    const secret = await settingsService.resolve('integrations.githubWebhookSecret');
+    return typeof secret === 'string' && secret !== '' ? secret : undefined;
+  },
   ...(deliverySyncer === undefined ? {} : { syncNow: () => deliverySyncer.runOnce() }),
 };
 
@@ -698,6 +791,31 @@ const cloudflareAccess =
   runtimeConfig.remote === 'cloudflare' ? runtimeConfig.cloudflareAccess : undefined;
 const cloudflareVerifier =
   cloudflareAccess === undefined ? undefined : createCloudflareAccessVerifier(cloudflareAccess);
+/**
+ * The Access rules, from Settings → Identity when an installation admin saved them. The
+ * caller sources read `roleMap` and `defaultRole` off this object per request, so updating it
+ * in place is what makes a saved rule apply without a restart.
+ */
+async function followCloudflareRules(): Promise<void> {
+  if (cloudflareAccess === undefined) return;
+  const map = await settingsService.resolve('identity.cfAccessRoleMap');
+  const role = await settingsService.resolve('identity.cfAccessDefaultRole');
+  try {
+    cloudflareAccess.roleMap = parseCloudflareRoleMap(typeof map === 'string' ? map : undefined);
+  } catch (error) {
+    logger.warn('the saved Cloudflare Access rules do not parse; the previous rules stay', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+  if (role === 'none') cloudflareAccess.defaultRole = null;
+  else if (role === 'viewer' || role === 'operator' || role === 'admin') {
+    cloudflareAccess.defaultRole = role;
+  }
+}
+void followCloudflareRules();
+settingsService.subscribe((key) => {
+  if (key.startsWith('identity.cfAccess')) void followCloudflareRules();
+});
 const accessLog = (message: string, fields: Record<string, unknown>) =>
   logger.warn(message, fields);
 const cloudflarePeople =
@@ -833,7 +951,9 @@ function buildWorkspace(workspaceId: string) {
   const access: CallerResolver = {
     mode: runtimeConfig.accessControl ?? 'open',
     profile: runtimeConfig.profile ?? 'solo',
-    ssoEnforced: runtimeConfig.ssoEnforced === true,
+    get ssoEnforced() {
+      return liveSsoEnforced;
+    },
     // Under enforced SSO, the installation key's session and a browser's token cookie count
     // again only with LUPIN_BREAK_GLASS on (`http/roles.ts`).
     breakGlass: runtimeConfig.breakGlass === true,
@@ -969,6 +1089,22 @@ function buildWorkspace(workspaceId: string) {
       }),
     );
     target.route('/', createChatRoutes({ gateway: gateways.chat }));
+    // Settings → AI, Integrations, Identity, Sessions & retention. Installation-wide, so every
+    // workspace's composition serves the one service; writes need an installation admin.
+    target.route(
+      '/',
+      createSettingsRoutes({ access, settings: settingsService, testers: settingTesters }),
+    );
+    target.route(
+      '/',
+      createIdentitySettingsRoutes({
+        access,
+        settings: settingsService,
+        drafts: identityDrafts,
+        publicAppUrl: installationPublicUrl,
+        breakGlass: runtimeConfig.breakGlass === true,
+      }),
+    );
 
     /**
      * The project registry and the derived QA score.
@@ -1011,6 +1147,7 @@ function buildWorkspace(workspaceId: string) {
         createProjectsRoutes({
           ...registry,
           defaultWorkspace,
+          onboarding: { aiConfigured: async () => (await liveAi.provider()) !== null },
           vaultSecret: runtimeConfig.vaultSecret,
           // The built-in eval runner uses the raw gateway: its runs are eval runs, not chat.
           agents: {
@@ -1332,7 +1469,11 @@ app.route(
     databaseUrl: runtimeConfig.databaseUrl,
     agentAvailability: agentCatalog.available,
     profile: runtimeConfig.profile ?? 'solo',
-    signIn: { oidc: runtimeConfig.oidc !== undefined && databaseResources !== undefined },
+    signIn: {
+      get oidc() {
+        return liveOidc !== undefined && databaseResources !== undefined;
+      },
+    },
     checkDatabase: databaseResources
       ? async () => {
           await databaseResources.db.execute(sql`SELECT 1`);
@@ -1351,13 +1492,36 @@ app.route('/', authRoutes.app);
 app.route(
   '/',
   createOidcRoutes({
-    ...(runtimeConfig.oidc === undefined ? {} : { oidc: runtimeConfig.oidc }),
+    oidc: async () => liveOidc,
+    // Test sign-in for a draft from Settings ? Identity: the person comes back through the
+    // registered callback, and the draft records the role its rules gave them.
+    test: {
+      authorize: installationAdminGuard(accessResolver),
+      configFor: async (draftId) => {
+        const draft = identityDrafts.get(draftId);
+        if (draft === undefined) return undefined;
+        const merged = { ...(await currentIdentity(settingsService)), ...draft.values };
+        return oidcConfigFrom(merged, installationPublicUrl);
+      },
+      onResult: (draftId, identity, reason) => {
+        const draft = identityDrafts.get(draftId);
+        if (draft === undefined) return;
+        if (identity === null) {
+          logger.warn('identity test sign-in failed', { reason: reason ?? 'unknown' });
+          return;
+        }
+        void currentIdentity(settingsService).then((current) => {
+          const config = oidcConfigFrom({ ...current, ...draft.values }, installationPublicUrl);
+          identityDrafts.verify(draftId, { ...identity, role: roleUnderDraft(config, identity) });
+        });
+      },
+    },
     ...(databaseResources === undefined ? {} : { db: databaseResources.db as never }),
     workspaceId: runtimeConfig.workspaceId ?? DEFAULT_WORKSPACE_ID,
     sessions: authRoutes.sessions,
     installationId,
     cookieSecret: authCookieSecret,
-    sessionTtlMs,
+    sessionTtlMs: liveSessionTtlMs,
     secureCookies: resolveSecureCookies(),
     trustProxy: runtimeConfig.trustProxy ?? false,
     log: (message, fields) => logger.warn(message, fields),
@@ -1500,9 +1664,17 @@ if (runtimeConfig.nodeEnv !== 'test') {
     lifecycle.add('report dispatcher', () => reportDispatcher.stop());
   }
   if (deliverySyncer) {
-    // Parsed and bounded (a whole number, 10 s or more) by `@lupin/config`, so NaN cannot
-    // reach the timer; `getConfig` always sets it, the `??` only satisfies the partial type.
-    deliverySyncer.start(runtimeConfig.deliverySyncIntervalMs ?? 60_000);
+    // Bounded (a whole number, 10 s or more) by the registry schema and by `@lupin/config`, so
+    // NaN cannot reach the timer. Restarted when the interval is saved from Settings.
+    const startSyncer = async () => {
+      const interval = await settingsService.resolve('integrations.deliverySyncIntervalMs');
+      deliverySyncer.start(typeof interval === 'number' ? interval : 60_000);
+    };
+    void startSyncer();
+    settingsService.subscribe((key) => {
+      if (key !== 'integrations.deliverySyncIntervalMs') return;
+      void deliverySyncer.stop().then(startSyncer);
+    });
     lifecycle.add('delivery syncer', () => deliverySyncer.stop());
   }
   if (otlpExporter !== undefined) {

@@ -1,4 +1,10 @@
-import { readVaultSecret, storeVaultSecret, type VaultOptions } from './vault-secrets.js';
+import {
+  deleteVaultSecret,
+  hasVaultSecret,
+  readVaultSecret,
+  storeVaultSecret,
+  type VaultOptions,
+} from './vault-secrets.js';
 
 /**
  * A project's git access token, sealed in the vault and handed only to the runner that holds
@@ -35,4 +41,14 @@ export async function readGitToken(
   projectId: string,
 ): Promise<string | null> {
   return readVaultSecret(options, nameFor(projectId), WHAT);
+}
+
+/** Whether the project has a token, without opening it. */
+export async function hasGitToken(options: VaultOptions, projectId: string): Promise<boolean> {
+  return hasVaultSecret(options, nameFor(projectId));
+}
+
+/** Removes the project's token, if it has one. Audited by the vault. */
+export async function deleteGitToken(options: VaultOptions, projectId: string): Promise<void> {
+  await deleteVaultSecret(options, nameFor(projectId));
 }

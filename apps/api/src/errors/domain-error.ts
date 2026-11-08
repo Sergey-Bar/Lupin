@@ -78,6 +78,8 @@ export const ErrorCode = {
   INVALID_QUALITY_GATE: 'INVALID_QUALITY_GATE',
   INVALID_QUARANTINE_ENTRY: 'INVALID_QUARANTINE_ENTRY',
   INVALID_QUARANTINE_DECISION: 'INVALID_QUARANTINE_DECISION',
+  /** A setting value its registry schema refuses. */
+  INVALID_SETTING: 'INVALID_SETTING',
 
   // 401 / 403 — authentication and authorisation.
   UNAUTHENTICATED: 'UNAUTHENTICATED',
@@ -97,6 +99,8 @@ export const ErrorCode = {
   RUNNER_REGISTRATION_UNAUTHORIZED: 'RUNNER_REGISTRATION_UNAUTHORIZED',
   RUNNER_ROTATION_UNAUTHORIZED: 'RUNNER_ROTATION_UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',
+  /** An installation-wide setting, changed by a workspace admin who is not an installation admin. */
+  INSTALLATION_ADMIN_REQUIRED: 'INSTALLATION_ADMIN_REQUIRED',
   /**
    * Single sign-on is enforced (ADR-014, enterprise): a browser signs in through the identity
    * provider, and the installation key only under `LUPIN_BREAK_GLASS=1`.
@@ -119,6 +123,8 @@ export const ErrorCode = {
   RUNNER_NOT_FOUND: 'RUNNER_NOT_FOUND',
   AUTOMATION_NOT_FOUND: 'AUTOMATION_NOT_FOUND',
   QUALITY_GATE_NOT_FOUND: 'QUALITY_GATE_NOT_FOUND',
+  /** A settings key the registry does not declare. */
+  UNKNOWN_SETTING: 'UNKNOWN_SETTING',
   QUARANTINE_ENTRY_NOT_FOUND: 'QUARANTINE_ENTRY_NOT_FOUND',
   /**
    * The GitHub webhook receiver is off: it answers only in LAN mode with a webhook secret.
@@ -132,6 +138,12 @@ export const ErrorCode = {
   CONFLICT: 'CONFLICT',
   /** The change would leave the workspace with no enabled admin. */
   LAST_ADMIN: 'LAST_ADMIN',
+  /** A setting an environment variable already sets; the interface cannot override it. */
+  ENV_LOCKED: 'ENV_LOCKED',
+  /** An identity change saved before a test sign-in passed against it. */
+  NOT_VERIFIED: 'NOT_VERIFIED',
+  /** An identity change after which no admin could sign in. */
+  WOULD_LOCK_OUT: 'WOULD_LOCK_OUT',
   /** Several workspaces per install are a team and enterprise feature (ADR-014). */
   WORKSPACES_NEED_TEAM: 'WORKSPACES_NEED_TEAM',
   RUN_ALREADY_EXISTS: 'RUN_ALREADY_EXISTS',
@@ -290,6 +302,7 @@ const STATUS_BY_CODE: Record<ErrorCodeValue, number> = {
   INVALID_QUALITY_GATE: 400,
   INVALID_QUARANTINE_ENTRY: 400,
   INVALID_QUARANTINE_DECISION: 400,
+  INVALID_SETTING: 400,
   INVALID_RUN_STATUS: 400,
   UNAUTHENTICATED: 401,
   RUNNER_UNAUTHORIZED: 401,
@@ -299,6 +312,7 @@ const STATUS_BY_CODE: Record<ErrorCodeValue, number> = {
   MISSING_REPORTER_TOKEN: 401,
   RUNNER_REGISTRATION_UNAUTHORIZED: 401,
   FORBIDDEN: 403,
+  INSTALLATION_ADMIN_REQUIRED: 403,
   SSO_ENFORCED: 403,
   CLIENT_NOT_ALLOWED: 403,
   CROSS_SITE_REQUEST: 403,
@@ -314,11 +328,15 @@ const STATUS_BY_CODE: Record<ErrorCodeValue, number> = {
   RUNNER_NOT_FOUND: 404,
   AUTOMATION_NOT_FOUND: 404,
   QUALITY_GATE_NOT_FOUND: 404,
+  UNKNOWN_SETTING: 404,
   QUARANTINE_ENTRY_NOT_FOUND: 404,
   WEBHOOK_NOT_CONFIGURED: 404,
   OIDC_NOT_CONFIGURED: 404,
   CONFLICT: 409,
   LAST_ADMIN: 409,
+  ENV_LOCKED: 409,
+  NOT_VERIFIED: 409,
+  WOULD_LOCK_OUT: 409,
   WORKSPACES_NEED_TEAM: 409,
   RUN_ALREADY_EXISTS: 409,
   IDEMPOTENCY_KEY_REUSED: 409,

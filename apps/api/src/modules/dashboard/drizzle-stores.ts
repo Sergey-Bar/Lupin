@@ -129,6 +129,62 @@ export class DrizzleQualityGateStore implements QualityGateStore {
     if (row === undefined) return null;
     return mapGate(row);
   }
+
+  async update(
+    id: string,
+    patch: Partial<Omit<QualityGate, 'id' | 'createdAt'>>,
+    context: WriteContext = systemContext(),
+  ): Promise<QualityGate | null> {
+    const now = new Date();
+    const updated = await this.db.transaction(async (tx) => {
+      const rows = await tx
+        .update(qualityGateConfig)
+        .set({ ...patch, updatedAt: now })
+        .where(eq(qualityGateConfig.id, id))
+        .returning();
+      if (rows.length === 0) return null;
+      await tx.insert(auditEvents).values(
+        auditRow(
+          {
+            action: 'quality_gate.updated',
+            resourceType: 'quality_gate',
+            resourceId: id,
+            ...context,
+            details: { ...patch },
+          },
+          this.workspaceId,
+          now,
+        ),
+      );
+      return rows[0];
+    });
+    return updated == null ? null : mapGate(updated);
+  }
+
+  async remove(id: string, context: WriteContext = systemContext()): Promise<boolean> {
+    const now = new Date();
+    return this.db.transaction(async (tx) => {
+      const rows = await tx
+        .delete(qualityGateConfig)
+        .where(eq(qualityGateConfig.id, id))
+        .returning({ id: qualityGateConfig.id });
+      if (rows.length === 0) return false;
+      await tx.insert(auditEvents).values(
+        auditRow(
+          {
+            action: 'quality_gate.deleted',
+            resourceType: 'quality_gate',
+            resourceId: id,
+            ...context,
+            details: {},
+          },
+          this.workspaceId,
+          now,
+        ),
+      );
+      return true;
+    });
+  }
 }
 
 function mapEntry(row: typeof quarantine.$inferSelect): QuarantineEntry {

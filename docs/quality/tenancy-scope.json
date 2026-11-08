@@ -24,10 +24,10 @@
   ],
   "whatDoesNotBlock": "Workspace-scoped tables without a hard boundary. That is real debt, counted and reported by `pnpm tenancy:check`, because failing on it would make the gate permanently red — and a permanently red gate stops catching the regressions above.",
   "tally": {
-    "total": 88,
-    "global": 12,
-    "workspaceScoped": 76,
-    "workspaceScopedWithHardBoundary": 76,
+    "total": 90,
+    "global": 13,
+    "workspaceScoped": 77,
+    "workspaceScopedWithHardBoundary": 77,
     "workspaceScopedNullable": 0,
     "workspaceScopedAbsent": 0,
     "note": "**Derived, not asserted.** An earlier version of this file carried a hand-written tally of 19 / 37 / 18, which was wrong in every field — the numbers had been written from memory rather than measured. `scripts/lib/tenancy-scope.test.mjs` now recomputes all six from the schema and this register and fails if any disagree, so they cannot drift again. That is the `no-second-authority` failure this repository records as `P-6` and `P-5`, committed by the author of the skill that describes it.",
@@ -473,6 +473,16 @@
       "scope": "workspace",
       "column": "not-null",
       "reason": "A tenant project's AI test proposals: a patch never applied, its rationale, model and token counts. Hard-scoped from its first migration (`0042_test_proposals.sql`). Isolation: `apps/api/src/services/test-proposal-service.test.ts`."
+    },
+    "installation_settings": {
+      "scope": "global",
+      "column": "absent",
+      "reason": "Values an installation admin saved for the registry in `@lupin/shared-contracts` settings: an AI gateway, a sign-in provider, retention windows. They belong to the installation, like `installation_keys`. No secret is stored here; a secret setting is a vault entry in the home workspace (`0057_settings_onboarding.sql`)."
+    },
+    "onboarding_progress": {
+      "scope": "workspace",
+      "column": "not-null",
+      "reason": "Which setup steps a tenant skipped, and whether it dismissed the checklist. Hard-scoped from its first migration (`0057_settings_onboarding.sql`). Isolation: `apps/api/src/services/onboarding-service.test.ts`."
     }
   }
 }

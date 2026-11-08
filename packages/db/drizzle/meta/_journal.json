@@ -400,6 +400,13 @@
       "when": 1790400000051,
       "tag": "0056_email_channel",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1790400000052,
+      "tag": "0057_settings_onboarding",
+      "breakpoints": true
     }
   ]
 }

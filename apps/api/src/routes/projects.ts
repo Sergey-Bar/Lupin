@@ -45,6 +45,8 @@ import type { SecureCookies } from '../http/secure-cookies.js';
 import { createAccessRoutes } from './access.js';
 import { createAuditRoutes } from './audit.js';
 import { createMembersRoutes } from './members.js';
+import { createProjectAdminRoutes } from './project-admin.js';
+import { createOnboardingRoutes } from './onboarding.js';
 import { createScimRoutes } from './scim.js';
 import { defaultClientKey } from './auth.js';
 import { createPairingRoutes } from './pairing.js';
@@ -149,7 +151,11 @@ export interface ProjectsRouteOptions extends ProjectRegistryServiceOptions {
    * Delivery performance. `lanMode` and `webhookSecret` together turn the GitHub webhook
    * receiver on; `syncNow` runs queued syncs at once after a request queues one.
    */
-  delivery?: { lanMode?: boolean; webhookSecret?: string; syncNow?: () => Promise<unknown> };
+  delivery?: {
+    lanMode?: boolean;
+    webhookSecret?: string | (() => Promise<string | undefined>);
+    syncNow?: () => Promise<unknown>;
+  };
   /** The role a person provisioned over SCIM starts with: `OIDC_DEFAULT_ROLE`, or viewer. */
   scimDefaultRole?: 'viewer' | 'operator' | 'admin';
   /**
@@ -159,13 +165,15 @@ export interface ProjectsRouteOptions extends ProjectRegistryServiceOptions {
    * workspace by fallback: then every workspace would count as the default.
    */
   defaultWorkspace: string;
+  /** The setup checklist's one fact that is not in this workspace's tables. */
+  onboarding?: { aiConfigured: () => Promise<boolean> };
   /**
    * The built-in eval runner's model access: the configured gateway (`null` when no provider
    * is configured, and runs are refused `NOT_CONFIGURED`) and its provider name.
    */
   agents?: {
     gateway: AiGateway | null;
-    provider: string | null;
+    provider: string | null | (() => Promise<string | null>);
     onRunFailure?: (error: unknown) => void;
   };
   /** The connectors an issue from a finding or a failure cluster is created through. */
@@ -174,7 +182,10 @@ export interface ProjectsRouteOptions extends ProjectRegistryServiceOptions {
    * The gateway a test proposal asks: the composition root's **instrumented** one, so each
    * proposal is a GenAI span. `null` when no provider is configured: proposals are refused.
    */
-  testProposals?: { gateway: AiGateway | null; provider: string | null };
+  testProposals?: {
+    gateway: AiGateway | null;
+    provider: string | null | (() => Promise<string | null>);
+  };
   /**
    * Where a CI job's test report is recorded and what quarantine it is judged against.
    * Absent: `POST /api/v1/projects/:id/tests/reports` is not mounted.
@@ -341,6 +352,26 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
       publicAppUrl: options.pairing?.publicAppUrl ?? 'http://localhost:8080',
       clientKey: (context) => defaultClientKey(context, options.trustProxy ?? false),
       ...(options.secureCookies === undefined ? {} : { secureCookies: options.secureCookies }),
+    }),
+  );
+  // The setup checklist: what this workspace has, and what it chose to skip.
+  app.route(
+    '/',
+    createOnboardingRoutes({
+      db: options.db,
+      workspaceId: options.workspaceId,
+      access,
+      aiConfigured: options.onboarding?.aiConfigured ?? (async () => false),
+    }),
+  );
+  // Settings → Projects: rename, re-branch, replace the token, delete.
+  app.route(
+    '/',
+    createProjectAdminRoutes({
+      db: options.db,
+      workspaceId: options.workspaceId,
+      vaultSecret: options.vaultSecret,
+      access,
     }),
   );
   // Scheduled reports. The channel credentials are vault entries, so this needs the vault.

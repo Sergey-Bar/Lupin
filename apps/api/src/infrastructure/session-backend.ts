@@ -24,12 +24,18 @@ export interface AuthSessionBackend {
   sweep?(): Promise<{ removed: number }>;
 }
 
+/** A lifetime that is a number, or a reader for one. */
+export const ttlOf = (value: number | (() => number)): number =>
+  typeof value === 'function' ? value() : value;
+
 export class DrizzleAuthSessionBackend implements AuthSessionBackend {
   constructor(
     private readonly store: DrizzleSessionStore,
     private readonly cookieSecret: string,
-    private readonly ttlMs: number,
-    private readonly retentionMs: number,
+    // A number, or a reader called per use so a lifetime saved from Settings applies to the
+    // next sign-in (TTL) and the next sweep (retention) without a restart.
+    private readonly ttl: number | (() => number),
+    private readonly retention: number | (() => number),
     private readonly now: () => Date = () => new Date(),
   ) {}
 
@@ -44,7 +50,7 @@ export class DrizzleAuthSessionBackend implements AuthSessionBackend {
       tokenHash: hashCredential(this.cookieSecret, token),
       installationId,
       issuedAt,
-      expiresAt: new Date(issuedAt.getTime() + this.ttlMs),
+      expiresAt: new Date(issuedAt.getTime() + ttlOf(this.ttl)),
       ...(userId === undefined ? {} : { userId }),
     };
     await this.store.ensureInstallation(installationId);
@@ -88,7 +94,7 @@ export class DrizzleAuthSessionBackend implements AuthSessionBackend {
    * rather than deletes.
    */
   async sweep(): Promise<{ removed: number }> {
-    const cutoff = new Date(this.now().getTime() - this.retentionMs);
+    const cutoff = new Date(this.now().getTime() - ttlOf(this.retention));
     return { removed: await this.store.deleteExpired(cutoff) };
   }
 }

@@ -56,8 +56,11 @@ import type { UploadInput } from './repo-health-service.js';
 export interface EvalRunnerOptions extends EvalOptions {
   /** The configured gateway, or `null` when no model provider is configured. */
   gateway: AiGateway | null;
-  /** The gateway's provider name for the stored run (`kilo`, `ollama`). */
-  provider: string | null;
+  /**
+   * The gateway's provider name for the stored run (`kilo`, `ollama`), or a reader for the one
+   * in effect now. A reader answering `null` means none is configured.
+   */
+  provider: string | null | (() => Promise<string | null>);
   /** The health upload door, with its hooks. */
   ingest: (input: UploadInput) => Promise<HealthUploadResult>;
   /** How long one completion may take. */
@@ -540,10 +543,12 @@ export async function prepareDatasetRun(
 ): Promise<PreparedRun> {
   const project = await projectRow(options, projectId);
   const gateway = options.gateway;
-  if (gateway === null) {
+  const provider =
+    typeof options.provider === 'function' ? await options.provider() : options.provider;
+  if (gateway === null || (typeof options.provider === 'function' && provider === null)) {
     throw new DomainError(
       ErrorCode.NOT_CONFIGURED,
-      'No model provider is configured, so no eval can run. Set KILO_GATEWAY_URL and KILO_API_KEY, or OLLAMA_BASE_URL.',
+      'No model provider is configured, so no eval can run. Connect one in Settings ? AI provider.',
       { callerSafe: true },
     );
   }
@@ -573,7 +578,7 @@ export async function prepareDatasetRun(
         const run = await executeDataset(
           gateway,
           dataset,
-          options.provider,
+          provider,
           options.completionTimeoutMs ?? DEFAULT_COMPLETION_TIMEOUT_MS,
         );
         return await options.ingest({

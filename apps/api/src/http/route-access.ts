@@ -78,6 +78,8 @@ export const ROUTE_ROLES: ReadonlyArray<
   ['POST', '/api/v1/schedules', 'operator'],
   // Changing what "passing" means for everyone is configuration.
   ['POST', '/api/v1/dashboard/quality-gates', 'admin'],
+  ['PATCH', '/api/v1/dashboard/quality-gates/:id', 'admin'],
+  ['DELETE', '/api/v1/dashboard/quality-gates/:id', 'admin'],
   ['POST', '/api/v1/quality-policies', 'admin'],
 ];
 

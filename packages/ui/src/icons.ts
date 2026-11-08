@@ -127,6 +127,8 @@ export {
   Route,
   /** The Settings section: a gear, the one place a reader changes how the product behaves. */
   Settings,
+  /** A setting an environment variable pins: shown, but not editable from the interface. */
+  Lock,
 } from 'lucide-react';
 
 /**

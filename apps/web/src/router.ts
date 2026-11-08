@@ -41,7 +41,14 @@ import {
   SettingsDeploymentRoute,
   SettingsMembersRoute,
   SettingsReportsRoute,
+  SettingsProjectsRoute,
+  SettingsQualityGatesRoute,
+  SettingsAiRoute,
+  SettingsIntegrationsRoute,
+  SettingsIdentityRoute,
+  SettingsSessionsRoute,
 } from './routes/dashboard/settings.js';
+import { SetupRoute } from './routes/dashboard/setup.js';
 
 const dashboardTree = dashboardRoute.addChildren([
   nowRoute,
@@ -84,6 +91,13 @@ const dashboardTree = dashboardRoute.addChildren([
   SettingsMembersRoute,
   SettingsAuditRoute,
   SettingsDeploymentRoute,
+  SettingsProjectsRoute,
+  SettingsQualityGatesRoute,
+  SettingsAiRoute,
+  SettingsIntegrationsRoute,
+  SettingsIdentityRoute,
+  SettingsSessionsRoute,
+  SetupRoute,
 ]);
 
 /**

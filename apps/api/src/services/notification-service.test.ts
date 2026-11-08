@@ -21,6 +21,7 @@ import {
   loadReport,
   nextOccurrence,
   queueTestDelivery,
+  updateChannel,
 } from './notification-service.js';
 import { createReportDispatcher, requestFor } from './report-dispatcher.js';
 
@@ -64,6 +65,52 @@ describe('channels', () => {
     await expect(queueTestDelivery(other, channel.id)).rejects.toMatchObject({ code: 'NOT_FOUND' });
     await expect(channelWithSecret(options, 'not-a-uuid')).rejects.toMatchObject({
       code: 'NOT_FOUND',
+    });
+  });
+
+  it('edits a channel in place, keeping the secret unless a new one is sent', async () => {
+    const { options, other } = await setup();
+    const channel = await createChannel(options, {
+      kind: 'telegram',
+      name: 'QA chat',
+      settings: { chatId: '-100123' },
+      secret: TOKEN,
+    });
+    const renamed = await updateChannel(options, channel.id, {
+      name: 'Release chat',
+      enabled: false,
+    });
+    expect(renamed).toMatchObject({
+      name: 'Release chat',
+      enabled: false,
+      settings: { chatId: '-100123' },
+    });
+    expect((await channelWithSecret(options, channel.id)).secret).toBe(TOKEN);
+    const next = ['5678', ':', 'telegram-bot-secret-2'].join('');
+    await updateChannel(options, channel.id, { secret: next });
+    expect((await channelWithSecret(options, channel.id)).secret).toBe(next);
+    await expect(
+      updateChannel(options, channel.id, { settings: { chatId: 'nope nope' } }),
+    ).rejects.toMatchObject({
+      code: 'INVALID_REQUEST_BODY',
+    });
+    await expect(updateChannel(other, channel.id, { name: 'Mine' })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('refuses an edited Teams webhook the server must not call', async () => {
+    const { options } = await setup();
+    const channel = await createChannel(options, {
+      kind: 'teams',
+      name: 't',
+      settings: {},
+      secret: 'https://example.webhook.office.com/hook',
+    });
+    await expect(
+      updateChannel(options, channel.id, { secret: 'http://10.0.0.5/hook' }),
+    ).rejects.toMatchObject({
+      code: 'INVALID_REQUEST_BODY',
     });
   });
 

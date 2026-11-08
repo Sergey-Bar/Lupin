@@ -8,9 +8,9 @@
     "`composition: database` rows are mounted only when `DATABASE_URL` is set, so the in-memory composition cannot send them a request; the class is still read from their guards."
   ],
   "summary": {
-    "admin": 24,
-    "viewer": 87,
-    "operator": 33,
+    "admin": 40,
+    "viewer": 88,
+    "operator": 35,
     "open": 16,
     "runner-credential": 9,
     "reporter-secret": 13,
@@ -127,6 +127,14 @@
       "method": "GET",
       "path": "/api/v1/auth/oidc/start",
       "access": "open",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/oidc.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/oidc/test",
+      "access": "admin",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/oidc.test.ts",
       "composition": "always"
@@ -268,9 +276,25 @@
       "composition": "always"
     },
     {
+      "method": "DELETE",
+      "path": "/api/v1/dashboard/quality-gates/:id",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/modules/dashboard/quality-gates.test.ts",
+      "composition": "always"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/dashboard/quality-gates/:id",
       "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/modules/dashboard/quality-gates.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/dashboard/quality-gates/:id",
+      "access": "admin",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/modules/dashboard/quality-gates.test.ts",
       "composition": "always"
@@ -556,11 +580,43 @@
       "composition": "database"
     },
     {
+      "method": "PATCH",
+      "path": "/api/v1/notification-channels/:id",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/services/notification-service.test.ts",
+      "composition": "database"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/notification-channels/:id/test",
       "access": "admin",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/services/notification-service.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/onboarding",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/onboarding.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/onboarding/:step/dismiss",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/onboarding.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/onboarding/reset",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/onboarding.test.ts",
       "composition": "database"
     },
     {
@@ -636,10 +692,26 @@
       "composition": "database"
     },
     {
+      "method": "DELETE",
+      "path": "/api/v1/projects/:id",
+      "access": "admin",
+      "workspaceScoped": true,
+      "evidenceTest": "apps/api/src/routes/projects.test.ts",
+      "composition": "database"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/projects/:id",
       "access": "viewer",
       "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/projects.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/projects/:id",
+      "access": "operator",
+      "workspaceScoped": true,
       "evidenceTest": "apps/api/src/routes/projects.test.ts",
       "composition": "database"
     },
@@ -793,6 +865,30 @@
       "access": "viewer",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/agent-quality.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/projects/:id/git-token",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/project-admin.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:id/git-token",
+      "access": "operator",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/project-admin.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/projects/:id/git-token",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/project-admin.test.ts",
       "composition": "database"
     },
     {
@@ -1410,6 +1506,62 @@
       "workspaceScoped": true,
       "evidenceTest": "apps/api/src/routes/scim.test.ts",
       "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings",
+      "access": "admin",
+      "workspaceScoped": true,
+      "evidenceTest": "apps/api/src/routes/identity-settings.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/settings/:key",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/identity-settings.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/settings/:key",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/identity-settings.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/:key/test",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/settings.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/identity/apply",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/identity-settings.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/identity/draft",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/identity-settings.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings/identity/draft/:id",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/identity-settings.test.ts",
+      "composition": "always"
     },
     {
       "method": "DELETE",

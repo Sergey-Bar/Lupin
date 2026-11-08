@@ -11,3 +11,4 @@ export * from './delivery.js';
 export * from './github.js';
 export * from './agents.js';
 export * from './integrations.js';
+export * from './settings.js';

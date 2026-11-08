@@ -1,11 +1,12 @@
-import { Hono, type Context } from 'hono';
+import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import * as client from 'openid-client';
 import type { OidcConfig } from '@lupin/config';
 import { hashCredential, verifyCredential } from '@lupin/auth';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
+import { guard } from '../http/access.js';
 import { isSecureFor, type SecureCookies } from '../http/secure-cookies.js';
-import type { AuthSessionBackend } from '../infrastructure/session-backend.js';
+import { ttlOf, type AuthSessionBackend } from '../infrastructure/session-backend.js';
 import { createRateLimiter } from '../middleware/rate-limit.js';
 import { audit } from '../services/access-service.js';
 import type { ProjectRegistryServiceOptions } from '../services/project-registry-service.js';
@@ -30,12 +31,29 @@ import { defaultClientKey } from './auth.js';
  * JSON, because a browser is on the other end.
  */
 export interface OidcRouteOptions extends Partial<Pick<ProjectRegistryServiceOptions, 'db'>> {
-  oidc?: OidcConfig;
+  /** The configuration, or a reader for the one in effect (Settings → Identity applies live). */
+  oidc?: OidcConfig | (() => Promise<OidcConfig | undefined>);
+  /**
+   * The test sign-in behind Settings → Identity: a flow started with a draft configuration
+   * comes back through the same registered callback, and is reported here instead of signing
+   * anyone in.
+   */
+  test?: {
+    /** The guard on the test-start route: refuses anyone who is not an installation admin. */
+    authorize: MiddlewareHandler;
+    configFor(draftId: string): Promise<OidcConfig | undefined>;
+    onResult(
+      draftId: string,
+      identity: { email: string; groups: string[] } | null,
+      reason?: string,
+    ): void;
+  };
   workspaceId: string;
   sessions: AuthSessionBackend;
   installationId: string;
   cookieSecret: string;
-  sessionTtlMs: number;
+  /** A number, or a reader so a lifetime saved from Settings applies to the next sign-in. */
+  sessionTtlMs: number | (() => number);
   secureCookies: SecureCookies;
   trustProxy?: boolean;
   log?: (message: string, fields: Record<string, unknown>) => void;
@@ -53,6 +71,8 @@ interface Flow {
   nonce: string;
   verifier: string;
   expiresAt: number;
+  /** Set for a test sign-in from Settings → Identity: the draft being tested. */
+  draft?: string;
 }
 
 function sealFlow(secret: string, flow: Flow): string {
@@ -93,16 +113,23 @@ function unverified(claim: unknown): boolean {
 export function createOidcRoutes(options: OidcRouteOptions): Hono {
   const app = new Hono();
   const limiter = createRateLimiter({ limit: 20, windowMs: 60_000 });
-  let discovered: Promise<client.Configuration> | null = null;
+  const discovered = new Map<string, Promise<client.Configuration>>();
 
-  const configured = (): { oidc: OidcConfig; db: NonNullable<OidcRouteOptions['db']> } => {
-    if (options.oidc === undefined || options.db === undefined) {
+  const current = async (): Promise<OidcConfig | undefined> =>
+    typeof options.oidc === 'function' ? options.oidc() : options.oidc;
+
+  const configured = async (): Promise<{
+    oidc: OidcConfig;
+    db: NonNullable<OidcRouteOptions['db']>;
+  }> => {
+    const oidc = await current();
+    if (oidc === undefined || options.db === undefined) {
       throw new DomainError(
         ErrorCode.OIDC_NOT_CONFIGURED,
-        'Single sign-on is off: it needs OIDC_ISSUER, OIDC_CLIENT_ID and a database',
+        'Single sign-on is off: set the issuer and client id in Settings → Identity (or OIDC_ISSUER and OIDC_CLIENT_ID), with a database',
       );
     }
-    return { oidc: options.oidc, db: options.db };
+    return { oidc, db: options.db };
   };
 
   const throttle = (context: Context): void => {
@@ -115,9 +142,16 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
     }
   };
 
-  /** Discovery, once; a failure is forgotten so the next sign-in tries again. */
+  /**
+   * Discovery, once per provider configuration; a failure is forgotten so the next sign-in
+   * tries again. Keyed by issuer, client and secret, so a configuration saved from Settings
+   * (or a draft under test) never reuses another's.
+   */
   const configuration = (oidc: OidcConfig): Promise<client.Configuration> => {
-    discovered ??= client
+    const key = `${oidc.issuer}\u0000${oidc.clientId}\u0000${oidc.clientSecret}`;
+    const cached = discovered.get(key);
+    if (cached !== undefined) return cached;
+    const pending = client
       .discovery(
         new URL(oidc.issuer),
         oidc.clientId,
@@ -127,10 +161,11 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
         oidc.issuer.startsWith('http:') ? { execute: [client.allowInsecureRequests] } : undefined,
       )
       .catch((error: unknown) => {
-        discovered = null;
+        discovered.delete(key);
         throw error;
       });
-    return discovered;
+    discovered.set(key, pending);
+    return pending;
   };
 
   const redirectWith = (context: Context, reason: string, fields: Record<string, unknown> = {}) => {
@@ -139,13 +174,17 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
     return context.redirect(`/?signin=${reason}`, 302);
   };
 
-  app.get('/api/v1/auth/oidc/start', async (context) => {
-    const { oidc } = configured();
+  /** Starts a sign-in with the provider; `draft` marks it as a test of that draft. */
+  const begin = async (context: Context, oidc: OidcConfig, draft?: string) => {
     throttle(context);
     let config: client.Configuration;
     try {
       config = await configuration(oidc);
     } catch (error) {
+      if (draft !== undefined) {
+        options.test?.onResult(draft, null, 'provider-unreachable');
+        return context.redirect('/dashboard/settings/identity?test=unreachable', 302);
+      }
       // The provider is down or misconfigured: back to the sign-in screen, as a failed
       // callback goes, rather than a 500 page in the middle of signing in.
       return redirectWith(context, 'failed', {
@@ -157,6 +196,7 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
       nonce: client.randomNonce(),
       verifier: client.randomPKCECodeVerifier(),
       expiresAt: Date.now() + FLOW_TTL_MS,
+      ...(draft === undefined ? {} : { draft }),
     };
     const url = client.buildAuthorizationUrl(config, {
       redirect_uri: oidc.redirectUri,
@@ -175,12 +215,63 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
       maxAge: Math.floor(FLOW_TTL_MS / 1000),
     });
     return context.redirect(url.href, 302);
+  };
+
+  app.get('/api/v1/auth/oidc/start', async (context) => {
+    const { oidc } = await configured();
+    return begin(context, oidc);
   });
 
+  if (options.test !== undefined) {
+    const test = options.test;
+    // Test sign-in for Settings → Identity. Admin, and the identity routes it is reached from
+    // also require an installation admin; the flow it starts signs nobody in.
+    app.get('/api/v1/auth/oidc/test', guard('admin', test.authorize), async (context) => {
+      const draft = context.req.query('draft') ?? '';
+      const oidc = await test.configFor(draft);
+      if (oidc === undefined)
+        return context.redirect('/dashboard/settings/identity?test=expired', 302);
+      return begin(context, oidc, draft);
+    });
+  }
+
+  /** The end of a test sign-in: who came back, reported to the draft; no session is issued. */
+  const finishTest = async (context: Context, flow: Flow, draft: string) => {
+    deleteCookie(context, SIGN_IN_FLOW, { path: '/api/v1/auth/oidc' });
+    const back = (outcome: string) =>
+      context.redirect(`/dashboard/settings/identity?test=${outcome}`, 302);
+    const oidc = await options.test?.configFor(draft);
+    if (oidc === undefined) return back('expired');
+    const returned = new URL(oidc.redirectUri);
+    returned.search = new URL(context.req.url).search;
+    try {
+      const tokens = await client.authorizationCodeGrant(await configuration(oidc), returned, {
+        pkceCodeVerifier: flow.verifier,
+        expectedState: flow.state,
+        expectedNonce: flow.nonce,
+        idTokenExpected: true,
+      });
+      const claims = (tokens.claims() ?? {}) as Record<string, unknown>;
+      const email = typeof claims['email'] === 'string' ? claims['email'].toLowerCase() : '';
+      if (email === '' || unverified(claims['email_verified'])) {
+        options.test?.onResult(draft, null, 'no-verified-email');
+        return back('failed');
+      }
+      options.test?.onResult(draft, { email, groups: groupsOf(claims) });
+      return back('done');
+    } catch (error) {
+      options.test?.onResult(draft, null, error instanceof Error ? error.name : 'error');
+      return back('failed');
+    }
+  };
+
   app.get('/api/v1/auth/oidc/callback', async (context) => {
-    const { oidc, db } = configured();
     throttle(context);
     const flow = openFlow(options.cookieSecret, getCookie(context, SIGN_IN_FLOW), Date.now());
+    // A test sign-in works before sign-in is switched on; everything else is a coded 404 until
+    // it is, as before.
+    if (flow?.draft !== undefined) return finishTest(context, flow, flow.draft);
+    const { oidc, db } = await configured();
     if (flow === null) return redirectWith(context, 'expired');
     // The URL the provider redirected to, as the provider saw it: behind the edge, the
     // request URL this process sees names the proxy, not the public origin.
@@ -236,7 +327,7 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
       sameSite: 'Lax',
       secure: isSecureFor(options.secureCookies, context),
       path: '/',
-      maxAge: Math.floor(options.sessionTtlMs / 1000),
+      maxAge: Math.floor(ttlOf(options.sessionTtlMs) / 1000),
     });
     return context.redirect('/', 302);
   });

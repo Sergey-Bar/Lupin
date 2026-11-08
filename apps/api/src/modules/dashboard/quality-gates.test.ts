@@ -72,6 +72,16 @@ class ScopedQualityGateStore implements QualityGateStore {
     this.askedFor.push(id);
     return null;
   }
+
+  async update(id: string): Promise<QualityGate | null> {
+    this.askedFor.push(id);
+    return null;
+  }
+
+  async remove(id: string): Promise<boolean> {
+    this.askedFor.push(id);
+    return false;
+  }
 }
 
 const FOREIGN_GATE: QualityGate = {
@@ -331,5 +341,64 @@ describe('GET /api/v1/dashboard/quality-gates/:id', () => {
       error: { code: 'QUALITY_GATE_NOT_FOUND', message: 'Quality gate not found' },
     });
     expect(store.askedFor).toEqual(['theirs']);
+  });
+});
+
+describe('editing and removing a quality gate', () => {
+  const send = (app: Hono, method: string, path: string, body?: unknown) =>
+    Promise.resolve(
+      app.request(path, {
+        method,
+        headers: { 'content-type': 'application/json' },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      }),
+    );
+
+  it('changes the threshold and the name, and reads the change back', async () => {
+    const { app, store } = build();
+    const gate = await store.add({ name: 'main', passRateThreshold: 90 });
+    const response = await send(app, 'PATCH', `/api/v1/dashboard/quality-gates/${gate.id}`, {
+      passRateThreshold: 95,
+    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: gate.id,
+      name: 'main',
+      passRateThreshold: 95,
+    });
+    expect((await store.get(gate.id))?.passRateThreshold).toBe(95);
+    expect(store.recorded.map((entry) => entry.action)).toContain('quality_gate.updated');
+  });
+
+  it('refuses an out-of-range threshold and an empty edit', async () => {
+    const { app, store } = build();
+    const gate = await store.add({ name: 'main', passRateThreshold: 90 });
+    const path = `/api/v1/dashboard/quality-gates/${gate.id}`;
+    expect((await send(app, 'PATCH', path, { passRateThreshold: 101 })).status).toBe(400);
+    expect((await send(app, 'PATCH', path, {})).status).toBe(400);
+  });
+
+  it('removes a gate, and answers 404 for one that is not there', async () => {
+    const { app, store } = build();
+    const gate = await store.add({ name: 'main', passRateThreshold: 90 });
+    expect((await send(app, 'DELETE', `/api/v1/dashboard/quality-gates/${gate.id}`)).status).toBe(
+      200,
+    );
+    expect(await store.get(gate.id)).toBeNull();
+    expect((await send(app, 'DELETE', `/api/v1/dashboard/quality-gates/${gate.id}`)).status).toBe(
+      404,
+    );
+    expect(
+      (await send(app, 'PATCH', '/api/v1/dashboard/quality-gates/missing', { name: 'x' })).status,
+    ).toBe(404);
+  });
+
+  it('never removes the installation default gate, and says what to do instead', async () => {
+    const { app } = build();
+    const response = await send(app, 'DELETE', '/api/v1/dashboard/quality-gates/global');
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: { details: { fix: expect.stringContaining('threshold') } },
+    });
   });
 });

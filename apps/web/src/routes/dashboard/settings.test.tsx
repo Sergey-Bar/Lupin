@@ -36,6 +36,11 @@ function stubAdminApi(): void {
       if (url.includes('/api/v1/audit')) return reply({ events: [], next: null });
       if (url.includes('/api/v1/workspaces'))
         return reply({ current: 'w', workspaces: [], canCreate: false });
+      if (url.includes('/api/v1/settings')) return reply({ settings: [] });
+      if (url.includes('/api/v1/onboarding'))
+        return reply({ steps: [], done: 1, total: 6, dismissed: false });
+      if (url.includes('/api/v1/dashboard/quality-gates')) return reply([]);
+      if (url.endsWith('/api/v1/projects')) return reply({ projects: [] });
       if (url.includes('/api/v1/projects')) return reply([]);
       return reply({});
     }),
@@ -84,5 +89,18 @@ describe('the settings routes', () => {
     expect(
       await screen.findByTestId('deployment-page', {}, { timeout: 10_000 }),
     ).toBeInTheDocument();
+  });
+  it.each([
+    ['/dashboard/settings/projects', 'settings-projects'],
+    ['/dashboard/settings/quality-gates', 'settings-quality-gates'],
+    ['/dashboard/settings/ai', 'settings-ai'],
+    ['/dashboard/settings/integrations', 'settings-integrations'],
+    ['/dashboard/settings/identity', 'settings-identity'],
+    ['/dashboard/settings/sessions', 'settings-sessions-retention'],
+    ['/dashboard/setup', 'setup-page'],
+  ])('opens %s', async (path, testId) => {
+    stubAdminApi();
+    render(<MemoryRouter initialEntries={[path]} />);
+    expect(await screen.findByTestId(testId, {}, { timeout: 10_000 })).toBeInTheDocument();
   });
 });

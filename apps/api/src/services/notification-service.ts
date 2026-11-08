@@ -12,6 +12,7 @@ import {
   type ReportDeliveryRow,
   type ReportSubscriptionRow,
 } from '@lupin/db';
+import { CreateChannelBodySchema, type UpdateChannelBody } from '@lupin/shared-contracts';
 import type {
   ChannelKind,
   ChannelSummary,
@@ -182,6 +183,51 @@ export async function deleteChannel(options: NotificationOptions, id: string): P
   await deleteVaultSecret(options, channelSecretName(row.id));
   // Subscriptions go with the channel (cascade); deliveries stay, as history.
   await options.db.delete(notificationChannels).where(eq(notificationChannels.id, row.id));
+}
+
+/**
+ * Edits a channel in place. Settings are checked against the kind's own schema, and a new
+ * secret against the same rules a new channel's is; an absent secret keeps the stored one.
+ */
+export async function updateChannel(
+  options: NotificationOptions,
+  id: string,
+  body: UpdateChannelBody,
+): Promise<ChannelSummary> {
+  const row = await channelRow(options, id);
+  const candidate = {
+    kind: row.kind,
+    name: body.name ?? row.name,
+    settings: body.settings ?? row.settings ?? {},
+    // A placeholder stands in for a kept secret: only its presence is checked here.
+    ...(row.kind === 'inbox' ? {} : { secret: body.secret ?? 'kept' }),
+  };
+  const parsed = CreateChannelBodySchema.safeParse(candidate);
+  if (!parsed.success) {
+    throw new DomainError(ErrorCode.INVALID_REQUEST_BODY, 'Invalid channel settings', {
+      details: { issues: parsed.error.issues },
+    });
+  }
+  if (body.secret !== undefined && parsed.data.kind !== 'inbox') assertCallableSecret(parsed.data);
+  if (body.secret !== undefined && row.kind !== 'inbox') {
+    await storeVaultSecret(options, channelSecretName(row.id), body.secret, WHAT);
+  }
+  const [updated] = await options.db
+    .update(notificationChannels)
+    .set({
+      name: parsed.data.name,
+      settings: parsed.data.settings,
+      ...(body.enabled === undefined ? {} : { enabled: body.enabled }),
+      updatedAt: now(options),
+    })
+    .where(
+      and(
+        eq(notificationChannels.workspaceId, options.workspaceId),
+        eq(notificationChannels.id, row.id),
+      ),
+    )
+    .returning();
+  return channelSummary(updated as NotificationChannelRow);
 }
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

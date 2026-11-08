@@ -56,6 +56,14 @@ export const routeManifest = [
     section: 'overview',
     tab: 'Cockpit',
   },
+  // First-run setup: a guided flow, reached from the cockpit and the checklist, never a tab.
+  {
+    id: 'setup',
+    path: '/dashboard/setup',
+    label: 'Set up Lupin',
+    visible: false,
+    section: 'overview',
+  },
   {
     id: 'metric',
     path: '/dashboard/metric/:metricId',
@@ -310,6 +318,10 @@ export const routeManifest = [
   // Appearance (the one visible entry, so the section appears once in the nav and the
   // palette); the other tabs reuse the admin and report surfaces under `settings/*` and
   // stay out of the palette (`visible: false`) while still drawing the section's tab row.
+  //
+  // The tab row reads workspace first (what this team owns), then installation (what the
+  // whole install shares). Appearance leads because it is the landing, and the one tab every
+  // reader, signed in or not, may use.
   {
     id: 'settings-appearance',
     path: '/dashboard/settings',
@@ -317,6 +329,14 @@ export const routeManifest = [
     visible: true,
     section: 'settings',
     tab: 'Appearance',
+  },
+  {
+    id: 'settings-projects',
+    path: '/dashboard/settings/projects',
+    label: 'Project settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Projects',
   },
   {
     id: 'settings-reports',
@@ -327,13 +347,12 @@ export const routeManifest = [
     tab: 'Reports',
   },
   {
-    id: 'settings-access',
-    path: '/dashboard/settings/access',
-    label: 'Access settings',
+    id: 'settings-quality-gates',
+    path: '/dashboard/settings/quality-gates',
+    label: 'Quality gate settings',
     visible: false,
     section: 'settings',
-    tab: 'Access',
-    access: 'admin',
+    tab: 'Quality gates',
   },
   {
     id: 'settings-members',
@@ -342,6 +361,51 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Members',
+    access: 'admin',
+  },
+  {
+    id: 'settings-ai',
+    path: '/dashboard/settings/ai',
+    label: 'AI provider settings',
+    visible: false,
+    section: 'settings',
+    tab: 'AI provider',
+    access: 'admin',
+  },
+  {
+    id: 'settings-integrations',
+    path: '/dashboard/settings/integrations',
+    label: 'Integration settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Integrations',
+    access: 'admin',
+  },
+  {
+    id: 'settings-identity',
+    path: '/dashboard/settings/identity',
+    label: 'Identity settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Identity',
+    access: 'admin',
+  },
+  {
+    id: 'settings-sessions',
+    path: '/dashboard/settings/sessions',
+    label: 'Session and retention settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Sessions & retention',
+    access: 'admin',
+  },
+  {
+    id: 'settings-access',
+    path: '/dashboard/settings/access',
+    label: 'Access settings',
+    visible: false,
+    section: 'settings',
+    tab: 'Access',
     access: 'admin',
   },
   {
