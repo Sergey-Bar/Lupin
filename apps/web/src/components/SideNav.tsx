@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import {
   FlaskConical,
+  Focus,
   GitBranch,
   LayoutGrid,
   ListChecks,
@@ -24,6 +25,7 @@ function sectionOfId(id: string | undefined): SectionId | undefined {
   return routeManifest.find((route) => route.id === id)?.section;
 }
 import { ThemeToggle } from './ThemeToggle.js';
+import { usePreferences } from '../theme/preferences.js';
 
 const FOCUS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus';
@@ -77,7 +79,10 @@ export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.
             </SideLink>
           </div>
         ))}
-        <RecentRuns api={api} />
+        {/* Focus mode puts the recent runs away with the rest of the secondary chrome. */}
+        <div data-chrome="secondary">
+          <RecentRuns api={api} />
+        </div>
       </nav>
       {/* Settings and the theme live at the bottom, out of the way of the work. */}
       <div className="flex shrink-0 items-center gap-1 border-t border-border px-3 py-3">
@@ -90,6 +95,7 @@ export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.
             Settings
           </SideLink>
         </div>
+        <FocusToggle />
         <ThemeToggle />
       </div>
     </aside>
@@ -213,5 +219,31 @@ function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
         </ul>
       )}
     </div>
+  );
+}
+
+/**
+ * Focus mode, one click from anywhere: it puts away the recent runs, the folded lists, the
+ * numbers and the setup line, and leaves each page its one thing to do in a reading column.
+ * `aria-pressed` says whether it is on, and the primary tint says so to the eye.
+ */
+function FocusToggle(): React.ReactElement {
+  const { preferences, update } = usePreferences();
+  const on = preferences.focus;
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      aria-label="Focus mode"
+      title={on ? 'Leave focus mode' : 'Focus mode'}
+      onClick={() => update({ focus: !on })}
+      className={cn(
+        'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors duration-100 hover:bg-surface-raised motion-reduce:transition-none',
+        on ? 'text-primary' : 'text-fg-muted hover:text-fg',
+        FOCUS,
+      )}
+    >
+      <Focus size={16} aria-hidden="true" />
+    </button>
   );
 }

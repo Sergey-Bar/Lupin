@@ -124,7 +124,7 @@ export function CockpitPage({
         />
         {sources.setup === undefined ? null : <SetupChecklist source={sources.setup} />}
         {/* The numbers are one quiet line until asked for, so the page leads with one decision. */}
-        <details data-testid="cockpit-everything" className="group">
+        <details data-testid="cockpit-everything" data-chrome="secondary" className="group">
           <summary className="cursor-pointer select-none rounded-md py-2 text-sm text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
             How the product is doing
           </summary>

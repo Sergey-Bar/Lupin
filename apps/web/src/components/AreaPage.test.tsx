@@ -176,6 +176,17 @@ describe('AreaPage', () => {
     localStorage.clear();
   });
 
+  it('lets focus mode keep the verdict and the top items, and put the rest away', () => {
+    show(
+      ['a', 'b', 'c', 'd'].map((id) => item(id)),
+      { details: <p>numbers</p> },
+    );
+    expect(screen.getByTestId('area-item-a').closest('[data-chrome="secondary"]')).toBeNull();
+    expect(screen.getByTestId('area-verdict').closest('[data-chrome="secondary"]')).toBeNull();
+    expect(screen.getByTestId('area-rest')).toHaveAttribute('data-chrome', 'secondary');
+    expect(screen.getByTestId('area-details')).toHaveAttribute('data-chrome', 'secondary');
+  });
+
   it('has no serious or critical axe violations', async () => {
     const { container } = show(
       ['a', 'b', 'c', 'd'].map((id) => item(id)),

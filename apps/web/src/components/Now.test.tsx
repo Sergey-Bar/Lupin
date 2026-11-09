@@ -287,6 +287,20 @@ describe('AttentionSection, as one focus', () => {
     expect(navigate).toHaveBeenCalledWith('/dashboard/runs/00000000-0000-4000-8000-000000000001');
   });
 
+  it('lets focus mode leave only the first thing: the rest is secondary', async () => {
+    render(
+      <AttentionSection
+        sources={sources({ runs: vi.fn(async () => many) })}
+        navigate={vi.fn()}
+        now={() => NOW}
+      />,
+    );
+    const first = await screen.findByTestId('focus-first');
+    expect(first.closest('[data-chrome="secondary"]')).toBeNull();
+    expect(screen.getByRole('list', { name: 'Then' })).toHaveAttribute('data-chrome', 'secondary');
+    expect(screen.getByTestId('focus-rest')).toHaveAttribute('data-chrome', 'secondary');
+  });
+
   it('opens a next item with its own button', async () => {
     const user = userEvent.setup();
     const navigate = vi.fn();

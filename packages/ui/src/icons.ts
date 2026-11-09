@@ -87,6 +87,8 @@ export {
   Bug,
   Handshake,
   Eye,
+  /** Focus mode: puts everything but the one thing to do away. */
+  Focus,
   Workflow,
   /** The menu button's chevron: it opens a list of actions below it. */
   ChevronDown,

@@ -94,8 +94,8 @@ export function SettingsAppearancePage(): React.ReactElement {
           }
         >
           <p className="max-w-measure text-sm text-fg-muted">
-            Hide the secondary navigation so a page is the page and nothing else. The command
-            palette and the keyboard shortcuts still reach everywhere.
+            Leave each page its one thing to do, in the middle of the screen, and put the rest away.
+            The focus button beside the theme in the sidebar turns it on and off.
           </p>
         </Panel>
 

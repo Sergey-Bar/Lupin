@@ -120,7 +120,11 @@ export function AreaPage({
           </ol>
         )}
         {rest.length === 0 ? null : (
-          <details data-testid="area-rest" className="text-sm text-fg-muted">
+          <details
+            data-testid="area-rest"
+            data-chrome="secondary"
+            className="text-sm text-fg-muted"
+          >
             <summary className="cursor-pointer select-none rounded-md py-1 hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
               {String(rest.length)} more when you are ready
             </summary>
@@ -142,7 +146,7 @@ export function AreaPage({
           </details>
         )}
         {details === undefined ? null : (
-          <details data-testid="area-details" className="group">
+          <details data-testid="area-details" data-chrome="secondary" className="group">
             <summary className="cursor-pointer select-none rounded-md py-2 text-sm text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
               Details
             </summary>

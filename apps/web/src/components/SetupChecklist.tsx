@@ -46,6 +46,7 @@ export function SetupChecklist({
     <section
       aria-labelledby="setup-checklist-title"
       data-testid="setup-checklist"
+      data-chrome="secondary"
       className="grid gap-2 rounded-lg bg-surface px-4 py-3"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">

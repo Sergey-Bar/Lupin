@@ -350,6 +350,12 @@ describe('the home page, as one focus', () => {
     expect(numbers).not.toHaveAttribute('open');
     expect(numbers.querySelector('summary')).toHaveTextContent('How the product is doing');
   });
+
+  it('lets focus mode put the numbers away', async () => {
+    show();
+    const numbers = await screen.findByTestId('cockpit-everything');
+    expect(numbers).toHaveAttribute('data-chrome', 'secondary');
+  });
 });
 describe('pace against quality', () => {
   it('loads after the headline and carries every number in a table', async () => {

@@ -62,7 +62,10 @@ function RootComponent() {
             <SideNav />
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <NavBar />
-              <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 sm:px-6 sm:py-6">
+              <main
+                data-focus-column
+                className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 sm:px-6 sm:py-6"
+              >
                 {/*
                  * Secondary chrome: focus mode hides it (index.css). The attribute is on the
                  * navs themselves, not on a wrapper here — a wrapper rendered on a page with

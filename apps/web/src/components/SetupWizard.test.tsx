@@ -242,6 +242,14 @@ describe('the cockpit checklist', () => {
     expect(screen.getByRole('link', { name: 'Continue setup' })).not.toHaveClass('bg-primary');
   });
 
+  it('lets focus mode put it away: setup is not the work', async () => {
+    render(<SetupChecklist source={source(onboarding({ repository: 'done' }))} />);
+    expect(await screen.findByTestId('setup-checklist')).toHaveAttribute(
+      'data-chrome',
+      'secondary',
+    );
+  });
+
   it('is read-only for a viewer, naming who can finish each step', async () => {
     render(<SetupChecklist source={source(onboarding(), 'viewer')} />);
     expect(await screen.findByTestId('checklist-ai')).toHaveTextContent(

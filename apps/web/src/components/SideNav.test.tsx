@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import {
   createMemoryHistory,
   createRootRoute,
@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-router';
 import { SideNav } from './SideNav';
 import { ThemeProvider } from '../theme/ThemeProvider';
+import { PreferencesProvider } from '../theme/preferences';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
 import { expectNoBlockingAxeViolations } from '../test-axe';
 import { makeApi, makeRun } from '../test-utils';
@@ -17,7 +18,9 @@ function renderAt(path: string, api = makeApi({ getRecentRuns: vi.fn(async () =>
   const rootRoute = createRootRoute({
     component: () => (
       <ThemeProvider>
-        <SideNav api={api} />
+        <PreferencesProvider>
+          <SideNav api={api} />
+        </PreferencesProvider>
       </ThemeProvider>
     ),
   });
@@ -158,6 +161,27 @@ describe('SideNav', () => {
     const recent = await screen.findByRole('list', { name: 'Recent runs' });
     await within(recent).findByText('feat/express-checkout');
     expect(within(recent).queryByText('checkout e2e')).toBeNull();
+  });
+
+  it('offers focus mode beside the theme, and shows when it is on', async () => {
+    renderAt('/dashboard/now');
+    const toggle = await screen.findByRole('button', { name: 'Focus mode' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    toggle.click();
+    await waitFor(() => expect(document.documentElement.dataset['focus']).toBe('on'));
+    expect(screen.getByRole('button', { name: 'Focus mode' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    screen.getByRole('button', { name: 'Focus mode' }).click();
+    await waitFor(() => expect(document.documentElement.dataset['focus']).toBe('off'));
+    localStorage.clear();
+  });
+
+  it('lets focus mode put the recent runs away', async () => {
+    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => [makeRun()]) }));
+    const recent = await screen.findByRole('list', { name: 'Recent runs' });
+    expect(recent.closest('[data-chrome="secondary"]')).not.toBeNull();
   });
 
   it('says nothing has run yet, rather than drawing an empty box', async () => {

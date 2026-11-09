@@ -141,7 +141,7 @@ export function AttentionSection({
             {...(sources.retryRun === undefined ? {} : { retryRun: sources.retryRun })}
           />
           {focus.next.length > 0 ? (
-            <ol aria-label="Then" className="flex flex-col">
+            <ol aria-label="Then" data-chrome="secondary" className="flex flex-col">
               {focus.next.map((item) => (
                 <NextRow
                   key={item.id}
@@ -153,7 +153,11 @@ export function AttentionSection({
             </ol>
           ) : null}
           {focus.hidden.length + (state.total - state.items.length) > 0 ? (
-            <details data-testid="focus-rest" className="group text-sm text-fg-muted">
+            <details
+              data-testid="focus-rest"
+              data-chrome="secondary"
+              className="group text-sm text-fg-muted"
+            >
               <summary className="cursor-pointer select-none rounded-md py-1 hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
                 {String(focus.hidden.length + (state.total - state.items.length))} more when you are
                 ready

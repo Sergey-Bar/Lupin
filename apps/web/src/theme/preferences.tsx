@@ -3,8 +3,9 @@ import React from 'react';
 /**
  * Three ways to make the dashboard quieter, kept beside the theme and persisted per browser.
  *
- *  - **Focus** hides the secondary navigation (section tabs, bottom tab bar), so a page is
- *    the page and nothing else. The command palette and the shortcuts still go everywhere.
+ *  - **Focus** puts away everything but each page's one thing to do (recent runs, the "then"
+ *    list, folded extras, the numbers, the setup line) and centres what is left. The sidebar's
+ *    focus button, the command palette and Settings all toggle it.
  *  - **Density** compact scales the whole rem-based layout down by one step.
  *  - **Motion** reduced sets the one motion multiplier `motion.css` reads to its floor. It
  *    starts from the operating system's `prefers-reduced-motion`, and a person can override it.
