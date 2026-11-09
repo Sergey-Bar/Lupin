@@ -40,6 +40,15 @@ describe('the OpenCode palettes', () => {
     expect(PALETTE_OPTIONS[0].value).toBe('lupin');
   });
 
+  it('draws card edges a step off the surface, so panels read as blocks, not outlines', () => {
+    const css = readFileSync(path.join(here, 'palettes.css'), 'utf8').replace(/\s+/gu, ' ');
+    for (const block of css.split('[data-palette=').slice(1)) {
+      const border = /--lupin-border: (oklch\([^)]+\))/u.exec(block)?.[1];
+      const muted = /--lupin-surface-muted: (oklch\([^)]+\))/u.exec(block)?.[1];
+      expect(border).toBe(muted);
+    }
+  });
+
   for (const [name, p] of Object.entries(PALETTES)) {
     const [sunken, surface, raised, muted, fg, fgMuted, , borderStrong, accent, ...status] = p;
     it(`${name}: text clears 4.5:1 on every plane step`, () => {

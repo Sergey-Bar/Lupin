@@ -244,7 +244,10 @@ const KEYS = [
 
 export function render() {
   const blocks = Object.entries(PALETTES).map(([name, hexes]) => {
-    const lines = hexes.map((hex, i) => `  --lupin-${KEYS[i]}: ${toOklch(hex)};`);
+    // Card edges sit one step off the surface (the muted plane), so panels read as quiet blocks
+    // rather than outlined boxes. The control edge (border-strong) keeps its 3:1.
+    const values = hexes.map((hex, i) => (KEYS[i] === 'border' ? hexes[3] : hex));
+    const lines = values.map((hex, i) => `  --lupin-${KEYS[i]}: ${toOklch(hex)};`);
     lines.push(
       `  --lupin-on-fill: ${toOklch(hexes[0])};`,
       `  --lupin-chart-grid: ${toOklch(hexes[3])};`,

@@ -5,7 +5,10 @@ import React from 'react';
 describe('ThemeProvider', () => {
   beforeEach(() => {
     localStorage.clear();
+    // These cases are the Lupin theme's light/dark mechanics, so the Lupin palette is chosen.
+    localStorage.setItem('lupin-palette', 'lupin');
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('data-palette');
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -261,7 +264,18 @@ describe('the OpenCode palettes', () => {
     document.documentElement.removeAttribute('data-theme');
   });
 
-  it('starts on the Lupin theme, with no palette attribute', () => {
+  it('starts on the OpenCode palette, on the dark plane', () => {
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    expect(document.documentElement.getAttribute('data-palette')).toBe('opencode');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('returns to the Lupin theme, light or dark, when Lupin is chosen', () => {
+    localStorage.setItem('lupin-palette', 'lupin');
     render(
       <ThemeProvider defaultTheme="light">
         <Picker />
@@ -290,7 +304,7 @@ describe('the OpenCode palettes', () => {
         <Picker />
       </ThemeProvider>,
     );
-    expect(screen.getByRole('button')).toHaveAttribute('data-palette-now', 'lupin');
-    expect(document.documentElement.hasAttribute('data-palette')).toBe(false);
+    expect(screen.getByRole('button')).toHaveAttribute('data-palette-now', 'opencode');
+    expect(document.documentElement.getAttribute('data-palette')).toBe('opencode');
   });
 });

@@ -14,7 +14,7 @@
   --lupin-surface-muted: oklch(29.45% 0.0073 17.58);
   --lupin-fg: oklch(99.18% 0.0011 17.18);
   --lupin-fg-muted: oklch(76.53% 0.0068 17.31);
-  --lupin-border: oklch(31.55% 0.0087 17.62);
+  --lupin-border: oklch(29.45% 0.0073 17.58);
   --lupin-border-strong: oklch(55.93% 0.0099 17.45);
   --lupin-accent: oklch(82.12% 0.1045 53.88);
   --lupin-success: oklch(80.77% 0.134 148.56);
@@ -34,7 +34,7 @@
   --lupin-surface-muted: oklch(28.19% 0.0355 274.75);
   --lupin-fg: oklch(84.56% 0.0611 274.76);
   --lupin-fg-muted: oklch(76.66% 0.0537 275.49);
-  --lupin-border: oklch(30.56% 0.0369 273.23);
+  --lupin-border: oklch(28.19% 0.0355 274.75);
   --lupin-border-strong: oklch(55.61% 0.0691 275.98);
   --lupin-accent: oklch(71.9% 0.1322 264.2);
   --lupin-success: oklch(79.53% 0.1395 130.14);
@@ -94,7 +94,7 @@
   --lupin-surface-muted: oklch(41.57% 0.0324 264.13);
   --lupin-fg: oklch(95.13% 0.0074 260.73);
   --lupin-fg-muted: oklch(89.93% 0.0164 262.75);
-  --lupin-border: oklch(37.92% 0.029 266.47);
+  --lupin-border: oklch(41.57% 0.0324 264.13);
   --lupin-border-strong: oklch(62.25% 0.0436 264.87);
   --lupin-accent: oklch(77.46% 0.0622 217.47);
   --lupin-success: oklch(76.83% 0.0749 131.06);
@@ -134,7 +134,7 @@
   --lupin-surface-muted: oklch(28.75% 0.0435 289.09);
   --lupin-fg: oklch(90.88% 0.0299 289.97);
   --lupin-fg-muted: oklch(73.47% 0.0445 289.69);
-  --lupin-border: oklch(27.08% 0.0423 289.23);
+  --lupin-border: oklch(28.75% 0.0435 289.09);
   --lupin-border-strong: oklch(53.83% 0.0435 291.41);
   --lupin-accent: oklch(77.6% 0.0945 304.99);
   --lupin-success: oklch(82.19% 0.0543 209.56);
@@ -154,7 +154,7 @@
   --lupin-surface-muted: oklch(33.96% 0.0279 284.82);
   --lupin-fg: oklch(87.55% 0.0391 99.09);
   --lupin-fg-muted: oklch(80.31% 0.0608 99.15);
-  --lupin-border: oklch(29.07% 0.0236 284.84);
+  --lupin-border: oklch(33.96% 0.0279 284.82);
   --lupin-border-strong: oklch(54.7% 0.0122 100.99);
   --lupin-accent: oklch(69.37% 0.0951 263.66);
   --lupin-success: oklch(74.77% 0.1125 128.36);
@@ -214,7 +214,7 @@
   --lupin-surface-muted: oklch(23.89% 0.0207 264.07);
   --lupin-fg: oklch(90.88% 0.0246 94.08);
   --lupin-fg-muted: oklch(76.09% 0.0061 84.57);
-  --lupin-border: oklch(26.09% 0.0238 267.11);
+  --lupin-border: oklch(23.89% 0.0207 264.07);
   --lupin-border-strong: oklch(50.87% 0.0234 250.58);
   --lupin-accent: oklch(82.38% 0.1408 70.17);
   --lupin-success: oklch(82.51% 0.1745 125.84);
@@ -234,7 +234,7 @@
   --lupin-surface-muted: oklch(22.64% 0 0);
   --lupin-fg: oklch(100% 0 0);
   --lupin-fg-muted: oklch(75.72% 0 0);
-  --lupin-border: oklch(25.62% 0 0);
+  --lupin-border: oklch(22.64% 0 0);
   --lupin-border-strong: oklch(52.43% 0 0);
   --lupin-accent: oklch(86.89% 0.0877 60.68);
   --lupin-success: oklch(93% 0.1035 175.07);

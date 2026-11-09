@@ -40,6 +40,9 @@ describe('the theme boot script', () => {
   beforeEach(() => {
     document.documentElement.removeAttribute('data-theme');
     localStorage.clear();
+    // The light/dark cases below are the Lupin theme's; a palette would force dark.
+    localStorage.setItem('lupin-palette', 'lupin');
+    document.documentElement.removeAttribute('data-palette');
     vi.unstubAllGlobals();
     systemPrefers(false);
   });
@@ -49,6 +52,12 @@ describe('the theme boot script', () => {
     const entry = html.indexOf('<script type="module"');
     expect(script).toBeGreaterThan(-1);
     expect(entry).toBeGreaterThan(script);
+  });
+
+  it('applies the default OpenCode palette on the dark plane when nothing is stored', () => {
+    localStorage.clear();
+    expect(run()).toBe('dark');
+    expect(document.documentElement.getAttribute('data-palette')).toBe('opencode');
   });
 
   it('applies a stored light theme', () => {

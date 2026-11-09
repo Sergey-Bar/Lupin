@@ -22,6 +22,9 @@ export interface ThemeProviderState {
 
 export const PALETTE_STORAGE_KEY = 'lupin-palette';
 
+/** The warm OpenCode palette is the default look; `lupin` (light or dark) stays one choice away. */
+export const DEFAULT_PALETTE: Palette = 'opencode';
+
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
 export function ThemeProvider({
@@ -41,10 +44,10 @@ export function ThemeProvider({
   });
 
   const [palette, setPaletteState] = useState<Palette>(() => {
-    if (typeof window === 'undefined') return 'lupin';
+    if (typeof window === 'undefined') return DEFAULT_PALETTE;
     // Validated like the theme: an unknown stored name would match no stylesheet.
     const stored = localStorage.getItem(PALETTE_STORAGE_KEY);
-    return isPalette(stored) ? stored : 'lupin';
+    return isPalette(stored) ? stored : DEFAULT_PALETTE;
   });
 
   useEffect(() => {
