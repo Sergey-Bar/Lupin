@@ -21,7 +21,9 @@
   --site-on-accent: var(--lupin-on-fill);
   --site-sans: var(--lupin-font-sans);
   --site-mono: var(--lupin-font-mono);
-  --site-width: 1248px;
+  /* Docs need room for sidebar, text and outline; the landing page centres within it. */
+  --site-width: 1440px;
+  --site-home-width: 1248px;
   --site-radius: 8px;
   --site-space: 8px;
 }
@@ -100,7 +102,7 @@ body {
   border-radius: 8px !important;
 }
 .lupin-home {
-  max-width: var(--site-width);
+  max-width: var(--site-home-width);
   margin-inline: auto;
   padding-inline: 32px;
 }

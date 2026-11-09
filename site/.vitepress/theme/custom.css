@@ -206,7 +206,8 @@ html:not([data-theme='light']) {
 }
 
 .VPDoc .content-container {
-  max-width: 48rem;
+  /* About 80 characters of prose: wide enough to breathe, narrow enough to read. */
+  max-width: 54rem;
 }
 
 .VPDoc:has(.story) .content-container {
@@ -216,7 +217,7 @@ html:not([data-theme='light']) {
 .VPDoc:has(.story) .vp-doc > p,
 .VPDoc:has(.story) .vp-doc > ul,
 .VPDoc:has(.story) .vp-doc > ol {
-  max-width: 48rem;
+  max-width: 54rem;
 }
 
 .vp-doc p,
@@ -522,4 +523,59 @@ html:not([data-theme='light']) {
   .VPNavBar .wrapper {
     padding-inline: 12px;
   }
+}
+
+/* Breathing room on documentation pages: wider gutters and more space between blocks. */
+@media (min-width: 960px) {
+  .VPDoc {
+    padding-block: 56px 112px !important;
+  }
+  /* VitePress caps a page with an outline at 688px; this is the rule that made docs narrow. */
+  .VPDoc.has-aside .content-container,
+  .VPDoc .content-container {
+    max-width: 54rem !important;
+  }
+  .VPDoc .content {
+    max-width: none !important;
+  }
+  .VPDoc .container {
+    gap: 64px;
+  }
+}
+@media (min-width: 1280px) {
+  .VPDoc {
+    padding-inline: 40px !important;
+  }
+  .VPDoc .content {
+    padding-inline: 24px 48px !important;
+  }
+  /* The outline is a list of short links; 224px is enough, and the text gets the rest. */
+  .VPDoc .aside {
+    max-width: 224px !important;
+    padding-inline-start: 24px !important;
+  }
+}
+.vp-doc h2 {
+  margin-top: 4.5rem;
+  padding-top: 2rem;
+}
+.vp-doc h3 {
+  margin-top: 2.5rem;
+}
+.vp-doc p,
+.vp-doc ul,
+.vp-doc ol {
+  margin-block: 1.1rem;
+}
+.vp-doc pre,
+.vp-doc [class*='language-'],
+.vp-doc table,
+.vp-doc .custom-block {
+  margin-block: 1.75rem !important;
+}
+.VPSidebar .group + .group {
+  padding-top: 18px !important;
+}
+.VPSidebarItem .text {
+  line-height: 1.7 !important;
 }
