@@ -178,7 +178,10 @@ function DashboardBody({
             />
           ) : undefined
         }
-        items={healthItems(summary)}
+        items={healthItems(
+          summary,
+          readiness.status === 'ready' ? heroVerdict(readiness.value).reason : undefined,
+        )}
         navigate={navigate}
         clear={`${project.name} is healthy.`}
         actions={

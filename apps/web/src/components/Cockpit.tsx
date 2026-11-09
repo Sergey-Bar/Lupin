@@ -504,7 +504,8 @@ function NowHero({
       eyebrow="Release readiness"
     >
       <div>
-        <Button className="min-h-11" onClick={() => navigate(hero.action.to)}>
+        {/* Secondary: the focus card below owns the one primary fill on the page. */}
+        <Button variant="secondary" className="min-h-11" onClick={() => navigate(hero.action.to)}>
           {hero.action.label}
         </Button>
       </div>

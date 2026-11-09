@@ -652,6 +652,9 @@ describe('the hero verdict', () => {
     const action = within(hero).getByRole('button', { name: 'See what is blocking' });
     action.click();
     expect(navigate).toHaveBeenCalledWith('/dashboard');
+    // The focus card below owns the one primary fill; the hero's way in is an edge.
+    expect(action).toHaveClass('border-border-strong');
+    expect(action).not.toHaveClass('bg-primary');
     // It comes before the focus list, so it is the first thing read.
     const focus = await screen.findByTestId('now-page');
     expect(hero.compareDocumentPosition(focus) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

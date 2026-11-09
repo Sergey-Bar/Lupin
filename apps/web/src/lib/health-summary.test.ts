@@ -269,4 +269,12 @@ describe('healthItems', () => {
       'gap-unit:api',
     ]);
   });
+
+  it('drops the finding the hero already states, so the page does not say it twice', () => {
+    const summary = { wrong: [gap('unit:api')] } as never;
+    const all = healthItems(summary);
+    const stated = (all[0] as { title: string }).title;
+    expect(healthItems(summary, stated)).toEqual([]);
+    expect(healthItems(summary, 'something else')).toHaveLength(1);
+  });
 });

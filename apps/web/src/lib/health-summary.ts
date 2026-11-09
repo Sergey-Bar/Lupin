@@ -184,8 +184,24 @@ export function findingPath(action: FindingAction): string {
     : action.to;
 }
 
-/** What the Health area asks of a reader: every "what's wrong" finding, worst first. */
-export function healthItems(summary: HealthSummary): Array<{
+/**
+ * What the Health area asks of a reader: every "what's wrong" finding, worst first. `stated` is
+ * the line the hero already says; the item that says the same is dropped, not repeated.
+ */
+export function healthItems(
+  summary: HealthSummary,
+  stated?: string,
+): Array<{
+  id: string;
+  title: string;
+  detail: string;
+  tone: 'bad' | 'warn' | 'info';
+  action: { label: string; to: string };
+}> {
+  return allHealthItems(summary).filter((item) => item.title !== stated);
+}
+
+function allHealthItems(summary: HealthSummary): Array<{
   id: string;
   title: string;
   detail: string;
