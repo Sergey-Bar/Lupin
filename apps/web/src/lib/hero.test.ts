@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { heroVerdict } from './hero.js';
+import { heroVerdict, runHero } from './hero.js';
 import type { ReleaseReadinessCard } from './qa.js';
 
 const card = (
@@ -49,5 +49,50 @@ describe('heroVerdict', () => {
 
   it('never claims ready when nothing was measured', () => {
     expect(heroVerdict(null)).toMatchObject({ verdict: 'unknown', word: 'Not measured' });
+  });
+});
+
+describe('runHero', () => {
+  const run = (overrides: Record<string, unknown>) =>
+    ({
+      phase: 'complete',
+      outcome: 'passed',
+      tests: [],
+      summary: { total: 10, passed: 10, failed: 0 },
+      ...overrides,
+    }) as never;
+
+  it('counts a running run live, never as a verdict', () => {
+    expect(
+      runHero(
+        run({ phase: 'running', outcome: null, summary: { total: 10, passed: 3, failed: 1 } }),
+      ),
+    ).toEqual({
+      verdict: 'unknown',
+      word: 'Running',
+      reason: '4 of 10 tests reported · 1 failing so far',
+      failed: 1,
+    });
+  });
+
+  it('settles into the verdict when the run ends', () => {
+    expect(runHero(run({}))).toMatchObject({
+      verdict: 'go',
+      word: 'Passed',
+      reason: 'All 10 tests passed.',
+    });
+    expect(
+      runHero(
+        run({
+          outcome: 'failed',
+          summary: { total: 10, passed: 8, failed: 2 },
+          tests: [
+            { id: 'a', status: 'failed' },
+            { id: 'b', status: 'timed_out' },
+            { id: 'c', status: 'passed' },
+          ],
+        }),
+      ),
+    ).toEqual({ verdict: 'no-go', word: 'Failed', reason: '2 of 10 tests failed.', failed: 2 });
   });
 });

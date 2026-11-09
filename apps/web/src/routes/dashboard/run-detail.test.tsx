@@ -652,3 +652,38 @@ describe('RunDetailPage from the cockpit', () => {
     expect(screen.queryByTestId('score-impact')).toBeNull();
   });
 });
+
+describe('the live run hero', () => {
+  it('leads with the verdict and retries only the failed tests in one click', async () => {
+    const failed = makeRun({
+      id: 'red',
+      phase: 'complete',
+      outcome: 'failed',
+      summary: { ...makeRun().summary, total: 3, passed: 1, failed: 2 },
+      tests: [
+        { id: 't1', title: 'pays', status: 'failed', attempts: [], artifactIds: [], metadata: {} },
+        { id: 't2', title: 'ships', status: 'failed', attempts: [], artifactIds: [], metadata: {} },
+      ],
+    });
+    const retryRun = vi.fn().mockResolvedValue(makeRun({ id: 'again' }));
+    render(<RunDetailPage id="red" api={detailApi(failed, { retryRun })} />);
+    const hero = await screen.findByRole('region', { name: 'Failed' });
+    expect(hero).toHaveTextContent('2 of 3 tests failed.');
+    fireEvent.click(within(hero).getByRole('button', { name: 'Retry 2 failed tests' }));
+    await waitFor(() =>
+      expect(retryRun).toHaveBeenCalledWith('red', undefined, { scope: 'failed' }),
+    );
+  });
+
+  it('counts a running run live, with no verdict yet', async () => {
+    const running = makeRun({
+      id: 'live',
+      phase: 'running',
+      outcome: null,
+      summary: { ...makeRun().summary, total: 10, passed: 3, failed: 1 },
+    });
+    render(<RunDetailPage id="live" api={detailApi(running)} />);
+    const hero = await screen.findByRole('region', { name: 'Running' });
+    expect(hero).toHaveTextContent('4 of 10 tests reported · 1 failing so far');
+  });
+});

@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Badge, Button, EmptyState, StatusDot, cn } from '@lupin/ui';
+import { Badge, Button, EmptyState, Hero, StatusDot, cn } from '@lupin/ui';
 import type { CockpitWindow, RunPhase } from '@lupin/shared-contracts';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { useRunDetail } from '../../hooks/useDashboard.js';
+import { runHero } from '../../lib/hero.js';
+import { retryLabel } from '../../lib/attention.js';
 import { isRunActive } from '../../hooks/useRuns.js';
-import { ApiError, getArtifactUrl, type ApiClient, type Run } from '../../lib/api.js';
+import {
+  ApiError,
+  defaultApiClient,
+  getArtifactUrl,
+  type ApiClient,
+  type Run,
+} from '../../lib/api.js';
 import { createCockpitClient, type CockpitClient } from '../../lib/cockpit-client.js';
 import { runTransitionName } from '../../lib/view-transition.js';
 import { formatDate as formatDateWithFallback } from '../../lib/format.js';
@@ -463,6 +471,7 @@ export function RunDetailPage({
         onCancel={() => void performCancel()}
         onRetry={() => void performRetry()}
       />
+      <LiveRunHero run={run} api={api ?? defaultApiClient} onRetried={setRetryTarget} />
       <ActionNotice actionError={actionError} retryTarget={retryTarget} />
       {scoreContext === undefined ? null : (
         <ScoreImpactBanner
@@ -995,5 +1004,47 @@ function ContextItem({
         {value}
       </dd>
     </div>
+  );
+}
+
+/**
+ * The run as one verdict, Tesla-style. While it runs the hero counts what has reported (the
+ * page already takes live events, so the numbers move as results arrive); when it ends it
+ * settles into Passed or Failed, and a failed run offers one click that re-runs only the
+ * tests that broke.
+ */
+function LiveRunHero({
+  run,
+  api,
+  onRetried,
+}: {
+  run: Run;
+  api: ApiClient;
+  onRetried: (id: string) => void;
+}) {
+  const hero = runHero(run);
+  const [busy, setBusy] = useState(false);
+  return (
+    <Hero verdict={hero.verdict} word={hero.word} reason={hero.reason} eyebrow="This run">
+      {hero.verdict === 'no-go' && hero.failed > 0 ? (
+        <div>
+          <Button
+            data-primary="true"
+            aria-keyshortcuts="a"
+            className="min-h-11"
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void api
+                .retryRun(run.id, undefined, { scope: 'failed' })
+                .then((next) => onRetried(next.id))
+                .finally(() => setBusy(false));
+            }}
+          >
+            {busy ? 'Retrying' : retryLabel(hero.failed)}
+          </Button>
+        </div>
+      ) : null}
+    </Hero>
   );
 }
