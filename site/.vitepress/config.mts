@@ -1,6 +1,18 @@
 import { defineConfig } from 'vitepress';
 import { translations, githubUrl } from './locales';
 
+/*
+ * Share metadata. A crawler does not resolve a relative URL, so the preview image is absolute
+ * when `SITE_URL` (the Pages origin, e.g. https://owner.github.io) is set, which the deploy
+ * workflow does. Locally it falls back to a path under the base.
+ */
+const SITE_BASE = process.env.SITE_BASE ?? '/';
+const SITE_URL = process.env.SITE_URL ?? '';
+const SITE_TITLE = 'Lupin: test evidence and release decisions, self-hosted';
+const SITE_DESCRIPTION =
+  'A self-hosted QA control plane for test evidence, quality gates and flaky-test quarantine';
+const OG_IMAGE = `${SITE_URL}${SITE_BASE}og-image.png`;
+
 export default defineConfig({
   title: 'Lupin',
   appearance: false,
@@ -13,10 +25,21 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#FAFAF9', media: '(prefers-color-scheme: light)' }],
     ['meta', { name: 'theme-color', content: '#101114', media: '(prefers-color-scheme: dark)' }],
     ['meta', { property: 'og:site_name', content: 'Lupin' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:title', content: SITE_TITLE }],
+    ['meta', { property: 'og:description', content: SITE_DESCRIPTION }],
+    ['meta', { property: 'og:image', content: OG_IMAGE }],
+    ['meta', { property: 'og:image:width', content: '1200' }],
+    ['meta', { property: 'og:image:height', content: '630' }],
     [
-      'link',
-      { rel: 'icon', type: 'image/svg+xml', href: `${process.env.SITE_BASE ?? '/'}favicon.svg` },
+      'meta',
+      {
+        property: 'og:image:alt',
+        content: 'The Lupin wordmark and the line "Know what broke. Know whether to ship."',
+      },
     ],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${SITE_BASE}favicon.svg` }],
   ],
   locales: Object.fromEntries(
     translations.map((copy) => [
@@ -41,8 +64,7 @@ export default defineConfig({
       },
     ]),
   ),
-  description:
-    'A self-hosted QA control plane for test evidence, quality gates and flaky-test quarantine',
+  description: SITE_DESCRIPTION,
   // Mermaid diagrams on the guide pages are rendered as code blocks; the source is the
   // diagram, and GitHub renders the same block natively.
   // A GitHub project page is served from `/<repo>/`, so the base has to be set or
@@ -52,7 +74,7 @@ export default defineConfig({
   // builds or publishes this package. `SITE_BASE` is the input a deploy workflow
   // will pass, and a build that renders unstyled is the visible failure if it
   // ever forgets to.
-  base: process.env.SITE_BASE ?? '/',
+  base: SITE_BASE,
   // `dist`, not VitePress's default `.vitepress/dist`.
   //
   // Two existing rules then cover the output without being extended: turbo's

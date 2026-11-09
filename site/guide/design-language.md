@@ -58,7 +58,7 @@ violet-filled button on a screen means one of the two is not primary.
 
 Lupin's copy reads like an engineer who has checked the facts:
 
-- **Plain.** "3 tests failed on main" beats "Quality signals need your attention".
+- **Plain.** "checkout.spec failed on main" beats "Quality signals need your attention".
 - **Specific.** Give the count, the name or the time. A sentence without one is usually filler.
 - **No hype.** Avoid words like "seamless", "powerful", "revolutionary" and "AI-powered" when
   they replace a fact.

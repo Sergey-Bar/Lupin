@@ -56,11 +56,17 @@ html[data-theme='dark'] {
 body {
   font-family: var(--site-sans);
 }
+/* The wordmark (design-language "The brand"): Geist semibold, tight tracking, sentence case. */
 .VPNavBarTitle .title {
   font-size: 22px;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.02em;
   text-transform: none;
-  font-weight: 650;
+  font-weight: 600;
+}
+.lupin-wordmark-dot {
+  color: var(--site-accent);
+  font-size: 22px;
+  font-weight: 600;
 }
 .VPNavBarMenuLink {
   font-size: 13px;
@@ -400,7 +406,7 @@ body {
 .lupin-wordmark {
   font-size: 24px;
   font-weight: 600;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.02em;
 }
 .lupin-wordmark span {
   color: var(--site-accent);

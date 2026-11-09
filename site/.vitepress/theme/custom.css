@@ -169,14 +169,8 @@ html:not([data-theme='light']) {
   margin-top: 3.5rem;
 }
 
-/* Keep the documentation readable and give the product a restrained site chrome. */
-.VPNavBarTitle .title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
+/* Keep the documentation readable and give the product a restrained site chrome.
+   The nav title is the wordmark, and lupin.css sets it once. */
 .VPNavBarMenuLink {
   font-size: 0.83rem;
   font-weight: 600;
@@ -495,10 +489,6 @@ html:not([data-theme='light']) {
   margin-inline-start: 0;
 }
 @media (max-width: 480px) {
-  .VPNavBarTitle .title {
-    font-size: 0.75rem;
-    letter-spacing: 0.12em;
-  }
   .VPNavBar .theme-picker,
   .VPNavBar .language-trigger,
   .VPNavBar .VPNavBarSocialLinks .VPSocialLink,
