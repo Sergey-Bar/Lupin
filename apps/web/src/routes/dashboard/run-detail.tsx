@@ -13,6 +13,7 @@ import { formatDuration } from '../../lib/insights.js';
 import { describeGateReason } from '../../lib/gate-reason.js';
 import { statusWord } from '../../lib/status-word.js';
 import { Timestamp } from '../../components/Timestamp.js';
+import { Bdi } from '../../components/Bidi.js';
 import { PageFrame, PageHeader, Panel } from '../../components/kit.js';
 import { Responsive } from '../../components/responsive.js';
 import { ScoreImpactBanner } from '../../components/ScoreImpactBanner.js';
@@ -592,13 +593,20 @@ function RunHeader({
           </span>{' '}
           Runs
         </a>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Run detail</h1>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+          Run <span className="font-mono">{run.id.slice(0, 8)}</span>
+        </h1>
         <div
-          className="mt-1 flex min-w-0 items-center gap-2 text-sm text-fg-muted"
+          className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-muted"
           style={{ viewTransitionName: runTransitionName(run.id) }}
         >
+          {run.branch || run.commit ? (
+            <span data-testid="run-ref" className="truncate font-mono text-fg">
+              <Bdi>{[run.branch, run.commit?.slice(0, 7)].filter(Boolean).join(' · ')}</Bdi>
+            </span>
+          ) : null}
           {run.suite ? <span className="truncate font-mono text-fg">{run.suite}</span> : null}
-          <span data-testid="run-id" className="truncate font-mono">
+          <span data-testid="run-id" className="truncate font-mono text-xs">
             {run.id}
           </span>
         </div>

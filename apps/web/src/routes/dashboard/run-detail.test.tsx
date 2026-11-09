@@ -264,6 +264,26 @@ describe('RunDetailPage', () => {
     },
   );
 
+  it('names the run by its short id and branch, and keeps the full id as secondary text', async () => {
+    render(
+      <RunDetailPage
+        id="069c2b03-7a1a-4310-a407-f24b37123002"
+        api={detailApi(
+          makeRun({
+            id: '069c2b03-7a1a-4310-a407-f24b37123002',
+            branch: 'feat/express-checkout',
+            commit: '7d02b5f',
+          }),
+        )}
+      />,
+    );
+    // Awaited by name: the loading state has its own level-one heading.
+    const heading = await screen.findByRole('heading', { level: 1, name: 'Run 069c2b03' });
+    expect(heading).toBeInTheDocument();
+    expect(screen.getByTestId('run-id')).toHaveTextContent('069c2b03-7a1a-4310-a407-f24b37123002');
+    expect(screen.getByTestId('run-ref')).toHaveTextContent('feat/express-checkout · 7d02b5f');
+  });
+
   it('renders loading state initially', () => {
     const api = detailApi(passedRun, { getRun: vi.fn(() => new Promise<Run>(() => undefined)) });
     render(<RunDetailPage id="run-123" api={api} />);

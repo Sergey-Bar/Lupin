@@ -112,7 +112,7 @@ export const routeManifest = [
   {
     id: 'run-detail',
     path: '/dashboard/runs/:runId',
-    label: 'Run Detail',
+    label: 'Run detail',
     visible: false,
     section: 'runs',
   },
