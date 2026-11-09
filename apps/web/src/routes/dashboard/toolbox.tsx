@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Search,
   Select,
+  ToolLogo,
   cn,
 } from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
@@ -22,7 +23,6 @@ import {
   Segmented,
   usePager,
 } from '../../components/kit.js';
-import { KindIcon } from '../../components/responsive.js';
 import { ProjectGate } from '../../components/ProjectGate.js';
 import { useResource } from '../../hooks/useResource.js';
 import { createQaClient, type QaClient } from '../../lib/qa-client.js';
@@ -339,11 +339,11 @@ function ToolTile({
       >
         <span
           className={cn(
-            'relative flex h-12 w-12 items-center justify-center rounded-lg border bg-surface-raised text-fg transition-transform group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0',
+            'relative flex rounded-lg border bg-surface-raised text-fg transition-transform group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0',
             entry.status === 'recommended' ? 'border-warning' : 'border-border',
           )}
         >
-          <KindIcon kind={entry.capability} size={22} />
+          <ToolLogo name={entry.name} command={entry.setup} size="lg" className="bg-transparent" />
           {dot === null ? null : (
             <span
               aria-hidden="true"
@@ -382,9 +382,12 @@ function ToolDialog({
         <DialogContent>
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-muted">
-                <KindIcon kind={entry.capability} size={22} />
-              </span>
+              <ToolLogo
+                name={entry.name}
+                command={entry.setup}
+                size="lg"
+                className="border border-border"
+              />
               <div className="min-w-0">
                 <DialogTitle>{entry.name}</DialogTitle>
                 <div className="text-xs font-medium text-fg-muted">

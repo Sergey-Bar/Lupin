@@ -248,6 +248,7 @@ catalog:
   fast-check: ^4.10.2
   jsdom: ^31.0.0
   lucide-react: ^1.70.0
+  simple-icons: 16.36.0
   # The read-only MCP server (apps/api/src/mcp): Streamable HTTP and stdio transports.
   # Pinned exactly: it carries its own transitive tree (express, hono, ajv, jose), so a
   # minor bump is a reviewed change rather than one that arrives with an install.

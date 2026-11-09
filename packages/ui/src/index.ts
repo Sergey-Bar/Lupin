@@ -63,6 +63,8 @@ export * from './components/Sparkline/Sparkline.js';
 export * from './components/StatusDot/StatusDot.js';
 // The product's name as type. Lupin has no logo mark; see the header in its file.
 export * from './components/Wordmark/Wordmark.js';
+// A tool's real mark (simple-icons, CC0), monochrome. See the header in its file.
+export * from './components/ToolLogo/ToolLogo.js';
 // The icon list. Exported so an application component can draw a shape without
 // taking a second dependency edge on `lucide-react` to do it — see the header in
 // `icons.ts` for the measured reason that matters here.

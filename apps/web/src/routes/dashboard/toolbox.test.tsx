@@ -6,6 +6,11 @@ import { makeQa, makeScan } from '../../test-utils';
 import type { ToolboxEntry } from '../../lib/qa';
 
 describe('the toolbox', () => {
+  it('draws every tool with its own mark, not a category icon', async () => {
+    render(<ToolboxPage qa={makeQa()} />);
+    const tile = await screen.findByTestId('toolbox-vitest');
+    expect(tile.querySelector('[data-tool-logo]')).toHaveAttribute('data-tool-logo', 'vitest');
+  });
   it('opens on every tool, the recommended ones first and highest priority first', async () => {
     render(<ToolboxPage qa={makeQa()} />);
     await waitFor(() => expect(screen.getByTestId('toolbox-gitleaks')).toBeInTheDocument());
