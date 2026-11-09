@@ -23,7 +23,9 @@ function contrast(a: string, b: string): number {
 
 describe('the OpenCode palettes', () => {
   it('ships the CSS its source generates, so a palette cannot drift from its hex', () => {
-    expect(readFileSync(path.join(here, 'palettes.css'), 'utf8')).toBe(render());
+    // Compared without whitespace: Prettier owns the layout, the generator owns the values.
+    const squash = (css: string) => css.replace(/\s+/gu, '');
+    expect(squash(readFileSync(path.join(here, 'palettes.css'), 'utf8'))).toBe(squash(render()));
   });
 
   it('offers at least the dozen best-known OpenCode themes, OpenCode first', () => {
