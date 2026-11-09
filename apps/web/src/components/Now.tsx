@@ -154,7 +154,8 @@ export function AttentionSection({
   const focus = focusOf(forPersona(persona, state.items));
   const fresh = state.items.filter((item) => isNew(item, lastVisit)).length;
   // An empty marker, so the page still says it has loaded; nothing is drawn or announced.
-  if (underVerdict && focus.first === undefined) return <div data-testid="now-page" />;
+  if (underVerdict && focus.first === undefined)
+    return <div data-testid="now-page" className="hidden" />;
   return (
     <section
       aria-labelledby="focus-sentence"
