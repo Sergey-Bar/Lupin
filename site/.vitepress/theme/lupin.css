@@ -62,6 +62,8 @@ body {
   letter-spacing: -0.02em;
   text-transform: none;
   font-weight: 600;
+  /* The full stop follows the name in every locale; RTL would draw it first. */
+  direction: ltr;
 }
 .lupin-wordmark-dot {
   color: var(--site-accent);
