@@ -130,14 +130,14 @@ function InsightsBody({
         details={
           <div data-testid="insights-page" className="flex flex-col gap-4">
             {trend.status === 'ready' ? (
-              <Panel title={`Flaky results per day · last ${days} days`} data-testid="flaky-trend">
+              <Panel title={`Failed results per day · last ${days} days`} data-testid="flaky-trend">
                 <DailyBars
                   days={trend.value.buckets.map((bucket) => ({
                     date: bucket.date,
-                    value: bucket.flaky,
+                    value: bucket.failed,
                   }))}
-                  label="Flaky results per day"
-                  tone="text-chart-flaky"
+                  label="Failed results per day"
+                  tone="text-chart-fail"
                 />
               </Panel>
             ) : null}

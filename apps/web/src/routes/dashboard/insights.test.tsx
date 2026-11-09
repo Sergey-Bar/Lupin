@@ -103,17 +103,19 @@ describe('the insights page', () => {
     expect(screen.getByTestId('history-chart')).toBeInTheDocument();
   });
 
-  it('charts the flaky results day by day, so a reader sees whether flakiness is growing', async () => {
+  it('charts failures day by day, so a reader sees whether instability is growing', async () => {
     const trend = makeTrend();
     renderInsights(
       makeQa({
         getTrend: vi.fn(async () => ({
           ...trend,
-          buckets: trend.buckets.map((bucket, index) => ({ ...bucket, flaky: index })),
+          buckets: trend.buckets.map((bucket, index) => ({ ...bucket, failed: index })),
         })),
       }),
     );
-    expect(await screen.findByRole('table', { name: 'Flaky results per day' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('table', { name: 'Failed results per day' }),
+    ).toBeInTheDocument();
   });
 
   it('says what each empty panel is waiting for', async () => {
