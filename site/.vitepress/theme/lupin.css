@@ -112,10 +112,11 @@ body {
   font-weight: 550;
 }
 .lupin-hero {
-  padding-block: 100px 72px;
-  max-width: 980px;
-  margin-inline: auto;
-  text-align: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 64px;
+  align-items: center;
+  padding-block: 112px 88px;
 }
 .lupin-kicker {
   display: flex;
@@ -127,7 +128,6 @@ body {
   line-height: 1.6;
   margin: 0 0 24px;
 }
-.lupin-hero .lupin-kicker,
 .lupin-closing .lupin-kicker {
   justify-content: center;
 }
@@ -138,18 +138,18 @@ body {
   border-radius: 50%;
 }
 .lupin-hero h1 {
-  font-size: clamp(38px, 5.4vw, 76px);
+  font-size: clamp(38px, 4.4vw, 68px);
   line-height: 1.07;
   letter-spacing: -0.055em;
   margin: 0;
   text-wrap: balance;
 }
 .lupin-hero h1 span {
-  color: var(--site-accent);
+  color: var(--site-muted);
 }
 .lupin-lead {
-  max-width: 620px;
-  margin: 28px auto 0;
+  max-width: 560px;
+  margin: 28px 0 0;
   color: var(--site-muted);
   font-size: 18px;
   line-height: 1.7;
@@ -163,7 +163,6 @@ body {
   gap: 12px;
   margin-block-start: 28px;
 }
-.lupin-hero .lupin-actions,
 .lupin-closing .lupin-actions {
   justify-content: center;
 }
@@ -237,23 +236,6 @@ body {
   color: var(--site-muted);
   line-height: 1.7;
   margin-block-start: 12px;
-}
-.lupin-showcase-notes {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 32px;
-  padding-block: 32px 0;
-}
-.lupin-showcase-notes p {
-  font-size: 14px;
-  color: var(--site-muted);
-  line-height: 1.7;
-}
-.lupin-showcase-notes strong {
-  display: block;
-  color: var(--site-text);
-  font-weight: 550;
-  margin-block-end: 6px;
 }
 .lupin-section {
   padding-block: 96px;
@@ -347,46 +329,16 @@ body {
   line-height: 1.7;
   display: block;
 }
-.lupin-install,
 .lupin-open {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 80px;
   align-items: center;
 }
-.lupin-install-panel {
-  background: var(--site-surface);
-  padding: 32px;
-  border: 1px solid var(--site-border);
-  border-radius: 8px;
-}
-.lupin-install-panel > p:first-child {
-  font-size: 13px;
-  margin: 0 0 24px;
-}
-.lupin-install-panel dl {
-  margin: 0;
-}
-.lupin-install-panel dl > div {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 12px;
-  padding-block: 20px;
-  border-block-start: 1px solid var(--site-border);
-}
-.lupin-install-panel dt {
-  font-size: 13px;
-  color: var(--site-muted);
-}
-.lupin-install-panel code {
-  font: 14px var(--site-mono);
-  color: var(--site-text);
-}
-.lupin-install-panel .lupin-technical-note {
+.lupin-technical-note {
   font-size: 12px;
   line-height: 1.8;
-  margin-block: 16px 0;
+  color: var(--site-muted);
 }
 .lupin-technical-note code {
   font-size: inherit;
@@ -445,7 +397,13 @@ body {
   border-radius: 8px;
 }
 @media (max-width: 960px) {
-  .lupin-install,
+  .lupin-hero {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  .lupin-shots {
+    grid-template-columns: 1fr;
+  }
   .lupin-open {
     gap: 40px;
   }
@@ -480,7 +438,6 @@ body {
   }
   .lupin-steps,
   .lupin-capabilities,
-  .lupin-install,
   .lupin-open {
     grid-template-columns: 1fr;
   }
@@ -489,10 +446,6 @@ body {
   }
   .lupin-section-heading {
     margin-block-end: 32px;
-  }
-  .lupin-showcase-notes {
-    grid-template-columns: 1fr;
-    gap: 20px;
   }
   .lupin-section-line {
     align-items: start;
@@ -505,8 +458,15 @@ body {
   .lupin-closing {
     padding-block: 72px;
   }
-  .lupin-install-panel {
-    padding: 24px;
+  .lupin-quickstart li {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .lupin-decision li {
+    grid-template-columns: auto 1fr auto;
+  }
+  .lupin-decision-detail {
+    display: none;
   }
   .lupin-footer {
     padding-inline: 24px;
@@ -524,6 +484,248 @@ body {
     gap: 0;
   }
 }
+/* home: the hero's release decision. A reading, so it is a surface a step above the page. */
+.lupin-decision {
+  margin: 0;
+  background: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 0 var(--lupin-border),
+    0 24px 48px -32px color-mix(in oklab, var(--lupin-fg) 30%, transparent);
+  overflow: hidden;
+}
+.lupin-decision header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-block-end: 1px solid var(--site-border);
+}
+.lupin-decision header strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.lupin-mono {
+  font: 12px var(--site-mono);
+  color: var(--site-muted);
+}
+.lupin-verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.lupin-verdict[data-tone='bad'] {
+  color: var(--lupin-danger);
+  background: color-mix(in oklab, var(--lupin-danger) 12%, transparent);
+}
+.lupin-decision ul {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+}
+.lupin-decision li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 0.9fr) minmax(0, 1.2fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  font-size: 14px;
+}
+.lupin-decision li + li {
+  border-block-start: 1px solid color-mix(in oklab, var(--lupin-border) 60%, transparent);
+}
+.lupin-decision-domain {
+  font-weight: 550;
+}
+.lupin-decision-detail {
+  color: var(--site-muted);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lupin-decision-word {
+  font-size: 13px;
+  font-weight: 550;
+  justify-self: end;
+}
+.lupin-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lupin-fg-muted);
+}
+.lupin-dot[data-tone='good'] {
+  background: var(--lupin-success);
+}
+.lupin-dot[data-tone='warn'] {
+  background: var(--lupin-warning);
+}
+.lupin-dot[data-tone='bad'] {
+  background: var(--lupin-danger);
+}
+/* Hollow, so "not measured" never reads as a fourth verdict colour (the StatusDot rule). */
+.lupin-dot[data-tone='unknown'] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--lupin-fg-muted);
+}
+.lupin-decision-word[data-tone='good'] {
+  color: var(--lupin-success);
+}
+.lupin-decision-word[data-tone='warn'] {
+  color: var(--lupin-warning);
+}
+.lupin-decision-word[data-tone='bad'] {
+  color: var(--lupin-danger);
+}
+.lupin-decision-word[data-tone='unknown'] {
+  color: var(--site-muted);
+}
+.lupin-decision figcaption {
+  padding: 14px 20px;
+  border-block-start: 1px solid var(--site-border);
+  background: var(--lupin-surface-muted);
+  font: 12px var(--site-mono);
+  color: var(--site-muted);
+}
+
+/* home: product screenshots in a quiet window frame. */
+.lupin-shots {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.lupin-frame {
+  margin: 0;
+}
+.lupin-frame-bar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--lupin-surface-muted);
+  border: 1px solid var(--site-border);
+  border-block-end: 0;
+  border-start-start-radius: 10px;
+  border-start-end-radius: 10px;
+}
+.lupin-frame-bar span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lupin-border-strong);
+}
+.lupin-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--site-border);
+  border-end-start-radius: 10px;
+  border-end-end-radius: 10px;
+}
+.lupin-frame figcaption {
+  font-size: 13px;
+  color: var(--site-muted);
+  margin-block-start: 12px;
+}
+
+/* home: quick start. The commands are evidence, so they are mono on the surface step. */
+.lupin-quickstart {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0;
+  border-block-start: 1px solid var(--site-border);
+}
+.lupin-quickstart li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 24px;
+  padding-block: 28px;
+  border-block-end: 1px solid var(--site-border);
+}
+.lupin-quickstart h3 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.lupin-quickstart h3 a {
+  color: var(--site-text) !important;
+}
+.lupin-quickstart pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  background: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: 8px;
+}
+.lupin-quickstart code {
+  font: 13px/1.6 var(--site-mono);
+  /* A command is copied, so --flag must read as two hyphens, not a ligature dash. */
+  font-variant-ligatures: none;
+  color: var(--site-text);
+}
+.lupin-quickstart p {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--site-muted);
+}
+.lupin-closing .lupin-wordmark-dot {
+  font-size: inherit;
+}
+
+/* home: motion */
+/*
+ * One arrival for the hero, staggered so the eye reads it in order: the line, the claim, the
+ * decision. Token-timed (150ms, the calm arrive curve, a 4px rise from `lupin-enter`), and gone
+ * under reduced motion. The stagger is a multiple of a duration token, never a literal.
+ */
+.lupin-arrive {
+  animation: lupin-enter var(--lupin-duration-150) var(--lupin-ease-arrive) both;
+}
+.lupin-hero-copy > .lupin-arrive:nth-child(2) {
+  animation-delay: var(--lupin-duration-75);
+}
+.lupin-hero-copy > .lupin-arrive:nth-child(3) {
+  animation-delay: var(--lupin-duration-150);
+}
+.lupin-hero-copy > .lupin-arrive:nth-child(4) {
+  animation-delay: var(--lupin-duration-200);
+}
+.lupin-hero-copy > .lupin-arrive:nth-child(5) {
+  animation-delay: var(--lupin-duration-200);
+}
+.lupin-decision.lupin-arrive {
+  animation-delay: var(--lupin-duration-300);
+}
+.lupin-capabilities article,
+.lupin-quickstart pre {
+  transition: border-color var(--lupin-duration-100) var(--lupin-ease-out);
+}
+.lupin-capabilities article:hover {
+  border-block-start-color: var(--site-accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lupin-arrive {
+    animation: none;
+  }
+  .lupin-capabilities article,
+  .lupin-quickstart pre {
+    transition: none;
+  }
+}
+/* home: motion end */
+
 /* Wide technical tables scroll locally instead of widening the document. */
 .vp-doc table {
   display: block;
