@@ -406,6 +406,20 @@ describe('AttentionSection, as one focus', () => {
     expect(screen.queryByTestId('focus-first')).toBeNull();
   });
 
+  it('stays silent when empty under a verdict, so it never says "all clear" beside a Caution', async () => {
+    render(
+      <AttentionSection
+        sources={sources({ runs: vi.fn(async () => []) })}
+        navigate={vi.fn()}
+        now={() => NOW}
+        underVerdict
+      />,
+    );
+    await waitFor(() => expect(screen.queryByTestId('now-loading')).toBeNull());
+    expect(screen.queryByTestId('now-clear')).toBeNull();
+    expect(screen.queryByText(/Nothing needs you/u)).toBeNull();
+  });
+
   it('offers to act, not just to look: one click retries a failed run and says where it went', async () => {
     const user = userEvent.setup();
     const navigate = vi.fn();

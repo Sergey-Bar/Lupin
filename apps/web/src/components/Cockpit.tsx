@@ -133,6 +133,7 @@ export function CockpitPage({
         <AttentionSection
           sources={sources.attention}
           navigate={navigate}
+          underVerdict={sources.readiness !== undefined}
           {...(now === undefined ? {} : { now })}
         />
         {sources.setup === undefined ? null : <SetupChecklist source={sources.setup} />}

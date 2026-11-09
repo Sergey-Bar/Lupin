@@ -29,7 +29,7 @@ export function heroVerdict(card: ReleaseReadinessCard | null): Hero {
         verdict: 'caution',
         word: 'Caution',
         reason: first('caution') ?? 'A release gate is warning.',
-        action: { label: 'See what is warning', to: '/dashboard' },
+        action: { label: 'Review the warnings', to: '/dashboard' },
       };
     case 'go':
       return {

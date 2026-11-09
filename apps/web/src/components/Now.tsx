@@ -89,10 +89,16 @@ export function AttentionSection({
   sources,
   navigate,
   now = () => new Date(),
+  underVerdict = false,
 }: {
   sources: NowSources;
   navigate: (to: string) => void;
   now?: () => Date;
+  /**
+   * The release verdict sits above and already says the state. With nothing to act on, this
+   * section then draws nothing: "All clear" under a Caution reads as a contradiction.
+   */
+  underVerdict?: boolean;
 }): React.ReactElement {
   const [state, setState] = React.useState<Ready | null>(null);
   const { persona } = usePreferences().preferences;
@@ -147,6 +153,8 @@ export function AttentionSection({
   }
   const focus = focusOf(forPersona(persona, state.items));
   const fresh = state.items.filter((item) => isNew(item, lastVisit)).length;
+  // An empty marker, so the page still says it has loaded; nothing is drawn or announced.
+  if (underVerdict && focus.first === undefined) return <div data-testid="now-page" />;
   return (
     <section
       aria-labelledby="focus-sentence"

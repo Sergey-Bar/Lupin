@@ -35,6 +35,7 @@ describe('heroVerdict', () => {
       verdict: 'caution',
       word: 'Caution',
       reason: 'Flaky at 2%',
+      action: { label: 'Review the warnings' },
     });
   });
 

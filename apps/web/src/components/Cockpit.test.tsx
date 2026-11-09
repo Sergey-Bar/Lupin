@@ -655,9 +655,10 @@ describe('the hero verdict', () => {
     // The focus card below owns the one primary fill; the hero's way in is an edge.
     expect(action).toHaveClass('border-border-strong');
     expect(action).not.toHaveClass('bg-primary');
-    // It comes before the focus list, so it is the first thing read.
-    const focus = await screen.findByTestId('now-page');
-    expect(hero.compareDocumentPosition(focus) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // With nothing to act on, the focus list says nothing under the verdict: no "All clear"
+    // beside a No-go.
+    await waitFor(() => expect(screen.queryByTestId('now-loading')).toBeNull());
+    expect(screen.queryByTestId('now-clear')).toBeNull();
   });
 
   it('draws no hero when the page has no readiness to read', async () => {
