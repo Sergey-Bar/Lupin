@@ -217,6 +217,13 @@ export const ReadinessReasonSchema = z.object({
 });
 export type ReadinessReason = z.infer<typeof ReadinessReasonSchema>;
 
+/**
+ * Below this pass rate a release is a no-go regardless of any threshold: one run in five fails.
+ * Declared here, once, because the evaluator in `@lupin/reporting` decides with it and the web
+ * app draws it on the trend chart; two copies could disagree about where the line is.
+ */
+export const PASS_RATE_FLOOR = 80;
+
 export const ReleaseReadinessCardSchema = z.object({
   projectId: z.string().min(1),
   verdict: ReadinessVerdictSchema,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useRouterState } from '@tanstack/react-router';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import {
   FlaskConical,
   GitBranch,
@@ -23,6 +23,7 @@ import {
   type SectionId,
 } from '../route-manifest.js';
 import { useViewerRole } from '../hooks/useViewerRole.js';
+import { useWheelStep } from '../hooks/useWheelStep.js';
 
 /**
  * The chrome: four sections, three surfaces.
@@ -128,11 +129,34 @@ export function SectionTabs(): React.ReactElement | null {
   const tabs = section === 'settings' ? visibleTabsOf(section, role) : tabsOf(section);
   if (tabs.length === 0) return null;
   const label = SECTIONS.find((entry) => entry.id === section)?.label ?? '';
+  return <WheelTabs tabs={tabs} pageId={page.id} label={label} tabsRef={tabsRef} />;
+}
+
+/** The row itself, split out so the wheel hook is called after the early returns above. */
+function WheelTabs({
+  tabs,
+  pageId,
+  label,
+  tabsRef,
+}: {
+  tabs: ReturnType<typeof tabsOf>;
+  pageId: string;
+  label: string;
+  tabsRef: React.Ref<HTMLUListElement>;
+}): React.ReactElement {
+  const navigate = useNavigate();
+  const onWheel = useWheelStep(
+    tabs.map((tab) => tab.path),
+    tabs.findIndex((tab) => tab.id === pageId),
+    (to) => void navigate({ to }),
+  );
+  const page = { id: pageId };
   return (
     <nav
       data-testid="section-tabs"
       data-chrome="secondary"
       aria-label={`${label} pages`}
+      onWheel={onWheel}
       className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6"
     >
       <ul ref={tabsRef} className="relative flex gap-1">

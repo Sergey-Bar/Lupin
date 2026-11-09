@@ -52,9 +52,12 @@ export function tickIndices(length: number, count: number): number[] {
 
 export function TrendChart({
   buckets,
+  floor,
   'data-testid': testId,
 }: {
   buckets: readonly TrendBucket[];
+  /** The pass rate a release needs, drawn as a labelled line so the gap to it is visible. */
+  floor?: number;
   'data-testid'?: string;
 }): React.ReactElement {
   const [active, setActive] = React.useState<number | null>(null);
@@ -127,6 +130,20 @@ export function TrendChart({
                 );
               })}
             </g>
+            {floor === undefined ? null : (
+              <line
+                data-testid="trend-floor"
+                className="text-warning"
+                x1={0}
+                x2={WIDTH}
+                y1={HEIGHT - (floor / 100) * HEIGHT}
+                y2={HEIGHT - (floor / 100) * HEIGHT}
+                stroke="currentColor"
+                strokeWidth={1.25}
+                strokeDasharray="6 4"
+                vectorEffect="non-scaling-stroke"
+              />
+            )}
             {active === null ? null : (
               <rect
                 data-testid="trend-guide"
@@ -216,6 +233,15 @@ export function TrendChart({
               )}
             </g>
           </svg>
+          {floor === undefined ? null : (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute end-1 -translate-y-full rounded-sm bg-surface px-1 text-xs font-medium tabular-nums text-warning"
+              style={{ top: `${String(100 - floor)}%` }}
+            >
+              {String(floor)}% floor
+            </span>
+          )}
           {/*
             The pointer layer. Hidden from assistive technology because everything it
             reveals is already in the table below the figure.
@@ -242,11 +268,11 @@ export function TrendChart({
               <dl className="m-0 mt-1 grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 tabular-nums">
                 <dt className="text-fg-muted">Runs</dt>
                 <dd className="m-0 text-end">{hovered.runs}</dd>
-                <dt className="text-success">Passed</dt>
+                <dt className="text-chart-pass">Passed</dt>
                 <dd className="m-0 text-end">{hovered.passed}</dd>
-                <dt className="text-danger">Failed</dt>
+                <dt className="text-chart-fail">Failed</dt>
                 <dd className="m-0 text-end">{hovered.failed}</dd>
-                <dt className="text-fg-muted">Flaky</dt>
+                <dt className="text-chart-flaky">Flaky</dt>
                 <dd className="m-0 text-end">{hovered.flaky}</dd>
                 <dt className="text-fg-muted">Pass rate</dt>
                 <dd className="m-0 text-end">{orDash(hovered.passRate, formatPercent)}</dd>

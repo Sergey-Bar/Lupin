@@ -1,10 +1,12 @@
 import React from 'react';
-import { Link, useRouterState } from '@tanstack/react-router';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import {
   FlaskConical,
   Focus,
   GitBranch,
   LayoutGrid,
+  PanelLeftClose,
+  PanelLeftOpen,
   ListChecks,
   Radar,
   Settings,
@@ -25,6 +27,18 @@ function sectionOfId(id: string | undefined): SectionId | undefined {
   return routeManifest.find((route) => route.id === id)?.section;
 }
 import { usePreferences } from '../theme/preferences.js';
+import { useWheelStep } from '../hooks/useWheelStep.js';
+
+/** Whether the sidebar is the icon rail or the full column, kept per browser. */
+export const SIDEBAR_KEY = 'lupin-sidebar';
+
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) !== 'expanded';
+  } catch {
+    return true;
+  }
+}
 
 const FOCUS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus';
@@ -55,36 +69,94 @@ const AREAS = SECTIONS.filter((section) => section.id !== 'settings');
 export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.ReactElement {
   const path = useRouterState({ select: (state) => state.location.pathname });
   const page = routeFor(path);
+  const navigate = useNavigate();
+  // A rail by default: five icons and nothing else beside the work, opened when wanted.
+  const [collapsed, setCollapsed] = React.useState(readCollapsed);
+  const toggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem(SIDEBAR_KEY, next ? 'collapsed' : 'expanded');
+    } catch {
+      // A storage that refuses writes keeps the choice for this page only.
+    }
+  };
+  const current = AREAS.findIndex((section) => sectionOfId(page?.id) === section.id);
+  const onWheel = useWheelStep(
+    AREAS.map((section) => section.path),
+    current,
+    (to) => void navigate({ to }),
+  );
   return (
     <aside
       data-testid="side-nav"
-      className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-e border-border bg-surface lg:flex"
+      data-collapsed={collapsed ? 'true' : 'false'}
+      className={cn(
+        'sticky top-0 hidden h-dvh shrink-0 flex-col border-e border-border bg-surface transition-[width] duration-100 motion-reduce:transition-none lg:flex',
+        collapsed ? 'w-14' : 'w-60',
+      )}
     >
-      <div className="flex h-14 shrink-0 items-center px-5">
-        <Wordmark data-testid="side-wordmark" decorative />
+      <div
+        className={cn(
+          'flex h-14 shrink-0 items-center',
+          collapsed ? 'justify-center' : 'justify-between ps-5 pe-2',
+        )}
+      >
+        {collapsed ? null : <Wordmark data-testid="side-wordmark" decorative />}
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className={cn(
+            'inline-flex h-9 w-9 items-center justify-center rounded-md text-fg-muted transition-colors duration-100 hover:bg-surface-raised hover:text-fg motion-reduce:transition-none',
+            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
+          )}
+        >
+          {collapsed ? (
+            <PanelLeftOpen size={16} aria-hidden="true" />
+          ) : (
+            <PanelLeftClose size={16} aria-hidden="true" />
+          )}
+        </button>
       </div>
-      <div className="px-3 pb-2">
-        <AskButton />
+      <div className={collapsed ? 'flex justify-center pb-2' : 'px-3 pb-2'}>
+        <AskButton compact={collapsed} />
       </div>
-      <nav aria-label="Sidebar" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2">
-        {AREAS.map((section) => (
-          <div key={section.id} className="pt-1">
-            <SideLink
-              to={section.path}
-              active={sectionOfId(page?.id) === section.id}
-              icon={SECTION_ICONS[section.id]}
-            >
-              {section.label}
-            </SideLink>
-          </div>
-        ))}
-        {/* Focus mode puts the recent runs away with the rest of the secondary chrome. */}
-        <div data-chrome="secondary">
-          <RecentRuns api={api} />
+      <nav
+        aria-label="Sidebar"
+        className={cn('min-h-0 flex-1 overflow-y-auto pb-4 pt-2', collapsed ? 'px-2' : 'px-3')}
+      >
+        {/* Turning the wheel over the areas steps to the next or previous one. */}
+        <div onWheel={onWheel}>
+          {AREAS.map((section) => (
+            <div key={section.id} className="pt-1">
+              <SideLink
+                to={section.path}
+                active={sectionOfId(page?.id) === section.id}
+                icon={SECTION_ICONS[section.id]}
+                compact={collapsed}
+              >
+                {section.label}
+              </SideLink>
+            </div>
+          ))}
         </div>
+        {/* Focus mode puts the recent runs away with the rest of the secondary chrome. */}
+        {collapsed ? null : (
+          <div data-chrome="secondary">
+            <RecentRuns api={api} />
+          </div>
+        )}
       </nav>
       {/* Two quiet icons at the bottom, out of the way of the work. The theme lives in Settings. */}
-      <div className="flex shrink-0 items-center justify-between border-t border-border px-3 py-3">
+      <div
+        className={cn(
+          'flex shrink-0 items-center border-t border-border py-3',
+          collapsed ? 'flex-col gap-1 px-1' : 'justify-between px-3',
+        )}
+      >
         <Link
           to="/dashboard/settings"
           aria-label="Settings"
@@ -111,20 +183,25 @@ function SideLink({
   active,
   icon: Icon,
   children,
+  compact = false,
 }: {
   to: string;
   active: boolean;
   icon?: typeof LayoutGrid;
   children: React.ReactNode;
+  /** The rail: the icon alone, the name kept for hover and for a screen reader. */
+  compact?: boolean;
 }): React.ReactElement {
   return (
     <Link
+      {...(compact ? { title: String(children) } : {})}
       to={to}
       // Exact: `/dashboard` is a prefix of every page, and prefix matching marked it current everywhere.
       activeOptions={{ exact: true }}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex min-h-9 items-center gap-2.5 rounded-md px-2 text-sm transition-colors duration-100 motion-reduce:transition-none',
+        compact ? 'justify-center' : 'px-2',
+        'flex min-h-9 items-center gap-2.5 rounded-md text-sm transition-colors duration-100 motion-reduce:transition-none',
         FOCUS,
         active
           ? 'bg-surface-muted font-semibold text-fg'
@@ -132,7 +209,7 @@ function SideLink({
       )}
     >
       {Icon === undefined ? null : <Icon size={16} aria-hidden="true" />}
-      {children}
+      <span className={compact ? 'sr-only' : undefined}>{children}</span>
     </Link>
   );
 }
@@ -142,7 +219,7 @@ function SideLink({
  * the command palette. It sends the same Ctrl+K the palette already listens for, so there is
  * one way in and no second palette state to keep in step.
  */
-function AskButton(): React.ReactElement {
+function AskButton({ compact = false }: { compact?: boolean }): React.ReactElement {
   return (
     <button
       type="button"
@@ -151,14 +228,21 @@ function AskButton(): React.ReactElement {
           new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }),
         )
       }
+      aria-label={compact ? 'Ask Lupin' : undefined}
+      title={compact ? 'Ask Lupin (⌘K)' : undefined}
       className={cn(
-        'flex min-h-10 w-full items-center gap-2.5 rounded-md bg-surface-raised px-3 text-sm font-medium text-fg transition-colors duration-100 hover:bg-surface-muted motion-reduce:transition-none',
+        compact ? 'h-10 w-10 justify-center' : 'w-full px-3',
+        'flex min-h-10 items-center gap-2.5 rounded-md bg-surface-raised text-sm font-medium text-fg transition-colors duration-100 hover:bg-surface-muted motion-reduce:transition-none',
         FOCUS,
       )}
     >
       <Sparkles size={16} aria-hidden="true" className="text-accent" />
-      <span className="flex-1 text-start">Ask Lupin</span>
-      <kbd className="rounded border border-border px-1.5 font-mono text-xs text-fg-muted">⌘K</kbd>
+      {compact ? null : <span className="flex-1 text-start">Ask Lupin</span>}
+      {compact ? null : (
+        <kbd className="rounded border border-border px-1.5 font-mono text-xs text-fg-muted">
+          ⌘K
+        </kbd>
+      )}
     </button>
   );
 }

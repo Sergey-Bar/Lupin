@@ -238,6 +238,12 @@ describe('the dashboard', () => {
     );
   });
 
+  it('draws the 80% pass-rate floor on the trend', async () => {
+    renderDashboard(qaWithScore());
+    const chart = await screen.findByTestId('trend-chart');
+    expect(within(chart).getByTestId('trend-floor')).toBeInTheDocument();
+  });
+
   it('compares before and now row by row, and tallies what improved', async () => {
     renderDashboard(qaWithScore());
     const table = await screen.findByTestId('dashboard-before-now');

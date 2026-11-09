@@ -1,7 +1,12 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
 import { Sparkline, cn } from '@lupin/ui';
-import { SCORE_CATEGORIES, SCORE_SURFACES, type ScoreCell } from '@lupin/shared-contracts';
+import {
+  PASS_RATE_FLOOR,
+  SCORE_CATEGORIES,
+  SCORE_SURFACES,
+  type ScoreCell,
+} from '@lupin/shared-contracts';
 import { useResource, type Resource } from '../hooks/useResource.js';
 import { repoHealthPath } from '../route-manifest.js';
 import type { ApiClient, QuarantineEntry } from '../lib/api.js';
@@ -310,7 +315,7 @@ function DashboardGrid({
       {trend === null ? (
         <Quiet>{trendFailure ?? 'Reading run history…'}</Quiet>
       ) : (
-        <TrendChart buckets={trend.buckets} data-testid="trend-chart" />
+        <TrendChart buckets={trend.buckets} floor={PASS_RATE_FLOOR} data-testid="trend-chart" />
       )}
     </Panel>
   );

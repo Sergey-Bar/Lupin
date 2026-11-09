@@ -1,13 +1,13 @@
 /// <reference types="vitest/globals" />
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import {
   createMemoryHistory,
   createRootRoute,
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
-import { SideNav } from './SideNav';
+import { SIDEBAR_KEY, SideNav } from './SideNav';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { PreferencesProvider } from '../theme/preferences';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
@@ -32,6 +32,8 @@ function renderAt(path: string, api = makeApi({ getRecentRuns: vi.fn(async () =>
 describe('SideNav', () => {
   beforeEach(() => {
     resetViewerRoleCache();
+    // Most of this file is about the open sidebar; the rail has its own tests below.
+    localStorage.setItem(SIDEBAR_KEY, 'expanded');
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response('{}', { status: 401 })),
@@ -51,6 +53,44 @@ describe('SideNav', () => {
     const settings = within(aside).getByRole('link', { name: 'Settings' });
     expect(nav.contains(settings)).toBe(false);
     expect(within(aside).queryByTestId('theme-toggle')).toBeNull();
+  });
+
+  it('starts as an icon rail, each area named for hover and for a screen reader', async () => {
+    localStorage.removeItem(SIDEBAR_KEY);
+    renderAt('/dashboard/now');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    const aside = nav.closest('aside') as HTMLElement;
+    expect(aside).toHaveAttribute('data-collapsed', 'true');
+    expect(aside).toHaveClass('w-14');
+    const runs = within(nav).getByRole('link', { name: 'Runs' });
+    expect(runs).toHaveAttribute('title', 'Runs');
+    expect(within(aside).queryByRole('list', { name: 'Recent runs' })).toBeNull();
+  });
+
+  it('expands and collapses from one button, and remembers the choice', async () => {
+    localStorage.removeItem(SIDEBAR_KEY);
+    renderAt('/dashboard/now');
+    const toggle = await screen.findByRole('button', { name: 'Expand sidebar' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(toggle);
+    const aside = screen.getByTestId('side-nav');
+    expect(aside).toHaveAttribute('data-collapsed', 'false');
+    expect(localStorage.getItem(SIDEBAR_KEY)).toBe('expanded');
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
+    expect(aside).toHaveAttribute('data-collapsed', 'true');
+    expect(localStorage.getItem(SIDEBAR_KEY)).toBe('collapsed');
+  });
+
+  it('moves to the next or previous area when the wheel turns over the areas', async () => {
+    renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    fireEvent.wheel(within(nav).getByRole('link', { name: 'Runs' }), { deltaY: 120 });
+    await waitFor(() =>
+      expect(within(nav).getByRole('link', { name: 'Tests' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      ),
+    );
   });
 
   it('draws Settings as one icon with a name, not a labelled row', async () => {

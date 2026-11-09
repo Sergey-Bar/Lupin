@@ -135,6 +135,18 @@ describe('NavBar', () => {
     expect(scrolled.mock.contexts[0]).toBe(within(tabs).getByRole('link', { name: 'Appearance' }));
   });
 
+  it('moves to the next tab when the wheel turns over the tab row, one step per turn', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
+    const tabs = await screen.findByTestId('section-tabs');
+    fireEvent.wheel(tabs, { deltaY: 120 });
+    fireEvent.wheel(tabs, { deltaY: 120 });
+    await waitFor(() =>
+      expect(
+        within(screen.getByTestId('section-tabs')).getByRole('link', { name: 'Capabilities' }),
+      ).toHaveAttribute('aria-current', 'page'),
+    );
+  });
+
   it('shows the section tabs for a section with more than one page', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
     const tabs = await screen.findByTestId('section-tabs');
