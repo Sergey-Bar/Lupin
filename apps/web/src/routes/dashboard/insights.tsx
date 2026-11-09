@@ -18,6 +18,7 @@ import {
   QuarantineSuggestionsPanel,
 } from '../../components/InsightsCauses.js';
 import { ProjectGate } from '../../components/ProjectGate.js';
+import { AreaPage, type AreaItem } from '../../components/AreaPage.js';
 import { headline } from '../../components/Readiness.js';
 import { Responsive } from '../../components/responsive.js';
 import { useResource } from '../../hooks/useResource.js';
@@ -56,11 +57,19 @@ const WINDOWS = [
 ] as const;
 type WindowValue = (typeof WINDOWS)[number]['value'];
 
-export function InsightsPage({ qa, api }: { qa: QaClient; api: ApiClient }): React.ReactElement {
+export function InsightsPage({
+  qa,
+  api,
+  navigate = (to) => window.location.assign(to),
+}: {
+  qa: QaClient;
+  api: ApiClient;
+  navigate?: (to: string) => void;
+}): React.ReactElement {
   return (
-    <ProjectGate qa={qa} title="Insights">
+    <ProjectGate qa={qa} title="Tests">
       {(project, switcher) => (
-        <InsightsBody qa={qa} api={api} project={project} switcher={switcher} />
+        <InsightsBody qa={qa} api={api} project={project} switcher={switcher} navigate={navigate} />
       )}
     </ProjectGate>
   );
@@ -78,11 +87,13 @@ function InsightsBody({
   api,
   project,
   switcher,
+  navigate,
 }: {
   qa: QaClient;
   api: ApiClient;
   project: RegisteredProject;
   switcher: React.ReactNode;
+  navigate: (to: string) => void;
 }): React.ReactElement {
   const [days, setDays] = React.useState<WindowValue>('14');
   const insights = useResource<QaInsights>(
@@ -97,15 +108,40 @@ function InsightsBody({
     () => qa.getReadiness(project.id, 7),
     [qa, project.id],
   );
+  if (insights.status === 'ready') {
+    const items = testItems(insights.value, api);
+    return (
+      <AreaPage
+        title="Tests"
+        verdict={testVerdict(insights.value, items.length)}
+        items={items}
+        navigate={navigate}
+        clear={`Every test in ${project.name} is steady.`}
+        actions={
+          <>
+            {switcher}
+            <Segmented label="Window" options={WINDOWS} value={days} onChange={setDays} />
+          </>
+        }
+        details={
+          <div data-testid="insights-page">
+            <InsightsGrid
+              api={api}
+              insights={insights.value}
+              history={history.status === 'ready' ? history.value : null}
+              historyFailure={history.status === 'error' ? history.message : null}
+              readiness={readiness.status === 'ready' ? readiness.value : null}
+            />
+          </div>
+        }
+      />
+    );
+  }
   return (
     <PageFrame data-testid="insights-page">
       <PageHeader
-        title="Insights"
-        subtitle={
-          insights.status === 'ready'
-            ? `${String(insights.value.runs)} runs in ${project.name} over the last ${days} days`
-            : project.name
-        }
+        title="Tests"
+        subtitle={project.name}
         actions={
           <>
             {switcher}
@@ -113,15 +149,7 @@ function InsightsBody({
           </>
         }
       />
-      {insights.status === 'ready' ? (
-        <InsightsGrid
-          api={api}
-          insights={insights.value}
-          history={history.status === 'ready' ? history.value : null}
-          historyFailure={history.status === 'error' ? history.message : null}
-          readiness={readiness.status === 'ready' ? readiness.value : null}
-        />
-      ) : insights.status === 'error' ? (
+      {insights.status === 'error' ? (
         <Quiet role="alert" data-testid="insights-error">
           Could not read the insights: {insights.message}
         </Quiet>
@@ -532,4 +560,43 @@ function HistoryBody({
         : `Collecting since ${shortDate(history.collectingSince.slice(0, 10))}: a line needs two readings.`}
     </Quiet>
   );
+}
+
+/**
+ * What the Tests area asks of a reader, worst first: each flaky test with one click to
+ * quarantine it (with the evidence as the reason), then the slowest test to look at.
+ */
+export function testItems(insights: QaInsights, api: Pick<ApiClient, 'addQuarantine'>): AreaItem[] {
+  const flaky: AreaItem[] = insights.flakyLeaderboard.map((test) => ({
+    id: `flaky-${test.key}`,
+    title: `${test.title} is flaky`,
+    detail: `${String(Math.round(test.score * 100))}% unstable · ${String(test.flips)} flips in ${String(test.runs)} runs`,
+    tone: 'bad' as const,
+    at: test.lastSeen,
+    action: {
+      label: 'Quarantine',
+      run: async () => {
+        await api.addQuarantine({
+          testTitle: test.title,
+          testFile: test.file ?? '',
+          reason: `Flaky: ${String(test.flips)} flips in ${String(test.runs)} runs (Lupin)`,
+        });
+      },
+    },
+  }));
+  const slow: AreaItem[] = insights.slowestTests.slice(0, 1).map((test) => ({
+    id: `slow-${test.key}`,
+    title: `${test.title} is the slowest test`,
+    detail: `p95 ${formatDuration(test.p95Ms)}`,
+    tone: 'warn' as const,
+    action: { label: 'See its history', to: testHistoryPath(test.key) },
+  }));
+  return [...flaky, ...slow];
+}
+
+export function testVerdict(insights: QaInsights, count: number): string {
+  const flaky = insights.flakyLeaderboard.length;
+  if (count === 0) return `${String(insights.runs)} runs, and nothing needs you.`;
+  if (flaky === 0) return 'No flaky tests. One slow test is worth a look.';
+  return `${String(flaky)} flaky ${flaky === 1 ? 'test needs' : 'tests need'} a decision.`;
 }
