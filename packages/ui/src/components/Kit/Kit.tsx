@@ -52,6 +52,7 @@ export function Hero({
   eyebrow,
   children,
   className,
+  headingLevel = 1,
 }: {
   verdict: HeroVerdict;
   word: string;
@@ -61,8 +62,11 @@ export function Hero({
   /** What sits under the reason: the background chart, the action. */
   children?: React.ReactNode;
   className?: string;
+  /** 2 on a page whose title is already its \h1\. */
+  headingLevel?: 1 | 2;
 }): React.ReactElement {
   const id = React.useId();
+  const Heading = headingLevel === 1 ? 'h1' : 'h2';
   return (
     <section
       aria-labelledby={id}
@@ -76,7 +80,7 @@ export function Hero({
       {eyebrow === undefined ? null : (
         <p className="text-sm font-medium text-fg-muted">{eyebrow}</p>
       )}
-      <h1
+      <Heading
         id={id}
         className={cn(
           'font-display text-6xl leading-tight tracking-tight sm:text-8xl',
@@ -84,7 +88,7 @@ export function Hero({
         )}
       >
         {word}
-      </h1>
+      </Heading>
       <p className="max-w-measure text-pretty text-lg text-fg sm:text-xl">{reason}</p>
       {children}
     </section>

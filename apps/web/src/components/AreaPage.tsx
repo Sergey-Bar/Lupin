@@ -59,6 +59,7 @@ export function AreaPage({
   clear = 'Nothing here needs you.',
   actions,
   subtitle,
+  hero,
 }: {
   title: string;
   verdict: string;
@@ -71,6 +72,8 @@ export function AreaPage({
   actions?: React.ReactNode;
   /** Which subject this is about (the project), so the reader knows where they are. */
   subtitle?: React.ReactNode;
+  /** The page's one verdict, full width above everything (kit v2 `Hero`). */
+  hero?: React.ReactNode;
 }): React.ReactElement {
   const key = `lupin-area-${title.toLowerCase()}`;
   const [lastVisit] = React.useState<string | null>(() => localStorage.getItem(key));
@@ -120,6 +123,7 @@ export function AreaPage({
         {...(subtitle === undefined ? {} : { subtitle })}
       />
       <PageBody>
+        {hero}
         <p data-testid="area-verdict" className="text-lg text-fg-muted">
           {/* A verdict that repeats the first item's title says it twice; a count says more. */}
           {top[0] !== undefined && verdict === top[0].title

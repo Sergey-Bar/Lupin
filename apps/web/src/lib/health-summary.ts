@@ -192,11 +192,27 @@ export function healthItems(summary: HealthSummary): Array<{
   tone: 'bad' | 'warn' | 'info';
   action: { label: string; to: string };
 }> {
-  return summary.wrong.map((finding) => ({
+  const toItem = (finding: Finding) => ({
     id: finding.id,
     title: finding.title,
     detail: finding.evidence,
-    tone: finding.tone === 'bad' ? 'bad' : finding.tone === 'warn' ? 'warn' : 'info',
+    tone: (finding.tone === 'bad' ? 'bad' : finding.tone === 'warn' ? 'warn' : 'info') as
+      'bad' | 'warn' | 'info',
     action: { label: finding.action.label, to: findingPath(finding.action) },
-  }));
+  });
+  // Coverage gaps come one per cell; sixteen of them crowd out the one finding that blocks.
+  // Two or more are said as one item, worst gap named, opening the gap queue.
+  const gaps = summary.wrong.filter((finding) => finding.id.startsWith('gap-'));
+  if (gaps.length < 2) return summary.wrong.map(toItem);
+  const first = gaps[0] as Finding;
+  return [
+    ...summary.wrong.filter((finding) => !finding.id.startsWith('gap-')).map(toItem),
+    {
+      id: 'gaps',
+      title: `${String(gaps.length)} coverage gaps`,
+      detail: `Biggest: ${first.title}`,
+      tone: 'warn',
+      action: { label: 'Find the gaps', to: findingPath(first.action) },
+    },
+  ];
 }

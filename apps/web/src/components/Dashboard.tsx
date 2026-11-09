@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
-import { Sparkline, cn } from '@lupin/ui';
+import { Hero, Sparkline, cn } from '@lupin/ui';
+import { heroVerdict } from '../lib/hero.js';
 import {
   PASS_RATE_FLOOR,
   SCORE_CATEGORIES,
@@ -166,6 +167,17 @@ function DashboardBody({
         title="Health"
         subtitle={<span data-testid="dashboard-subject">{project.name}</span>}
         verdict={summary.headline}
+        hero={
+          readiness.status === 'ready' ? (
+            <Hero
+              headingLevel={2}
+              verdict={heroVerdict(readiness.value).verdict}
+              word={heroVerdict(readiness.value).word}
+              reason={heroVerdict(readiness.value).reason}
+              eyebrow={`Release readiness · ${project.name}`}
+            />
+          ) : undefined
+        }
         items={healthItems(summary)}
         navigate={navigate}
         clear={`${project.name} is healthy.`}

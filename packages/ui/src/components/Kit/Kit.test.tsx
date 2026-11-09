@@ -26,6 +26,11 @@ describe('Hero', () => {
     expect(hero).toHaveTextContent('Pass rate 73.5% is below the 80% floor');
   });
 
+  it('takes a lower heading level on a page that already has its title', () => {
+    render(<Hero verdict="go" word="Ready" reason="All gates pass" headingLevel={2} />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Ready' })).toBeInTheDocument();
+  });
+
   it('arrives on the expressive tier', () => {
     render(<Hero verdict="go" word="Ready" reason="All gates pass" />);
     expect(screen.getByRole('region', { name: 'Ready' })).toHaveClass('animate-reveal');

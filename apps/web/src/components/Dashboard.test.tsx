@@ -238,6 +238,12 @@ describe('the dashboard', () => {
     );
   });
 
+  it('opens on the release verdict as the hero', async () => {
+    renderDashboard(qaWithScore());
+    // makeReadiness is a caution.
+    expect(await screen.findByRole('region', { name: 'Caution' })).toBeInTheDocument();
+  });
+
   it('draws the 80% pass-rate floor on the trend', async () => {
     renderDashboard(qaWithScore());
     const chart = await screen.findByTestId('trend-chart');

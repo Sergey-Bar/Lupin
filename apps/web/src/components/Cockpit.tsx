@@ -497,6 +497,7 @@ function NowHero({
   const hero = heroVerdict(card.status === 'ready' ? card.value : null);
   return (
     <Hero
+      headingLevel={2}
       verdict={hero.verdict}
       word={hero.word}
       reason={card.status === 'error' ? card.message : hero.reason}

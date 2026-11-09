@@ -1025,7 +1025,13 @@ function LiveRunHero({
   const hero = runHero(run);
   const [busy, setBusy] = useState(false);
   return (
-    <Hero verdict={hero.verdict} word={hero.word} reason={hero.reason} eyebrow="This run">
+    <Hero
+      headingLevel={2}
+      verdict={hero.verdict}
+      word={hero.word}
+      reason={hero.reason}
+      eyebrow="This run"
+    >
       {hero.verdict === 'no-go' && hero.failed > 0 ? (
         <div>
           <Button
