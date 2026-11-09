@@ -165,6 +165,12 @@ function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
     runs.status === 'ready'
       ? [...runs.value].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, RECENT)
       : [];
+  // Branches more than one recent run is on: only those need a tag to be told apart.
+  const shared = new Set(
+    recent
+      .map((run) => run.branch ?? '')
+      .filter((branch, index, all) => branch !== '' && all.indexOf(branch) !== index),
+  );
   return (
     <div className="pt-6">
       <p className="px-2 pb-1 text-xs font-medium text-fg-muted">Recent</p>
@@ -191,10 +197,12 @@ function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
                 <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
                   <Bdi className="truncate">{run.branch ?? run.id.slice(0, 8)}</Bdi>
                   {/* Five runs of `main` read as five identical rows; the suite (or the commit)
-                is what tells them apart. */}
-                  {runTag(run) === null ? null : (
-                    <Bdi className="truncate text-xs text-fg-muted">{runTag(run)}</Bdi>
-                  )}
+                      tells them apart, and is shown only when the branch alone cannot. */}
+                  {shared.has(run.branch ?? '') && runTag(run) !== null ? (
+                    <Bdi className="max-w-20 shrink-0 truncate text-xs text-fg-muted">
+                      {runTag(run)}
+                    </Bdi>
+                  ) : null}
                 </span>
                 <span className="shrink-0 text-xs text-fg-muted">
                   <Timestamp value={run.createdAt} empty="" />

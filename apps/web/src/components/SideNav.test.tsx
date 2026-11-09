@@ -149,6 +149,17 @@ describe('SideNav', () => {
     expect(within(items[1] as HTMLElement).getByText('abcdef1')).toBeInTheDocument();
   });
 
+  it('names a run by its branch alone when no other recent run shares it', async () => {
+    const runs = [
+      makeRun({ id: 'one', branch: 'feat/express-checkout', suite: 'checkout e2e' }),
+      makeRun({ id: 'two', branch: 'main', suite: null }),
+    ];
+    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => runs) }));
+    const recent = await screen.findByRole('list', { name: 'Recent runs' });
+    await within(recent).findByText('feat/express-checkout');
+    expect(within(recent).queryByText('checkout e2e')).toBeNull();
+  });
+
   it('says nothing has run yet, rather than drawing an empty box', async () => {
     renderAt('/dashboard/now');
     expect(await screen.findByText('No runs yet')).toBeInTheDocument();
