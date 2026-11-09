@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from '../../router.js';
-import { cockpitFixture } from '../../test-utils.js';
+import { cockpitFixture, makeRun } from '../../test-utils.js';
 import { Route } from './now.js';
 
 /**
@@ -90,6 +90,63 @@ describe('the Now route', () => {
       await waitFor(() => expect(screen.getByLabelText('Project')).toHaveValue(''), {
         timeout: RENDER_TIMEOUT_MS,
       });
+    },
+    RENDER_TIMEOUT_MS * 2,
+  );
+  it(
+    'retries just the failed tests of a red run with one click',
+    async () => {
+      const failing = makeRun({
+        id: 'red-run',
+        branch: 'main',
+        phase: 'complete',
+        outcome: 'failed',
+        tests: [
+          {
+            id: 't-red',
+            title: 'pays',
+            status: 'failed',
+            attempts: [],
+            artifactIds: [],
+            metadata: {},
+          },
+        ],
+      });
+      const posted: { url: string; body: unknown }[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          if (init?.method === 'POST') posted.push({ url, body: init.body });
+          const body = url.includes('/api/v1/cockpit')
+            ? JSON.stringify(cockpitFixture())
+            : url.endsWith('/retry')
+              ? JSON.stringify(makeRun({ id: 'again', retryOfRunId: 'red-run', attempt: 2 }))
+              : url.includes('/api/v1/runs')
+                ? JSON.stringify([failing])
+                : url.endsWith('/api/v1/projects')
+                  ? JSON.stringify({ projects: PROJECTS })
+                  : '[]';
+          return new Response(body, {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }),
+      );
+      window.scrollTo = () => undefined;
+      render(<MemoryRouter initialEntries={['/dashboard/now']} />);
+      const retry = await screen.findByRole(
+        'button',
+        { name: 'Retry the failed test' },
+        { timeout: RENDER_TIMEOUT_MS },
+      );
+      await userEvent.setup().click(retry);
+      await waitFor(() =>
+        expect(posted).toContainEqual({
+          url: '/api/v1/runs/red-run/retry',
+          body: '{"scope":"failed"}',
+        }),
+      );
     },
     RENDER_TIMEOUT_MS * 2,
   );

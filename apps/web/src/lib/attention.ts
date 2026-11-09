@@ -15,14 +15,19 @@ export interface AttentionItem {
   detail: string;
   /** The one thing to do about it. */
   action: { label: string; to: string };
-  /** What Lupin can do about it for you, in one click, when the page can take the action. */
-  auto?: { kind: 'retry-run'; runId: string };
+  /**
+   * What Lupin can do about it for you, in one click, when the page can take the action.
+   * `failed` is the count of tests the retry names; zero means the run listed none, so the
+   * retry repeats the whole run.
+   */
+  auto?: { kind: 'retry-run'; runId: string; failed: number };
   /** When it happened, for ordering and the "new since your last visit" marker. */
   at: string;
 }
 
 export const MAX_ATTENTION = 5;
-const STUCK_MS = 60 * 60_000;
+/** How long a run may stay in `running` before it is worth asking about. */
+export const STUCK_MS = 60 * 60_000;
 const NEEDS_ATTENTION = new Set(['C', 'D', 'F']);
 
 function runLabel(run: Run): string {
@@ -33,32 +38,48 @@ function runLabel(run: Run): string {
  * What broke, said as the work: how many tests, on which branch. `browser failed` named a test
  * type, which tells nobody where to look.
  */
-function failureTitle(run: Run): string {
+export function failureTitle(run: Run): string {
   const failed = run.summary?.failed ?? 0;
   const where = run.branch ?? runLabel(run);
   if (failed <= 0) return `${where} is failing`;
   return `${String(failed)} ${failed === 1 ? 'test' : 'tests'} failing on ${where}`;
 }
 
+/**
+ * How many tests a "retry what failed" would run: the same statuses the API's
+ * `scope: 'failed'` picks up, so the button's count is the run's size.
+ */
+export function failedTests(run: Run): number {
+  return (run.tests ?? []).filter((test) => test.status === 'failed' || test.status === 'timed_out')
+    .length;
+}
+
+/** The retry button says what it will run: the broken tests by count, or the whole run. */
+export function retryLabel(failed: number): string {
+  if (failed === 0) return 'Retry now';
+  return failed === 1 ? 'Retry the failed test' : `Retry ${String(failed)} failed tests`;
+}
+
 function runItems(runs: readonly Run[], now: Date): AttentionItem[] {
   const items: AttentionItem[] = [];
-  // The newest failure per suite: three red runs of one suite are one thing to fix.
-  const seenFailed = new Set<string>();
+  // One verdict per branch (or per suite when there is no branch), from its newest
+  // *finished* run: a later pass means it is fixed, and a queued or cancelled retry says
+  // nothing either way, so it neither hides the red run nor stands in for it.
+  const judged = new Set<string>();
   for (const run of [...runs].sort((a, b) => b.createdAt.localeCompare(a.createdAt))) {
     const at = run.completedAt ?? run.startedAt ?? run.createdAt;
+    const finished = run.outcome !== null && run.outcome !== 'cancelled';
+    const key = run.branch ?? runLabel(run);
+    if (finished && judged.has(key)) continue;
+    if (finished) judged.add(key);
     if (run.outcome === 'failed' || run.outcome === 'blocked') {
-      // One item per branch (or per suite when there is no branch): five red runs on one
-      // branch are one thing to untangle, and the newest of them is the one to open.
-      const key = run.branch ?? runLabel(run);
-      if (seenFailed.has(key)) continue;
-      seenFailed.add(key);
       items.push({
         id: `run-failed-${run.id}`,
         severity: 'bad',
         title: failureTitle(run),
         detail: run.suite ?? (run.branch === null ? 'Latest run' : 'Latest run on this branch'),
         action: { label: 'Open run', to: `/dashboard/runs/${run.id}` },
-        auto: { kind: 'retry-run', runId: run.id },
+        auto: { kind: 'retry-run', runId: run.id, failed: failedTests(run) },
         at,
       });
     } else if (

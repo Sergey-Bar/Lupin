@@ -266,7 +266,12 @@ export interface ApiClient {
   getRun(id: string, options?: RequestOptions): Promise<Run>;
   createRun(request: CreateRunRequest, options?: RequestOptions): Promise<Run>;
   cancelRun(id: string, options?: RequestOptions): Promise<Run>;
-  retryRun(id: string, idempotencyKey?: string, options?: RequestOptions): Promise<Run>;
+  retryRun(
+    id: string,
+    idempotencyKey?: string,
+    /** `failed` runs only the tests that failed or timed out; the default repeats them all. */
+    options?: RequestOptions & { scope?: 'all' | 'failed' },
+  ): Promise<Run>;
   getRunArtifacts(id: string, options?: RequestOptions): Promise<ArtifactDescriptor[]>;
   getRunGate(id: string, options?: RequestOptions): Promise<GateEvaluation | null>;
   getReleaseReadiness(
@@ -640,6 +645,8 @@ export const defaultApiClient: ApiClient = {
   retryRun: async (id, idempotencyKey, options) => {
     const key = idempotencyKey ?? crypto.randomUUID();
     const path = `/api/v1/runs/${encodeURIComponent(id)}/retry`;
+    // No body for a full retry, so the request is byte-for-byte what it always was.
+    const failedOnly = options?.scope === 'failed';
     return parse(
       await request(
         await fetch(
@@ -651,7 +658,9 @@ export const defaultApiClient: ApiClient = {
               headers: {
                 Accept: 'application/json',
                 'Idempotency-Key': key,
+                ...(failedOnly ? { 'Content-Type': 'application/json' } : {}),
               },
+              ...(failedOnly ? { body: JSON.stringify({ scope: 'failed' }) } : {}),
             },
             options?.signal,
           ),

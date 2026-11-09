@@ -132,6 +132,23 @@ describe('SideNav', () => {
     expect(within(recent).getAllByRole('img', { name: /Passed|Failed/u }).length).toBe(5);
   });
 
+  it('tells two runs on one branch apart by suite, or by commit when there is no suite', async () => {
+    const runs = [
+      makeRun({ id: 'one', branch: 'main', suite: 'checkout e2e' }),
+      makeRun({ id: 'two', branch: 'main', suite: null, commit: 'abcdef1234567' }),
+    ];
+    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => runs) }));
+    const recent = await screen.findByRole('list', { name: 'Recent runs' });
+    await within(recent).findByText('checkout e2e');
+    const items = within(recent).getAllByRole('listitem');
+    expect(items.map((item) => item.textContent)).toEqual([
+      expect.stringContaining('checkout e2e'),
+      expect.stringContaining('abcdef1'),
+    ]);
+    // Exact text: seven characters of the commit, not the whole sha.
+    expect(within(items[1] as HTMLElement).getByText('abcdef1')).toBeInTheDocument();
+  });
+
   it('says nothing has run yet, rather than drawing an empty box', async () => {
     renderAt('/dashboard/now');
     expect(await screen.findByText('No runs yet')).toBeInTheDocument();

@@ -116,6 +116,66 @@ describe('AreaPage', () => {
     expect(details).toHaveTextContent('raw numbers');
   });
 
+  it('says the busy word it was given, or makes one from a verb that does not end in e', async () => {
+    const user = userEvent.setup();
+    const pending = () => new Promise<void>(() => undefined);
+    show([
+      item('a', { action: { label: 'Retry now', busyLabel: 'Retrying', run: pending } }),
+      item('b', { action: { label: 'Mark done', run: pending } }),
+    ]);
+    await user.click(screen.getByRole('button', { name: 'Retry now' }));
+    await user.click(screen.getByRole('button', { name: 'Mark done' }));
+    expect(screen.getByRole('button', { name: 'Retrying' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Marking' })).toBeDisabled();
+  });
+
+  it('takes the action of a folded item too, and announces it', async () => {
+    const user = userEvent.setup();
+    const run = vi.fn(async () => undefined);
+    show([item('a'), item('b'), item('c'), item('d', { action: { label: 'Quarantine', run } })]);
+    const folded = screen.getByTestId('area-folded-d');
+    await user.click(within(folded).getByRole('button', { name: 'Quarantine' }));
+    expect(run).toHaveBeenCalledOnce();
+    expect(await screen.findByRole('status')).toHaveTextContent('Done: item d');
+    await waitFor(() => expect(screen.queryByTestId('area-folded-d')).toBeNull());
+  });
+
+  it('removes a finished item at once when Lupin’s Motion setting is reduced', async () => {
+    const user = userEvent.setup();
+    document.documentElement.dataset['motion'] = 'reduced';
+    try {
+      show([item('a', { action: { label: 'Quarantine', run: async () => undefined } })]);
+      await user.click(screen.getByRole('button', { name: 'Quarantine' }));
+      await screen.findByRole('status');
+      expect(screen.queryByTestId('area-item-a')).toBeNull();
+    } finally {
+      delete document.documentElement.dataset['motion'];
+    }
+  });
+
+  it('removes a finished item at once when the system asks for reduced motion', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({ matches: true }) as MediaQueryList),
+    );
+    try {
+      show([item('a', { action: { label: 'Quarantine', run: async () => undefined } })]);
+      await user.click(screen.getByRole('button', { name: 'Quarantine' }));
+      await screen.findByRole('status');
+      expect(screen.queryByTestId('area-item-a')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('marks a folded item new since the last visit as well', () => {
+    localStorage.setItem('lupin-area-tests', '2026-11-01T00:00:00.000Z');
+    show([item('a'), item('b'), item('c'), item('d', { at: '2026-11-08T00:00:00.000Z' })]);
+    expect(within(screen.getByTestId('area-folded-d')).getByText('new')).toBeInTheDocument();
+    localStorage.clear();
+  });
+
   it('has no serious or critical axe violations', async () => {
     const { container } = show(
       ['a', 'b', 'c', 'd'].map((id) => item(id)),

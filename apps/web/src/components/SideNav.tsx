@@ -13,7 +13,8 @@ import {
   Wordmark,
   cn,
 } from '@lupin/ui';
-import { defaultApiClient, type ApiClient } from '../lib/api.js';
+import { defaultApiClient, type ApiClient, type Run } from '../lib/api.js';
+import { Bdi } from './Bidi.js';
 import { useResource } from '../hooks/useResource.js';
 import { statusWord } from '../lib/status-word.js';
 import { Timestamp } from './Timestamp.js';
@@ -152,6 +153,11 @@ function AskButton(): React.ReactElement {
   );
 }
 
+/** What tells a run apart from others on its branch: the suite, else the short commit. */
+function runTag(run: Run): string | null {
+  return run.suite ?? (run.commit === null ? null : run.commit.slice(0, 7));
+}
+
 /** The latest runs, newest first, as Codex lists recent tasks: a dot, the branch, and when. */
 function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
   const runs = useResource(() => api.getRecentRuns(RECENT), [api]);
@@ -182,7 +188,14 @@ function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
                   }
                   label={statusWord(run.outcome)}
                 />
-                <span className="min-w-0 flex-1 truncate">{run.branch ?? run.id.slice(0, 8)}</span>
+                <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+                  <Bdi className="truncate">{run.branch ?? run.id.slice(0, 8)}</Bdi>
+                  {/* Five runs of `main` read as five identical rows; the suite (or the commit)
+                is what tells them apart. */}
+                  {runTag(run) === null ? null : (
+                    <Bdi className="truncate text-xs text-fg-muted">{runTag(run)}</Bdi>
+                  )}
+                </span>
                 <span className="shrink-0 text-xs text-fg-muted">
                   <Timestamp value={run.createdAt} empty="" />
                 </span>

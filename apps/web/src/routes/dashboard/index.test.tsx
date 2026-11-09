@@ -7,7 +7,7 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
-import { RunsListPage } from './index.js';
+import { RunsListPage, runAreaItems, runVerdict } from './index.js';
 import { makeApi, makeRun } from '../../test-utils.js';
 import type { ApiClient } from '../../lib/api.js';
 
@@ -61,7 +61,143 @@ const failedRun = makeRun({
   },
 });
 
+describe('runAreaItems', () => {
+  const now = new Date('2026-05-26T12:00:00.000Z');
+  const retryRun = vi.fn(async () => makeRun({ id: 'again' }));
+
+  it('asks about a branch only while its newest run is red, and retries just what broke', async () => {
+    const red = makeRun({
+      id: 'red-new',
+      branch: 'feat/pay',
+      outcome: 'failed',
+      createdAt: '2026-05-26T11:00:00.000Z',
+      summary: { ...failedRun.summary, failed: 2 },
+      tests: [
+        { id: 't1', title: 'pays', status: 'failed' },
+        { id: 't2', title: 'ships', status: 'passed' },
+      ] as never,
+    });
+    const olderRed = makeRun({
+      id: 'red-old',
+      branch: 'feat/pay',
+      outcome: 'failed',
+      createdAt: '2026-05-26T10:00:00.000Z',
+    });
+    const fixed = makeRun({
+      id: 'fixed',
+      branch: 'main',
+      outcome: 'passed',
+      createdAt: '2026-05-26T11:30:00.000Z',
+    });
+    const brokeBefore = makeRun({
+      id: 'broke-before',
+      branch: 'main',
+      outcome: 'failed',
+      createdAt: '2026-05-26T09:00:00.000Z',
+    });
+    const items = runAreaItems([olderRed, fixed, brokeBefore, red], { retryRun }, now);
+    expect(items.map((item) => item.id)).toEqual(['run-red-new']);
+    expect(items[0]?.title).toBe('2 tests failing on feat/pay');
+    expect(items[0]?.detail).toBe('Latest run on this branch');
+    expect(items[0]?.action.label).toBe('Retry the failed test');
+    if (!('run' in items[0]!.action)) throw new Error('expected an action Lupin takes');
+    await items[0]!.action.run();
+    expect(retryRun).toHaveBeenCalledWith('red-new', undefined, { scope: 'failed' });
+  });
+
+  it('names a run that has been going for over an hour as worth a look', () => {
+    const stuck = makeRun({
+      id: 'stuck',
+      branch: 'main',
+      phase: 'running',
+      outcome: null,
+      startedAt: '2026-05-26T10:00:00.000Z',
+    });
+    const items = runAreaItems([stuck], { retryRun }, now);
+    expect(items[0]).toMatchObject({ tone: 'warn', action: { to: '/dashboard/runs/stuck' } });
+  });
+
+  it('retries the whole run when it listed no tests, and words a branchless stuck run by its suite', async () => {
+    const red = makeRun({ id: 'red-bare', branch: 'main', outcome: 'blocked', tests: [] });
+    const stuck = makeRun({
+      id: 'stuck-suite',
+      branch: null,
+      suite: 'nightly',
+      phase: 'running',
+      outcome: null,
+      startedAt: '2026-05-26T10:00:00.000Z',
+    });
+    const items = runAreaItems([red, stuck], { retryRun }, now);
+    expect(items.map((item) => item.title)).toEqual([
+      'main is failing',
+      'nightly has been running over an hour',
+    ]);
+    expect(items[0]?.action.label).toBe('Retry now');
+    if (!('run' in items[0]!.action)) throw new Error('expected an action Lupin takes');
+    await items[0]!.action.run();
+    expect(retryRun).toHaveBeenCalledWith('red-bare', undefined, { scope: 'all' });
+  });
+
+  it('judges a branch by its newest finished run, so a queued or cancelled retry hides nothing', () => {
+    const red = makeRun({
+      id: 'red',
+      branch: 'main',
+      phase: 'complete',
+      outcome: 'failed',
+      createdAt: '2026-05-26T09:00:00.000Z',
+    });
+    const queued = makeRun({
+      id: 'queued',
+      branch: 'main',
+      phase: 'queued',
+      outcome: null,
+      createdAt: '2026-05-26T11:00:00.000Z',
+    });
+    const cancelled = makeRun({
+      id: 'cancelled',
+      branch: 'main',
+      phase: 'cancelled',
+      outcome: 'cancelled',
+      createdAt: '2026-05-26T10:00:00.000Z',
+    });
+    const items = runAreaItems([queued, cancelled, red], { retryRun }, now);
+    expect(items.map((item) => item.id)).toEqual(['run-red']);
+  });
+
+  it('says how many branches are red, or that every branch is green', () => {
+    expect(runVerdict(0)).toBe('Every branch is green.');
+    expect(runVerdict(1)).toBe('One branch needs you.');
+    expect(runVerdict(3)).toBe('3 branches need you.');
+  });
+});
+
 describe('RunsListPage', () => {
+  it('leads with what needs doing, and keeps every run under Details', async () => {
+    renderRunsPage(makeApi({ getRuns: vi.fn().mockResolvedValue([failedRun]) }));
+    await waitFor(() => expect(screen.getByTestId('area-runs')).toBeInTheDocument());
+    expect(screen.getByTestId('area-verdict')).toHaveTextContent('One branch needs you.');
+    expect(screen.getByTestId(`area-item-run-${failedRun.id}`)).toBeInTheDocument();
+    expect(screen.getByTestId('area-details')).toContainElement(
+      screen.getByTestId(`run-row-${failedRun.id}`),
+    );
+  });
+
+  it('badges a partial, an unknown and a cancelled outcome without calling any of them a pass', async () => {
+    const runs = (['partial', 'unknown', 'cancelled'] as const).map((outcome, index) =>
+      makeRun({
+        id: `run-${outcome}`,
+        branch: `b-${String(index)}`,
+        phase: 'complete',
+        outcome,
+      }),
+    );
+    renderRunsPage(makeApi({ getRuns: vi.fn().mockResolvedValue(runs) }));
+    await waitFor(() => expect(screen.getByTestId('run-outcome-run-partial')).toBeInTheDocument());
+    expect(screen.getByTestId('run-outcome-run-partial')).toHaveTextContent('partial');
+    expect(screen.getByTestId('run-outcome-run-unknown')).toHaveTextContent('unknown');
+    expect(screen.getByTestId('run-outcome-run-cancelled')).toHaveTextContent('cancelled');
+  });
+
   it('renders loading state initially', async () => {
     const api = makeApi({
       getRuns: vi.fn(() => new Promise<ReturnType<typeof makeRun>[]>(() => undefined)),

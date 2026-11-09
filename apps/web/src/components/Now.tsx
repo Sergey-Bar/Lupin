@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge, Button, EmptyState, RotateCcw, Skeleton, StatusDot } from '@lupin/ui';
 import type { DeliverySummary, GithubPullItem, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from '../lib/api.js';
-import { isNew, rankAttention, type AttentionItem } from '../lib/attention.js';
+import { isNew, rankAttention, retryLabel, type AttentionItem } from '../lib/attention.js';
 import { ago } from '../lib/health-view.js';
 import { focusOf, focusSentence } from '../lib/focus.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
@@ -19,8 +19,11 @@ export interface NowSources {
   deliveries: () => Promise<DeliverySummary[]>;
   /** Open pull requests; absent or failing (GitHub not connected) simply adds nothing. */
   pulls?: () => Promise<GithubPullItem[]>;
-  /** One-click retry. Absent, the page offers only the manual action. */
-  retryRun?: (runId: string) => Promise<{ id: string }>;
+  /**
+   * One-click retry. `failed` runs only the tests that broke; `all` repeats the run. Absent,
+   * the page offers only the manual action.
+   */
+  retryRun?: (runId: string, scope: 'all' | 'failed') => Promise<{ id: string }>;
 }
 
 export const LAST_VISIT_KEY = 'lupin-now-last-visit';
@@ -192,7 +195,7 @@ function FirstThing({
   item: AttentionItem;
   isNew: boolean;
   navigate: (to: string) => void;
-  retryRun?: (runId: string) => Promise<{ id: string }>;
+  retryRun?: (runId: string, scope: 'all' | 'failed') => Promise<{ id: string }>;
 }): React.ReactElement {
   const [auto, setAuto] = React.useState<
     | { state: 'idle' }
@@ -205,7 +208,7 @@ function FirstThing({
     if (item.auto === undefined || retryRun === undefined) return;
     setAuto({ state: 'busy' });
     try {
-      const next = await retryRun(item.auto.runId);
+      const next = await retryRun(item.auto.runId, item.auto.failed > 0 ? 'failed' : 'all');
       setAuto({ state: 'done', runId: next.id });
     } catch (error) {
       setAuto({ state: 'failed', message: error instanceof Error ? error.message : String(error) });
@@ -237,7 +240,7 @@ function FirstThing({
               onClick={() => void act()}
             >
               <RotateCcw size={16} aria-hidden="true" />
-              {auto.state === 'busy' ? 'Retrying' : 'Retry now'}
+              {auto.state === 'busy' ? 'Retrying' : retryLabel(item.auto?.failed ?? 0)}
             </Button>
           ) : null}
           {auto.state === 'done' ? (

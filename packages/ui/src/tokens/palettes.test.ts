@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { LABELS, PALETTES, render } from './palettes.source.mjs';
-import { PALETTE_OPTIONS } from './palettes.js';
+import { PALETTE_OPTIONS, isPalette } from './palettes.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,6 +22,13 @@ function contrast(a: string, b: string): number {
 }
 
 describe('the OpenCode palettes', () => {
+  it('accepts a stored palette name only if Lupin ships it', () => {
+    // A stored value is untrusted: an old or hand-edited one must fall back, not apply.
+    expect(isPalette('opencode')).toBe(true);
+    expect(isPalette('vesper')).toBe(true);
+    expect(isPalette('solarized-pink')).toBe(false);
+    expect(isPalette(null)).toBe(false);
+  });
   it('ships the CSS its source generates, so a palette cannot drift from its hex', () => {
     // Compared without whitespace: Prettier owns the layout, the generator owns the values.
     const squash = (css: string) => css.replace(/\s+/gu, '');

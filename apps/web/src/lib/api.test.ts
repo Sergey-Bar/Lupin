@@ -136,6 +136,16 @@ describe('ApiClient', () => {
     expect((fetchMock.mock.calls[1]?.[1] as RequestInit).headers).toMatchObject({
       'Idempotency-Key': 'retry-1',
     });
+    expect((fetchMock.mock.calls[1]?.[1] as RequestInit).body).toBeUndefined();
+  });
+
+  it('asks for the failed tests only when the retry says so', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(makeRun())));
+    vi.stubGlobal('fetch', fetchMock);
+    await defaultApiClient.retryRun('run-1', 'retry-2', { scope: 'failed' });
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.body).toBe('{"scope":"failed"}');
+    expect(init.headers).toMatchObject({ 'Content-Type': 'application/json' });
   });
 
   it('returns null for unavailable optional gate and readiness evidence', async () => {

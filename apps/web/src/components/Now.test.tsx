@@ -1,11 +1,12 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Run } from '../lib/api.js';
 import { MAX_ATTENTION, isNew, rankAttention } from '../lib/attention.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { AttentionSection, LAST_VISIT_KEY, type NowSources } from './Now.js';
+import { commandStore } from '../hooks/useCommandActions.js';
 
 const NOW = new Date('2026-10-25T12:00:00.000Z');
 
@@ -40,6 +41,31 @@ const entry = (overrides: Record<string, unknown>) =>
   }) as never;
 
 describe('rankAttention', () => {
+  it('drops a branch whose newest finished run passed, and ignores a queued retry behind a red one', () => {
+    const fixed = rankAttention({
+      runs: [
+        run({ id: 'r1', branch: 'main', outcome: 'failed', createdAt: '2026-10-25T09:00:00.000Z' }),
+        run({ id: 'g1', branch: 'main', outcome: 'passed', createdAt: '2026-10-25T10:00:00.000Z' }),
+        run({
+          id: 'r2',
+          branch: 'feat/x',
+          outcome: 'failed',
+          createdAt: '2026-10-25T09:00:00.000Z',
+        }),
+        run({
+          id: 'q2',
+          branch: 'feat/x',
+          phase: 'queued',
+          outcome: null,
+          createdAt: '2026-10-25T11:00:00.000Z',
+        }),
+      ],
+      portfolio: { projects: [] } as never,
+      deliveries: [],
+      now: NOW,
+    });
+    expect(fixed.items.map((item) => item.id)).toEqual(['run-failed-r2']);
+  });
   it('names a failure by its branch and how many tests broke, one item per branch', () => {
     const ranked = rankAttention({
       runs: [
@@ -251,6 +277,33 @@ describe('AttentionSection, as one focus', () => {
     expect(rest).toHaveTextContent('3 more when you are ready');
   });
 
+  it('opens the first thing from the command palette', async () => {
+    const navigate = vi.fn();
+    render(<AttentionSection sources={sources()} navigate={navigate} now={() => NOW} />);
+    await screen.findByTestId('focus-first');
+    const action = commandStore.getActions().find((entry) => entry.id === 'now-open-first');
+    expect(action?.label).toBe('Open: main is failing');
+    action?.onSelect();
+    expect(navigate).toHaveBeenCalledWith('/dashboard/runs/00000000-0000-4000-8000-000000000001');
+  });
+
+  it('opens a next item with its own button', async () => {
+    const user = userEvent.setup();
+    const navigate = vi.fn();
+    render(
+      <AttentionSection
+        sources={sources({ runs: vi.fn(async () => many) })}
+        navigate={navigate}
+        now={() => NOW}
+      />,
+    );
+    await screen.findByTestId('focus-first');
+    const [next] = screen.getAllByTestId(/^focus-next-/u);
+    const target = (next as HTMLElement).dataset['testid']!.replace('focus-next-run-failed-', '');
+    await user.click(within(next as HTMLElement).getByRole('button', { name: 'Open run' }));
+    expect(navigate).toHaveBeenCalledWith(`/dashboard/runs/${target}`);
+  });
+
   it('says it in one calm sentence, and marks what is new since last time', async () => {
     localStorage.setItem(LAST_VISIT_KEY, '2026-10-25T10:00:00.000Z');
     render(<AttentionSection sources={sources()} navigate={vi.fn()} now={() => NOW} />);
@@ -280,10 +333,32 @@ describe('AttentionSection, as one focus', () => {
       <AttentionSection sources={{ ...sources(), retryRun }} navigate={navigate} now={() => NOW} />,
     );
     await user.click(await screen.findByRole('button', { name: 'Retry now' }));
-    expect(retryRun).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001');
+    expect(retryRun).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'all');
     expect(await screen.findByRole('status')).toHaveTextContent('Retry queued');
     await user.click(screen.getByRole('button', { name: 'Watch it' }));
     expect(navigate).toHaveBeenCalledWith('/dashboard/runs/retry-1234');
+  });
+
+  it('retries only what broke when the run says which tests failed', async () => {
+    const user = userEvent.setup();
+    const retryRun = vi.fn(async () => ({ id: 'retry-5678' }));
+    const failing = run({
+      outcome: 'failed',
+      tests: [
+        { id: 't1', title: 'pays', status: 'failed' },
+        { id: 't2', title: 'ships', status: 'timed_out' },
+        { id: 't3', title: 'logs in', status: 'passed' },
+      ] as Run['tests'],
+    });
+    render(
+      <AttentionSection
+        sources={{ ...sources({ runs: vi.fn(async () => [failing]) }), retryRun }}
+        navigate={vi.fn()}
+        now={() => NOW}
+      />,
+    );
+    await user.click(await screen.findByRole('button', { name: 'Retry 2 failed tests' }));
+    expect(retryRun).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'failed');
   });
 
   it('says so when the automatic action is refused, and keeps the manual one', async () => {
