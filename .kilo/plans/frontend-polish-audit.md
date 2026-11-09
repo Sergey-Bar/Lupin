@@ -36,3 +36,17 @@ Screenshots: `.agents/tasks/design-system-brand-refresh/screenshots/before/` (un
 ## Order
 
 Primitives (1, 2, 3, 6, 7) → then pages (4, 5, per-page items), one commit per page.
+
+## Status (2026-11-09)
+
+- 1 status words: **done** (`lib/status-word.ts`).
+- 2 timestamps: **done** (`components/Timestamp.tsx`) on runs, recent executions, run detail.
+- 3 docs icon: **kept as is, deliberately.** `PageGuide.tsx` documents why it takes no height:
+  moving it into the header row re-adds height on a screen laid out not to scroll.
+- 4 cockpit raw error: **done**.
+- 5 live state as subtitle: **done** (runs).
+- 6 empty panels full height: **open.** The panels fill the viewport grid by design (the
+  no-scroll contract in `__root.tsx`); shrinking them needs a layout decision, not a class.
+- 7 panel title gap: **open**, same reason as 6.
+- run-detail title: **done** (short id, branch · commit, full id secondary).
+- Found while capturing: `GET /api/v1/runs` served legacy rows oldest first (**Q-57, fixed**).
