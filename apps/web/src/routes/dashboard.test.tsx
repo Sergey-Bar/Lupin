@@ -128,14 +128,14 @@ describe('dashboard routes', () => {
     render(<MemoryRouter initialEntries={['/dashboard/runs']} />);
     await waitFor(() => expect(screen.getByTestId('runs-list-page')).toBeInTheDocument());
     expect(screen.getByTestId('launch-run-form')).toBeInTheDocument();
-    expect(screen.getByTestId('release-readiness')).toHaveTextContent('UNKNOWN');
-    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('UNKNOWN');
+    expect(screen.getByTestId('release-readiness')).toHaveTextContent('Unknown');
+    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('Unknown');
     // With no release there is no evaluation, so no per-domain status is drawn — not even
     // a confident "not configured" that no read returned.
     expect(screen.getByTestId('release-readiness-unread')).toHaveTextContent(
       'No readiness has been evaluated',
     );
-    expect(screen.getByTestId('release-readiness')).not.toHaveTextContent('NOT_CONFIGURED');
+    expect(screen.getByTestId('release-readiness')).not.toHaveTextContent('Not configured');
     expect(screen.queryByTestId('dashboard')).not.toBeInTheDocument();
   });
 
@@ -203,10 +203,10 @@ describe('dashboard routes', () => {
       }),
     );
     render(<MemoryRouter initialEntries={['/dashboard/runs']} />);
-    await waitFor(() => expect(screen.getByTestId('release-readiness')).toHaveTextContent('READY'));
-    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('READY');
-    expect(screen.getByTestId('release-readiness')).toHaveTextContent('browserPASSED');
-    expect(screen.getByTestId('release-readiness')).toHaveTextContent('apiNOT_CONFIGURED');
+    await waitFor(() => expect(screen.getByTestId('release-readiness')).toHaveTextContent('Ready'));
+    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('Ready');
+    expect(screen.getByTestId('release-readiness')).toHaveTextContent('browserPassed');
+    expect(screen.getByTestId('release-readiness')).toHaveTextContent('apiNot configured');
     expect(screen.getByTestId('run-item-recent-run')).toHaveAttribute(
       'href',
       '/dashboard/runs/recent-run',

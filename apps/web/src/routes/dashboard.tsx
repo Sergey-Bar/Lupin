@@ -10,6 +10,7 @@ import { Panel, Quiet } from '../components/kit.js';
 import { createQaClient } from '../lib/qa-client.js';
 import { defaultApiClient, type ApiClient, type Run } from '../lib/api.js';
 import { formatDate } from '../lib/format.js';
+import { statusWord } from '../lib/status-word.js';
 import { runTransitionName } from '../lib/view-transition.js';
 
 export const Route = createRoute({
@@ -261,7 +262,7 @@ export function ReleaseReadinessCard({
                 : 'warning'
           }
         >
-          {(data?.decision ?? 'unknown').toUpperCase()}
+          {statusWord(data?.decision ?? 'unknown')}
         </Badge>
       }
     >
@@ -279,7 +280,7 @@ export function ReleaseReadinessCard({
             <li key={domain} className="flex min-w-0 flex-col">
               <span className="text-xs capitalize text-fg-muted">{domain}</span>
               <Badge variant={readinessTone(status)} className="self-start">
-                {status.toUpperCase()}
+                {statusWord(status)}
               </Badge>
             </li>
           ))}
@@ -304,7 +305,7 @@ export function RecentRuns({ runs, isLive }: { runs: Run[]; isLive: boolean }) {
   return (
     <Panel
       title="Recent executions"
-      action={<span className="text-xs text-fg-muted">{isLive ? 'LIVE' : 'RECONNECTING'}</span>}
+      action={<span className="text-xs text-fg-muted">{isLive ? 'Live' : 'Reconnecting'}</span>}
     >
       <div className="divide-y divide-border-default">
         {runs.slice(0, 3).map((run) => (

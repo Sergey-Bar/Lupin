@@ -666,9 +666,7 @@ function NextActions({
                 >
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="truncate text-sm">Add {entry.name}</span>
-                    <span className="shrink-0 text-xs uppercase text-warning">
-                      {entry.priority}
-                    </span>
+                    <span className="shrink-0 text-xs text-warning">{entry.priority}</span>
                   </div>
                   <p className="max-w-measure truncate text-xs text-fg-muted">{entry.reason}</p>
                 </Link>

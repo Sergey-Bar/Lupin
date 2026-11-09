@@ -11,6 +11,7 @@ import { runTransitionName } from '../../lib/view-transition.js';
 import { formatDate as formatDateWithFallback } from '../../lib/format.js';
 import { formatDuration } from '../../lib/insights.js';
 import { describeGateReason } from '../../lib/gate-reason.js';
+import { statusWord } from '../../lib/status-word.js';
 import { PageFrame, PageHeader, Panel } from '../../components/kit.js';
 import { Responsive } from '../../components/responsive.js';
 import { ScoreImpactBanner } from '../../components/ScoreImpactBanner.js';
@@ -65,12 +66,12 @@ const ACTIVE_PHASES = new Set<RunPhase>([
 ]);
 
 /**
- * Run detail says `UNKNOWN` where the runs list says `Not started`: here the
+ * Run detail says `Unknown` where the runs list says `Not started`: here the
  * field is unknown, not the run unstarted. The shared helper takes the fallback
  * as a parameter precisely so the two screens keep making different claims.
  */
 function formatDate(value: string | null | undefined): string {
-  return formatDateWithFallback(value, 'UNKNOWN');
+  return formatDateWithFallback(value, 'Unknown');
 }
 
 function outcomeTone(outcome: string | null): 'success' | 'danger' | 'warning' | 'secondary' {
@@ -158,17 +159,17 @@ function TestEvidence({ tests }: { tests: Run['tests'] }) {
           <summary className="cursor-pointer">
             <span className="inline-flex flex-wrap items-baseline gap-x-3">
               <span className="font-medium">{test.title}</span>
-              <span className="text-xs uppercase text-fg-muted">{test.status}</span>
+              <span className="text-xs text-fg-muted">{statusWord(test.status)}</span>
             </span>
           </summary>
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <dt className="text-xs text-fg-muted">File</dt>
-              <dd>{test.file ?? 'UNKNOWN'}</dd>
+              <dd>{test.file ?? 'Unknown'}</dd>
             </div>
             <div>
               <dt className="text-xs text-fg-muted">Duration</dt>
-              <dd>{test.durationMs == null ? 'UNKNOWN' : `${test.durationMs}ms`}</dd>
+              <dd>{test.durationMs == null ? 'Unknown' : `${test.durationMs}ms`}</dd>
             </div>
           </dl>
           {test.error ? (
@@ -198,7 +199,7 @@ function TestEvidence({ tests }: { tests: Run['tests'] }) {
                 <div key={attempt.attempt} className="rounded bg-surface-muted p-3 text-sm">
                   <div className="flex justify-between gap-3">
                     <span>Attempt {attempt.attempt}</span>
-                    <span className="uppercase">{attempt.status}</span>
+                    <span>{statusWord(attempt.status)}</span>
                   </div>
                   <div className="mt-1 text-xs text-fg-muted">
                     {formatDate(attempt.startedAt)}{' '}
@@ -602,12 +603,12 @@ function RunHeader({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-fg-muted">{isLive ? 'LIVE' : 'RECONNECTING'}</span>
+        <span className="text-xs text-fg-muted">{isLive ? 'Live' : 'Reconnecting'}</span>
         <Badge data-testid="run-phase" variant={isRunActive(run) ? 'default' : 'outline'}>
           {run.phase}
         </Badge>
         <Badge data-testid="run-status" variant={outcomeTone(run.outcome)}>
-          {(run.outcome ?? 'PENDING').toUpperCase()}
+          {statusWord(run.outcome)}
         </Badge>
         {isRunActive(run) ? (
           <Button
@@ -710,7 +711,7 @@ function SummaryPanels({ run }: { run: Run }) {
         <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3 xl:grid-cols-9">
           {/*
             Project, environment and release are omitted when the run never had them — a
-            reporter-sent run has none of the three — rather than drawn as UNKNOWN. Branch,
+            reporter-sent run has none of the three — rather than drawn as Unknown. Branch,
             runner and the times stay, because their absence is itself the information.
           */}
           {run.projectId ? (
@@ -725,7 +726,7 @@ function SummaryPanels({ run }: { run: Run }) {
           {run.framework && run.framework !== 'unknown' ? (
             <ContextItem label="Framework" value={run.framework} />
           ) : null}
-          <ContextItem label="Runner" value={run.runner?.name ?? run.runner?.id ?? 'UNASSIGNED'} />
+          <ContextItem label="Runner" value={run.runner?.name ?? run.runner?.id ?? 'Unassigned'} />
           <ContextItem label="Created" value={formatDate(run.createdAt)} />
           <ContextItem label="Started" value={formatDate(run.startedAt)} />
           <ContextItem label="Finished" value={formatDate(run.finishedAt)} />
@@ -859,7 +860,7 @@ function GatePanel({
         {gate ? (
           <>
             <Badge className="self-start" variant={gateTone(gate.status)}>
-              {gate.status.toUpperCase()}
+              {statusWord(gate.status)}
             </Badge>
             <div
               tabIndex={0}
@@ -883,7 +884,7 @@ function GatePanel({
           </>
         ) : (
           <p className="max-w-measure text-pretty text-sm text-fg-muted">
-            UNKNOWN — no persisted gate evaluation is available.
+            Unknown: no gate has evaluated this run yet.
           </p>
         )}
       </Panel>
@@ -893,7 +894,7 @@ function GatePanel({
           data-testid="run-readiness"
           action={
             <Badge variant={readinessTone(readiness.decision)}>
-              {readiness.decision.toUpperCase()}
+              {statusWord(readiness.decision)}
             </Badge>
           }
         >
@@ -901,7 +902,7 @@ function GatePanel({
             {Object.entries(readiness.domains).map(([domain, status]) => (
               <div key={domain} className="flex justify-between gap-2">
                 <span className="capitalize">{domain}</span>
-                <span>{status.toUpperCase()}</span>
+                <span>{statusWord(status)}</span>
               </div>
             ))}
           </div>
@@ -930,7 +931,7 @@ function Figure({
       <div className="truncate text-xs font-medium text-fg-muted" title={label}>
         {label}
       </div>
-      {/* A word ("UNKNOWN") steps down a size on a phone, so four figures share one row. */}
+      {/* A word ("Unknown") steps down a size on a phone, so four figures share one row. */}
       <div
         data-testid={testId}
         title={hint ?? value}

@@ -75,12 +75,12 @@ test.describe('release readiness', () => {
     // labels' `span`s — it went empty with them, and had never found the badge it named.
     const decision = card.getByTestId('release-readiness-decision');
     await expect(decision).toBeVisible();
-    await expect(decision).not.toHaveText(/^READY$/u);
+    await expect(decision).not.toHaveText(/^Ready$/u);
     const rendered = (await card.textContent()) ?? '';
     expect(rendered.length).toBeGreaterThan(0);
     expect(rendered).toMatch(/Release readiness/i);
     // Nothing on the page may claim a release is ready.
-    await expect(card).not.toContainText('READY');
+    await expect(card).not.toContainText(/\bReady\b/u);
     // **What the card draws is what the API answered, and nothing it did not.**
     //
     // This asserted every domain name in the card's text, which held only while the card
@@ -96,13 +96,15 @@ test.describe('release readiness', () => {
         'No readiness has been evaluated',
       );
       expect(rendered, 'no per-domain status may be drawn without a read').not.toMatch(
-        /NOT_CONFIGURED|PASSED|FAILED/u,
+        /Not configured|Passed|Failed/u,
       );
     } else {
       const expected = await getReleaseReadiness(request, named);
       for (const [domain, status] of Object.entries(expected.domains)) {
+        // The card reads the status in sentence case (`statusWord` in apps/web/src/lib).
+        const word = status.replace(/[_-]+/gu, ' ');
         expect(rendered, `domain ${domain} must show the API's status`).toContain(
-          `${domain}${status.toUpperCase()}`,
+          `${domain}${word.charAt(0).toUpperCase()}${word.slice(1)}`,
         );
       }
     }

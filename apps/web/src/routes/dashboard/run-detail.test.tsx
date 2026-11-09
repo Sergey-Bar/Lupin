@@ -352,7 +352,7 @@ describe('RunDetailPage', () => {
 
     await waitFor(() => expect(screen.getByTestId('run-detail-page')).toBeInTheDocument());
     expect(screen.getByTestId('run-phase')).toHaveTextContent('complete');
-    expect(screen.getByTestId('run-status')).toHaveTextContent('FAILED');
+    expect(screen.getByTestId('run-status')).toHaveTextContent('Failed');
     expect(screen.getByTestId('run-project')).toHaveTextContent('lupin');
     expect(screen.getByTestId('run-total')).toHaveTextContent('1');
     expect(screen.getByTestId('test-test-result-1')).toHaveTextContent('loads the command center');
@@ -364,7 +364,7 @@ describe('RunDetailPage', () => {
       '/api/v1/artifacts/artifact-1',
     );
     expect(screen.getByTestId('run-gate')).toHaveTextContent('Browser tests failed');
-    expect(screen.getByTestId('run-readiness')).toHaveTextContent('NOT_CONFIGURED');
+    expect(screen.getByTestId('run-readiness')).toHaveTextContent('Not configured');
   });
 
   it('says what is unknown about a run, and leaves out context nobody reported', async () => {
@@ -385,7 +385,7 @@ describe('RunDetailPage', () => {
     expect(context).not.toHaveTextContent('Release');
     expect(context).toHaveTextContent('Branch / Commit');
     expect(screen.getByTestId('run-duration')).toHaveTextContent('—');
-    expect(screen.getByTestId('run-gate')).toHaveTextContent('UNKNOWN');
+    expect(screen.getByTestId('run-gate')).toHaveTextContent('Unknown');
     expect(screen.getByText(/No events have been observed/iu)).toBeInTheDocument();
   });
 
@@ -436,7 +436,7 @@ describe('RunDetailPage', () => {
   });
 
   /**
-   * A finished run says RECONNECTING, and nothing on the page says LIVE.
+   * A finished run says Reconnecting, and nothing on the page says Live.
    *
    * The badge distinguishes "the event stream is attached" from "the page has
    * loaded a run and is no longer watching it", which is the difference between
@@ -444,11 +444,11 @@ describe('RunDetailPage', () => {
    * `LIVE` half was asserted and the other half was not, so a page that rendered
    * `LIVE` unconditionally would have passed every test here.
    */
-  it('marks a completed run as not live rather than as LIVE', async () => {
+  it('marks a completed run as not live rather than as live', async () => {
     render(<RunDetailPage id="run-123" api={detailApi(passedRun)} />);
     await waitFor(() => expect(screen.getByTestId('run-detail-page')).toBeInTheDocument());
-    expect(screen.queryByText('LIVE')).toBeNull();
-    expect(screen.getByText('RECONNECTING')).toBeInTheDocument();
+    expect(screen.queryByText('Live')).toBeNull();
+    expect(screen.getByText('Reconnecting')).toBeInTheDocument();
   });
 
   it('records live canonical events in the timeline', async () => {
@@ -529,9 +529,9 @@ describe('RunDetailPage', () => {
     });
     render(<RunDetailPage id={run.id} api={detailApi(run)} />);
     await waitFor(() => expect(screen.getByTestId('run-phase')).toHaveTextContent('infra_failed'));
-    expect(screen.getByTestId('run-status')).toHaveTextContent('INFRA_FAILED');
+    expect(screen.getByTestId('run-status')).toHaveTextContent('Infra failed');
     expect(screen.getByTestId('phase-infra_failed')).toBeInTheDocument();
-    expect(screen.getByTestId('test-test-no-attempt')).toHaveTextContent('UNKNOWN');
+    expect(screen.getByTestId('test-test-no-attempt')).toHaveTextContent('Unknown');
     expect(screen.getByText('No retry attempts were reported.')).toBeInTheDocument();
   });
 
