@@ -283,7 +283,7 @@ function NextRow({
   return (
     <li
       data-testid={`focus-${group}-${item.id}`}
-      className="flex items-center justify-between gap-3 border-b border-border py-3 last:border-b-0"
+      className="flex animate-fade-in items-center justify-between gap-3 border-b border-border py-3 [animation-delay:var(--lupin-duration-75)] last:border-b-0 nth-2:[animation-delay:var(--lupin-duration-150)]"
     >
       <span className="flex min-w-0 items-center gap-3">
         <StatusDot status={item.severity === 'bad' ? 'bad' : 'warn'} />
