@@ -21,13 +21,12 @@ import {
   visibleTabsOf,
   type SectionId,
 } from '../route-manifest.js';
-import { ThemeToggle } from './ThemeToggle.js';
 import { useViewerRole } from '../hooks/useViewerRole.js';
 
 /**
  * The chrome: four sections, three surfaces.
  *
- * - `NavBar` — the top bar. The wordmark, the four sections from `lg` up, the theme.
+ * - `NavBar` — the top bar. The wordmark and where you are. The theme is set in Settings.
  * - `SectionTabs` — the tab row under it, for a section with more than one page.
  * - `BottomTabBar` — the four sections as a thumb-reach tab bar below `lg`.
  *
@@ -100,7 +99,6 @@ export function NavBar(): React.ReactElement {
       <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg-muted lg:hidden">
         {SECTIONS.find((section) => section.id === current)?.label}
       </span>
-      <ThemeToggle />
     </nav>
   );
 }

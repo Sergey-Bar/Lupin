@@ -48,7 +48,14 @@ export function DeliveryArea({
       verdict={verdict}
       items={items}
       navigate={navigate}
-      clear="No pull request needs you."
+      clear={
+        // Only a read that succeeded can say nothing needs you; a failed or pending one cannot.
+        pulls.status === 'ready'
+          ? 'No pull request needs you.'
+          : pulls.status === 'loading'
+            ? 'Checking…'
+            : 'Lupin will check again when you reload.'
+      }
       details={details}
     />
   );

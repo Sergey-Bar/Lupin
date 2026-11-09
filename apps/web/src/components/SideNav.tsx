@@ -24,7 +24,6 @@ import { SECTIONS, routeFor, routeManifest, type SectionId } from '../route-mani
 function sectionOfId(id: string | undefined): SectionId | undefined {
   return routeManifest.find((route) => route.id === id)?.section;
 }
-import { ThemeToggle } from './ThemeToggle.js';
 import { usePreferences } from '../theme/preferences.js';
 
 const FOCUS =
@@ -84,19 +83,24 @@ export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.
           <RecentRuns api={api} />
         </div>
       </nav>
-      {/* Settings and the theme live at the bottom, out of the way of the work. */}
-      <div className="flex shrink-0 items-center gap-1 border-t border-border px-3 py-3">
-        <div className="min-w-0 flex-1">
-          <SideLink
-            to="/dashboard/settings"
-            active={sectionOfId(page?.id) === 'settings'}
-            icon={Settings}
-          >
-            Settings
-          </SideLink>
-        </div>
+      {/* Two quiet icons at the bottom, out of the way of the work. The theme lives in Settings. */}
+      <div className="flex shrink-0 items-center justify-between border-t border-border px-3 py-3">
+        <Link
+          to="/dashboard/settings"
+          aria-label="Settings"
+          title="Settings"
+          aria-current={sectionOfId(page?.id) === 'settings' ? 'page' : undefined}
+          className={cn(
+            'inline-flex h-11 w-11 items-center justify-center rounded-md transition-colors duration-100 motion-reduce:transition-none',
+            sectionOfId(page?.id) === 'settings'
+              ? 'bg-surface-muted text-fg'
+              : 'text-fg-muted hover:bg-surface-raised hover:text-fg',
+            FOCUS,
+          )}
+        >
+          <Settings size={16} aria-hidden="true" />
+        </Link>
         <FocusToggle />
-        <ThemeToggle />
       </div>
     </aside>
   );

@@ -50,7 +50,17 @@ describe('SideNav', () => {
     const aside = nav.closest('aside') as HTMLElement;
     const settings = within(aside).getByRole('link', { name: 'Settings' });
     expect(nav.contains(settings)).toBe(false);
-    expect(within(aside).getByTestId('theme-toggle')).toBeInTheDocument();
+    expect(within(aside).queryByTestId('theme-toggle')).toBeNull();
+  });
+
+  it('draws Settings as one icon with a name, not a labelled row', async () => {
+    renderAt('/dashboard/now');
+    const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest(
+      'aside',
+    ) as HTMLElement;
+    const settings = within(aside).getByRole('link', { name: 'Settings' });
+    expect(settings.textContent).toBe('');
+    expect(settings).toHaveAttribute('title', 'Settings');
   });
 
   it('opens an area by its first page', async () => {
@@ -94,11 +104,11 @@ describe('SideNav', () => {
     expect(aside).toHaveClass('hidden', 'lg:flex');
   });
 
-  it('carries the wordmark and the theme control', async () => {
+  it('carries the wordmark, and no theme control', async () => {
     renderAt('/dashboard/now');
     const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest('aside');
     expect(within(aside as HTMLElement).getByTestId('side-wordmark')).toHaveTextContent('Lupin.');
-    expect(within(aside as HTMLElement).getByTestId('theme-toggle')).toBeInTheDocument();
+    expect(within(aside as HTMLElement).queryByTestId('theme-toggle')).toBeNull();
   });
 
   it('adds no headings, so the page keeps its own outline', async () => {

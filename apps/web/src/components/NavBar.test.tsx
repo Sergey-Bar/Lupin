@@ -41,30 +41,10 @@ describe('NavBar', () => {
     vi.unstubAllGlobals();
   });
 
-  it('toggles theme', async () => {
+  it('keeps the theme out of the chrome: it is set in Settings, Appearance', async () => {
     render(<RouterProvider router={makeRouter()} />);
-    const themeBtn = await screen.findByTestId('theme-toggle');
-    fireEvent.click(themeBtn);
-    expect(localStorage.getItem('lupin-theme')).toBeDefined();
-  });
-
-  /*
-   * The cycle is `dark → light → system → dark`, which is the declaration order of
-   * `THEMES` in `ThemeProvider.tsx`. These cases exercise the real provider and real
-   * `localStorage`; `ThemeToggle.test.tsx` covers the arithmetic against a mocked hook.
-   */
-  it('theme cycles: light → system when starting from light', async () => {
-    localStorage.setItem('lupin-theme', 'light');
-    render(<RouterProvider router={makeRouter()} />);
-    fireEvent.click(await screen.findByTestId('theme-toggle'));
-    expect(localStorage.getItem('lupin-theme')).toBe('system');
-  });
-
-  it('theme cycles: dark → light when starting from dark', async () => {
-    localStorage.setItem('lupin-theme', 'dark');
-    render(<RouterProvider router={makeRouter()} />);
-    fireEvent.click(await screen.findByTestId('theme-toggle'));
-    expect(localStorage.getItem('lupin-theme')).toBe('light');
+    await screen.findByTestId('nav-bar');
+    expect(screen.queryByTestId('theme-toggle')).toBeNull();
   });
 
   it('draws the six sections, and nothing else, in the top bar', async () => {

@@ -95,7 +95,7 @@ export function SettingsAppearancePage(): React.ReactElement {
         >
           <p className="max-w-measure text-sm text-fg-muted">
             Leave each page its one thing to do, in the middle of the screen, and put the rest away.
-            The focus button beside the theme in the sidebar turns it on and off.
+            The focus button at the bottom of the sidebar turns it on and off.
           </p>
         </Panel>
 
