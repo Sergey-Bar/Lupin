@@ -170,17 +170,38 @@ function CockpitReading({
     );
   }
   if (state.status === 'error') {
+    // A bare "not found" from the server is not a sentence a reader can act on. Here it means
+    // nothing has reported yet, so say that and give the one next step. Any other server
+    // sentence is shown as the server wrote it.
+    const nothingYet = /^\s*not found\.?\s*$/iu.test(state.message);
     return (
       <div
         role="alert"
         data-testid="cockpit-error"
         className="flex flex-col items-start gap-3 rounded-lg border border-border bg-surface p-5"
       >
-        <p className="text-sm font-medium text-fg">The cockpit could not be read.</p>
-        <p className="text-sm text-fg-muted">{state.message}</p>
-        <Button variant="outline" size="sm" onClick={onRetry}>
-          Try again
-        </Button>
+        {nothingYet ? (
+          <>
+            <p className="text-sm font-medium text-fg">No project has sent results yet.</p>
+            <p className="text-sm text-fg-muted">
+              The cockpit fills in after a repository is connected and its first run arrives.
+            </p>
+            <a
+              href="/dashboard/setup"
+              className="text-sm font-medium text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            >
+              Set up Lupin
+            </a>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-medium text-fg">The cockpit could not be read.</p>
+            <p className="text-sm text-fg-muted">{state.message}</p>
+            <Button variant="outline" size="sm" onClick={onRetry}>
+              Try again
+            </Button>
+          </>
+        )}
       </div>
     );
   }

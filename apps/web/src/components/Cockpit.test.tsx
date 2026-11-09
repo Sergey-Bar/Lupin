@@ -289,6 +289,20 @@ describe('loading and failing', () => {
     await screen.findByTestId('now-clear');
   });
 
+  it('turns a bare "not found" into what is missing and one next step', async () => {
+    const cockpit = vi
+      .fn<CockpitSources['cockpit']>()
+      .mockRejectedValue(new QaApiError(404, 'not found'));
+    show(cockpit);
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('No project has sent results yet');
+    expect(alert).not.toHaveTextContent(/\bnot found\b/u);
+    expect(within(alert).getByRole('link', { name: 'Set up Lupin' })).toHaveAttribute(
+      'href',
+      '/dashboard/setup',
+    );
+  });
+
   it('says the server\u2019s own sentence on a failure, and reads again on request', async () => {
     const user = userEvent.setup();
     const cockpit = vi
