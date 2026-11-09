@@ -70,6 +70,13 @@ export function Shortcuts(): React.ReactElement {
       } else if (event.key === '?') {
         event.preventDefault();
         setOpen(true);
+      } else if (key === 'a') {
+        // The page's one main action, which wears the A hint (AreaPage, the Now card).
+        const primary = document.querySelector<HTMLElement>('[data-primary="true"]');
+        if (primary !== null) {
+          event.preventDefault();
+          primary.click();
+        }
       } else if (key === 'j') {
         moveRow(1);
       } else if (key === 'k') {
@@ -94,6 +101,8 @@ export function Shortcuts(): React.ReactElement {
               <dd>Go to {target.label}</dd>
             </React.Fragment>
           ))}
+          <dt className="font-mono">a</dt>
+          <dd>Take the page’s main action</dd>
           <dt className="font-mono">j / k</dt>
           <dd>Next / previous row</dd>
           <dt className="font-mono">Enter</dt>

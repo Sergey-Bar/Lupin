@@ -1,4 +1,5 @@
 import React from 'react';
+import { ReadFailed } from './ReadFailed.js';
 import {
   Badge,
   Button,
@@ -66,7 +67,7 @@ function MembersBody({ admin }: { admin: AdminClient }): React.ReactElement {
           {members.status === 'loading' ? (
             <Skeleton className="h-16 w-full" />
           ) : members.status === 'error' ? (
-            <Quiet role="alert">{members.message}</Quiet>
+            <ReadFailed failure={members} />
           ) : members.value.length === 0 ? (
             <Quiet data-testid="members-empty">
               Nobody has signed in with single sign-on yet. People appear here the first time they
@@ -250,7 +251,7 @@ function verdictSentence(value: AuditVerification): string {
 
 function AuditVerdict({ verdict }: { verdict: Resource<AuditVerification> }): React.ReactElement {
   if (verdict.status === 'loading') return <Skeleton className="h-24 w-full" />;
-  if (verdict.status === 'error') return <Quiet role="alert">{verdict.message}</Quiet>;
+  if (verdict.status === 'error') return <ReadFailed failure={verdict} />;
   const { value } = verdict;
   return (
     <>
@@ -285,7 +286,7 @@ function AuditEvents({
   page: Resource<{ events: AuditEvent[]; next: number | null }>;
 }): React.ReactElement {
   if (page.status === 'loading') return <Skeleton className="h-16 w-full" />;
-  if (page.status === 'error') return <Quiet role="alert">{page.message}</Quiet>;
+  if (page.status === 'error') return <ReadFailed failure={page} />;
   if (page.value.events.length === 0) return <Quiet>Nothing has been recorded yet.</Quiet>;
   return <AuditEventsTable events={page.value.events} />;
 }

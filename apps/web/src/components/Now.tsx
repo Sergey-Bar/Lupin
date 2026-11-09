@@ -277,12 +277,20 @@ function FirstThing({
         <div className="flex flex-wrap gap-2">
           {canAuto && auto.state !== 'done' ? (
             <Button
+              data-primary="true"
+              aria-keyshortcuts="a"
               className="min-h-11"
               disabled={auto.state === 'busy'}
               onClick={() => void act()}
             >
               <RotateCcw size={16} aria-hidden="true" />
               {auto.state === 'busy' ? 'Retrying' : retryLabel(item.auto?.failed ?? 0)}
+              <kbd
+                aria-hidden="true"
+                className="ms-1 hidden rounded border border-current px-1 font-mono text-xs opacity-60 sm:inline"
+              >
+                A
+              </kbd>
             </Button>
           ) : null}
           {auto.state === 'done' ? (
@@ -292,6 +300,7 @@ function FirstThing({
           ) : null}
           <Button
             variant={canAuto ? 'outline' : 'default'}
+            {...(canAuto ? {} : { 'data-primary': 'true', 'aria-keyshortcuts': 'a' })}
             className="min-h-11"
             onClick={() => navigate(item.action.to)}
           >

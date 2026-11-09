@@ -216,6 +216,15 @@ describe('AreaPage', () => {
     expect(run).toHaveBeenCalledOnce();
   });
 
+  it('shows the A shortcut on the one primary button, and announces it', () => {
+    show([item('a'), item('b')]);
+    const primary = within(screen.getByTestId('area-item-a')).getByRole('button', { name: 'Open' });
+    expect(primary).toHaveAttribute('aria-keyshortcuts', 'a');
+    expect(primary.querySelector('kbd')).toHaveTextContent('A');
+    const other = within(screen.getByTestId('area-item-b')).getByRole('button', { name: 'Open' });
+    expect(other).not.toHaveAttribute('aria-keyshortcuts');
+  });
+
   it('has no serious or critical axe violations', async () => {
     const { container } = show(
       ['a', 'b', 'c', 'd'].map((id) => item(id)),

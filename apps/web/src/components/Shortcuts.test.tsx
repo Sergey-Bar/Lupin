@@ -79,6 +79,25 @@ describe('keyboard shortcuts', () => {
     expect(screen.getByTestId('notifications-page')).toBeTruthy();
   });
 
+  it('A takes the page’s one main action, and a field swallows it', async () => {
+    stubApi();
+    render(<MemoryRouter initialEntries={['/dashboard/reports']} />);
+    await screen.findByTestId('notifications-page', {}, { timeout: 10_000 });
+    const button = document.createElement('button');
+    button.dataset['primary'] = 'true';
+    const clicked = vi.fn();
+    button.addEventListener('click', clicked);
+    document.body.appendChild(button);
+    const field = document.createElement('input');
+    document.body.appendChild(field);
+    press('a', field);
+    expect(clicked).not.toHaveBeenCalled();
+    press('a');
+    expect(clicked).toHaveBeenCalledOnce();
+    button.remove();
+    field.remove();
+  });
+
   it('j and k move through rows, and Enter opens the focused one', async () => {
     stubApi();
     render(<MemoryRouter initialEntries={['/dashboard/reports']} />);

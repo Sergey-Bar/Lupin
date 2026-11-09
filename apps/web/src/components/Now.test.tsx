@@ -290,6 +290,17 @@ describe('AttentionSection, as one focus', () => {
     expect(retryRun).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'all');
   });
 
+  it('marks the first card’s main button for the A shortcut', async () => {
+    const retryRun = vi.fn(async () => ({ id: 'again' }));
+    render(
+      <AttentionSection sources={{ ...sources(), retryRun }} navigate={vi.fn()} now={() => NOW} />,
+    );
+    const retry = await screen.findByRole('button', { name: 'Retry now' });
+    expect(retry).toHaveAttribute('data-primary', 'true');
+    expect(retry).toHaveAttribute('aria-keyshortcuts', 'a');
+    expect(screen.getByRole('button', { name: 'Open run' })).not.toHaveAttribute('data-primary');
+  });
+
   it('opens the first thing from the command palette', async () => {
     const navigate = vi.fn();
     render(<AttentionSection sources={sources()} navigate={navigate} now={() => NOW} />);

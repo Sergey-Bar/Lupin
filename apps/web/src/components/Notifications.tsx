@@ -1,4 +1,5 @@
 import React from 'react';
+import { ReadFailed } from './ReadFailed.js';
 import {
   Badge,
   Button,
@@ -482,7 +483,7 @@ function Schedules({
       {subscriptions.status === 'loading' ? (
         <Skeleton className="h-10 w-full" />
       ) : subscriptions.status === 'error' ? (
-        <Quiet role="alert">{subscriptions.message}</Quiet>
+        <ReadFailed failure={subscriptions} />
       ) : subscriptions.value.length === 0 ? (
         <Quiet>Nothing scheduled.</Quiet>
       ) : (
@@ -599,7 +600,7 @@ export function NotificationsPage({
             {channels.status === 'loading' ? (
               <Skeleton className="h-24 w-full" />
             ) : channels.status === 'error' ? (
-              <Quiet role="alert">{channels.message}</Quiet>
+              <ReadFailed failure={channels} />
             ) : (
               <div className="grid gap-4">
                 <Channels client={client} channels={channels.value} onChanged={changed} />
@@ -626,7 +627,7 @@ export function NotificationsPage({
                 {preview.value.text}
               </pre>
             ) : preview.status === 'error' ? (
-              <Quiet role="alert">{preview.message}</Quiet>
+              <ReadFailed failure={preview} />
             ) : (
               <Skeleton className="h-24 w-full" />
             )}
@@ -635,7 +636,7 @@ export function NotificationsPage({
             {deliveries.status === 'ready' ? (
               <History deliveries={deliveries.value} />
             ) : deliveries.status === 'error' ? (
-              <Quiet role="alert">{deliveries.message}</Quiet>
+              <ReadFailed failure={deliveries} />
             ) : (
               <Skeleton className="h-24 w-full" />
             )}

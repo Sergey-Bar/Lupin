@@ -270,6 +270,7 @@ function Row({
       </div>
       <Button
         data-primary={primary ? 'true' : 'false'}
+        {...(primary ? { 'aria-keyshortcuts': 'a' } : {})}
         variant={primary ? 'primary' : 'outline'}
         size={primary ? 'md' : 'sm'}
         className="shrink-0"
@@ -277,6 +278,14 @@ function Row({
         onClick={() => void act()}
       >
         {state.busy && !('to' in action) ? busyWord(action) : action.label}
+        {primary ? (
+          <kbd
+            aria-hidden="true"
+            className="ms-2 hidden rounded border border-current px-1 font-mono text-xs opacity-60 sm:inline"
+          >
+            A
+          </kbd>
+        ) : null}
       </Button>
     </li>
   );

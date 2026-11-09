@@ -1,4 +1,5 @@
 import React from 'react';
+import { ReadFailed } from './ReadFailed.js';
 import {
   Badge,
   Button,
@@ -496,7 +497,7 @@ function Findings({
       {page.status === 'loading' ? (
         <Skeleton className="h-24 w-full" />
       ) : page.status === 'error' ? (
-        <Quiet role="alert">{page.message}</Quiet>
+        <ReadFailed failure={page} />
       ) : page.value.total === 0 ? (
         <Quiet data-testid="findings-empty">No findings match.</Quiet>
       ) : (
@@ -828,7 +829,7 @@ function Settings({
         {settings.status === 'loading' ? (
           <Skeleton className="h-10 w-full" />
         ) : (
-          <Quiet role="alert">{settings.message}</Quiet>
+          <ReadFailed failure={settings} />
         )}
       </Panel>
     );
