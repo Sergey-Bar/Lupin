@@ -45,8 +45,9 @@ Primitives (1, 2, 3, 6, 7) → then pages (4, 5, per-page items), one commit per
   moving it into the header row re-adds height on a screen laid out not to scroll.
 - 4 cockpit raw error: **done**.
 - 5 live state as subtitle: **done** (runs).
-- 6 empty panels full height: **open.** The panels fill the viewport grid by design (the
-  no-scroll contract in `__root.tsx`); shrinking them needs a layout decision, not a class.
-- 7 panel title gap: **open**, same reason as 6.
+- 6 empty panels full height: **done.** An evidence panel fills its column only when it has evidence.
+- 7 panel title gap: **done.** Settings controls sit on the panel title row.
 - run-detail title: **done** (short id, branch · commit, full id secondary).
 - Found while capturing: `GET /api/v1/runs` served legacy rows oldest first (**Q-57, fixed**).
+- Every route swept at 1440px: a bare `not found` now reads as set-up-first on the project gate,
+  GitHub lists, repositories and access (`lib/nothing-yet.ts`). Quarantine copy in sentence case.
