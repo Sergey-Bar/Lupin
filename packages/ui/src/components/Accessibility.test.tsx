@@ -7,6 +7,7 @@ import type { ReactElement } from 'react';
 import { expectNoBlockingAxeViolations } from '../test/axe.js';
 import { Alert, AlertDescription, AlertTitle } from './Alert/Alert.js';
 import { AppShell } from './AppShell/AppShell.js';
+import { ActionCard, Hero, Row, Surface } from './Kit/Kit.js';
 import { Avatar, AvatarFallback, AvatarImage } from './Avatar/Avatar.js';
 import { Badge } from './Badge/Badge.js';
 import { Breadcrumbs } from './Breadcrumbs/Breadcrumbs.js';
@@ -254,6 +255,26 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
     element: <Sparkline points={[0.1, 0.4, 0.35, 0.8]} label="Pass rate, last 4 runs" />,
   },
   {
+    name: 'Kit',
+    element: (
+      <Surface level={2}>
+        <Hero verdict="caution" word="Caution" reason="One gate warns" />
+        <Row title="Waiting on you">
+          {[
+            <ActionCard
+              key="a"
+              tone="warn"
+              title="Review quarantine"
+              fact="8 tests"
+              action="Open"
+              onAct={() => undefined}
+            />,
+          ]}
+        </Row>
+      </Surface>
+    ),
+  },
+  {
     name: 'DefinitionList',
     element: (
       <DefinitionList>
@@ -398,7 +419,7 @@ describe('axe sweep over every shipped component', () => {
   it('covers every component directory that ships a component', () => {
     const shipped = shippedComponentNames();
     const covered = CASES.map((testCase) => testCase.name).sort();
-    expect(shipped.length).toBe(37);
+    expect(shipped.length).toBe(38);
     // Guards the case list below: a missing or extra entry fails here, with the
     // diff, rather than as a silently smaller sweep.
     expect(covered).toEqual(shipped);

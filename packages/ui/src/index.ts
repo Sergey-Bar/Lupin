@@ -61,6 +61,8 @@ export * from './components/Meter/Meter.js';
 export * from './components/Sparkline/Sparkline.js';
 // A verdict as a mark, always paired with a word. See the header in its file.
 export * from './components/StatusDot/StatusDot.js';
+// Kit v2 (design language v2): Surface, Hero, Row, ActionCard. See the header in its file.
+export * from './components/Kit/Kit.js';
 // The product's name as type. Lupin has no logo mark; see the header in its file.
 export * from './components/Wordmark/Wordmark.js';
 // A tool's real mark (simple-icons, CC0), monochrome. See the header in its file.
