@@ -221,7 +221,9 @@ function toOklch(hex) {
   const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
   const C = Math.hypot(A, B);
   const H = ((Math.atan2(B, A) * 180) / Math.PI + 360) % 360;
-  return `oklch(${(L * 100).toFixed(2)}% ${C.toFixed(4)} ${C < 0.0005 ? '0' : H.toFixed(2)})`;
+  // Numbers written the way Prettier writes them (no trailing zeros), so formatting is a no-op.
+  const num = (value, digits) => String(Number(value.toFixed(digits)));
+  return `oklch(${num(L * 100, 2)}% ${num(C, 4)} ${C < 0.0005 ? '0' : num(H, 2)})`;
 }
 
 const KEYS = [
