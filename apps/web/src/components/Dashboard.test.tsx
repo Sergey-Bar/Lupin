@@ -225,6 +225,18 @@ describe('the dashboard', () => {
     expect(screen.getByTestId('kpi-maturity')).toHaveTextContent('1 of 3 capabilities');
   });
 
+  it('opens the full score breakdown from the health matrix', async () => {
+    // The score page had no link anywhere after the redesign; only a typed URL reached it.
+    renderDashboard(qaWithScore());
+    const matrix = await screen.findByTestId('dashboard-matrix');
+    await waitFor(() =>
+      expect(within(matrix).getByRole('link', { name: 'Full score' })).toHaveAttribute(
+        'href',
+        '/dashboard/score/project-1',
+      ),
+    );
+  });
+
   it('compares before and now row by row, and tallies what improved', async () => {
     renderDashboard(qaWithScore());
     const table = await screen.findByTestId('dashboard-before-now');

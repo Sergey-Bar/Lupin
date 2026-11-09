@@ -323,7 +323,7 @@ function DashboardGrid({
     </Panel>
   );
   const beforeNow = <BeforeNow comparisons={comparisons} trend={trend} />;
-  const matrix = <Matrix score={snapshot.score.value} />;
+  const matrix = <Matrix score={snapshot.score.value} projectId={projectId} />;
   const actions = (
     <NextActions gaps={snapshot.gaps.value} scan={snapshot.scan.value} projectId={projectId} />
   );
@@ -570,9 +570,23 @@ const CELL_TONE = {
  * artifact was ingested, and colouring that tile would draw a confident verdict on a
  * dimension nobody measured. It is drawn as a dashed outline and says `unmeasured`.
  */
-function Matrix({ score }: { score: QaScore | null }): React.ReactElement {
+function Matrix({
+  score,
+  projectId,
+}: {
+  score: QaScore | null;
+  projectId: string;
+}): React.ReactElement {
   return (
-    <Panel title="Health matrix" data-testid="dashboard-matrix">
+    <Panel
+      title="Health matrix"
+      data-testid="dashboard-matrix"
+      action={
+        <Link to="/dashboard/score/$projectId" params={{ projectId }} className={LINK}>
+          Full score
+        </Link>
+      }
+    >
       {score === null ? (
         <Quiet>The score could not be read.</Quiet>
       ) : (

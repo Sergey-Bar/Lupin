@@ -70,6 +70,7 @@ describe('route manifest', () => {
       '/dashboard/insights',
       '/dashboard/delivery',
       '/dashboard/ai-code',
+      '/dashboard/agents',
       '/dashboard/health',
       '/dashboard/supply-chain',
       '/dashboard/access',
@@ -85,6 +86,10 @@ describe('route manifest', () => {
       '/dashboard/toolbox',
     ]);
     expect(visibleRoutes.every((route) => isApplicationPath(route.path))).toBe(true);
+  });
+
+  it('reaches every area page in one click from the tab row, Agents included', () => {
+    expect(tabsOf('delivery').map((tab) => tab.path)).toContain('/dashboard/agents');
   });
 
   it('has no login route: the install is open (ADR-006)', () => {
@@ -149,6 +154,7 @@ describe('route manifest', () => {
     expect(tabsOf('delivery').map((tab) => tab.tab)).toEqual([
       'Delivery',
       'AI code',
+      'Agents',
       'Pull requests',
       'Issues',
       'Repositories',
@@ -317,13 +323,15 @@ describe('route manifest', () => {
     expect(isApplicationPath(reportPath('p-1', '7d'))).toBe(false);
   });
 
-  it('has Trends and Agents off the tab rows and the palette, not off the product', () => {
-    for (const id of ['analytics', 'agents']) {
-      const entry = routeManifest.find((route) => route.id === id);
-      expect(entry, id).toBeDefined();
-      expect(entry?.visible, id).toBe(false);
-      expect(entry !== undefined && 'tab' in entry, id).toBe(false);
-    }
+  it('has Trends off the tab rows and the palette, and Agents back on them', () => {
+    // Trends is reached from the cockpit's metric pages. Agents went the same way, and then
+    // nothing linked to it once the desktop tab row was gone, so it is a Delivery tab again.
+    const trends = routeManifest.find((route) => route.id === 'analytics');
+    expect(trends?.visible).toBe(false);
+    expect(trends !== undefined && 'tab' in trends).toBe(false);
+    const agents = routeManifest.find((route) => route.id === 'agents');
+    expect(agents?.visible).toBe(true);
+    expect(agents !== undefined && 'tab' in agents).toBe(true);
   });
 
   it('registers the scorecard pages and the 360 in the router', () => {

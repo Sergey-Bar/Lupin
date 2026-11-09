@@ -134,6 +134,18 @@ describe('NavBar', () => {
     );
   });
 
+  it('shows the tab row on a desktop too, since the sidebar lists only the areas', async () => {
+    // The sidebar used to list every tab, so the row hid from `lg` up. The pyramid sidebar
+    // lists the six areas only, and with the row hidden 25 of 48 pages had no link at all.
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
+    const tabs = await screen.findByTestId('section-tabs');
+    expect(tabs.className).not.toMatch(/(^|\s)lg:hidden(\s|$)/u);
+    expect(within(tabs).getByRole('link', { name: 'Portfolio' })).toHaveAttribute(
+      'href',
+      '/dashboard/portfolio',
+    );
+  });
+
   it('shows the section tabs for a section with more than one page', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
     const tabs = await screen.findByTestId('section-tabs');

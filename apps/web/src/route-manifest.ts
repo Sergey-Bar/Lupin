@@ -173,8 +173,11 @@ export const routeManifest = [
     id: 'agents',
     path: '/dashboard/agents',
     label: 'Agents',
-    visible: false,
+    // A tab again: with the tab row gone from desktop and no tab here, nothing linked to it
+    // but a card deep in Repository 360.
+    visible: true,
     section: 'delivery',
+    tab: 'Agents',
   },
   {
     id: 'score',

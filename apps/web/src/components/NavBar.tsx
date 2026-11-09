@@ -106,9 +106,10 @@ export function NavBar(): React.ReactElement {
 }
 
 /**
- * The section's pages, as an underline row. Shown only when the current page is one of
- * the section's tabs — a run detail or a score deep-dive is reached by a link, and a tab
- * row above it would mark nothing as current.
+ * The section's pages, as an underline row, at every width: the sidebar lists the six areas
+ * and nothing under them, so this row is the only way to the other pages of an area. Shown
+ * only when the current page is one of the section's tabs — a run detail or a score
+ * deep-dive is reached by a link, and a tab row above it would mark nothing as current.
  */
 export function SectionTabs(): React.ReactElement | null {
   const path = useCurrentPath();
@@ -127,7 +128,7 @@ export function SectionTabs(): React.ReactElement | null {
       data-testid="section-tabs"
       data-chrome="secondary"
       aria-label={`${label} pages`}
-      className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6 lg:hidden"
+      className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6"
     >
       <ul ref={tabsRef} className="relative flex gap-1">
         {tabs.map((tab) => {
