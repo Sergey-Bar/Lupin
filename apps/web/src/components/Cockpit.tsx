@@ -20,6 +20,7 @@ import { AttentionSection, type NowSources } from './Now.js';
 import { Delta, PageFrame, PageBody, PageHeader, Panel, Segmented } from './kit.js';
 import { SetupChecklist, type SetupChecklistSource } from './SetupChecklist.js';
 import { StatusLine } from './StatusLine.js';
+import { greetingFor } from '../lib/focus.js';
 import { isNothingYet } from '../lib/nothing-yet.js';
 
 /**
@@ -94,8 +95,7 @@ export function CockpitPage({
   return (
     <PageFrame data-testid="cockpit-page" className="gap-4 sm:gap-6">
       <PageHeader
-        title="Cockpit"
-        subtitle="Is the product better or worse than before, and why."
+        title={greetingFor((now ?? (() => new Date()))())}
         actions={
           <div className="flex flex-wrap items-end gap-3">
             <ProjectPicker
@@ -116,21 +116,30 @@ export function CockpitPage({
         }
       />
       <PageBody>
-        {sources.setup === undefined ? null : <SetupChecklist source={sources.setup} />}
-        {/* Keyed by the window and the reload, so a new read starts from loading and never shows
-          the previous window's headline under the new window's label. */}
-        <CockpitReading
-          key={`${projectId ?? ''}:${window}:${String(reload)}`}
-          sources={sources}
-          window={window}
-          projectId={projectId}
-          onRetry={() => setReload((count) => count + 1)}
-        />
+        {/* The focus first: what to do now, decided for the reader. */}
         <AttentionSection
           sources={sources.attention}
           navigate={navigate}
           {...(now === undefined ? {} : { now })}
         />
+        {sources.setup === undefined ? null : <SetupChecklist source={sources.setup} />}
+        {/* The numbers are one quiet line until asked for, so the page leads with one decision. */}
+        <details data-testid="cockpit-everything" className="group">
+          <summary className="cursor-pointer select-none rounded-md py-2 text-sm text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
+            How the product is doing
+          </summary>
+          <div className="mt-4">
+            {/* Keyed by the window and the reload, so a new read starts from loading and never
+              shows the previous window's headline under the new window's label. */}
+            <CockpitReading
+              key={`${projectId ?? ''}:${window}:${String(reload)}`}
+              sources={sources}
+              window={window}
+              projectId={projectId}
+              onRetry={() => setReload((count) => count + 1)}
+            />
+          </div>
+        </details>
       </PageBody>
     </PageFrame>
   );

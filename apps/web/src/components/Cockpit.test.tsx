@@ -5,6 +5,7 @@ import type { Cockpit } from '@lupin/shared-contracts';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { cockpitFixture, cockpitMetric } from '../test-utils.js';
 import { QaApiError } from '../lib/qa-client.js';
+import { greetingFor } from '../lib/focus.js';
 import { CockpitPage, safeHref, type CockpitSources } from './Cockpit.js';
 
 const NOW = new Date('2026-10-26T12:00:00.000Z');
@@ -284,7 +285,12 @@ describe('loading and failing', () => {
   it('shows a loading state that keeps the page\u2019s shape', async () => {
     show(vi.fn(() => new Promise<Cockpit>(() => undefined)));
     expect(screen.getByTestId('cockpit-loading')).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByRole('heading', { level: 1, name: 'Cockpit' })).toBeTruthy();
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: /^Good (morning|afternoon|evening)|^Working late/u,
+      }),
+    ).toBeTruthy();
     // The section under it settles on its own, so wait for it rather than leave it mid-update.
     await screen.findByTestId('now-clear');
   });
@@ -327,6 +333,24 @@ describe('loading and failing', () => {
   });
 });
 
+describe('the home page, as one focus', () => {
+  it('greets the reader, then puts the focus above the numbers', async () => {
+    show();
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading.textContent).toBe(greetingFor(NOW));
+    const focus = await screen.findByTestId('now-page');
+    const numbers = screen.getByTestId('cockpit-everything');
+    expect(focus.compareDocumentPosition(numbers) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('folds the product numbers away under one quiet line', async () => {
+    show();
+    const numbers = await screen.findByTestId('cockpit-everything');
+    expect(numbers.tagName).toBe('DETAILS');
+    expect(numbers).not.toHaveAttribute('open');
+    expect(numbers.querySelector('summary')).toHaveTextContent('How the product is doing');
+  });
+});
 describe('pace against quality', () => {
   it('loads after the headline and carries every number in a table', async () => {
     show();

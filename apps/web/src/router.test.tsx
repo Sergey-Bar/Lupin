@@ -115,7 +115,13 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
     // an onboarding screen — and both are named `Dashboard`, so this assertion holds
     // whichever one a bare install is in.
     await waitFor(
-      () => expect(screen.getByRole('heading', { level: 1, name: 'Cockpit' })).toBeInTheDocument(),
+      () =>
+        expect(
+          screen.getByRole('heading', {
+            level: 1,
+            name: /^Good (morning|afternoon|evening)|^Working late/u,
+          }),
+        ).toBeInTheDocument(),
       {
         timeout: RENDER_TIMEOUT_MS,
       },

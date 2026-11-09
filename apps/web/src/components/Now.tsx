@@ -1,9 +1,10 @@
 import React from 'react';
-import { Badge, Button, EmptyState, Skeleton } from '@lupin/ui';
+import { Badge, Button, EmptyState, Skeleton, StatusDot } from '@lupin/ui';
 import type { DeliverySummary, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from '../lib/api.js';
 import { isNew, rankAttention, type AttentionItem } from '../lib/attention.js';
 import { ago } from '../lib/health-view.js';
+import { focusOf, focusSentence } from '../lib/focus.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
 
 /**
@@ -16,11 +17,6 @@ export interface NowSources {
   runs: () => Promise<Run[]>;
   portfolio: () => Promise<Portfolio>;
   deliveries: () => Promise<DeliverySummary[]>;
-}
-
-function sentenceOf(total: number): string {
-  if (total === 0) return 'Nothing needs you now';
-  return total === 1 ? '1 thing needs you now' : `${String(total)} things need you now`;
 }
 
 export const LAST_VISIT_KEY = 'lupin-now-last-visit';
@@ -104,17 +100,64 @@ export function AttentionSection({
       </section>
     );
   }
+  const focus = focusOf(state.items);
+  const fresh = state.items.filter((item) => isNew(item, lastVisit)).length;
   return (
-    <section aria-labelledby="now-heading" data-testid="now-page" className="flex flex-col gap-3">
-      <h2 id="now-heading" className="text-sm font-medium text-fg">
-        {sentenceOf(state.total)}
-      </h2>
-      <AttentionList items={state.items} lastVisit={lastVisit} navigate={navigate} />
-      {state.total > state.items.length ? (
-        <p className="text-sm text-fg-muted">
-          +{String(state.total - state.items.length)} more. Fix these first.
-        </p>
-      ) : null}
+    <section
+      aria-labelledby="focus-sentence"
+      data-testid="now-page"
+      className="flex flex-col gap-6"
+    >
+      <p id="focus-sentence" data-testid="focus-sentence" className="text-lg text-fg-muted">
+        {focusSentence(state.total, fresh)}
+      </p>
+      {focus.first === undefined ? (
+        <EmptyState
+          headingLevel={2}
+          data-testid="now-clear"
+          title="All clear"
+          description="No failing run, no falling grade, no lost report."
+        />
+      ) : (
+        <>
+          <FirstThing
+            item={focus.first}
+            isNew={isNew(focus.first, lastVisit)}
+            navigate={navigate}
+          />
+          {focus.next.length > 0 ? (
+            <ol aria-label="Then" className="flex flex-col">
+              {focus.next.map((item) => (
+                <NextRow
+                  key={item.id}
+                  item={item}
+                  isNew={isNew(item, lastVisit)}
+                  navigate={navigate}
+                />
+              ))}
+            </ol>
+          ) : null}
+          {focus.hidden.length + (state.total - state.items.length) > 0 ? (
+            <details data-testid="focus-rest" className="group text-sm text-fg-muted">
+              <summary className="cursor-pointer select-none rounded-md py-1 hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
+                {String(focus.hidden.length + (state.total - state.items.length))} more when you are
+                ready
+              </summary>
+              <ol className="mt-2 flex flex-col">
+                {focus.hidden.map((item) => (
+                  <NextRow
+                    key={item.id}
+                    item={item}
+                    isNew={isNew(item, lastVisit)}
+                    navigate={navigate}
+                    group="rest"
+                  />
+                ))}
+              </ol>
+            </details>
+          ) : null}
+        </>
+      )}
       {state.partial ? (
         <p role="status" className="text-sm text-fg-muted">
           Part of this could not be read, so the list may be incomplete.
@@ -123,53 +166,75 @@ export function AttentionSection({
     </section>
   );
 }
-function AttentionList({
-  items,
-  lastVisit,
+
+/**
+ * The one thing to do now: large, with its single action as the primary button, so the page
+ * makes the decision and the reader only has to act on it.
+ */
+function FirstThing({
+  item,
+  isNew: fresh,
   navigate,
 }: {
-  items: AttentionItem[];
-  lastVisit: string | null;
+  item: AttentionItem;
+  isNew: boolean;
   navigate: (to: string) => void;
 }): React.ReactElement {
-  if (items.length === 0) {
-    return (
-      <EmptyState
-        headingLevel={2}
-        data-testid="now-clear"
-        title="All clear"
-        description="No failing run, no falling grade, no lost report. Go do something else."
-      />
-    );
-  }
   return (
-    <ol className="flex flex-col gap-2" aria-label="Needs attention">
-      {items.map((item) => (
-        <li
-          key={item.id}
-          data-testid={`now-item-${item.id}`}
-          className="flex animate-fade-in items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4"
-        >
-          <div className="min-w-0">
-            <p className="flex items-center gap-2 font-medium">
-              <span aria-hidden="true">{item.severity === 'bad' ? '🔴' : '🟡'}</span>
-              <span className="truncate">{item.title}</span>
-              {isNew(item, lastVisit) ? <Badge variant="outline">new</Badge> : null}
-            </p>
-            <p className="truncate text-sm text-fg-muted">
-              {item.detail} · {ago(item.at)}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            onClick={() => navigate(item.action.to)}
-          >
-            {item.action.label}
-          </Button>
-        </li>
-      ))}
-    </ol>
+    <article
+      data-testid="focus-first"
+      aria-label="Start here"
+      className="flex animate-fade-in flex-col gap-4 rounded-lg bg-surface p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8"
+    >
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-fg-muted">Start here</p>
+        <h2 className="mt-1 flex items-center gap-3 text-2xl font-semibold tracking-tight">
+          <StatusDot status={item.severity === 'bad' ? 'bad' : 'warn'} />
+          <span className="truncate">{item.title}</span>
+          {fresh ? <Badge variant="outline">new</Badge> : null}
+        </h2>
+        <p className="mt-1 text-sm text-fg-muted">
+          {item.detail} · {ago(item.at)}
+        </p>
+      </div>
+      <Button className="min-h-11 shrink-0" onClick={() => navigate(item.action.to)}>
+        {item.action.label}
+      </Button>
+    </article>
+  );
+}
+
+/** Everything after the first thing: one quiet line each, the action a link-weight button. */
+function NextRow({
+  item,
+  isNew: fresh,
+  navigate,
+  group = 'next',
+}: {
+  item: AttentionItem;
+  isNew: boolean;
+  navigate: (to: string) => void;
+  group?: 'next' | 'rest';
+}): React.ReactElement {
+  return (
+    <li
+      data-testid={`focus-${group}-${item.id}`}
+      className="flex items-center justify-between gap-3 border-b border-border py-3 last:border-b-0"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <StatusDot status={item.severity === 'bad' ? 'bad' : 'warn'} />
+        <span className="truncate text-sm text-fg">{item.title}</span>
+        <span className="hidden truncate text-sm text-fg-muted sm:inline">{item.detail}</span>
+        {fresh ? <Badge variant="outline">new</Badge> : null}
+      </span>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="shrink-0"
+        onClick={() => navigate(item.action.to)}
+      >
+        {item.action.label}
+      </Button>
+    </li>
   );
 }

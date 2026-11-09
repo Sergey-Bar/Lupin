@@ -171,23 +171,56 @@ afterEach(() => {
   localStorage.clear();
 });
 
-describe('AttentionSection', () => {
-  it('says how many things need you, marks the new one, and opens it with its one action', async () => {
+describe('AttentionSection, as one focus', () => {
+  const many = Array.from({ length: 6 }, (_, index) =>
+    run({
+      id: `${String(index)}`.repeat(8),
+      suite: `suite ${String(index)}`,
+      outcome: 'failed',
+      createdAt: `2026-10-25T0${String(index)}:00:00.000Z`,
+    }),
+  );
+
+  it('gives one thing first, with its one action as the primary button', async () => {
     const user = userEvent.setup();
     const navigate = vi.fn();
-    localStorage.setItem(LAST_VISIT_KEY, '2026-10-25T10:00:00.000Z');
     const { container } = render(
       <AttentionSection sources={sources()} navigate={navigate} now={() => NOW} />,
     );
-    expect(await screen.findByRole('heading', { name: '1 thing needs you now' })).toBeTruthy();
-    expect(screen.getByText('new')).toBeTruthy();
-    await user.click(screen.getAllByRole('button', { name: 'Open run' })[0] as HTMLElement);
+    const first = await screen.findByTestId('focus-first');
+    expect(first).toHaveTextContent('checkout e2e failed');
+    await user.click(screen.getByRole('button', { name: 'Open run' }));
     expect(navigate).toHaveBeenCalledWith('/dashboard/runs/00000000-0000-4000-8000-000000000001');
     expect(localStorage.getItem(LAST_VISIT_KEY)).toBe(NOW.toISOString());
     await expectNoBlockingAxeViolations(container);
   });
 
-  it('says all clear when nothing needs anyone', async () => {
+  it('shows at most two next, and folds the rest away until asked', async () => {
+    render(
+      <AttentionSection
+        sources={sources({ runs: vi.fn(async () => many) })}
+        navigate={vi.fn()}
+        now={() => NOW}
+      />,
+    );
+    await screen.findByTestId('focus-first');
+    expect(screen.getAllByTestId(/^focus-next-/u)).toHaveLength(2);
+    const rest = screen.getByTestId('focus-rest');
+    expect(rest.tagName).toBe('DETAILS');
+    expect(rest).not.toHaveAttribute('open');
+    expect(rest).toHaveTextContent('3 more when you are ready');
+  });
+
+  it('says it in one calm sentence, and marks what is new since last time', async () => {
+    localStorage.setItem(LAST_VISIT_KEY, '2026-10-25T10:00:00.000Z');
+    render(<AttentionSection sources={sources()} navigate={vi.fn()} now={() => NOW} />);
+    expect(await screen.findByTestId('focus-sentence')).toHaveTextContent(
+      'One thing needs you. 1 is new since your last visit.',
+    );
+    expect(screen.getByText('new')).toBeTruthy();
+  });
+
+  it('says all clear, and nothing else, when nothing needs you', async () => {
     render(
       <AttentionSection
         sources={sources({ runs: vi.fn(async () => []) })}
@@ -196,26 +229,18 @@ describe('AttentionSection', () => {
       />,
     );
     expect(await screen.findByTestId('now-clear')).toHaveTextContent('All clear');
-    expect(screen.getByRole('heading', { name: 'Nothing needs you now' })).toBeTruthy();
+    expect(screen.queryByTestId('focus-first')).toBeNull();
   });
 
-  it('counts what did not fit, and says when a source could not be read', async () => {
-    const many = Array.from({ length: 7 }, (_, index) =>
-      run({ id: `${String(index)}`.repeat(8), suite: `suite ${String(index)}`, outcome: 'failed' }),
-    );
+  it('says when a source could not be read', async () => {
     render(
       <AttentionSection
-        sources={sources({
-          runs: vi.fn(async () => many),
-          portfolio: vi.fn(async () => Promise.reject(new Error('offline'))),
-        })}
+        sources={sources({ portfolio: vi.fn(async () => Promise.reject(new Error('offline'))) })}
         navigate={vi.fn()}
         now={() => NOW}
       />,
     );
-    expect(await screen.findByText('+2 more. Fix these first.')).toBeTruthy();
-    expect(screen.getByText(/could not be read/u)).toBeTruthy();
-    expect(screen.getByRole('heading', { name: '7 things need you now' })).toBeTruthy();
+    expect(await screen.findByText(/could not be read/u)).toBeTruthy();
   });
 
   it('shows a loading state, and ignores an answer after unmount', async () => {
