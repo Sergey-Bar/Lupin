@@ -20,6 +20,7 @@ import { AttentionSection, type NowSources } from './Now.js';
 import { Delta, PageFrame, PageBody, PageHeader, Panel, Segmented } from './kit.js';
 import { SetupChecklist, type SetupChecklistSource } from './SetupChecklist.js';
 import { StatusLine } from './StatusLine.js';
+import { isNothingYet } from '../lib/nothing-yet.js';
 
 /**
  * The cockpit: is the product better or worse than it was, and why.
@@ -173,7 +174,7 @@ function CockpitReading({
     // A bare "not found" from the server is not a sentence a reader can act on. Here it means
     // nothing has reported yet, so say that and give the one next step. Any other server
     // sentence is shown as the server wrote it.
-    const nothingYet = /^\s*not found\.?\s*$/iu.test(state.message);
+    const nothingYet = isNothingYet(state.message);
     return (
       <div
         role="alert"

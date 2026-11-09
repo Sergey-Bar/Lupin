@@ -1,4 +1,5 @@
 import React from 'react';
+import { isNothingYet } from '../lib/nothing-yet.js';
 import {
   Badge,
   Button,
@@ -53,7 +54,15 @@ export function AccessGate({
   }
   if (who.status === 'error') {
     return (
-      <EmptyState headingLevel={2} title="Could not reach the API" description={who.message} />
+      <EmptyState
+        headingLevel={2}
+        title={isNothingYet(who.message) ? 'Nothing set up yet' : 'Could not reach the API'}
+        description={
+          isNothingYet(who.message)
+            ? 'This install has not been configured. Start with setup, then come back here.'
+            : who.message
+        }
+      />
     );
   }
   if (who.value.role === null) {

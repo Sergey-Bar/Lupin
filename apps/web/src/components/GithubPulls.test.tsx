@@ -427,6 +427,18 @@ describe('PullRequestsPage', () => {
     );
   });
 
+  it('says GitHub is not connected yet, not "not found", on a bare 404', async () => {
+    const unconnected = {
+      listPulls: vi.fn(async () => {
+        throw new Error('not found');
+      }),
+      listRepos: vi.fn(async () => ({ items: [repo()] })),
+    } as unknown as GithubClient;
+    render(<PullRequestsPage github={unconnected} now={() => NOW} />);
+    expect(await screen.findByText(/GitHub is not connected yet/u)).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('says so when the load fails, and when no repository is being read', async () => {
     const failing = {
       listPulls: vi.fn(async () => {

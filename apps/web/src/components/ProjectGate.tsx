@@ -5,6 +5,7 @@ import { useViewerRole } from '../hooks/useViewerRole.js';
 import type { QaClient } from '../lib/qa-client.js';
 import type { RegisteredProject } from '../lib/qa.js';
 import { PageFrame, PageHeader, Quiet } from './kit.js';
+import { isNothingYet } from '../lib/nothing-yet.js';
 
 /**
  * Reads the registry once and hands each project-scoped screen its subject.
@@ -46,7 +47,7 @@ export function ProjectGate({
   if (registry.status === 'error') {
     // A bare "not found" means the registry has nothing yet (the same rule the cockpit uses),
     // so the reader gets the way in rather than a sentence they cannot act on.
-    if (/^\s*not found\.?\s*$/iu.test(registry.message)) return <Onboarding title={title} />;
+    if (isNothingYet(registry.message)) return <Onboarding title={title} />;
     return (
       <PageFrame>
         <PageHeader title={title} />
