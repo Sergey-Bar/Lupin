@@ -172,12 +172,24 @@ describe('fonts.css declares each locked face', () => {
     }
   });
 
-  it('publishes exactly two font stacks, as custom properties', () => {
-    // Two families. A third face is a decision somebody makes in a component
-    // and not in this file, so the count is asserted rather than trusted.
-    expect(fontsCss.match(/--lupin-font-(?:sans|mono):/g)).toHaveLength(2);
+  it('publishes exactly three font stacks, as custom properties', () => {
+    // Three families: Geist for reading, Geist Mono for readings, and Inter Display for
+    // the one large verdict and the page titles (design language v2). A fourth face is a
+    // decision somebody makes in a component and not in this file, so the count is asserted.
+    expect(fontsCss.match(/--lupin-font-(?:sans|mono|display):/g)).toHaveLength(3);
     expect(fontsCss).toContain("--lupin-font-sans: 'Geist', 'Geist Fallback'");
     expect(fontsCss).toContain("--lupin-font-mono: 'Geist Mono', 'Geist Mono Fallback'");
+    expect(fontsCss).toContain("--lupin-font-display: 'Inter Display', 'Geist'");
+  });
+});
+
+describe('the display face', () => {
+  it('is locked, so the hero verdict ships in a face somebody recorded', () => {
+    expect(lock.fonts.map((font) => font.family)).toContain('Inter Display');
+  });
+
+  it('is published to Tailwind as font-display', () => {
+    expect(fontsCss).toContain('--font-display: var(--lupin-font-display);');
   });
 });
 

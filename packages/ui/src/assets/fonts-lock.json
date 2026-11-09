@@ -30,7 +30,9 @@
       "source": "Geist-Variable.woff2, the variable face the documentation site pinned to this revision in `site/public/fonts/manifest.json` before 4.0.0",
       "licence": "SIL Open Font License 1.1",
       "licenceFile": "geist-OFL.txt",
-      "axes": { "wght": "100 900" },
+      "axes": {
+        "wght": "100 900"
+      },
       "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
       "sha256": "2ffebe993e969069a9789d15164b7715d42491b5835516c5e3b935d5f81b05f1"
     },
@@ -42,9 +44,25 @@
       "source": "GeistMono-Variable.woff2, the variable face the documentation site pinned to this revision in `site/public/fonts/manifest.json` before 4.0.0",
       "licence": "SIL Open Font License 1.1",
       "licenceFile": "geist-OFL.txt",
-      "axes": { "wght": "100 900" },
+      "axes": {
+        "wght": "100 900"
+      },
       "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
       "sha256": "afaacc4c5fbba89d2ebf7a02dc4070208540874592a5504d57175782fe893101"
+    },
+    {
+      "family": "Inter Display",
+      "file": "inter-display-semibold.woff2",
+      "upstream": "https://github.com/rsms/inter",
+      "revision": "e3a3d4c57d5ecc01453a575621882a384c1995a3",
+      "source": "web/InterDisplay-SemiBold.woff2 from the v4.1 release archive (Inter-4.1.zip), the commit the v4.1 tag points at",
+      "licence": "SIL Open Font License 1.1",
+      "licenceFile": "inter-OFL.txt",
+      "axes": {
+        "wght": "600"
+      },
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "sha256": "d9f63a82b826fb0117c92715c3a52a2d2247bc321bc39341420bf52d91e8277a"
     }
   ],
   "unitsPerEm": 1000,

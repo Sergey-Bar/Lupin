@@ -122,6 +122,13 @@ export const semanticColorTokens = {
   warning: '--lupin-warning',
   danger: '--lupin-danger',
   info: '--lupin-info',
+  /** Design language v2: three elevations (aliases of plane steps) and the verdict glow. */
+  'elevation-1': '--lupin-surface',
+  'elevation-2': '--lupin-surface-raised',
+  'elevation-3': '--lupin-surface-muted',
+  'glow-go': '--lupin-success',
+  'glow-caution': '--lupin-warning',
+  'glow-no-go': '--lupin-danger',
   /**
    * `error` is the name the components use (`bg-error` is the destructive
    * "Cancel run" button). It is an alias of `danger`, kept because renaming

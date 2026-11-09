@@ -80,6 +80,16 @@
   --color-warning: var(--lupin-warning);
   --color-danger: var(--lupin-danger);
   --color-info: var(--lupin-info);
+  /*
+   * Design language v2: three elevations, each an existing surface step (so contrast is
+   * already held), and the verdict glow behind the hero, at most a quarter strength.
+   */
+  --color-elevation-1: var(--lupin-surface);
+  --color-elevation-2: var(--lupin-surface-raised);
+  --color-elevation-3: var(--lupin-surface-muted);
+  --color-glow-go: color-mix(in oklab, var(--lupin-success) 18%, transparent);
+  --color-glow-caution: color-mix(in oklab, var(--lupin-warning) 18%, transparent);
+  --color-glow-no-go: color-mix(in oklab, var(--lupin-danger) 18%, transparent);
   --color-error: var(--lupin-danger);
   --color-text-primary: var(--lupin-fg);
   --color-text-secondary: var(--lupin-fg-muted);

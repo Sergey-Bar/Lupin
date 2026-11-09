@@ -1912,3 +1912,38 @@ describe('the light plane has depth', () => {
     expect(themeBlock(DARK_SELECTOR)).not.toMatch(/--shadow-elevation-/);
   });
 });
+
+/**
+ * Design language v2: depth and the verdict glow.
+ *
+ * Depth is three elevations, each an alias of a surface step `theme.test.ts` already holds to
+ * contrast in every palette, so no new plane can be one the text fails on. The glow is the
+ * verdict colour mixed into transparency behind the hero: at most a quarter strength, so it
+ * tints the plane and never becomes a fill text has to sit on.
+ */
+describe('design language v2: depth and glow', () => {
+  const v2Css = readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), 'theme.css'),
+    'utf8',
+  );
+
+  it.each([
+    ['1', 'surface'],
+    ['2', 'surface-raised'],
+    ['3', 'surface-muted'],
+  ])('elevation %s is the %s plane', (level, surface) => {
+    expect(v2Css).toContain(`--color-elevation-${level}: var(--lupin-${surface});`);
+  });
+
+  it.each([
+    ['go', 'success'],
+    ['caution', 'warning'],
+    ['no-go', 'danger'],
+  ])('the %s glow is the %s colour at no more than 25%%', (verdict, tone) => {
+    const match = new RegExp(
+      `--color-glow-${verdict}: color-mix\\(in oklab, var\\(--lupin-${tone}\\) (\\d+)%, transparent\\);`,
+    ).exec(v2Css);
+    expect(match, `--color-glow-${verdict} is missing or not a mix of ${tone}`).not.toBeNull();
+    expect(Number(match?.[1])).toBeLessThanOrEqual(25);
+  });
+});

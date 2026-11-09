@@ -315,3 +315,12 @@ site:doctor` check 8 reads **every** stylesheet in the site theme and fails on a
 colour in any of them, hex or colour function, so the site and the console cannot drift
 into two palettes. The site defaults to light on a first visit; the console follows the
 system setting.
+
+## Design language v2
+
+The redesign keeps every rule above and adds four, each with its gate:
+
+- **A display face.** Inter Display SemiBold sets the hero verdict and page titles (`font-display`); everything that is read stays in Geist. Committed once with its sha256 and upstream in `fonts-lock.json` (`fonts.test.ts`).
+- **Depth.** Three elevations, `elevation-1` to `elevation-3`, each an existing plane step, so no new surface can fail contrast (`theme.test.ts`).
+- **The verdict glow.** `glow-go`, `glow-caution` and `glow-no-go` mix the verdict colour into transparency at no more than 25%, behind the hero only (`theme.test.ts`).
+- **An expressive tier.** `animate-reveal`: 300ms at most, an 8–12px rise on the arrival curve, for the hero and a page's first screen. Controls keep the calm tier, and reduced motion makes both instant (`motion.test.ts`).

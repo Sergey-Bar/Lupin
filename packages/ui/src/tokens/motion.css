@@ -133,6 +133,8 @@
   --animate-zoom-out-95: lupin-zoom-out var(--lupin-duration-100) var(--lupin-ease-in);
   --animate-lupin-slide-in: lupin-slide-in var(--lupin-duration-300) var(--lupin-ease-in-out);
   --animate-lupin-pulse: lupin-pulse var(--lupin-duration-150) var(--lupin-ease-in-out);
+  /* Design language v2, the expressive tier: the hero and a page's first screen only. */
+  --animate-reveal: lupin-reveal var(--lupin-duration-300) var(--lupin-ease-arrive) both;
 
   /* The press scale, so `active:scale-press` is the press feedback. */
   --scale-press: var(--lupin-press-scale);
@@ -150,6 +152,23 @@
   from {
     opacity: 0;
     transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+ * `lupin-reveal` — **role: reveal (expressive tier).** The hero verdict and a page's first
+ * screen arriving: 300ms, a 12px rise on the arrival curve. Larger than `lupin-enter` because
+ * the hero is the one thing on the screen, still no overshoot, and scaled to instant under
+ * reduced motion like every other duration. Not for controls, panels or list rows.
+ */
+@keyframes lupin-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
