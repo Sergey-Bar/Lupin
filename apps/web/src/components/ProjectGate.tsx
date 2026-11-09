@@ -44,6 +44,9 @@ export function ProjectGate({
     );
   }
   if (registry.status === 'error') {
+    // A bare "not found" means the registry has nothing yet (the same rule the cockpit uses),
+    // so the reader gets the way in rather than a sentence they cannot act on.
+    if (/^\s*not found\.?\s*$/iu.test(registry.message)) return <Onboarding title={title} />;
     return (
       <PageFrame>
         <PageHeader title={title} />

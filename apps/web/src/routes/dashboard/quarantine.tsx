@@ -125,7 +125,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
         subtitle="Tests held out of the pass rate while someone decides what to do about them"
         actions={
           <Button data-testid="add-quarantine-btn" onClick={toggle} className="min-h-11">
-            {isAdding ? 'Cancel' : 'Add to Quarantine'}
+            {isAdding ? 'Cancel' : 'Add to quarantine'}
           </Button>
         }
       />
@@ -158,7 +158,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
         <EmptyState
           headingLevel={2}
           data-testid="quarantine-empty"
-          title="No Quarantined Tests"
+          title="No tests in quarantine"
           description="There are currently no tests in quarantine."
         />
       ) : (

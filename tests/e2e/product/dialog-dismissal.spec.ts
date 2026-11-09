@@ -21,7 +21,7 @@ const DIALOGS = [
   {
     name: 'quarantine form',
     path: '/dashboard/quarantine',
-    trigger: 'Add to Quarantine',
+    trigger: 'Add to quarantine',
     heading: 'Quarantine a test',
   },
 ] as const;

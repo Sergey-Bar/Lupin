@@ -70,3 +70,28 @@ describe('the empty-registry screen', () => {
     expect(screen.queryByTestId('onboarding-connect')).toBeNull();
   });
 });
+
+describe('a registry that is not there yet', () => {
+  function gateWith(listProjects: QaClient['listProjects']) {
+    return render(
+      <ProjectGate qa={{ listProjects } as unknown as QaClient} title="Overview">
+        {() => <p>never</p>}
+      </ProjectGate>,
+    );
+  }
+
+  it('reads a bare "not found" as an empty install and shows onboarding', async () => {
+    signedInAs('admin');
+    gateWith(vi.fn(async () => Promise.reject(new Error('not found'))));
+    expect(await screen.findByTestId('onboarding')).toBeInTheDocument();
+    expect(screen.queryByText('not found')).toBeNull();
+  });
+
+  it('still reports a real failure in the server’s words', async () => {
+    signedInAs('admin');
+    gateWith(vi.fn(async () => Promise.reject(new Error('Database unavailable'))));
+    expect(await screen.findByTestId('project-gate-error')).toHaveTextContent(
+      'Database unavailable',
+    );
+  });
+});
