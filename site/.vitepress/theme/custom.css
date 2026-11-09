@@ -82,7 +82,7 @@
   --vp-font-family-base: var(--lupin-font-sans);
   --vp-font-family-mono: var(--lupin-font-mono);
 
-  --vp-layout-max-width: 1440px;
+  --vp-layout-max-width: 100%;
   color-scheme: dark;
 }
 
@@ -533,7 +533,7 @@ html:not([data-theme='light']) {
   /* VitePress caps a page with an outline at 688px; this is the rule that made docs narrow. */
   .VPDoc.has-aside .content-container,
   .VPDoc .content-container {
-    max-width: 54rem !important;
+    max-width: min(72rem, 100%) !important;
   }
   .VPDoc .content {
     max-width: none !important;

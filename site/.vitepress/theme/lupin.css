@@ -22,8 +22,10 @@
   --site-sans: var(--lupin-font-sans);
   --site-mono: var(--lupin-font-mono);
   /* Docs need room for sidebar, text and outline; the landing page centres within it. */
-  --site-width: 1440px;
-  --site-home-width: 1248px;
+  /* The site uses the whole window; only prose keeps a reading measure. */
+  --site-width: 100%;
+  --site-gutter: clamp(24px, 4vw, 96px);
+  --site-home-width: 100%;
   --site-radius: 8px;
   --site-space: 8px;
 }
@@ -104,7 +106,7 @@ body {
 .lupin-home {
   max-width: var(--site-home-width);
   margin-inline: auto;
-  padding-inline: 32px;
+  padding-inline: var(--site-gutter);
 }
 .lupin-home h1,
 .lupin-home h2,
@@ -686,6 +688,31 @@ body {
   font-size: inherit;
 }
 
+/* Full-bleed hero band: the first screen is the whole window, edge to edge. */
+.lupin-hero {
+  min-height: calc(100svh - var(--vp-nav-height, 64px));
+  margin-inline: calc(-1 * var(--site-gutter));
+  padding-inline: var(--site-gutter);
+  background: var(--lupin-surface);
+  border-block-end: 1px solid var(--site-border);
+}
+.lupin-hero h1 {
+  font-size: clamp(44px, 5.2vw, 104px);
+}
+.lupin-lead {
+  max-width: 44rem;
+  font-size: clamp(17px, 1.2vw, 21px);
+}
+.lupin-section,
+.lupin-showcase {
+  padding-block: clamp(80px, 9vw, 160px);
+}
+.lupin-showcase {
+  padding-block-end: 0;
+}
+.lupin-footer {
+  padding-inline: var(--site-gutter) !important;
+}
 /* home: motion */
 /*
  * One arrival for the hero, staggered so the eye reads it in order: the line, the claim, the
