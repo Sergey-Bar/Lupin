@@ -37,9 +37,11 @@ export function DeliveryArea({
         ? isNothingYet(pulls.message)
           ? 'GitHub is not connected yet.'
           : `Could not read the pull requests: ${pulls.message}`
-        : items.length === 0
-          ? 'Nothing is stuck. Every open pull request is moving.'
-          : `${String(items.length)} ${items.length === 1 ? 'pull request is' : 'pull requests are'} stuck.`;
+        : pulls.value.items.length === 0
+          ? 'No open pull requests yet. Connect GitHub in Settings to watch them here.'
+          : items.length === 0
+            ? 'Nothing is stuck. Every open pull request is moving.'
+            : `${String(items.length)} ${items.length === 1 ? 'pull request is' : 'pull requests are'} stuck.`;
   return (
     <AreaPage
       title="Delivery"

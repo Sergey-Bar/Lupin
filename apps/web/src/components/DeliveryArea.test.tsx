@@ -47,4 +47,11 @@ describe('DeliveryArea', () => {
       'GitHub is not connected yet.',
     );
   });
+  it('does not claim nothing is stuck when there are no pull requests to check', async () => {
+    const listPulls = vi.fn(async () => ({ items: [], nextCursor: null }));
+    render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);
+    expect(await screen.findByTestId('area-verdict')).toHaveTextContent(
+      'No open pull requests yet. Connect GitHub in Settings to watch them here.',
+    );
+  });
 });
