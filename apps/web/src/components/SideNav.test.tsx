@@ -9,7 +9,6 @@ import {
 } from '@tanstack/react-router';
 import { SideNav } from './SideNav';
 import { ThemeProvider } from '../theme/ThemeProvider';
-import { SECTIONS, tabsOf } from '../route-manifest';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
 import { expectNoBlockingAxeViolations } from '../test-axe';
 import { makeApi, makeRun } from '../test-utils';
