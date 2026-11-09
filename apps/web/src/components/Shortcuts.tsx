@@ -11,10 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lupin/ui';
  * is in a field, so typing a pairing code or a cron expression never navigates.
  */
 export const GO_TO: Readonly<Record<string, { label: string; to: string }>> = {
-  n: { label: 'Cockpit', to: '/dashboard/now' },
-  p: { label: 'Portfolio', to: '/dashboard/portfolio' },
+  n: { label: 'Now', to: '/dashboard/now' },
   r: { label: 'Runs', to: '/dashboard/runs' },
-  i: { label: 'Tests', to: '/dashboard/insights' },
+  t: { label: 'Tests', to: '/dashboard/insights' },
+  h: { label: 'Health', to: '/dashboard' },
+  d: { label: 'Delivery', to: '/dashboard/prs' },
   s: { label: 'Reports', to: '/dashboard/reports' },
   a: { label: 'Access', to: '/dashboard/access' },
   ',': { label: 'Settings', to: '/dashboard/settings' },

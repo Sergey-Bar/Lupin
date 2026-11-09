@@ -7,7 +7,7 @@ import {
   readPreferences,
   usePreferences,
 } from '../theme/preferences.js';
-import { isTypingTarget } from './Shortcuts.js';
+import { GO_TO, isTypingTarget } from './Shortcuts.js';
 import { MemoryRouter } from '../router.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 
@@ -103,6 +103,19 @@ describe('keyboard shortcuts', () => {
     expect(clicked).toHaveBeenCalledOnce();
     list.remove();
     press('j');
+  });
+
+  it('reaches every area of the pyramid in two keys', () => {
+    expect(
+      Object.fromEntries(Object.entries(GO_TO).map(([key, target]) => [key, target.to])),
+    ).toMatchObject({
+      n: '/dashboard/now',
+      r: '/dashboard/runs',
+      t: '/dashboard/insights',
+      h: '/dashboard',
+      d: '/dashboard/prs',
+      ',': '/dashboard/settings',
+    });
   });
 
   it('knows a field from the page', () => {
