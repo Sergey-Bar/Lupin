@@ -40,6 +40,20 @@ describe('Settings · Appearance', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
   });
 
+  it('puts each control on its title row, so every setting reads the same way', () => {
+    renderAppearance();
+    for (const name of ['Theme', 'Focus', 'Density', 'Motion']) {
+      const heading = screen.getByRole('heading', { name });
+      const row = heading.parentElement;
+      expect(row, name).not.toBeNull();
+      // The segmented control is a sibling of the heading, not a block below the description.
+      expect(
+        row?.querySelector('[role="radiogroup"], [role="tablist"], [role="group"]'),
+        name,
+      ).not.toBeNull();
+    }
+  });
+
   it('reflects the stored theme and writes the chosen one to localStorage and <html>', () => {
     localStorage.setItem('lupin-theme', 'light');
     renderAppearance();

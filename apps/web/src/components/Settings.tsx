@@ -37,27 +37,26 @@ export function SettingsAppearancePage(): React.ReactElement {
         subtitle="How the product looks and behaves on this device. Kept in this browser."
       />
       <PageBody>
-        <Panel title="Theme">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="max-w-measure text-sm text-fg-muted">
-              The plane and the type. System follows what your operating system is set to, and
-              changes with it.
-            </p>
+        <Panel
+          title="Theme"
+          action={
             <Segmented<Theme>
               label="Theme"
               value={theme}
               onChange={setTheme}
               options={THEME_OPTIONS}
             />
-          </div>
+          }
+        >
+          <p className="max-w-measure text-sm text-fg-muted">
+            The plane and the type. System follows what your operating system is set to, and changes
+            with it.
+          </p>
         </Panel>
 
-        <Panel title="Focus">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="max-w-measure text-sm text-fg-muted">
-              Hide the secondary navigation so a page is the page and nothing else. The command
-              palette and the keyboard shortcuts still reach everywhere.
-            </p>
+        <Panel
+          title="Focus"
+          action={
             <Segmented<'on' | 'off'>
               label="Focus mode"
               value={preferences.focus ? 'on' : 'off'}
@@ -67,15 +66,17 @@ export function SettingsAppearancePage(): React.ReactElement {
                 { value: 'on', label: 'On' },
               ]}
             />
-          </div>
+          }
+        >
+          <p className="max-w-measure text-sm text-fg-muted">
+            Hide the secondary navigation so a page is the page and nothing else. The command
+            palette and the keyboard shortcuts still reach everywhere.
+          </p>
         </Panel>
 
-        <Panel title="Density">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="max-w-measure text-sm text-fg-muted">
-              Compact scales the whole layout down one step, to fit more on a smaller screen without
-              scrolling.
-            </p>
+        <Panel
+          title="Density"
+          action={
             <Segmented<'comfortable' | 'compact'>
               label="Density"
               value={preferences.density}
@@ -85,15 +86,17 @@ export function SettingsAppearancePage(): React.ReactElement {
                 { value: 'compact', label: 'Compact' },
               ]}
             />
-          </div>
+          }
+        >
+          <p className="max-w-measure text-sm text-fg-muted">
+            Compact scales the whole layout down one step, to fit more on a smaller screen without
+            scrolling.
+          </p>
         </Panel>
 
-        <Panel title="Motion">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="max-w-measure text-sm text-fg-muted">
-              Reduced holds movement to its floor, for when animation is distracting. It starts from
-              your system setting and you can override it here.
-            </p>
+        <Panel
+          title="Motion"
+          action={
             <Segmented<'full' | 'reduced'>
               label="Motion"
               value={preferences.motion}
@@ -103,7 +106,12 @@ export function SettingsAppearancePage(): React.ReactElement {
                 { value: 'reduced', label: 'Reduced' },
               ]}
             />
-          </div>
+          }
+        >
+          <p className="max-w-measure text-sm text-fg-muted">
+            Reduced holds movement to its floor, for when animation is distracting. It starts from
+            your system setting and you can override it here.
+          </p>
         </Panel>
       </PageBody>
     </PageFrame>
