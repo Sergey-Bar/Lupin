@@ -272,6 +272,36 @@ describe('AttentionSection, as one focus', () => {
     expect(screen.queryByTestId('focus-first')).toBeNull();
   });
 
+  it('offers to act, not just to look: one click retries a failed run and says where it went', async () => {
+    const user = userEvent.setup();
+    const navigate = vi.fn();
+    const retryRun = vi.fn(async () => ({ id: 'retry-1234' }));
+    render(
+      <AttentionSection sources={{ ...sources(), retryRun }} navigate={navigate} now={() => NOW} />,
+    );
+    await user.click(await screen.findByRole('button', { name: 'Retry now' }));
+    expect(retryRun).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001');
+    expect(await screen.findByRole('status')).toHaveTextContent('Retry queued');
+    await user.click(screen.getByRole('button', { name: 'Watch it' }));
+    expect(navigate).toHaveBeenCalledWith('/dashboard/runs/retry-1234');
+  });
+
+  it('says so when the automatic action is refused, and keeps the manual one', async () => {
+    const user = userEvent.setup();
+    const retryRun = vi.fn(async () => Promise.reject(new Error('Runner offline')));
+    render(
+      <AttentionSection sources={{ ...sources(), retryRun }} navigate={vi.fn()} now={() => NOW} />,
+    );
+    await user.click(await screen.findByRole('button', { name: 'Retry now' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Runner offline');
+    expect(screen.getByRole('button', { name: 'Open run' })).toBeInTheDocument();
+  });
+
+  it('offers no automatic action when the page was given no way to take one', async () => {
+    render(<AttentionSection sources={sources()} navigate={vi.fn()} now={() => NOW} />);
+    await screen.findByTestId('focus-first');
+    expect(screen.queryByRole('button', { name: 'Retry now' })).toBeNull();
+  });
   it('says when a source could not be read', async () => {
     render(
       <AttentionSection

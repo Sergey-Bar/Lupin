@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, EmptyState, Skeleton, StatusDot } from '@lupin/ui';
+import { Badge, Button, EmptyState, RotateCcw, Skeleton, StatusDot } from '@lupin/ui';
 import type { DeliverySummary, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from '../lib/api.js';
 import { isNew, rankAttention, type AttentionItem } from '../lib/attention.js';
@@ -17,6 +17,8 @@ export interface NowSources {
   runs: () => Promise<Run[]>;
   portfolio: () => Promise<Portfolio>;
   deliveries: () => Promise<DeliverySummary[]>;
+  /** One-click retry. Absent, the page offers only the manual action. */
+  retryRun?: (runId: string) => Promise<{ id: string }>;
 }
 
 export const LAST_VISIT_KEY = 'lupin-now-last-visit';
@@ -124,6 +126,7 @@ export function AttentionSection({
             item={focus.first}
             isNew={isNew(focus.first, lastVisit)}
             navigate={navigate}
+            {...(sources.retryRun === undefined ? {} : { retryRun: sources.retryRun })}
           />
           {focus.next.length > 0 ? (
             <ol aria-label="Then" className="flex flex-col">
@@ -175,11 +178,30 @@ function FirstThing({
   item,
   isNew: fresh,
   navigate,
+  retryRun,
 }: {
   item: AttentionItem;
   isNew: boolean;
   navigate: (to: string) => void;
+  retryRun?: (runId: string) => Promise<{ id: string }>;
 }): React.ReactElement {
+  const [auto, setAuto] = React.useState<
+    | { state: 'idle' }
+    | { state: 'busy' }
+    | { state: 'done'; runId: string }
+    | { state: 'failed'; message: string }
+  >({ state: 'idle' });
+  const canAuto = item.auto?.kind === 'retry-run' && retryRun !== undefined;
+  const act = async () => {
+    if (item.auto === undefined || retryRun === undefined) return;
+    setAuto({ state: 'busy' });
+    try {
+      const next = await retryRun(item.auto.runId);
+      setAuto({ state: 'done', runId: next.id });
+    } catch (error) {
+      setAuto({ state: 'failed', message: error instanceof Error ? error.message : String(error) });
+    }
+  };
   return (
     <article
       data-testid="focus-first"
@@ -197,9 +219,42 @@ function FirstThing({
           {item.detail} · {ago(item.at)}
         </p>
       </div>
-      <Button className="min-h-11 shrink-0" onClick={() => navigate(item.action.to)}>
-        {item.action.label}
-      </Button>
+      <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+        <div className="flex flex-wrap gap-2">
+          {canAuto && auto.state !== 'done' ? (
+            <Button
+              className="min-h-11"
+              disabled={auto.state === 'busy'}
+              onClick={() => void act()}
+            >
+              <RotateCcw size={16} aria-hidden="true" />
+              {auto.state === 'busy' ? 'Retrying' : 'Retry now'}
+            </Button>
+          ) : null}
+          {auto.state === 'done' ? (
+            <Button className="min-h-11" onClick={() => navigate(`/dashboard/runs/${auto.runId}`)}>
+              Watch it
+            </Button>
+          ) : null}
+          <Button
+            variant={canAuto ? 'outline' : 'default'}
+            className="min-h-11"
+            onClick={() => navigate(item.action.to)}
+          >
+            {item.action.label}
+          </Button>
+        </div>
+        {auto.state === 'done' ? (
+          <p role="status" className="text-sm text-success">
+            Retry queued. Lupin will put the result here.
+          </p>
+        ) : null}
+        {auto.state === 'failed' ? (
+          <p role="alert" className="max-w-xs text-sm text-danger">
+            {auto.message}
+          </p>
+        ) : null}
+      </div>
     </article>
   );
 }

@@ -15,6 +15,8 @@ export interface AttentionItem {
   detail: string;
   /** The one thing to do about it. */
   action: { label: string; to: string };
+  /** What Lupin can do about it for you, in one click, when the page can take the action. */
+  auto?: { kind: 'retry-run'; runId: string };
   /** When it happened, for ordering and the "new since your last visit" marker. */
   at: string;
 }
@@ -56,6 +58,7 @@ function runItems(runs: readonly Run[], now: Date): AttentionItem[] {
         title: failureTitle(run),
         detail: run.suite ?? (run.branch === null ? 'Latest run' : 'Latest run on this branch'),
         action: { label: 'Open run', to: `/dashboard/runs/${run.id}` },
+        auto: { kind: 'retry-run', runId: run.id },
         at,
       });
     } else if (

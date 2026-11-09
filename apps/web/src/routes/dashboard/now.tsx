@@ -33,6 +33,7 @@ export const Route = createRoute({
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),
           deliveries: () => notifications.listDeliveries(),
+          retryRun: (runId) => defaultApiClient.retryRun(runId),
         },
         setup: {
           load: () => settings.getOnboarding(),
