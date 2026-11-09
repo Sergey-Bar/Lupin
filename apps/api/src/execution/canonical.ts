@@ -67,7 +67,8 @@ function canonicalTest(test: ExecutionTestResult) {
     id: test.id,
     testId: test.id,
     title: test.title || test.id,
-    file: test.file ?? null,
+    // `||`, not `??`: the store keeps an absent file as '', which the contract refuses.
+    file: test.file || null,
     status: test.status,
     startedAt: null,
     finishedAt: null,

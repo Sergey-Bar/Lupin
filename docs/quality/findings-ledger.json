@@ -7461,7 +7461,7 @@
       "provenance": "hand",
       "status": "fixed",
       "wave": "BRAND-2026-11",
-      "summary": "With a legacy repository mounted, the first page of GET /api/v1/runs prepended RunRepository.listRuns rows in that repository's oldest-first order (\u0007sc(runs.startedAt), and insertion order in memory) to the store's newest-first page. On a reporter-fed install the Runs page opened on the oldest run, beneath a header that says newest first. Found 2026-11-09 by reading the local stack's response: eleven runs, ascending by createdAt.",
+      "summary": "With a legacy repository mounted, the first page of GET /api/v1/runs prepended RunRepository.listRuns rows in that repository's oldest-first order (asc(runs.startedAt), and insertion order in memory) to the store's newest-first page. On a reporter-fed install the Runs page opened on the oldest run, beneath a header that says newest first. Found 2026-11-09 by reading the local stack's response: eleven runs, ascending by createdAt.",
       "confirmed": true,
       "confirmedOn": "2026-11-09",
       "confirmedBy": "kilo:fail-before-verification",
@@ -7474,6 +7474,29 @@
         {
           "path": "apps/api/src/routes/execution/runs-pagination.test.ts",
           "asserts": "Legacy rows from before and after a store row interleave by time: legacy-new, db-mid, legacy-old."
+        }
+      ]
+    },
+    {
+      "id": "Q-58",
+      "title": "A completed test with no file made its whole run unreadable",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "BRAND-2026-11",
+      "summary": "A runner may complete a job with tests that carry no file. The store keeps the absent file as '', and toCanonicalRun passed it through with `??`, so CanonicalTestResultSchema (file: min(1)) refused it: every read of that run, and every listing containing it, answered 500 RUN_SERIALIZATION_FAILED. Found 2026-11-09 while writing the retry-failed-tests route test.",
+      "confirmed": true,
+      "confirmedOn": "2026-11-09",
+      "confirmedBy": "kilo:fail-before-verification",
+      "resolution": "canonicalTest maps an empty file to null (`||`), which is what the contract means by a test with no file.",
+      "evidence": [
+        {
+          "path": "apps/api/src/execution/canonical.ts",
+          "asserts": "An empty stored file is projected as null."
+        },
+        {
+          "path": "apps/api/src/execution/canonical.test.ts",
+          "asserts": "A test stored with file '' reads back with file null instead of failing the contract."
         }
       ]
     }
