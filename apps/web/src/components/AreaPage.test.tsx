@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { AreaPage, type AreaItem } from './AreaPage.js';
@@ -80,6 +80,15 @@ describe('AreaPage', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Done: item a');
   });
 
+  it('fades a finished item out with the exit motion, then removes it', async () => {
+    const user = userEvent.setup();
+    show([item('a', { action: { label: 'Quarantine', run: async () => undefined } })]);
+    await user.click(screen.getByRole('button', { name: 'Quarantine' }));
+    const leaving = await screen.findByTestId('area-item-a');
+    expect(leaving).toHaveAttribute('data-leaving', 'true');
+    expect(leaving).toHaveClass('animate-fade-out');
+    await waitFor(() => expect(screen.queryByTestId('area-item-a')).toBeNull());
+  });
   it('keeps the item and says why when the automatic action is refused', async () => {
     const user = userEvent.setup();
     show([

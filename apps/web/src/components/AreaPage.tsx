@@ -81,10 +81,8 @@ export function AreaPage({
   const top = live.slice(0, ABOVE_THE_FOLD);
   const rest = live.slice(ABOVE_THE_FOLD);
   const [notice, setNotice] = React.useState<string | null>(null);
-  const finish = (entry: AreaItem) => {
-    setDone((ids) => [...ids, entry.id]);
-    setNotice(`Done: ${entry.title}`);
-  };
+  const finish = (entry: AreaItem) => setDone((ids) => [...ids, entry.id]);
+  const announce = (entry: AreaItem) => setNotice(`Done: ${entry.title}`);
   return (
     <PageFrame data-testid={`area-${title.toLowerCase()}`}>
       <PageHeader
@@ -116,6 +114,7 @@ export function AreaPage({
                 className={STAGGER[index] ?? ''}
                 navigate={navigate}
                 onDone={() => finish(entry)}
+                onSucceeded={() => announce(entry)}
               />
             ))}
           </ol>
@@ -136,6 +135,7 @@ export function AreaPage({
                   navigate={navigate}
                   folded
                   onDone={() => finish(entry)}
+                  onSucceeded={() => announce(entry)}
                 />
               ))}
             </ol>
@@ -161,6 +161,7 @@ function Row({
   className,
   navigate,
   onDone,
+  onSucceeded,
   folded = false,
 }: {
   entry: AreaItem;
@@ -169,12 +170,21 @@ function Row({
   className: string;
   navigate: (to: string) => void;
   onDone: () => void;
+  onSucceeded: () => void;
   folded?: boolean;
 }): React.ReactElement {
   const [state, setState] = React.useState<{ busy: boolean; error: string | null }>({
     busy: false,
     error: null,
   });
+  const [leaving, setLeaving] = React.useState(false);
+  // A fallback for a browser that never fires `animationend`: the exit is 75ms by token, so
+  // 200ms is always past it.
+  React.useEffect(() => {
+    if (!leaving) return undefined;
+    const timer = window.setTimeout(onDone, 200);
+    return () => window.clearTimeout(timer);
+  }, [leaving, onDone]);
   const { action } = entry;
   const act = async () => {
     if ('to' in action) {
@@ -184,7 +194,10 @@ function Row({
     setState({ busy: true, error: null });
     try {
       await action.run();
-      onDone();
+      onSucceeded();
+      // Leave with the exit motion; with motion reduced there is no animation to wait for.
+      if (prefersReducedMotion()) onDone();
+      else setLeaving(true);
     } catch (error) {
       setState({ busy: false, error: error instanceof Error ? error.message : String(error) });
     }
@@ -192,8 +205,11 @@ function Row({
   return (
     <li
       data-testid={`area-${folded ? 'folded' : 'item'}-${entry.id}`}
+      data-leaving={leaving ? 'true' : undefined}
+      onAnimationEnd={leaving ? onDone : undefined}
       className={cn(
-        'flex animate-fade-in flex-col gap-3 rounded-lg bg-surface p-4 sm:flex-row sm:items-center sm:justify-between',
+        leaving ? 'animate-fade-out' : 'animate-fade-in',
+        'flex flex-col gap-3 rounded-lg bg-surface p-4 sm:flex-row sm:items-center sm:justify-between',
         primary && 'p-6',
         className,
       )}
@@ -225,5 +241,14 @@ function Row({
         {state.busy && !('to' in action) ? busyWord(action) : action.label}
       </Button>
     </li>
+  );
+}
+
+/** The reader's motion choice: the OS setting, or Lupin's own Motion setting (`data-motion`). */
+function prefersReducedMotion(): boolean {
+  if (document.documentElement.dataset['motion'] === 'reduced') return true;
+  return (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
 }
