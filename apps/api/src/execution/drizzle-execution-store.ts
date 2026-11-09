@@ -54,6 +54,7 @@ import type {
   ArtifactDescriptor,
   CreateRunInput,
   CreateRunResult,
+  RetryOverrides,
   DomainName,
   DomainStatus,
   ExecutionEvent,
@@ -884,6 +885,7 @@ export class DrizzleExecutionStore implements ExecutionStore {
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides: RetryOverrides = {},
   ): Promise<CreateRunResult | null> {
     const previous = await this.getRun(runId, workspaceId);
     if (!previous || !isTerminalPhase(previous.phase)) return null;
@@ -900,7 +902,7 @@ export class DrizzleExecutionStore implements ExecutionStore {
         branch: previous.branch ?? undefined,
         commit: previous.commit ?? undefined,
         suite: previous.suite ?? undefined,
-        selection: previous.selection,
+        selection: overrides.selection ?? previous.selection,
         timeoutMs: previous.timeoutMs,
         priority: previous.priority,
         requiredCapabilities: previous.requiredCapabilities,
@@ -910,7 +912,8 @@ export class DrizzleExecutionStore implements ExecutionStore {
         policyId: previous.policyId ?? undefined,
         retryOfRunId: previous.id,
       },
-      idempotencyKey ?? `retry:${previous.id}:${previous.attempt + 1}`,
+      idempotencyKey ??
+        `retry${overrides.selection ? '-failed' : ''}:${previous.id}:${previous.attempt + 1}`,
       previous.workspaceId,
     );
   }
@@ -2285,8 +2288,9 @@ export class DrizzleExecutionStore implements ExecutionStore {
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides: RetryOverrides = {},
   ): Promise<CreateRunResult | null> {
-    return this.retryRun(runId, workspaceId, idempotencyKey);
+    return this.retryRun(runId, workspaceId, idempotencyKey, overrides);
   }
 }
 

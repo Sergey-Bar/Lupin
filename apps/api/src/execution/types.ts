@@ -378,6 +378,12 @@ export interface ReleaseReadiness {
   evaluatedAt: string;
 }
 
+/** What a retry changes from the run it repeats; anything absent is copied. */
+export interface RetryOverrides {
+  /** The test ids to run again, in place of the original selection. */
+  selection?: string[];
+}
+
 export interface CreateRunResult {
   run: ExecutionRun;
   job: ExecutionJob;
@@ -451,11 +457,13 @@ export interface ExecutionStore {
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides?: RetryOverrides,
   ): Promise<CreateRunResult | null>;
   retry(
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides?: RetryOverrides,
   ): Promise<CreateRunResult | null>;
   getJob(jobId: string, workspaceId?: string): Promise<ExecutionJob | null>;
   listJobs(workspaceId?: string): Promise<ExecutionJob[]>;

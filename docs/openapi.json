@@ -24921,6 +24921,14 @@
         "required": ["title", "file", "status"],
         "additionalProperties": false
       },
+      "RetryRunRequestSchema": {
+        "type": "object",
+        "properties": {
+          "scope": { "default": "all", "type": "string", "enum": ["all", "failed"] }
+        },
+        "required": ["scope"],
+        "additionalProperties": false
+      },
       "RunAssignedEventPayloadSchema": {
         "type": "object",
         "properties": {

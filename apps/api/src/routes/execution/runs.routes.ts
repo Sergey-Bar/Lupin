@@ -34,6 +34,27 @@ import {
   parsePageQuery,
   publishCanonical,
 } from './shared.js';
+import type { Context } from 'hono';
+import { RetryRunRequestSchema, type RetryRunRequest } from '@lupin/shared-contracts';
+
+/** The statuses a "retry the failed tests" run picks up. */
+const FAILED_TEST = new Set(['failed', 'timed_out']);
+
+/**
+ * A retry's body is optional: an empty body is a full retry, as it always was, so every
+ * existing caller is unchanged. A body that is present must parse.
+ */
+async function retryRequest(c: Context): Promise<RetryRunRequest | null> {
+  const text = await c.req.text();
+  if (text.trim() === '') return RetryRunRequestSchema.parse({});
+  try {
+    const parsed = RetryRunRequestSchema.safeParse(JSON.parse(text));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
 export function registerRunRoutes(app: Hono, context: ExecutionRouteContext): void {
   const { options, ws, eventSequences } = context;
   app.post('/api/v1/runs', async (c) => {
@@ -212,7 +233,22 @@ export function registerRunRoutes(app: Hono, context: ExecutionRouteContext): vo
 
   app.post('/api/v1/runs/:runId/retry', async (c) => {
     const key = c.req.header('idempotency-key');
-    const result = await options.store.retryRun(c.req.param('runId'), ws, key);
+    const runId = c.req.param('runId');
+    const request = await retryRequest(c);
+    if (!request) throw new DomainError('INVALID_RUN', 'Retry request is invalid');
+    if (request.scope === 'failed') {
+      const previous = await options.store.getRun(runId, ws);
+      const failed = (previous?.tests ?? [])
+        .filter((test) => FAILED_TEST.has(test.status))
+        .map((test) => test.id);
+      if (failed.length === 0)
+        throw new DomainError('RUN_NOT_RETRYABLE', 'Run has no failed tests to retry');
+      const result = await options.store.retryRun(runId, ws, key, { selection: failed });
+      if (!result) throw new DomainError('RUN_NOT_RETRYABLE', 'Run is not retryable');
+      c.header('x-idempotent-replay', String(result.duplicate));
+      return c.json(toCanonicalRun(result.run), 202);
+    }
+    const result = await options.store.retryRun(runId, ws, key);
     if (!result) {
       const legacy = options.legacyRepository
         ? await options.legacyRepository.getRun(c.req.param('runId'))

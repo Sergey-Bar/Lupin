@@ -298,6 +298,15 @@ export const CreateRunRequestSchema = z.object({
 });
 export type CreateRunRequest = z.infer<typeof CreateRunRequestSchema>;
 
+/**
+ * What a retry runs again. `all` repeats the original selection; `failed` names only the
+ * tests that failed or timed out, so a retry of one red test does not re-run the green ones.
+ */
+export const RetryRunRequestSchema = z
+  .object({ scope: z.enum(['all', 'failed']).default('all') })
+  .strict();
+export type RetryRunRequest = z.infer<typeof RetryRunRequestSchema>;
+
 export const RunRunnerReferenceSchema = z.object({
   id: IdSchema,
   name: z.string().min(1).optional(),
