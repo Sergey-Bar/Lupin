@@ -60,7 +60,7 @@ export function NavBar(): React.ReactElement {
     <nav
       data-testid="nav-bar"
       aria-label="Primary navigation"
-      className="relative flex h-14 shrink-0 items-center gap-x-6 border-b border-border bg-surface px-4 sm:px-6"
+      className="relative flex h-14 shrink-0 items-center gap-x-6 border-b border-border bg-surface px-4 sm:px-6 lg:hidden"
     >
       {/*
         The product's name, and the only place it appears in the chrome: "Lupin." with the
@@ -126,7 +126,7 @@ export function SectionTabs(): React.ReactElement | null {
       data-testid="section-tabs"
       data-chrome="secondary"
       aria-label={`${label} pages`}
-      className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6"
+      className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6 lg:hidden"
     >
       <ul ref={tabsRef} className="relative flex gap-1">
         {tabs.map((tab) => {
