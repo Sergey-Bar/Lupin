@@ -10,6 +10,7 @@ import {
 import { testItems, testVerdict, InsightsPage } from './insights';
 import {
   makeApi,
+  makeTrend,
   makeHistory,
   makeInsights,
   makeQa,
@@ -100,6 +101,19 @@ describe('the insights page', () => {
     ]);
     expect(screen.getByTestId('insights-recovery')).toHaveTextContent('red since');
     expect(screen.getByTestId('history-chart')).toBeInTheDocument();
+  });
+
+  it('charts the flaky results day by day, so a reader sees whether flakiness is growing', async () => {
+    const trend = makeTrend();
+    renderInsights(
+      makeQa({
+        getTrend: vi.fn(async () => ({
+          ...trend,
+          buckets: trend.buckets.map((bucket, index) => ({ ...bucket, flaky: index })),
+        })),
+      }),
+    );
+    expect(await screen.findByRole('table', { name: 'Flaky results per day' })).toBeInTheDocument();
   });
 
   it('says what each empty panel is waiting for', async () => {

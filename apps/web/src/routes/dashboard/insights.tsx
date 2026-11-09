@@ -19,6 +19,7 @@ import {
 } from '../../components/InsightsCauses.js';
 import { ProjectGate } from '../../components/ProjectGate.js';
 import { AreaPage, type AreaItem } from '../../components/AreaPage.js';
+import { DailyBars } from '../../components/DailyBars.js';
 import { headline } from '../../components/Readiness.js';
 import { Responsive } from '../../components/responsive.js';
 import { useResource } from '../../hooks/useResource.js';
@@ -27,6 +28,7 @@ import { formatDuration, orDash, shortDate } from '../../lib/insights.js';
 import { createQaClient, type QaClient } from '../../lib/qa-client.js';
 import { testHistoryPath } from '../../route-manifest.js';
 import type {
+  AnalyticsTrend,
   FlakyTest,
   ProjectHistory,
   QaInsights,
@@ -108,6 +110,7 @@ function InsightsBody({
     () => qa.getReadiness(project.id, 7),
     [qa, project.id],
   );
+  const trend = useResource<AnalyticsTrend>(() => qa.getTrend(Number(days)), [qa, days]);
   if (insights.status === 'ready') {
     const items = testItems(insights.value, api);
     return (
@@ -125,7 +128,19 @@ function InsightsBody({
           </>
         }
         details={
-          <div data-testid="insights-page">
+          <div data-testid="insights-page" className="flex flex-col gap-4">
+            {trend.status === 'ready' ? (
+              <Panel title={`Flaky results per day · last ${days} days`} data-testid="flaky-trend">
+                <DailyBars
+                  days={trend.value.buckets.map((bucket) => ({
+                    date: bucket.date,
+                    value: bucket.flaky,
+                  }))}
+                  label="Flaky results per day"
+                  tone="text-chart-flaky"
+                />
+              </Panel>
+            ) : null}
             <InsightsGrid
               api={api}
               insights={insights.value}
