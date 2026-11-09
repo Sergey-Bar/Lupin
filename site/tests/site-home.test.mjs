@@ -73,3 +73,14 @@ test('no step or capability paragraph runs past one short line', () => {
     assert.ok(text.split(/\s+/u).length <= 12, text);
   }
 });
+
+test('the page says what Lupin is for in the AI era, and that it is free for good', () => {
+  assert.match(template, /id="hero-title"[^>]*>[\s\S]*AI[\s\S]*<\/h1>/u);
+  assert.match(template, /Free\. Forever\./u);
+  assert.doesNotMatch(template, /\bpricing\b|\$\d/u);
+});
+
+test('the showcase shows the focus view and the insights, not a list of runs', () => {
+  assert.match(home, /docs\/assets\/focus\.png/u);
+  assert.match(home, /docs\/assets\/insights\.png/u);
+});

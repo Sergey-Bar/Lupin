@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { withBase } from 'vitepress';
-import runsPreview from '../../../docs/assets/runs.png';
-import runDetailPreview from '../../../docs/assets/run-detail.png';
+import focusPreview from '../../../docs/assets/focus.png';
+import insightsPreview from '../../../docs/assets/insights.png';
 import { githubUrl } from '../locales';
 
 /**
@@ -29,22 +29,22 @@ const decision = {
 
 const stages = [
   {
-    title: 'Observe',
-    text: 'Results from Playwright, JUnit, k6, ZAP and Allure.',
-    link: '/guide/sending-results',
-    action: 'Connect your test tools',
+    title: 'Connect',
+    text: 'Point it at your repo and CI. Two minutes.',
+    link: '/guide/install',
+    action: 'Install',
   },
   {
-    title: 'Investigate',
-    text: 'Every failure keeps its retries and its evidence.',
+    title: 'Lupin watches',
+    text: 'Every run, flaky test and health signal, as you ship.',
     link: '/guide/concepts',
-    action: 'Follow a test result',
+    action: 'What it reads',
   },
   {
-    title: 'Decide',
-    text: 'Pass, fail or unknown. Never green by omission.',
+    title: 'You decide',
+    text: 'One thing first. One click to retry or quarantine.',
     link: '/guide/quality-gates',
-    action: 'Understand quality gates',
+    action: 'Gates and quarantine',
   },
 ];
 
@@ -77,12 +77,14 @@ const quickStart = [
     <section class="lupin-hero" aria-labelledby="hero-title">
       <div class="lupin-hero-copy">
         <p class="lupin-kicker lupin-arrive">
-          <span aria-hidden="true"></span> Self-hosted QA control plane
+          <span aria-hidden="true"></span> The QA copilot for AI-speed teams
         </p>
         <h1 id="hero-title" class="lupin-arrive">
-          Know what broke.<br /><span>Know whether to ship.</span>
+          AI writes the code.<br /><span>Lupin keeps it shippable.</span>
         </h1>
-        <p class="lupin-lead lupin-arrive">Test results in. A release decision out. Self-hosted.</p>
+        <p class="lupin-lead lupin-arrive">
+          It reads every test run, spots what broke, and fixes the obvious in one click.
+        </p>
         <div class="lupin-actions lupin-arrive">
           <a class="lupin-button primary" :href="withBase('/guide/install')"
             >Get started <span aria-hidden="true">→</span></a
@@ -118,7 +120,7 @@ const quickStart = [
 
     <section id="product" class="lupin-showcase" aria-labelledby="showcase-title">
       <div class="lupin-section-line">
-        <h2 id="showcase-title">The evidence, in view.</h2>
+        <h2 id="showcase-title">It already knows what to show you.</h2>
         <a :href="withBase('/guide/concepts')"
           >Explore the product <span aria-hidden="true">→</span></a
         >
@@ -129,8 +131,8 @@ const quickStart = [
             <span></span><span></span><span></span>
           </div>
           <img
-            :src="runsPreview"
-            alt="The Lupin runs view in the dark theme: run totals, a table of runs with their outcomes and test counts, release readiness and recent executions."
+            :src="focusPreview"
+            alt="Lupin&rsquo;s home: a greeting, one failing test on main to fix first, and a one-click Retry now button."
             width="1440"
             height="900"
             fetchpriority="high"
@@ -142,8 +144,8 @@ const quickStart = [
             <span></span><span></span><span></span>
           </div>
           <img
-            :src="runDetailPreview"
-            alt="A failed run in Lupin: the headline “2 of 8 tests failed”, the run's phase timeline, totals, branch and commit, and its quality gate."
+            :src="insightsPreview"
+            alt="Lupin Insights: release readiness, flaky tests ranked by flips, slowest tests and failures by suite and day."
             width="1440"
             height="900"
             loading="lazy"
@@ -156,7 +158,7 @@ const quickStart = [
     <section id="how-it-works" class="lupin-section" aria-labelledby="how-title">
       <div class="lupin-section-heading">
         <p class="lupin-kicker">How it works</p>
-        <h2 id="how-title">Observe. Investigate. Decide.</h2>
+        <h2 id="how-title">Connect. Forget it. Ship.</h2>
       </div>
       <ol class="lupin-steps">
         <li v-for="(stage, index) in stages" :key="stage.title">
@@ -189,7 +191,7 @@ const quickStart = [
 
     <section class="lupin-closing" aria-labelledby="closing-title">
       <p class="lupin-kicker">Lupin<span class="lupin-wordmark-dot" aria-hidden="true">.</span></p>
-      <h2 id="closing-title">Ship with evidence.</h2>
+      <h2 id="closing-title">Free. Forever.<br /><span>Open source, on your machines.</span></h2>
       <div class="lupin-actions">
         <a class="lupin-button primary" :href="withBase('/guide/install')"
           >Get started <span aria-hidden="true">→</span></a
