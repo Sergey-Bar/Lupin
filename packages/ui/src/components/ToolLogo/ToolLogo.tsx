@@ -42,7 +42,6 @@ import {
   siOwasp,
   siPercy,
   siPhp,
-  siPnpm,
   siPostman,
   siPrecommit,
   siPrettier,
@@ -69,7 +68,6 @@ import {
   siTrivy,
   siTurborepo,
   siTypescript,
-  siVite,
   siVitepress,
   siVitest,
   siWebdriverio,
@@ -144,7 +142,6 @@ const BY_NAME = new Map<string, SimpleIcon>([
   ['k6', siK6],
   ['docker', siDocker],
   ['node.js', siNodedotjs],
-  ['pnpm', siPnpm],
   ['npm', siNpm],
   ['python', siPython],
   ['go', siGo],
@@ -175,14 +172,14 @@ const BY_KEYWORD: ReadonlyArray<readonly [string, SimpleIcon]> = [
   ['vitepress', siVitepress],
   ['storybook', siStorybook],
   ['k6', siK6],
-  ['vite', siVite],
-  ['pnpm', siPnpm],
-  ['node', siNodedotjs],
 ];
 
 export function toolIconFor(name: string, command = ''): SimpleIcon | undefined {
   const direct = BY_NAME.get(name.trim().toLowerCase());
   if (direct !== undefined) return direct;
+  // A named catalog tool is never drawn with another tool's mark: `pnpm add -D husky` is
+  // Husky, not pnpm. The command is read only for a bare script name (`lint`, `test:e2e`).
+  if (!/^[a-z0-9:_-]+$/u.test(name.trim())) return undefined;
   const haystack = `${name} ${command}`.toLowerCase();
   return BY_KEYWORD.find(([word]) => new RegExp(`\\b${word}\\b`, 'u').test(haystack))?.[1];
 }

@@ -1,4 +1,4 @@
-﻿import { render } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ToolLogo, toolIconFor } from './ToolLogo.js';
 
@@ -13,6 +13,11 @@ describe('ToolLogo', () => {
     expect(toolIconFor('lint', 'eslint . --max-warnings=0')?.slug).toBe('eslint');
     expect(toolIconFor('test:unit', 'vitest run')?.slug).toBe('vitest');
     expect(toolIconFor('typecheck', 'tsc --noEmit')?.slug).toBe('typescript');
+  });
+
+  it('never borrows a package manager or runner mark for a tool installed through it', () => {
+    expect(toolIconFor('Husky', 'pnpm add -D husky')).toBeUndefined();
+    expect(toolIconFor('V8 / Istanbul', 'vitest run --coverage')).toBeUndefined();
   });
 
   it('falls back to a monogram, never a blank, for a tool with no mark', () => {

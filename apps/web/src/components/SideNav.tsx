@@ -15,6 +15,7 @@ import {
 import { defaultApiClient, type ApiClient } from '../lib/api.js';
 import { useResource } from '../hooks/useResource.js';
 import { statusWord } from '../lib/status-word.js';
+import { Timestamp } from './Timestamp.js';
 import {
   SECTIONS,
   routeFor,
@@ -225,7 +226,10 @@ function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
                   }
                   label={statusWord(run.outcome)}
                 />
-                <span className="truncate">{run.branch ?? run.id.slice(0, 8)}</span>
+                <span className="min-w-0 flex-1 truncate">{run.branch ?? run.id.slice(0, 8)}</span>
+                <span className="shrink-0 text-xs text-fg-muted">
+                  <Timestamp value={run.createdAt} empty="" />
+                </span>
               </Link>
             </li>
           ))}
