@@ -194,6 +194,15 @@ describe('SideNav', () => {
     expect(recent.closest('[data-chrome="secondary"]')).not.toBeNull();
   });
 
+  it('draws no empty "Recent" heading when the runs cannot be read', async () => {
+    renderAt(
+      '/dashboard/now',
+      makeApi({ getRecentRuns: vi.fn(async () => Promise.reject(new Error('HTTP 502'))) }),
+    );
+    await screen.findByRole('navigation', { name: 'Sidebar' });
+    await waitFor(() => expect(screen.queryByText('Recent')).toBeNull());
+  });
+
   it('says nothing has run yet, rather than drawing an empty box', async () => {
     renderAt('/dashboard/now');
     expect(await screen.findByText('No runs yet')).toBeInTheDocument();

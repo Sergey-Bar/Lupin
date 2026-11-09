@@ -187,6 +187,18 @@ describe('AreaPage', () => {
     expect(screen.getByTestId('area-details')).toHaveAttribute('data-chrome', 'secondary');
   });
 
+  it('does not say the first item twice: a verdict that repeats it becomes a count', () => {
+    show([item('a', { title: 'Pass rate is low' }), item('b')], { verdict: 'Pass rate is low' });
+    expect(screen.getByTestId('area-verdict')).toHaveTextContent('2 things need you.');
+  });
+
+  it('lets a long title wrap rather than cut it off mid-word', () => {
+    show([item('a', { title: 'A very long title' }), item('b')]);
+    const title = screen.getByText('A very long title');
+    expect(title.className).not.toMatch(/(^|\s)truncate(\s|$)/u);
+    expect(title.className).toMatch(/line-clamp-2/u);
+  });
+
   it('has no serious or critical axe violations', async () => {
     const { container } = show(
       ['a', 'b', 'c', 'd'].map((id) => item(id)),

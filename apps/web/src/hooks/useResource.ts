@@ -1,4 +1,5 @@
 import React from 'react';
+import { plainError } from '../lib/plain-error.js';
 
 /**
  * The one fetch-and-render state machine every command-center screen needs.
@@ -15,7 +16,14 @@ import React from 'react';
  * So the states are declared once, here, and every screen inherits all three.
  */
 export type Resource<T> =
-  { status: 'loading' } | { status: 'ready'; value: T } | { status: 'error'; message: string };
+  | { status: 'loading' }
+  | { status: 'ready'; value: T }
+  /**
+   * `message` is what a reader sees: the server's own sentence, or a plain one in place of a
+   * bare status line ("HTTP 502") or a dropped connection. `detail` is the original text when
+   * it was rewritten, for a "Technical details" fold.
+   */
+  | { status: 'error'; message: string; detail?: string };
 
 /**
  * Loads one resource, ignoring a response that arrives after unmount.
@@ -38,7 +46,13 @@ export function useResource<T>(
       })
       .catch((error: unknown) => {
         if (live) {
-          setState({ status: 'error', message: describeFailure(error) });
+          const raw = describeFailure(error);
+          const message = plainError(raw);
+          setState(
+            message === raw
+              ? { status: 'error', message }
+              : { status: 'error', message, detail: raw },
+          );
         }
       });
     return () => {

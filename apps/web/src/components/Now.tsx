@@ -228,7 +228,7 @@ function FirstThing({
         <p className="text-xs font-medium text-fg-muted">Start here</p>
         <h2 className="mt-1 flex items-center gap-3 text-2xl font-semibold tracking-tight">
           <StatusDot status={item.severity === 'bad' ? 'bad' : 'warn'} />
-          <span className="truncate">{item.title}</span>
+          <span className="line-clamp-2">{item.title}</span>
           {fresh ? <Badge variant="outline">new</Badge> : null}
         </h2>
         <p className="mt-1 text-sm text-fg-muted">

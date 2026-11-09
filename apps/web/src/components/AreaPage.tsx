@@ -92,7 +92,12 @@ export function AreaPage({
       />
       <PageBody>
         <p data-testid="area-verdict" className="text-lg text-fg-muted">
-          {verdict}
+          {/* A verdict that repeats the first item's title says it twice; a count says more. */}
+          {top[0] !== undefined && verdict === top[0].title
+            ? live.length === 1
+              ? 'One thing needs you.'
+              : `${String(live.length)} things need you.`
+            : verdict}
         </p>
         {notice === null ? null : (
           <p role="status" className="text-sm text-success">
@@ -224,7 +229,7 @@ function Row({
           <span className="text-xs font-medium text-fg-muted">{TONE_WORD[entry.tone]}</span>
           {fresh ? <Badge variant="outline">new</Badge> : null}
         </p>
-        <p className={cn('mt-1 truncate font-medium text-fg', primary ? 'text-xl' : 'text-sm')}>
+        <p className={cn('mt-1 line-clamp-2 font-medium text-fg', primary ? 'text-xl' : 'text-sm')}>
           {entry.title}
         </p>
         <p className="truncate text-sm text-fg-muted">{entry.detail}</p>

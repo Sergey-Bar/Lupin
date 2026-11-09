@@ -50,7 +50,9 @@ describe('DeliveryArea', () => {
   it('does not say all clear under a read that failed', async () => {
     const listPulls = vi.fn(async () => Promise.reject(new Error('HTTP 502')));
     render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);
-    expect(await screen.findByTestId('area-verdict')).toHaveTextContent('HTTP 502');
+    expect(await screen.findByTestId('area-verdict')).toHaveTextContent(
+      "Could not read the pull requests: Lupin's server isn't answering right now.",
+    );
     expect(screen.getByTestId('area-clear')).not.toHaveTextContent('No pull request needs you');
   });
   it('does not claim nothing is stuck when there are no pull requests to check', async () => {

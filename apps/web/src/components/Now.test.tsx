@@ -301,6 +301,13 @@ describe('AttentionSection, as one focus', () => {
     expect(screen.getByTestId('focus-rest')).toHaveAttribute('data-chrome', 'secondary');
   });
 
+  it('lets the first thing wrap to two lines instead of cutting off the branch', async () => {
+    render(<AttentionSection sources={sources()} navigate={vi.fn()} now={() => NOW} />);
+    const first = await screen.findByTestId('focus-first');
+    const title = within(first).getByText('main is failing');
+    expect(title.className).toMatch(/line-clamp-2/u);
+  });
+
   it('opens a next item with its own button', async () => {
     const user = userEvent.setup();
     const navigate = vi.fn();

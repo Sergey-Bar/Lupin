@@ -117,6 +117,12 @@ export function SectionTabs(): React.ReactElement | null {
   // decides only which Settings tabs to draw; the API still enforces who may open each.
   const tabsRef = useSlidingIndicator<HTMLUListElement>(page?.id);
   const role = useViewerRole();
+  // A row wider than the screen (Settings, for an admin) must not hide the page you are on.
+  React.useEffect(() => {
+    document
+      .querySelector<HTMLElement>('[data-testid="section-tabs"] [aria-current="page"]')
+      ?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [page?.id, role]);
   if (section === null || page === undefined || !('tab' in page)) return null;
   const tabs = section === 'settings' ? visibleTabsOf(section, role) : tabsOf(section);
   if (tabs.length === 0) return null;

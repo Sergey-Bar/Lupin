@@ -126,6 +126,15 @@ describe('NavBar', () => {
     );
   });
 
+  it('keeps the current tab in view when the row is wider than the screen', async () => {
+    const scrolled = vi.fn();
+    Element.prototype.scrollIntoView = scrolled;
+    render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
+    const tabs = await screen.findByTestId('section-tabs');
+    await waitFor(() => expect(scrolled).toHaveBeenCalled());
+    expect(scrolled.mock.contexts[0]).toBe(within(tabs).getByRole('link', { name: 'Appearance' }));
+  });
+
   it('shows the section tabs for a section with more than one page', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
     const tabs = await screen.findByTestId('section-tabs');

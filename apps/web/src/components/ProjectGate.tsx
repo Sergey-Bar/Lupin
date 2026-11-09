@@ -1,5 +1,5 @@
 import React from 'react';
-import { EmptyState, Select } from '@lupin/ui';
+import { Button, EmptyState, Select } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import { useViewerRole } from '../hooks/useViewerRole.js';
 import type { QaClient } from '../lib/qa-client.js';
@@ -34,7 +34,8 @@ export function ProjectGate({
    */
   children: (project: RegisteredProject, switcher: React.ReactNode) => React.ReactNode;
 }): React.ReactElement {
-  const registry = useResource<RegisteredProject[]>(() => qa.listProjects(), [qa]);
+  const [attempt, setAttempt] = React.useState(0);
+  const registry = useResource<RegisteredProject[]>(() => qa.listProjects(), [qa, attempt]);
   const [chosen, choose] = React.useState<string | null>(() => readChoice());
   if (registry.status === 'loading') {
     return (
@@ -54,8 +55,21 @@ export function ProjectGate({
         <EmptyState
           headingLevel={2}
           data-testid="project-gate-error"
-          title="The project registry is unavailable"
+          title="Can't load your projects"
           description={registry.message}
+          action={
+            <div className="grid justify-items-center gap-3">
+              <Button onClick={() => setAttempt((count) => count + 1)}>Try again</Button>
+              {registry.detail === undefined ? null : (
+                <details className="text-xs text-fg-muted">
+                  <summary className="cursor-pointer rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
+                    Technical details
+                  </summary>
+                  <p className="mt-1 font-mono">{registry.detail}</p>
+                </details>
+              )}
+            </div>
+          }
         />
       </PageFrame>
     );

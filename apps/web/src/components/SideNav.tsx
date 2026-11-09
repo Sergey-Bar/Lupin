@@ -181,6 +181,8 @@ function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
       .map((run) => run.branch ?? '')
       .filter((branch, index, all) => branch !== '' && all.indexOf(branch) !== index),
   );
+  // A failed read draws nothing: an empty "Recent" heading looks like a broken list.
+  if (runs.status === 'error') return <></>;
   return (
     <div className="pt-6">
       <p className="px-2 pb-1 text-xs font-medium text-fg-muted">Recent</p>
