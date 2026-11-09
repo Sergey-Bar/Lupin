@@ -29,6 +29,48 @@ import { createQaClient, type QaClient } from '../../lib/qa-client.js';
 import type { RegisteredProject, RepoScan, ToolboxEntry } from '../../lib/qa.js';
 import { CAPABILITY_LABELS } from './health.js';
 
+/**
+ * The twenty capabilities as the five things a QA person sets out to check. Every capability
+ * sits under exactly one goal (`toolbox.test.tsx` holds that), so a goal never hides a tool.
+ */
+export const GOALS = [
+  {
+    id: 'tests',
+    label: 'Tests',
+    capabilities: [
+      'unit',
+      'integration',
+      'e2e',
+      'contract',
+      'api',
+      'mobile',
+      'mutation',
+      'visual',
+      'test-management',
+    ],
+  },
+  { id: 'security', label: 'Security', capabilities: ['sast', 'secrets', 'dependencies', 'dast'] },
+  { id: 'performance', label: 'Performance', capabilities: ['performance'] },
+  { id: 'accessibility', label: 'Accessibility', capabilities: ['accessibility'] },
+  {
+    id: 'code',
+    label: 'Code quality',
+    capabilities: ['coverage', 'static-analysis', 'types', 'formatting', 'ci'],
+  },
+] as const satisfies readonly {
+  id: string;
+  label: string;
+  capabilities: readonly (keyof typeof CAPABILITY_LABELS)[];
+}[];
+
+type GoalId = (typeof GOALS)[number]['id'] | 'all';
+
+function goalOf(capability: string): GoalId {
+  return (
+    GOALS.find((goal) => (goal.capabilities as readonly string[]).includes(capability))?.id ?? 'all'
+  );
+}
+
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/toolbox',
@@ -192,6 +234,7 @@ function ToolboxCatalogue({
   // grid reads as a full kit with the next pick at its head rather than one lonely tile.
   const [status, setStatus] = React.useState<StatusFilter>('all');
   const [capability, setCapability] = React.useState('all');
+  const [goal, setGoal] = React.useState<GoalId>('all');
   const [pricing, setPricing] = React.useState<PricingFilter>('all');
   const [query, setQuery] = React.useState('');
   const [selected, select] = React.useState<ToolboxEntry | null>(null);
@@ -200,6 +243,7 @@ function ToolboxCatalogue({
   const visible = sortToolbox(entries).filter(
     (entry) =>
       (status === 'all' || entry.status === status) &&
+      (goal === 'all' || goalOf(entry.capability) === goal) &&
       (capability === 'all' || entry.capability === capability) &&
       (pricing === 'all' || entry.pricing === pricing) &&
       (needle.length === 0 ||
@@ -220,6 +264,17 @@ function ToolboxCatalogue({
           </>
         }
       />
+      <div className="shrink-0">
+        <Segmented<GoalId>
+          label="What do you want to check?"
+          options={[
+            { value: 'all', label: 'Everything' },
+            ...GOALS.map((entry) => ({ value: entry.id, label: entry.label })),
+          ]}
+          value={goal}
+          onChange={setGoal}
+        />
+      </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <label className="relative block min-w-0 basis-full sm:basis-auto sm:flex-1">
           <span className="sr-only">Search the toolbox</span>
