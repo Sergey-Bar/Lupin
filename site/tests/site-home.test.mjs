@@ -55,3 +55,21 @@ test('home motion is token-timed arrival only, and stops under reduced motion', 
   assert.match(homeCss, /@media \(prefers-reduced-motion: reduce\)/u);
   assert.doesNotMatch(css, /backdrop-filter/u);
 });
+
+test('the page is minimal: at most five sections, and a lead under twenty words', () => {
+  const sections = template.match(/<section\b/gu) ?? [];
+  assert.ok(sections.length <= 5, `${sections.length} sections`);
+  const lead = /class="lupin-lead[^"]*"[^>]*>([\s\S]*?)<\/p>/u.exec(template)?.[1] ?? '';
+  const words = lead
+    .replace(/<[^>]+>/gu, ' ')
+    .trim()
+    .split(/\s+/u)
+    .filter(Boolean);
+  assert.ok(words.length > 0 && words.length < 20, `${words.length} words in the lead`);
+});
+
+test('no step or capability paragraph runs past one short line', () => {
+  for (const [, text] of home.matchAll(/text: '([^']+)'/gu)) {
+    assert.ok(text.split(/\s+/u).length <= 12, text);
+  }
+});
