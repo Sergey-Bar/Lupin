@@ -9,8 +9,8 @@ import { Dashboard } from '../components/Dashboard.js';
 import { Panel, Quiet } from '../components/kit.js';
 import { createQaClient } from '../lib/qa-client.js';
 import { defaultApiClient, type ApiClient, type Run } from '../lib/api.js';
-import { formatDate } from '../lib/format.js';
 import { statusWord } from '../lib/status-word.js';
+import { Timestamp } from '../components/Timestamp.js';
 import { runTransitionName } from '../lib/view-transition.js';
 
 export const Route = createRoute({
@@ -18,16 +18,6 @@ export const Route = createRoute({
   path: '/dashboard',
   component: DashboardLayout,
 });
-
-/**
- * `run.createdAt` is a required `string` here, so there is no empty state to
- * render and no fallback to invent — one would be a user-visible string chosen
- * by a refactor. The shared helper takes a fallback, so this stays a thin
- * non-fallback wrapper over the same `toLocaleString()`.
- */
-function formatRequiredDate(value: string): string {
-  return formatDate(value, '');
-}
 
 function readinessTone(
   status: DomainReadinessStatus,
@@ -324,7 +314,9 @@ export function RecentRuns({ runs, isLive }: { runs: Run[]; isLive: boolean }) {
               >
                 {run.suite ?? run.id.slice(0, 8)}
               </div>
-              <div className="text-xs text-fg-muted">{formatRequiredDate(run.createdAt)}</div>
+              <div className="text-xs text-fg-muted">
+                <Timestamp value={run.createdAt} empty="" />
+              </div>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <Badge variant={isRunActive(run) ? 'default' : 'outline'}>{run.phase}</Badge>

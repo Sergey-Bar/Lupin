@@ -12,6 +12,7 @@ import { formatDate as formatDateWithFallback } from '../../lib/format.js';
 import { formatDuration } from '../../lib/insights.js';
 import { describeGateReason } from '../../lib/gate-reason.js';
 import { statusWord } from '../../lib/status-word.js';
+import { Timestamp } from '../../components/Timestamp.js';
 import { PageFrame, PageHeader, Panel } from '../../components/kit.js';
 import { Responsive } from '../../components/responsive.js';
 import { ScoreImpactBanner } from '../../components/ScoreImpactBanner.js';
@@ -727,9 +728,18 @@ function SummaryPanels({ run }: { run: Run }) {
             <ContextItem label="Framework" value={run.framework} />
           ) : null}
           <ContextItem label="Runner" value={run.runner?.name ?? run.runner?.id ?? 'Unassigned'} />
-          <ContextItem label="Created" value={formatDate(run.createdAt)} />
-          <ContextItem label="Started" value={formatDate(run.startedAt)} />
-          <ContextItem label="Finished" value={formatDate(run.finishedAt)} />
+          <ContextItem
+            label="Created"
+            value={<Timestamp value={run.createdAt} empty="Unknown" />}
+          />
+          <ContextItem
+            label="Started"
+            value={<Timestamp value={run.startedAt} empty="Unknown" />}
+          />
+          <ContextItem
+            label="Finished"
+            value={<Timestamp value={run.finishedAt} empty="Unknown" />}
+          />
         </dl>
       </section>
       {run.error ? (
@@ -943,11 +953,23 @@ function Figure({
   );
 }
 
-function ContextItem({ label, value, testId }: { label: string; value: string; testId?: string }) {
+function ContextItem({
+  label,
+  value,
+  testId,
+}: {
+  label: string;
+  value: React.ReactNode;
+  testId?: string;
+}) {
   return (
     <div className="min-w-0">
       <dt className="truncate text-xs text-fg-muted">{label}</dt>
-      <dd data-testid={testId} className="m-0 break-words" title={value}>
+      <dd
+        data-testid={testId}
+        className="m-0 break-words"
+        title={typeof value === 'string' ? value : undefined}
+      >
         {value}
       </dd>
     </div>

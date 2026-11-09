@@ -29,7 +29,7 @@ import {
 } from '../../components/kit.js';
 import { isRunActive, useRuns } from '../../hooks/useRuns.js';
 import { defaultApiClient, type ApiClient, type Run } from '../../lib/api.js';
-import { formatDate } from '../../lib/format.js';
+import { Timestamp } from '../../components/Timestamp.js';
 import { formatDuration } from '../../lib/insights.js';
 import { runDetailPath } from '../../route-manifest.js';
 import { Responsive } from '../../components/responsive.js';
@@ -184,7 +184,7 @@ export function RunsListPage({ api = defaultApiClient }: { api?: ApiClient }) {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {formatDate(run.createdAt, 'Not started')}
+                      <Timestamp value={run.createdAt} empty="Not started" />
                     </TableCell>
                     {showDuration ? (
                       <TableCell numeric className="hidden sm:table-cell">
