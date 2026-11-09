@@ -1,4 +1,4 @@
-import type { DeliverySummary, Portfolio } from '@lupin/shared-contracts';
+import type { DeliverySummary, GithubPullItem, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from './api.js';
 
 /**
@@ -120,6 +120,8 @@ export interface AttentionInput {
   runs: readonly Run[];
   portfolio: Portfolio | null;
   deliveries: readonly DeliverySummary[];
+  /** Open pull requests, when GitHub is connected. */
+  pulls?: readonly GithubPullItem[];
   now: Date;
 }
 
@@ -129,6 +131,7 @@ export function rankAttention(input: AttentionInput): { items: AttentionItem[]; 
     ...runItems(input.runs, input.now),
     ...portfolioItems(input.portfolio),
     ...deliveryItems(input.deliveries),
+    ...pullItems(input.pulls ?? []),
   ].sort((a, b) =>
     a.severity === b.severity ? b.at.localeCompare(a.at) : a.severity === 'bad' ? -1 : 1,
   );
@@ -138,4 +141,32 @@ export function rankAttention(input: AttentionInput): { items: AttentionItem[]; 
 /** Whether something happened since the person last opened the Now page. */
 export function isNew(item: AttentionItem, lastVisit: string | null): boolean {
   return lastVisit !== null && item.at > lastVisit;
+}
+
+/**
+ * Open pull requests that are stuck, said as the work: blocked by failing checks (a red item),
+ * or sent back for changes (a caution). Drafts are the author's own business and are skipped.
+ */
+export function pullItems(pulls: readonly GithubPullItem[]): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  for (const pull of pulls) {
+    if (pull.state !== 'open' || pull.draft) continue;
+    const blocked = pull.checksState === 'failure';
+    const changes = pull.reviewDecision === 'changes_requested';
+    if (!blocked && !changes) continue;
+    items.push({
+      id: `pull-${pull.id}`,
+      severity: blocked ? 'bad' : 'caution',
+      title: blocked
+        ? `PR #${String(pull.number)} is blocked by failing checks`
+        : `PR #${String(pull.number)} needs changes`,
+      detail: `${pull.repository} · ${pull.title}`,
+      action: {
+        label: 'Open PR',
+        to: `/dashboard/prs?project=${encodeURIComponent(pull.projectId)}`,
+      },
+      at: pull.lastActivityAt,
+    });
+  }
+  return items;
 }

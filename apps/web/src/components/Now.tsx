@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge, Button, EmptyState, RotateCcw, Skeleton, StatusDot } from '@lupin/ui';
-import type { DeliverySummary, Portfolio } from '@lupin/shared-contracts';
+import type { DeliverySummary, GithubPullItem, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from '../lib/api.js';
 import { isNew, rankAttention, type AttentionItem } from '../lib/attention.js';
 import { ago } from '../lib/health-view.js';
@@ -17,6 +17,8 @@ export interface NowSources {
   runs: () => Promise<Run[]>;
   portfolio: () => Promise<Portfolio>;
   deliveries: () => Promise<DeliverySummary[]>;
+  /** Open pull requests; absent or failing (GitHub not connected) simply adds nothing. */
+  pulls?: () => Promise<GithubPullItem[]>;
   /** One-click retry. Absent, the page offers only the manual action. */
   retryRun?: (runId: string) => Promise<{ id: string }>;
 }
@@ -45,7 +47,14 @@ async function readAttention(sources: NowSources, now: Date): Promise<Ready> {
     settle(sources.portfolio),
     settle(sources.deliveries),
   ]);
-  const ranked = rankAttention({ runs: runs ?? [], portfolio, deliveries: deliveries ?? [], now });
+  const pulls = sources.pulls === undefined ? null : await settle(sources.pulls);
+  const ranked = rankAttention({
+    runs: runs ?? [],
+    portfolio,
+    deliveries: deliveries ?? [],
+    pulls: pulls ?? [],
+    now,
+  });
   return {
     status: 'ready',
     ...ranked,

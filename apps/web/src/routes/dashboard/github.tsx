@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { lazyPage } from '../../components/lazy-page.js';
+import { DeliveryArea } from '../../components/DeliveryArea.js';
 import { projectSearch } from '../../components/ProjectPage.js';
 import { createDeliveryClient } from '../../lib/delivery-client.js';
 import { createGithubClient } from '../../lib/github-client.js';
@@ -29,7 +30,17 @@ export const PrsRoute = createRoute({
     const { project } = PrsRoute.useSearch();
     const github = React.useMemo(() => createGithubClient(), []);
     const health = React.useMemo(() => createHealthClient(), []);
-    return <PullRequestsPage github={github} health={health} initialProjectId={project} />;
+    const listPulls = React.useCallback(
+      () => github.listPulls({ state: 'open', limit: 50 }),
+      [github],
+    );
+    return (
+      <DeliveryArea
+        listPulls={listPulls}
+        navigate={(to) => window.location.assign(to)}
+        details={<PullRequestsPage github={github} health={health} initialProjectId={project} />}
+      />
+    );
   },
 });
 

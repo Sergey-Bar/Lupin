@@ -8,6 +8,7 @@ import { createHealthClient } from '../../lib/health-client.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
 import { createSettingsClient } from '../../lib/settings-client.js';
+import { createGithubClient } from '../../lib/github-client.js';
 
 /** The landing page: is the product better or worse than before, and what needs you. `/` lands here. */
 export const Route = createRoute({
@@ -26,6 +27,7 @@ export const Route = createRoute({
       const notifications = createNotificationsClient();
       const qa = createQaClient();
       const settings = createSettingsClient();
+      const github = createGithubClient();
       return {
         cockpit: (query, signal) => cockpit.getCockpit(query, signal),
         projects: async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name })),
@@ -34,6 +36,7 @@ export const Route = createRoute({
           portfolio: () => health.getPortfolio(),
           deliveries: () => notifications.listDeliveries(),
           retryRun: (runId) => defaultApiClient.retryRun(runId),
+          pulls: async () => (await github.listPulls({ state: 'open', limit: 50 })).items,
         },
         setup: {
           load: () => settings.getOnboarding(),
