@@ -239,7 +239,7 @@ function CockpitReading({
         <a
           href={reportPath(cockpit.projectId, window)}
           data-testid="cockpit-report"
-          className="rounded-sm text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+          className="inline-flex min-h-6 items-center rounded-sm text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
         >
           Download report
           <span className="sr-only"> as one HTML file that opens without an account</span>
@@ -399,7 +399,7 @@ function MetricCard({
         <h3 className="text-sm font-medium">
           <a
             href={metricPath(metric.id, window, projectId)}
-            className="rounded-sm text-fg-muted underline-offset-2 hover:text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            className="inline-flex min-h-6 items-center rounded-sm text-fg-muted underline-offset-2 hover:text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
           >
             {metric.label}
             <span className="sr-only">, open details</span>
@@ -457,7 +457,7 @@ function Driver({
       {inside !== null ? (
         <a
           href={inside}
-          className="rounded-sm text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+          className="inline-flex min-h-6 items-center rounded-sm text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
         >
           {text}
         </a>

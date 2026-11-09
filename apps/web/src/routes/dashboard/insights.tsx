@@ -322,7 +322,7 @@ function FlakyPanel({
                 <div className="min-w-0 flex-1">
                   <a
                     href={testHistoryPath(test.key)}
-                    className="block truncate text-sm text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+                    className="block min-h-6 truncate py-0.5 text-sm text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
                     title={test.key}
                   >
                     {test.title}
