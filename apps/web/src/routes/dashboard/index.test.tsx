@@ -73,6 +73,17 @@ describe('RunsListPage', () => {
     await waitFor(() => expect(screen.getByTestId('runs-list-loading')).toBeInTheDocument());
   });
 
+  it('describes the page in its subtitle, and shows the live state as a dot and a word beside the action', async () => {
+    renderRunsPage(makeApi({ getRuns: vi.fn().mockResolvedValue([passedRun]) }));
+    await waitFor(() => expect(screen.getByTestId('runs-list-page')).toBeInTheDocument());
+    const header = screen.getByRole('banner');
+    expect(header).toHaveTextContent('Every run Lupin has received, newest first.');
+    expect(header).not.toHaveTextContent('Live stream');
+    const live = screen.getByTestId('runs-live-state');
+    expect(live).toHaveTextContent(/^(Live|Reconnecting)$/u);
+    expect(live.querySelector('[aria-hidden="true"]')).not.toBeNull();
+  });
+
   it('renders error state when fetch fails', async () => {
     const api = makeApi({ getRuns: vi.fn().mockRejectedValue(new Error('Network error')) });
     renderRunsPage(api);

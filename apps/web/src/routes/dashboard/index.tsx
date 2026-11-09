@@ -14,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  StatusDot,
 } from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { LaunchRunForm, RecentRuns, ReleaseReadinessCard } from '../dashboard.js';
@@ -215,19 +216,24 @@ export function RunsListPage({ api = defaultApiClient }: { api?: ApiClient }) {
     <PageFrame data-testid="runs-list-page">
       <PageHeader
         title="Runs"
-        subtitle={
-          <span data-testid="runs-live-state">
-            {isLive ? 'Live stream connected' : 'Live stream disconnected'}
-          </span>
-        }
+        subtitle="Every run Lupin has received, newest first."
         actions={
-          <Button
-            data-testid="launch-run-open"
-            onClick={() => setLaunching(true)}
-            className="min-h-11"
-          >
-            New browser run
-          </Button>
+          <>
+            <span
+              data-testid="runs-live-state"
+              className="inline-flex items-center gap-2 text-xs text-fg-muted"
+            >
+              <StatusDot status={isLive ? 'good' : 'unknown'} live={isLive} />
+              {isLive ? 'Live' : 'Reconnecting'}
+            </span>
+            <Button
+              data-testid="launch-run-open"
+              onClick={() => setLaunching(true)}
+              className="min-h-11"
+            >
+              New browser run
+            </Button>
+          </>
         }
       />
       <section aria-label="Run totals" className="grid shrink-0 grid-cols-4 gap-2 sm:gap-3">
