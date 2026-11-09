@@ -1,5 +1,14 @@
 import React from 'react';
-import { Badge, Button, EmptyState, RotateCcw, Skeleton, StatusDot } from '@lupin/ui';
+import {
+  ActionCard,
+  Badge,
+  Button,
+  EmptyState,
+  RotateCcw,
+  Row,
+  Skeleton,
+  StatusDot,
+} from '@lupin/ui';
 import type { DeliverySummary, GithubPullItem, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from '../lib/api.js';
 import { isNew, rankAttention, retryLabel, type AttentionItem } from '../lib/attention.js';
@@ -7,6 +16,7 @@ import { ago } from '../lib/health-view.js';
 import { focusOf, focusSentence } from '../lib/focus.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
 import { forPersona, personaTools } from '../lib/persona.js';
+import { rowsFor } from '../lib/rows.js';
 import { usePreferences } from '../theme/preferences.js';
 
 /**
@@ -161,41 +171,28 @@ export function AttentionSection({
             navigate={navigate}
             {...(sources.retryRun === undefined ? {} : { retryRun: sources.retryRun })}
           />
-          {focus.next.length > 0 ? (
-            <ol aria-label="Then" data-chrome="secondary" className="flex flex-col">
-              {focus.next.map((item) => (
-                <NextRow
-                  key={item.id}
-                  item={item}
-                  isNew={isNew(item, lastVisit)}
-                  navigate={navigate}
-                />
-              ))}
-            </ol>
-          ) : null}
-          {focus.hidden.length + (state.total - state.items.length) > 0 ? (
-            <details
-              data-testid="focus-rest"
-              data-chrome="secondary"
-              className="group text-sm text-fg-muted"
-            >
-              <summary className="cursor-pointer select-none rounded-md py-1 hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
-                {String(focus.hidden.length + (state.total - state.items.length))} more when you are
-                ready
-              </summary>
-              <ol className="mt-2 flex flex-col">
-                {focus.hidden.map((item) => (
-                  <NextRow
+          {/* What's next, Netflix-style: the rest in titled rows of one-action cards. */}
+          <div data-testid="now-rows" data-chrome="secondary" className="flex flex-col gap-6">
+            {rowsFor(persona, [...focus.next, ...focus.hidden]).map((row) => (
+              <Row key={row.id} title={row.title}>
+                {row.items.map((item) => (
+                  <ActionCard
                     key={item.id}
-                    item={item}
-                    isNew={isNew(item, lastVisit)}
-                    navigate={navigate}
-                    group="rest"
+                    tone={item.severity === 'bad' ? 'bad' : 'warn'}
+                    title={item.title}
+                    fact={`${item.detail} · ${ago(item.at)}`}
+                    action={item.action.label}
+                    onAct={() => navigate(item.action.to)}
                   />
                 ))}
-              </ol>
-            </details>
-          ) : null}
+              </Row>
+            ))}
+            {state.total > state.items.length ? (
+              <p className="text-sm text-fg-muted">
+                {String(state.total - state.items.length)} more on the area pages.
+              </p>
+            ) : null}
+          </div>
         </>
       )}
       {state.partial ? (
@@ -319,40 +316,5 @@ function FirstThing({
         ) : null}
       </div>
     </article>
-  );
-}
-
-/** Everything after the first thing: one quiet line each, the action a link-weight button. */
-function NextRow({
-  item,
-  isNew: fresh,
-  navigate,
-  group = 'next',
-}: {
-  item: AttentionItem;
-  isNew: boolean;
-  navigate: (to: string) => void;
-  group?: 'next' | 'rest';
-}): React.ReactElement {
-  return (
-    <li
-      data-testid={`focus-${group}-${item.id}`}
-      className="flex animate-fade-in items-center justify-between gap-3 border-b border-border py-3 [animation-delay:var(--lupin-duration-75)] last:border-b-0 nth-2:[animation-delay:var(--lupin-duration-150)]"
-    >
-      <span className="flex min-w-0 items-center gap-3">
-        <StatusDot status={item.severity === 'bad' ? 'bad' : 'warn'} />
-        <span className="truncate text-sm text-fg">{item.title}</span>
-        <span className="hidden truncate text-sm text-fg-muted sm:inline">{item.detail}</span>
-        {fresh ? <Badge variant="outline">new</Badge> : null}
-      </span>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="shrink-0"
-        onClick={() => navigate(item.action.to)}
-      >
-        {item.action.label}
-      </Button>
-    </li>
   );
 }

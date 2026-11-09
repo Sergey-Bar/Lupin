@@ -262,7 +262,7 @@ describe('AttentionSection, as one focus', () => {
     await expectNoBlockingAxeViolations(container);
   });
 
-  it('shows at most two next, and folds the rest away until asked', async () => {
+  it('puts everything after the first thing in titled rows of cards, one card each', async () => {
     render(
       <AttentionSection
         sources={sources({ runs: vi.fn(async () => many) })}
@@ -271,11 +271,9 @@ describe('AttentionSection, as one focus', () => {
       />,
     );
     await screen.findByTestId('focus-first');
-    expect(screen.getAllByTestId(/^focus-next-/u)).toHaveLength(2);
-    const rest = screen.getByTestId('focus-rest');
-    expect(rest.tagName).toBe('DETAILS');
-    expect(rest).not.toHaveAttribute('open');
-    expect(rest).toHaveTextContent('3 more when you are ready');
+    const row = screen.getByRole('list', { name: 'Broke since yesterday' });
+    // Five failing branches, one is the first thing, four are cards.
+    expect(within(row).getAllByRole('article')).toHaveLength(4);
   });
 
   it('offers the one-click retry from the command palette as well', async () => {
@@ -321,8 +319,7 @@ describe('AttentionSection, as one focus', () => {
     );
     const first = await screen.findByTestId('focus-first');
     expect(first.closest('[data-chrome="secondary"]')).toBeNull();
-    expect(screen.getByRole('list', { name: 'Then' })).toHaveAttribute('data-chrome', 'secondary');
-    expect(screen.getByTestId('focus-rest')).toHaveAttribute('data-chrome', 'secondary');
+    expect(screen.getByTestId('now-rows')).toHaveAttribute('data-chrome', 'secondary');
   });
 
   it('lets the first thing wrap to two lines instead of cutting off the branch', async () => {
@@ -382,10 +379,10 @@ describe('AttentionSection, as one focus', () => {
       />,
     );
     await screen.findByTestId('focus-first');
-    const [next] = screen.getAllByTestId(/^focus-next-/u);
-    const target = (next as HTMLElement).dataset['testid']!.replace('focus-next-run-failed-', '');
-    await user.click(within(next as HTMLElement).getByRole('button', { name: 'Open run' }));
-    expect(navigate).toHaveBeenCalledWith(`/dashboard/runs/${target}`);
+    const row = screen.getByRole('list', { name: 'Broke since yesterday' });
+    const [card] = within(row).getAllByRole('article');
+    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Open run' }));
+    expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^\/dashboard\/runs\//u));
   });
 
   it('says it in one calm sentence, and marks what is new since last time', async () => {
