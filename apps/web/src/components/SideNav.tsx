@@ -15,6 +15,7 @@ import {
   StatusDot,
   Wordmark,
   cn,
+  type DotStatus,
 } from '@lupin/ui';
 import { defaultApiClient, type ApiClient, type Run } from '../lib/api.js';
 import { Bdi } from './Bidi.js';
@@ -144,11 +145,9 @@ export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.
           ))}
         </div>
         {/* Focus mode puts the recent runs away with the rest of the secondary chrome. */}
-        {collapsed ? null : (
-          <div data-chrome="secondary">
-            <RecentRuns api={api} />
-          </div>
-        )}
+        <div data-chrome="secondary">
+          <RecentRuns api={api} compact={collapsed} />
+        </div>
       </nav>
       {/* Two quiet icons at the bottom, out of the way of the work. The theme lives in Settings. */}
       <div
@@ -201,14 +200,18 @@ function SideLink({
       aria-current={active ? 'page' : undefined}
       className={cn(
         compact ? 'justify-center' : 'px-2',
-        'flex min-h-9 items-center gap-2.5 rounded-md text-sm transition-colors duration-100 motion-reduce:transition-none',
+        'relative flex min-h-9 items-center gap-2.5 rounded-md text-sm transition-colors duration-100 motion-reduce:transition-none',
         FOCUS,
+        // The current area: a short accent bar on the leading edge, the one place the violet
+        // marks where you are, so the rail reads at a glance and not only by a grey fill.
         active
-          ? 'bg-surface-muted font-semibold text-fg'
+          ? 'bg-surface-muted font-semibold text-fg before:absolute before:start-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-accent'
           : 'font-medium text-fg-muted hover:bg-surface-raised hover:text-fg',
       )}
     >
-      {Icon === undefined ? null : <Icon size={16} aria-hidden="true" />}
+      {Icon === undefined ? null : (
+        <Icon size={16} aria-hidden="true" className={active ? 'text-accent' : undefined} />
+      )}
       <span className={compact ? 'sr-only' : undefined}>{children}</span>
     </Link>
   );
@@ -247,13 +250,24 @@ function AskButton({ compact = false }: { compact?: boolean }): React.ReactEleme
   );
 }
 
+/** A run's outcome as a status mark: failed, passed, or not known yet. */
+function dotFor(run: Run): DotStatus {
+  return run.outcome === 'failed' ? 'bad' : run.outcome === 'passed' ? 'good' : 'unknown';
+}
+
 /** What tells a run apart from others on its branch: the suite, else the short commit. */
 function runTag(run: Run): string | null {
   return run.suite ?? (run.commit === null ? null : run.commit.slice(0, 7));
 }
 
 /** The latest runs, newest first, as Codex lists recent tasks: a dot, the branch, and when. */
-function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
+function RecentRuns({
+  api,
+  compact = false,
+}: {
+  api: ApiClient;
+  compact?: boolean;
+}): React.ReactElement {
   const runs = useResource(() => api.getRecentRuns(RECENT), [api]);
   const recent =
     runs.status === 'ready'
@@ -267,6 +281,37 @@ function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
   );
   // A failed read draws nothing: an empty "Recent" heading looks like a broken list.
   if (runs.status === 'error') return <></>;
+  if (compact) {
+    // The rail: one mark per run under a hairline, named by branch and outcome for hover and
+    // for a screen reader. Nothing at all when there are no runs, rather than an empty column.
+    if (recent.length === 0) return <></>;
+    return (
+      <ul
+        aria-label="Recent runs"
+        className="mt-4 flex flex-col items-center gap-px border-t border-border pt-3"
+      >
+        {recent.map((run) => {
+          const name = `${run.branch ?? run.id.slice(0, 8)} · ${statusWord(run.outcome)}`;
+          return (
+            <li key={run.id}>
+              <Link
+                to="/dashboard/runs/$runId"
+                params={{ runId: run.id }}
+                aria-label={name}
+                title={name}
+                className={cn(
+                  'flex h-8 w-10 items-center justify-center rounded-md transition-colors duration-100 hover:bg-surface-raised motion-reduce:transition-none',
+                  FOCUS,
+                )}
+              >
+                <StatusDot status={dotFor(run)} />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
   return (
     <div className="pt-6">
       <p className="px-2 pb-1 text-xs font-medium text-fg-muted">Recent</p>
@@ -280,28 +325,25 @@ function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
                 to="/dashboard/runs/$runId"
                 params={{ runId: run.id }}
                 className={cn(
-                  'flex min-h-9 items-center gap-2.5 rounded-md px-2 text-sm text-fg-muted transition-colors duration-100 hover:bg-surface-raised hover:text-fg motion-reduce:transition-none',
+                  'flex min-h-11 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-fg-muted transition-colors duration-100 hover:bg-surface-raised hover:text-fg motion-reduce:transition-none',
                   FOCUS,
                 )}
               >
-                <StatusDot
-                  status={
-                    run.outcome === 'failed' ? 'bad' : run.outcome === 'passed' ? 'good' : 'unknown'
-                  }
-                  label={statusWord(run.outcome)}
-                />
-                <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
-                  <Bdi className="truncate">{run.branch ?? run.id.slice(0, 8)}</Bdi>
-                  {/* Five runs of `main` read as five identical rows; the suite (or the commit)
-                      tells them apart, and is shown only when the branch alone cannot. */}
-                  {shared.has(run.branch ?? '') && runTag(run) !== null ? (
-                    <Bdi className="max-w-20 shrink-0 truncate text-xs text-fg-muted">
-                      {runTag(run)}
-                    </Bdi>
-                  ) : null}
-                </span>
-                <span className="shrink-0 text-xs text-fg-muted">
-                  <Timestamp value={run.createdAt} empty="" />
+                <StatusDot status={dotFor(run)} label={statusWord(run.outcome)} />
+                {/* Two lines: the branch gets the whole width, and the tag and the time sit
+                    under it, so a long branch is not cut to "feat…" by its neighbours. */}
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <Bdi className="truncate text-fg">{run.branch ?? run.id.slice(0, 8)}</Bdi>
+                  <span className="flex min-w-0 items-baseline gap-1.5 text-xs text-fg-muted">
+                    {/* Five runs of `main` read as five identical rows; the suite (or the commit)
+                        tells them apart, and is shown only when the branch alone cannot. */}
+                    {shared.has(run.branch ?? '') && runTag(run) !== null ? (
+                      <Bdi className="max-w-24 truncate font-mono">{runTag(run)}</Bdi>
+                    ) : null}
+                    <span className="shrink-0">
+                      <Timestamp value={run.createdAt} empty="" />
+                    </span>
+                  </span>
                 </span>
               </Link>
             </li>

@@ -64,7 +64,31 @@ describe('SideNav', () => {
     expect(aside).toHaveClass('w-14');
     const runs = within(nav).getByRole('link', { name: 'Runs' });
     expect(runs).toHaveAttribute('title', 'Runs');
-    expect(within(aside).queryByRole('list', { name: 'Recent runs' })).toBeNull();
+  });
+
+  it('keeps the recent runs on the rail as a column of named marks, one per run', async () => {
+    localStorage.removeItem(SIDEBAR_KEY);
+    const runs = [
+      makeRun({ id: 'one', branch: 'main', outcome: 'failed' }),
+      makeRun({ id: 'two', branch: 'feat/x', outcome: 'passed' }),
+    ];
+    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => runs) }));
+    const recent = await screen.findByRole('list', { name: 'Recent runs' });
+    const links = await within(recent).findAllByRole('link');
+    expect(links).toHaveLength(2);
+    // The rail has no room for words, so each mark carries its branch and outcome by name.
+    expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
+      expect.stringMatching(/main.*Failed/u),
+      expect.stringMatching(/feat\/x.*Passed/u),
+    ]);
+  });
+
+  it('marks the current area with an accent bar on its leading edge, not a grey fill alone', async () => {
+    renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    const runs = within(nav).getByRole('link', { name: 'Runs' });
+    expect(runs).toHaveClass('before:start-0', 'before:bg-accent');
+    expect(within(nav).getByRole('link', { name: 'Tests' })).not.toHaveClass('before:bg-accent');
   });
 
   it('expands and collapses from one button, and remembers the choice', async () => {
