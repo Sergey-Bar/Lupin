@@ -31,6 +31,12 @@ export const Route = createRoute({
       return {
         cockpit: (query, signal) => cockpit.getCockpit(query, signal),
         projects: async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name })),
+        // The hero's verdict: the chosen project, else the first registered one.
+        readiness: async (projectId) => {
+          const id = projectId ?? (await qa.listProjects())[0]?.id;
+          if (id === undefined) throw new Error('not found');
+          return qa.getReadiness(id, 7);
+        },
         attention: {
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),

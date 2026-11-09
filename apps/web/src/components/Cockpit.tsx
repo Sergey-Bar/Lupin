@@ -1,5 +1,7 @@
 import React from 'react';
-import { ExternalLink, Select, Skeleton, Sparkline, Button, cn } from '@lupin/ui';
+import { ExternalLink, Hero, Select, Skeleton, Sparkline, Button, cn } from '@lupin/ui';
+import { heroVerdict } from '../lib/hero.js';
+import type { ReleaseReadinessCard } from '../lib/qa.js';
 import type { Cockpit, CockpitDriver, CockpitMetric, CockpitWindow } from '@lupin/shared-contracts';
 import { useCockpit } from '../hooks/useCockpit.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
@@ -43,6 +45,8 @@ export interface CockpitSources {
   attention: NowSources;
   /** The setup checklist; absent in a composition that has none (most tests). */
   setup?: SetupChecklistSource;
+  /** The release verdict the hero leads with, for the chosen project; absent, no hero. */
+  readiness?: (projectId: string | undefined) => Promise<ReleaseReadinessCard>;
 }
 
 const PaceChart = React.lazy(() => import('./CockpitPaceChart.js'));
@@ -116,7 +120,16 @@ export function CockpitPage({
         }
       />
       <PageBody>
-        {/* The focus first: what to do now, decided for the reader. */}
+        {/* The verdict first, Tesla-style: one word for the whole release. */}
+        {sources.readiness === undefined ? null : (
+          <NowHero
+            key={projectId ?? ''}
+            load={sources.readiness}
+            projectId={projectId}
+            navigate={navigate}
+          />
+        )}
+        {/* Then the focus: what to do now, decided for the reader. */}
         <AttentionSection
           sources={sources.attention}
           navigate={navigate}
@@ -463,5 +476,37 @@ function Driver({
         </a>
       )}
     </p>
+  );
+}
+
+/**
+ * The release verdict, full width at the top of Now: the word, the reason, and the one place
+ * to go. While it loads the space is held, so the page does not jump when it lands.
+ */
+function NowHero({
+  load,
+  projectId,
+  navigate,
+}: {
+  load: (projectId: string | undefined) => Promise<ReleaseReadinessCard>;
+  projectId: string | undefined;
+  navigate: (to: string) => void;
+}): React.ReactElement {
+  const card = useResource(() => load(projectId), [load, projectId]);
+  if (card.status === 'loading') return <Skeleton className="h-64 w-full" />;
+  const hero = heroVerdict(card.status === 'ready' ? card.value : null);
+  return (
+    <Hero
+      verdict={hero.verdict}
+      word={hero.word}
+      reason={card.status === 'error' ? card.message : hero.reason}
+      eyebrow="Release readiness"
+    >
+      <div>
+        <Button className="min-h-11" onClick={() => navigate(hero.action.to)}>
+          {hero.action.label}
+        </Button>
+      </div>
+    </Hero>
   );
 }

@@ -620,3 +620,46 @@ describe('choosing the project', () => {
     expect(await screen.findByLabelText('Project')).toHaveValue('');
   });
 });
+
+describe('the hero verdict', () => {
+  const readiness = (verdict: 'go' | 'caution' | 'no-go') =>
+    vi.fn(
+      async () =>
+        ({
+          verdict,
+          reasons: [
+            {
+              code: 'pass-rate',
+              level: 'no-go',
+              message: 'Pass rate 73.5% is below the 80% floor',
+              evidence: '',
+            },
+          ],
+        }) as never,
+    );
+
+  it('leads the page with the release verdict, one reason and one action', async () => {
+    const navigate = vi.fn();
+    render(
+      <CockpitPage
+        sources={{ ...sources(), readiness: readiness('no-go') }}
+        navigate={navigate}
+        now={() => NOW}
+      />,
+    );
+    const hero = await screen.findByRole('region', { name: 'No-go' });
+    expect(hero).toHaveTextContent('Pass rate 73.5% is below the 80% floor');
+    const action = within(hero).getByRole('button', { name: 'See what is blocking' });
+    action.click();
+    expect(navigate).toHaveBeenCalledWith('/dashboard');
+    // It comes before the focus list, so it is the first thing read.
+    const focus = await screen.findByTestId('now-page');
+    expect(hero.compareDocumentPosition(focus) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('draws no hero when the page has no readiness to read', async () => {
+    show();
+    await screen.findByTestId('now-page');
+    expect(screen.queryByRole('region', { name: /No-go|Ready|Caution/u })).toBeNull();
+  });
+});
