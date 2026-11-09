@@ -70,10 +70,9 @@ export default defineConfig({
   // A GitHub project page is served from `/<repo>/`, so the base has to be set or
   // every asset URL resolves one level too high and the site renders unstyled.
   //
-  // Left unset by default because **no deployment exists yet** — no workflow
-  // builds or publishes this package. `SITE_BASE` is the input a deploy workflow
-  // will pass, and a build that renders unstyled is the visible failure if it
-  // ever forgets to.
+  // Defaults to `/` for local work. `.github/workflows/docs.yml` publishes this site to
+  // GitHub Pages and passes `SITE_BASE=/<repo>/` (and `SITE_URL`, for the share image);
+  // a build that renders unstyled is the visible failure if it ever forgets to.
   base: SITE_BASE,
   // `dist`, not VitePress's default `.vitepress/dist`.
   //

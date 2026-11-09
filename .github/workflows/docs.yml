@@ -34,6 +34,9 @@ env:
   # fork under a different owner is still correct, and it means renaming the
   # repository cannot silently leave a stale prefix in a workflow file.
   SITE_BASE: /${{ github.event.repository.name }}/
+  # The Pages origin, so the share preview (`og:image`) is an absolute URL. A crawler does
+  # not resolve a relative one. A custom domain would replace this value.
+  SITE_URL: https://${{ github.repository_owner }}.github.io
 
 jobs:
   build:
