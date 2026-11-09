@@ -40,6 +40,45 @@ const entry = (overrides: Record<string, unknown>) =>
   }) as never;
 
 describe('rankAttention', () => {
+  it('names a failure by its branch and how many tests broke, one item per branch', () => {
+    const ranked = rankAttention({
+      runs: [
+        run({
+          id: 'a'.repeat(8),
+          suite: null,
+          testType: 'browser',
+          branch: 'feat/express-checkout',
+          outcome: 'failed',
+          summary: { total: 16, passed: 14, failed: 2 } as Run['summary'],
+          createdAt: '2026-10-25T11:30:00.000Z',
+        }),
+        run({
+          id: 'b'.repeat(8),
+          suite: null,
+          testType: 'browser',
+          branch: 'feat/express-checkout',
+          outcome: 'failed',
+          createdAt: '2026-10-25T09:00:00.000Z',
+        }),
+        run({
+          id: 'c'.repeat(8),
+          suite: null,
+          testType: 'browser',
+          branch: 'main',
+          outcome: 'failed',
+          summary: { total: 16, passed: 15, failed: 1 } as Run['summary'],
+          createdAt: '2026-10-25T10:00:00.000Z',
+        }),
+      ],
+      portfolio: null,
+      deliveries: [],
+      now: NOW,
+    });
+    expect(ranked.items.map((item) => item.title)).toEqual([
+      '2 tests failing on feat/express-checkout',
+      '1 test failing on main',
+    ]);
+  });
   it('puts failures first, one per suite, newest first, then cautions', () => {
     const ranked = rankAttention({
       runs: [
@@ -97,9 +136,9 @@ describe('rankAttention', () => {
       'caution',
       'caution',
     ]);
-    expect(ranked.items[0]?.title).toBe('checkout e2e failed');
+    expect(ranked.items[0]?.title).toBe('main is failing');
     expect(ranked.items[0]?.action.to).toBe('/dashboard/runs/bbbbbbbb');
-    expect(ranked.items.some((item) => item.title === 'api failed')).toBe(true);
+    expect(ranked.items.some((item) => item.title === 'api is failing')).toBe(true);
     expect(ranked.items.some((item) => item.title === 'Service is graded D')).toBe(true);
   });
 
@@ -176,6 +215,7 @@ describe('AttentionSection, as one focus', () => {
     run({
       id: `${String(index)}`.repeat(8),
       suite: `suite ${String(index)}`,
+      branch: `feat/branch-${String(index)}`,
       outcome: 'failed',
       createdAt: `2026-10-25T0${String(index)}:00:00.000Z`,
     }),
@@ -188,7 +228,7 @@ describe('AttentionSection, as one focus', () => {
       <AttentionSection sources={sources()} navigate={navigate} now={() => NOW} />,
     );
     const first = await screen.findByTestId('focus-first');
-    expect(first).toHaveTextContent('checkout e2e failed');
+    expect(first).toHaveTextContent('main is failing');
     await user.click(screen.getByRole('button', { name: 'Open run' }));
     expect(navigate).toHaveBeenCalledWith('/dashboard/runs/00000000-0000-4000-8000-000000000001');
     expect(localStorage.getItem(LAST_VISIT_KEY)).toBe(NOW.toISOString());

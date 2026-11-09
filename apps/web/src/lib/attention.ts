@@ -27,6 +27,17 @@ function runLabel(run: Run): string {
   return run.suite ?? run.testType ?? `run ${run.id.slice(0, 8)}`;
 }
 
+/**
+ * What broke, said as the work: how many tests, on which branch. `browser failed` named a test
+ * type, which tells nobody where to look.
+ */
+function failureTitle(run: Run): string {
+  const failed = run.summary?.failed ?? 0;
+  const where = run.branch ?? runLabel(run);
+  if (failed <= 0) return `${where} is failing`;
+  return `${String(failed)} ${failed === 1 ? 'test' : 'tests'} failing on ${where}`;
+}
+
 function runItems(runs: readonly Run[], now: Date): AttentionItem[] {
   const items: AttentionItem[] = [];
   // The newest failure per suite: three red runs of one suite are one thing to fix.
@@ -34,14 +45,16 @@ function runItems(runs: readonly Run[], now: Date): AttentionItem[] {
   for (const run of [...runs].sort((a, b) => b.createdAt.localeCompare(a.createdAt))) {
     const at = run.completedAt ?? run.startedAt ?? run.createdAt;
     if (run.outcome === 'failed' || run.outcome === 'blocked') {
-      const label = runLabel(run);
-      if (seenFailed.has(label)) continue;
-      seenFailed.add(label);
+      // One item per branch (or per suite when there is no branch): five red runs on one
+      // branch are one thing to untangle, and the newest of them is the one to open.
+      const key = run.branch ?? runLabel(run);
+      if (seenFailed.has(key)) continue;
+      seenFailed.add(key);
       items.push({
         id: `run-failed-${run.id}`,
         severity: 'bad',
-        title: `${label} failed`,
-        detail: run.branch === null ? 'Latest run' : `on ${run.branch}`,
+        title: failureTitle(run),
+        detail: run.suite ?? (run.branch === null ? 'Latest run' : 'Latest run on this branch'),
         action: { label: 'Open run', to: `/dashboard/runs/${run.id}` },
         at,
       });
