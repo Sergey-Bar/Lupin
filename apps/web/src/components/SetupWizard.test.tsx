@@ -213,7 +213,7 @@ describe('the cockpit checklist', () => {
     const checklist = source(onboarding({ repository: 'done', ai: 'skipped' }));
     const { container } = render(<SetupChecklist source={checklist} />);
     expect(await screen.findByTestId('setup-checklist-progress')).toHaveTextContent(
-      '2 of 6 done. Next: connect an ai provider.',
+      'Setup 2 of 6 · Next: connect an ai provider',
     );
     expect(screen.getByRole('progressbar', { name: 'Setup progress' })).toHaveAttribute(
       'aria-valuenow',
@@ -230,6 +230,16 @@ describe('the cockpit checklist', () => {
     await user.click(screen.getByRole('button', { name: 'Dismiss the setup checklist' }));
     expect(checklist.dismiss).toHaveBeenCalled();
     expect(screen.queryByTestId('setup-checklist')).toBeNull();
+  });
+
+  it('takes one line on the home page, and folds the steps until asked', async () => {
+    render(<SetupChecklist source={source(onboarding({ repository: 'done' }))} />);
+    expect(await screen.findByTestId('setup-checklist-progress')).toHaveTextContent('Setup 2 of 6');
+    const steps = screen.getByTestId('setup-checklist-steps');
+    expect(steps.tagName).toBe('DETAILS');
+    expect(steps).not.toHaveAttribute('open');
+    // Not a second solid button: the focus card above owns the one primary action.
+    expect(screen.getByRole('link', { name: 'Continue setup' })).not.toHaveClass('bg-primary');
   });
 
   it('is read-only for a viewer, naming who can finish each step', async () => {
