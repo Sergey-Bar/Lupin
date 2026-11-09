@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Badge, Button, EmptyState, StatusDot } from '@lupin/ui';
+import { Badge, Button, EmptyState, StatusDot, cn } from '@lupin/ui';
 import type { CockpitWindow, RunPhase } from '@lupin/shared-contracts';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { useRunDetail } from '../../hooks/useDashboard.js';
@@ -763,10 +763,20 @@ function SummaryPanels({ run }: { run: Run }) {
   );
 }
 
+/**
+ * How an evidence panel takes space. With evidence it fills its column so a long list scrolls
+ * inside it; with none it is one sentence, and a full-height box around one sentence reads as a
+ * missing page rather than as an answer. `self-start` because the test panel is a grid cell,
+ * which stretches regardless of flex.
+ */
+function evidenceFit(hasEvidence: boolean): string {
+  return hasEvidence ? 'flex-1' : 'flex-none self-start w-full';
+}
+
 function TestPanel({ run }: { run: Run }) {
   return (
     <>
-      <Panel title="Test attempts" className="flex-1">
+      <Panel title="Test attempts" className={evidenceFit(run.tests.length > 0)}>
         <div
           tabIndex={0}
           role="region"
@@ -789,7 +799,7 @@ function ArtifactPanel({
 }) {
   return (
     <>
-      <Panel title="Artifacts" className="min-h-0 flex-1">
+      <Panel title="Artifacts" className={cn('min-h-0', evidenceFit(artifacts.length > 0))}>
         {evidenceError ? (
           <p className="max-w-measure text-pretty text-sm text-warning">
             Some artifact metadata could not be refreshed.
@@ -832,7 +842,7 @@ function ArtifactPanel({
 function EventPanel({ events }: { events: RunDetailState['events'] }) {
   return (
     <>
-      <Panel title="Live event timeline" className="min-h-0 flex-1">
+      <Panel title="Live event timeline" className={cn('min-h-0', evidenceFit(events.length > 0))}>
         {events.length > 0 ? (
           <div
             tabIndex={0}
@@ -874,7 +884,11 @@ function GatePanel({
 }) {
   return (
     <>
-      <Panel title="Quality gate" data-testid="run-gate" className="min-h-0 flex-1">
+      <Panel
+        title="Quality gate"
+        data-testid="run-gate"
+        className={cn('min-h-0', evidenceFit(gate !== null && gate !== undefined))}
+      >
         {gate ? (
           <>
             <Badge className="self-start" variant={gateTone(gate.status)}>

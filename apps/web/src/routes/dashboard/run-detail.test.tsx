@@ -284,6 +284,27 @@ describe('RunDetailPage', () => {
     expect(screen.getByTestId('run-ref')).toHaveTextContent('feat/express-checkout · 7d02b5f');
   });
 
+  it('shrinks an empty evidence panel to its sentence, and lets a full one fill its column', async () => {
+    render(
+      <RunDetailPage
+        id="empty-evidence"
+        api={detailApi(makeRun({ id: 'empty-evidence', tests: [], artifacts: [] }))}
+      />,
+    );
+    await screen.findByTestId('run-detail-page');
+    for (const name of ['Test attempts', 'Artifacts', 'Live event timeline']) {
+      const panel = screen.getByRole('region', { name });
+      expect(panel, name).toHaveClass('flex-none');
+      expect(panel, name).not.toHaveClass('flex-1');
+    }
+  });
+
+  it('keeps a panel with evidence filling its column', async () => {
+    render(<RunDetailPage id="run-123" api={detailApi(passedRun)} />);
+    await screen.findByTestId('run-detail-page');
+    expect(screen.getByRole('region', { name: 'Test attempts' })).toHaveClass('flex-1');
+  });
+
   it('renders loading state initially', () => {
     const api = detailApi(passedRun, { getRun: vi.fn(() => new Promise<Run>(() => undefined)) });
     render(<RunDetailPage id="run-123" api={api} />);
