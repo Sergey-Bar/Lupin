@@ -12,12 +12,13 @@ import { ThemeProvider } from '../theme/ThemeProvider';
 import { SECTIONS, tabsOf } from '../route-manifest';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
 import { expectNoBlockingAxeViolations } from '../test-axe';
+import { makeApi, makeRun } from '../test-utils';
 
-function renderAt(path: string) {
+function renderAt(path: string, api = makeApi({ getRecentRuns: vi.fn(async () => []) })) {
   const rootRoute = createRootRoute({
     component: () => (
       <ThemeProvider>
-        <SideNav />
+        <SideNav api={api} />
       </ThemeProvider>
     ),
   });
@@ -96,6 +97,38 @@ describe('SideNav', () => {
     expect(within(nav).queryAllByRole('heading')).toHaveLength(0);
   });
 
+  it('leads with Ask Lupin, which opens the command palette', async () => {
+    const heard = vi.fn();
+    document.addEventListener('keydown', heard);
+    renderAt('/dashboard/now');
+    const ask = await screen.findByRole('button', { name: /Ask Lupin/u });
+    ask.click();
+    expect(heard).toHaveBeenCalledWith(expect.objectContaining({ key: 'k', ctrlKey: true }));
+    document.removeEventListener('keydown', heard);
+  });
+
+  it('lists the five most recent runs, each with its outcome as a dot and a word', async () => {
+    const runs = Array.from({ length: 7 }, (_, index) =>
+      makeRun({
+        id: `${String(index)}`.repeat(8),
+        branch: `feat/b-${String(index)}`,
+        outcome: index === 0 ? 'failed' : 'passed',
+        createdAt: `2026-11-0${String(index + 1)}T10:00:00.000Z`,
+      }),
+    );
+    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => runs) }));
+    const recent = await screen.findByRole('list', { name: 'Recent runs' });
+    await within(recent).findByText('feat/b-6');
+    const items = within(recent).getAllByRole('listitem');
+    expect(items).toHaveLength(5);
+    expect(items[0]).toHaveTextContent('feat/b-6');
+    expect(within(recent).getAllByRole('img', { name: /Passed|Failed/u }).length).toBe(5);
+  });
+
+  it('says nothing has run yet, rather than drawing an empty box', async () => {
+    renderAt('/dashboard/now');
+    expect(await screen.findByText('No runs yet')).toBeInTheDocument();
+  });
   it('has no serious or critical axe violations', async () => {
     const { container } = renderAt('/dashboard/runs');
     await screen.findByRole('navigation', { name: 'Sidebar' });

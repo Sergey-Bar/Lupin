@@ -261,6 +261,8 @@ export interface RunEventSubscription {
 
 export interface ApiClient {
   getRuns(options?: RequestOptions): Promise<Run[]>;
+  /** The newest `limit` runs, for a glance (the sidebar), without reading a whole page. */
+  getRecentRuns(limit: number, options?: RequestOptions): Promise<Run[]>;
   getRun(id: string, options?: RequestOptions): Promise<Run>;
   createRun(request: CreateRunRequest, options?: RequestOptions): Promise<Run>;
   cancelRun(id: string, options?: RequestOptions): Promise<Run>;
@@ -576,6 +578,12 @@ export const defaultApiClient: ApiClient = {
     );
   },
   getRuns: (options) => getJson('/api/v1/runs', z.array(NormalizedRunSchema), options),
+  getRecentRuns: (limit, options) =>
+    getJson(
+      `/api/v1/runs?limit=${String(Math.trunc(limit))}`,
+      z.array(NormalizedRunSchema),
+      options,
+    ),
   getRun: (id, options) =>
     getJson(`/api/v1/runs/${encodeURIComponent(id)}`, NormalizedRunSchema, options),
   createRun: async (requestBody, options) => {

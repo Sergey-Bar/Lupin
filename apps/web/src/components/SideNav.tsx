@@ -1,6 +1,20 @@
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Wordmark, cn } from '@lupin/ui';
+import {
+  Activity,
+  GitBranch,
+  LayoutGrid,
+  ListChecks,
+  Network,
+  Settings,
+  Sparkles,
+  StatusDot,
+  Wordmark,
+  cn,
+} from '@lupin/ui';
+import { defaultApiClient, type ApiClient } from '../lib/api.js';
+import { useResource } from '../hooks/useResource.js';
+import { statusWord } from '../lib/status-word.js';
 import {
   SECTIONS,
   routeFor,
@@ -28,7 +42,18 @@ const FOCUS =
  * while the page scrolls and still reaches the bottom of a long section list on a short screen.
  * Below `lg` it is hidden; the top bar and the bottom tab bar take over.
  */
-export function SideNav(): React.ReactElement {
+const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
+  overview: LayoutGrid,
+  runs: ListChecks,
+  insights: Activity,
+  map: Network,
+  github: GitBranch,
+  settings: Settings,
+};
+
+const RECENT = 5;
+
+export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.ReactElement {
   const path = useRouterState({ select: (state) => state.location.pathname });
   const page = routeFor(path);
   const role = useViewerRole();
@@ -39,6 +64,9 @@ export function SideNav(): React.ReactElement {
     >
       <div className="flex h-14 shrink-0 items-center px-5">
         <Wordmark data-testid="side-wordmark" decorative />
+      </div>
+      <div className="px-3 pb-2">
+        <AskButton />
       </div>
       <nav aria-label="Sidebar" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2">
         {SECTIONS.map((section) => (
@@ -51,6 +79,7 @@ export function SideNav(): React.ReactElement {
             role={role}
           />
         ))}
+        <RecentRuns api={api} />
       </nav>
       <div className="flex shrink-0 items-center justify-between border-t border-border px-5 py-3">
         <span className="text-xs text-fg-muted">Theme</span>
@@ -83,7 +112,7 @@ function SectionGroup({
   if (!current || tabs.length === 0) {
     return (
       <div className="pt-1">
-        <SideLink to={path} active={current}>
+        <SideLink to={path} active={current} icon={SECTION_ICONS[id]}>
           {label}
         </SideLink>
       </div>
@@ -112,10 +141,12 @@ function SectionGroup({
 function SideLink({
   to,
   active,
+  icon: Icon,
   children,
 }: {
   to: string;
   active: boolean;
+  icon?: typeof LayoutGrid;
   children: React.ReactNode;
 }): React.ReactElement {
   return (
@@ -125,14 +156,81 @@ function SideLink({
       activeOptions={{ exact: true }}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex min-h-9 items-center rounded-md px-2 text-sm transition-colors duration-100 motion-reduce:transition-none',
+        'flex min-h-9 items-center gap-2.5 rounded-md px-2 text-sm transition-colors duration-100 motion-reduce:transition-none',
         FOCUS,
         active
           ? 'bg-surface-muted font-semibold text-fg'
           : 'font-medium text-fg-muted hover:bg-surface-raised hover:text-fg',
       )}
     >
+      {Icon === undefined ? null : <Icon size={16} aria-hidden="true" />}
       {children}
     </Link>
+  );
+}
+
+/**
+ * The one primary action, at the top like Codex's "New task": ask Lupin anything, which opens
+ * the command palette. It sends the same Ctrl+K the palette already listens for, so there is
+ * one way in and no second palette state to keep in step.
+ */
+function AskButton(): React.ReactElement {
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        document.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }),
+        )
+      }
+      className={cn(
+        'flex min-h-10 w-full items-center gap-2.5 rounded-md bg-surface-raised px-3 text-sm font-medium text-fg transition-colors duration-100 hover:bg-surface-muted motion-reduce:transition-none',
+        FOCUS,
+      )}
+    >
+      <Sparkles size={16} aria-hidden="true" className="text-accent" />
+      <span className="flex-1 text-start">Ask Lupin</span>
+      <kbd className="rounded border border-border px-1.5 font-mono text-xs text-fg-muted">⌘K</kbd>
+    </button>
+  );
+}
+
+/** The latest runs, newest first, as Codex lists recent tasks: a dot, the branch, and when. */
+function RecentRuns({ api }: { api: ApiClient }): React.ReactElement {
+  const runs = useResource(() => api.getRecentRuns(RECENT), [api]);
+  const recent =
+    runs.status === 'ready'
+      ? [...runs.value].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, RECENT)
+      : [];
+  return (
+    <div className="pt-6">
+      <p className="px-2 pb-1 text-xs font-medium text-fg-muted">Recent</p>
+      {runs.status === 'ready' && recent.length === 0 ? (
+        <p className="px-2 py-1 text-sm text-fg-muted">No runs yet</p>
+      ) : (
+        <ul aria-label="Recent runs" className="flex flex-col gap-px">
+          {recent.map((run) => (
+            <li key={run.id}>
+              <Link
+                to="/dashboard/runs/$runId"
+                params={{ runId: run.id }}
+                className={cn(
+                  'flex min-h-9 items-center gap-2.5 rounded-md px-2 text-sm text-fg-muted transition-colors duration-100 hover:bg-surface-raised hover:text-fg motion-reduce:transition-none',
+                  FOCUS,
+                )}
+              >
+                <StatusDot
+                  status={
+                    run.outcome === 'failed' ? 'bad' : run.outcome === 'passed' ? 'good' : 'unknown'
+                  }
+                  label={statusWord(run.outcome)}
+                />
+                <span className="truncate">{run.branch ?? run.id.slice(0, 8)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
