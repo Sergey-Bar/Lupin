@@ -196,8 +196,18 @@ test('every tracked and untracked text file is valid UTF-8', () => {
   // is indistinguishable from having measured nothing.
   /** @type {string[]} */
   const absent = [];
+  // `--others` names an untracked nested repository (a git worktree checked out inside
+  // this one) as a single `dir/` entry, and reading it raised EISDIR, so a developer with
+  // a worktree under the tree could not run this gate at all. Its files belong to another
+  // checkout, which runs this gate itself; they are skipped here and counted, like `absent`.
+  /** @type {string[]} */
+  const nested = [];
   for (const file of files) {
     const full = path.join(REPO_ROOT, file);
+    if (file.endsWith('/')) {
+      nested.push(file);
+      continue;
+    }
     if (!existsSync(full)) {
       absent.push(file);
       continue;
@@ -235,6 +245,12 @@ test('every tracked and untracked text file is valid UTF-8', () => {
     console.log(
       `encoding-integrity: skipped ${String(absent.length)} path(s) in the index that ` +
         `are not in the working tree (deleted or renamed): ${absent.join(', ')}`,
+    );
+  }
+  if (nested.length > 0) {
+    console.log(
+      `encoding-integrity: skipped ${String(nested.length)} nested repository path(s), ` +
+        `which another checkout owns: ${nested.join(', ')}`,
     );
   }
 });
