@@ -141,9 +141,11 @@ export function AreaPage({
           </p>
         )}
         {top.length === 0 ? (
-          <p data-testid="area-clear" className="rounded-lg bg-surface p-6 text-sm text-fg-muted">
-            {clear}
-          </p>
+          hero !== undefined ? null : (
+            <p data-testid="area-clear" className="rounded-lg bg-surface p-6 text-sm text-fg-muted">
+              {clear}
+            </p>
+          )
         ) : (
           <ol aria-label={`${title}: what to do`} className="flex flex-col gap-2">
             {top.map((entry, index) => (

@@ -188,6 +188,15 @@ describe('NavBar', () => {
     render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
     const tabs = await screen.findByTestId('section-tabs');
     expect(tabs).toHaveAttribute('aria-label', 'Settings pages');
+    // Each group is a named list, so a screen reader hears "Workspace, list" before its tabs.
+    await waitFor(() =>
+      expect(
+        within(tabs)
+          .getAllByRole('group')
+          .map((group) => group.getAttribute('aria-label')),
+      ).toEqual(['Personal', 'Workspace', 'Tools']),
+    );
+    expect(within(tabs).getByText('Workspace', { selector: '[data-tab-group]' })).toBeVisible();
     // fetch is mocked to 401, so `whoami` yields no role: a signed-out reader sees only the
     // two tabs everyone may use, never the admin ones.
     await waitFor(() =>

@@ -17,6 +17,7 @@ import {
   SECTIONS,
   routeFor,
   sectionOf,
+  groupOf,
   tabGroups,
   tabsOf,
   visibleTabsOf,
@@ -171,26 +172,46 @@ function WheelTabs({
                   className="mx-1 my-3 w-px shrink-0 bg-border"
                 />,
               ]),
-          ...group.map((tab) => {
-            const active = tab.id === page.id;
-            return (
-              <li key={tab.id} className="shrink-0">
-                <Link
-                  to={tab.path}
-                  activeOptions={{ exact: true }}
-                  aria-current={active ? 'page' : undefined}
-                  {...(active ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
-                  className={cn(
-                    'inline-flex min-h-11 items-center px-3 text-sm transition-colors duration-100 motion-reduce:transition-none',
-                    FOCUS,
-                    active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
-                  )}
+          ...(() => {
+            const links = group.map((tab) => {
+              const active = tab.id === page.id;
+              return (
+                <li key={tab.id} className="shrink-0">
+                  <Link
+                    to={tab.path}
+                    activeOptions={{ exact: true }}
+                    aria-current={active ? 'page' : undefined}
+                    {...(active ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
+                    className={cn(
+                      'inline-flex min-h-11 items-center px-3 text-sm transition-colors duration-100 motion-reduce:transition-none',
+                      FOCUS,
+                      active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
+                    )}
+                  >
+                    {tab.tab}
+                  </Link>
+                </li>
+              );
+            });
+            const name = group[0] === undefined ? undefined : groupOf(group[0]);
+            if (name === undefined) return links;
+            // A named group (Settings): a quiet label, then its tabs, as one named list so a
+            // screen reader hears "Workspace" before the tabs in it.
+            return [
+              <li key={`group-${name}`} className="flex shrink-0 items-center">
+                <span
+                  data-tab-group=""
+                  aria-hidden="true"
+                  className="pe-1 ps-2 text-[0.6875rem] font-medium uppercase tracking-wider text-fg-muted"
                 >
-                  {tab.tab}
-                </Link>
-              </li>
-            );
-          }),
+                  {name}
+                </span>
+                <ul role="group" aria-label={name} className="flex gap-1">
+                  {links}
+                </ul>
+              </li>,
+            ];
+          })(),
         ])}
         <span aria-hidden="true" className="indicator" />
       </ul>

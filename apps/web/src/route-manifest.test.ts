@@ -8,6 +8,7 @@ import {
   repo360Path,
   reportPath,
   roleMeets,
+  groupOf,
   tabGroups,
   routeManifest,
   runDetailPath,
@@ -221,25 +222,36 @@ describe('route manifest', () => {
     ]);
   });
 
-  it('splits a long tab row into groups where the access floor changes', () => {
+  it('splits a long tab row into its named groups', () => {
     const groups = tabGroups(visibleTabsOf('settings', 'admin')).map((group) =>
       group.map((tab) => tab.tab),
     );
     expect(groups).toEqual([
-      ['Appearance', 'Projects', 'Reports', 'Quality gates'],
-      [
-        'Members',
-        'AI provider',
-        'Integrations',
-        'Identity',
-        'Sessions & retention',
-        'Access',
-        'Audit',
-        'Deployment',
-      ],
+      ['Appearance'],
+      ['Projects', 'Reports', 'Quality gates', 'Members', 'AI provider', 'Integrations'],
+      ['Identity', 'Sessions & retention', 'Access', 'Audit', 'Deployment'],
       ['Map', 'Toolbox'],
     ]);
     expect(tabGroups(tabsOf('tests'))).toHaveLength(1);
+  });
+
+  it('names the Settings groups, so the row reads as yours, the workspace, the install and the tools', () => {
+    const groups = tabGroups(visibleTabsOf('settings', 'admin'));
+    expect(groups.map((group) => (group[0] === undefined ? undefined : groupOf(group[0])))).toEqual(
+      ['Personal', 'Workspace', 'Install', 'Tools'],
+    );
+    expect(groups.map((group) => group.map((tab) => tab.tab))).toEqual([
+      ['Appearance'],
+      ['Projects', 'Reports', 'Quality gates', 'Members', 'AI provider', 'Integrations'],
+      ['Identity', 'Sessions & retention', 'Access', 'Audit', 'Deployment'],
+      ['Map', 'Toolbox'],
+    ]);
+    // A viewer sees the same names over fewer tabs; a group left empty is not drawn.
+    expect(
+      tabGroups(visibleTabsOf('settings', 'viewer')).map((group) =>
+        group[0] === undefined ? undefined : groupOf(group[0]),
+      ),
+    ).toEqual(['Personal', 'Workspace', 'Tools']);
   });
 
   it('meets an access floor only at or above it', () => {

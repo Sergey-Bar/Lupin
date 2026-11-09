@@ -43,6 +43,8 @@ interface ManifestEntry {
   readonly visible: boolean;
   readonly section: SectionId;
   readonly tab?: string;
+  /** The named group a tab sits in on a long tab row (Settings): Personal, Workspace, … */
+  readonly group?: string;
   readonly access?: TabAccess;
 }
 
@@ -318,6 +320,7 @@ export const routeManifest = [
     visible: true,
     section: 'settings',
     tab: 'Appearance',
+    group: 'Personal',
   },
   {
     id: 'settings-projects',
@@ -326,6 +329,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Projects',
+    group: 'Workspace',
   },
   {
     id: 'settings-reports',
@@ -334,6 +338,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Reports',
+    group: 'Workspace',
   },
   {
     id: 'settings-quality-gates',
@@ -342,6 +347,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Quality gates',
+    group: 'Workspace',
   },
   {
     id: 'settings-members',
@@ -350,6 +356,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Members',
+    group: 'Workspace',
     access: 'admin',
   },
   {
@@ -359,6 +366,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'AI provider',
+    group: 'Workspace',
     access: 'admin',
   },
   {
@@ -368,6 +376,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Integrations',
+    group: 'Workspace',
     access: 'admin',
   },
   {
@@ -377,6 +386,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Identity',
+    group: 'Install',
     access: 'admin',
   },
   {
@@ -386,6 +396,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Sessions & retention',
+    group: 'Install',
     access: 'admin',
   },
   {
@@ -395,6 +406,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Access',
+    group: 'Install',
     access: 'admin',
   },
   {
@@ -404,6 +416,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Audit',
+    group: 'Install',
     access: 'admin',
   },
   {
@@ -413,6 +426,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Deployment',
+    group: 'Install',
     access: 'admin',
   },
   {
@@ -422,6 +436,7 @@ export const routeManifest = [
     visible: true,
     section: 'settings',
     tab: 'Map',
+    group: 'Tools',
   },
   {
     id: 'toolbox',
@@ -430,6 +445,7 @@ export const routeManifest = [
     visible: true,
     section: 'settings',
     tab: 'Toolbox',
+    group: 'Tools',
   },
 ] as const satisfies readonly ManifestEntry[];
 
@@ -511,18 +527,25 @@ export function visibleTabsOf(section: SectionId, role: ViewerRole | null): TabR
   return tabs.length > 1 ? tabs : [];
 }
 
+/** The named group a tab sits in on its row, or `undefined` for a row with none. */
+export function groupOf(tab: TabRoute): string | undefined {
+  return (tab as { group?: string }).group;
+}
+
 /**
- * A tab row split where the access floor changes, so Settings reads as three short groups
- * (yours, the admin's, the tools) rather than fourteen tabs in a line.
+ * A tab row split into its named groups (Settings: Personal, Workspace, Install, Tools), so it
+ * reads as four short groups rather than fourteen tabs in a line. A row with no named groups
+ * splits where the access floor changes instead.
  */
 export function tabGroups(tabs: readonly TabRoute[]): TabRoute[][] {
   const groups: TabRoute[][] = [];
   let floor: string | undefined | null = null;
   for (const tab of tabs) {
-    const access = (tab as { access?: TabAccess }).access;
-    if (groups.length === 0 || access !== floor) groups.push([]);
+    const named = (tab as { group?: string }).group;
+    const key = named ?? (tab as { access?: TabAccess }).access;
+    if (groups.length === 0 || key !== floor) groups.push([]);
     groups[groups.length - 1]?.push(tab);
-    floor = access;
+    floor = key;
   }
   return groups;
 }

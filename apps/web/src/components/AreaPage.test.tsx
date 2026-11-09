@@ -36,6 +36,11 @@ describe('AreaPage', () => {
     expect(screen.getByTestId('area-verdict')).toHaveTextContent('Two tests need a decision.');
   });
 
+  it('draws no "all clear" card under a hero, which has already said it at display size', () => {
+    show([], { hero: <section aria-label="Green">Every branch is green.</section> });
+    expect(screen.queryByTestId('area-clear')).toBeNull();
+  });
+
   it('lets a hero say the verdict once, rather than again in a line under it', () => {
     show([item('a')], { hero: <section aria-label="Failing">Two tests need a decision.</section> });
     expect(screen.getByRole('region', { name: 'Failing' })).toBeInTheDocument();
