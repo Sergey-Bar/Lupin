@@ -18,7 +18,8 @@ export function PageGuide({ pathname }: { pathname: string }): React.ReactElemen
   const guide = pageGuidance[route.id];
   return (
     <div className="relative z-popover h-0 shrink-0" data-chrome="secondary">
-      <details key={route.id} className="absolute end-0 -top-6">
+      {/* In the gap under the tab row: 16px on a phone, 24px from `sm` up, so it never touches it. */}
+      <details key={route.id} className="absolute end-0 -top-4 sm:-top-6">
         <summary
           title={`How to use ${route.label}`}
           className="relative flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-md text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus after:absolute after:-inset-2 after:content-[''] [&::-webkit-details-marker]:hidden"

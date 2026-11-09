@@ -8,6 +8,7 @@ import {
   repo360Path,
   reportPath,
   roleMeets,
+  tabGroups,
   routeManifest,
   runDetailPath,
   sectionOf,
@@ -218,6 +219,27 @@ describe('route manifest', () => {
       'Map',
       'Toolbox',
     ]);
+  });
+
+  it('splits a long tab row into groups where the access floor changes', () => {
+    const groups = tabGroups(visibleTabsOf('settings', 'admin')).map((group) =>
+      group.map((tab) => tab.tab),
+    );
+    expect(groups).toEqual([
+      ['Appearance', 'Projects', 'Reports', 'Quality gates'],
+      [
+        'Members',
+        'AI provider',
+        'Integrations',
+        'Identity',
+        'Sessions & retention',
+        'Access',
+        'Audit',
+        'Deployment',
+      ],
+      ['Map', 'Toolbox'],
+    ]);
+    expect(tabGroups(tabsOf('tests'))).toHaveLength(1);
   });
 
   it('meets an access floor only at or above it', () => {

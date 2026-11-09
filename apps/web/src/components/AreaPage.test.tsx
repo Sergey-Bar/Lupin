@@ -192,6 +192,13 @@ describe('AreaPage', () => {
     expect(screen.getByTestId('area-verdict')).toHaveTextContent('2 things need you.');
   });
 
+  it('counts only what needs you, not the items given for context', () => {
+    show([item('a', { title: 'Same' }), item('b', { tone: 'warn' }), item('c', { tone: 'info' })], {
+      verdict: 'Same',
+    });
+    expect(screen.getByTestId('area-verdict')).toHaveTextContent('2 things need you.');
+  });
+
   it('lets a long title wrap rather than cut it off mid-word', () => {
     show([item('a', { title: 'A very long title' }), item('b')]);
     const title = screen.getByText('A very long title');

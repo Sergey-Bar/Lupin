@@ -159,11 +159,7 @@ function DashboardBody({
     return (
       <AreaPage
         title="Health"
-        subtitle={
-          <span data-testid="dashboard-subject">
-            {project.name} · {project.repoPath ?? 'no repository path recorded'}
-          </span>
-        }
+        subtitle={<span data-testid="dashboard-subject">{project.name}</span>}
         verdict={summary.headline}
         items={healthItems(summary)}
         navigate={navigate}
@@ -188,11 +184,7 @@ function DashboardBody({
     <PageFrame data-testid="dashboard" className="gap-4 sm:gap-6">
       <PageHeader
         title="Health"
-        subtitle={
-          <span data-testid="dashboard-subject">
-            {project.name} · {project.repoPath ?? 'no repository path recorded'}
-          </span>
-        }
+        subtitle={<span data-testid="dashboard-subject">{project.name}</span>}
         actions={
           <>
             <a

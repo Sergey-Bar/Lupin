@@ -17,6 +17,7 @@ import {
   SECTIONS,
   routeFor,
   sectionOf,
+  tabGroups,
   tabsOf,
   visibleTabsOf,
   type SectionId,
@@ -135,26 +136,38 @@ export function SectionTabs(): React.ReactElement | null {
       className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6"
     >
       <ul ref={tabsRef} className="relative flex gap-1">
-        {tabs.map((tab) => {
-          const active = tab.id === page.id;
-          return (
-            <li key={tab.id} className="shrink-0">
-              <Link
-                to={tab.path}
-                activeOptions={{ exact: true }}
-                aria-current={active ? 'page' : undefined}
-                {...(active ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
-                className={cn(
-                  'inline-flex min-h-11 items-center px-3 text-sm transition-colors duration-100 motion-reduce:transition-none',
-                  FOCUS,
-                  active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
-                )}
-              >
-                {tab.tab}
-              </Link>
-            </li>
-          );
-        })}
+        {tabGroups(tabs).flatMap((group, groupIndex) => [
+          ...(groupIndex === 0
+            ? []
+            : [
+                <li
+                  key={`divider-${String(groupIndex)}`}
+                  aria-hidden="true"
+                  data-tab-divider=""
+                  className="mx-1 my-3 w-px shrink-0 bg-border"
+                />,
+              ]),
+          ...group.map((tab) => {
+            const active = tab.id === page.id;
+            return (
+              <li key={tab.id} className="shrink-0">
+                <Link
+                  to={tab.path}
+                  activeOptions={{ exact: true }}
+                  aria-current={active ? 'page' : undefined}
+                  {...(active ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
+                  className={cn(
+                    'inline-flex min-h-11 items-center px-3 text-sm transition-colors duration-100 motion-reduce:transition-none',
+                    FOCUS,
+                    active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
+                  )}
+                >
+                  {tab.tab}
+                </Link>
+              </li>
+            );
+          }),
+        ])}
         <span aria-hidden="true" className="indicator" />
       </ul>
     </nav>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hrefOf, summarizeHealth, WRONG_SHOWN } from './health-summary.js';
+import { hrefOf, plainEvidence, summarizeHealth, WRONG_SHOWN } from './health-summary.js';
 import type { DigestItem, ReleaseReadinessCard } from './qa.js';
 import type { QaGapsResponse } from './qa.js';
 
@@ -204,5 +204,20 @@ describe('summarizeHealth', () => {
     }));
     const summary = summarizeHealth({ projectId: PROJECT, readiness: null, digest, gaps: null });
     expect(summary.wrong).toHaveLength(WRONG_SHOWN + 2);
+  });
+});
+
+describe('plainEvidence', () => {
+  it('rewrites the server’s system wording into a sentence a person reads', () => {
+    expect(plainEvidence("pass rate over the window's runs with a verdict")).toBe(
+      'Across the finished runs in this window',
+    );
+    expect(plainEvidence('pending quarantine entries')).toBe(
+      'Waiting for you to keep or release them',
+    );
+    expect(plainEvidence('no gate evaluation in the window')).toBe(
+      'No run in this window was checked against a gate',
+    );
+    expect(plainEvidence('run run-9')).toBe('run run-9');
   });
 });

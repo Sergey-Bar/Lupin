@@ -203,7 +203,8 @@ describe('the dashboard', () => {
     renderDashboard(qaWithScore(), makeApi({ getQuarantine: vi.fn(async () => []) }));
     await waitFor(() => expect(screen.getByTestId('kpi-health')).toHaveTextContent('72'));
     expect(screen.getByRole('heading', { level: 1, name: 'Health' })).toBeInTheDocument();
-    expect(screen.getByTestId('dashboard-subject')).toHaveTextContent('Lupin · /repos/lupin');
+    // The project's name only: a local folder path is noise to a reader.
+    expect(screen.getByTestId('dashboard-subject')).toHaveTextContent(/^Lupin$/u);
     expect(screen.getByTestId('kpi-health')).toHaveTextContent('limited by security at 0.00');
     // 80% → 90% is ten points better, and says so in words as well as colour.
     expect(screen.getByTestId('kpi-pass-rate')).toHaveTextContent('90.0%');

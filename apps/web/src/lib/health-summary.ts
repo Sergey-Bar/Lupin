@@ -39,6 +39,21 @@ export function hrefOf(action: FindingAction): string {
     : action.to;
 }
 
+/**
+ * The readiness evaluator's evidence lines are written for the system ("pending quarantine
+ * entries"). The ones it is known to send are said as a person would; anything else is shown
+ * as written, since it may name a specific run or file.
+ */
+const EVIDENCE_WORDS: Readonly<Record<string, string>> = {
+  "pass rate over the window's runs with a verdict": 'Across the finished runs in this window',
+  'pending quarantine entries': 'Waiting for you to keep or release them',
+  'no gate evaluation in the window': 'No run in this window was checked against a gate',
+};
+
+export function plainEvidence(evidence: string): string {
+  return EVIDENCE_WORDS[evidence.trim()] ?? evidence;
+}
+
 export interface Finding {
   id: string;
   tone: FindingTone;
@@ -93,7 +108,7 @@ function fromReason(reason: ReadinessReason, projectId: string): Finding {
     id: `reason-${reason.code}`,
     tone: LEVEL_TONE[reason.level],
     title: reason.message,
-    evidence: reason.evidence,
+    evidence: plainEvidence(reason.evidence),
     // Coverage is closed cell by cell, so it goes to the gap queue that names the cells.
     action:
       reason.code === 'coverage'

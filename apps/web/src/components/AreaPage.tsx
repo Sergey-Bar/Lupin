@@ -80,6 +80,8 @@ export function AreaPage({
   const live = items.filter((entry) => !doneIds.includes(entry.id));
   const top = live.slice(0, ABOVE_THE_FOLD);
   const rest = live.slice(ABOVE_THE_FOLD);
+  // "For context" and "Fine" items are information, not work, so they are not counted.
+  const needing = live.filter((entry) => entry.tone === 'bad' || entry.tone === 'warn').length;
   const [notice, setNotice] = React.useState<string | null>(null);
   const finish = (entry: AreaItem) => setDone((ids) => [...ids, entry.id]);
   const announce = (entry: AreaItem) => setNotice(`Done: ${entry.title}`);
@@ -94,9 +96,9 @@ export function AreaPage({
         <p data-testid="area-verdict" className="text-lg text-fg-muted">
           {/* A verdict that repeats the first item's title says it twice; a count says more. */}
           {top[0] !== undefined && verdict === top[0].title
-            ? live.length === 1
+            ? needing === 1
               ? 'One thing needs you.'
-              : `${String(live.length)} things need you.`
+              : `${String(needing)} things need you.`
             : verdict}
         </p>
         {notice === null ? null : (

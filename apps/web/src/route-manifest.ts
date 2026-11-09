@@ -512,6 +512,22 @@ export function visibleTabsOf(section: SectionId, role: ViewerRole | null): TabR
 }
 
 /**
+ * A tab row split where the access floor changes, so Settings reads as three short groups
+ * (yours, the admin's, the tools) rather than fourteen tabs in a line.
+ */
+export function tabGroups(tabs: readonly TabRoute[]): TabRoute[][] {
+  const groups: TabRoute[][] = [];
+  let floor: string | undefined | null = null;
+  for (const tab of tabs) {
+    const access = (tab as { access?: TabAccess }).access;
+    if (groups.length === 0 || access !== floor) groups.push([]);
+    groups[groups.length - 1]?.push(tab);
+    floor = access;
+  }
+  return groups;
+}
+
+/**
  * A metric's detail page, for the window the cockpit was showing. The metric ids are the
  * cockpit contract's; the window is carried so the page compares what the person was looking at.
  */
