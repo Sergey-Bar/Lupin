@@ -28,7 +28,12 @@ describe('theme/index barrel exports', () => {
   });
 
   it('re-exports ThemeProviderState type (compile-time check)', () => {
-    const state: ThemeProviderState = { theme: 'system', setTheme: () => {} };
+    const state: ThemeProviderState = {
+      theme: 'system',
+      setTheme: () => {},
+      palette: 'lupin',
+      setPalette: () => {},
+    };
     expect(state.theme).toBe('system');
   });
 });

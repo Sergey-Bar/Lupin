@@ -1,4 +1,5 @@
 import React from 'react';
+import { PALETTE_OPTIONS, Select, isPalette } from '@lupin/ui';
 import { PageBody, PageFrame, PageHeader, Panel, Segmented } from './kit.js';
 import { useTheme, type Theme } from '../theme/ThemeProvider.js';
 import { usePreferences } from '../theme/preferences.js';
@@ -28,7 +29,7 @@ const THEME_OPTIONS: ReadonlyArray<{ value: Theme; label: string }> = [
  * until now focus, density and motion were only reachable from the command palette.
  */
 export function SettingsAppearancePage(): React.ReactElement {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, palette, setPalette } = useTheme();
   const { preferences, update } = usePreferences();
   return (
     <PageFrame data-testid="settings-appearance-page" className="gap-4 sm:gap-6">
@@ -51,6 +52,30 @@ export function SettingsAppearancePage(): React.ReactElement {
           <p className="max-w-measure text-sm text-fg-muted">
             The plane and the type. System follows what your operating system is set to, and changes
             with it.
+          </p>
+        </Panel>
+
+        <Panel
+          title="Palette"
+          action={
+            <Select
+              data-testid="palette-select"
+              aria-label="Palette"
+              containerClassName="w-48"
+              value={palette}
+              onChange={(event) => {
+                if (isPalette(event.target.value)) setPalette(event.target.value);
+              }}
+              options={PALETTE_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+            />
+          }
+        >
+          <p className="max-w-measure text-sm text-fg-muted">
+            Lupin&rsquo;s own colours, or one of the OpenCode themes. A palette is a dark theme, so
+            it holds the dark plane while it is on.
           </p>
         </Panel>
 

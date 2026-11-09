@@ -73,3 +73,5 @@ export * from './components/Wordmark/Wordmark.js';
 // by looking for a non-test `.tsx` — ask for an accessibility case with no element
 // to audit.
 export * from './icons.js';
+// The selectable palettes (names and labels; the colours are in tokens/palettes.css).
+export * from './tokens/palettes.js';

@@ -32,6 +32,7 @@ describe('Settings · Appearance', () => {
     document.documentElement.removeAttribute('data-density');
     document.documentElement.removeAttribute('data-motion');
     document.documentElement.removeAttribute('data-focus');
+    document.documentElement.removeAttribute('data-palette');
   });
 
   it('renders a titled Settings page on the no-scroll kit', () => {
@@ -87,5 +88,13 @@ describe('Settings · Appearance', () => {
   it('has no serious or critical axe violations', async () => {
     const { container } = renderAppearance();
     await expectNoBlockingAxeViolations(container);
+  });
+  it('switches to an OpenCode palette from the Palette setting', () => {
+    renderAppearance();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Palette' }), {
+      target: { value: 'catppuccin' },
+    });
+    expect(document.documentElement.getAttribute('data-palette')).toBe('catppuccin');
+    expect(localStorage.getItem('lupin-palette')).toBe('catppuccin');
   });
 });

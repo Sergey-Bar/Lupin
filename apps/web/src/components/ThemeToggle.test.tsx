@@ -15,7 +15,12 @@ describe('ThemeToggle', () => {
   });
 
   it('renders correctly with dark theme', () => {
-    vi.mocked(useTheme).mockReturnValue({ theme: 'dark', setTheme: mockSetTheme });
+    vi.mocked(useTheme).mockReturnValue({
+      theme: 'dark',
+      setTheme: mockSetTheme,
+      palette: 'lupin',
+      setPalette: vi.fn(),
+    });
     render(<ThemeToggle />);
     const button = screen.getByTestId('theme-toggle');
     expect(button).toBeTruthy();
@@ -23,21 +28,36 @@ describe('ThemeToggle', () => {
   });
 
   it('cycles theme dark -> light', () => {
-    vi.mocked(useTheme).mockReturnValue({ theme: 'dark', setTheme: mockSetTheme });
+    vi.mocked(useTheme).mockReturnValue({
+      theme: 'dark',
+      setTheme: mockSetTheme,
+      palette: 'lupin',
+      setPalette: vi.fn(),
+    });
     render(<ThemeToggle />);
     fireEvent.click(screen.getByTestId('theme-toggle'));
     expect(mockSetTheme).toHaveBeenCalledWith('light');
   });
 
   it('cycles theme light -> system', () => {
-    vi.mocked(useTheme).mockReturnValue({ theme: 'light', setTheme: mockSetTheme });
+    vi.mocked(useTheme).mockReturnValue({
+      theme: 'light',
+      setTheme: mockSetTheme,
+      palette: 'lupin',
+      setPalette: vi.fn(),
+    });
     render(<ThemeToggle />);
     fireEvent.click(screen.getByTestId('theme-toggle'));
     expect(mockSetTheme).toHaveBeenCalledWith('system');
   });
 
   it('cycles theme system -> dark', () => {
-    vi.mocked(useTheme).mockReturnValue({ theme: 'system', setTheme: mockSetTheme });
+    vi.mocked(useTheme).mockReturnValue({
+      theme: 'system',
+      setTheme: mockSetTheme,
+      palette: 'lupin',
+      setPalette: vi.fn(),
+    });
     render(<ThemeToggle />);
     fireEvent.click(screen.getByTestId('theme-toggle'));
     expect(mockSetTheme).toHaveBeenCalledWith('dark');

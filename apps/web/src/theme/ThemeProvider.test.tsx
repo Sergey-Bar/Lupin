@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider, useTheme } from './ThemeProvider.js';
 import React from 'react';
 
@@ -242,5 +242,55 @@ describe('ThemeProvider', () => {
     expect(() => renderHook(() => useTheme())).toThrow(
       'useTheme must be used within a ThemeProvider',
     );
+  });
+});
+
+describe('the OpenCode palettes', () => {
+  function Picker(): React.ReactElement {
+    const { palette, setPalette } = useTheme();
+    return (
+      <button type="button" data-palette-now={palette} onClick={() => setPalette('tokyonight')}>
+        pick
+      </button>
+    );
+  }
+
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-palette');
+    document.documentElement.removeAttribute('data-theme');
+  });
+
+  it('starts on the Lupin theme, with no palette attribute', () => {
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    expect(document.documentElement.hasAttribute('data-palette')).toBe(false);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+  });
+
+  it('applies a chosen palette on the dark plane and remembers it', () => {
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'pick' }));
+    expect(document.documentElement.getAttribute('data-palette')).toBe('tokyonight');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(localStorage.getItem('lupin-palette')).toBe('tokyonight');
+  });
+
+  it('ignores a stored palette it does not know', () => {
+    localStorage.setItem('lupin-palette', 'not-a-theme');
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-palette-now', 'lupin');
+    expect(document.documentElement.hasAttribute('data-palette')).toBe(false);
   });
 });

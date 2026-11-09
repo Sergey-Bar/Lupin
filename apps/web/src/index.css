@@ -16,6 +16,7 @@
  */
 @import '../../../packages/ui/src/tokens/fonts.css';
 @import '../../../packages/ui/src/tokens/theme.css';
+@import '../../../packages/ui/src/tokens/palettes.css';
 @import '../../../packages/ui/src/tokens/motion.css';
 @source "../../../packages/ui/src";
 
