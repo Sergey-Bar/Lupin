@@ -202,7 +202,7 @@ describe('the dashboard', () => {
   it('reports the six figures, each with its change against the window before', async () => {
     renderDashboard(qaWithScore(), makeApi({ getQuarantine: vi.fn(async () => []) }));
     await waitFor(() => expect(screen.getByTestId('kpi-health')).toHaveTextContent('72'));
-    expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Health' })).toBeInTheDocument();
     expect(screen.getByTestId('dashboard-subject')).toHaveTextContent('Lupin · /repos/lupin');
     expect(screen.getByTestId('kpi-health')).toHaveTextContent('limited by security at 0.00');
     // 80% → 90% is ten points better, and says so in words as well as colour.
@@ -362,7 +362,7 @@ describe('the dashboard', () => {
   it('shows the onboarding screen for an empty registry, and for an unknown project id', async () => {
     renderDashboard(makeQa({ listProjects: vi.fn(async () => []) }));
     await waitFor(() => expect(screen.getByTestId('onboarding')).toBeInTheDocument());
-    expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Health' })).toBeInTheDocument();
   });
 
   it('routes to an explicit project and refuses one that is not registered', async () => {

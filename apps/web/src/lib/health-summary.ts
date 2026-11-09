@@ -161,3 +161,27 @@ export function summarizeHealth({
 
   return { verdict: readiness?.verdict ?? null, headline, wrong, good };
 }
+
+/** A finding's action as a plain path, with its route params filled in. */
+export function findingPath(action: FindingAction): string {
+  return 'params' in action
+    ? action.to.replace('$projectId', encodeURIComponent(action.params.projectId))
+    : action.to;
+}
+
+/** What the Health area asks of a reader: every "what's wrong" finding, worst first. */
+export function healthItems(summary: HealthSummary): Array<{
+  id: string;
+  title: string;
+  detail: string;
+  tone: 'bad' | 'warn' | 'info';
+  action: { label: string; to: string };
+}> {
+  return summary.wrong.map((finding) => ({
+    id: finding.id,
+    title: finding.title,
+    detail: finding.evidence,
+    tone: finding.tone === 'bad' ? 'bad' : finding.tone === 'warn' ? 'warn' : 'info',
+    action: { label: finding.action.label, to: findingPath(finding.action) },
+  }));
+}

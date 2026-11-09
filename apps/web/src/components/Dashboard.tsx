@@ -39,7 +39,8 @@ import {
 } from './kit.js';
 import { ProjectGate } from './ProjectGate.js';
 import { FindingsColumns, VerdictHero } from './Readiness.js';
-import { summarizeHealth, type HealthSummary } from '../lib/health-summary.js';
+import { healthItems, summarizeHealth, type HealthSummary } from '../lib/health-summary.js';
+import { AreaPage } from './AreaPage.js';
 import { Responsive } from './responsive.js';
 import { TrendChart } from './TrendChart.js';
 
@@ -97,7 +98,7 @@ export function Dashboard({
   projectId?: string;
 }): React.ReactElement {
   return (
-    <ProjectGate qa={qa} title="Overview" projectId={projectId}>
+    <ProjectGate qa={qa} title="Health" projectId={projectId}>
       {(project, switcher) => (
         <DashboardBody qa={qa} api={api} project={project} switcher={switcher} />
       )}
@@ -134,11 +135,59 @@ function DashboardBody({
   );
 
   const summary = overviewSummary(project.id, readiness, insights, snapshot);
+  const navigate = (to: string) => window.location.assign(to);
+  const dense = (
+    <>
+      <VerdictHero
+        summary={readiness.status === 'ready' ? summary : null}
+        failure={readiness.status === 'error' ? readiness.message : null}
+      />
+      {summary === null || snapshot.status === 'loading' ? null : (
+        <FindingsColumns summary={summary} />
+      )}
+      {snapshot.status === 'ready' ? (
+        <DashboardGrid
+          snapshot={snapshot.value}
+          projectId={project.id}
+          trend={trend.status === 'ready' ? trend.value : null}
+          trendFailure={trend.status === 'error' ? trend.message : null}
+        />
+      ) : null}
+    </>
+  );
+  if (summary !== null && snapshot.status === 'ready') {
+    return (
+      <AreaPage
+        title="Health"
+        subtitle={
+          <span data-testid="dashboard-subject">
+            {project.name} · {project.repoPath ?? 'no repository path recorded'}
+          </span>
+        }
+        verdict={summary.headline}
+        items={healthItems(summary)}
+        navigate={navigate}
+        clear={`${project.name} is healthy.`}
+        actions={
+          <>
+            {switcher}
+            <Segmented
+              label="Comparison window"
+              options={WINDOWS}
+              value={days}
+              onChange={setDays}
+            />
+          </>
+        }
+        details={<div data-testid="dashboard">{dense}</div>}
+      />
+    );
+  }
 
   return (
     <PageFrame data-testid="dashboard" className="gap-4 sm:gap-6">
       <PageHeader
-        title="Overview"
+        title="Health"
         subtitle={
           <span data-testid="dashboard-subject">
             {project.name} · {project.repoPath ?? 'no repository path recorded'}

@@ -113,6 +113,7 @@ function InsightsBody({
     return (
       <AreaPage
         title="Tests"
+        subtitle={`${String(insights.value.runs)} runs in ${project.name} over the last ${days} days`}
         verdict={testVerdict(insights.value, items.length)}
         items={items}
         navigate={navigate}

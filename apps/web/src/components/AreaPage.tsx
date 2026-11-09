@@ -57,6 +57,7 @@ export function AreaPage({
   details,
   clear = 'Nothing here needs you.',
   actions,
+  subtitle,
 }: {
   title: string;
   verdict: string;
@@ -67,6 +68,8 @@ export function AreaPage({
   clear?: string;
   /** The page's switchers (project, window), drawn in the header. */
   actions?: React.ReactNode;
+  /** Which subject this is about (the project), so the reader knows where they are. */
+  subtitle?: React.ReactNode;
 }): React.ReactElement {
   const key = `lupin-area-${title.toLowerCase()}`;
   const [lastVisit] = React.useState<string | null>(() => localStorage.getItem(key));
@@ -84,7 +87,11 @@ export function AreaPage({
   };
   return (
     <PageFrame data-testid={`area-${title.toLowerCase()}`}>
-      <PageHeader title={title} {...(actions === undefined ? {} : { actions })} />
+      <PageHeader
+        title={title}
+        {...(actions === undefined ? {} : { actions })}
+        {...(subtitle === undefined ? {} : { subtitle })}
+      />
       <PageBody>
         <p data-testid="area-verdict" className="text-lg text-fg-muted">
           {verdict}

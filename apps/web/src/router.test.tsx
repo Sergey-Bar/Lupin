@@ -102,7 +102,7 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
     mockAuthenticatedApi();
     render(<MemoryRouter initialEntries={['/dashboard']} />);
     await waitFor(
-      () => expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument(),
+      () => expect(screen.getByRole('heading', { name: 'Health' })).toBeInTheDocument(),
       { timeout: RENDER_TIMEOUT_MS },
     );
     expect(screen.getByTestId('dashboard-page')).toBeInTheDocument();
@@ -155,7 +155,7 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
     mockAuthenticatedApi();
     render(<MemoryRouter initialEntries={['/dashboard']} />);
     await waitFor(
-      () => expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument(),
+      () => expect(screen.getByRole('heading', { name: 'Health' })).toBeInTheDocument(),
       {
         timeout: RENDER_TIMEOUT_MS,
       },
