@@ -10,6 +10,7 @@ import {
   Settings,
   cn,
   useSlidingIndicator,
+  Wordmark,
 } from '@lupin/ui';
 import {
   SECTIONS,
@@ -66,16 +67,7 @@ export function NavBar(): React.ReactElement {
         dot in the accent, the same mark as the site's footer. `aria-hidden` because the
         page's `h1` already names the screen.
       */}
-      <span
-        data-testid="nav-wordmark"
-        aria-hidden="true"
-        className="shrink-0 text-lg font-semibold tracking-tight text-fg"
-      >
-        <span>Lupin</span>
-        <span data-wordmark-dot className="text-accent">
-          .
-        </span>
-      </span>
+      <Wordmark data-testid="nav-wordmark" decorative />
       {/* The accent mark slides between sections (`indicator`, motion.css) rather than jumping. */}
       <ul
         ref={listRef}

@@ -31,6 +31,41 @@ active state and the one primary action, and every other colour on screen is a v
 pass, warn, fail, flaky — or a chart series. Things that float above the plane may be
 translucent; nothing a reader is meant to read sits behind glass.
 
+## The brand
+
+Lupin has **no logo mark**. The brand is the name, set as type, plus the one violet.
+
+**The wordmark** is "Lupin." in Geist, semibold, at tight tracking (`-0.02em`), with the full
+stop in the accent. It is the `Wordmark` component in `packages/ui`, and the console's top
+bar, this site's nav and its footer all draw that one shape. Sizes come from the type scale:
+`sm` (base), `md` (lg, the chrome size) and `lg` (3xl, a setup or sign-in screen).
+
+- **Clear space.** Leave at least the height of the capital L empty around the wordmark. Never
+  place it inside a filled shape, except for the favicon.
+- **Colour.** Set the name in `fg` and the full stop in `accent`, and nothing else. On the dark
+  plane both tokens change, so the wordmark needs no dark variant.
+- **The favicon** is the only place the brand is a glyph: a white L on a violet square. The app
+  and the site commit the same file, and `apps/web/src/brand.test.ts` holds the two copies
+  byte-identical.
+- **The name in prose** is "Lupin", in sentence case. Do not write it in capitals, add a
+  trademark sign, or put the full stop in running text.
+
+**The violet's role.** It marks focus, links, the active place and the single primary action on
+a screen. It is never used as a decoration, a gradient or a background wash. A second
+violet-filled button on a screen means one of the two is not primary.
+
+### Tone of voice
+
+Lupin's copy reads like an engineer who has checked the facts:
+
+- **Plain.** "3 tests failed on main" beats "Quality signals need your attention".
+- **Specific.** Give the count, the name or the time. A sentence without one is usually filler.
+- **No hype.** Avoid words like "seamless", "powerful", "revolutionary" and "AI-powered" when
+  they replace a fact.
+- **Honest about missing data.** "No coverage report yet" is a state, not an error. Say what is
+  missing and the one thing that would fill it.
+- **One next step.** An empty state or a status line ends with one action, not a menu.
+
 ## Colour is declared in OKLCH
 
 Every colour in `theme.css` is an `oklch(L% C H)` literal, because those three numbers are

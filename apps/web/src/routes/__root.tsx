@@ -8,6 +8,7 @@ import { Shortcuts } from '../components/Shortcuts.js';
 import { PreferencesProvider } from '../theme/preferences.js';
 import { createHealthClient } from '../lib/health-client.js';
 import { PageContent } from '../components/PageContent.js';
+import { documentTitleFor } from '../lib/document-title.js';
 
 export const Route = createRootRoute({
   /**
@@ -34,6 +35,9 @@ export const Route = createRootRoute({
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const health = React.useMemo(() => createHealthClient(), []);
+  React.useEffect(() => {
+    document.title = documentTitleFor(pathname);
+  }, [pathname]);
   /*
    * **The viewport is the page.** `h-dvh` and `overflow-hidden` on the frame, and each
    * screen is laid out into what is left — `PageFrame` fills it and panels page their

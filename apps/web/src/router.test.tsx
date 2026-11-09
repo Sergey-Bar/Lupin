@@ -122,6 +122,14 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
     );
   });
 
+  it('names the browser tab after the page, then the product', async () => {
+    mockAuthenticatedApi();
+    render(<MemoryRouter initialEntries={['/dashboard/now']} />);
+    await waitFor(() => expect(document.title).toMatch(/^.+ · Lupin$/), {
+      timeout: RENDER_TIMEOUT_MS,
+    });
+  });
+
   it('settles in one navigation rather than looping toward the update bound', async () => {
     // The behaviour the mechanism guarantees, stated as behaviour so the two are
     // not only the source assertion. React throws "Maximum update depth
