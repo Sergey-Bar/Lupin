@@ -36,21 +36,29 @@ describe('SideNav', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('lists every section with all of its tabs, so every page is one click away', async () => {
+  it('shows every section, and opens only the current one, so the column is never a wall', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
     for (const section of SECTIONS) {
-      // A heading and its first tab can share a name (Runs, Runs), so all matches count.
-      expect(within(nav).getAllByText(section.label, { selector: 'p, a' }).length).toBeGreaterThan(
-        0,
-      );
-      if (section.id === 'settings') continue; // role-filtered, asserted below
-      for (const tab of tabsOf(section.id)) {
-        expect(within(nav).getAllByRole('link', { name: tab.tab }).length).toBeGreaterThan(0);
-      }
+      expect(
+        within(nav).getAllByText(section.label, { selector: 'a, span' }).length,
+      ).toBeGreaterThan(0);
     }
+    for (const tab of tabsOf('runs')) {
+      expect(within(nav).getAllByRole('link', { name: tab.tab }).length).toBeGreaterThan(0);
+    }
+    expect(within(nav).queryByRole('link', { name: 'Supply chain' })).toBeNull();
+    expect(within(nav).getAllByRole('link').length).toBeLessThanOrEqual(SECTIONS.length + 3);
   });
 
+  it('opens a section by its first page', async () => {
+    renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    expect(within(nav).getByRole('link', { name: 'Map' })).toHaveAttribute(
+      'href',
+      '/dashboard/map',
+    );
+  });
   it('marks the page you are on, by aria-current and not by colour alone', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
