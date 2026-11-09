@@ -118,44 +118,39 @@ export default defineConfig({
      */
     sidebar: [
       {
-        text: 'Guide',
-        collapsed: true,
+        text: 'Get started',
         items: [
           { text: 'Start here · choose your goal', link: '/guide/' },
-          { text: 'Words explained', link: '/guide/glossary' },
           { text: 'Install', link: '/guide/install' },
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'Sending results', link: '/guide/sending-results' },
+          { text: 'Choose a profile', link: '/guide/profiles' },
+        ],
+      },
+      {
+        text: 'Use Lupin',
+        collapsed: false,
+        items: [
           { text: 'Core concepts', link: '/guide/concepts' },
           { text: 'Quality gates and quarantine', link: '/guide/quality-gates' },
-          {
-            text: 'More product topics',
-            collapsed: true,
-            items: [
-              { text: 'Choose a profile', link: '/guide/profiles' },
-              { text: 'Repository health', link: '/guide/repository-health' },
-              { text: 'Delivery performance', link: '/guide/delivery-performance' },
-              { text: 'GitHub command center', link: '/guide/github-command-center' },
-              { text: 'AI-written code', link: '/guide/ai-code' },
-              { text: 'Agent quality', link: '/guide/agents' },
-              { text: 'Issues and test proposals', link: '/guide/issues-and-test-proposals' },
-              { text: 'Send results from any CI (CLI)', link: '/guide/cli' },
-              { text: 'How Lupin compares', link: '/guide/compare' },
-              { text: 'Ask your editor (MCP)', link: '/guide/mcp' },
-              { text: 'Serve your network (LAN mode)', link: '/guide/lan-mode' },
-              { text: 'Reach it from anywhere (Cloudflare)', link: '/guide/remote-cloudflare' },
-              { text: 'Scheduled reports', link: '/guide/notifications' },
-            ],
-          },
-          {
-            text: 'Behind the product',
-            collapsed: true,
-            items: [
-              { text: 'How this repository tests itself', link: '/guide/testing-strategy' },
-              { text: 'How this project is maintained', link: '/guide/maintenance' },
-              { text: 'The design language', link: '/guide/design-language' },
-            ],
-          },
+          { text: 'Repository health', link: '/guide/repository-health' },
+          { text: 'Delivery performance', link: '/guide/delivery-performance' },
+          { text: 'Scheduled reports', link: '/guide/notifications' },
+          { text: 'AI-written code', link: '/guide/ai-code' },
+          { text: 'Agent quality', link: '/guide/agents' },
+          { text: 'Issues and test proposals', link: '/guide/issues-and-test-proposals' },
+          { text: 'How Lupin compares', link: '/guide/compare' },
+        ],
+      },
+      {
+        text: 'Integrations',
+        collapsed: true,
+        items: [
+          { text: 'Send results from any CI (CLI)', link: '/guide/cli' },
+          { text: 'GitHub command center', link: '/guide/github-command-center' },
+          { text: 'Ask your editor (MCP)', link: '/guide/mcp' },
+          { text: 'Serve your network (LAN mode)', link: '/guide/lan-mode' },
+          { text: 'Reach it from anywhere (Cloudflare)', link: '/guide/remote-cloudflare' },
         ],
       },
       {
@@ -163,14 +158,18 @@ export default defineConfig({
         collapsed: true,
         items: [
           { text: 'Reference', link: '/pages/' },
+          { text: 'Words explained', link: '/guide/glossary' },
           { text: 'Architecture', link: '/architecture' },
           { text: 'Operations', link: '/operations' },
         ],
       },
       {
-        text: 'Status',
+        text: 'Project',
         collapsed: true,
         items: [
+          { text: 'How this repository tests itself', link: '/guide/testing-strategy' },
+          { text: 'How this project is maintained', link: '/guide/maintenance' },
+          { text: 'The design language', link: '/guide/design-language' },
           { text: 'Quality', link: '/pages/quality/' },
           { text: 'Capabilities', link: '/pages/capabilities' },
           { text: 'Findings', link: '/pages/quality/findings' },
