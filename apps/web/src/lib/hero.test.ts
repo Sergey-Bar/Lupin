@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { heroVerdict, runHero } from './hero.js';
+import { areaHero, heroVerdict, runHero } from './hero.js';
 import type { ReleaseReadinessCard } from './qa.js';
 
 const card = (
@@ -95,5 +95,22 @@ describe('runHero', () => {
         }),
       ),
     ).toEqual({ verdict: 'no-go', word: 'Failed', reason: '2 of 10 tests failed.', failed: 2 });
+  });
+});
+
+describe('areaHero', () => {
+  it('fails when anything is red, warns on cautions only, and is green otherwise', () => {
+    expect(areaHero({ bad: 2, warn: 1 }, 'Two branches are red.')).toEqual({
+      verdict: 'no-go',
+      word: 'Failing',
+      reason: 'Two branches are red.',
+    });
+    expect(areaHero({ bad: 0, warn: 3 }, 'x').verdict).toBe('caution');
+    expect(areaHero({ bad: 0, warn: 3 }, 'x').word).toBe('Caution');
+    expect(areaHero({ bad: 0, warn: 0 }, 'All steady.')).toEqual({
+      verdict: 'go',
+      word: 'Green',
+      reason: 'All steady.',
+    });
   });
 });

@@ -49,6 +49,19 @@ export function heroVerdict(card: ReleaseReadinessCard | null): Hero {
 }
 
 /**
+ * An area's verdict as the hero says it (Runs, Tests): failing when anything is red, caution
+ * when only warnings are left, green otherwise. The reason is the area's own sentence.
+ */
+export function areaHero(
+  counts: { bad: number; warn: number },
+  reason: string,
+): { verdict: HeroVerdict; word: string; reason: string } {
+  if (counts.bad > 0) return { verdict: 'no-go', word: 'Failing', reason };
+  if (counts.warn > 0) return { verdict: 'caution', word: 'Caution', reason };
+  return { verdict: 'go', word: 'Green', reason };
+}
+
+/**
  * One run as the hero says it. While it runs it counts what has reported and what is failing
  * so far, and never shows a verdict; when it ends it settles into Passed or Failed. `failed`
  * is how many tests a "retry what failed" would run (the API's `scope: 'failed'` statuses).

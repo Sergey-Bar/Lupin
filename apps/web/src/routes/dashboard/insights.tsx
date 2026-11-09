@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Button, Flame, GitBranch, Sparkline, Timer, cn } from '@lupin/ui';
+import { Button, Flame, GitBranch, Hero, Sparkline, Timer, cn } from '@lupin/ui';
+import { areaHero } from '../../lib/hero.js';
 import { Route as dashboardRoute } from '../dashboard.js';
 import {
   Kpi,
@@ -113,11 +114,27 @@ function InsightsBody({
   const trend = useResource<AnalyticsTrend>(() => qa.getTrend(Number(days)), [qa, days]);
   if (insights.status === 'ready') {
     const items = testItems(insights.value, api);
+    const testsHero = areaHero(
+      {
+        bad: items.filter((item) => item.tone === 'bad').length,
+        warn: items.filter((item) => item.tone === 'warn').length,
+      },
+      testVerdict(insights.value, items.length),
+    );
     return (
       <AreaPage
         title="Tests"
         subtitle={`${String(insights.value.runs)} runs in ${project.name} over the last ${days} days`}
         verdict={testVerdict(insights.value, items.length)}
+        hero={
+          <Hero
+            headingLevel={2}
+            verdict={testsHero.verdict}
+            word={testsHero.word}
+            reason={testsHero.reason}
+            eyebrow={`Tests · last ${days} days`}
+          />
+        }
         items={items}
         navigate={navigate}
         clear={`Every test in ${project.name} is steady.`}

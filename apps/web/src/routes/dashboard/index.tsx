@@ -15,7 +15,9 @@ import {
   TableHeader,
   TableRow,
   StatusDot,
+  Hero,
 } from '@lupin/ui';
+import { areaHero } from '../../lib/hero.js';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { LaunchRunForm, RecentRuns, ReleaseReadinessCard } from '../dashboard.js';
 import {
@@ -334,12 +336,23 @@ export function RunsListPage({
 
   const items = runAreaItems(runs, api, now());
   const red = items.filter((item) => item.tone === 'bad').length;
+  const warn = items.filter((item) => item.tone === 'warn').length;
+  const runsHero = areaHero({ bad: red, warn }, runVerdict(red));
   return (
     <>
       <AreaPage
         title="Runs"
         subtitle={subtitle}
         verdict={runVerdict(red)}
+        hero={
+          <Hero
+            headingLevel={2}
+            verdict={runsHero.verdict}
+            word={runsHero.word}
+            reason={runsHero.reason}
+            eyebrow="Latest run on every branch"
+          />
+        }
         items={items}
         navigate={navigate}
         clear="Nothing to retry. The newest run on every branch passed."

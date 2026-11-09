@@ -124,14 +124,17 @@ export function AreaPage({
       />
       <PageBody>
         {hero}
-        <p data-testid="area-verdict" className="text-lg text-fg-muted">
-          {/* A verdict that repeats the first item's title says it twice; a count says more. */}
-          {top[0] !== undefined && verdict === top[0].title
-            ? needing === 1
-              ? 'One thing needs you.'
-              : `${String(needing)} things need you.`
-            : verdict}
-        </p>
+        {/* With a hero the verdict is already said, at display size; once is enough. */}
+        {hero !== undefined ? null : (
+          <p data-testid="area-verdict" className="text-lg text-fg-muted">
+            {/* A verdict that repeats the first item's title says it twice; a count says more. */}
+            {top[0] !== undefined && verdict === top[0].title
+              ? needing === 1
+                ? 'One thing needs you.'
+                : `${String(needing)} things need you.`
+              : verdict}
+          </p>
+        )}
         {notice === null ? null : (
           <p role="status" className="text-sm text-success">
             {notice}

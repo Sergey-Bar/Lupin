@@ -36,6 +36,12 @@ describe('AreaPage', () => {
     expect(screen.getByTestId('area-verdict')).toHaveTextContent('Two tests need a decision.');
   });
 
+  it('lets a hero say the verdict once, rather than again in a line under it', () => {
+    show([item('a')], { hero: <section aria-label="Failing">Two tests need a decision.</section> });
+    expect(screen.getByRole('region', { name: 'Failing' })).toBeInTheDocument();
+    expect(screen.queryByTestId('area-verdict')).toBeNull();
+  });
+
   it('shows at most three items, and folds the rest behind one quiet line', () => {
     show(['a', 'b', 'c', 'd', 'e'].map((id) => item(id)));
     expect(screen.getAllByTestId(/^area-item-/u)).toHaveLength(3);
