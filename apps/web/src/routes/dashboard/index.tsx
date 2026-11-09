@@ -350,6 +350,10 @@ export function RunsListPage({
             verdict={runsHero.verdict}
             word={runsHero.word}
             reason={runsHero.reason}
+            facts={[
+              { label: red === 1 ? 'Branch red' : 'Branches red', value: String(red) },
+              { label: 'Runs shown', value: String(runs.length) },
+            ]}
             eyebrow="Latest run on every branch"
           />
         }

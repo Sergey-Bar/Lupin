@@ -132,6 +132,13 @@ function InsightsBody({
             verdict={testsHero.verdict}
             word={testsHero.word}
             reason={testsHero.reason}
+            facts={[
+              {
+                label: 'Need a decision',
+                value: String(items.filter((item) => item.tone === 'bad').length),
+              },
+              { label: 'Runs', value: String(insights.value.runs) },
+            ]}
             eyebrow={`Tests · last ${days} days`}
           />
         }

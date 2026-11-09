@@ -3,7 +3,6 @@ import { PALETTE_OPTIONS, Select, isPalette } from '@lupin/ui';
 import { PageBody, PageFrame, PageHeader, Panel, Segmented } from './kit.js';
 import { useTheme, type Theme } from '../theme/ThemeProvider.js';
 import { usePreferences } from '../theme/preferences.js';
-import { PERSONAS, type PersonaId } from '../lib/persona.js';
 
 /**
  * Settings — the one place a reader changes how the product behaves.
@@ -39,26 +38,6 @@ export function SettingsAppearancePage(): React.ReactElement {
         subtitle="How the product looks and behaves on this device. Kept in this browser."
       />
       <PageBody>
-        <Panel
-          title="Your role"
-          action={
-            <Segmented<PersonaId | 'none'>
-              label="Your role"
-              value={preferences.persona ?? 'none'}
-              onChange={(value) => update({ persona: value === 'none' ? null : value })}
-              options={[
-                ...PERSONAS.map((persona) => ({ value: persona.id, label: persona.label })),
-                { value: 'none' as const, label: 'Not set' },
-              ]}
-            />
-          }
-        >
-          <p className="max-w-measure text-sm text-fg-muted">
-            Now leads with what your role looks at first, and adds three shortcuts to the pages you
-            use most. Nothing is hidden; only the order changes.
-          </p>
-        </Panel>
-
         <Panel
           title="Theme"
           action={
@@ -97,26 +76,6 @@ export function SettingsAppearancePage(): React.ReactElement {
           <p className="max-w-measure text-sm text-fg-muted">
             Lupin&rsquo;s own colours, or one of the OpenCode themes. A palette is a dark theme, so
             it holds the dark plane while it is on.
-          </p>
-        </Panel>
-
-        <Panel
-          title="Focus"
-          action={
-            <Segmented<'on' | 'off'>
-              label="Focus mode"
-              value={preferences.focus ? 'on' : 'off'}
-              onChange={(value) => update({ focus: value === 'on' })}
-              options={[
-                { value: 'off', label: 'Off' },
-                { value: 'on', label: 'On' },
-              ]}
-            />
-          }
-        >
-          <p className="max-w-measure text-sm text-fg-muted">
-            Leave each page its one thing to do, in the middle of the screen, and put the rest away.
-            The focus button at the bottom of the sidebar turns it on and off.
           </p>
         </Panel>
 

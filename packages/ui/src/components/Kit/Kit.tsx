@@ -31,11 +31,11 @@ export function Surface({
 
 export type HeroVerdict = 'go' | 'caution' | 'no-go' | 'unknown';
 
-const GLOW: Record<HeroVerdict, string> = {
-  go: 'bg-glow-go',
-  caution: 'bg-glow-caution',
-  'no-go': 'bg-glow-no-go',
-  unknown: 'bg-elevation-1',
+const MARK: Record<HeroVerdict, 'good' | 'warn' | 'bad' | 'unknown'> = {
+  go: 'good',
+  caution: 'warn',
+  'no-go': 'bad',
+  unknown: 'unknown',
 };
 
 const WORD_TONE: Record<HeroVerdict, string> = {
@@ -45,11 +45,17 @@ const WORD_TONE: Record<HeroVerdict, string> = {
   unknown: 'text-fg',
 };
 
+/**
+ * The page's status, as one compact band: a mark, the word in its tone, the one reason, the
+ * numbers behind it, and the action at the end. A neutral surface, so colour is only on the
+ * mark and the word, never a tinted panel; it is a line to read, not a poster to look at.
+ */
 export function Hero({
   verdict,
   word,
   reason,
   eyebrow,
+  facts,
   children,
   className,
   headingLevel = 1,
@@ -59,7 +65,9 @@ export function Hero({
   reason: React.ReactNode;
   /** A small label above the word, e.g. "Release readiness · Storefront". */
   eyebrow?: React.ReactNode;
-  /** What sits under the reason: the background chart, the action. */
+  /** The numbers behind the verdict, shown as a short row: "2 Failing · 146 Passed". */
+  facts?: readonly { label: string; value: string }[];
+  /** The action, at the end of the band. */
   children?: React.ReactNode;
   className?: string;
   /** 2 on a page whose title is already its \h1\. */
@@ -72,25 +80,33 @@ export function Hero({
       aria-labelledby={id}
       data-verdict={verdict}
       className={cn(
-        GLOW[verdict],
-        'relative isolate flex animate-reveal flex-col gap-4 overflow-hidden rounded-lg border border-border px-6 py-10 sm:px-10 sm:py-14',
+        'flex animate-fade-in flex-col gap-4 rounded-lg border border-border bg-surface px-5 py-4 sm:flex-row sm:items-center sm:gap-6',
         className,
       )}
     >
-      {eyebrow === undefined ? null : (
-        <p className="text-sm font-medium text-fg-muted">{eyebrow}</p>
-      )}
-      <Heading
-        id={id}
-        className={cn(
-          'font-display text-6xl leading-tight tracking-tight sm:text-8xl',
-          WORD_TONE[verdict],
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {eyebrow === undefined ? null : (
+          <p className="text-xs font-medium text-fg-muted">{eyebrow}</p>
         )}
-      >
-        {word}
-      </Heading>
-      <p className="max-w-measure text-pretty text-lg text-fg sm:text-xl">{reason}</p>
-      {children}
+        <div className="flex items-center gap-3">
+          <StatusDot status={MARK[verdict]} />
+          <Heading id={id} className={cn('text-xl font-semibold', WORD_TONE[verdict])}>
+            {word}
+          </Heading>
+        </div>
+        <p className="max-w-measure text-pretty text-sm text-fg">{reason}</p>
+      </div>
+      {facts === undefined || facts.length === 0 ? null : (
+        <ul aria-label="In numbers" className="flex shrink-0 gap-6">
+          {facts.map((fact) => (
+            <li key={fact.label} className="flex flex-col">
+              <span className="text-xl font-semibold text-fg">{fact.value}</span>
+              <span className="text-xs text-fg-muted">{fact.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {children === undefined ? null : <div className="shrink-0">{children}</div>}
     </section>
   );
 }

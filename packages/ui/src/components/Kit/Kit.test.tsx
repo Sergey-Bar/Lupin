@@ -15,15 +15,35 @@ describe('Surface', () => {
 });
 
 describe('Hero', () => {
-  it('says the verdict in the display face, on its glow, with one reason', () => {
+  it('is one compact status band, not a poster: a neutral surface, a mark, the word, the reason', () => {
     render(<Hero verdict="no-go" word="No-go" reason="Pass rate 73.5% is below the 80% floor" />);
     const hero = screen.getByRole('region', { name: 'No-go' });
     expect(hero).toHaveAttribute('data-verdict', 'no-go');
-    expect(hero).toHaveClass('bg-glow-no-go');
-    expect(within(hero).getByRole('heading', { level: 1, name: 'No-go' })).toHaveClass(
-      'font-display',
-    );
+    expect(hero).toHaveClass('bg-surface');
+    expect(hero.className).not.toMatch(/bg-glow|py-1[04]|text-[68]xl/u);
+    const heading = within(hero).getByRole('heading', { level: 1, name: 'No-go' });
+    expect(heading).toHaveClass('text-xl', 'text-danger');
     expect(hero).toHaveTextContent('Pass rate 73.5% is below the 80% floor');
+  });
+
+  it('shows the numbers behind the verdict, so it says how much and not only a word', () => {
+    render(
+      <Hero
+        verdict="no-go"
+        word="Failing"
+        reason="2 branches are red."
+        facts={[
+          { label: 'Failing', value: '2' },
+          { label: 'Passed', value: '146' },
+        ]}
+      />,
+    );
+    const facts = screen.getByRole('list', { name: 'In numbers' });
+    expect(
+      within(facts)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['2Failing', '146Passed']);
   });
 
   it('takes a lower heading level on a page that already has its title', () => {
@@ -31,9 +51,9 @@ describe('Hero', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Ready' })).toBeInTheDocument();
   });
 
-  it('arrives on the expressive tier', () => {
+  it('arrives on the calm tier, not the expressive one', () => {
     render(<Hero verdict="go" word="Ready" reason="All gates pass" />);
-    expect(screen.getByRole('region', { name: 'Ready' })).toHaveClass('animate-reveal');
+    expect(screen.getByRole('region', { name: 'Ready' })).toHaveClass('animate-fade-in');
   });
 });
 

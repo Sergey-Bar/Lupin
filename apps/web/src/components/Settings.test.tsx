@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { SettingsAppearancePage } from './Settings';
 import { ThemeProvider } from '../theme/ThemeProvider';
-import { PreferencesProvider, PREFERENCES_KEY } from '../theme/preferences';
+import { PreferencesProvider } from '../theme/preferences';
 import { expectNoBlockingAxeViolations } from '../test-axe';
 
 function renderAppearance() {
@@ -43,7 +43,7 @@ describe('Settings · Appearance', () => {
 
   it('puts each control on its title row, so every setting reads the same way', () => {
     renderAppearance();
-    for (const name of ['Theme', 'Focus', 'Density', 'Motion']) {
+    for (const name of ['Theme', 'Density', 'Motion']) {
       const heading = screen.getByRole('heading', { name });
       const row = heading.parentElement;
       expect(row, name).not.toBeNull();
@@ -64,18 +64,13 @@ describe('Settings · Appearance', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
-  it('keeps the reader’s QA role, so Now leads with what they do first', () => {
+  it('asks only how the product looks: no role to pick and no focus mode to manage', () => {
     renderAppearance();
-    fireEvent.click(within(screen.getByRole('group', { name: 'Your role' })).getByText('QA lead'));
-    expect(JSON.parse(localStorage.getItem(PREFERENCES_KEY) ?? '{}').persona).toBe('lead');
-  });
-
-  it('toggles focus mode and sets data-focus on <html>', () => {
-    renderAppearance();
-    expect(pressed('Focus mode')).toBe('Off');
-    fireEvent.click(within(screen.getByRole('group', { name: 'Focus mode' })).getByText('On'));
-    expect(document.documentElement.dataset['focus']).toBe('on');
-    expect(JSON.parse(localStorage.getItem(PREFERENCES_KEY) ?? '{}').focus).toBe(true);
+    expect(
+      screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent),
+    ).toEqual(['Theme', 'Palette', 'Density', 'Motion']);
+    expect(screen.queryByRole('group', { name: 'Your role' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Focus mode' })).toBeNull();
   });
 
   it('sets compact density on <html> when chosen', () => {

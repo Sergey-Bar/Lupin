@@ -170,10 +170,12 @@ describe('preferences', () => {
     expect(
       readPreferences('{"focus":true,"density":"compact","motion":"reduced","persona":"lead"}'),
     ).toEqual({
-      focus: true,
+      // Focus mode and the QA roles were removed: a value stored by an older build is
+      // ignored, so nobody is left in a mode there is no longer a control to leave.
+      focus: false,
       density: 'compact',
       motion: 'reduced',
-      persona: 'lead',
+      persona: null,
     });
     expect(
       readPreferences('{"focus":"yes","density":"tiny","motion":"wild","persona":"boss"}'),
@@ -212,8 +214,9 @@ describe('preferences', () => {
     act(() => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
     });
-    expect(await screen.findByText('Focus mode')).toBeTruthy();
-    expect(screen.getByText('Compact density')).toBeTruthy();
+    expect(await screen.findByText('Compact density')).toBeTruthy();
+    // Focus mode was removed; the palette no longer offers it.
+    expect(screen.queryByText('Focus mode')).toBeNull();
     expect(screen.getByText(/Reduce motion|Full motion/u)).toBeTruthy();
     // Each one flips its attribute. The palette is open now; selecting closes it.
     const choose = (label: RegExp, reopen: boolean) => {
@@ -228,9 +231,7 @@ describe('preferences', () => {
           .dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
       });
     };
-    choose(/^Focus mode$/u, false);
-    await waitFor(() => expect(document.documentElement.dataset['focus']).toBe('on'));
-    choose(/^Compact density$/u, true);
+    choose(/^Compact density$/u, false);
     await waitFor(() => expect(document.documentElement.dataset['density']).toBe('compact'));
     choose(/^(Reduce motion|Full motion)$/u, true);
     await waitFor(() => expect(localStorage.getItem(PREFERENCES_KEY)).toMatch(/"motion"/u));

@@ -329,7 +329,7 @@ describe('AttentionSection, as one focus', () => {
     expect(title.className).toMatch(/line-clamp-2/u);
   });
 
-  it('reorders and adds shortcuts for the role chosen in Settings', async () => {
+  it('ignores a role an older build stored, so the order is the same for everyone', async () => {
     localStorage.setItem(PREFERENCES_KEY, JSON.stringify({ persona: 'lead' }));
     render(
       <PreferencesProvider>
@@ -354,12 +354,12 @@ describe('AttentionSection, as one focus', () => {
         />
       </PreferencesProvider>,
     );
-    const shortcuts = await screen.findByRole('navigation', { name: 'Your shortcuts' });
-    expect(within(shortcuts).getByRole('link', { name: 'Release readiness' })).toHaveAttribute(
-      'href',
-      '/dashboard',
-    );
-    expect(screen.getByTestId('focus-first').textContent).not.toContain('main is failing');
+    const shortcuts = screen.queryByRole('navigation', { name: 'Your shortcuts' });
+    await screen.findByTestId('focus-first');
+    // The QA roles were removed: a role an older build stored changes nothing.
+    expect(shortcuts).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'Your shortcuts' })).toBeNull();
+    localStorage.removeItem(PREFERENCES_KEY);
   });
 
   it('shows no shortcuts before a role is chosen', async () => {

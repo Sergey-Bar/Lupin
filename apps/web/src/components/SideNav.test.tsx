@@ -66,23 +66,6 @@ describe('SideNav', () => {
     expect(runs).toHaveAttribute('title', 'Runs');
   });
 
-  it('keeps the recent runs on the rail as a column of named marks, one per run', async () => {
-    localStorage.removeItem(SIDEBAR_KEY);
-    const runs = [
-      makeRun({ id: 'one', branch: 'main', outcome: 'failed' }),
-      makeRun({ id: 'two', branch: 'feat/x', outcome: 'passed' }),
-    ];
-    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => runs) }));
-    const recent = await screen.findByRole('list', { name: 'Recent runs' });
-    const links = await within(recent).findAllByRole('link');
-    expect(links).toHaveLength(2);
-    // The rail has no room for words, so each mark carries its branch and outcome by name.
-    expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
-      expect.stringMatching(/main.*Failed/u),
-      expect.stringMatching(/feat\/x.*Passed/u),
-    ]);
-  });
-
   it('marks the current area with an accent bar on its leading edge, not a grey fill alone', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
@@ -181,6 +164,21 @@ describe('SideNav', () => {
     expect(within(nav).queryAllByRole('heading')).toHaveLength(0);
   });
 
+  it('holds only the areas, Ask Lupin and Settings: no run list and no mode switch', async () => {
+    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => [makeRun()]) }));
+    const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest(
+      'aside',
+    ) as HTMLElement;
+    expect(within(aside).queryByRole('list', { name: 'Recent runs' })).toBeNull();
+    expect(within(aside).queryByRole('button', { name: 'Focus mode' })).toBeNull();
+    const names = within(aside)
+      .getAllByRole('button')
+      .map((button) => button.getAttribute('aria-label') ?? button.textContent ?? '');
+    expect(names).toHaveLength(2);
+    expect(names[0]).toMatch(/sidebar$/u);
+    expect(names[1]).toMatch(/^Ask Lupin/u);
+  });
+
   it('leads with Ask Lupin, which opens the command palette', async () => {
     const heard = vi.fn();
     document.addEventListener('keydown', heard);
@@ -191,86 +189,6 @@ describe('SideNav', () => {
     document.removeEventListener('keydown', heard);
   });
 
-  it('lists the five most recent runs, each with its outcome as a dot and a word', async () => {
-    const runs = Array.from({ length: 7 }, (_, index) =>
-      makeRun({
-        id: `${String(index)}`.repeat(8),
-        branch: `feat/b-${String(index)}`,
-        outcome: index === 0 ? 'failed' : 'passed',
-        createdAt: `2026-11-0${String(index + 1)}T10:00:00.000Z`,
-      }),
-    );
-    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => runs) }));
-    const recent = await screen.findByRole('list', { name: 'Recent runs' });
-    await within(recent).findByText('feat/b-6');
-    const items = within(recent).getAllByRole('listitem');
-    expect(items).toHaveLength(5);
-    expect(items[0]).toHaveTextContent('feat/b-6');
-    expect(within(recent).getAllByRole('img', { name: /Passed|Failed/u }).length).toBe(5);
-  });
-
-  it('tells two runs on one branch apart by suite, or by commit when there is no suite', async () => {
-    const runs = [
-      makeRun({ id: 'one', branch: 'main', suite: 'checkout e2e' }),
-      makeRun({ id: 'two', branch: 'main', suite: null, commit: 'abcdef1234567' }),
-    ];
-    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => runs) }));
-    const recent = await screen.findByRole('list', { name: 'Recent runs' });
-    await within(recent).findByText('checkout e2e');
-    const items = within(recent).getAllByRole('listitem');
-    expect(items.map((item) => item.textContent)).toEqual([
-      expect.stringContaining('checkout e2e'),
-      expect.stringContaining('abcdef1'),
-    ]);
-    // Exact text: seven characters of the commit, not the whole sha.
-    expect(within(items[1] as HTMLElement).getByText('abcdef1')).toBeInTheDocument();
-  });
-
-  it('names a run by its branch alone when no other recent run shares it', async () => {
-    const runs = [
-      makeRun({ id: 'one', branch: 'feat/express-checkout', suite: 'checkout e2e' }),
-      makeRun({ id: 'two', branch: 'main', suite: null }),
-    ];
-    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => runs) }));
-    const recent = await screen.findByRole('list', { name: 'Recent runs' });
-    await within(recent).findByText('feat/express-checkout');
-    expect(within(recent).queryByText('checkout e2e')).toBeNull();
-  });
-
-  it('offers focus mode beside the theme, and shows when it is on', async () => {
-    renderAt('/dashboard/now');
-    const toggle = await screen.findByRole('button', { name: 'Focus mode' });
-    expect(toggle).toHaveAttribute('aria-pressed', 'false');
-    toggle.click();
-    await waitFor(() => expect(document.documentElement.dataset['focus']).toBe('on'));
-    expect(screen.getByRole('button', { name: 'Focus mode' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    screen.getByRole('button', { name: 'Focus mode' }).click();
-    await waitFor(() => expect(document.documentElement.dataset['focus']).toBe('off'));
-    localStorage.clear();
-  });
-
-  it('lets focus mode put the recent runs away', async () => {
-    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => [makeRun()]) }));
-    const recent = await screen.findByRole('list', { name: 'Recent runs' });
-    expect(recent.closest('[data-chrome="secondary"]')).not.toBeNull();
-  });
-
-  it('draws no empty "Recent" heading when the runs cannot be read', async () => {
-    renderAt(
-      '/dashboard/now',
-      makeApi({ getRecentRuns: vi.fn(async () => Promise.reject(new Error('HTTP 502'))) }),
-    );
-    await screen.findByRole('navigation', { name: 'Sidebar' });
-    await waitFor(() => expect(screen.queryByText('Recent')).toBeNull());
-  });
-
-  it('says nothing has run yet, rather than drawing an empty box', async () => {
-    renderAt('/dashboard/now');
-    expect(await screen.findByText('No runs yet')).toBeInTheDocument();
-  });
   it('has no serious or critical axe violations', async () => {
     const { container } = renderAt('/dashboard/runs');
     await screen.findByRole('navigation', { name: 'Sidebar' });

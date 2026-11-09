@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import {
   FlaskConical,
-  Focus,
   GitBranch,
   LayoutGrid,
   PanelLeftClose,
@@ -12,22 +11,15 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
-  StatusDot,
   Wordmark,
   cn,
-  type DotStatus,
 } from '@lupin/ui';
-import { defaultApiClient, type ApiClient, type Run } from '../lib/api.js';
-import { Bdi } from './Bidi.js';
-import { useResource } from '../hooks/useResource.js';
-import { statusWord } from '../lib/status-word.js';
-import { Timestamp } from './Timestamp.js';
+import type { ApiClient } from '../lib/api.js';
 import { SECTIONS, routeFor, routeManifest, type SectionId } from '../route-manifest.js';
 
 function sectionOfId(id: string | undefined): SectionId | undefined {
   return routeManifest.find((route) => route.id === id)?.section;
 }
-import { usePreferences } from '../theme/preferences.js';
 import { useWheelStep } from '../hooks/useWheelStep.js';
 
 /** Whether the sidebar is the icon rail or the full column, kept per browser. */
@@ -62,12 +54,14 @@ const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
   settings: Settings,
 };
 
-const RECENT = 5;
-
 /** The five areas of the pyramid; Settings is pinned at the bottom instead. */
 const AREAS = SECTIONS.filter((section) => section.id !== 'settings');
 
-export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.ReactElement {
+/**
+ * `api` is accepted and unused: the sidebar no longer reads anything (the recent-runs list was
+ * removed, because the Runs page is that list). Callers keep passing it without a change.
+ */
+export function SideNav(_props: { api?: ApiClient }): React.ReactElement {
   const path = useRouterState({ select: (state) => state.location.pathname });
   const page = routeFor(path);
   const navigate = useNavigate();
@@ -144,16 +138,12 @@ export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.
             </div>
           ))}
         </div>
-        {/* Focus mode puts the recent runs away with the rest of the secondary chrome. */}
-        <div data-chrome="secondary">
-          <RecentRuns api={api} compact={collapsed} />
-        </div>
       </nav>
-      {/* Two quiet icons at the bottom, out of the way of the work. The theme lives in Settings. */}
+      {/* One quiet icon at the bottom, out of the way of the work. */}
       <div
         className={cn(
           'flex shrink-0 items-center border-t border-border py-3',
-          collapsed ? 'flex-col gap-1 px-1' : 'justify-between px-3',
+          collapsed ? 'flex-col gap-1 px-1' : 'px-3',
         )}
       >
         <Link
@@ -171,7 +161,6 @@ export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.
         >
           <Settings size={16} aria-hidden="true" />
         </Link>
-        <FocusToggle />
       </div>
     </aside>
   );
@@ -246,136 +235,6 @@ function AskButton({ compact = false }: { compact?: boolean }): React.ReactEleme
           ⌘K
         </kbd>
       )}
-    </button>
-  );
-}
-
-/** A run's outcome as a status mark: failed, passed, or not known yet. */
-function dotFor(run: Run): DotStatus {
-  return run.outcome === 'failed' ? 'bad' : run.outcome === 'passed' ? 'good' : 'unknown';
-}
-
-/** What tells a run apart from others on its branch: the suite, else the short commit. */
-function runTag(run: Run): string | null {
-  return run.suite ?? (run.commit === null ? null : run.commit.slice(0, 7));
-}
-
-/** The latest runs, newest first, as Codex lists recent tasks: a dot, the branch, and when. */
-function RecentRuns({
-  api,
-  compact = false,
-}: {
-  api: ApiClient;
-  compact?: boolean;
-}): React.ReactElement {
-  const runs = useResource(() => api.getRecentRuns(RECENT), [api]);
-  const recent =
-    runs.status === 'ready'
-      ? [...runs.value].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, RECENT)
-      : [];
-  // Branches more than one recent run is on: only those need a tag to be told apart.
-  const shared = new Set(
-    recent
-      .map((run) => run.branch ?? '')
-      .filter((branch, index, all) => branch !== '' && all.indexOf(branch) !== index),
-  );
-  // A failed read draws nothing: an empty "Recent" heading looks like a broken list.
-  if (runs.status === 'error') return <></>;
-  if (compact) {
-    // The rail: one mark per run under a hairline, named by branch and outcome for hover and
-    // for a screen reader. Nothing at all when there are no runs, rather than an empty column.
-    if (recent.length === 0) return <></>;
-    return (
-      <ul
-        aria-label="Recent runs"
-        className="mt-4 flex flex-col items-center gap-px border-t border-border pt-3"
-      >
-        {recent.map((run) => {
-          const name = `${run.branch ?? run.id.slice(0, 8)} · ${statusWord(run.outcome)}`;
-          return (
-            <li key={run.id}>
-              <Link
-                to="/dashboard/runs/$runId"
-                params={{ runId: run.id }}
-                aria-label={name}
-                title={name}
-                className={cn(
-                  'flex h-8 w-10 items-center justify-center rounded-md transition-colors duration-100 hover:bg-surface-raised motion-reduce:transition-none',
-                  FOCUS,
-                )}
-              >
-                <StatusDot status={dotFor(run)} />
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    );
-  }
-  return (
-    <div className="pt-6">
-      <p className="px-2 pb-1 text-xs font-medium text-fg-muted">Recent</p>
-      {runs.status === 'ready' && recent.length === 0 ? (
-        <p className="px-2 py-1 text-sm text-fg-muted">No runs yet</p>
-      ) : (
-        <ul aria-label="Recent runs" className="flex flex-col gap-px">
-          {recent.map((run) => (
-            <li key={run.id}>
-              <Link
-                to="/dashboard/runs/$runId"
-                params={{ runId: run.id }}
-                className={cn(
-                  'flex min-h-11 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-fg-muted transition-colors duration-100 hover:bg-surface-raised hover:text-fg motion-reduce:transition-none',
-                  FOCUS,
-                )}
-              >
-                <StatusDot status={dotFor(run)} label={statusWord(run.outcome)} />
-                {/* Two lines: the branch gets the whole width, and the tag and the time sit
-                    under it, so a long branch is not cut to "feat…" by its neighbours. */}
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <Bdi className="truncate text-fg">{run.branch ?? run.id.slice(0, 8)}</Bdi>
-                  <span className="flex min-w-0 items-baseline gap-1.5 text-xs text-fg-muted">
-                    {/* Five runs of `main` read as five identical rows; the suite (or the commit)
-                        tells them apart, and is shown only when the branch alone cannot. */}
-                    {shared.has(run.branch ?? '') && runTag(run) !== null ? (
-                      <Bdi className="max-w-24 truncate font-mono">{runTag(run)}</Bdi>
-                    ) : null}
-                    <span className="shrink-0">
-                      <Timestamp value={run.createdAt} empty="" />
-                    </span>
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-/**
- * Focus mode, one click from anywhere: it puts away the recent runs, the folded lists, the
- * numbers and the setup line, and leaves each page its one thing to do in a reading column.
- * `aria-pressed` says whether it is on, and the primary tint says so to the eye.
- */
-function FocusToggle(): React.ReactElement {
-  const { preferences, update } = usePreferences();
-  const on = preferences.focus;
-  return (
-    <button
-      type="button"
-      aria-pressed={on}
-      aria-label="Focus mode"
-      title={on ? 'Leave focus mode' : 'Focus mode'}
-      onClick={() => update({ focus: !on })}
-      className={cn(
-        'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors duration-100 hover:bg-surface-raised motion-reduce:transition-none',
-        on ? 'text-primary' : 'text-fg-muted hover:text-fg',
-        FOCUS,
-      )}
-    >
-      <Focus size={16} aria-hidden="true" />
     </button>
   );
 }

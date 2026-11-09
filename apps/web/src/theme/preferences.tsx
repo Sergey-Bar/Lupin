@@ -1,5 +1,5 @@
 import React from 'react';
-import { PERSONAS, type PersonaId } from '../lib/persona.js';
+import { type PersonaId } from '../lib/persona.js';
 
 /**
  * Three ways to make the dashboard quieter, kept beside the theme and persisted per browser.
@@ -43,15 +43,15 @@ export function readPreferences(raw: string | null): Preferences {
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     return {
-      focus: parsed['focus'] === true,
+      focus: false,
       density: parsed['density'] === 'compact' ? 'compact' : 'comfortable',
       motion:
         parsed['motion'] === 'reduced' || parsed['motion'] === 'full'
           ? parsed['motion']
           : defaults.motion,
-      persona: PERSONAS.some((entry) => entry.id === parsed['persona'])
-        ? (parsed['persona'] as PersonaId)
-        : null,
+      // Focus mode and the QA roles were removed; a value an older build stored is ignored, so
+      // nobody is held in a mode or an order there is no longer a control for.
+      persona: null,
     };
   } catch {
     return defaults;

@@ -60,11 +60,6 @@ export function GlobalCommandPalette() {
         onSelect: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
       },
       {
-        id: 'focus-toggle',
-        label: preferences.focus ? 'Leave focus mode' : 'Focus mode',
-        onSelect: () => update({ focus: !preferences.focus }),
-      },
-      {
         id: 'density-toggle',
         label: preferences.density === 'compact' ? 'Comfortable density' : 'Compact density',
         onSelect: () =>
