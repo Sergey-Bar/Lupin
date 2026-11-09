@@ -158,6 +158,38 @@ describe('GET /api/v1/runs with a legacy repository mounted', () => {
     expect(legacy.listRuns).not.toHaveBeenCalled();
   });
 
+  it('orders the merged page newest first, legacy rows included', async () => {
+    // The legacy rows were prepended in the repository's oldest-first order, so a
+    // reporter-fed install opened the Runs page on its oldest run.
+    const legacy = {
+      listRuns: vi.fn().mockResolvedValue([
+        { ...legacyRecord('legacy-old'), startedAt: '2026-01-01T00:00:00.000Z' },
+        { ...legacyRecord('legacy-new'), startedAt: '2026-03-01T00:00:00.000Z' },
+      ]),
+    } as unknown as RunRepository;
+    const store = {
+      listRuns: vi.fn().mockResolvedValue({
+        runs: [
+          legacyRun({ ...legacyRecord('db-mid'), startedAt: '2026-02-01T00:00:00.000Z' } as never),
+        ],
+        hasMore: false,
+      }),
+    } as unknown as ExecutionStore;
+    const response = await new Hono()
+      .route(
+        '/',
+        createExecutionRoutes({
+          store,
+          workspaceId: 'ws-1',
+          bus: { publish: vi.fn() } as never,
+          legacyRepository: legacy,
+        }),
+      )
+      .request('/api/v1/runs?limit=25');
+    const ids = ((await response.json()) as Array<{ id: string }>).map((run) => run.id);
+    expect(ids).toEqual(['legacy-new', 'db-mid', 'legacy-old']);
+  });
+
   it('serves the legacy rows once, and never repeats them on a later page', async () => {
     // The remaining half of Q-50, and the half the cap fix made worse rather than
     // better: `listRuns` takes a `limit` but no `after`, so paging through the

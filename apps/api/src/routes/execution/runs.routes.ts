@@ -85,13 +85,21 @@ export function registerRunRoutes(app: Hono, context: ExecutionRouteContext): vo
     if (room === 0) return c.json(page.runs.map(toCanonicalRun));
     const legacy = await options.legacyRepository.listRuns({ limit: room });
     const ids = new Set(page.runs.map((run) => run.id));
-    return c.json([
+    // **Newest first, across both sources**, with the store's own tie-break. The legacy
+    // repository reads oldest first, and prepending its rows put the install's oldest
+    // run at the top of the Runs page.
+    const merged = [
       ...legacy
         .filter((run) => !ids.has(run.id))
         .slice(0, room)
         .map((record) => toCanonicalRun(legacyRun(record))),
       ...page.runs.map(toCanonicalRun),
-    ]);
+    ];
+    merged.sort((left, right) => {
+      const byTime = right.createdAt.localeCompare(left.createdAt);
+      return byTime === 0 ? right.id.localeCompare(left.id) : byTime;
+    });
+    return c.json(merged);
   });
 
   app.get('/api/v1/releases/:releaseId/readiness', async (c) => {
