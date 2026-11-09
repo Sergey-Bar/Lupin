@@ -123,7 +123,7 @@ describe('NavBar keyboard operation', () => {
       '/dashboard',
     );
     await waitFor(() => expect(screen.getByTestId('nav-bar')).toBeInTheDocument());
-    expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Health' })).toHaveAttribute('aria-current', 'page');
   });
 
   /**

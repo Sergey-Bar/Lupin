@@ -37,29 +37,37 @@ describe('SideNav', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('shows every section, and opens only the current one, so the column is never a wall', async () => {
+  it('is a pyramid: five areas, no sub-tab lists, and Settings pinned at the bottom', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    for (const section of SECTIONS) {
-      expect(
-        within(nav).getAllByText(section.label, { selector: 'a, span' }).length,
-      ).toBeGreaterThan(0);
-    }
-    for (const tab of tabsOf('runs')) {
-      expect(within(nav).getAllByRole('link', { name: tab.tab }).length).toBeGreaterThan(0);
-    }
-    expect(within(nav).queryByRole('link', { name: 'Supply chain' })).toBeNull();
-    expect(within(nav).getAllByRole('link').length).toBeLessThanOrEqual(SECTIONS.length + 3);
+    const areas = within(nav)
+      .getAllByRole('link')
+      .filter((link) => !link.closest('[aria-label="Recent runs"]'))
+      .map((link) => link.textContent);
+    expect(areas).toEqual(['Now', 'Runs', 'Tests', 'Health', 'Delivery']);
+    const aside = nav.closest('aside') as HTMLElement;
+    const settings = within(aside).getByRole('link', { name: 'Settings' });
+    expect(nav.contains(settings)).toBe(false);
+    expect(within(aside).getByTestId('theme-toggle')).toBeInTheDocument();
   });
 
-  it('opens a section by its first page', async () => {
+  it('opens an area by its first page', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    expect(within(nav).getByRole('link', { name: 'Map' })).toHaveAttribute(
-      'href',
-      '/dashboard/map',
+    expect(within(nav).getByRole('link', { name: 'Health' })).toHaveAttribute('href', '/dashboard');
+  });
+
+  it('marks Settings current on any settings page, including the moved Toolbox', async () => {
+    renderAt('/dashboard/toolbox');
+    const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest(
+      'aside',
+    ) as HTMLElement;
+    expect(within(aside).getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'aria-current',
+      'page',
     );
   });
+
   it('marks the page you are on, by aria-current and not by colour alone', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });

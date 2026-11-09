@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import {
-  Activity,
+  FlaskConical,
   GitBranch,
   LayoutGrid,
   ListChecks,
-  Network,
+  Radar,
   Settings,
+  ShieldCheck,
   Sparkles,
   StatusDot,
   Wordmark,
@@ -16,20 +17,12 @@ import { defaultApiClient, type ApiClient } from '../lib/api.js';
 import { useResource } from '../hooks/useResource.js';
 import { statusWord } from '../lib/status-word.js';
 import { Timestamp } from './Timestamp.js';
-import {
-  SECTIONS,
-  routeFor,
-  routeManifest,
-  tabsOf,
-  visibleTabsOf,
-  type SectionId,
-} from '../route-manifest.js';
+import { SECTIONS, routeFor, routeManifest, type SectionId } from '../route-manifest.js';
 
 function sectionOfId(id: string | undefined): SectionId | undefined {
   return routeManifest.find((route) => route.id === id)?.section;
 }
 import { ThemeToggle } from './ThemeToggle.js';
-import { useViewerRole } from '../hooks/useViewerRole.js';
 
 const FOCUS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus';
@@ -44,20 +37,22 @@ const FOCUS =
  * Below `lg` it is hidden; the top bar and the bottom tab bar take over.
  */
 const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
-  overview: LayoutGrid,
+  now: Radar,
   runs: ListChecks,
-  insights: Activity,
-  map: Network,
-  github: GitBranch,
+  tests: FlaskConical,
+  health: ShieldCheck,
+  delivery: GitBranch,
   settings: Settings,
 };
 
 const RECENT = 5;
 
+/** The five areas of the pyramid; Settings is pinned at the bottom instead. */
+const AREAS = SECTIONS.filter((section) => section.id !== 'settings');
+
 export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.ReactElement {
   const path = useRouterState({ select: (state) => state.location.pathname });
   const page = routeFor(path);
-  const role = useViewerRole();
   return (
     <aside
       data-testid="side-nav"
@@ -70,75 +65,36 @@ export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.
         <AskButton />
       </div>
       <nav aria-label="Sidebar" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2">
-        {SECTIONS.map((section) => (
-          <SectionGroup
-            key={section.id}
-            id={section.id}
-            label={section.label}
-            path={section.path}
-            currentId={page?.id}
-            role={role}
-          />
+        {AREAS.map((section) => (
+          <div key={section.id} className="pt-1">
+            <SideLink
+              to={section.path}
+              active={sectionOfId(page?.id) === section.id}
+              icon={SECTION_ICONS[section.id]}
+            >
+              {section.label}
+            </SideLink>
+          </div>
         ))}
         <RecentRuns api={api} />
       </nav>
-      <div className="flex shrink-0 items-center justify-between border-t border-border px-5 py-3">
-        <span className="text-xs text-fg-muted">Theme</span>
+      {/* Settings and the theme live at the bottom, out of the way of the work. */}
+      <div className="flex shrink-0 items-center gap-1 border-t border-border px-3 py-3">
+        <div className="min-w-0 flex-1">
+          <SideLink
+            to="/dashboard/settings"
+            active={sectionOfId(page?.id) === 'settings'}
+            icon={Settings}
+          >
+            Settings
+          </SideLink>
+        </div>
         <ThemeToggle />
       </div>
     </aside>
   );
 }
 
-/**
- * One section: a single link when you are elsewhere, and its pages listed under it when you are
- * in it. Six lines to read instead of twenty-six, and the pages you are working among stay one
- * click apart.
- */
-function SectionGroup({
-  id,
-  label,
-  path,
-  currentId,
-  role,
-}: {
-  id: SectionId;
-  label: string;
-  path: string;
-  currentId: string | undefined;
-  role: ReturnType<typeof useViewerRole>;
-}): React.ReactElement {
-  const tabs = id === 'settings' ? visibleTabsOf(id, role) : tabsOf(id);
-  const current = sectionOfId(currentId) === id;
-  if (!current || tabs.length === 0) {
-    return (
-      <div className="pt-1">
-        <SideLink to={path} active={current} icon={SECTION_ICONS[id]}>
-          {label}
-        </SideLink>
-      </div>
-    );
-  }
-  return (
-    <section className="pt-1" aria-labelledby={`side-${id}`}>
-      <span
-        id={`side-${id}`}
-        className="flex min-h-9 items-center px-2 text-sm font-semibold text-fg"
-      >
-        {label}
-      </span>
-      <ul className="ms-2 flex flex-col gap-px border-s border-border ps-2">
-        {tabs.map((tab) => (
-          <li key={tab.id}>
-            <SideLink to={tab.path} active={tab.id === currentId}>
-              {tab.tab}
-            </SideLink>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
 function SideLink({
   to,
   active,

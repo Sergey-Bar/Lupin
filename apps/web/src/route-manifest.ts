@@ -1,13 +1,12 @@
 /**
  * Every navigable page, and the section it belongs to.
  *
- * ## Four sections, and every old URL is still a page
+ * ## A pyramid: five areas, then Settings
  *
- * The product used to have eight top-level destinations. It has four now — Overview,
- * Runs, Insights, Map — and the eight became **tabs** of those sections rather than
- * being merged or redirected, so a bookmark to `/dashboard/analytics` opens the same
- * page it always did, now inside Insights. `section` is the one place that decision is
- * written; `NavBar`, `BottomTabBar`, `SectionTabs` and the command palette all read it.
+ * Now (the one thing to do), Runs, Tests, Health and Delivery are the five areas a reader
+ * works in; everything an admin configures, or opens rarely, is under Settings. Every old URL
+ * is still a page: `section` only decides where it sits, and `route-manifest.test.ts` pins
+ * every path.
  *
  * `label` is the page's own name (the palette says "Go to Trends"); `tab` is the short
  * label on its section's tab row. A page with no `tab` is a detail page — reachable from
@@ -24,11 +23,11 @@
  * working; `route-manifest.test.ts` pins every old path.
  */
 export const SECTIONS = [
-  { id: 'overview', label: 'Overview', path: '/dashboard/now' },
+  { id: 'now', label: 'Now', path: '/dashboard/now' },
   { id: 'runs', label: 'Runs', path: '/dashboard/runs' },
-  { id: 'insights', label: 'Insights', path: '/dashboard/insights' },
-  { id: 'map', label: 'Map', path: '/dashboard/map' },
-  { id: 'github', label: 'GitHub', path: '/dashboard/prs' },
+  { id: 'tests', label: 'Tests', path: '/dashboard/insights' },
+  { id: 'health', label: 'Health', path: '/dashboard' },
+  { id: 'delivery', label: 'Delivery', path: '/dashboard/prs' },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ] as const;
 
@@ -53,8 +52,8 @@ export const routeManifest = [
     path: '/dashboard/now',
     label: 'Cockpit',
     visible: true,
-    section: 'overview',
-    tab: 'Cockpit',
+    section: 'now',
+    tab: 'Now',
   },
   // First-run setup: a guided flow, reached from the cockpit and the checklist, never a tab.
   {
@@ -62,21 +61,21 @@ export const routeManifest = [
     path: '/dashboard/setup',
     label: 'Set up Lupin',
     visible: false,
-    section: 'overview',
+    section: 'now',
   },
   {
     id: 'metric',
     path: '/dashboard/metric/:metricId',
     label: 'Metric',
     visible: false,
-    section: 'overview',
+    section: 'now',
   },
   {
     id: 'portfolio',
     path: '/dashboard/portfolio',
     label: 'Portfolio',
     visible: true,
-    section: 'overview',
+    section: 'health',
     tab: 'Portfolio',
   },
   {
@@ -84,22 +83,22 @@ export const routeManifest = [
     path: '/dashboard',
     label: 'Overview',
     visible: true,
-    section: 'overview',
-    tab: 'Project',
+    section: 'health',
+    tab: 'Overview',
   },
   {
     id: 'repo-health',
     path: '/dashboard/repo/:projectId',
     label: 'Repository Health',
     visible: false,
-    section: 'overview',
+    section: 'health',
   },
   {
     id: 'repo-360',
     path: '/dashboard/repo/:projectId/overview',
     label: 'Repository 360',
     visible: false,
-    section: 'overview',
+    section: 'health',
   },
   {
     id: 'runs',
@@ -129,7 +128,7 @@ export const routeManifest = [
     path: '/dashboard/insights',
     label: 'Insights',
     visible: true,
-    section: 'insights',
+    section: 'tests',
     tab: 'Tests',
   },
   {
@@ -137,28 +136,29 @@ export const routeManifest = [
     path: '/dashboard/analytics',
     label: 'Trends',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'quarantine',
     path: '/dashboard/quarantine',
     label: 'Quarantine',
     visible: false,
-    section: 'insights',
+    section: 'tests',
+    tab: 'Quarantine',
   },
   {
     id: 'test-history',
     path: '/dashboard/test',
     label: 'Test History',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'delivery',
     path: '/dashboard/delivery',
     label: 'Delivery',
     visible: true,
-    section: 'insights',
+    section: 'delivery',
     tab: 'Delivery',
   },
   {
@@ -166,7 +166,7 @@ export const routeManifest = [
     path: '/dashboard/ai-code',
     label: 'AI code',
     visible: true,
-    section: 'insights',
+    section: 'delivery',
     tab: 'AI code',
   },
   {
@@ -174,50 +174,49 @@ export const routeManifest = [
     path: '/dashboard/agents',
     label: 'Agents',
     visible: false,
-    section: 'insights',
+    section: 'delivery',
   },
   {
     id: 'score',
     path: '/dashboard/score/:projectId',
     label: 'Health Score',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'gaps',
     path: '/dashboard/gaps/:projectId',
     label: 'Automation Gaps',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'hollow',
     path: '/dashboard/hollow/:projectId',
     label: 'Hollow Tests',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'flaky',
     path: '/dashboard/flaky/:projectId',
     label: 'Flaky Tests',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'structure',
     path: '/dashboard/structure/:projectId',
     label: 'Structural Findings',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
-  { id: 'map', path: '/dashboard/map', label: 'Map', visible: true, section: 'map', tab: 'Map' },
   {
     id: 'health',
     path: '/dashboard/health',
     label: 'Capabilities',
     visible: true,
-    section: 'map',
+    section: 'health',
     tab: 'Capabilities',
   },
   {
@@ -225,63 +224,50 @@ export const routeManifest = [
     path: '/dashboard/supply-chain',
     label: 'Supply chain',
     visible: true,
-    section: 'map',
+    section: 'health',
     tab: 'Supply chain',
-  },
-  {
-    id: 'toolbox',
-    path: '/dashboard/toolbox',
-    label: 'Toolbox',
-    visible: true,
-    section: 'map',
-    tab: 'Toolbox',
   },
   {
     id: 'access',
     path: '/dashboard/access',
     label: 'Access',
     visible: true,
-    section: 'map',
-    tab: 'Access',
+    section: 'settings',
   },
   {
     id: 'members',
     path: '/dashboard/members',
     label: 'Members',
     visible: true,
-    section: 'map',
-    tab: 'Members',
+    section: 'settings',
   },
   {
     id: 'audit',
     path: '/dashboard/audit',
     label: 'Audit trail',
     visible: true,
-    section: 'map',
-    tab: 'Audit',
+    section: 'settings',
   },
   {
     id: 'deployment',
     path: '/dashboard/deployment',
     label: 'Deployment',
     visible: true,
-    section: 'map',
-    tab: 'Deployment',
+    section: 'settings',
   },
   {
     id: 'reports',
     path: '/dashboard/reports',
     label: 'Reports',
     visible: true,
-    section: 'map',
-    tab: 'Reports',
+    section: 'settings',
   },
   {
     id: 'prs',
     path: '/dashboard/prs',
     label: 'Pull requests',
     visible: true,
-    section: 'github',
+    section: 'delivery',
     tab: 'Pull requests',
   },
   {
@@ -289,7 +275,7 @@ export const routeManifest = [
     path: '/dashboard/issues',
     label: 'Issues',
     visible: true,
-    section: 'github',
+    section: 'delivery',
     tab: 'Issues',
   },
   {
@@ -297,7 +283,7 @@ export const routeManifest = [
     path: '/dashboard/repos',
     label: 'Repositories',
     visible: true,
-    section: 'github',
+    section: 'delivery',
     tab: 'Repositories',
   },
   {
@@ -305,14 +291,14 @@ export const routeManifest = [
     path: '/dashboard/repos/:projectId',
     label: 'Repository',
     visible: false,
-    section: 'github',
+    section: 'delivery',
   },
   {
     id: 'pair',
     path: '/dashboard/pair',
     label: 'Pair this device',
     visible: false,
-    section: 'map',
+    section: 'settings',
   },
   // Settings — the one place a reader changes how the product behaves. The landing is
   // Appearance (the one visible entry, so the section appears once in the nav and the
@@ -425,6 +411,22 @@ export const routeManifest = [
     section: 'settings',
     tab: 'Deployment',
     access: 'admin',
+  },
+  {
+    id: 'map',
+    path: '/dashboard/map',
+    label: 'Map',
+    visible: true,
+    section: 'settings',
+    tab: 'Map',
+  },
+  {
+    id: 'toolbox',
+    path: '/dashboard/toolbox',
+    label: 'Toolbox',
+    visible: true,
+    section: 'settings',
+    tab: 'Toolbox',
   },
 ] as const satisfies readonly ManifestEntry[];
 

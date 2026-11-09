@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import {
-  Activity,
+  FlaskConical,
   GitBranch,
   INDICATOR_ACTIVE_ATTRIBUTE,
   LayoutGrid,
   ListChecks,
-  Network,
+  Radar,
   Settings,
+  ShieldCheck,
   cn,
   useSlidingIndicator,
   Wordmark,
@@ -38,11 +39,11 @@ import { useViewerRole } from '../hooks/useViewerRole.js';
  */
 
 const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
-  overview: LayoutGrid,
+  now: Radar,
   runs: ListChecks,
-  insights: Activity,
-  map: Network,
-  github: GitBranch,
+  tests: FlaskConical,
+  health: ShieldCheck,
+  delivery: GitBranch,
   settings: Settings,
 };
 
