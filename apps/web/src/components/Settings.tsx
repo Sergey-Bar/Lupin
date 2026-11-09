@@ -3,6 +3,7 @@ import { PALETTE_OPTIONS, Select, isPalette } from '@lupin/ui';
 import { PageBody, PageFrame, PageHeader, Panel, Segmented } from './kit.js';
 import { useTheme, type Theme } from '../theme/ThemeProvider.js';
 import { usePreferences } from '../theme/preferences.js';
+import { PERSONAS, type PersonaId } from '../lib/persona.js';
 
 /**
  * Settings — the one place a reader changes how the product behaves.
@@ -38,6 +39,26 @@ export function SettingsAppearancePage(): React.ReactElement {
         subtitle="How the product looks and behaves on this device. Kept in this browser."
       />
       <PageBody>
+        <Panel
+          title="Your role"
+          action={
+            <Segmented<PersonaId | 'none'>
+              label="Your role"
+              value={preferences.persona ?? 'none'}
+              onChange={(value) => update({ persona: value === 'none' ? null : value })}
+              options={[
+                ...PERSONAS.map((persona) => ({ value: persona.id, label: persona.label })),
+                { value: 'none' as const, label: 'Not set' },
+              ]}
+            />
+          }
+        >
+          <p className="max-w-measure text-sm text-fg-muted">
+            Now leads with what your role looks at first, and adds three shortcuts to the pages you
+            use most. Nothing is hidden; only the order changes.
+          </p>
+        </Panel>
+
         <Panel
           title="Theme"
           action={

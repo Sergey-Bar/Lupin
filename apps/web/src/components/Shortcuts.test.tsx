@@ -141,17 +141,28 @@ describe('preferences', () => {
   }
 
   it('reads only valid stored values, and falls back to the system for motion', () => {
-    expect(readPreferences(null)).toEqual({ focus: false, density: 'comfortable', motion: 'full' });
-    expect(readPreferences('not json')).toMatchObject({ density: 'comfortable' });
-    expect(readPreferences('{"focus":true,"density":"compact","motion":"reduced"}')).toEqual({
-      focus: true,
-      density: 'compact',
-      motion: 'reduced',
-    });
-    expect(readPreferences('{"focus":"yes","density":"tiny","motion":"wild"}')).toEqual({
+    expect(readPreferences(null)).toEqual({
       focus: false,
       density: 'comfortable',
       motion: 'full',
+      persona: null,
+    });
+    expect(readPreferences('not json')).toMatchObject({ density: 'comfortable' });
+    expect(
+      readPreferences('{"focus":true,"density":"compact","motion":"reduced","persona":"lead"}'),
+    ).toEqual({
+      focus: true,
+      density: 'compact',
+      motion: 'reduced',
+      persona: 'lead',
+    });
+    expect(
+      readPreferences('{"focus":"yes","density":"tiny","motion":"wild","persona":"boss"}'),
+    ).toEqual({
+      focus: false,
+      density: 'comfortable',
+      motion: 'full',
+      persona: null,
     });
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     expect(readPreferences(null).motion).toBe('reduced');

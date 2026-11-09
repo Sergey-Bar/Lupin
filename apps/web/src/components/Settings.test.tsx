@@ -64,6 +64,12 @@ describe('Settings · Appearance', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
+  it('keeps the reader’s QA role, so Now leads with what they do first', () => {
+    renderAppearance();
+    fireEvent.click(within(screen.getByRole('group', { name: 'Your role' })).getByText('QA lead'));
+    expect(JSON.parse(localStorage.getItem(PREFERENCES_KEY) ?? '{}').persona).toBe('lead');
+  });
+
   it('toggles focus mode and sets data-focus on <html>', () => {
     renderAppearance();
     expect(pressed('Focus mode')).toBe('Off');

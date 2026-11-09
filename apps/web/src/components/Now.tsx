@@ -6,6 +6,8 @@ import { isNew, rankAttention, retryLabel, type AttentionItem } from '../lib/att
 import { ago } from '../lib/health-view.js';
 import { focusOf, focusSentence } from '../lib/focus.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
+import { forPersona, personaTools } from '../lib/persona.js';
+import { usePreferences } from '../theme/preferences.js';
 
 /**
  * What needs you now: at most five items, worst first, each with one button. "All clear" when
@@ -83,6 +85,7 @@ export function AttentionSection({
   now?: () => Date;
 }): React.ReactElement {
   const [state, setState] = React.useState<Ready | null>(null);
+  const { persona } = usePreferences().preferences;
   const [lastVisit] = React.useState<string | null>(() => localStorage.getItem(LAST_VISIT_KEY));
   React.useEffect(() => {
     let live = true;
@@ -114,7 +117,7 @@ export function AttentionSection({
       </section>
     );
   }
-  const focus = focusOf(state.items);
+  const focus = focusOf(forPersona(persona, state.items));
   const fresh = state.items.filter((item) => isNew(item, lastVisit)).length;
   return (
     <section
@@ -182,6 +185,23 @@ export function AttentionSection({
           Part of this could not be read, so the list may be incomplete.
         </p>
       ) : null}
+      {persona === null ? null : (
+        <nav
+          aria-label="Your shortcuts"
+          data-chrome="secondary"
+          className="flex flex-wrap items-center gap-2 text-sm"
+        >
+          {personaTools(persona).map((tool) => (
+            <a
+              key={tool.to + tool.label}
+              href={tool.to}
+              className="inline-flex min-h-9 items-center rounded-md border border-border px-3 text-fg-muted no-underline hover:bg-surface-raised hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            >
+              {tool.label}
+            </a>
+          ))}
+        </nav>
+      )}
     </section>
   );
 }

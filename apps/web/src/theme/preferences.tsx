@@ -1,4 +1,5 @@
 import React from 'react';
+import { PERSONAS, type PersonaId } from '../lib/persona.js';
 
 /**
  * Three ways to make the dashboard quieter, kept beside the theme and persisted per browser.
@@ -17,6 +18,8 @@ export interface Preferences {
   focus: boolean;
   density: 'comfortable' | 'compact';
   motion: 'full' | 'reduced';
+  /** The reader's QA role, which decides what Now leads with; `null` until chosen. */
+  persona: PersonaId | null;
 }
 
 export const PREFERENCES_KEY = 'lupin-preferences';
@@ -30,7 +33,12 @@ function systemMotion(): Preferences['motion'] {
 
 /** Validated rather than cast: localStorage is a string anyone can edit. */
 export function readPreferences(raw: string | null): Preferences {
-  const defaults: Preferences = { focus: false, density: 'comfortable', motion: systemMotion() };
+  const defaults: Preferences = {
+    focus: false,
+    density: 'comfortable',
+    motion: systemMotion(),
+    persona: null,
+  };
   if (raw === null) return defaults;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -41,6 +49,9 @@ export function readPreferences(raw: string | null): Preferences {
         parsed['motion'] === 'reduced' || parsed['motion'] === 'full'
           ? parsed['motion']
           : defaults.motion,
+      persona: PERSONAS.some((entry) => entry.id === parsed['persona'])
+        ? (parsed['persona'] as PersonaId)
+        : null,
     };
   } catch {
     return defaults;
@@ -53,7 +64,7 @@ interface PreferencesState {
 }
 
 const PreferencesContext = React.createContext<PreferencesState>({
-  preferences: { focus: false, density: 'comfortable', motion: 'full' },
+  preferences: { focus: false, density: 'comfortable', motion: 'full', persona: null },
   update: () => undefined,
 });
 

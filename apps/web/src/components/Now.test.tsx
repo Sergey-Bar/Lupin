@@ -7,6 +7,7 @@ import { MAX_ATTENTION, isNew, rankAttention } from '../lib/attention.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { AttentionSection, LAST_VISIT_KEY, type NowSources } from './Now.js';
 import { commandStore } from '../hooks/useCommandActions.js';
+import { PREFERENCES_KEY, PreferencesProvider } from '../theme/preferences.js';
 
 const NOW = new Date('2026-10-25T12:00:00.000Z');
 
@@ -306,6 +307,45 @@ describe('AttentionSection, as one focus', () => {
     const first = await screen.findByTestId('focus-first');
     const title = within(first).getByText('main is failing');
     expect(title.className).toMatch(/line-clamp-2/u);
+  });
+
+  it('reorders and adds shortcuts for the role chosen in Settings', async () => {
+    localStorage.setItem(PREFERENCES_KEY, JSON.stringify({ persona: 'lead' }));
+    render(
+      <PreferencesProvider>
+        <AttentionSection
+          sources={sources({
+            runs: vi.fn(async () => [run({ outcome: 'failed' })]),
+            pulls: vi.fn(async () => [
+              {
+                id: 7,
+                number: 7,
+                title: 'Pay faster',
+                state: 'open',
+                draft: false,
+                checksState: 'failure',
+                reviewDecision: null,
+                updatedAt: '2026-10-25T11:30:00.000Z',
+              } as never,
+            ]),
+          })}
+          navigate={vi.fn()}
+          now={() => NOW}
+        />
+      </PreferencesProvider>,
+    );
+    const shortcuts = await screen.findByRole('navigation', { name: 'Your shortcuts' });
+    expect(within(shortcuts).getByRole('link', { name: 'Release readiness' })).toHaveAttribute(
+      'href',
+      '/dashboard',
+    );
+    expect(screen.getByTestId('focus-first').textContent).not.toContain('main is failing');
+  });
+
+  it('shows no shortcuts before a role is chosen', async () => {
+    render(<AttentionSection sources={sources()} navigate={vi.fn()} now={() => NOW} />);
+    await screen.findByTestId('focus-first');
+    expect(screen.queryByRole('navigation', { name: 'Your shortcuts' })).toBeNull();
   });
 
   it('opens a next item with its own button', async () => {
