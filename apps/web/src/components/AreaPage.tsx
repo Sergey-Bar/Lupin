@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge, Button, StatusDot, cn } from '@lupin/ui';
 import { PageBody, PageFrame, PageHeader } from './kit.js';
+import { useCommandActions } from '../hooks/useCommandActions.js';
 
 /**
  * One area of the pyramid (Tests, Health, Delivery), drawn the same way every time so a reader
@@ -85,6 +86,32 @@ export function AreaPage({
   const [notice, setNotice] = React.useState<string | null>(null);
   const finish = (entry: AreaItem) => setDone((ids) => [...ids, entry.id]);
   const announce = (entry: AreaItem) => setNotice(`Done: ${entry.title}`);
+  // Every action Lupin can take here is in the command palette too, so "quarantine login"
+  // or "retry" does it from anywhere on the page. It runs exactly as the button does.
+  const paletteActions = React.useMemo(
+    () =>
+      live.flatMap((entry) => {
+        const { action } = entry;
+        return 'run' in action
+          ? [
+              {
+                id: `area-act-${entry.id}`,
+                label: `${action.label}: ${entry.title}`,
+                keywords: [title],
+                onSelect: () => {
+                  void action.run().then(() => {
+                    finish(entry);
+                    announce(entry);
+                  });
+                },
+              },
+            ]
+          : [];
+      }),
+    // `live` is derived from `items` and the finished ids each render.
+    [items, doneIds, title],
+  );
+  useCommandActions(paletteActions);
   return (
     <PageFrame data-testid={`area-${title.toLowerCase()}`}>
       <PageHeader

@@ -162,3 +162,28 @@ describe('CommandPalette as a combobox', () => {
     expect(await screen.findByRole('dialog', { name: 'Command palette' })).toBeInTheDocument();
   });
 });
+
+test('answers a question by its words, best match first, using each action’s keywords', async () => {
+  const user = userEvent.setup();
+  render(
+    <CommandPalette
+      open
+      actions={[
+        {
+          id: 'flaky',
+          label: 'Which tests are flaky?',
+          keywords: ['flake', 'unstable'],
+          onSelect: vi.fn(),
+        },
+        { id: 'ship', label: 'Can we ship?', keywords: ['release', 'ready'], onSelect: vi.fn() },
+        { id: 'theme', label: 'Toggle Theme', onSelect: vi.fn() },
+      ]}
+    />,
+  );
+  await user.type(
+    screen.getByPlaceholderText('Type a command or search...'),
+    'is the release ready',
+  );
+  const options = screen.getAllByRole('option');
+  expect(options.map((option) => option.textContent)).toEqual(['Can we ship?']);
+});

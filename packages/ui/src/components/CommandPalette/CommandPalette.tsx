@@ -14,6 +14,57 @@ export interface CommandAction {
   id: string;
   label: string;
   onSelect: () => void;
+  /** Other words a person might type for this action, so a question finds it. */
+  keywords?: readonly string[];
+}
+
+/** Words that carry no meaning in a question, so they match nothing. */
+const STOP = new Set([
+  'the',
+  'is',
+  'are',
+  'was',
+  'we',
+  'it',
+  'a',
+  'an',
+  'to',
+  'of',
+  'do',
+  'did',
+  'can',
+  'what',
+  'which',
+  'why',
+  'how',
+  'my',
+  'our',
+  'any',
+  'show',
+  'me',
+]);
+
+/**
+ * The actions a query finds, best first. A label that contains the query as typed wins
+ * outright (so "go to runs" works as it always did); otherwise each meaningful word of the
+ * query that appears in the label or the keywords scores one, and nothing scoring zero shows.
+ */
+export function matchActions(actions: readonly CommandAction[], query: string): CommandAction[] {
+  const needle = query.trim().toLowerCase();
+  if (needle === '') return [...actions];
+  const words = needle.split(/\s+/u).filter((word) => word.length > 1 && !STOP.has(word));
+  return actions
+    .map((action, index) => {
+      const label = action.label.toLowerCase();
+      const hay = [label, ...(action.keywords ?? []).map((word) => word.toLowerCase())].join(' ');
+      const score = label.includes(needle)
+        ? 1000
+        : words.filter((word) => hay.includes(word)).length;
+      return { action, score, index };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((entry) => entry.action);
 }
 
 export interface CommandPaletteProps extends HTMLAttributes<HTMLDivElement> {
@@ -91,7 +142,7 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
     }, [isOpen]);
 
     const filteredActions = query
-      ? actions.filter((a) => a.label.toLowerCase().includes(query.toLowerCase()))
+      ? matchActions(actions, query)
       : actions
           .filter((a) => recentIds.includes(a.id))
           .concat(actions.filter((a) => !recentIds.includes(a.id))); // Recent first when empty query

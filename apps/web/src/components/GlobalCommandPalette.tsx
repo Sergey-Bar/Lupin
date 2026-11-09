@@ -6,6 +6,39 @@ import { useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import { visibleRoutes } from '../route-manifest.js';
 
+const QUESTIONS = [
+  {
+    id: 'ship',
+    label: 'Can we ship? Release readiness',
+    keywords: ['release', 'ready', 'readiness', 'ship', 'go', 'no-go', 'blocking'],
+    to: '/dashboard',
+  },
+  {
+    id: 'failing',
+    label: 'What is failing right now?',
+    keywords: ['fail', 'failed', 'failing', 'broken', 'red', 'main', 'branch'],
+    to: '/dashboard/now',
+  },
+  {
+    id: 'flaky',
+    label: 'Which tests are flaky?',
+    keywords: ['flaky', 'flake', 'unstable', 'flipping', 'quarantine'],
+    to: '/dashboard/insights',
+  },
+  {
+    id: 'slow',
+    label: 'Which tests are slowest?',
+    keywords: ['slow', 'slowest', 'duration', 'time', 'tests'],
+    to: '/dashboard/insights',
+  },
+  {
+    id: 'coverage',
+    label: 'Where are the coverage gaps?',
+    keywords: ['coverage', 'gaps', 'gap', 'untested', 'missing'],
+    to: '/dashboard',
+  },
+] as const;
+
 export function GlobalCommandPalette() {
   const actions = useCommandStore();
   const { theme, setTheme } = useTheme();
@@ -42,6 +75,14 @@ export function GlobalCommandPalette() {
         label: preferences.motion === 'reduced' ? 'Full motion' : 'Reduce motion',
         onSelect: () => update({ motion: preferences.motion === 'reduced' ? 'full' : 'reduced' }),
       },
+      // **The questions a QA person asks**, each answered by the page that answers it. The
+      // palette matches them by their words, so "is the release ready" finds "Can we ship?".
+      ...QUESTIONS.map((question) => ({
+        id: `ask-${question.id}`,
+        label: question.label,
+        keywords: question.keywords,
+        onSelect: () => void navigate({ to: question.to }),
+      })),
       // **No "Sign Out" action.** There is no session to end on an open install, and a
       // palette entry that navigated to a route which no longer exists would leave the
       // user on a dead link.

@@ -278,6 +278,18 @@ describe('AttentionSection, as one focus', () => {
     expect(rest).toHaveTextContent('3 more when you are ready');
   });
 
+  it('offers the one-click retry from the command palette as well', async () => {
+    const retryRun = vi.fn(async () => ({ id: 'again' }));
+    render(
+      <AttentionSection sources={{ ...sources(), retryRun }} navigate={vi.fn()} now={() => NOW} />,
+    );
+    await screen.findByTestId('focus-first');
+    const action = commandStore.getActions().find((entry) => entry.id === 'now-retry-first');
+    expect(action?.label).toBe('Retry now: main is failing');
+    action?.onSelect();
+    expect(retryRun).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'all');
+  });
+
   it('opens the first thing from the command palette', async () => {
     const navigate = vi.fn();
     render(<AttentionSection sources={sources()} navigate={navigate} now={() => NOW} />);

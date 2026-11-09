@@ -107,7 +107,25 @@ export function AttentionSection({
   useCommandActions(
     first === undefined
       ? []
-      : [{ id: 'now-open-first', label: `Open: ${first.title}`, onSelect: openFirst }],
+      : [
+          { id: 'now-open-first', label: `Open: ${first.title}`, onSelect: openFirst },
+          ...(first.auto === undefined || sources.retryRun === undefined
+            ? []
+            : [
+                {
+                  id: 'now-retry-first',
+                  label: `${retryLabel(first.auto.failed)}: ${first.title}`,
+                  keywords: ['retry', 'rerun', 'again'],
+                  onSelect: () => {
+                    if (first.auto !== undefined)
+                      void sources.retryRun?.(
+                        first.auto.runId,
+                        first.auto.failed > 0 ? 'failed' : 'all',
+                      );
+                  },
+                },
+              ]),
+        ],
   );
 
   if (state === null) {

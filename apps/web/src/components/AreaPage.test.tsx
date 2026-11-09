@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { commandStore } from '../hooks/useCommandActions.js';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { AreaPage, type AreaItem } from './AreaPage.js';
@@ -204,6 +205,15 @@ describe('AreaPage', () => {
     const title = screen.getByText('A very long title');
     expect(title.className).not.toMatch(/(^|\s)truncate(\s|$)/u);
     expect(title.className).toMatch(/line-clamp-2/u);
+  });
+
+  it('offers each action Lupin can take from the command palette too', async () => {
+    const run = vi.fn(async () => undefined);
+    show([item('a', { title: 'login is flaky', action: { label: 'Quarantine', run } })]);
+    const action = commandStore.getActions().find((entry) => entry.id === 'area-act-a');
+    expect(action?.label).toBe('Quarantine: login is flaky');
+    await act(async () => action?.onSelect());
+    expect(run).toHaveBeenCalledOnce();
   });
 
   it('has no serious or critical axe violations', async () => {
