@@ -15,6 +15,55 @@ const DELIVERY_PAGES: ReadonlyArray<readonly [string, string]> = [
   ['Agents', '/dashboard/agents'],
 ];
 
+/** The one sentence the Delivery page leads with, for each state of the pull-request read. */
+function deliveryVerdict(
+  pulls: ReturnType<typeof useResource<{ items: GithubPullItem[] }>>,
+  stuck: number,
+): string {
+  if (pulls.status === 'loading') return 'Reading the open pull requests…';
+  if (pulls.status === 'error') {
+    return isNothingYet(pulls.message)
+      ? 'GitHub is not connected yet.'
+      : `Could not read the pull requests: ${pulls.message}`;
+  }
+  if (pulls.value.items.length === 0) {
+    return 'No open pull requests yet. Connect GitHub in Settings to watch them here.';
+  }
+  if (stuck === 0) return 'Nothing is stuck. Every open pull request is moving.';
+  return `${String(stuck)} ${stuck === 1 ? 'pull request is' : 'pull requests are'} stuck.`;
+}
+
+function DeliveryHero({
+  items,
+  open,
+  verdict,
+}: {
+  items: AreaItem[];
+  open: number;
+  verdict: string;
+}): React.ReactElement {
+  const band = areaHero(
+    {
+      bad: items.filter((item) => item.tone === 'bad').length,
+      warn: items.filter((item) => item.tone === 'warn').length,
+    },
+    verdict,
+  );
+  return (
+    <Hero
+      headingLevel={2}
+      verdict={band.verdict}
+      word={band.word}
+      reason={band.reason}
+      eyebrow="Open pull requests"
+      facts={[
+        { label: 'Stuck', value: String(items.length) },
+        { label: 'Open', value: String(open) },
+      ]}
+    />
+  );
+}
+
 /**
  * The Delivery area: which pull requests are stuck and why, first; every pull request, issue
  * and repository list is under Details for the reader who wants the whole inbox.
@@ -40,18 +89,7 @@ export function DeliveryArea({
           action: item.action,
         }))
       : [];
-  const verdict =
-    pulls.status === 'loading'
-      ? 'Reading the open pull requests…'
-      : pulls.status === 'error'
-        ? isNothingYet(pulls.message)
-          ? 'GitHub is not connected yet.'
-          : `Could not read the pull requests: ${pulls.message}`
-        : pulls.value.items.length === 0
-          ? 'No open pull requests yet. Connect GitHub in Settings to watch them here.'
-          : items.length === 0
-            ? 'Nothing is stuck. Every open pull request is moving.'
-            : `${String(items.length)} ${items.length === 1 ? 'pull request is' : 'pull requests are'} stuck.`;
+  const verdict = deliveryVerdict(pulls, items.length);
   return (
     <AreaPage
       title="Delivery"
@@ -72,28 +110,7 @@ export function DeliveryArea({
       verdict={verdict}
       {...(pulls.status === 'ready' && pulls.value.items.length > 0
         ? {
-            hero: (() => {
-              const band = areaHero(
-                {
-                  bad: items.filter((item) => item.tone === 'bad').length,
-                  warn: items.filter((item) => item.tone === 'warn').length,
-                },
-                verdict,
-              );
-              return (
-                <Hero
-                  headingLevel={2}
-                  verdict={band.verdict}
-                  word={band.word}
-                  reason={band.reason}
-                  eyebrow="Open pull requests"
-                  facts={[
-                    { label: 'Stuck', value: String(items.length) },
-                    { label: 'Open', value: String(pulls.value.items.length) },
-                  ]}
-                />
-              );
-            })(),
+            hero: <DeliveryHero items={items} open={pulls.value.items.length} verdict={verdict} />,
           }
         : {})}
       items={items}

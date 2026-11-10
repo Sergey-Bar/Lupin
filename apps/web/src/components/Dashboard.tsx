@@ -156,50 +156,34 @@ function DashboardBody({
   const summary = overviewSummary(project.id, readiness, insights, snapshot);
   const navigate = (to: string) => window.location.assign(to);
   const dense = (
-    <>
-      <VerdictHero
-        summary={readiness.status === 'ready' ? summary : null}
-        failure={readiness.status === 'error' ? readiness.message : null}
-      />
-      {summary === null || snapshot.status === 'loading' ? null : (
-        <FindingsColumns summary={summary} />
-      )}
-      {snapshot.status === 'ready' ? (
-        <DashboardGrid
-          snapshot={snapshot.value}
-          projectId={project.id}
-          trend={trend.status === 'ready' ? trend.value : null}
-          trendFailure={trend.status === 'error' ? trend.message : null}
-        />
-      ) : null}
-      {cockpit === undefined ? null : (
-        <Panel title="How the product is doing">
-          <CockpitNumbers cockpit={cockpit} projectId={project.id} />
-        </Panel>
-      )}
-    </>
+    <DashboardDense
+      summary={summary}
+      readiness={readiness}
+      snapshot={snapshot}
+      trend={trend}
+      projectId={project.id}
+      cockpit={cockpit}
+    />
   );
   if (summary !== null && snapshot.status === 'ready') {
+    const band = readiness.status === 'ready' ? heroVerdict(readiness.value) : undefined;
     return (
       <AreaPage
         title="Health"
         subtitle={<span data-testid="dashboard-subject">{project.name}</span>}
         verdict={summary.headline}
         hero={
-          readiness.status === 'ready' ? (
+          band === undefined ? undefined : (
             <Hero
               headingLevel={2}
-              verdict={heroVerdict(readiness.value).verdict}
-              word={heroVerdict(readiness.value).word}
-              reason={heroVerdict(readiness.value).reason}
+              verdict={band.verdict}
+              word={band.word}
+              reason={band.reason}
               eyebrow={`Release readiness · ${project.name}`}
             />
-          ) : undefined
+          )
         }
-        items={healthItems(
-          summary,
-          readiness.status === 'ready' ? heroVerdict(readiness.value).reason : undefined,
-        )}
+        items={healthItems(summary, band?.reason)}
         navigate={navigate}
         clear={`${project.name} is healthy.`}
         actions={
@@ -243,27 +227,21 @@ function DashboardBody({
         }
       />
       <PageBody>
-        <VerdictHero
-          summary={readiness.status === 'ready' ? summary : null}
-          failure={readiness.status === 'error' ? readiness.message : null}
+        <DashboardDense
+          summary={summary}
+          readiness={readiness}
+          snapshot={snapshot}
+          trend={trend}
+          projectId={project.id}
         />
-        {summary === null || snapshot.status === 'loading' ? null : (
-          <FindingsColumns summary={summary} />
-        )}
-        {snapshot.status === 'ready' ? (
-          <DashboardGrid
-            snapshot={snapshot.value}
-            projectId={project.id}
-            trend={trend.status === 'ready' ? trend.value : null}
-            trendFailure={trend.status === 'error' ? trend.message : null}
-          />
-        ) : snapshot.status === 'error' ? (
+        {snapshot.status === 'error' ? (
           <Quiet role="alert" data-testid="dashboard-load-error">
             Could not read the dashboard: {snapshot.message}
           </Quiet>
-        ) : (
+        ) : null}
+        {snapshot.status === 'loading' ? (
           <Quiet data-testid="dashboard-loading">Reading {project.name}…</Quiet>
-        )}
+        ) : null}
       </PageBody>
     </PageFrame>
   );
@@ -886,5 +864,47 @@ function Mini({
       <dd className="m-0 tabular-nums text-2xl font-semibold">{value}</dd>
       {hint === undefined ? null : <dd className={cn('m-0 text-xs', hintTone)}>{hint}</dd>}
     </div>
+  );
+}
+
+/** The full Health detail, under Details: the verdict, findings, grid and product numbers. */
+function DashboardDense({
+  summary,
+  readiness,
+  snapshot,
+  trend,
+  projectId,
+  cockpit,
+}: {
+  summary: ReturnType<typeof overviewSummary>;
+  readiness: Resource<ReleaseReadinessCard>;
+  snapshot: Resource<Snapshot>;
+  trend: Resource<AnalyticsTrend>;
+  projectId: string;
+  cockpit?: CockpitClient['getCockpit'];
+}): React.ReactElement {
+  return (
+    <>
+      <VerdictHero
+        summary={readiness.status === 'ready' ? summary : null}
+        failure={readiness.status === 'error' ? readiness.message : null}
+      />
+      {summary === null || snapshot.status === 'loading' ? null : (
+        <FindingsColumns summary={summary} />
+      )}
+      {snapshot.status === 'ready' ? (
+        <DashboardGrid
+          snapshot={snapshot.value}
+          projectId={projectId}
+          trend={trend.status === 'ready' ? trend.value : null}
+          trendFailure={trend.status === 'error' ? trend.message : null}
+        />
+      ) : null}
+      {cockpit === undefined ? null : (
+        <Panel title="How the product is doing">
+          <CockpitNumbers cockpit={cockpit} projectId={projectId} />
+        </Panel>
+      )}
+    </>
   );
 }

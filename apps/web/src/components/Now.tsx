@@ -85,6 +85,30 @@ async function readAttention(sources: NowSources, now: Date): Promise<Ready> {
  * `StatusLine` of its own, because two headline numbers on one screen ask the reader to
  * choose which is the answer.
  */
+/**
+ * The first thing, in the command palette too: open it, and retry it when it is a red run
+ * and retrying is wired. Exactly what the card's own buttons do.
+ */
+function firstThingActions(
+  first: AttentionItem | undefined,
+  openFirst: () => void,
+  retryRun: NowSources['retryRun'],
+) {
+  if (first === undefined) return [];
+  const open = { id: 'now-open-first', label: `Open: ${first.title}`, onSelect: openFirst };
+  const { auto } = first;
+  if (auto === undefined || retryRun === undefined) return [open];
+  return [
+    open,
+    {
+      id: 'now-retry-first',
+      label: `${retryLabel(auto.failed)}: ${first.title}`,
+      keywords: ['retry', 'rerun', 'again'],
+      onSelect: () => void retryRun(auto.runId, auto.failed > 0 ? 'failed' : 'all'),
+    },
+  ];
+}
+
 export function AttentionSection({
   sources,
   navigate,
@@ -120,29 +144,7 @@ export function AttentionSection({
   const openFirst = React.useCallback(() => {
     if (first !== undefined) navigate(first.action.to);
   }, [first, navigate]);
-  useCommandActions(
-    first === undefined
-      ? []
-      : [
-          { id: 'now-open-first', label: `Open: ${first.title}`, onSelect: openFirst },
-          ...(first.auto === undefined || sources.retryRun === undefined
-            ? []
-            : [
-                {
-                  id: 'now-retry-first',
-                  label: `${retryLabel(first.auto.failed)}: ${first.title}`,
-                  keywords: ['retry', 'rerun', 'again'],
-                  onSelect: () => {
-                    if (first.auto !== undefined)
-                      void sources.retryRun?.(
-                        first.auto.runId,
-                        first.auto.failed > 0 ? 'failed' : 'all',
-                      );
-                  },
-                },
-              ]),
-        ],
-  );
+  useCommandActions(firstThingActions(first, openFirst, sources.retryRun));
 
   if (state === null) {
     return (

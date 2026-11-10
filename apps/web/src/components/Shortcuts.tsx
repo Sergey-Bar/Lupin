@@ -53,18 +53,21 @@ export function Shortcuts(): React.ReactElement {
   const [open, setOpen] = React.useState(false);
   const chord = React.useRef<number | null>(null);
   React.useEffect(() => {
+    /** The second key of a `g` chord: go there if it names a place. Returns true if consumed. */
+    const finishChord = (event: KeyboardEvent, key: string): boolean => {
+      if (chord.current === null || Date.now() - chord.current >= CHORD_MS) return false;
+      chord.current = null;
+      const target = GO_TO[key];
+      if (target !== undefined) {
+        event.preventDefault();
+        void navigate({ to: target.to });
+      }
+      return true;
+    };
     const onKey = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return;
       const key = event.key.toLowerCase();
-      if (chord.current !== null && Date.now() - chord.current < CHORD_MS) {
-        chord.current = null;
-        const target = GO_TO[key];
-        if (target !== undefined) {
-          event.preventDefault();
-          void navigate({ to: target.to });
-        }
-        return;
-      }
+      if (finishChord(event, key)) return;
       if (key === 'g') {
         chord.current = Date.now();
       } else if (event.key === '?') {

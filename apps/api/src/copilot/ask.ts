@@ -27,75 +27,83 @@ function runPath(id: string): string {
   return `/dashboard/runs/${encodeURIComponent(id)}`;
 }
 
-export function answerQuestion(question: string, runs: readonly ExecutionRun[]): QuestionAnswer {
-  const words = question.toLowerCase();
-  const newest = [...runs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const none: QuestionAnswer = { source: 'rules', answer: CAN_ANSWER, citations: [], links: [] };
-  const intent = FLAKY.test(words)
-    ? 'flaky'
-    : SHIP.test(words)
-      ? 'ship'
-      : FAILING.test(words)
-        ? 'failing'
-        : null;
-  if (intent === null) return none;
-  if (newest.length === 0) {
-    return {
-      ...none,
-      answer: 'There are no runs in this workspace yet, so there is nothing to answer from.',
-    };
-  }
+type Intent = 'flaky' | 'ship' | 'failing';
 
-  if (intent === 'flaky') {
-    const seen = new Map<string, string>();
-    for (const run of newest) {
-      for (const test of run.tests) {
-        if (test.status === 'flaky' && !seen.has(test.id)) seen.set(test.id, run.id);
-      }
+function intentOf(words: string): Intent | null {
+  if (FLAKY.test(words)) return 'flaky';
+  if (SHIP.test(words)) return 'ship';
+  if (FAILING.test(words)) return 'failing';
+  return null;
+}
+
+function rules(answer: string, extra: Partial<QuestionAnswer> = {}): QuestionAnswer {
+  return { source: 'rules', answer, citations: [], links: [], ...extra };
+}
+
+function flakyAnswer(newest: readonly ExecutionRun[]): QuestionAnswer {
+  const seen = new Map<string, string>();
+  for (const run of newest) {
+    for (const test of run.tests.filter((entry) => entry.status === 'flaky')) {
+      if (!seen.has(test.id)) seen.set(test.id, run.id);
     }
-    const count = seen.size;
-    return {
-      source: 'rules',
-      answer:
-        count === 0
-          ? `No test was flaky in the last ${String(newest.length)} runs.`
-          : `${String(count)} ${count === 1 ? 'test was' : 'tests were'} flaky in the last ${String(newest.length)} runs.`,
+  }
+  const runs = String(newest.length);
+  const subject = seen.size === 1 ? 'test was' : 'tests were';
+  return rules(
+    seen.size === 0
+      ? `No test was flaky in the last ${runs} runs.`
+      : `${String(seen.size)} ${subject} flaky in the last ${runs} runs.`,
+    {
       citations: [...seen].map(([id, runId]) => ({ kind: 'test' as const, id, runId })),
       links: [{ label: 'See flaky tests', to: '/dashboard/insights' }],
-    };
-  }
+    },
+  );
+}
 
-  if (intent === 'ship') {
-    const main = newest.find((run) => run.branch === 'main' || run.branch === 'master');
-    if (main === undefined) {
-      return {
-        ...none,
-        answer: 'No run on main has been reported, so there is no release signal yet.',
-      };
-    }
-    return {
-      source: 'rules',
-      answer: `The newest run on ${main.branch ?? 'main'} ${main.outcome === 'passed' ? 'passed' : main.outcome === 'failed' ? 'failed' : 'has not finished'}. ${explainRun(main).summary}`,
+const VERDICT: Record<string, string> = { passed: 'passed', failed: 'failed' };
+
+function shipAnswer(newest: readonly ExecutionRun[]): QuestionAnswer {
+  const main = newest.find((run) => run.branch === 'main' || run.branch === 'master');
+  if (main === undefined) {
+    return rules('No run on main has been reported, so there is no release signal yet.');
+  }
+  const verdict = VERDICT[main.outcome ?? ''] ?? 'has not finished';
+  return rules(
+    `The newest run on ${main.branch ?? 'main'} ${verdict}. ${explainRun(main).summary}`,
+    {
       citations: [{ kind: 'run', id: main.id }],
       links: [
         { label: 'Open the run', to: runPath(main.id) },
         { label: 'Release readiness', to: '/dashboard' },
       ],
-    };
-  }
+    },
+  );
+}
 
+function failingAnswer(newest: readonly ExecutionRun[]): QuestionAnswer {
   const red = newest.find((run) => run.outcome === 'failed');
   if (red === undefined) {
-    return {
-      ...none,
-      answer: `Nothing is failing: none of the last ${String(newest.length)} runs failed.`,
-    };
+    return rules(`Nothing is failing: none of the last ${String(newest.length)} runs failed.`);
   }
   const explained = explainRun(red);
-  return {
-    source: 'rules',
-    answer: explained.summary,
+  return rules(explained.summary, {
     citations: explained.citations,
     links: [{ label: 'Open the run', to: runPath(red.id) }],
-  };
+  });
+}
+
+const ANSWERS: Record<Intent, (newest: readonly ExecutionRun[]) => QuestionAnswer> = {
+  flaky: flakyAnswer,
+  ship: shipAnswer,
+  failing: failingAnswer,
+};
+
+export function answerQuestion(question: string, runs: readonly ExecutionRun[]): QuestionAnswer {
+  const intent = intentOf(question.toLowerCase());
+  if (intent === null) return rules(CAN_ANSWER);
+  if (runs.length === 0) {
+    return rules('There are no runs in this workspace yet, so there is nothing to answer from.');
+  }
+  const newest = [...runs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return ANSWERS[intent](newest);
 }

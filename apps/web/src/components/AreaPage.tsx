@@ -50,6 +50,48 @@ function busyWord(action: { label: string; busyLabel?: string }): string {
   return verb.endsWith('e') ? `${verb.slice(0, -1)}ing` : `${verb}ing`;
 }
 
+/** A verdict that repeats the first item's title says it twice; a count says more. */
+function verdictLine(verdict: string, first: AreaItem | undefined, needing: number): string {
+  if (first === undefined || verdict !== first.title) return verdict;
+  return needing === 1 ? 'One thing needs you.' : `${String(needing)} things need you.`;
+}
+
+/** Whether an item arrived since the reader last opened this area. */
+function isFresh(entry: AreaItem, lastVisit: string | null): boolean {
+  return lastVisit !== null && entry.at !== undefined && entry.at > lastVisit;
+}
+
+/** The dense view: open under a heading, or folded behind "Details". */
+function AreaDetails({
+  details,
+  open,
+  title,
+}: {
+  details: React.ReactNode;
+  open: boolean;
+  title: string;
+}): React.ReactElement | null {
+  if (details === undefined) return null;
+  if (open) {
+    return (
+      <section aria-labelledby="area-details-title" className="flex flex-col gap-3">
+        <h2 id="area-details-title" className="text-sm font-semibold text-fg">
+          {title}
+        </h2>
+        {details}
+      </section>
+    );
+  }
+  return (
+    <details data-testid="area-details" data-chrome="secondary" className="group">
+      <summary className="cursor-pointer select-none rounded-md py-2 text-sm text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
+        Details
+      </summary>
+      <div className="mt-4 flex flex-col gap-4">{details}</div>
+    </details>
+  );
+}
+
 export function AreaPage({
   title,
   verdict,
@@ -135,12 +177,7 @@ export function AreaPage({
         {/* With a hero the verdict is already said, at display size; once is enough. */}
         {hero !== undefined ? null : (
           <p data-testid="area-verdict" className="text-lg text-fg-muted">
-            {/* A verdict that repeats the first item's title says it twice; a count says more. */}
-            {top[0] !== undefined && verdict === top[0].title
-              ? needing === 1
-                ? 'One thing needs you.'
-                : `${String(needing)} things need you.`
-              : verdict}
+            {verdictLine(verdict, top[0], needing)}
           </p>
         )}
         {notice === null ? null : (
@@ -161,7 +198,7 @@ export function AreaPage({
                 key={entry.id}
                 entry={entry}
                 primary={index === 0}
-                fresh={lastVisit !== null && entry.at !== undefined && entry.at > lastVisit}
+                fresh={isFresh(entry, lastVisit)}
                 className={STAGGER[index] ?? ''}
                 navigate={navigate}
                 onDone={() => finish(entry)}
@@ -185,7 +222,7 @@ export function AreaPage({
                   key={entry.id}
                   entry={entry}
                   primary={false}
-                  fresh={lastVisit !== null && entry.at !== undefined && entry.at > lastVisit}
+                  fresh={isFresh(entry, lastVisit)}
                   className=""
                   navigate={navigate}
                   folded
@@ -196,45 +233,22 @@ export function AreaPage({
             </ol>
           </details>
         )}
-        {details === undefined ? null : detailsOpen ? (
-          <section aria-labelledby="area-details-title" className="flex flex-col gap-3">
-            <h2 id="area-details-title" className="text-sm font-semibold text-fg">
-              {detailsTitle}
-            </h2>
-            {details}
-          </section>
-        ) : (
-          <details data-testid="area-details" data-chrome="secondary" className="group">
-            <summary className="cursor-pointer select-none rounded-md py-2 text-sm text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
-              Details
-            </summary>
-            <div className="mt-4 flex flex-col gap-4">{details}</div>
-          </details>
-        )}
+        <AreaDetails details={details} open={detailsOpen} title={detailsTitle} />
       </PageBody>
     </PageFrame>
   );
 }
 
-function Row({
-  entry,
-  primary,
-  fresh,
-  className,
-  navigate,
-  onDone,
-  onSucceeded,
-  folded = false,
-}: {
-  entry: AreaItem;
-  primary: boolean;
-  fresh: boolean;
-  className: string;
-  navigate: (to: string) => void;
-  onDone: () => void;
-  onSucceeded: () => void;
-  folded?: boolean;
-}): React.ReactElement {
+/**
+ * What a row's button does: navigate, or run the action and leave with the exit motion. A
+ * failed action stays on screen with its error, so nothing is silently dropped.
+ */
+function useRowAction(
+  entry: AreaItem,
+  navigate: (to: string) => void,
+  onDone: () => void,
+  onSucceeded: () => void,
+) {
   const [state, setState] = React.useState<{ busy: boolean; error: string | null }>({
     busy: false,
     error: null,
@@ -264,6 +278,30 @@ function Row({
       setState({ busy: false, error: error instanceof Error ? error.message : String(error) });
     }
   };
+  return { state, leaving, act };
+}
+
+function Row({
+  entry,
+  primary,
+  fresh,
+  className,
+  navigate,
+  onDone,
+  onSucceeded,
+  folded = false,
+}: {
+  entry: AreaItem;
+  primary: boolean;
+  fresh: boolean;
+  className: string;
+  navigate: (to: string) => void;
+  onDone: () => void;
+  onSucceeded: () => void;
+  folded?: boolean;
+}): React.ReactElement {
+  const { state, leaving, act } = useRowAction(entry, navigate, onDone, onSucceeded);
+  const { action } = entry;
   return (
     <li
       data-testid={`area-${folded ? 'folded' : 'item'}-${entry.id}`}
@@ -292,26 +330,56 @@ function Row({
           </p>
         )}
       </div>
-      <Button
-        data-primary={primary ? 'true' : 'false'}
-        {...(primary ? { 'aria-keyshortcuts': 'a' } : {})}
-        variant={primary ? 'primary' : 'outline'}
-        size={primary ? 'md' : 'sm'}
-        className="shrink-0"
-        disabled={state.busy}
-        onClick={() => void act()}
-      >
-        {state.busy && !('to' in action) ? busyWord(action) : action.label}
-        {primary ? (
-          <kbd
-            aria-hidden="true"
-            className="ms-2 hidden rounded border border-current px-1 font-mono text-xs opacity-60 sm:inline"
-          >
-            A
-          </kbd>
-        ) : null}
-      </Button>
+      <RowButton primary={primary} busy={state.busy} action={action} onClick={() => void act()} />
     </li>
+  );
+}
+
+/** The row's one action; the first row's is the page's primary, with the `a` shortcut. */
+function RowButton({
+  primary,
+  busy,
+  action,
+  onClick,
+}: {
+  primary: boolean;
+  busy: boolean;
+  action: AreaItem['action'];
+  onClick: () => void;
+}): React.ReactElement {
+  const label = busy && !('to' in action) ? busyWord(action) : action.label;
+  if (!primary) {
+    return (
+      <Button
+        data-primary="false"
+        variant="outline"
+        size="sm"
+        className="shrink-0"
+        disabled={busy}
+        onClick={onClick}
+      >
+        {label}
+      </Button>
+    );
+  }
+  return (
+    <Button
+      data-primary="true"
+      aria-keyshortcuts="a"
+      variant="primary"
+      size="md"
+      className="shrink-0"
+      disabled={busy}
+      onClick={onClick}
+    >
+      {label}
+      <kbd
+        aria-hidden="true"
+        className="ms-2 hidden rounded border border-current px-1 font-mono text-xs opacity-60 sm:inline"
+      >
+        A
+      </kbd>
+    </Button>
   );
 }
 

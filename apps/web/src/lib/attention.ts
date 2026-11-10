@@ -67,37 +67,46 @@ function runItems(runs: readonly Run[], now: Date): AttentionItem[] {
   // nothing either way, so it neither hides the red run nor stands in for it.
   const judged = new Set<string>();
   for (const run of [...runs].sort((a, b) => b.createdAt.localeCompare(a.createdAt))) {
-    const at = run.completedAt ?? run.startedAt ?? run.createdAt;
     const finished = run.outcome !== null && run.outcome !== 'cancelled';
     const key = run.branch ?? runLabel(run);
     if (finished && judged.has(key)) continue;
     if (finished) judged.add(key);
-    if (run.outcome === 'failed' || run.outcome === 'blocked') {
-      items.push({
-        id: `run-failed-${run.id}`,
-        severity: 'bad',
-        title: failureTitle(run),
-        detail: run.suite ?? (run.branch === null ? 'Latest run' : 'Latest run on this branch'),
-        action: { label: 'Open run', to: `/dashboard/runs/${run.id}` },
-        auto: { kind: 'retry-run', runId: run.id, failed: failedTests(run) },
-        at,
-      });
-    } else if (
-      run.phase === 'running' &&
-      run.startedAt !== null &&
-      now.getTime() - new Date(run.startedAt).getTime() > STUCK_MS
-    ) {
-      items.push({
-        id: `run-stuck-${run.id}`,
-        severity: 'caution',
-        title: `${runLabel(run)} has been running over an hour`,
-        detail: 'It may be stuck',
-        action: { label: 'Open run', to: `/dashboard/runs/${run.id}` },
-        at: run.startedAt,
-      });
-    }
+    const item = runItem(run, now);
+    if (item !== null) items.push(item);
   }
   return items;
+}
+
+/** The one item a run asks for: a failure to fix, a run that looks stuck, or nothing. */
+function runItem(run: Run, now: Date): AttentionItem | null {
+  if (run.outcome === 'failed' || run.outcome === 'blocked') {
+    return {
+      id: `run-failed-${run.id}`,
+      severity: 'bad',
+      title: failureTitle(run),
+      detail: run.suite ?? (run.branch === null ? 'Latest run' : 'Latest run on this branch'),
+      action: { label: 'Open run', to: `/dashboard/runs/${run.id}` },
+      auto: { kind: 'retry-run', runId: run.id, failed: failedTests(run) },
+      at: run.completedAt ?? run.startedAt ?? run.createdAt,
+    };
+  }
+  if (!isStuck(run, now)) return null;
+  return {
+    id: `run-stuck-${run.id}`,
+    severity: 'caution',
+    title: `${runLabel(run)} has been running over an hour`,
+    detail: 'It may be stuck',
+    action: { label: 'Open run', to: `/dashboard/runs/${run.id}` },
+    at: run.startedAt ?? run.createdAt,
+  };
+}
+
+function isStuck(run: Run, now: Date): boolean {
+  return (
+    run.phase === 'running' &&
+    run.startedAt !== null &&
+    now.getTime() - new Date(run.startedAt).getTime() > STUCK_MS
+  );
 }
 
 function portfolioItems(portfolio: Portfolio | null): AttentionItem[] {
