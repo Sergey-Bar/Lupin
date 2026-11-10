@@ -48,7 +48,7 @@ describe('SideNav', () => {
       .getAllByRole('link')
       .filter((link) => !link.closest('[aria-label="Recent runs"]'))
       .map((link) => link.textContent);
-    expect(areas).toEqual(['Home', 'Runs']);
+    expect(areas).toEqual(['Home', 'Runs', 'Tests', 'Health']);
     const aside = nav.closest('aside') as HTMLElement;
     const settings = within(aside).getByRole('link', { name: 'Settings' });
     expect(nav.contains(settings)).toBe(false);

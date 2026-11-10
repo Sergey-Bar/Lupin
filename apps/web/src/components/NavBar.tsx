@@ -4,7 +4,10 @@ import {
   INDICATOR_ACTIVE_ATTRIBUTE,
   LayoutGrid,
   ListChecks,
+  FlaskConical,
   House,
+  MenuButton,
+  ShieldCheck,
   Settings,
   cn,
   useSlidingIndicator,
@@ -15,6 +18,7 @@ import {
   routeFor,
   sectionOf,
   groupOf,
+  isOverflowTab,
   tabGroups,
   tabsOf,
   visibleTabsOf,
@@ -40,6 +44,8 @@ import { useWheelStep } from '../hooks/useWheelStep.js';
 const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
   now: House,
   runs: ListChecks,
+  tests: FlaskConical,
+  health: ShieldCheck,
   settings: Settings,
 };
 
@@ -142,9 +148,11 @@ function WheelTabs({
   tabsRef: React.Ref<HTMLUListElement>;
 }): React.ReactElement {
   const navigate = useNavigate();
+  const inView = tabs.filter((tab) => !isOverflowTab(tab));
+  const overflow = tabs.filter(isOverflowTab);
   const onWheel = useWheelStep(
-    tabs.map((tab) => tab.path),
-    tabs.findIndex((tab) => tab.id === pageId),
+    inView.map((tab) => tab.path),
+    inView.findIndex((tab) => tab.id === pageId),
     (to) => void navigate({ to }),
   );
   const page = { id: pageId };
@@ -157,7 +165,7 @@ function WheelTabs({
       className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6"
     >
       <ul ref={tabsRef} className="relative flex gap-1">
-        {tabGroups(tabs).flatMap((group, groupIndex) => [
+        {tabGroups(inView).flatMap((group, groupIndex) => [
           ...(groupIndex === 0
             ? []
             : [
@@ -210,6 +218,25 @@ function WheelTabs({
             ];
           })(),
         ])}
+        {overflow.length === 0 ? null : (
+          <li className="flex shrink-0 items-center ps-1">
+            {/* A place shows at most four tabs; its other pages are one menu away (Apple's
+                "More"), still links in the manifest and still reached by their old URLs. */}
+            <MenuButton
+              label={`More ${label} pages`}
+              items={overflow.map((tab) => ({ value: tab.path, label: tab.tab }))}
+              onSelect={(to) => void navigate({ to })}
+              className={cn(
+                'h-9 border-0',
+                overflow.some((tab) => tab.id === page.id)
+                  ? 'font-semibold text-fg'
+                  : 'text-fg-muted',
+              )}
+            >
+              {overflow.find((tab) => tab.id === page.id)?.tab ?? 'More'}
+            </MenuButton>
+          </li>
+        )}
         <span aria-hidden="true" className="indicator" />
       </ul>
     </nav>

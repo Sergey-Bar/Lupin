@@ -5,7 +5,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ListChecks,
+  FlaskConical,
   House,
+  ShieldCheck,
   Settings,
   Sparkles,
   Wordmark,
@@ -45,6 +47,8 @@ const FOCUS =
 const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
   now: House,
   runs: ListChecks,
+  tests: FlaskConical,
+  health: ShieldCheck,
   settings: Settings,
 };
 

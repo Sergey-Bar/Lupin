@@ -1,6 +1,7 @@
 /// <reference types="vitest/globals" />
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { NavBar, BottomTabBar, SectionTabs } from './NavBar';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { expectNoBlockingAxeViolations } from '../test-axe';
@@ -28,7 +29,7 @@ function makeRouter(initialPath = '/') {
   return router;
 }
 
-const SECTION_LABELS = ['Home', 'Runs', 'Settings'];
+const SECTION_LABELS = ['Home', 'Runs', 'Tests', 'Health', 'Settings'];
 
 describe('NavBar', () => {
   beforeEach(() => {
@@ -47,7 +48,7 @@ describe('NavBar', () => {
     expect(screen.queryByTestId('theme-toggle')).toBeNull();
   });
 
-  it('draws the three places, and nothing else, in the top bar', async () => {
+  it('draws the five places, and nothing else, in the top bar', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
     const links = within(bar).getAllByRole('link');
@@ -73,12 +74,12 @@ describe('NavBar', () => {
   });
 
   it.each([
-    ['/dashboard', 'Home'],
+    ['/dashboard', 'Health'],
     ['/dashboard/runs/run-1', 'Runs'],
     ['/dashboard/runner', 'Runs'],
-    ['/dashboard/analytics', 'Runs'],
-    ['/dashboard/flaky/project-1', 'Runs'],
-    ['/dashboard/health', 'Home'],
+    ['/dashboard/analytics', 'Tests'],
+    ['/dashboard/flaky/project-1', 'Tests'],
+    ['/dashboard/health', 'Health'],
   ])('marks %s as inside the %s section, in both bars', async (path, label) => {
     render(<RouterProvider router={makeRouter(path)} />);
     const bar = await screen.findByTestId('nav-bar');
@@ -91,7 +92,7 @@ describe('NavBar', () => {
     }
   });
 
-  it('gives the bottom bar three labelled, finger-sized targets', async () => {
+  it('gives the bottom bar five labelled, finger-sized targets', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bottom = await screen.findByTestId('bottom-tab-bar');
     expect(bottom).toHaveAttribute('aria-label', 'Sections');
@@ -150,19 +151,9 @@ describe('NavBar', () => {
   it('shows the section tabs for a section with more than one page', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
     const tabs = await screen.findByTestId('section-tabs');
-    expect(tabs).toHaveAttribute('aria-label', 'Runs pages');
+    expect(tabs).toHaveAttribute('aria-label', 'Tests pages');
     const links = within(tabs).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual([
-      'Runs',
-      'Launch',
-      'Tests',
-      'Quarantine',
-    ]);
-    expect(
-      within(tabs)
-        .getAllByRole('group')
-        .map((group) => group.getAttribute('aria-label')),
-    ).toEqual(['Runs', 'Tests']);
+    expect(links.map((link) => link.textContent)).toEqual(['Tests', 'Quarantine']);
     expect(within(tabs).getByRole('link', { name: 'Tests' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -176,38 +167,24 @@ describe('NavBar', () => {
     await screen.findByTestId('nav-bar');
     expect(screen.queryByTestId('section-tabs')).toBeNull();
     expect(
-      within(screen.getByTestId('nav-bar')).getByRole('link', { name: 'Runs' }),
+      within(screen.getByTestId('nav-bar')).getByRole('link', { name: 'Tests' }),
     ).toHaveAttribute('aria-current', 'page');
   });
 
-  it('shows Home’s tabs, Health and Delivery as named groups, and none on a detail page', async () => {
-    const { unmount } = render(<RouterProvider router={makeRouter('/dashboard')} />);
+  it('keeps Health to four tabs and puts the rest in a More menu that still reaches every page', async () => {
+    const user = userEvent.setup();
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
     const tabs = await screen.findByTestId('section-tabs');
     expect(
       within(tabs)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual([
-      'Now',
-      'Portfolio',
-      'Overview',
-      'Capabilities',
-      'Supply chain',
-      'Delivery',
-      'AI code',
-      'Agents',
-      'Pull requests',
-      'Issues',
-      'Repositories',
-    ]);
-    // "Now" is a group of one tab named "Now": its label would only say the tab twice.
-    expect(
-      [...tabs.querySelectorAll('[data-tab-group]')].map((label) => label.textContent),
-    ).toEqual(['Health', 'Delivery']);
-    unmount();
-    render(<RouterProvider router={makeRouter('/dashboard/runs/run-1')} />);
-    await screen.findByTestId('nav-bar');
-    expect(screen.queryByTestId('section-tabs')).toBeNull();
+    ).toEqual(['Portfolio', 'Overview', 'Capabilities', 'Supply chain']);
+    await user.click(within(tabs).getByRole('button', { name: 'More Health pages' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Pull requests' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('section-tabs')).toHaveAttribute('aria-label', 'Health pages'),
+    );
   });
 
   it('shows the settings tabs a signed-out reader may use, Appearance first', async () => {

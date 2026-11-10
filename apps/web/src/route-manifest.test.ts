@@ -9,6 +9,7 @@ import {
   reportPath,
   roleMeets,
   groupOf,
+  isOverflowTab,
   tabGroups,
   routeManifest,
   runDetailPath,
@@ -47,12 +48,29 @@ describe('route manifest', () => {
     expect(routeManifest.some((route) => route.path === '/dashboard/runs')).toBe(true);
   });
 
-  it('has three places: Home, Runs and Settings', () => {
-    expect(SECTIONS.map((section) => section.label)).toEqual(['Home', 'Runs', 'Settings']);
-    for (const section of SECTIONS) {
-      expect(isApplicationPath(section.path), `${section.label} opens nowhere`).toBe(true);
-      expect(sectionOf(section.path)).toBe(section.id);
+  it('has five places, Home, Runs, Tests, Health and Settings, each with at most 4 tabs in view', () => {
+    expect(SECTIONS.map((section) => section.label)).toEqual([
+      'Home',
+      'Runs',
+      'Tests',
+      'Health',
+      'Settings',
+    ]);
+    for (const section of SECTIONS.filter((entry) => entry.id !== 'settings')) {
+      const inView = tabsOf(section.id).filter((tab) => !isOverflowTab(tab));
+      expect(
+        inView.length,
+        `${section.label} shows ${String(inView.length)} tabs`,
+      ).toBeLessThanOrEqual(4);
     }
+    // Delivery and AI code fold into Health, under "More", and every page still opens.
+    expect(sectionOf('/dashboard/prs')).toBe('health');
+    expect(sectionOf('/dashboard/ai-code')).toBe('health');
+    expect(
+      tabsOf('health')
+        .filter(isOverflowTab)
+        .map((tab) => tab.tab),
+    ).toContain('Pull requests');
   });
 
   it('exposes every old destination, now as a tab of a section', () => {
@@ -84,7 +102,7 @@ describe('route manifest', () => {
   });
 
   it('reaches every area page in one click from the tab row, Agents included', () => {
-    expect(tabsOf('now').map((tab) => tab.path)).toContain('/dashboard/agents');
+    expect(tabsOf('health').map((tab) => tab.path)).toContain('/dashboard/agents');
   });
 
   it('has no login route: the install is open (ADR-006)', () => {
@@ -102,25 +120,25 @@ describe('route manifest', () => {
   });
 
   it.each([
-    ['/dashboard', 'now'],
-    ['/dashboard/portfolio', 'now'],
-    ['/dashboard/repo/project-1', 'now'],
-    ['/dashboard/repo/project-1/overview', 'now'],
-    ['/dashboard/delivery', 'now'],
-    ['/dashboard/ai-code', 'now'],
-    ['/dashboard/agents', 'now'],
-    ['/dashboard/supply-chain', 'now'],
+    ['/dashboard', 'health'],
+    ['/dashboard/portfolio', 'health'],
+    ['/dashboard/repo/project-1', 'health'],
+    ['/dashboard/repo/project-1/overview', 'health'],
+    ['/dashboard/delivery', 'health'],
+    ['/dashboard/ai-code', 'health'],
+    ['/dashboard/agents', 'health'],
+    ['/dashboard/supply-chain', 'health'],
     ['/dashboard/runs', 'runs'],
     ['/dashboard/runs/run-1', 'runs'],
     ['/dashboard/runs/run-1/extra', 'runs'],
     ['/dashboard/runner', 'runs'],
-    ['/dashboard/insights', 'runs'],
-    ['/dashboard/analytics', 'runs'],
-    ['/dashboard/quarantine', 'runs'],
-    ['/dashboard/gaps/project-1', 'runs'],
-    ['/dashboard/score/project-1', 'runs'],
+    ['/dashboard/insights', 'tests'],
+    ['/dashboard/analytics', 'tests'],
+    ['/dashboard/quarantine', 'tests'],
+    ['/dashboard/gaps/project-1', 'tests'],
+    ['/dashboard/score/project-1', 'tests'],
     ['/dashboard/map', 'settings'],
-    ['/dashboard/health', 'now'],
+    ['/dashboard/health', 'health'],
     ['/dashboard/toolbox', 'settings'],
     ['/dashboard/deployment', 'settings'],
     ['/dashboard/settings', 'settings'],
@@ -136,26 +154,26 @@ describe('route manifest', () => {
     expect(sectionOf('/elsewhere')).toBeNull();
   });
 
-  it('lists each place’s tabs in named groups: Home leads with Now, Runs holds the tests', () => {
+  it('lists each place’s tabs: Home is one page, Runs and Tests two each, Health four and More', () => {
+    expect(tabsOf('now')).toEqual([]);
+    expect(tabsOf('runs').map((tab) => tab.tab)).toEqual(['Runs', 'Launch']);
     expect(
-      tabGroups(tabsOf('now')).map((group) => [
-        groupOf(group[0] as never),
-        group.map((tab) => tab.tab),
-      ]),
-    ).toEqual([
-      ['Now', ['Now']],
-      ['Health', ['Portfolio', 'Overview', 'Capabilities', 'Supply chain']],
-      ['Delivery', ['Delivery', 'AI code', 'Agents', 'Pull requests', 'Issues', 'Repositories']],
-    ]);
+      tabsOf('health')
+        .filter((tab) => !isOverflowTab(tab))
+        .map((tab) => tab.tab),
+    ).toEqual(['Portfolio', 'Overview', 'Capabilities', 'Supply chain']);
+    expect(
+      tabsOf('health')
+        .filter(isOverflowTab)
+        .map((tab) => tab.tab),
+    ).toEqual(['Delivery', 'AI code', 'Agents', 'Pull requests', 'Issues', 'Repositories']);
     expect(
       tabGroups(tabsOf('runs')).map((group) => [
         groupOf(group[0] as never),
         group.map((tab) => tab.tab),
       ]),
-    ).toEqual([
-      ['Runs', ['Runs', 'Launch']],
-      ['Tests', ['Tests', 'Quarantine']],
-    ]);
+    ).toEqual([[undefined, ['Runs', 'Launch']]]);
+    expect(tabsOf('tests').map((tab) => tab.tab)).toEqual(['Tests', 'Quarantine']);
     expect(tabsOf('settings').map((tab) => tab.tab)).toEqual([
       'Appearance',
       'Projects',
@@ -227,7 +245,7 @@ describe('route manifest', () => {
       ['Identity', 'Sessions & retention', 'Access', 'Audit', 'Deployment'],
       ['Map', 'Toolbox'],
     ]);
-    expect(tabGroups(tabsOf('runs'))).toHaveLength(2);
+    expect(tabGroups(tabsOf('runs'))).toHaveLength(1);
   });
 
   it('names the Settings groups, so the row reads as yours, the workspace, the install and the tools', () => {
@@ -283,29 +301,29 @@ describe('route manifest', () => {
     // notice that something was removed from it. Trends, Quarantine and Agents left the tab
     // rows when the cockpit arrived, and each must still open the page it always did.
     const EVER_REACHABLE: ReadonlyArray<readonly [path: string, section: string]> = [
-      ['/dashboard', 'now'],
+      ['/dashboard', 'health'],
       ['/dashboard/now', 'now'],
-      ['/dashboard/portfolio', 'now'],
-      ['/dashboard/repo/p-1', 'now'],
-      ['/dashboard/repo/p-1/overview', 'now'],
+      ['/dashboard/portfolio', 'health'],
+      ['/dashboard/repo/p-1', 'health'],
+      ['/dashboard/repo/p-1/overview', 'health'],
       ['/dashboard/runs', 'runs'],
       ['/dashboard/runs/r-1', 'runs'],
       ['/dashboard/runner', 'runs'],
-      ['/dashboard/insights', 'runs'],
-      ['/dashboard/analytics', 'runs'],
-      ['/dashboard/quarantine', 'runs'],
-      ['/dashboard/test', 'runs'],
-      ['/dashboard/delivery', 'now'],
-      ['/dashboard/ai-code', 'now'],
-      ['/dashboard/agents', 'now'],
-      ['/dashboard/score/p-1', 'runs'],
-      ['/dashboard/gaps/p-1', 'runs'],
-      ['/dashboard/hollow/p-1', 'runs'],
-      ['/dashboard/flaky/p-1', 'runs'],
-      ['/dashboard/structure/p-1', 'runs'],
+      ['/dashboard/insights', 'tests'],
+      ['/dashboard/analytics', 'tests'],
+      ['/dashboard/quarantine', 'tests'],
+      ['/dashboard/test', 'tests'],
+      ['/dashboard/delivery', 'health'],
+      ['/dashboard/ai-code', 'health'],
+      ['/dashboard/agents', 'health'],
+      ['/dashboard/score/p-1', 'tests'],
+      ['/dashboard/gaps/p-1', 'tests'],
+      ['/dashboard/hollow/p-1', 'tests'],
+      ['/dashboard/flaky/p-1', 'tests'],
+      ['/dashboard/structure/p-1', 'tests'],
       ['/dashboard/map', 'settings'],
-      ['/dashboard/health', 'now'],
-      ['/dashboard/supply-chain', 'now'],
+      ['/dashboard/health', 'health'],
+      ['/dashboard/supply-chain', 'health'],
       ['/dashboard/toolbox', 'settings'],
       ['/dashboard/access', 'settings'],
       ['/dashboard/members', 'settings'],
@@ -375,7 +393,7 @@ describe('route manifest', () => {
       expect(registered, `${path} is in the manifest but not the router`).toContain(path);
     }
     expect(repo360Path('p 1')).toBe('/dashboard/repo/p%201/overview');
-    expect(sectionOf(repo360Path('p 1'))).toBe('now');
+    expect(sectionOf(repo360Path('p 1'))).toBe('health');
   });
 
   it('recognizes canonical run detail links without accepting arbitrary dashboard paths', () => {

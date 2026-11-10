@@ -25,6 +25,8 @@
 export const SECTIONS = [
   { id: 'now', label: 'Home', path: '/dashboard/now' },
   { id: 'runs', label: 'Runs', path: '/dashboard/runs' },
+  { id: 'tests', label: 'Tests', path: '/dashboard/insights' },
+  { id: 'health', label: 'Health', path: '/dashboard' },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ] as const;
 
@@ -42,6 +44,8 @@ interface ManifestEntry {
   readonly tab?: string;
   /** The named group a tab sits in on a long tab row (Settings): Personal, Workspace, … */
   readonly group?: string;
+  /** Drawn in the tab row's "More" menu rather than as a tab: a place shows at most four. */
+  readonly overflow?: boolean;
   readonly access?: TabAccess;
 }
 
@@ -53,7 +57,6 @@ export const routeManifest = [
     visible: true,
     section: 'now',
     tab: 'Now',
-    group: 'Now',
   },
   // First-run setup: a guided flow, reached from the cockpit and the checklist, never a tab.
   {
@@ -75,32 +78,30 @@ export const routeManifest = [
     path: '/dashboard/portfolio',
     label: 'Portfolio',
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'Portfolio',
-    group: 'Health',
   },
   {
     id: 'dashboard',
     path: '/dashboard',
     label: 'Overview',
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'Overview',
-    group: 'Health',
   },
   {
     id: 'repo-health',
     path: '/dashboard/repo/:projectId',
     label: 'Repository Health',
     visible: false,
-    section: 'now',
+    section: 'health',
   },
   {
     id: 'repo-360',
     path: '/dashboard/repo/:projectId/overview',
     label: 'Repository 360',
     visible: false,
-    section: 'now',
+    section: 'health',
   },
   {
     id: 'runs',
@@ -109,7 +110,6 @@ export const routeManifest = [
     visible: true,
     section: 'runs',
     tab: 'Runs',
-    group: 'Runs',
   },
   {
     id: 'run-detail',
@@ -125,57 +125,54 @@ export const routeManifest = [
     visible: true,
     section: 'runs',
     tab: 'Launch',
-    group: 'Runs',
   },
   {
     id: 'insights',
     path: '/dashboard/insights',
     label: 'Insights',
     visible: true,
-    section: 'runs',
+    section: 'tests',
     tab: 'Tests',
-    group: 'Tests',
   },
   {
     id: 'analytics',
     path: '/dashboard/analytics',
     label: 'Trends',
     visible: false,
-    section: 'runs',
+    section: 'tests',
   },
   {
     id: 'quarantine',
     path: '/dashboard/quarantine',
     label: 'Quarantine',
     visible: false,
-    section: 'runs',
+    section: 'tests',
     tab: 'Quarantine',
-    group: 'Tests',
   },
   {
     id: 'test-history',
     path: '/dashboard/test',
     label: 'Test History',
     visible: false,
-    section: 'runs',
+    section: 'tests',
   },
   {
     id: 'delivery',
     path: '/dashboard/delivery',
     label: 'Delivery',
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'Delivery',
-    group: 'Delivery',
+    overflow: true,
   },
   {
     id: 'ai-code',
     path: '/dashboard/ai-code',
     label: 'AI code',
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'AI code',
-    group: 'Delivery',
+    overflow: true,
   },
   {
     id: 'agents',
@@ -184,62 +181,60 @@ export const routeManifest = [
     // A tab again: with the tab row gone from desktop and no tab here, nothing linked to it
     // but a card deep in Repository 360.
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'Agents',
-    group: 'Delivery',
+    overflow: true,
   },
   {
     id: 'score',
     path: '/dashboard/score/:projectId',
     label: 'Health Score',
     visible: false,
-    section: 'runs',
+    section: 'tests',
   },
   {
     id: 'gaps',
     path: '/dashboard/gaps/:projectId',
     label: 'Automation Gaps',
     visible: false,
-    section: 'runs',
+    section: 'tests',
   },
   {
     id: 'hollow',
     path: '/dashboard/hollow/:projectId',
     label: 'Hollow Tests',
     visible: false,
-    section: 'runs',
+    section: 'tests',
   },
   {
     id: 'flaky',
     path: '/dashboard/flaky/:projectId',
     label: 'Flaky Tests',
     visible: false,
-    section: 'runs',
+    section: 'tests',
   },
   {
     id: 'structure',
     path: '/dashboard/structure/:projectId',
     label: 'Structural Findings',
     visible: false,
-    section: 'runs',
+    section: 'tests',
   },
   {
     id: 'health',
     path: '/dashboard/health',
     label: 'Capabilities',
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'Capabilities',
-    group: 'Health',
   },
   {
     id: 'supply-chain',
     path: '/dashboard/supply-chain',
     label: 'Supply chain',
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'Supply chain',
-    group: 'Health',
   },
   {
     id: 'access',
@@ -281,34 +276,34 @@ export const routeManifest = [
     path: '/dashboard/prs',
     label: 'Pull requests',
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'Pull requests',
-    group: 'Delivery',
+    overflow: true,
   },
   {
     id: 'issues',
     path: '/dashboard/issues',
     label: 'Issues',
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'Issues',
-    group: 'Delivery',
+    overflow: true,
   },
   {
     id: 'repos',
     path: '/dashboard/repos',
     label: 'Repositories',
     visible: true,
-    section: 'now',
+    section: 'health',
     tab: 'Repositories',
-    group: 'Delivery',
+    overflow: true,
   },
   {
     id: 'repo-detail',
     path: '/dashboard/repos/:projectId',
     label: 'Repository',
     visible: false,
-    section: 'now',
+    section: 'health',
   },
   {
     id: 'pair',
@@ -537,6 +532,11 @@ export function visibleTabsOf(section: SectionId, role: ViewerRole | null): TabR
     roleMeets((tab as { access?: TabAccess }).access, role),
   );
   return tabs.length > 1 ? tabs : [];
+}
+
+/** Whether a tab lives in its row's "More" menu, because the place already shows four. */
+export function isOverflowTab(tab: TabRoute): boolean {
+  return (tab as { overflow?: boolean }).overflow === true;
 }
 
 /** The named group a tab sits in on its row, or `undefined` for a row with none. */
