@@ -26,7 +26,7 @@ drifted from the product.
 
 **A quiet plane, one brand colour, and colour elsewhere is meaning.** The product is an
 instrument: a QA engineer opens it to learn what is wrong and what is good. So the plane is
-near-neutral in four opaque steps, the brand is a single violet used for focus, links, the
+near-neutral in four opaque steps, the brand is a single blue used for focus, links, the
 active state and the one primary action, and every other colour on screen is a verdict —
 pass, warn, fail, flaky — or a chart series. Things that float above the plane may be
 translucent; nothing a reader is meant to read sits behind glass.
@@ -44,15 +44,15 @@ bar, this site's nav and its footer all draw that one shape. Sizes come from the
   place it inside a filled shape, except for the favicon.
 - **Colour.** Set the name in `fg` and the full stop in `accent`, and nothing else. On the dark
   plane both tokens change, so the wordmark needs no dark variant.
-- **The favicon** is the only place the brand is a glyph: a white L on a violet square. The app
+- **The favicon** is the only place the brand is a glyph: a white L on a blue square. The app
   and the site commit the same file, and `apps/web/src/brand.test.ts` holds the two copies
   byte-identical.
 - **The name in prose** is "Lupin", in sentence case. Do not write it in capitals, add a
   trademark sign, or put the full stop in running text.
 
-**The violet's role.** It marks focus, links, the active place and the single primary action on
+**The blue's role.** It marks focus, links, the active place and the single primary action on
 a screen. It is never used as a decoration, a gradient or a background wash. A second
-violet-filled button on a screen means one of the two is not primary.
+accent-filled button on a screen means one of the two is not primary.
 
 ### Tone of voice
 
@@ -86,7 +86,7 @@ Four steps, and the names do not change between themes — the plane is what inv
 | `--lupin-surface-raised` | `oklch(23.6% .010 277)` | `oklch(99.1% .001 106)` | A control sitting on the base, and every overlay                  |
 | `--lupin-surface-muted`  | `oklch(25.7% .010 277)` | `oklch(96.7% .003 106)` | The recessed fill inside a control                                |
 
-The near is a decision. The dark plane carries the violet's undertone (hue about 276) so
+The near is a decision. The dark plane carries a cool undertone (hue about 276) so
 the brand reads as part of the room; the light plane is warm paper (hue about 106). Every
 plane step, both foregrounds and the decorative border stay under 0.012 chroma — a
 temperature, never a colour.
@@ -131,15 +131,15 @@ the first button, so no action is armed before the dialog has been read.
 
 ## The accent
 
-`--lupin-accent` is the Lupin violet: `oklch(50.9% .138 290)` on the light plane and a
-lifted `oklch(79.3% .089 293)` on the dark one — the colour of the dot in the wordmark.
-`theme.test.ts` holds it in the violet hue band (280–300), above 0.08 chroma, at 4.5:1 and
+`--lupin-accent` is the Lupin blue: `oklch(48% .15 242)` on the light plane and a
+lifted `oklch(77% .12 242)` on the dark one — the colour of the dot in the wordmark.
+`theme.test.ts` holds it in the blue hue band (230–250), above 0.08 chroma, at 4.5:1 and
 APCA Lc 60 as text on every plane step, and at least 20 degrees of hue from `info`, so the
 brand is never read as a note.
 
 It is allowed in four places: the focus ring, the active state (the current section, a
-selected tab), a link, and the one solid primary fill per screen — a violet button with a
-white label in light, a lavender button with a near-black label in dark. It is never a
+selected tab), a link, and the one solid primary fill per screen — a blue button with a
+white label in light, a pale blue button with a near-black label in dark. It is never a
 large plane and never a verdict.
 
 ## Run state, and why `info` is quieter
@@ -149,7 +149,7 @@ large plane and never a verdict.
 | `--lupin-success` | 148       | Passed                            |
 | `--lupin-warning` | 72        | Needs a decision                  |
 | `--lupin-danger`  | 25        | Failed                            |
-| `--lupin-info`    | 258       | A note — steel, quieter than both |
+| `--lupin-info`    | 210       | A note — slate, quieter than both |
 
 Every run state is at least half as saturated again as info, the three run states keep 20
 degrees or more of hue between them, and each lands within 3 degrees of its decided hue.
@@ -275,7 +275,7 @@ limits the material to those five components.
 - **Off when asked.** Reduced transparency, more contrast and forced colours each return the
   opaque step with no filter.
 
-There is also one gradient: `--lupin-gradient-ambient`, a faint violet light from the top of
+There is also one gradient: `--lupin-gradient-ambient`, a faint accent-blue light from the top of
 the page drawn from the accent, used on entry screens only — today, the first-run screen.
 
 ## The Overview and the Map
@@ -324,4 +324,4 @@ The redesign keeps every rule above and adds these, each with its gate:
 - **Depth.** Three elevations, `elevation-1` to `elevation-3`, each an existing plane step, so no new surface can fail contrast (`theme.test.ts`).
 - **The status band.** Every area page opens on one compact band (`Hero` in `@lupin/ui`): a status mark, the verdict word in its colour, one reason, the numbers behind it, and one action, on the neutral plane. It replaced the full-width poster hero, whose one-word verdict on a tinted panel said little and read as a placeholder. The `glow-*` tokens and the expressive `animate-reveal` tier are still defined and tested (`theme.test.ts`, `motion.test.ts`), and no component uses them now.
 - **One button system.** At most one solid primary per screen, outlined for secondary, text for tertiary. A link drawn as a button is `ButtonLink`, which shares `buttonVariants` with `Button`; `apps/web/src/button-rule.test.ts` fails on a hand-written solid button, and the page tests assert one primary with `expectOnePrimary`.
-- **Lupin's violet by default.** The OpenCode palettes are a choice in Settings, not the default (`ThemeProvider.test.tsx`, `theme-boot.test.ts`).
+- **Lupin's blue by default.** The OpenCode palettes are a choice in Settings, not the default (`ThemeProvider.test.tsx`, `theme-boot.test.ts`).

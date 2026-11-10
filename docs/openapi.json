@@ -226,6 +226,14 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/copilot/explain": {
+      "post": {
+        "operationId": "postApiV1CopilotExplain",
+        "tags": ["copilot"],
+        "x-source": "apps/api/src/copilot/routes.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/dashboard/analytics/summary": {
       "get": {
         "operationId": "getApiV1DashboardAnalyticsSummary",
