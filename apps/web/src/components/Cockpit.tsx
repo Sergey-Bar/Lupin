@@ -501,7 +501,11 @@ function NowHero({
       headingLevel={2}
       verdict={hero.verdict}
       word={hero.word}
-      reason={card.status === 'error' ? card.message : hero.reason}
+      reason={
+        card.status === 'error'
+          ? `Lupin could not read the release gates (${card.message.replace(/\.$/u, '')}).`
+          : hero.reason
+      }
       eyebrow="Release readiness"
     >
       <div>

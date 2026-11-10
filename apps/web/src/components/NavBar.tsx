@@ -190,7 +190,8 @@ function WheelTabs({
               );
             });
             const name = group[0] === undefined ? undefined : groupOf(group[0]);
-            if (name === undefined) return links;
+            // A group of one tab with the group's own name has nothing to label.
+            if (name === undefined || (group.length === 1 && group[0]?.tab === name)) return links;
             // A named group (Settings): a quiet label, then its tabs, as one named list so a
             // screen reader hears "Workspace" before the tabs in it.
             return [

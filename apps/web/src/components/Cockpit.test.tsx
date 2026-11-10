@@ -661,6 +661,21 @@ describe('the hero verdict', () => {
     expect(screen.queryByTestId('now-clear')).toBeNull();
   });
 
+  it('says an unreadable verdict in a sentence, never as the server’s bare word', async () => {
+    render(
+      <CockpitPage
+        sources={{
+          ...sources(),
+          readiness: vi.fn(() => Promise.reject(new QaApiError(404, 'not found'))),
+        }}
+        navigate={vi.fn()}
+        now={() => NOW}
+      />,
+    );
+    const hero = await screen.findByRole('region', { name: 'Not measured' });
+    expect(hero).toHaveTextContent('Lupin could not read the release gates (not found).');
+  });
+
   it('draws no hero when the page has no readiness to read', async () => {
     show();
     await screen.findByTestId('now-page');

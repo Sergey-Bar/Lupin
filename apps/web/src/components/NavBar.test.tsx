@@ -200,6 +200,10 @@ describe('NavBar', () => {
       'Issues',
       'Repositories',
     ]);
+    // "Now" is a group of one tab named "Now": its label would only say the tab twice.
+    expect(
+      [...tabs.querySelectorAll('[data-tab-group]')].map((label) => label.textContent),
+    ).toEqual(['Health', 'Delivery']);
     unmount();
     render(<RouterProvider router={makeRouter('/dashboard/runs/run-1')} />);
     await screen.findByTestId('nav-bar');
