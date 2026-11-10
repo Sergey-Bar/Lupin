@@ -120,3 +120,7 @@ certs/
 
 # Local before/after screenshots and axe reports for design sign-off.
 .shots/
+
+# Local agent scratch (task scripts, screenshots, logs) and the skills CLI's default
+# output folder. AGENTS.md: vendored skills move to .kilo/skills/, so nothing here is source.
+.agents/
