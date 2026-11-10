@@ -361,7 +361,7 @@ export function RunsListPage({
         navigate={navigate}
         clear="Nothing to retry. The newest run on every branch passed."
         detailsOpen
-        detailsTitle="All runs"
+        detailsTitle="Every run"
         actions={headerActions}
         details={
           // A height of its own: the table fits its rows to the panel, and a folded section

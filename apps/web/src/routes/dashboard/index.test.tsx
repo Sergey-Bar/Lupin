@@ -179,7 +179,7 @@ describe('RunsListPage', () => {
     expect(hero).toHaveTextContent('One branch needs you.');
     expect(screen.getByTestId(`area-item-run-${failedRun.id}`)).toBeInTheDocument();
     expect(screen.queryByTestId('area-details')).toBeNull();
-    expect(screen.getByRole('region', { name: 'All runs' })).toContainElement(
+    expect(screen.getByRole('region', { name: 'Every run' })).toContainElement(
       screen.getByTestId(`run-row-${failedRun.id}`),
     );
   });
