@@ -1,113 +1,76 @@
 /*
- * The two families, self-hosted (D6-5, revised for 4.0.0).
+ * The type of design language v3, self-hosted.
  *
- * Two families and no more: Geist for everything that is read, Geist Mono for
- * everything that is a reading — run ids, digests, stack traces, JUnit output,
- * every tabular numeral. A third face is a decision somebody will make in a
- * component and not in this file.
+ * Three families: Inter for everything that is read, JetBrains Mono for everything that is a
+ * reading (run ids, digests, stack traces), and Inter Display for the large numbers. Inter is
+ * the closest open face to the system UI type Apple ships, and its optical-size axis gives the
+ * small text and the titles each the cut drawn for their size.
  *
- * Geist replaced Archivo and JetBrains Mono when the product took the Lupin site's
- * type. The two Geist faces share one vertical design (the same ascent, descent,
- * x-height and cap height), so a run id set in the mono beside a sentence in the
- * sans sits on the same baseline and the same x-height, which Archivo beside
- * JetBrains Mono never did.
- *
- * ## The binaries
- *
- * `assets/fonts/` is the canonical directory and both consumers resolve through
- * it — the product imports this file and the documentation site imports this
- * file — so each face is committed exactly once. The site used to carry its own
- * copies under `site/public/fonts/`; those were moved here byte for byte.
- *
- * Variable, `woff2` only, one file per family: the axis the product moves is
- * weight, and one variable face covers 100–900 in about 70KB. `fonts-lock.json`
- * beside them records the upstream repository, the commit, the licence file and a
- * sha256 per binary, and `fonts.test.ts` checks both directions — the recorded
- * digest, and that no binary has been added to the directory without a row.
+ * Each binary is a Latin subset committed once in `assets/fonts/`, with its upstream, commit
+ * and sha256 in `fonts-lock.json`; `fonts.test.ts` checks both directions.
  *
  * ## The fallback
  *
- * `Geist Fallback` and `Geist Mono Fallback` are local faces carrying metrics
- * overrides, and that is the whole reason the swap does not move a line. Without
- * them a reader on a cold cache gets the local face's line box for the length of
- * the download and every block of text below it shifts; with them the fallback
- * occupies the same height before the webfont arrives.
+ * `Inter Fallback` and `JetBrains Mono Fallback` are local faces carrying measured metrics
+ * overrides, so the swap from the local face to the webfont does not move a line:
  *
- * The percentages are **measured**, not conventional: read out of each binary's
- * `hhea` and `OS/2` tables at `unitsPerEm` 1000 (the method is in the lock).
+ *   Inter           ascent 969   descent -241  lineGap 0  xHeight 546  (of 1000)
+ *   JetBrains Mono  ascent 1020  descent -300  lineGap 0  xHeight 550
  *
- *   Geist       ascent 1005  descent -295  lineGap 0  xHeight 530
- *   Geist Mono  ascent 1005  descent -295  lineGap 0  xHeight 530
- *
- * `ascent-override` and `descent-override` are percentages of the em, so they
- * hold whichever local face is actually selected and they are what fixes the
- * line box. `size-adjust` compares x-heights and is therefore specific to the
- * face it was measured against: 53.0/51.86 for Geist against Arial, and
- * 53.0/52.9 for the mono against Consolas. One `local()` per face rather than a
- * list, so that approximation is never silently compounded by picking a face the
- * numbers do not describe.
- *
- * `line-gap-override: 0%` is stated on both rather than left to the local face.
- * Arial's own line gap is 67/2048, and leaving it in is the difference between
- * the fallback matching the webfont's line box and being three pixels taller
- * per line for the length of the download.
- *
- * `font-display: swap` on all four faces. `optional` would avoid the swap flash
- * by never swapping on a slow connection, which trades a layout shift for a
- * reader looking at the wrong type and never seeing the right one — the wrong
- * trade for a product whose thesis is that the evidence is legible.
+ * `size-adjust` compares x-heights against the one local face named: 54.6/51.86 for Inter
+ * against Arial, 55.0/52.9 for the mono against Consolas.
  */
 
 @font-face {
-  font-family: 'Geist';
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url('../assets/fonts/geist-var.woff2') format('woff2');
+  src: url('../assets/fonts/inter-var.woff2') format('woff2');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: 'Geist Fallback';
+  font-family: 'Inter Fallback';
   src: local('Arial');
   font-style: normal;
   font-weight: 100 900;
-  ascent-override: 100.5%;
-  descent-override: 29.5%;
+  ascent-override: 96.9%;
+  descent-override: 24.1%;
   line-gap-override: 0%;
-  size-adjust: 102.2%;
+  size-adjust: 105.28%;
 }
 
 @font-face {
-  font-family: 'Geist Mono';
+  font-family: 'JetBrains Mono';
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400;
   font-display: swap;
-  src: url('../assets/fonts/geist-mono-var.woff2') format('woff2');
+  src: url('../assets/fonts/jetbrains-mono-regular.woff2') format('woff2');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: 'Geist Mono Fallback';
+  font-family: 'JetBrains Mono Fallback';
   src: local('Consolas');
   font-style: normal;
-  font-weight: 100 900;
-  ascent-override: 100.5%;
-  descent-override: 29.5%;
+  font-weight: 400;
+  ascent-override: 102%;
+  descent-override: 30%;
   line-gap-override: 0%;
-  size-adjust: 100.19%;
+  size-adjust: 103.97%;
 }
 
 /*
  * Inter Display, one weight (design language v2). The display cut of Inter, drawn for
- * large sizes: tighter spacing and sharper joins than the text cut. It sets the hero
- * verdict and page titles only; everything that is read stays in Geist. One static
+ * large sizes: tighter spacing and sharper joins than the text cut. It sets the large
+ * numbers only; everything that is read is in Inter. One static
  * SemiBold (~114KB) rather than the variable family (~350KB), because the display
- * sizes use one weight. No metrics fallback: it falls back to Geist, which shares the
+ * sizes use one weight. No metrics fallback: it falls back to Inter, which shares the
  * Latin x-height closely enough at display sizes that the swap does not move a line.
  */
 @font-face {
@@ -131,9 +94,9 @@
  * needs the mono reaches for `var(--lupin-font-mono)`.
  */
 :root {
-  --lupin-font-sans: 'Geist', 'Geist Fallback', ui-sans-serif, system-ui, sans-serif;
-  --lupin-font-mono: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, monospace;
-  --lupin-font-display: 'Inter Display', 'Geist', 'Geist Fallback', ui-sans-serif, sans-serif;
+  --lupin-font-sans: 'Inter', 'Inter Fallback', ui-sans-serif, system-ui, sans-serif;
+  --lupin-font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, monospace;
+  --lupin-font-display: 'Inter Display', 'Inter', 'Inter Fallback', ui-sans-serif, sans-serif;
 }
 
 /*
@@ -143,8 +106,7 @@
  * `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, …` — so every `font-mono`
  * in this product rendered in whatever the operating system happened to have, which
  * on Windows is Consolas. The run id, the digest, the score and the stack trace all
- * set `font-mono`, in a product whose own header says "Geist Mono for everything
- * that is a reading". The committed binary was loaded and then not used.
+ * set `font-mono`, so the committed mono was loaded and then not used.
  *
  * `@theme inline`, not `@theme`, and the difference is the point: `inline` substitutes
  * the `var()` into the utility so `font-mono` compiles to

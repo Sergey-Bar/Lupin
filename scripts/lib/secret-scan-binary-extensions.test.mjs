@@ -123,8 +123,8 @@ test('the real committed fonts are on the skip list rather than merely absent', 
   // files this repository actually ships, so a font added later without the
   // extension is caught here rather than in a commit hook.
   const fonts = [
-    'packages/ui/src/assets/fonts/geist-var.woff2',
-    'packages/ui/src/assets/fonts/geist-mono-var.woff2',
+    'packages/ui/src/assets/fonts/inter-var.woff2',
+    'packages/ui/src/assets/fonts/jetbrains-mono-regular.woff2',
   ];
   for (const font of fonts) {
     assert.ok(

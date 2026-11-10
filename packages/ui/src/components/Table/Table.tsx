@@ -201,7 +201,7 @@ export const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(
          * `tabular-nums` because a digit is proportional by default and a column of scores
          * shifts sideways every time one updates; `text-end` because a right edge is the
          * only alignment that puts the last digit in the same place on every row; and
-         * `font-mono` because the design language sets Geist Mono for anything a
+         * `font-mono` because the design language sets the mono for anything a
          * person compares character by character, which a column of scores is.
          */
         numeric && 'tabular-nums text-end font-mono',

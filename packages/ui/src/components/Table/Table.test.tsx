@@ -167,7 +167,7 @@ describe('Table keyboard operation', () => {
  *    since it was written and the product has had throughout.
  * 2. **`text-right`** — figures are compared down a column, and a right edge is the only
  *    alignment where the *last* digit is in the same place on every row.
- * 3. **`font-mono`** — the design language says Geist Mono for anything a person
+ * 3. **`font-mono`** — the design language says the mono for anything a person
  *    compares character by character, and a column of scores is that.
  */
 describe('a numeric cell', () => {

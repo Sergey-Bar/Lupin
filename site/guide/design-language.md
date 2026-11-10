@@ -1,6 +1,6 @@
 ---
 title: The design language
-description: A flat plane, the Lupin violet, Geist, calm motion and one translucent material for what floats — and the numbers every token has to clear.
+description: A flat plane, the Lupin blue, Inter, calm motion and one translucent material for what floats — and the numbers every token has to clear.
 ---
 
 # The design language
@@ -33,9 +33,9 @@ translucent; nothing a reader is meant to read sits behind glass.
 
 ## The brand
 
-Lupin has **no logo mark**. The brand is the name, set as type, plus the one violet.
+Lupin has **no logo mark**. The brand is the name, set as type, plus the one blue.
 
-**The wordmark** is "Lupin." in Geist, semibold, at tight tracking (`-0.02em`), with the full
+**The wordmark** is "Lupin." in Inter, semibold, at tight tracking (`-0.02em`), with the full
 stop in the accent. It is the `Wordmark` component in `packages/ui`, and the console's top
 bar, this site's nav and its footer all draw that one shape. Sizes come from the type scale:
 `sm` (base), `md` (lg, the chrome size) and `lg` (3xl, a setup or sign-in screen).
@@ -170,8 +170,8 @@ in the decorative border.
 
 Two families, and the rule is which of them a string is.
 
-- **Geist** for everything that is read.
-- **Geist Mono** for everything that is a reading: run ids, digests, stack traces, JUnit
+- **Inter** for everything that is read.
+- **JetBrains Mono** for everything that is a reading: run ids, digests, stack traces, JUnit
   output, and every column of numbers, in `tabular-nums`.
 
 The two faces share one vertical design, so a run id beside a sentence sits on the same
@@ -179,8 +179,8 @@ baseline and x-height. Both are variable (`wght` 100–900), woff2, committed on
 `packages/ui/src/assets/fonts/` with the upstream repository, the commit, the OFL licence
 file and a sha256 in `fonts-lock.json`; `fonts.test.ts` checks the lock in both directions.
 
-**Optical size, without an optical axis.** Geist has no `opsz`, so the correction a display
-cut would make is made in the type ladder: every step carries its own letter-spacing,
+**Optical size.** Inter carries an `opsz` axis, and the type ladder still carries the correction a display
+cut would make, so it holds in a fallback face: every step carries its own letter-spacing,
 closing up as the size grows (+0.01em at 12px to −0.035em at the display step), and the
 steps from 24px up carry a heading weight between 550 and 650. `theme.test.ts` asserts both
 relations rather than a list of values.

@@ -173,19 +173,28 @@ describe('fonts.css declares each locked face', () => {
   });
 
   it('publishes exactly three font stacks, as custom properties', () => {
-    // Three families: Geist for reading, Geist Mono for readings, and Inter Display for
-    // the one large verdict and the page titles (design language v2). A fourth face is a
+    // Three families (design language v3): Inter for everything that is read, JetBrains
+    // Mono for readings, and Inter Display for the large numbers. A fourth face is a
     // decision somebody makes in a component and not in this file, so the count is asserted.
     expect(fontsCss.match(/--lupin-font-(?:sans|mono|display):/g)).toHaveLength(3);
-    expect(fontsCss).toContain("--lupin-font-sans: 'Geist', 'Geist Fallback'");
-    expect(fontsCss).toContain("--lupin-font-mono: 'Geist Mono', 'Geist Mono Fallback'");
-    expect(fontsCss).toContain("--lupin-font-display: 'Inter Display', 'Geist'");
+    expect(fontsCss).toContain("--lupin-font-sans: 'Inter', 'Inter Fallback'");
+    expect(fontsCss).toContain("--lupin-font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback'");
+    expect(fontsCss).toContain("--lupin-font-display: 'Inter Display', 'Inter'");
   });
 });
 
 describe('the display face', () => {
   it('is locked, so the hero verdict ships in a face somebody recorded', () => {
     expect(lock.fonts.map((font) => font.family)).toContain('Inter Display');
+  });
+
+  it('retires Geist: no committed binary and no stack names it', () => {
+    expect(lock.fonts.map((font) => font.family)).toEqual([
+      'Inter',
+      'JetBrains Mono',
+      'Inter Display',
+    ]);
+    expect(fontsCss).not.toMatch(/Geist/u);
   });
 
   it('is published to Tailwind as font-display', () => {
@@ -195,8 +204,8 @@ describe('the display face', () => {
 
 describe('the fallback carries the measured metrics, not conventional ones', () => {
   const cases = [
-    { family: 'Geist', fallback: 'Geist Fallback', local: 'Arial' },
-    { family: 'Geist Mono', fallback: 'Geist Mono Fallback', local: 'Consolas' },
+    { family: 'Inter', fallback: 'Inter Fallback', local: 'Arial' },
+    { family: 'JetBrains Mono', fallback: 'JetBrains Mono Fallback', local: 'Consolas' },
   ] as const;
 
   it.each(cases)('$family Fallback declares a local $local face', (entry) => {

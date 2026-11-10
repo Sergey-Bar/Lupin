@@ -345,9 +345,6 @@ function rem(variable: string, scales: Map<string, string>): number {
  */
 const TYPE_STEPS = ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl'] as const;
 
-/** The steps on the geometric ladder — everything at or above `base`. */
-const LADDER_STEPS = TYPE_STEPS.slice(TYPE_STEPS.indexOf('base'));
-
 const LEADING_STEPS = ['none', 'tight', 'snug', 'normal', 'relaxed', 'loose'] as const;
 const TRACKING_STEPS = ['tighter', 'tight', 'normal', 'wide', 'wider', 'widest'] as const;
 const RADIUS_STEPS = ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'] as const;
@@ -421,35 +418,26 @@ describe('the scales the product renders from', () => {
   const radius = themeScale('--radius-');
   const zIndex = themeScale('--z-index-');
 
-  it('states the type ladder as a ratio, rather than leaving it to be inferred', () => {
-    // The ratio is a *number in the stylesheet*. A ladder whose steps are hand-tuned
-    // can only be reviewed, which is what happened: `theme.test.ts:278` asserted six
-    // sizes in a table nobody rendered while the product's heading was a seventh value
-    // no test could see.
-    const declared = themeScale('--lupin-type-').get('--lupin-type-ratio');
-    if (declared === undefined) {
-      throw new Error(
-        'theme.css does not declare --lupin-type-ratio, so the relationship between ' +
-          'the sizes is implied rather than stated. That is the defect this assertion exists for.',
-      );
-    }
-    const ratio = Number(declared);
-    expect(Number.isFinite(ratio), `--lupin-type-ratio is "${declared}"`).toBe(true);
-    expect(ratio).toBeGreaterThan(1.05);
-    expect(ratio).toBeLessThan(1.35);
-  });
+  /**
+   * Design language v3: a named scale, set the way Apple's text styles are, rather than a
+   * geometric ladder. Each size is a decision a reviewer reads (12 caption, 13 secondary,
+   * 15 body, 17 emphasis, 22 section, 28 page title, 40 the one large number), and this table
+   * is the authority for it: a size retuned here without the test is a failing assertion.
+   */
+  const V3_SCALE_PX: ReadonlyArray<readonly [string, number]> = [
+    ['xs', 12],
+    ['sm', 13],
+    ['base', 15],
+    ['lg', 17],
+    ['xl', 22],
+    ['2xl', 28],
+    ['3xl', 34],
+    ['4xl', 40],
+    ['5xl', 48],
+  ];
 
-  it.each(LADDER_STEPS)('puts %s one declared ratio above the step below it', (step) => {
-    const ratio = Number(themeScale('--lupin-type-').get('--lupin-type-ratio'));
-    const base = rem('--text-base', text);
-    const position = LADDER_STEPS.indexOf(step);
-    const expected = base * Math.pow(ratio, position);
-    const measured = rem(`--text-${step}`, text);
-    expect(
-      Math.abs(measured - expected) / expected,
-      `--text-${step} is ${String(measured)}rem and the ladder says it should be ` +
-        `${expected.toFixed(4)}rem (base ${String(base)}rem x ${String(ratio)}^${String(position)})`,
-    ).toBeLessThan(0.005);
+  it.each(V3_SCALE_PX)('sets --text-%s to %ipx, as the v3 scale names it', (step, px) => {
+    expect(rem(`--text-${step}`, text) * 16).toBeCloseTo(px, 2);
   });
 
   it('orders every size, and floors the two sub-base steps at 12px', () => {
@@ -1290,14 +1278,14 @@ describe('design token source', () => {
   describe('the hues are the ones the decision names', () => {
     /**
      * Colour is meaning. The accent is not in this table because it is not a verdict: it
-     * is the brand violet, used for focus, the active state, links and the primary fill,
+     * is the brand blue (design language v3), used for focus, the active state, links and the primary fill,
      * and the case below holds it at least 20 degrees from info so it is never read as one.
      */
     const HUES: ReadonlyArray<readonly [string, string, number]> = [
       ['success', '--lupin-success', 148],
       ['warning', '--lupin-warning', 72],
       ['danger', '--lupin-danger', 25],
-      ['info', '--lupin-info', 258],
+      ['info', '--lupin-info', 210],
     ];
 
     /** The shortest way round the hue circle, so 253 and 3 are 10 apart. */
@@ -1321,16 +1309,16 @@ describe('design token source', () => {
       },
     );
 
-    it.each(BOTH_SELECTORS)('keeps the accent the Lupin violet in %s', (selector) => {
-      // The accent is the brand: violet, the colour of the site's wordmark dot and primary
+    it.each(BOTH_SELECTORS)('keeps the accent the Lupin blue in %s', (selector) => {
+      // The accent is the brand: blue (v3), the colour of the site's wordmark dot and primary
       // action. Held to a hue band rather than one number, because each theme tunes its
       // lightness and a few degrees of hue move with it.
       const accent = oklch(variableValue(selector, '--lupin-accent'));
       expect(
         accent.hue,
-        `the accent is at hue ${accent.hue.toFixed(1)} in ${selector}, outside the violet band 280–300`,
-      ).toBeGreaterThanOrEqual(280);
-      expect(accent.hue).toBeLessThanOrEqual(300);
+        `the accent is at hue ${accent.hue.toFixed(1)} in ${selector}, outside the blue band 230–250`,
+      ).toBeGreaterThanOrEqual(230);
+      expect(accent.hue).toBeLessThanOrEqual(250);
       expect(
         accent.chroma,
         `the accent has chroma ${accent.chroma.toFixed(3)} in ${selector}, so it reads as a grey`,
@@ -1340,7 +1328,7 @@ describe('design token source', () => {
     it.each(BOTH_SELECTORS)(
       'keeps the accent visibly apart from info, so the brand is never read as a note, in %s',
       (selector) => {
-        // Info is steel at 258 and the accent violet at about 290. Twenty degrees is the
+        // Info is slate at 210 and the accent blue at about 240. Twenty degrees is the
         // same separation the run states are held to below, for the same reason.
         const distance = hueDistance(
           oklch(variableValue(selector, '--lupin-accent')).hue,

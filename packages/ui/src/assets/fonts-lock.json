@@ -1,54 +1,43 @@
 {
   "$comment": [
-    "The two committed font binaries, with the upstream they came from and a",
-    "sha256 for each. `fonts.test.ts` is what reads this file, and it reads it in",
-    "both directions: a recorded digest that does not match the file, and a file",
-    "in `assets/fonts/` with no row here. The second direction is the one that",
-    "matters — a binary nobody recorded is a binary nobody checked.",
+    "The three committed font binaries (design language v3), with the upstream they came from and a",
+    "sha256 for each. `fonts.test.ts` reads this file in both directions: a recorded digest that does",
+    "not match the file, and a file in `assets/fonts/` with no row here.",
     "",
-    "A hash answers 'did the file change', not 'is the file safe'. That is why the",
-    "upstream repository and the commit it was taken from are recorded next to it:",
-    "replacing the file with something else requires editing this row, which is a",
-    "diff somebody reads. It is the same reasoning `.kilo/skills-lock.json` carries",
-    "for the vendored skills, and it is why both exist.",
+    "A hash answers \"did the file change\", not \"is the file safe\". The upstream repository and the",
+    "commit are recorded so replacing a file means editing a row somebody reads.",
     "",
-    "Geist and Geist Mono replaced Archivo and JetBrains Mono in 4.0.0, when the",
-    "product took the site's type. The files are the ones the site had pinned, moved",
-    "here byte for byte, so the product and the site load one copy of each face.",
-    "",
-    "`unicodeRange` is the range `fonts.css` asks the browser to fetch the face for —",
-    "Latin and the punctuation and arrows the console uses — and the two are asserted",
-    "together: a range the stylesheet does not declare is a face that silently falls",
-    "back for part of the text."
+    "Inter and JetBrains Mono replaced Geist and Geist Mono in v3. Inter carries an optical-size axis",
+    "(opsz 14-32), so text and titles each get the cut drawn for their size; the subset keeps it."
   ],
   "fonts": [
     {
-      "family": "Geist",
-      "file": "geist-var.woff2",
-      "upstream": "https://github.com/vercel/geist-font",
-      "revision": "b5d164a0c066c2c9bfcd5ab65dd8244551f0ac06",
-      "source": "Geist-Variable.woff2, the variable face the documentation site pinned to this revision in `site/public/fonts/manifest.json` before 4.0.0",
+      "family": "Inter",
+      "file": "inter-var.woff2",
+      "upstream": "https://github.com/rsms/inter",
+      "revision": "e3a3d4c57d5ecc01453a575621882a384c1995a3",
+      "source": "web/InterVariable.woff2 from the v4.1 release archive (Inter-4.1.zip), subset with fontTools pyftsubset to the range below, --flavor=woff2 --layout-features=*; the script is .agents/tasks/design-system-brand-refresh/fonts-v3.py",
       "licence": "SIL Open Font License 1.1",
-      "licenceFile": "geist-OFL.txt",
+      "licenceFile": "inter-OFL.txt",
       "axes": {
         "wght": "100 900"
       },
       "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
-      "sha256": "2ffebe993e969069a9789d15164b7715d42491b5835516c5e3b935d5f81b05f1"
+      "sha256": "c06b669f205db2eee59d2db259cfee44930a2f19a1808611e12ce164cab5a952"
     },
     {
-      "family": "Geist Mono",
-      "file": "geist-mono-var.woff2",
-      "upstream": "https://github.com/vercel/geist-font",
-      "revision": "b5d164a0c066c2c9bfcd5ab65dd8244551f0ac06",
-      "source": "GeistMono-Variable.woff2, the variable face the documentation site pinned to this revision in `site/public/fonts/manifest.json` before 4.0.0",
+      "family": "JetBrains Mono",
+      "file": "jetbrains-mono-regular.woff2",
+      "upstream": "https://github.com/JetBrains/JetBrainsMono",
+      "revision": "cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9",
+      "source": "fonts/webfonts/JetBrainsMono-Regular.woff2 from the v2.304 release archive, subset with fontTools pyftsubset to the range below, --flavor=woff2 --layout-features=*; the script is .agents/tasks/design-system-brand-refresh/fonts-v3.py",
       "licence": "SIL Open Font License 1.1",
-      "licenceFile": "geist-OFL.txt",
+      "licenceFile": "jetbrains-mono-OFL.txt",
       "axes": {
-        "wght": "100 900"
+        "wght": "400"
       },
       "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
-      "sha256": "afaacc4c5fbba89d2ebf7a02dc4070208540874592a5504d57175782fe893101"
+      "sha256": "fe2b0940768256ceaece4a1868a0b977e6b6b41d29dadcee8eda0f069b23b65b"
     },
     {
       "family": "Inter Display",
@@ -68,35 +57,25 @@
   "unitsPerEm": 1000,
   "measuredMetrics": {
     "$comment": [
-      "The vertical metrics `fonts.css` writes into its `ascent-override` /",
-      "`descent-override` / `line-gap-override` descriptors, read out of each face's",
-      "`hhea` table, and the x-height out of its `OS/2` table, at `unitsPerEm` above.",
-      "",
-      "Measured by decompressing each woff2 (brotli) and reading the untransformed",
-      "`head`, `hhea` and `OS/2` tables; `head.magicNumber` was checked as 0x5F0F3CF5,",
-      "so the table offsets were right. Both faces share one vertical design:",
-      "ascent 1005, descent -295, lineGap 0, x-height 530, cap height 710.",
-      "",
-      "`fonts.test.ts` asserts these are the numbers in the stylesheet. That is a",
-      "link, not a measurement — the test does not parse the woff2 — so the",
-      "provenance is recorded here where a reviewer can check it, and the assertion",
-      "is what stops someone re-tuning the overrides without re-measuring."
+      "Read with fontTools from the subset binaries: hhea ascent/descent/lineGap and OS/2 sxHeight,",
+      "normalised to unitsPerEm 1000. Inter is drawn at 2048 units (ascent 1984, descent -494,",
+      "x-height 1118, cap 1490); JetBrains Mono at 1000 (1020, -300, 550, 730)."
     ],
-    "Geist": {
-      "ascent": 1005,
-      "descent": -295,
+    "Inter": {
+      "ascent": 969,
+      "descent": -241,
       "lineGap": 0,
-      "xHeight": 530,
-      "capHeight": 710,
+      "xHeight": 546,
+      "capHeight": 728,
       "fallbackFace": "Arial",
       "fallbackXHeightPerCent": 51.86
     },
-    "Geist Mono": {
-      "ascent": 1005,
-      "descent": -295,
+    "JetBrains Mono": {
+      "ascent": 1020,
+      "descent": -300,
       "lineGap": 0,
-      "xHeight": 530,
-      "capHeight": 710,
+      "xHeight": 550,
+      "capHeight": 730,
       "fallbackFace": "Consolas",
       "fallbackXHeightPerCent": 52.9
     }
