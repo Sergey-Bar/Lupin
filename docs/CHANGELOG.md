@@ -4,11 +4,23 @@
 
 ## Unreleased - the console, simplified
 
+### Added
+
+- **The copilot.** "Explain this run" (or `e`) on a failed run answers from the run's own
+  results, groups the failures by cause and links every test it names. Its proposed actions
+  (retry the failed tests, quarantine a flaky one) run only after one confirmation, through the
+  same guarded routes as the page's buttons. Type a question in the command palette and choose
+  "Ask Lupin" to open a side panel that keeps the thread. Without a configured model the answers
+  are rule-based: `POST /api/v1/copilot/explain` and `POST /api/v1/copilot/ask`, both viewer.
+- **Run detail** groups its failures by cause, folds the passes, and links the branch's last
+  green run and the run it first failed in.
+- **Home** has two views, Triage and Release, on the same verdict.
+
 ### Changed
 
-- **Three places.** The navigation is Home, Runs and Settings. Tests moved under Runs, and
-  Health and Delivery under Home, as named groups on the tab row. Every older address still opens
-  the page it always did.
+- **Five places.** The navigation is Home, Runs, Tests, Health and Settings; Health keeps four
+  tabs and puts the rest under More. Every older address still opens the page it always did.
+- **Type and colour.** Inter and JetBrains Mono replace Geist; the accent is blue, not violet.
 - **Home** is the release verdict and what needs you, nothing else. The setup checklist moved
   to Settings, and the product's numbers (score, metrics, pace, the report) to Health, under
   Details.
@@ -17,7 +29,7 @@
   width, with no tile row or second run list beside it.
 - **One button system.** At most one solid button per screen; a link drawn as a button is the
   new `ButtonLink`.
-- **Lupin's violet is the default palette**; the OpenCode palettes stay in Settings.
+- **Lupin's palette is the default**; the OpenCode palettes stay in Settings.
 - **Status marks** have a shape per state as well as a colour.
 
 ### Removed
