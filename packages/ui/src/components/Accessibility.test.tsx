@@ -54,6 +54,7 @@ import { ToolLogo } from './ToolLogo/ToolLogo.js';
 import { CountUp } from './CountUp/CountUp.js';
 import { Checkbox } from './Checkbox/Checkbox.js';
 import { MenuButton } from './MenuButton/MenuButton.js';
+import { Metric } from './Metric/Metric.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './Table/Table.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs/Tabs.js';
 import { Textarea } from './Textarea/Textarea.js';
@@ -313,6 +314,12 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
   { name: 'CountUp', element: <CountUp value={128} /> },
   { name: 'Checkbox', element: <Checkbox aria-label="Select all" /> },
   {
+    name: 'Metric',
+    element: (
+      <Metric label="Pass rate" value="94.2" unit="%" delta={-3.1} comparedWith="last week" />
+    ),
+  },
+  {
     name: 'MenuButton',
     element: (
       <MenuButton
@@ -429,7 +436,7 @@ describe('axe sweep over every shipped component', () => {
   it('covers every component directory that ships a component', () => {
     const shipped = shippedComponentNames();
     const covered = CASES.map((testCase) => testCase.name).sort();
-    expect(shipped.length).toBe(38);
+    expect(shipped.length).toBe(39);
     // Guards the case list below: a missing or extra entry fails here, with the
     // diff, rather than as a silently smaller sweep.
     expect(covered).toEqual(shipped);

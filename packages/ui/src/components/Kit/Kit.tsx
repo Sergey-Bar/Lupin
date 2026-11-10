@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils.js';
 import { StatusDot } from '../StatusDot/StatusDot.js';
+import { Metric } from '../Metric/Metric.js';
 
 /**
  * Kit v2 (design language v2): the four pieces every redesigned page is made of.
@@ -66,7 +67,15 @@ export function Hero({
   /** A small label above the word, e.g. "Release readiness · Storefront". */
   eyebrow?: React.ReactNode;
   /** The numbers behind the verdict, shown as a short row: "2 Failing · 146 Passed". */
-  facts?: readonly { label: string; value: string; testId?: string }[];
+  facts?: readonly {
+    label: string;
+    value: string;
+    testId?: string;
+    unit?: string;
+    delta?: number;
+    comparedWith?: string;
+    lowerIsBetter?: boolean;
+  }[];
   /** The action, at the end of the band. */
   children?: React.ReactNode;
   className?: string;
@@ -99,14 +108,16 @@ export function Hero({
       {facts === undefined || facts.length === 0 ? null : (
         <ul aria-label="In numbers" className="flex shrink-0 gap-6">
           {facts.map((fact) => (
-            <li key={fact.label} className="flex flex-col">
-              <span
-                {...(fact.testId === undefined ? {} : { 'data-testid': fact.testId })}
-                className="text-xl font-semibold text-fg"
-              >
-                {fact.value}
-              </span>
-              <span className="text-xs text-fg-muted">{fact.label}</span>
+            <li key={fact.label}>
+              <Metric
+                label={fact.label}
+                value={fact.value}
+                {...(fact.testId === undefined ? {} : { testId: fact.testId })}
+                {...(fact.unit === undefined ? {} : { unit: fact.unit })}
+                {...(fact.delta === undefined ? {} : { delta: fact.delta })}
+                {...(fact.comparedWith === undefined ? {} : { comparedWith: fact.comparedWith })}
+                {...(fact.lowerIsBetter === undefined ? {} : { lowerIsBetter: fact.lowerIsBetter })}
+              />
             </li>
           ))}
         </ul>
