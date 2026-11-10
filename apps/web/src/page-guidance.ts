@@ -336,7 +336,7 @@ export const pageGuidance = {
     purpose: 'Make the product quieter and easier to read, the way that suits you.',
     steps: [
       'Choose a theme: dark, light, or whatever the system uses.',
-      'Turn on focus mode to hide secondary navigation, or compact density to fit more.',
+      'Choose compact density to fit more on each screen.',
       'Reduce motion if movement is distracting.',
     ],
     remember: 'These settings are kept in this browser, so each device can read the way it needs.',
