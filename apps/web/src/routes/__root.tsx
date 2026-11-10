@@ -69,7 +69,6 @@ function RootComponent() {
                 <main
                   id="main"
                   tabIndex={-1}
-                  data-focus-column
                   className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 outline-none sm:px-6 sm:py-6"
                 >
                   {/*

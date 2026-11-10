@@ -103,18 +103,3 @@
     font-size: 93.75%;
   }
 }
-
-/*
- * Focus mode, outside every layer on purpose: an unlayered rule beats every layered one, so
- * `display: none` wins over a `grid` or `flex` utility on the same element.
- */
-html[data-focus='on'] [data-chrome='secondary'] {
-  display: none;
-}
-
-/* With the rest put away, the one thing left sits in a reading column, not across the window. */
-html[data-focus='on'] [data-focus-column] {
-  max-width: 56rem;
-  margin-inline: auto;
-  width: 100%;
-}
