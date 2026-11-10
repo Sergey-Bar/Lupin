@@ -52,6 +52,22 @@ describe('AreaPage', () => {
     expect(screen.getByText('the run table')).toBeVisible();
   });
 
+  it('keeps one order on every area page: the band, the list, then Details', () => {
+    show([item('a')], {
+      hero: <section aria-label="Failing">Two tests need a decision.</section>,
+      details: <p>numbers</p>,
+    });
+    const band = screen.getByRole('region', { name: 'Failing' });
+    const list = screen.getByRole('list', { name: 'Tests: what to do' });
+    const details = screen.getByTestId('area-details');
+    const follows = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(band, list) && follows(list, details)).toBe(true);
+    // Siblings in one column, so nothing is drawn beside the band or between them.
+    expect(band.parentElement).toBe(list.parentElement);
+    expect(list.parentElement).toBe(details.parentElement);
+  });
+
   it('lets a hero say the verdict once, rather than again in a line under it', () => {
     show([item('a')], { hero: <section aria-label="Failing">Two tests need a decision.</section> });
     expect(screen.getByRole('region', { name: 'Failing' })).toBeInTheDocument();

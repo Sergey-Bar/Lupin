@@ -1,6 +1,8 @@
 import React from 'react';
+import { Hero } from '@lupin/ui';
 import type { GithubPullItem } from '@lupin/shared-contracts';
 import { AreaPage, type AreaItem } from './AreaPage.js';
+import { areaHero } from '../lib/hero.js';
 import { useResource } from '../hooks/useResource.js';
 import { pullItems } from '../lib/attention.js';
 import { isNothingYet } from '../lib/nothing-yet.js';
@@ -46,6 +48,32 @@ export function DeliveryArea({
     <AreaPage
       title="Delivery"
       verdict={verdict}
+      {...(pulls.status === 'ready' && pulls.value.items.length > 0
+        ? {
+            hero: (() => {
+              const band = areaHero(
+                {
+                  bad: items.filter((item) => item.tone === 'bad').length,
+                  warn: items.filter((item) => item.tone === 'warn').length,
+                },
+                verdict,
+              );
+              return (
+                <Hero
+                  headingLevel={2}
+                  verdict={band.verdict}
+                  word={band.word}
+                  reason={band.reason}
+                  eyebrow="Open pull requests"
+                  facts={[
+                    { label: 'Stuck', value: String(items.length) },
+                    { label: 'Open', value: String(pulls.value.items.length) },
+                  ]}
+                />
+              );
+            })(),
+          }
+        : {})}
       items={items}
       navigate={navigate}
       clear={

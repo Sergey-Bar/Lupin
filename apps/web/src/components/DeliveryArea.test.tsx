@@ -31,6 +31,13 @@ const pull = {
 } as unknown as GithubPullItem;
 
 describe('DeliveryArea', () => {
+  it('opens on the same status band as Runs and Tests once the pull requests are read', async () => {
+    const listPulls = vi.fn(async () => ({ items: [pull], nextCursor: null }));
+    render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);
+    const band = await screen.findByRole('region', { name: 'Failing' });
+    expect(band).toHaveTextContent('1 pull request is stuck.');
+    expect(screen.queryByTestId('area-verdict')).toBeNull();
+  });
   it('draws at most one solid primary button on the screen', async () => {
     const listPulls = vi.fn(async () => ({ items: [pull], nextCursor: null }));
     render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);
@@ -41,7 +48,9 @@ describe('DeliveryArea', () => {
   it('leads with the stuck pull requests, and keeps the full list under Details', async () => {
     const listPulls = vi.fn(async () => ({ items: [pull], nextCursor: null }));
     render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);
-    expect(await screen.findByTestId('area-verdict')).toHaveTextContent('1 pull request is stuck.');
+    expect(await screen.findByRole('region', { name: 'Failing' })).toHaveTextContent(
+      '1 pull request is stuck.',
+    );
     expect(screen.getByTestId('area-item-pull-a')).toHaveTextContent(
       'PR #42 is blocked by failing checks',
     );
