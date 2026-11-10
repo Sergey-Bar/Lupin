@@ -15,7 +15,7 @@ import {
   type ScoreCell,
 } from '@lupin/shared-contracts';
 import { Dashboard, read, summariseReports } from './Dashboard';
-import { makeApi, makeQa, makeScan, makeTrend } from '../test-utils';
+import { cockpitFixture, makeApi, makeQa, makeScan, makeTrend } from '../test-utils';
 import type { QaClient } from '../lib/qa-client';
 import type { QaScore as WebQaScore } from '../lib/qa';
 import { expectOnePrimary } from '../test-utils.js';
@@ -110,9 +110,21 @@ function makeScore(cells?: ScoreCell[]): WebQaScore {
   return QaScoreSchema.parse(base);
 }
 
-function renderDashboard(qa: QaClient, api = makeApi(), projectId?: string) {
+function renderDashboard(
+  qa: QaClient,
+  api = makeApi(),
+  projectId?: string,
+  cockpit?: React.ComponentProps<typeof Dashboard>['cockpit'],
+) {
   const rootRoute = createRootRoute({
-    component: () => <Dashboard qa={qa} api={api} projectId={projectId} />,
+    component: () => (
+      <Dashboard
+        qa={qa}
+        api={api}
+        projectId={projectId}
+        {...(cockpit === undefined ? {} : { cockpit })}
+      />
+    ),
   });
   const router = createRouter({ routeTree: rootRoute });
   router.update({ history: createMemoryHistory({ initialEntries: ['/dashboard'] }) });
@@ -179,6 +191,17 @@ function qaWithScore(overrides: Partial<QaClient> = {}): QaClient {
 }
 
 describe('the dashboard', () => {
+  it('carries how the product is doing under Details, for the project it is about', async () => {
+    const cockpit = vi.fn(async () => cockpitFixture());
+    renderDashboard(qaWithScore(), makeApi(), undefined, cockpit);
+    const details = await screen.findByTestId('area-details');
+    const numbers = await within(details).findByTestId('cockpit-numbers');
+    expect(await within(numbers).findByTestId('cockpit-status')).toHaveTextContent('74');
+    expect(cockpit).toHaveBeenCalledWith(
+      { window: '7d', projectId: expect.any(String) },
+      expect.any(AbortSignal),
+    );
+  });
   it('draws at most one solid primary button on the screen', async () => {
     renderDashboard(qaWithScore());
     await screen.findByTestId('readiness-verdict');

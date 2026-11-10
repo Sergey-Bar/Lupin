@@ -51,7 +51,7 @@ describe('the Now route', () => {
   });
 
   it(
-    'is where / lands, and asks for the cockpit, the runs, the portfolio and the deliveries',
+    'is where / lands, and asks for the runs, the portfolio and the deliveries, not the numbers',
     async () => {
       const asked = stubFetch();
       window.scrollTo = () => undefined;
@@ -61,13 +61,14 @@ describe('the Now route', () => {
       });
       await waitFor(
         () => {
-          expect(asked.some((url) => url.includes('/api/v1/cockpit?window=7d'))).toBe(true);
           expect(asked.some((url) => url.includes('/runs'))).toBe(true);
           expect(asked.some((url) => url.includes('portfolio'))).toBe(true);
           expect(asked.some((url) => url.includes('deliveries'))).toBe(true);
         },
         { timeout: RENDER_TIMEOUT_MS },
       );
+      // The product's numbers moved to Health: Home does not read them.
+      expect(asked.some((url) => url.includes('/api/v1/cockpit'))).toBe(false);
     },
     RENDER_TIMEOUT_MS * 2,
   );
@@ -77,15 +78,21 @@ describe('the Now route', () => {
       const asked = stubFetch();
       window.scrollTo = () => undefined;
       render(<MemoryRouter initialEntries={['/dashboard/now?project=p-1']} />);
-      await waitFor(() => expect(asked.some((url) => url.includes('projectId=p-1'))).toBe(true), {
-        timeout: RENDER_TIMEOUT_MS,
-      });
+      await waitFor(
+        () => expect(asked.some((url) => url.includes('/projects/p-1/readiness'))).toBe(true),
+        {
+          timeout: RENDER_TIMEOUT_MS,
+        },
+      );
       const select = await screen.findByLabelText('Project');
       expect(select).toHaveValue('p-1');
       await userEvent.setup().selectOptions(select, 'p-2');
-      await waitFor(() => expect(asked.some((url) => url.includes('projectId=p-2'))).toBe(true), {
-        timeout: RENDER_TIMEOUT_MS,
-      });
+      await waitFor(
+        () => expect(asked.some((url) => url.includes('/projects/p-2/readiness'))).toBe(true),
+        {
+          timeout: RENDER_TIMEOUT_MS,
+        },
+      );
       await userEvent.setup().selectOptions(await screen.findByLabelText('Project'), '');
       await waitFor(() => expect(screen.getByLabelText('Project')).toHaveValue(''), {
         timeout: RENDER_TIMEOUT_MS,

@@ -70,6 +70,41 @@ describe('Settings · Appearance', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
+  it('carries the setup line while setup is unfinished, so Home does not have to', async () => {
+    const onboarding = {
+      done: 3,
+      total: 6,
+      dismissed: false,
+      steps: [
+        {
+          id: 'ai',
+          title: 'Connect an AI provider',
+          who: 'admin',
+          href: '/dashboard/settings/ai',
+          state: 'todo',
+        },
+      ],
+    };
+    render(
+      <ThemeProvider>
+        <PreferencesProvider>
+          <SettingsAppearancePage
+            setup={{
+              load: async () => onboarding as never,
+              dismiss: async () => onboarding as never,
+              role: async () => 'admin',
+            }}
+          />
+        </PreferencesProvider>
+      </ThemeProvider>,
+    );
+    expect(await screen.findByTestId('setup-checklist-progress')).toHaveTextContent('Setup 3 of 6');
+    expect(screen.getByRole('link', { name: 'Continue setup' })).toHaveAttribute(
+      'href',
+      '/dashboard/setup',
+    );
+  });
+
   it('asks only how the product looks: no role to pick and no focus mode to manage', () => {
     renderAppearance();
     expect(

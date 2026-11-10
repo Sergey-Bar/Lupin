@@ -20,7 +20,6 @@ import {
 import { metricPath, reportPath } from '../route-manifest.js';
 import { AttentionSection, type NowSources } from './Now.js';
 import { Delta, PageFrame, PageBody, PageHeader, Panel, Segmented } from './kit.js';
-import { SetupChecklist, type SetupChecklistSource } from './SetupChecklist.js';
 import { StatusLine } from './StatusLine.js';
 import { greetingFor } from '../lib/focus.js';
 import { isNothingYet } from '../lib/nothing-yet.js';
@@ -39,12 +38,9 @@ import { isNothingYet } from '../lib/nothing-yet.js';
  * missing reading cannot be mistaken for a flat one.
  */
 export interface CockpitSources {
-  cockpit: CockpitClient['getCockpit'];
   /** The projects the person may choose between. */
   projects: () => Promise<ReadonlyArray<{ id: string; name: string }>>;
   attention: NowSources;
-  /** The setup checklist; absent in a composition that has none (most tests). */
-  setup?: SetupChecklistSource;
   /** The release verdict the hero leads with, for the chosen project; absent, no hero. */
   readiness?: (projectId: string | undefined) => Promise<ReleaseReadinessCard>;
 }
@@ -82,45 +78,24 @@ export function CockpitPage({
   onProjectChange?: (projectId: string | undefined) => void;
 }): React.ReactElement {
   const [projectId, setProjectId] = React.useState<string | undefined>(initialProjectId);
-  const [window, setWindow] = React.useState<CockpitWindow>('7d');
-  const [reload, setReload] = React.useState(0);
-  useCommandActions([
-    {
-      id: 'cockpit-window-7d',
-      label: 'Cockpit: compare with the last 7 days',
-      onSelect: () => setWindow('7d'),
-    },
-    {
-      id: 'cockpit-window-release',
-      label: 'Cockpit: compare since the last release',
-      onSelect: () => setWindow('release'),
-    },
-  ]);
   return (
     <PageFrame data-testid="cockpit-page" className="gap-4 sm:gap-6">
       <PageHeader
         title={greetingFor((now ?? (() => new Date()))())}
         actions={
-          <div className="flex flex-wrap items-end gap-3">
-            <ProjectPicker
-              load={sources.projects}
-              value={projectId}
-              onChange={(next) => {
-                setProjectId(next);
-                onProjectChange?.(next);
-              }}
-            />
-            <Segmented<CockpitWindow>
-              label="Compare with"
-              options={WINDOWS}
-              value={window}
-              onChange={setWindow}
-            />
-          </div>
+          <ProjectPicker
+            load={sources.projects}
+            value={projectId}
+            onChange={(next) => {
+              setProjectId(next);
+              onProjectChange?.(next);
+            }}
+          />
         }
       />
+      {/* Home is two things: the verdict, then what needs you. The setup line lives in
+          Settings and the product's numbers on Health, so nothing here competes with them. */}
       <PageBody>
-        {/* The verdict first, Tesla-style: one word for the whole release. */}
         {sources.readiness === undefined ? null : (
           <NowHero
             key={projectId ?? ''}
@@ -129,48 +104,75 @@ export function CockpitPage({
             navigate={navigate}
           />
         )}
-        {/* Then the focus: what to do now, decided for the reader. */}
         <AttentionSection
           sources={sources.attention}
           navigate={navigate}
           underVerdict={sources.readiness !== undefined}
           {...(now === undefined ? {} : { now })}
         />
-        {sources.setup === undefined ? null : <SetupChecklist source={sources.setup} />}
-        {/* The numbers are one quiet line until asked for, so the page leads with one decision. */}
-        <details data-testid="cockpit-everything" data-chrome="secondary" className="group">
-          <summary className="cursor-pointer select-none rounded-md py-2 text-sm text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
-            How the product is doing
-          </summary>
-          <div className="mt-4">
-            {/* Keyed by the window and the reload, so a new read starts from loading and never
-              shows the previous window's headline under the new window's label. */}
-            <CockpitReading
-              key={`${projectId ?? ''}:${window}:${String(reload)}`}
-              sources={sources}
-              window={window}
-              projectId={projectId}
-              onRetry={() => setReload((count) => count + 1)}
-            />
-          </div>
-        </details>
       </PageBody>
     </PageFrame>
   );
 }
 
+/**
+ * How the product is doing: the score, the seven metrics, pace against quality and the report,
+ * for a window the reader chooses. Health draws it under Details for the project it is about.
+ */
+export function CockpitNumbers({
+  cockpit,
+  projectId,
+}: {
+  cockpit: CockpitClient['getCockpit'];
+  projectId: string | undefined;
+}): React.ReactElement {
+  const [window, setWindow] = React.useState<CockpitWindow>('7d');
+  const [reload, setReload] = React.useState(0);
+  useCommandActions([
+    {
+      id: 'cockpit-window-7d',
+      label: 'Numbers: compare with the last 7 days',
+      onSelect: () => setWindow('7d'),
+    },
+    {
+      id: 'cockpit-window-release',
+      label: 'Numbers: compare since the last release',
+      onSelect: () => setWindow('release'),
+    },
+  ]);
+  return (
+    <div data-testid="cockpit-numbers" className="flex flex-col gap-4">
+      <Segmented<CockpitWindow>
+        label="Compare with"
+        options={WINDOWS}
+        value={window}
+        onChange={setWindow}
+      />
+      {/* Keyed by the window and the reload, so a new read starts from loading and never
+          shows the previous window's headline under the new window's label. */}
+      <CockpitReading
+        key={`${projectId ?? ''}:${window}:${String(reload)}`}
+        cockpit={cockpit}
+        window={window}
+        projectId={projectId}
+        onRetry={() => setReload((count) => count + 1)}
+      />
+    </div>
+  );
+}
+
 function CockpitReading({
-  sources,
+  cockpit: load,
   window,
   projectId,
   onRetry,
 }: {
-  sources: CockpitSources;
+  cockpit: CockpitClient['getCockpit'];
   window: CockpitWindow;
   projectId: string | undefined;
   onRetry: () => void;
 }): React.ReactElement {
-  const state = useCockpit(sources.cockpit, { window, projectId });
+  const state = useCockpit(load, { window, projectId });
   // The chart is the heaviest part of the page and the last thing a reader needs, so it
   // loads after the headline and the cards have painted.
   const [chartReady, setChartReady] = React.useState(false);

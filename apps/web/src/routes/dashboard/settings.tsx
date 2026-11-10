@@ -45,7 +45,19 @@ const DeploymentPage = lazyPage(() => import('../../components/Deployment.js'), 
 export const SettingsAppearanceRoute = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/settings',
-  component: () => <SettingsAppearancePage />,
+  component: function SettingsLanding() {
+    // The setup line, while setup is unfinished: it left Home so Home is one decision.
+    const setup = React.useMemo(() => {
+      const settings = createSettingsClient();
+      const health = createHealthClient();
+      return {
+        load: () => settings.getOnboarding(),
+        dismiss: () => settings.dismissStep('checklist'),
+        role: async () => (await health.whoami()).role,
+      };
+    }, []);
+    return <SettingsAppearancePage setup={setup} />;
+  },
 });
 
 /**

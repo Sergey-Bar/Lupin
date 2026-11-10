@@ -44,6 +44,8 @@ import {
   useFitCount,
 } from './kit.js';
 import { ProjectGate } from './ProjectGate.js';
+import { CockpitNumbers } from './Cockpit.js';
+import type { CockpitClient } from '../lib/cockpit-client.js';
 import { FindingsColumns, VerdictHero } from './Readiness.js';
 import { healthItems, summarizeHealth, type HealthSummary } from '../lib/health-summary.js';
 import { AreaPage } from './AreaPage.js';
@@ -98,15 +100,24 @@ export function Dashboard({
   qa,
   api,
   projectId,
+  cockpit,
 }: {
   qa: QaClient;
   api: ApiClient;
   projectId?: string;
+  /** How the product is doing (score, metrics, pace), under Details. Absent, not drawn. */
+  cockpit?: CockpitClient['getCockpit'];
 }): React.ReactElement {
   return (
     <ProjectGate qa={qa} title="Health" projectId={projectId}>
       {(project, switcher) => (
-        <DashboardBody qa={qa} api={api} project={project} switcher={switcher} />
+        <DashboardBody
+          qa={qa}
+          api={api}
+          project={project}
+          switcher={switcher}
+          {...(cockpit === undefined ? {} : { cockpit })}
+        />
       )}
     </ProjectGate>
   );
@@ -117,11 +128,13 @@ function DashboardBody({
   api,
   project,
   switcher,
+  cockpit,
 }: {
   qa: QaClient;
   api: ApiClient;
   project: RegisteredProject;
   switcher: React.ReactNode;
+  cockpit?: CockpitClient['getCockpit'];
 }): React.ReactElement {
   const [days, setDays] = React.useState<WindowValue>('14');
   const snapshot = useResource<Snapshot>(
@@ -159,6 +172,11 @@ function DashboardBody({
           trendFailure={trend.status === 'error' ? trend.message : null}
         />
       ) : null}
+      {cockpit === undefined ? null : (
+        <Panel title="How the product is doing">
+          <CockpitNumbers cockpit={cockpit} projectId={project.id} />
+        </Panel>
+      )}
     </>
   );
   if (summary !== null && snapshot.status === 'ready') {

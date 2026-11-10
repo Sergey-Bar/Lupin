@@ -66,10 +66,11 @@ test.describe('onboarding', () => {
       /skipped|done/u,
     );
 
-    await page.goto(`${WEB_BASE}/dashboard/now`);
+    // The setup line lives in Settings now, so Home stays the verdict and what needs you.
+    await page.goto(`${WEB_BASE}/dashboard/settings`);
     await expect(page.getByTestId('setup-checklist')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('checklist-notifications')).toBeVisible();
-    await expectAccessible(page, 'cockpit with the checklist');
+    await expectAccessible(page, 'settings with the checklist');
   });
 
   test('every new Settings tab renders accessibly, and a field the environment sets is locked', async ({

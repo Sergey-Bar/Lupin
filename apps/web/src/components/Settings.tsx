@@ -3,6 +3,7 @@ import { PALETTE_OPTIONS, Select, isPalette } from '@lupin/ui';
 import { PageBody, PageFrame, PageHeader, Panel, Segmented } from './kit.js';
 import { useTheme, type Theme } from '../theme/ThemeProvider.js';
 import { usePreferences } from '../theme/preferences.js';
+import { SetupChecklist, type SetupChecklistSource } from './SetupChecklist.js';
 
 /**
  * Settings — the one place a reader changes how the product behaves.
@@ -28,7 +29,12 @@ const THEME_OPTIONS: ReadonlyArray<{ value: Theme; label: string }> = [
  * reads the way it needs. This is the first surface that gathers all four in one place;
  * until now focus, density and motion were only reachable from the command palette.
  */
-export function SettingsAppearancePage(): React.ReactElement {
+export function SettingsAppearancePage({
+  setup,
+}: {
+  /** The setup line, while setup is unfinished; it left Home so Home is one decision. */
+  setup?: SetupChecklistSource;
+} = {}): React.ReactElement {
   const { theme, setTheme, palette, setPalette } = useTheme();
   const { preferences, update } = usePreferences();
   return (
@@ -38,6 +44,7 @@ export function SettingsAppearancePage(): React.ReactElement {
         subtitle="How the product looks and behaves on this device. Kept in this browser."
       />
       <PageBody>
+        {setup === undefined ? null : <SetupChecklist source={setup} />}
         <Panel
           title="Theme"
           action={

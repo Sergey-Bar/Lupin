@@ -7,6 +7,7 @@ import { useReleaseReadiness } from '../hooks/useDashboard.js';
 import { Dashboard } from '../components/Dashboard.js';
 import { Panel, Quiet } from '../components/kit.js';
 import { createQaClient } from '../lib/qa-client.js';
+import { createCockpitClient } from '../lib/cockpit-client.js';
 import { defaultApiClient, type ApiClient, type Run } from '../lib/api.js';
 import { statusWord } from '../lib/status-word.js';
 
@@ -302,7 +303,15 @@ function DashboardLayout() {
 
   return (
     <div data-testid="dashboard-page" className="h-full min-h-0">
-      {isExactDashboard ? <Dashboard qa={createQaClient()} api={defaultApiClient} /> : <Outlet />}
+      {isExactDashboard ? (
+        <Dashboard
+          qa={createQaClient()}
+          api={defaultApiClient}
+          cockpit={(query, signal) => createCockpitClient().getCockpit(query, signal)}
+        />
+      ) : (
+        <Outlet />
+      )}
     </div>
   );
 }

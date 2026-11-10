@@ -3,11 +3,9 @@ import { createRoute, useNavigate } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { CockpitPage, type CockpitSources } from '../../components/Cockpit.js';
 import { defaultApiClient } from '../../lib/api.js';
-import { createCockpitClient } from '../../lib/cockpit-client.js';
 import { createHealthClient } from '../../lib/health-client.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
-import { createSettingsClient } from '../../lib/settings-client.js';
 import { createGithubClient } from '../../lib/github-client.js';
 
 /** The landing page: is the product better or worse than before, and what needs you. `/` lands here. */
@@ -22,14 +20,11 @@ export const Route = createRoute({
     const navigate = useNavigate();
     const { project } = Route.useSearch();
     const sources = React.useMemo<CockpitSources>(() => {
-      const cockpit = createCockpitClient();
       const health = createHealthClient();
       const notifications = createNotificationsClient();
       const qa = createQaClient();
-      const settings = createSettingsClient();
       const github = createGithubClient();
       return {
-        cockpit: (query, signal) => cockpit.getCockpit(query, signal),
         projects: async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name })),
         // The hero's verdict: the chosen project, else the first registered one.
         readiness: async (projectId) => {
@@ -43,11 +38,6 @@ export const Route = createRoute({
           deliveries: () => notifications.listDeliveries(),
           retryRun: (runId, scope) => defaultApiClient.retryRun(runId, undefined, { scope }),
           pulls: async () => (await github.listPulls({ state: 'open', limit: 50 })).items,
-        },
-        setup: {
-          load: () => settings.getOnboarding(),
-          dismiss: () => settings.dismissStep('checklist'),
-          role: async () => (await health.whoami()).role,
         },
       };
     }, []);
