@@ -90,7 +90,7 @@ function CopilotPanel({
     <aside
       data-testid="copilot-panel"
       aria-label="Copilot"
-      className="fixed inset-y-0 end-0 z-modal flex w-full max-w-md flex-col border-s border-border-default bg-surface-raised shadow-elevation-3 animate-fade-in"
+      className="fixed inset-y-0 end-0 z-modal flex w-full max-w-md flex-col border-s border-border-default surface-translucent shadow-elevation-3 animate-fade-in"
     >
       <header className="flex items-center justify-between border-b border-border-default px-4 py-3">
         <h2 className="text-sm font-semibold text-fg">Ask Lupin</h2>

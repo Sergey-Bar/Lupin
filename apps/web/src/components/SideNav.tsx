@@ -85,7 +85,7 @@ export function SideNav(_props: { api?: ApiClient }): React.ReactElement {
       data-testid="side-nav"
       data-collapsed={collapsed ? 'true' : 'false'}
       className={cn(
-        'sticky top-0 hidden h-dvh shrink-0 flex-col border-e border-border bg-surface transition-[width] duration-100 motion-reduce:transition-none lg:flex',
+        'sticky top-0 hidden h-dvh shrink-0 flex-col border-e border-border surface-translucent transition-[width] duration-100 motion-reduce:transition-none lg:flex',
         collapsed ? 'w-14' : 'w-60',
       )}
     >

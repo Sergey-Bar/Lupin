@@ -239,7 +239,9 @@ describe('the cockpit checklist', () => {
     expect(steps.tagName).toBe('DETAILS');
     expect(steps).not.toHaveAttribute('open');
     // Not a second solid button: the focus card above owns the one primary action.
-    expect(screen.getByRole('link', { name: 'Continue setup' })).not.toHaveClass('bg-primary');
+    expect(screen.getByRole('link', { name: 'Continue setup' })).not.toHaveClass(
+      'bg-primary-gradient',
+    );
   });
 
   it('lets focus mode put it away: setup is not the work', async () => {

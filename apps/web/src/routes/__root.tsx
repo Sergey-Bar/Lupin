@@ -60,7 +60,7 @@ function RootComponent() {
       <PreferencesProvider>
         <ToastProvider>
           <CopilotProvider>
-            <div className="relative flex h-dvh overflow-hidden bg-surface-sunken text-fg">
+            <div className="relative flex h-dvh overflow-hidden bg-surface-sunken bg-shell text-fg">
               <SkipLink />
               {/* From `lg` up the sidebar is the chrome: every section and tab, fixed beside the page. */}
               <SideNav />

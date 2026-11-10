@@ -53,6 +53,14 @@
     "The count is of *elements with a computed `backdrop-filter`*, not of elements carrying",
     "a glass class, so a token that stops applying stops counting.",
     "",
+    "**The ceiling is 1 on every route since 2026-11-10.** The premium pass makes the chrome",
+    "translucent: the sidebar, the phone top bar and bottom tab bar, and the copilot panel frost",
+    "the shell glow (`bg-shell`). They sit beside or above the page, never inside it, so depth is 1",
+    "and a panel inside a panel is still a failure. Measured before the change: depth 1 over 3",
+    "surfaces on all four routes, with LCP 176-220 ms against the 460 ms ceiling, unchanged from",
+    "the flat plane. Evidence stays opaque: theme-resolution.test.ts lists every translucent file.",
+    "",
+    "Before that:",
     "**The ceiling is 0 on every route, and still is after 4.0.0.** 4.0.0 admits one translucent",
     "material, `surface-translucent`, on the overlays only: the command palette, dialogs, popovers",
     "and toasts. None of them is open while a route is measured, and a closed dialog is opaque",
@@ -87,8 +95,8 @@
   "recordedOn": "2026-10-21",
   "routes": {
     "/dashboard": {
-      "$why": "The Overview: the first paint a person sees, and the screen that answers \"can I ship\". It replaced /login, which no longer exists (ADR-006). Opaque like everything else, so the glass depth is 0.",
-      "glassStackDepth": 0,
+      "$why": "The Overview: the first paint a person sees, and the screen that answers \"can I ship\". It replaced /login, which no longer exists (ADR-006). Opaque like everything else, Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
+      "glassStackDepth": 1,
       "lcpMs": 460,
       "inpMs": 150,
       "cls": 0.05,
@@ -101,8 +109,8 @@
       }
     },
     "/dashboard/runs": {
-      "$why": "The runs list. The heaviest of the four: every row is a run, and a slow one here is a dashboard that appears to hang. Opaque rows on an opaque plane, so the glass depth is 0.",
-      "glassStackDepth": 0,
+      "$why": "The runs list. The heaviest of the four: every row is a run, and a slow one here is a dashboard that appears to hang. Opaque rows on an opaque plane, Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
+      "glassStackDepth": 1,
       "lcpMs": 460,
       "inpMs": 150,
       "cls": 0.05,
@@ -115,8 +123,8 @@
       }
     },
     "/dashboard/runs/:runId": {
-      "$why": "Where a person decides whether a release is safe, so a rendering defect here is the most expensive one in the product. Evidence is never read through a translucent surface: the glass depth is 0.",
-      "glassStackDepth": 0,
+      "$why": "Where a person decides whether a release is safe, so a rendering defect here is the most expensive one in the product. Evidence is never read through a translucent surface: Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
+      "glassStackDepth": 1,
       "lcpMs": 460,
       "inpMs": 150,
       "cls": 0.05,
@@ -129,8 +137,8 @@
       }
     },
     "/dashboard/quarantine": {
-      "$why": "The filter surface, and the only primary flow whose content changes on every keystroke — so its INP is the reading most likely to catch an unthrottled re-render. Opaque, glass depth 0.",
-      "glassStackDepth": 0,
+      "$why": "The filter surface, and the only primary flow whose content changes on every keystroke — so its INP is the reading most likely to catch an unthrottled re-render. Opaque, Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
+      "glassStackDepth": 1,
       "lcpMs": 460,
       "inpMs": 150,
       "cls": 0.05,

@@ -636,6 +636,13 @@ describe('shipped theme class resolution', () => {
     'packages/ui/src/components/MenuButton/MenuButton.tsx',
     'packages/ui/src/components/Popover/Popover.tsx',
     'packages/ui/src/components/Toast/Toast.tsx',
+    // The chrome, since the 2026-11 premium pass: the sidebar, the phone top bar and bottom
+    // tab bar (both in NavBar.tsx) and the copilot panel. They frost the shell's glow
+    // (`bg-shell`), never evidence: no table, chart or card is translucent, and the
+    // rendering budget's glass depth of 1 per route is what holds that.
+    'apps/web/src/components/CopilotPanel.tsx',
+    'apps/web/src/components/NavBar.tsx',
+    'apps/web/src/components/SideNav.tsx',
   ];
 
   it('uses the translucent material on the floating layers and nowhere else', () => {
@@ -646,6 +653,15 @@ describe('shipped theme class resolution', () => {
     expect(adopters, 'the translucent material is used outside the floating layers').toEqual(
       [...TRANSLUCENT_LAYERS].sort(),
     );
+  });
+
+  it('puts the shell glow on the app shell only', () => {
+    const adopters = listComponentFiles()
+      .filter((file) => /\bbg-shell\b/.test(readFileSync(file, 'utf8')))
+      .map((file) => path.relative(repoRoot, file).replaceAll('\\', '/'));
+    expect(adopters, 'the shell glow is drawn behind something other than the shell').toEqual([
+      'apps/web/src/routes/__root.tsx',
+    ]);
   });
 
   it('puts the ambient gradient only on the entry surfaces', () => {

@@ -63,7 +63,7 @@ export function NavBar(): React.ReactElement {
     <nav
       data-testid="nav-bar"
       aria-label="Primary navigation"
-      className="relative flex h-14 shrink-0 items-center gap-x-6 border-b border-border bg-surface px-4 sm:px-6 lg:hidden"
+      className="relative flex h-14 shrink-0 items-center gap-x-6 border-b border-border surface-translucent px-4 sm:px-6 lg:hidden"
     >
       {/*
         The product's name, and the only place it appears in the chrome: "Lupin." with the
@@ -255,7 +255,7 @@ export function BottomTabBar(): React.ReactElement {
       data-testid="bottom-tab-bar"
       data-chrome="secondary"
       aria-label="Sections"
-      className="shrink-0 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="shrink-0 border-t border-border surface-translucent pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul className="grid grid-cols-6">
         {SECTIONS.map((section) => {

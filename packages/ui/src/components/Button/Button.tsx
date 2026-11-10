@@ -19,8 +19,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'text-on-fill bg-primary hover:opacity-90',
-        default: 'text-on-fill bg-primary hover:opacity-90',
+        primary: 'text-on-fill bg-primary-gradient shadow-elevation-1 hover:opacity-90',
+        default: 'text-on-fill bg-primary-gradient shadow-elevation-1 hover:opacity-90',
         secondary: 'border border-border-strong bg-transparent text-fg hover:bg-surface-muted',
         destructive: 'text-on-fill bg-error hover:opacity-90',
         outline: 'border border-border-strong bg-transparent text-fg hover:bg-surface-muted',

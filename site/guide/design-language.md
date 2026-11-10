@@ -257,11 +257,20 @@ as it appears in the file.
 
 ## One translucent material, for what floats
 
-The plane is flat. What is admitted is one material, `surface-translucent`, for the layers
-that float over it: the command palette, dialogs, popovers, menus and toasts. It is the only place
-a `backdrop-filter` is written — `theme.test.ts` fails on one anywhere else in the
-stylesheet, ESLint refuses a `backdrop-*` utility class, and `theme-resolution.test.ts`
-limits the material to those five components.
+The plane is solid. What is admitted is one material, `surface-translucent`, for the layers
+that float over it or frame it: the command palette, dialogs, popovers, menus and toasts, and
+since the 2026-11 premium pass the chrome (the sidebar, the phone top bar and tab bar, and
+the copilot panel). The chrome frosts the shell's glow (`bg-shell`, the brand blue from the top
+start and its cyan partner, `--lupin-accent-2`, from the bottom end), so the room has light in
+it while the evidence stays on solid panels. It is the only place a `backdrop-filter` is
+written — `theme.test.ts` fails on one anywhere else in the stylesheet, ESLint refuses a
+`backdrop-*` utility class, `theme-resolution.test.ts` limits the material to those eight
+files, and the rendering budget holds every primary route to a glass depth of 1.
+
+The one primary button per screen is the brand blue running into its cyan partner
+(`bg-primary-gradient`), flat under forced colours and more contrast. Cyan is never text and
+never a status. Each verdict band carries its verdict as a 2px top edge, the same colour as
+its mark, so the state reads from across the room while the panel stays neutral.
 
 - **Opaque first.** The first declaration is the raised plane step; the 90% tint and the
   16px blur are inside `@supports (backdrop-filter: …)`, so no browser shows a see-through

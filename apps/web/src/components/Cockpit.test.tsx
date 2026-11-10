@@ -717,7 +717,7 @@ describe('the hero verdict', () => {
     expect(navigate).toHaveBeenCalledWith('/dashboard');
     // The focus card below owns the one primary fill; the hero's way in is an edge.
     expect(action).toHaveClass('border-border-strong');
-    expect(action).not.toHaveClass('bg-primary');
+    expect(action).not.toHaveClass('bg-primary-gradient');
     // With nothing to act on, the focus list says nothing under the verdict: no "All clear"
     // beside a No-go.
     await waitFor(() => expect(screen.queryByTestId('now-loading')).toBeNull());

@@ -348,6 +348,11 @@
   --lupin-border-strong: oklch(55.34% 0.0141 275.92);
   /* The Lupin blue, lifted for the dark plane: focus, active, links, the primary fill. */
   --lupin-accent: oklch(77% 0.12 242);
+  /*
+   * The accent's partner, for light and gradients only: the shell's glow and the primary
+   * fill's far end. Never text, never a status, so cyan can never be read as a verdict.
+   */
+  --lupin-accent-2: oklch(82% 0.11 200);
   /* Restated off the Tailwind 500 steps. Hues 148 / 72 / 25. */
   --lupin-success: oklch(72.03% 0.1317 147.83);
   --lupin-warning: oklch(75.94% 0.1314 71.99);
@@ -391,6 +396,8 @@
   --lupin-border-strong: oklch(57.7% 0.0124 274.76);
   /* The Lupin blue: the primary button is blue with a white label, and a link is blue. */
   --lupin-accent: oklch(48% 0.15 242);
+  /* Deep enough that the white label on the primary gradient's far end still reads. */
+  --lupin-accent-2: oklch(50% 0.1 210);
   /*
    * The status colours are used as body text — `Alert` and `Toast` render
    * `text-success` over `bg-success/10`, and `StatCard` renders the trend in
@@ -563,6 +570,28 @@
     color-mix(in oklab, var(--lupin-accent) 10%, transparent),
     transparent 70%
   );
+  /*
+   * The shell's light: two soft glows, the brand blue from the top start and its cyan
+   * partner from the bottom end, so the translucent chrome has something to show through.
+   * Low alpha on purpose: it is a room, not a wallpaper, and text never sits on it directly.
+   */
+  --lupin-gradient-shell:
+    radial-gradient(
+      60% 50% at 0% 0%,
+      color-mix(in oklab, var(--lupin-accent) 14%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 45% at 100% 100%,
+      color-mix(in oklab, var(--lupin-accent-2) 11%, transparent),
+      transparent 70%
+    );
+  /* The one primary fill per screen: the brand blue running into its partner. */
+  --lupin-gradient-primary: linear-gradient(
+    135deg,
+    var(--lupin-accent),
+    color-mix(in oklab, var(--lupin-accent) 55%, var(--lupin-accent-2))
+  );
 }
 
 @utility surface-translucent {
@@ -595,4 +624,36 @@
 
 @utility bg-ambient {
   background-image: var(--lupin-gradient-ambient);
+}
+
+/* The app shell only: the glow behind the translucent chrome. */
+@utility bg-shell {
+  background-image: var(--lupin-gradient-shell);
+  background-attachment: fixed;
+
+  @media (prefers-reduced-transparency: reduce) {
+    background-image: none;
+  }
+
+  @media (prefers-contrast: more) {
+    background-image: none;
+  }
+
+  @media (forced-colors: active) {
+    background-image: none;
+  }
+}
+
+/* The one primary fill per screen. A flat accent under forced colours or more contrast. */
+@utility bg-primary-gradient {
+  background-color: var(--lupin-accent);
+  background-image: var(--lupin-gradient-primary);
+
+  @media (prefers-contrast: more) {
+    background-image: none;
+  }
+
+  @media (forced-colors: active) {
+    background-image: none;
+  }
 }

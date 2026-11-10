@@ -47,6 +47,18 @@ const WORD_TONE: Record<HeroVerdict, string> = {
 };
 
 /**
+ * The verdict as a 2px top edge, so the band reads from across the room. It is the verdict
+ * colour on a line, the same meaning as the mark beside the word: the panel itself stays
+ * neutral, so a red page is never a red wash.
+ */
+const EDGE_TONE: Record<HeroVerdict, string> = {
+  go: 'border-t-success',
+  caution: 'border-t-warning',
+  'no-go': 'border-t-danger',
+  unknown: 'border-t-border-strong',
+};
+
+/**
  * The page's status, as one compact band: a mark, the word in its tone, the one reason, the
  * numbers behind it, and the action at the end. A neutral surface, so colour is only on the
  * mark and the word, never a tinted panel; it is a line to read, not a poster to look at.
@@ -89,7 +101,8 @@ export function Hero({
       aria-labelledby={id}
       data-verdict={verdict}
       className={cn(
-        'flex animate-fade-in flex-col gap-4 rounded-lg border border-border bg-surface px-5 py-4 sm:flex-row sm:items-center sm:gap-6',
+        'flex animate-fade-in flex-col gap-4 rounded-lg border border-t-2 border-border bg-surface px-5 py-4 shadow-elevation-1 sm:flex-row sm:items-center sm:gap-6',
+        EDGE_TONE[verdict],
         className,
       )}
     >
