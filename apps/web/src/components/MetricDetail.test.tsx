@@ -30,7 +30,7 @@ describe('MetricDetailPage', () => {
     expect(summary).toHaveTextContent('(worse)');
     expect(summary).toHaveTextContent('from 70% at the start of the window');
     expect(screen.getByTestId('metric-scope')).toHaveTextContent('Service · main');
-    expect(screen.getByRole('link', { name: 'Back to the cockpit' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Back to the dashboard' })).toHaveAttribute(
       'href',
       '/dashboard/now',
     );

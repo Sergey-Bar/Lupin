@@ -309,7 +309,7 @@ function CockpitReading({
           <>
             <p className="text-sm font-medium text-fg">No project has sent results yet.</p>
             <p className="text-sm text-fg-muted">
-              The cockpit fills in after a repository is connected and its first run arrives.
+              The dashboard fills in after a repository is connected and its first run arrives.
             </p>
             <a
               href="/dashboard/setup"
@@ -320,7 +320,7 @@ function CockpitReading({
           </>
         ) : (
           <>
-            <p className="text-sm font-medium text-fg">The cockpit could not be read.</p>
+            <p className="text-sm font-medium text-fg">The dashboard could not be read.</p>
             <p className="text-sm text-fg-muted">{state.message}</p>
             <Button variant="outline" size="sm" onClick={onRetry}>
               Try again

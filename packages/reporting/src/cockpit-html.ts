@@ -358,7 +358,7 @@ export function renderCockpitHtml(cockpit: Cockpit): string {
     '</head>',
     '<body>',
     '<main>',
-    `<header><h1>Cockpit</h1><p class="scope">${scope}</p></header>`,
+    `<header><h1>Dashboard</h1><p class="scope">${scope}</p></header>`,
     `<section class="status tone-${TONE[cockpit.overall.status]}" aria-label="Status"><p class="score">${escapeHtml(formatValue('score', cockpit.overall.score))}</p><p class="headline">${escapeHtml(cockpit.headline)}</p>${overallLink === null ? '' : `<p><a href="${escapeHtml(overallLink)}" target="_blank" rel="noopener noreferrer">See the change</a></p>`}</section>`,
     `<section aria-labelledby="metrics"><h2 id="metrics">Metrics</h2><ul class="metrics">${cockpit.metrics.map(cardHtml).join('')}</ul></section>`,
     riskHtml(cockpit.risks),

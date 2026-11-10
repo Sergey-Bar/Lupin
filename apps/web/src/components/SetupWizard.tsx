@@ -276,7 +276,7 @@ function Finished({
           {done} of {total} steps done.{' '}
           {left.length === 0
             ? 'Everything is connected.'
-            : 'The cockpit keeps a checklist of what is left, so you can finish later.'}
+            : 'The dashboard keeps a checklist of what is left, so you can finish later.'}
         </p>
         {left.length === 0 ? null : (
           <ul className="grid gap-1 text-sm">

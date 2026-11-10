@@ -48,9 +48,9 @@ its source, then run `pnpm site:generate`.
 | Accessibility quality domain: **ingestion** of axe-core results                                     | `real`     |
 | Security and SARIF quality domain                                                                   | `deferred` |
 | Repository health grade, findings, triage and pull-request gate                                     | `real`     |
-| Cockpit: whether the product is better or worse than it was, and why                                | `real`     |
-| Cockpit: pull requests worth a look                                                                 | `real`     |
-| The cockpit as one self-contained HTML file                                                         | `real`     |
+| Dashboard: whether the product is better or worse than it was, and why                              | `real`     |
+| Dashboard: pull requests worth a look                                                               | `real`     |
+| The dashboard as one self-contained HTML file                                                       | `real`     |
 | SBOM inventory, VEX, licence policy and build provenance                                            | `real`     |
 | Mutation-testing results as Test effectiveness                                                      | `real`     |
 | Diff coverage of a commit, and its pull-request gate                                                | `real`     |
@@ -94,7 +94,7 @@ its source, then run `pnpm site:generate`.
 | Read-only MCP server over Streamable HTTP, and a stdio proxy for editors                            | `real`     |
 | Upload CLI and the GitHub composite action                                                          | `real`     |
 | Fingerprinted suppression policy                                                                    | `deferred` |
-| Product dashboard and KPI cockpit                                                                   | `real`     |
+| Product dashboard and KPIs                                                                          | `real`     |
 | Webwright, MCP, legacy automation, and admin surfaces                                               | `obsolete` |
 | Tauri desktop application                                                                           | `obsolete` |
 | Resumable source migration and reconciliation                                                       | `mock`     |

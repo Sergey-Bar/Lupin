@@ -5,7 +5,7 @@ Telegram, WhatsApp, Signal, or Lupin's own inbox. Open **Map → Reports**.
 
 ## What a report looks like
 
-The same five-second shape on every platform, and the same shape as the **Cockpit** page:
+The same five-second shape on every platform, and the same shape as the **Dashboard** page:
 
 ```
 🔴 Weekly quality report
@@ -21,9 +21,9 @@ A status you can see before you read, one sentence, at most three items worst fi
 how many more there are, and one link. A missed schedule — the server was off for a
 week — sends one catch-up report, never a backlog.
 
-### The cockpit at the head, and a chart
+### The dashboard at the head, and a chart
 
-When the workspace has a project, the report leads with the cockpit's own sentence, so a
+When the workspace has a project, the report leads with the dashboard's own sentence, so a
 channel message and the screen cannot disagree about whether the week was good, and up to
 three of the things that moved most:
 
@@ -44,19 +44,19 @@ text. A failure that may have delivered the message is not followed by a second 
 
 ### The link in a report
 
-The cockpit page has a **Project** menu when the workspace has more than one project. The
+The dashboard has a **Project** menu when the workspace has more than one project. The
 choice is kept in the address (`?project=`), so a shared link opens the same project, and its
 metric pages and the run banner stay on that project. _Latest report_ is the default: the
-project that reported most recently. A schedule can name its own project (the _Project_ menu on\nthe Reports page, shown when there is more than one), and its cockpit section is then about\nthat project; without one it follows that default.
+project that reported most recently. A schedule can name its own project (the _Project_ menu on\nthe Reports page, shown when there is more than one), and its dashboard section is then about\nthat project; without one it follows that default.
 
-The one link at the foot of a report opens the cockpit. It uses the address in
+The one link at the foot of a report opens the dashboard. It uses the address in
 `LUPIN_PUBLIC_URL` (`PUBLIC_APP_URL` outside the compose stack). While that address is a
 loopback one, such as the default `http://localhost:8080`, the report goes **without a
 link**, because the link would open the reader's own machine and not yours. Set it to the
 address people actually use, such as your [Cloudflare hostname](/guide/remote-cloudflare)
 or LAN name, and the link appears from the next report.
 
-The cockpit page lists, under _Worth a look_, the pull requests that match one of
+The dashboard lists, under _Worth a look_, the pull requests that match one of
 three stated facts: a large change with no test file, a merge with no approval from a
 person, and an open AI-attributed change nobody has approved. It is a list with the reason
 beside each, not a score. It reads pull requests the GitHub sync has stored.

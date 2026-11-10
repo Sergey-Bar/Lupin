@@ -609,7 +609,7 @@ describe('RunDetailPage from the cockpit', () => {
       }),
     );
 
-  it('says the cockpit names this run, when the person came from the cockpit and it does', async () => {
+  it('says the dashboard names this run, when the person came from the cockpit and it does', async () => {
     const getCockpit = named();
     render(
       <RunDetailPage

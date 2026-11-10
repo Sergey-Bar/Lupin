@@ -57,20 +57,20 @@ describe('ScoreImpactBanner', () => {
   it('names the run, what it is named for, and says possibly for a candidate', async () => {
     show('run-1');
     const banner = await screen.findByTestId('score-impact');
-    expect(banner).toHaveTextContent('The cockpit names this run.');
+    expect(banner).toHaveTextContent('The dashboard names this run.');
     expect(banner).toHaveTextContent('The overall score changed on this run’s commit.');
     expect(banner).toHaveTextContent('Possibly behind Coverage (-10 pts)');
     expect(banner).toHaveTextContent('Possibly behind Flaky tests (+3)');
     expect(banner).not.toHaveTextContent('Tests (');
   });
 
-  it('links each metric to its page for the same window, and back to the cockpit', async () => {
+  it('links each metric to its page for the same window, and back to the dashboard', async () => {
     show('run-1');
     expect(await screen.findByRole('link', { name: 'Coverage' })).toHaveAttribute(
       'href',
       '/dashboard/metric/coverage?window=7d&project=00000000-0000-4000-8000-000000000001',
     );
-    expect(screen.getByRole('link', { name: 'Back to the cockpit' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Back to the dashboard' })).toHaveAttribute(
       'href',
       '/dashboard/now',
     );

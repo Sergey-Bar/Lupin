@@ -53,7 +53,7 @@ export const routeManifest = [
   {
     id: 'now',
     path: '/dashboard/now',
-    label: 'Cockpit',
+    label: 'Dashboard',
     visible: true,
     section: 'now',
     tab: 'Now',

@@ -20,7 +20,7 @@ export const pageGuidance = {
   },
   metric: {
     purpose:
-      'See one metric of the cockpit in detail: its readings, what moved it, and where to act.',
+      'See one metric of the dashboard in detail: its readings, what moved it, and where to act.',
     steps: [
       'Read the value and how far it moved from the start of the window.',
       'Look at what was recorded while it moved. A run listed as possible is a candidate, not the cause.',
@@ -393,7 +393,7 @@ export const pageGuidance = {
       'Optionally connect an AI provider and choose where reports go.',
       'Invite your team, then run your first check.',
     ],
-    remember: 'Skip anything; the cockpit keeps a checklist of what is left.',
+    remember: 'Skip anything; the dashboard keeps a checklist of what is left.',
   },
   'settings-projects': {
     purpose: 'Connect, rename, re-scan and remove the repositories Lupin analyses.',

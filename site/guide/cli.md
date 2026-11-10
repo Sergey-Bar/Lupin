@@ -51,20 +51,20 @@ lupin deploy --environment production --status success --sha "$SHA"
 # Needs a branch: --branch, LUPIN_BRANCH, or GitHub Actions' own
 lupin agent-config --dir .
 
-# The cockpit as one HTML file that fetches nothing: attach it, or publish it as a CI artifact.
+# The dashboard as one HTML file that fetches nothing: attach it, or publish it as a CI artifact.
 # Reads the project's default branch unless --branch names another; --window 7d|release.
-lupin report --out artifacts/cockpit.html
+lupin report --out artifacts/dashboard.html
 ```
 
 `report` writes the file only if the server answered with a page, so a proxy's error page is never
 published as the report. Publishing it from GitHub Actions is one more step:
 
 ```yaml
-- run: lupin report --out artifacts/cockpit.html
+- run: lupin report --out artifacts/dashboard.html
 - uses: actions/upload-artifact@v4
   with:
-    name: cockpit
-    path: artifacts/cockpit.html
+    name: dashboard
+    path: artifacts/dashboard.html
 ```
 
 The file needs no account to open. It is a snapshot: it does not update, runs no script and makes

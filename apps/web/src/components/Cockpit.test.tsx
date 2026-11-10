@@ -322,7 +322,7 @@ describe('loading and failing', () => {
       .mockResolvedValue(cockpitFixture());
     show(cockpit);
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('The cockpit could not be read.');
+    expect(alert).toHaveTextContent('The dashboard could not be read.');
     expect(alert).toHaveTextContent('This workspace has no project to show');
     await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByTestId('cockpit-status')).toHaveTextContent('74');
