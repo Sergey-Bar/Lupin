@@ -5,6 +5,7 @@ import { SettingsAppearancePage } from './Settings';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { PreferencesProvider } from '../theme/preferences';
 import { expectNoBlockingAxeViolations } from '../test-axe';
+import { expectOnePrimary } from '../test-utils.js';
 
 function renderAppearance() {
   return render(
@@ -26,6 +27,11 @@ function pressed(groupLabel: string): string | null {
 }
 
 describe('Settings · Appearance', () => {
+  it('draws at most one solid primary button on the screen', async () => {
+    renderAppearance();
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');

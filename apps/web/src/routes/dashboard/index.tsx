@@ -292,7 +292,9 @@ export function RunsListPage({
     </>
   );
   const readiness = <ReleaseReadinessCard releaseId={latestReleaseId} api={api} />;
-  const headerActions = (
+  // The launch button is the page's primary only when nothing needs you; a needs-you row
+  // (Retry) owns the one solid fill otherwise.
+  const headerActions = (primary: boolean) => (
     <>
       <span
         data-testid="runs-live-state"
@@ -301,7 +303,12 @@ export function RunsListPage({
         <StatusDot status={isLive ? 'good' : 'unknown'} live={isLive} />
         {isLive ? 'Live' : 'Reconnecting'}
       </span>
-      <Button data-testid="launch-run-open" onClick={() => setLaunching(true)} className="min-h-11">
+      <Button
+        data-testid="launch-run-open"
+        variant={primary ? 'primary' : 'secondary'}
+        onClick={() => setLaunching(true)}
+        className="min-h-11"
+      >
         New browser run
       </Button>
     </>
@@ -329,7 +336,7 @@ export function RunsListPage({
   if (runs.length === 0) {
     return (
       <PageFrame data-testid="runs-list-page">
-        <PageHeader title="Runs" subtitle={subtitle} actions={headerActions} />
+        <PageHeader title="Runs" subtitle={subtitle} actions={headerActions(true)} />
         {table}
         {readiness}
         {launch}
@@ -367,7 +374,7 @@ export function RunsListPage({
         clear="Nothing to retry. The newest run on every branch passed."
         detailsOpen
         detailsTitle="Every run"
-        actions={headerActions}
+        actions={headerActions(items.length === 0)}
         details={
           // One list, the full width: the counts are in the status band above. The release's
           // own gate evidence follows the list (the release-readiness E2E reads it here); the

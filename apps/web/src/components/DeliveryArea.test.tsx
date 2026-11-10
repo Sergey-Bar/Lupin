@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { GithubPullItem } from '@lupin/shared-contracts';
 import { DeliveryArea } from './DeliveryArea.js';
+import { expectOnePrimary } from '../test-utils.js';
 
 const pull = {
   id: 'a',
@@ -30,6 +31,13 @@ const pull = {
 } as unknown as GithubPullItem;
 
 describe('DeliveryArea', () => {
+  it('draws at most one solid primary button on the screen', async () => {
+    const listPulls = vi.fn(async () => ({ items: [pull], nextCursor: null }));
+    render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);
+    await screen.findByTestId(/^area-item-/u);
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   it('leads with the stuck pull requests, and keeps the full list under Details', async () => {
     const listPulls = vi.fn(async () => ({ items: [pull], nextCursor: null }));
     render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);

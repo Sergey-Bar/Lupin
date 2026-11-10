@@ -19,6 +19,7 @@ import {
 } from '../../test-utils';
 import type { QaClient } from '../../lib/qa-client';
 import type { ApiClient } from '../../lib/api';
+import { expectOnePrimary } from '../../test-utils.js';
 
 function renderInsights(qa: QaClient, api: ApiClient = makeApi()) {
   const rootRoute = createRootRoute({ component: () => <InsightsPage qa={qa} api={api} /> });
@@ -28,6 +29,12 @@ function renderInsights(qa: QaClient, api: ApiClient = makeApi()) {
 }
 
 describe('the insights page', () => {
+  it('draws at most one solid primary button on the screen', async () => {
+    renderInsights(makeQa());
+    await waitFor(() => expect(screen.getByTestId('insights-flaky')).toBeInTheDocument());
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   it('leads with readiness, flakiness, recovery and the slowest test', async () => {
     renderInsights(makeQa());
     await waitFor(() => expect(screen.getByTestId('insights-flaky')).toBeInTheDocument());

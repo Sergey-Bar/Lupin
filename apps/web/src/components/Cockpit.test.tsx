@@ -7,6 +7,7 @@ import { cockpitFixture, cockpitMetric } from '../test-utils.js';
 import { QaApiError } from '../lib/qa-client.js';
 import { greetingFor } from '../lib/focus.js';
 import { CockpitPage, safeHref, type CockpitSources } from './Cockpit.js';
+import { expectOnePrimary } from '../test-utils.js';
 
 const NOW = new Date('2026-10-26T12:00:00.000Z');
 
@@ -35,6 +36,12 @@ afterEach(() => {
 });
 
 describe('the headline', () => {
+  it('draws at most one solid primary button on the screen', async () => {
+    show();
+    await screen.findByTestId('now-page');
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   it('opens on the one answer: the score, and the sentence that says why', async () => {
     show();
     const status = await screen.findByTestId('cockpit-status');

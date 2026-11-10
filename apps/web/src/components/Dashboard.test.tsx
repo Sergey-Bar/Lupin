@@ -18,6 +18,7 @@ import { Dashboard, read, summariseReports } from './Dashboard';
 import { makeApi, makeQa, makeScan, makeTrend } from '../test-utils';
 import type { QaClient } from '../lib/qa-client';
 import type { QaScore as WebQaScore } from '../lib/qa';
+import { expectOnePrimary } from '../test-utils.js';
 
 /**
  * The dashboard.
@@ -178,6 +179,12 @@ function qaWithScore(overrides: Partial<QaClient> = {}): QaClient {
 }
 
 describe('the dashboard', () => {
+  it('draws at most one solid primary button on the screen', async () => {
+    renderDashboard(qaWithScore());
+    await screen.findByTestId('readiness-verdict');
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   it('leads with the verdict, then what is wrong beside what is good', async () => {
     renderDashboard(qaWithScore());
     const verdict = await screen.findByTestId('readiness-verdict');

@@ -1715,3 +1715,27 @@ export function health(who: Partial<WhoAmI> = {}): HealthClient {
     })),
   } as unknown as HealthClient;
 }
+
+/**
+ * The one-primary rule: a screen draws at most one solid fill (`Button`/`ButtonLink`, variant
+ * `primary`). Two solid buttons on one screen leave the reader to choose which is the next
+ * step, which is the decision the page is for. Returns the solid controls' names.
+ */
+export function expectOnePrimary(container: HTMLElement): string[] {
+  const solid = [...container.querySelectorAll<HTMLElement>('a, button')].filter(
+    (element) =>
+      element.classList.contains('bg-primary') &&
+      element.classList.contains('text-on-fill') &&
+      // Not on screen: inside a closed native dialog, or hidden from everyone.
+      element.closest('dialog:not([open]), [hidden], [aria-hidden="true"]') === null,
+  );
+  const names = solid.map(
+    (element) => element.getAttribute('aria-label') ?? element.textContent?.trim() ?? '',
+  );
+  if (names.length > 1) {
+    throw new Error(
+      `expected at most one solid primary on the screen, found: ${names.join(' | ')}`,
+    );
+  }
+  return names;
+}

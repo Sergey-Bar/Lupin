@@ -10,6 +10,7 @@ import {
 import { RunsListPage, runAreaItems, runVerdict } from './index.js';
 import { makeApi, makeRun } from '../../test-utils.js';
 import type { ApiClient } from '../../lib/api.js';
+import { expectOnePrimary } from '../../test-utils.js';
 
 /**
  * Rendered inside a real router, because the page hosts `RecentRuns` and that renders
@@ -62,6 +63,12 @@ const failedRun = makeRun({
 });
 
 describe('runAreaItems', () => {
+  it('draws at most one solid primary button on the screen', async () => {
+    renderRunsPage(makeApi({ getRuns: vi.fn().mockResolvedValue([failedRun]) }));
+    await waitFor(() => expect(screen.getByTestId('area-runs')).toBeInTheDocument());
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   const now = new Date('2026-05-26T12:00:00.000Z');
   const retryRun = vi.fn(async () => makeRun({ id: 'again' }));
 
