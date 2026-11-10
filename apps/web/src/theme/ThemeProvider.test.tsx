@@ -264,7 +264,18 @@ describe('the OpenCode palettes', () => {
     document.documentElement.removeAttribute('data-theme');
   });
 
-  it('starts on the OpenCode palette, on the dark plane', () => {
+  it('starts on Lupin’s own violet palette, following the chosen theme', () => {
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    expect(document.documentElement.hasAttribute('data-palette')).toBe(false);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+  });
+
+  it('keeps an OpenCode palette one choice away, on the dark plane', () => {
+    localStorage.setItem('lupin-palette', 'opencode');
     render(
       <ThemeProvider defaultTheme="light">
         <Picker />
@@ -304,7 +315,7 @@ describe('the OpenCode palettes', () => {
         <Picker />
       </ThemeProvider>,
     );
-    expect(screen.getByRole('button')).toHaveAttribute('data-palette-now', 'opencode');
-    expect(document.documentElement.getAttribute('data-palette')).toBe('opencode');
+    expect(screen.getByRole('button')).toHaveAttribute('data-palette-now', 'lupin');
+    expect(document.documentElement.hasAttribute('data-palette')).toBe(false);
   });
 });

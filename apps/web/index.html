@@ -30,8 +30,8 @@
           document.documentElement.setAttribute('data-theme', theme);
           // An OpenCode palette is a dark theme. Only a name made of letters and hyphens is
           // written, so a hand-edited value cannot inject anything; an unknown one matches no rule.
-          // Default: the OpenCode palette (ThemeProvider's DEFAULT_PALETTE).
-          var palette = localStorage.getItem('lupin-palette') || 'opencode';
+          // Default: Lupin's own palette (ThemeProvider's DEFAULT_PALETTE), so nothing is set.
+          var palette = localStorage.getItem('lupin-palette') || 'lupin';
           if (palette && palette !== 'lupin' && /^[a-z-]+$/.test(palette)) {
             document.documentElement.setAttribute('data-palette', palette);
             document.documentElement.setAttribute('data-theme', 'dark');

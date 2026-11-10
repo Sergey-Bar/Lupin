@@ -22,8 +22,8 @@ export interface ThemeProviderState {
 
 export const PALETTE_STORAGE_KEY = 'lupin-palette';
 
-/** The warm OpenCode palette is the default look; `lupin` (light or dark) stays one choice away. */
-export const DEFAULT_PALETTE: Palette = 'opencode';
+/** Lupin's own violet is the default look; the OpenCode palettes stay one choice away in Settings. */
+export const DEFAULT_PALETTE: Palette = 'lupin';
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
