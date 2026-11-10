@@ -3,9 +3,11 @@ import { Button } from '@lupin/ui';
 import { isTypingTarget } from './Shortcuts.js';
 import {
   createCopilotClient,
+  type CopilotAction,
   type CopilotClient,
   type RunExplanation,
 } from '../lib/copilot-client.js';
+import { defaultApiClient } from '../lib/api.js';
 
 /** The fragment a test row carries, so a citation can point at it. */
 export function testAnchor(testId: string): string {
@@ -30,9 +32,12 @@ const defaultClient = createCopilotClient();
 export function CopilotExplain({
   runId,
   client = defaultClient,
+  act = performAction,
 }: {
   runId: string;
   client?: CopilotClient;
+  /** Carries out a confirmed action as the signed-in user; resolves to what happened. */
+  act?: (action: CopilotAction) => Promise<string>;
 }) {
   const [state, setState] = useState<State>({ kind: 'idle' });
 
@@ -74,15 +79,28 @@ export function CopilotExplain({
         {state.kind === 'error' ? (
           <p className="text-fg-muted">The copilot could not explain this run. Try again.</p>
         ) : null}
-        {state.kind === 'answer' ? <Answer answer={state.answer} /> : null}
+        {state.kind === 'answer' ? <Answer answer={state.answer} act={act} /> : null}
       </div>
     </section>
   );
 }
 
-function Answer({ answer }: { answer: RunExplanation }) {
+function Answer({
+  answer,
+  act,
+}: {
+  answer: RunExplanation;
+  act: (action: CopilotAction) => Promise<string>;
+}) {
   return (
     <div data-testid="copilot-answer" className="space-y-3">
+      {answer.actions.length === 0 ? null : (
+        <div className="flex flex-wrap gap-2">
+          {answer.actions.map((action) => (
+            <ActionCard key={action.label} action={action} act={act} />
+          ))}
+        </div>
+      )}
       <p className="max-w-measure text-pretty text-fg">{answer.summary}</p>
       {answer.causes.length === 0 ? null : (
         <ul className="space-y-2">
@@ -112,4 +130,65 @@ function Answer({ answer }: { answer: RunExplanation }) {
       </p>
     </div>
   );
+}
+
+/**
+ * A proposed action, and the one confirmation before it runs. The copilot never acts on its
+ * own: it calls the same guarded route the page's own button calls, as the signed-in user, so
+ * the server's role check and audit trail apply unchanged.
+ */
+function ActionCard({
+  action,
+  act,
+}: {
+  action: CopilotAction;
+  act: (action: CopilotAction) => Promise<string>;
+}) {
+  const [step, setStep] = useState<'offer' | 'confirm' | 'running' | { done: string }>('offer');
+  if (step === 'offer') {
+    return (
+      <Button variant="secondary" size="sm" onClick={() => setStep('confirm')}>
+        {action.label}
+      </Button>
+    );
+  }
+  if (typeof step === 'object') return <p className="text-fg">{step.done}</p>;
+  return (
+    <div
+      data-testid="copilot-confirm"
+      className="flex flex-wrap items-center gap-2 rounded-md border border-border-default p-2"
+    >
+      <span className="text-fg">{action.label}?</span>
+      <Button
+        size="sm"
+        disabled={step === 'running'}
+        onClick={() => {
+          setStep('running');
+          act(action).then(
+            (done) => setStep({ done }),
+            () => setStep({ done: 'That did not work. Nothing was changed.' }),
+          );
+        }}
+      >
+        Confirm
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => setStep('offer')}>
+        Cancel
+      </Button>
+    </div>
+  );
+}
+
+async function performAction(action: CopilotAction): Promise<string> {
+  if (action.kind === 'retry') {
+    await defaultApiClient.retryRun(action.runId, undefined, { scope: action.scope });
+    return 'Retry started.';
+  }
+  await defaultApiClient.addQuarantine({
+    testTitle: action.testTitle,
+    testFile: action.testFile,
+    stableId: action.testId,
+    reason: `Proposed by the copilot from run ${action.runId}`,
+  });
+  return 'Quarantine requested. It waits for approval.';
 }

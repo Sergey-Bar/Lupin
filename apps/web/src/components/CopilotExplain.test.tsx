@@ -51,6 +51,27 @@ describe('CopilotExplain', () => {
     expect(screen.queryByTestId('copilot-answer')).toBeNull();
   });
 
+  it('acts only after one confirmation, and says what it did', async () => {
+    const act = vi.fn(async () => 'Retry started');
+    const withAction: RunExplanation = {
+      ...ANSWER,
+      actions: [
+        { kind: 'retry', runId: 'run-1', scope: 'failed', label: 'Retry the 2 failed tests' },
+      ],
+    };
+    render(<CopilotExplain runId="run-1" client={client(async () => withAction)} act={act} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Explain this run' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Retry the 2 failed tests' }));
+    expect(act).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(act).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry the 2 failed tests' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(await screen.findByText('Retry started')).toBeInTheDocument();
+    expect(act).toHaveBeenCalledTimes(1);
+    expect(act).toHaveBeenCalledWith(withAction.actions[0]);
+  });
+
   it('explains on e, but not while the reader is typing in a field', async () => {
     const explainRun = vi.fn(async () => ANSWER);
     render(

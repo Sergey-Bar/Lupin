@@ -21,6 +21,8 @@ const ProposedActionSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('quarantine'),
     testId: z.string(),
+    testTitle: z.string(),
+    testFile: z.string(),
     runId: z.string(),
     label: z.string(),
   }),

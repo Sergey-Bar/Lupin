@@ -72,7 +72,15 @@ describe('explainRun, the copilot rule engine', () => {
     );
     expect(answer.actions).toEqual([
       { kind: 'retry', runId: 'run-1', scope: 'failed', label: 'Retry the 1 failed test' },
-      { kind: 'quarantine', testId: 'f', runId: 'run-1', label: 'Quarantine checkout › f' },
+      {
+        kind: 'quarantine',
+        testId: 'f',
+        // The quarantine route needs the title and file, so the action carries them.
+        testTitle: 'checkout › f',
+        testFile: 'e2e/checkout.spec.ts',
+        runId: 'run-1',
+        label: 'Quarantine checkout › f',
+      },
     ]);
   });
 

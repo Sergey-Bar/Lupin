@@ -24,7 +24,14 @@ export interface Citation {
 
 export type ProposedAction =
   | { kind: 'retry'; runId: string; scope: 'failed' | 'all'; label: string }
-  | { kind: 'quarantine'; testId: string; runId: string; label: string };
+  | {
+      kind: 'quarantine';
+      testId: string;
+      testTitle: string;
+      testFile: string;
+      runId: string;
+      label: string;
+    };
 
 export interface Cause {
   message: string;
@@ -113,6 +120,8 @@ export function explainRun(run: ExecutionRun): RunExplanation {
     actions.push({
       kind: 'quarantine',
       testId: test.id,
+      testTitle: test.title,
+      testFile: test.file ?? '',
       runId: run.id,
       label: `Quarantine ${test.title}`,
     });
