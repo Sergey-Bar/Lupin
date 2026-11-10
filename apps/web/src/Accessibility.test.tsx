@@ -112,7 +112,7 @@ describe('NavBar keyboard operation', () => {
       '/dashboard',
     );
     await waitFor(() => expect(screen.getByTestId('nav-bar')).toBeInTheDocument());
-    expect(screen.getByRole('link', { name: 'Health' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('draws no theme control in the chrome; the theme is a setting, not a button', async () => {

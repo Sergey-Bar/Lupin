@@ -1,14 +1,11 @@
 import React from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import {
-  FlaskConical,
-  GitBranch,
   INDICATOR_ACTIVE_ATTRIBUTE,
   LayoutGrid,
   ListChecks,
-  Radar,
+  House,
   Settings,
-  ShieldCheck,
   cn,
   useSlidingIndicator,
   Wordmark,
@@ -41,11 +38,8 @@ import { useWheelStep } from '../hooks/useWheelStep.js';
  */
 
 const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
-  now: Radar,
+  now: House,
   runs: ListChecks,
-  tests: FlaskConical,
-  health: ShieldCheck,
-  delivery: GitBranch,
   settings: Settings,
 };
 
@@ -127,7 +121,9 @@ export function SectionTabs(): React.ReactElement | null {
       ?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
   }, [page?.id, role]);
   if (section === null || page === undefined || !('tab' in page)) return null;
-  const tabs = section === 'settings' ? visibleTabsOf(section, role) : tabsOf(section);
+  const unordered = section === 'settings' ? visibleTabsOf(section, role) : tabsOf(section);
+  // The order on screen: the named groups gathered, so the wheel steps the way the row reads.
+  const tabs = tabGroups(unordered).flat();
   if (tabs.length === 0) return null;
   const label = SECTIONS.find((entry) => entry.id === section)?.label ?? '';
   return <WheelTabs tabs={tabs} pageId={page.id} label={label} tabsRef={tabsRef} />;
@@ -206,9 +202,9 @@ function WheelTabs({
                 >
                   {name}
                 </span>
-                <ul role="group" aria-label={name} className="flex gap-1">
-                  {links}
-                </ul>
+                <div role="group" aria-label={name}>
+                  <ul className="flex gap-1">{links}</ul>
+                </div>
               </li>,
             ];
           })(),

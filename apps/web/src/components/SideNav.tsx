@@ -1,15 +1,12 @@
 import React from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import {
-  FlaskConical,
-  GitBranch,
   LayoutGrid,
   PanelLeftClose,
   PanelLeftOpen,
   ListChecks,
-  Radar,
+  House,
   Settings,
-  ShieldCheck,
   Sparkles,
   Wordmark,
   cn,
@@ -46,11 +43,8 @@ const FOCUS =
  * Below `lg` it is hidden; the top bar and the bottom tab bar take over.
  */
 const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
-  now: Radar,
+  now: House,
   runs: ListChecks,
-  tests: FlaskConical,
-  health: ShieldCheck,
-  delivery: GitBranch,
   settings: Settings,
 };
 

@@ -28,7 +28,7 @@ function makeRouter(initialPath = '/') {
   return router;
 }
 
-const SECTION_LABELS = ['Now', 'Runs', 'Tests', 'Health', 'Delivery', 'Settings'];
+const SECTION_LABELS = ['Home', 'Runs', 'Settings'];
 
 describe('NavBar', () => {
   beforeEach(() => {
@@ -47,7 +47,7 @@ describe('NavBar', () => {
     expect(screen.queryByTestId('theme-toggle')).toBeNull();
   });
 
-  it('draws the six sections, and nothing else, in the top bar', async () => {
+  it('draws the three places, and nothing else, in the top bar', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bar = await screen.findByTestId('nav-bar');
     const links = within(bar).getAllByRole('link');
@@ -73,12 +73,12 @@ describe('NavBar', () => {
   });
 
   it.each([
-    ['/dashboard', 'Health'],
+    ['/dashboard', 'Home'],
     ['/dashboard/runs/run-1', 'Runs'],
     ['/dashboard/runner', 'Runs'],
-    ['/dashboard/analytics', 'Tests'],
-    ['/dashboard/flaky/project-1', 'Tests'],
-    ['/dashboard/health', 'Health'],
+    ['/dashboard/analytics', 'Runs'],
+    ['/dashboard/flaky/project-1', 'Runs'],
+    ['/dashboard/health', 'Home'],
   ])('marks %s as inside the %s section, in both bars', async (path, label) => {
     render(<RouterProvider router={makeRouter(path)} />);
     const bar = await screen.findByTestId('nav-bar');
@@ -91,7 +91,7 @@ describe('NavBar', () => {
     }
   });
 
-  it('gives the bottom bar six labelled, finger-sized targets', async () => {
+  it('gives the bottom bar three labelled, finger-sized targets', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bottom = await screen.findByTestId('bottom-tab-bar');
     expect(bottom).toHaveAttribute('aria-label', 'Sections');
@@ -105,9 +105,9 @@ describe('NavBar', () => {
   it('navigates from the bottom bar', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
     const bottom = await screen.findByTestId('bottom-tab-bar');
-    fireEvent.click(within(bottom).getByRole('link', { name: 'Tests' }));
+    fireEvent.click(within(bottom).getByRole('link', { name: 'Runs' }));
     await waitFor(() =>
-      expect(within(bottom).getByRole('link', { name: 'Tests' })).toHaveAttribute(
+      expect(within(bottom).getByRole('link', { name: 'Runs' })).toHaveAttribute(
         'aria-current',
         'page',
       ),
@@ -150,9 +150,19 @@ describe('NavBar', () => {
   it('shows the section tabs for a section with more than one page', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
     const tabs = await screen.findByTestId('section-tabs');
-    expect(tabs).toHaveAttribute('aria-label', 'Tests pages');
+    expect(tabs).toHaveAttribute('aria-label', 'Runs pages');
     const links = within(tabs).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual(['Tests', 'Quarantine']);
+    expect(links.map((link) => link.textContent)).toEqual([
+      'Runs',
+      'Launch',
+      'Tests',
+      'Quarantine',
+    ]);
+    expect(
+      within(tabs)
+        .getAllByRole('group')
+        .map((group) => group.getAttribute('aria-label')),
+    ).toEqual(['Runs', 'Tests']);
     expect(within(tabs).getByRole('link', { name: 'Tests' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -166,18 +176,30 @@ describe('NavBar', () => {
     await screen.findByTestId('nav-bar');
     expect(screen.queryByTestId('section-tabs')).toBeNull();
     expect(
-      within(screen.getByTestId('nav-bar')).getByRole('link', { name: 'Tests' }),
+      within(screen.getByTestId('nav-bar')).getByRole('link', { name: 'Runs' }),
     ).toHaveAttribute('aria-current', 'page');
   });
 
-  it('shows the health tabs on the project overview, and none on a detail page', async () => {
+  it('shows Home’s tabs, Health and Delivery as named groups, and none on a detail page', async () => {
     const { unmount } = render(<RouterProvider router={makeRouter('/dashboard')} />);
     const tabs = await screen.findByTestId('section-tabs');
     expect(
       within(tabs)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Portfolio', 'Overview', 'Capabilities', 'Supply chain']);
+    ).toEqual([
+      'Now',
+      'Portfolio',
+      'Overview',
+      'Capabilities',
+      'Supply chain',
+      'Delivery',
+      'AI code',
+      'Agents',
+      'Pull requests',
+      'Issues',
+      'Repositories',
+    ]);
     unmount();
     render(<RouterProvider router={makeRouter('/dashboard/runs/run-1')} />);
     await screen.findByTestId('nav-bar');

@@ -12,7 +12,7 @@ import { ThemeProvider } from '../theme/ThemeProvider';
 import { PreferencesProvider } from '../theme/preferences';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
 import { expectNoBlockingAxeViolations } from '../test-axe';
-import { makeApi, makeRun } from '../test-utils';
+import { makeApi } from '../test-utils';
 
 function renderAt(path: string, api = makeApi()) {
   const rootRoute = createRootRoute({
@@ -48,7 +48,7 @@ describe('SideNav', () => {
       .getAllByRole('link')
       .filter((link) => !link.closest('[aria-label="Recent runs"]'))
       .map((link) => link.textContent);
-    expect(areas).toEqual(['Now', 'Runs', 'Tests', 'Health', 'Delivery']);
+    expect(areas).toEqual(['Home', 'Runs']);
     const aside = nav.closest('aside') as HTMLElement;
     const settings = within(aside).getByRole('link', { name: 'Settings' });
     expect(nav.contains(settings)).toBe(false);
@@ -71,7 +71,7 @@ describe('SideNav', () => {
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
     const runs = within(nav).getByRole('link', { name: 'Runs' });
     expect(runs).toHaveClass('before:start-0', 'before:bg-accent');
-    expect(within(nav).getByRole('link', { name: 'Tests' })).not.toHaveClass('before:bg-accent');
+    expect(within(nav).getByRole('link', { name: 'Home' })).not.toHaveClass('before:bg-accent');
   });
 
   it('expands and collapses from one button, and remembers the choice', async () => {
@@ -91,9 +91,9 @@ describe('SideNav', () => {
   it('moves to the next or previous area when the wheel turns over the areas', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    fireEvent.wheel(within(nav).getByRole('link', { name: 'Runs' }), { deltaY: 120 });
+    fireEvent.wheel(within(nav).getByRole('link', { name: 'Runs' }), { deltaY: -120 });
     await waitFor(() =>
-      expect(within(nav).getByRole('link', { name: 'Tests' })).toHaveAttribute(
+      expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute(
         'aria-current',
         'page',
       ),
@@ -113,7 +113,10 @@ describe('SideNav', () => {
   it('opens an area by its first page', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    expect(within(nav).getByRole('link', { name: 'Health' })).toHaveAttribute('href', '/dashboard');
+    expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute(
+      'href',
+      '/dashboard/now',
+    );
   });
 
   it('marks Settings current on any settings page, including the moved Toolbox', async () => {

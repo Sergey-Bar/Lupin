@@ -108,6 +108,8 @@ export {
   /** The four capabilities the expanded toolbox added: mobile, API, DAST, test management. */
   Smartphone,
   Webhook,
+  // Home, the first of the three places.
+  House,
   Radar,
   ClipboardList,
   /** The insights page: activity, duration, branches, the flaky leaderboard and the digest. */

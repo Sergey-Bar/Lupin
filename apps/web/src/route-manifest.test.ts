@@ -47,15 +47,8 @@ describe('route manifest', () => {
     expect(routeManifest.some((route) => route.path === '/dashboard/runs')).toBe(true);
   });
 
-  it('is a pyramid: five areas, then Settings', () => {
-    expect(SECTIONS.map((section) => section.label)).toEqual([
-      'Now',
-      'Runs',
-      'Tests',
-      'Health',
-      'Delivery',
-      'Settings',
-    ]);
+  it('has three places: Home, Runs and Settings', () => {
+    expect(SECTIONS.map((section) => section.label)).toEqual(['Home', 'Runs', 'Settings']);
     for (const section of SECTIONS) {
       expect(isApplicationPath(section.path), `${section.label} opens nowhere`).toBe(true);
       expect(sectionOf(section.path)).toBe(section.id);
@@ -91,7 +84,7 @@ describe('route manifest', () => {
   });
 
   it('reaches every area page in one click from the tab row, Agents included', () => {
-    expect(tabsOf('delivery').map((tab) => tab.path)).toContain('/dashboard/agents');
+    expect(tabsOf('now').map((tab) => tab.path)).toContain('/dashboard/agents');
   });
 
   it('has no login route: the install is open (ADR-006)', () => {
@@ -109,25 +102,25 @@ describe('route manifest', () => {
   });
 
   it.each([
-    ['/dashboard', 'health'],
-    ['/dashboard/portfolio', 'health'],
-    ['/dashboard/repo/project-1', 'health'],
-    ['/dashboard/repo/project-1/overview', 'health'],
-    ['/dashboard/delivery', 'delivery'],
-    ['/dashboard/ai-code', 'delivery'],
-    ['/dashboard/agents', 'delivery'],
-    ['/dashboard/supply-chain', 'health'],
+    ['/dashboard', 'now'],
+    ['/dashboard/portfolio', 'now'],
+    ['/dashboard/repo/project-1', 'now'],
+    ['/dashboard/repo/project-1/overview', 'now'],
+    ['/dashboard/delivery', 'now'],
+    ['/dashboard/ai-code', 'now'],
+    ['/dashboard/agents', 'now'],
+    ['/dashboard/supply-chain', 'now'],
     ['/dashboard/runs', 'runs'],
     ['/dashboard/runs/run-1', 'runs'],
     ['/dashboard/runs/run-1/extra', 'runs'],
     ['/dashboard/runner', 'runs'],
-    ['/dashboard/insights', 'tests'],
-    ['/dashboard/analytics', 'tests'],
-    ['/dashboard/quarantine', 'tests'],
-    ['/dashboard/gaps/project-1', 'tests'],
-    ['/dashboard/score/project-1', 'tests'],
+    ['/dashboard/insights', 'runs'],
+    ['/dashboard/analytics', 'runs'],
+    ['/dashboard/quarantine', 'runs'],
+    ['/dashboard/gaps/project-1', 'runs'],
+    ['/dashboard/score/project-1', 'runs'],
     ['/dashboard/map', 'settings'],
-    ['/dashboard/health', 'health'],
+    ['/dashboard/health', 'now'],
     ['/dashboard/toolbox', 'settings'],
     ['/dashboard/deployment', 'settings'],
     ['/dashboard/settings', 'settings'],
@@ -143,23 +136,25 @@ describe('route manifest', () => {
     expect(sectionOf('/elsewhere')).toBeNull();
   });
 
-  it('lists each section’s tabs, and the overview leads with the cockpit', () => {
-    expect(tabsOf('now')).toEqual([]);
-    expect(tabsOf('runs').map((tab) => tab.tab)).toEqual(['Runs', 'Launch']);
-    expect(tabsOf('tests').map((tab) => tab.tab)).toEqual(['Tests', 'Quarantine']);
-    expect(tabsOf('health').map((tab) => tab.tab)).toEqual([
-      'Portfolio',
-      'Overview',
-      'Capabilities',
-      'Supply chain',
+  it('lists each place’s tabs in named groups: Home leads with Now, Runs holds the tests', () => {
+    expect(
+      tabGroups(tabsOf('now')).map((group) => [
+        groupOf(group[0] as never),
+        group.map((tab) => tab.tab),
+      ]),
+    ).toEqual([
+      ['Now', ['Now']],
+      ['Health', ['Portfolio', 'Overview', 'Capabilities', 'Supply chain']],
+      ['Delivery', ['Delivery', 'AI code', 'Agents', 'Pull requests', 'Issues', 'Repositories']],
     ]);
-    expect(tabsOf('delivery').map((tab) => tab.tab)).toEqual([
-      'Delivery',
-      'AI code',
-      'Agents',
-      'Pull requests',
-      'Issues',
-      'Repositories',
+    expect(
+      tabGroups(tabsOf('runs')).map((group) => [
+        groupOf(group[0] as never),
+        group.map((tab) => tab.tab),
+      ]),
+    ).toEqual([
+      ['Runs', ['Runs', 'Launch']],
+      ['Tests', ['Tests', 'Quarantine']],
     ]);
     expect(tabsOf('settings').map((tab) => tab.tab)).toEqual([
       'Appearance',
@@ -232,7 +227,7 @@ describe('route manifest', () => {
       ['Identity', 'Sessions & retention', 'Access', 'Audit', 'Deployment'],
       ['Map', 'Toolbox'],
     ]);
-    expect(tabGroups(tabsOf('tests'))).toHaveLength(1);
+    expect(tabGroups(tabsOf('runs'))).toHaveLength(2);
   });
 
   it('names the Settings groups, so the row reads as yours, the workspace, the install and the tools', () => {
@@ -288,29 +283,29 @@ describe('route manifest', () => {
     // notice that something was removed from it. Trends, Quarantine and Agents left the tab
     // rows when the cockpit arrived, and each must still open the page it always did.
     const EVER_REACHABLE: ReadonlyArray<readonly [path: string, section: string]> = [
-      ['/dashboard', 'health'],
+      ['/dashboard', 'now'],
       ['/dashboard/now', 'now'],
-      ['/dashboard/portfolio', 'health'],
-      ['/dashboard/repo/p-1', 'health'],
-      ['/dashboard/repo/p-1/overview', 'health'],
+      ['/dashboard/portfolio', 'now'],
+      ['/dashboard/repo/p-1', 'now'],
+      ['/dashboard/repo/p-1/overview', 'now'],
       ['/dashboard/runs', 'runs'],
       ['/dashboard/runs/r-1', 'runs'],
       ['/dashboard/runner', 'runs'],
-      ['/dashboard/insights', 'tests'],
-      ['/dashboard/analytics', 'tests'],
-      ['/dashboard/quarantine', 'tests'],
-      ['/dashboard/test', 'tests'],
-      ['/dashboard/delivery', 'delivery'],
-      ['/dashboard/ai-code', 'delivery'],
-      ['/dashboard/agents', 'delivery'],
-      ['/dashboard/score/p-1', 'tests'],
-      ['/dashboard/gaps/p-1', 'tests'],
-      ['/dashboard/hollow/p-1', 'tests'],
-      ['/dashboard/flaky/p-1', 'tests'],
-      ['/dashboard/structure/p-1', 'tests'],
+      ['/dashboard/insights', 'runs'],
+      ['/dashboard/analytics', 'runs'],
+      ['/dashboard/quarantine', 'runs'],
+      ['/dashboard/test', 'runs'],
+      ['/dashboard/delivery', 'now'],
+      ['/dashboard/ai-code', 'now'],
+      ['/dashboard/agents', 'now'],
+      ['/dashboard/score/p-1', 'runs'],
+      ['/dashboard/gaps/p-1', 'runs'],
+      ['/dashboard/hollow/p-1', 'runs'],
+      ['/dashboard/flaky/p-1', 'runs'],
+      ['/dashboard/structure/p-1', 'runs'],
       ['/dashboard/map', 'settings'],
-      ['/dashboard/health', 'health'],
-      ['/dashboard/supply-chain', 'health'],
+      ['/dashboard/health', 'now'],
+      ['/dashboard/supply-chain', 'now'],
       ['/dashboard/toolbox', 'settings'],
       ['/dashboard/access', 'settings'],
       ['/dashboard/members', 'settings'],
@@ -380,7 +375,7 @@ describe('route manifest', () => {
       expect(registered, `${path} is in the manifest but not the router`).toContain(path);
     }
     expect(repo360Path('p 1')).toBe('/dashboard/repo/p%201/overview');
-    expect(sectionOf(repo360Path('p 1'))).toBe('health');
+    expect(sectionOf(repo360Path('p 1'))).toBe('now');
   });
 
   it('recognizes canonical run detail links without accepting arbitrary dashboard paths', () => {

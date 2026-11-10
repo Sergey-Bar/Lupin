@@ -23,11 +23,8 @@
  * working; `route-manifest.test.ts` pins every old path.
  */
 export const SECTIONS = [
-  { id: 'now', label: 'Now', path: '/dashboard/now' },
+  { id: 'now', label: 'Home', path: '/dashboard/now' },
   { id: 'runs', label: 'Runs', path: '/dashboard/runs' },
-  { id: 'tests', label: 'Tests', path: '/dashboard/insights' },
-  { id: 'health', label: 'Health', path: '/dashboard' },
-  { id: 'delivery', label: 'Delivery', path: '/dashboard/prs' },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ] as const;
 
@@ -56,6 +53,7 @@ export const routeManifest = [
     visible: true,
     section: 'now',
     tab: 'Now',
+    group: 'Now',
   },
   // First-run setup: a guided flow, reached from the cockpit and the checklist, never a tab.
   {
@@ -77,30 +75,32 @@ export const routeManifest = [
     path: '/dashboard/portfolio',
     label: 'Portfolio',
     visible: true,
-    section: 'health',
+    section: 'now',
     tab: 'Portfolio',
+    group: 'Health',
   },
   {
     id: 'dashboard',
     path: '/dashboard',
     label: 'Overview',
     visible: true,
-    section: 'health',
+    section: 'now',
     tab: 'Overview',
+    group: 'Health',
   },
   {
     id: 'repo-health',
     path: '/dashboard/repo/:projectId',
     label: 'Repository Health',
     visible: false,
-    section: 'health',
+    section: 'now',
   },
   {
     id: 'repo-360',
     path: '/dashboard/repo/:projectId/overview',
     label: 'Repository 360',
     visible: false,
-    section: 'health',
+    section: 'now',
   },
   {
     id: 'runs',
@@ -109,6 +109,7 @@ export const routeManifest = [
     visible: true,
     section: 'runs',
     tab: 'Runs',
+    group: 'Runs',
   },
   {
     id: 'run-detail',
@@ -124,52 +125,57 @@ export const routeManifest = [
     visible: true,
     section: 'runs',
     tab: 'Launch',
+    group: 'Runs',
   },
   {
     id: 'insights',
     path: '/dashboard/insights',
     label: 'Insights',
     visible: true,
-    section: 'tests',
+    section: 'runs',
     tab: 'Tests',
+    group: 'Tests',
   },
   {
     id: 'analytics',
     path: '/dashboard/analytics',
     label: 'Trends',
     visible: false,
-    section: 'tests',
+    section: 'runs',
   },
   {
     id: 'quarantine',
     path: '/dashboard/quarantine',
     label: 'Quarantine',
     visible: false,
-    section: 'tests',
+    section: 'runs',
     tab: 'Quarantine',
+    group: 'Tests',
   },
   {
     id: 'test-history',
     path: '/dashboard/test',
     label: 'Test History',
     visible: false,
-    section: 'tests',
+    section: 'runs',
   },
   {
     id: 'delivery',
     path: '/dashboard/delivery',
     label: 'Delivery',
     visible: true,
-    section: 'delivery',
+    section: 'now',
     tab: 'Delivery',
+    group: 'Delivery',
   },
   {
     id: 'ai-code',
     path: '/dashboard/ai-code',
     label: 'AI code',
     visible: true,
-    section: 'delivery',
+    section: 'now',
     tab: 'AI code',
+    group: 'Delivery',
   },
   {
     id: 'agents',
@@ -178,59 +184,62 @@ export const routeManifest = [
     // A tab again: with the tab row gone from desktop and no tab here, nothing linked to it
     // but a card deep in Repository 360.
     visible: true,
-    section: 'delivery',
+    section: 'now',
     tab: 'Agents',
+    group: 'Delivery',
   },
   {
     id: 'score',
     path: '/dashboard/score/:projectId',
     label: 'Health Score',
     visible: false,
-    section: 'tests',
+    section: 'runs',
   },
   {
     id: 'gaps',
     path: '/dashboard/gaps/:projectId',
     label: 'Automation Gaps',
     visible: false,
-    section: 'tests',
+    section: 'runs',
   },
   {
     id: 'hollow',
     path: '/dashboard/hollow/:projectId',
     label: 'Hollow Tests',
     visible: false,
-    section: 'tests',
+    section: 'runs',
   },
   {
     id: 'flaky',
     path: '/dashboard/flaky/:projectId',
     label: 'Flaky Tests',
     visible: false,
-    section: 'tests',
+    section: 'runs',
   },
   {
     id: 'structure',
     path: '/dashboard/structure/:projectId',
     label: 'Structural Findings',
     visible: false,
-    section: 'tests',
+    section: 'runs',
   },
   {
     id: 'health',
     path: '/dashboard/health',
     label: 'Capabilities',
     visible: true,
-    section: 'health',
+    section: 'now',
     tab: 'Capabilities',
+    group: 'Health',
   },
   {
     id: 'supply-chain',
     path: '/dashboard/supply-chain',
     label: 'Supply chain',
     visible: true,
-    section: 'health',
+    section: 'now',
     tab: 'Supply chain',
+    group: 'Health',
   },
   {
     id: 'access',
@@ -272,31 +281,34 @@ export const routeManifest = [
     path: '/dashboard/prs',
     label: 'Pull requests',
     visible: true,
-    section: 'delivery',
+    section: 'now',
     tab: 'Pull requests',
+    group: 'Delivery',
   },
   {
     id: 'issues',
     path: '/dashboard/issues',
     label: 'Issues',
     visible: true,
-    section: 'delivery',
+    section: 'now',
     tab: 'Issues',
+    group: 'Delivery',
   },
   {
     id: 'repos',
     path: '/dashboard/repos',
     label: 'Repositories',
     visible: true,
-    section: 'delivery',
+    section: 'now',
     tab: 'Repositories',
+    group: 'Delivery',
   },
   {
     id: 'repo-detail',
     path: '/dashboard/repos/:projectId',
     label: 'Repository',
     visible: false,
-    section: 'delivery',
+    section: 'now',
   },
   {
     id: 'pair',
@@ -539,10 +551,25 @@ export function groupOf(tab: TabRoute): string | undefined {
  */
 export function tabGroups(tabs: readonly TabRoute[]): TabRoute[][] {
   const groups: TabRoute[][] = [];
+  const named = new Map<string, TabRoute[]>();
   let floor: string | undefined | null = null;
   for (const tab of tabs) {
-    const named = (tab as { group?: string }).group;
-    const key = named ?? (tab as { access?: TabAccess }).access;
+    const name = groupOf(tab);
+    if (name !== undefined) {
+      // A named group gathers its tabs wherever they sit in the manifest, so "Health" is
+      // one run of tabs even when a Delivery route was declared between two of them.
+      const existing = named.get(name);
+      if (existing !== undefined) {
+        existing.push(tab);
+      } else {
+        const group = [tab];
+        named.set(name, group);
+        groups.push(group);
+      }
+      floor = null;
+      continue;
+    }
+    const key = (tab as { access?: TabAccess }).access;
     if (groups.length === 0 || key !== floor) groups.push([]);
     groups[groups.length - 1]?.push(tab);
     floor = key;
