@@ -108,6 +108,9 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   // The reliability insights page through the same reader as the trend; `insights.test.ts`
   // proves a run in another workspace is not counted.
   { family: 'reliability insights', files: ['execution/insights.ts'] },
+  // The copilot explains a run read with the composition root's workspace; `routes.test.ts`
+  // proves a run in another workspace is the same 404 as a missing one.
+  { family: 'copilot', files: ['copilot/routes.ts'] },
   // Which quarantine entries a gate evaluation reads. `boundQuarantineSource` answers only
   // for the workspace its store is bound to, and `quarantine-gate.store.test.ts` proves one
   // workspace's approval does not excuse another workspace's failure, in both stores.

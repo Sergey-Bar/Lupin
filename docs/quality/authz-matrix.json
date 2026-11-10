@@ -9,7 +9,7 @@
   ],
   "summary": {
     "admin": 40,
-    "viewer": 88,
+    "viewer": 89,
     "operator": 35,
     "open": 16,
     "runner-credential": 9,
@@ -226,6 +226,14 @@
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/cockpit.test.ts",
       "composition": "database"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/copilot/explain",
+      "access": "viewer",
+      "workspaceScoped": true,
+      "evidenceTest": "apps/api/src/copilot/routes.test.ts",
+      "composition": "always"
     },
     {
       "method": "GET",
@@ -1512,7 +1520,7 @@
       "path": "/api/v1/settings",
       "access": "admin",
       "workspaceScoped": true,
-      "evidenceTest": "apps/api/src/routes/identity-settings.test.ts",
+      "evidenceTest": "apps/api/src/routes/settings.test.ts",
       "composition": "always"
     },
     {

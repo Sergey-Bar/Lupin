@@ -71,6 +71,7 @@ import { registerApiAgent } from './agents/api-adapter.js';
 import { registerBrowserAgent } from './agents/browser-adapter.js';
 import { registerLoadAgent } from './agents/load-adapter.js';
 import { createChatRoutes } from './routes/chat.js';
+import { createCopilotRoutes } from './copilot/routes.js';
 import { createLiveAiGateway } from './observability/live-ai-gateway.js';
 import { createSettingsService } from './services/settings-service.js';
 import { createSettingTesters } from './services/settings-testers.js';
@@ -1140,6 +1141,7 @@ function buildWorkspace(workspaceId: string) {
       }),
     );
     target.route('/', createChatRoutes({ gateway: gateways.chat }));
+    target.route('/', createCopilotRoutes({ store: executionStore, workspaceId: workspaceId }));
     // Settings → AI, Integrations, Identity, Sessions & retention. Installation-wide, so every
     // workspace's composition serves the one service; writes need an installation admin (or,
     // while single sign-on is enforced, an admin of the home workspace).
