@@ -281,9 +281,11 @@ describe('AttentionSection, as one focus', () => {
     render(
       <AttentionSection sources={{ ...sources(), retryRun }} navigate={vi.fn()} now={() => NOW} />,
     );
-    await screen.findByTestId('focus-first');
-    const action = commandStore.getActions().find((entry) => entry.id === 'now-retry-first');
-    expect(action?.label).toBe('Retry now: main is failing');
+    const action = await waitFor(() => {
+      const found = commandStore.getActions().find((entry) => entry.id === 'now-retry-first');
+      expect(found?.label).toBe('Retry now: main is failing');
+      return found;
+    });
     action?.onSelect();
     expect(retryRun).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'all');
   });
@@ -302,9 +304,11 @@ describe('AttentionSection, as one focus', () => {
   it('opens the first thing from the command palette', async () => {
     const navigate = vi.fn();
     render(<AttentionSection sources={sources()} navigate={navigate} now={() => NOW} />);
-    await screen.findByTestId('focus-first');
-    const action = commandStore.getActions().find((entry) => entry.id === 'now-open-first');
-    expect(action?.label).toBe('Open: main is failing');
+    const action = await waitFor(() => {
+      const found = commandStore.getActions().find((entry) => entry.id === 'now-open-first');
+      expect(found?.label).toBe('Open: main is failing');
+      return found;
+    });
     action?.onSelect();
     expect(navigate).toHaveBeenCalledWith('/dashboard/runs/00000000-0000-4000-8000-000000000001');
   });
