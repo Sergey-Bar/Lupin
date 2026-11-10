@@ -39,7 +39,7 @@ describe('the insights page', () => {
     renderInsights(makeQa());
     await waitFor(() => expect(screen.getByTestId('insights-flaky')).toBeInTheDocument());
     expect(screen.getByRole('heading', { level: 1, name: 'Tests' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Failing' })).toHaveTextContent(
+    expect(screen.getByRole('region', { name: 'Unstable' })).toHaveTextContent(
       '2 flaky tests need a decision.',
     );
     expect(screen.getByTestId('insight-readiness')).toHaveTextContent('Caution');

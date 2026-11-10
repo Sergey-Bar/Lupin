@@ -120,6 +120,7 @@ function InsightsBody({
         warn: items.filter((item) => item.tone === 'warn').length,
       },
       testVerdict(insights.value, items.length),
+      'Unstable',
     );
     return (
       <AreaPage
@@ -133,9 +134,14 @@ function InsightsBody({
             word={testsHero.word}
             reason={testsHero.reason}
             facts={[
+              // Each number counts what the list below holds, so the band and the list agree.
               {
-                label: 'Need a decision',
+                label: 'Flaky',
                 value: String(items.filter((item) => item.tone === 'bad').length),
+              },
+              {
+                label: 'Slow',
+                value: String(items.filter((item) => item.tone === 'warn').length),
               },
               { label: 'Runs', value: String(insights.value.runs) },
             ]}

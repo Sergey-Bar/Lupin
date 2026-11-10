@@ -172,7 +172,7 @@ describe('runAreaItems', () => {
   });
 
   it('says how many branches are red, or that every branch is green', () => {
-    expect(runVerdict(0)).toBe('Every branch is green.');
+    expect(runVerdict(0)).toBe('The newest run on every branch passed.');
     expect(runVerdict(1)).toBe('One branch needs you.');
     expect(runVerdict(3)).toBe('3 branches need you.');
   });

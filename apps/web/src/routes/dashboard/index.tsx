@@ -21,6 +21,7 @@ import {
 import { areaHero } from '../../lib/hero.js';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { LaunchRunForm, ReleaseReadinessCard } from '../dashboard.js';
+import { Bdi } from '../../components/Bidi.js';
 import {
   PageFrame,
   PageHeader,
@@ -130,7 +131,9 @@ function stuckItem(run: Run): AreaItem {
 }
 
 export function runVerdict(count: number): string {
-  if (count === 0) return 'Every branch is green.';
+  // Says what it judges: the newest run per branch, which can be green while Home's release
+  // verdict (the window's pass rate) is No-go. Naming the scope is what keeps them consistent.
+  if (count === 0) return 'The newest run on every branch passed.';
   return count === 1 ? 'One branch needs you.' : `${String(count)} branches need you.`;
 }
 
@@ -229,16 +232,16 @@ export function RunsListPage({
               <TableHeader>
                 <TableRow>
                   <TableHead>Run</TableHead>
+                  <TableHead className="hidden md:table-cell">Branch</TableHead>
                   {showProject ? (
                     <TableHead className="hidden lg:table-cell">Project</TableHead>
                   ) : null}
-                  <TableHead className="hidden md:table-cell">Phase</TableHead>
-                  <TableHead>Outcome</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="hidden md:table-cell">Created</TableHead>
                   {showDuration ? (
-                    <TableHead className="hidden sm:table-cell">Duration</TableHead>
+                    <TableHead className="hidden sm:table-cell text-end">Duration</TableHead>
                   ) : null}
-                  <TableHead>Tests</TableHead>
+                  <TableHead className="text-end">Tests</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -252,28 +255,42 @@ export function RunsListPage({
                         {run.suite ?? run.id.slice(0, 8)}
                       </a>
                     </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {run.branch === null ? (
+                        <span className="text-fg-muted">—</span>
+                      ) : (
+                        <span className="font-mono text-xs">
+                          <Bdi>{run.branch}</Bdi>
+                          {run.commit === null ? null : (
+                            <span className="ms-2 text-fg-muted">{run.commit.slice(0, 7)}</span>
+                          )}
+                        </span>
+                      )}
+                    </TableCell>
                     {showProject ? (
                       <TableCell className="hidden lg:table-cell">{run.projectId ?? '—'}</TableCell>
                     ) : null}
-                    <TableCell className="hidden md:table-cell">
-                      {/* A polite live region on the badge alone, so a status flip is spoken
-                          without re-reading the row. */}
-                      <Badge
+                    <TableCell>
+                      {/* One status: the phase while it runs, the outcome once it ends. A polite
+                          live region on the badge alone, so a status flip is spoken without
+                          re-reading the row. */}
+                      <span
                         data-testid={`run-status-${run.id}`}
                         role="status"
                         aria-live="polite"
-                        variant={isRunActive(run) ? 'default' : 'outline'}
+                        className="inline-flex"
                       >
-                        {run.phase}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        data-testid={`run-outcome-${run.id}`}
-                        variant={outcomeVariant(run.outcome)}
-                      >
-                        {run.outcome ?? 'PENDING'}
-                      </Badge>
+                        {isRunActive(run) ? (
+                          <Badge variant="default">{run.phase}</Badge>
+                        ) : (
+                          <Badge
+                            data-testid={`run-outcome-${run.id}`}
+                            variant={outcomeVariant(run.outcome)}
+                          >
+                            {run.outcome ?? 'PENDING'}
+                          </Badge>
+                        )}
+                      </span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <Timestamp value={run.createdAt} empty="Not started" />
@@ -375,7 +392,7 @@ export function RunsListPage({
               { label: 'Running', value: String(active), testId: 'stat-running' },
               { label: 'Total', value: String(runs.length), testId: 'stat-total' },
             ]}
-            eyebrow="Latest run on every branch"
+            eyebrow="Newest run on each branch"
           />
         }
         items={items}

@@ -55,8 +55,10 @@ export function heroVerdict(card: ReleaseReadinessCard | null): Hero {
 export function areaHero(
   counts: { bad: number; warn: number },
   reason: string,
+  /** The word for this area's red state: "Unstable" for flaky tests, which are not failing. */
+  badWord = 'Failing',
 ): { verdict: HeroVerdict; word: string; reason: string } {
-  if (counts.bad > 0) return { verdict: 'no-go', word: 'Failing', reason };
+  if (counts.bad > 0) return { verdict: 'no-go', word: badWord, reason };
   if (counts.warn > 0) return { verdict: 'caution', word: 'Caution', reason };
   return { verdict: 'go', word: 'Green', reason };
 }

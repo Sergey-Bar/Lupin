@@ -99,6 +99,11 @@ describe('runHero', () => {
 });
 
 describe('areaHero', () => {
+  it('lets an area name its red state, so flaky tests are not called failing', () => {
+    expect(areaHero({ bad: 2, warn: 0 }, 'Two tests flip.', 'Unstable').word).toBe('Unstable');
+    expect(areaHero({ bad: 2, warn: 0 }, 'Two tests flip.', 'Unstable').verdict).toBe('no-go');
+  });
+
   it('fails when anything is red, warns on cautions only, and is green otherwise', () => {
     expect(areaHero({ bad: 2, warn: 1 }, 'Two branches are red.')).toEqual({
       verdict: 'no-go',
