@@ -85,6 +85,10 @@ const TestEndPayloadSchema = z
         message: z.string().optional(),
       })
       .optional(),
+    // The published contract (`TestCompletedSchema`) declares the reason flat. Both are
+    // read; the nested one wins when a producer sends the two.
+    errorCode: z.string().optional(),
+    errorMessage: z.string().optional(),
   })
   .passthrough();
 
@@ -293,7 +297,12 @@ async function persistTestEnd(
     // The reason, bounded and normalised. This is the write that was missing: the
     // reporter has always sent it and the product has always dropped it, so a
     // failed run recorded *that* a test failed and nothing about why.
-    ...normaliseFailure(p.error),
+    ...normaliseFailure(
+      p.error ?? {
+        ...(p.errorCode === undefined ? {} : { code: p.errorCode }),
+        ...(p.errorMessage === undefined ? {} : { message: p.errorMessage }),
+      },
+    ),
   });
   if (previous && previous.status !== next) {
     const delta = transitionDelta(previous.status, next);
