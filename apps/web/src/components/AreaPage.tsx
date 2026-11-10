@@ -56,6 +56,8 @@ export function AreaPage({
   items,
   navigate,
   details,
+  detailsOpen = false,
+  detailsTitle = 'Details',
   clear = 'Nothing here needs you.',
   actions,
   subtitle,
@@ -67,6 +69,12 @@ export function AreaPage({
   navigate: (to: string) => void;
   /** The dense, senior view: every number and panel, folded until asked for. */
   details?: React.ReactNode;
+  /**
+   * Draw `details` open under a heading instead of folded. For a page whose details are the
+   * page itself (Runs: the run table), so the list is never hidden behind a click.
+   */
+  detailsOpen?: boolean;
+  detailsTitle?: string;
   clear?: string;
   /** The page's switchers (project, window), drawn in the header. */
   actions?: React.ReactNode;
@@ -188,7 +196,14 @@ export function AreaPage({
             </ol>
           </details>
         )}
-        {details === undefined ? null : (
+        {details === undefined ? null : detailsOpen ? (
+          <section aria-labelledby="area-details-title" className="flex flex-col gap-3">
+            <h2 id="area-details-title" className="text-sm font-semibold text-fg">
+              {detailsTitle}
+            </h2>
+            {details}
+          </section>
+        ) : (
           <details data-testid="area-details" data-chrome="secondary" className="group">
             <summary className="cursor-pointer select-none rounded-md py-2 text-sm text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
               Details

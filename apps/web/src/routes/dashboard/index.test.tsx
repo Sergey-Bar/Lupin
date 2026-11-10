@@ -172,13 +172,14 @@ describe('runAreaItems', () => {
 });
 
 describe('RunsListPage', () => {
-  it('leads with what needs doing, and keeps every run under Details', async () => {
+  it('leads with what needs doing, then every run in the open, never behind a fold', async () => {
     renderRunsPage(makeApi({ getRuns: vi.fn().mockResolvedValue([failedRun]) }));
     await waitFor(() => expect(screen.getByTestId('area-runs')).toBeInTheDocument());
     const hero = screen.getByRole('region', { name: 'Failing' });
     expect(hero).toHaveTextContent('One branch needs you.');
     expect(screen.getByTestId(`area-item-run-${failedRun.id}`)).toBeInTheDocument();
-    expect(screen.getByTestId('area-details')).toContainElement(
+    expect(screen.queryByTestId('area-details')).toBeNull();
+    expect(screen.getByRole('region', { name: 'All runs' })).toContainElement(
       screen.getByTestId(`run-row-${failedRun.id}`),
     );
   });

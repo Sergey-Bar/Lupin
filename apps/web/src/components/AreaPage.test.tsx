@@ -41,6 +41,17 @@ describe('AreaPage', () => {
     expect(screen.queryByTestId('area-clear')).toBeNull();
   });
 
+  it('shows the main content open when the page is a list, with no fold to find it behind', () => {
+    show([item('a')], {
+      details: <p>the run table</p>,
+      detailsTitle: 'All runs',
+      detailsOpen: true,
+    });
+    expect(screen.queryByTestId('area-details')).toBeNull();
+    expect(screen.getByRole('heading', { level: 2, name: 'All runs' })).toBeInTheDocument();
+    expect(screen.getByText('the run table')).toBeVisible();
+  });
+
   it('lets a hero say the verdict once, rather than again in a line under it', () => {
     show([item('a')], { hero: <section aria-label="Failing">Two tests need a decision.</section> });
     expect(screen.getByRole('region', { name: 'Failing' })).toBeInTheDocument();
