@@ -41,6 +41,10 @@ function harness(workspaceId: string) {
     ['ws-b', failedRun('run-b')],
   ]);
   const store = {
+    listRuns: async (ws?: string) => {
+      const run = ws === undefined ? undefined : runs.get(ws);
+      return { runs: run === undefined ? [] : [run], hasMore: false };
+    },
     getRun: async (runId: string, ws?: string) => {
       const run = ws === undefined ? undefined : runs.get(ws);
       return run?.id === runId ? run : null;
@@ -86,5 +90,29 @@ describe('POST /api/v1/copilot/explain', () => {
   it('refuses a body without a run id', async () => {
     const response = await explain(harness('ws-a'), {});
     expect(response.status).toBe(422);
+  });
+});
+
+describe('POST /api/v1/copilot/ask', () => {
+  function ask(app: Hono, body: unknown) {
+    return app.request('/api/v1/copilot/ask', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it('answers from the caller workspace runs only', async () => {
+    const response = await ask(harness('ws-a'), { question: 'what is failing?' });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { citations: Array<{ id: string }> };
+    const cited = body.citations.map((citation) => citation.id);
+    expect(cited).toContain('run-a');
+    expect(cited).not.toContain('run-b');
+  });
+
+  it('refuses an empty or oversized question', async () => {
+    expect((await ask(harness('ws-a'), { question: '' })).status).toBe(422);
+    expect((await ask(harness('ws-a'), { question: 'x'.repeat(501) })).status).toBe(422);
   });
 });

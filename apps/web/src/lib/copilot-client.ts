@@ -40,21 +40,38 @@ export const RunExplanationSchema = z.object({
 export type RunExplanation = z.infer<typeof RunExplanationSchema>;
 export type CopilotAction = z.infer<typeof ProposedActionSchema>;
 
+export const QuestionAnswerSchema = z.object({
+  source: z.literal('rules'),
+  answer: z.string(),
+  citations: z.array(CitationSchema),
+  links: z.array(z.object({ label: z.string(), to: z.string().startsWith('/') })),
+});
+export type QuestionAnswer = z.infer<typeof QuestionAnswerSchema>;
+
 export interface CopilotClient {
   explainRun(runId: string): Promise<RunExplanation>;
+  ask?(question: string): Promise<QuestionAnswer>;
 }
 
-export function createCopilotClient(baseUrl = '', fetchImpl: typeof fetch = fetch): CopilotClient {
+export function createCopilotClient(
+  baseUrl = '',
+  fetchImpl: typeof fetch = fetch,
+): Required<CopilotClient> {
+  const post = (path: string, body: unknown) =>
+    fetchImpl(`${baseUrl}${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
   return {
     explainRun: async (runId) => {
       const path = '/api/v1/copilot/explain';
-      const response = await fetchImpl(`${baseUrl}${path}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ runId }),
-      });
-      return parse(response, RunExplanationSchema, path);
+      return parse(await post(path, { runId }), RunExplanationSchema, path);
+    },
+    ask: async (question) => {
+      const path = '/api/v1/copilot/ask';
+      return parse(await post(path, { question }), QuestionAnswerSchema, path);
     },
   };
 }

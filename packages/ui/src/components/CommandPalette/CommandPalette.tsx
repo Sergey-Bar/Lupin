@@ -71,13 +71,15 @@ export interface CommandPaletteProps extends HTMLAttributes<HTMLDivElement> {
   actions: CommandAction[];
   open?: boolean; // Can be controlled externally
   onOpenChange?: (open: boolean) => void;
+  /** Offered last whenever something is typed: hands the words to the copilot. */
+  onAsk?: (question: string) => void;
 }
 
 const RECENT_KEY = 'lupin-cmd-recent';
 const MAX_RECENT = 8;
 
 export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
-  ({ actions, open: controlledOpen, onOpenChange, className, ...props }, ref) => {
+  ({ actions, open: controlledOpen, onOpenChange, onAsk, className, ...props }, ref) => {
     const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
     const isOpen = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
     const [query, setQuery] = useState('');
@@ -141,8 +143,14 @@ export const CommandPalette = forwardRef<HTMLDivElement, CommandPaletteProps>(
       }
     }, [isOpen]);
 
+    // Anything typed can be asked, offered after every match so a command still wins Enter.
+    const asked = query.trim();
+    const askAction: CommandAction[] =
+      onAsk === undefined || asked === ''
+        ? []
+        : [{ id: 'ask-copilot', label: `Ask Lupin: “${asked}”`, onSelect: () => onAsk(asked) }];
     const filteredActions = query
-      ? matchActions(actions, query)
+      ? [...matchActions(actions, query), ...askAction]
       : actions
           .filter((a) => recentIds.includes(a.id))
           .concat(actions.filter((a) => !recentIds.includes(a.id))); // Recent first when empty query

@@ -187,3 +187,21 @@ test('answers a question by its words, best match first, using each action’s k
   const options = screen.getAllByRole('option');
   expect(options.map((option) => option.textContent)).toEqual(['Can we ship?']);
 });
+
+test('offers to ask the typed question, last, and hands the words to onAsk', () => {
+  const onAsk = vi.fn();
+  render(
+    <CommandPalette
+      actions={[{ id: 'go', label: 'Go to Runs', onSelect: () => undefined }]}
+      onAsk={onAsk}
+    />,
+  );
+  fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
+  const input = screen.getByRole('combobox');
+  expect(screen.queryByText(/^Ask Lupin/u)).toBeNull();
+  fireEvent.change(input, { target: { value: 'why did checkout fail' } });
+  const options = screen.getAllByRole('option');
+  expect(options.at(-1)).toHaveTextContent('Ask Lupin: “why did checkout fail”');
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(onAsk).toHaveBeenCalledWith('why did checkout fail');
+});

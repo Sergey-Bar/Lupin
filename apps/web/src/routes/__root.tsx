@@ -5,6 +5,7 @@ import { SideNav } from '../components/SideNav.js';
 import { SkipLink } from '../components/SkipLink.js';
 import { ThemeProvider } from '../theme/ThemeProvider.js';
 import { GlobalCommandPalette } from '../components/GlobalCommandPalette.js';
+import { CopilotProvider } from '../components/CopilotPanel.js';
 import { ToastProvider } from '../components/Toasts.js';
 import { Shortcuts } from '../components/Shortcuts.js';
 import { PreferencesProvider } from '../theme/preferences.js';
@@ -58,33 +59,35 @@ function RootComponent() {
     <ThemeProvider>
       <PreferencesProvider>
         <ToastProvider>
-          <div className="relative flex h-dvh overflow-hidden bg-surface-sunken text-fg">
-            <SkipLink />
-            {/* From `lg` up the sidebar is the chrome: every section and tab, fixed beside the page. */}
-            <SideNav />
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-              <NavBar />
-              <main
-                id="main"
-                tabIndex={-1}
-                data-focus-column
-                className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 outline-none sm:px-6 sm:py-6"
-              >
-                {/*
-                 * Secondary chrome: focus mode hides it (index.css). The attribute is on the
-                 * navs themselves, not on a wrapper here — a wrapper rendered on a page with
-                 * no tab row was an empty first child of <main>.
-                 */}
-                <SectionTabs />
-                <PageContent health={health} pathname={pathname}>
-                  <Outlet />
-                </PageContent>
-              </main>
-              <BottomTabBar />
+          <CopilotProvider>
+            <div className="relative flex h-dvh overflow-hidden bg-surface-sunken text-fg">
+              <SkipLink />
+              {/* From `lg` up the sidebar is the chrome: every section and tab, fixed beside the page. */}
+              <SideNav />
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                <NavBar />
+                <main
+                  id="main"
+                  tabIndex={-1}
+                  data-focus-column
+                  className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 outline-none sm:px-6 sm:py-6"
+                >
+                  {/*
+                   * Secondary chrome: focus mode hides it (index.css). The attribute is on the
+                   * navs themselves, not on a wrapper here — a wrapper rendered on a page with
+                   * no tab row was an empty first child of <main>.
+                   */}
+                  <SectionTabs />
+                  <PageContent health={health} pathname={pathname}>
+                    <Outlet />
+                  </PageContent>
+                </main>
+                <BottomTabBar />
+              </div>
             </div>
-          </div>
-          <GlobalCommandPalette />
-          <Shortcuts />
+            <GlobalCommandPalette />
+            <Shortcuts />
+          </CopilotProvider>
         </ToastProvider>
       </PreferencesProvider>
     </ThemeProvider>

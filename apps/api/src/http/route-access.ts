@@ -33,6 +33,7 @@ export const ROUTE_ROLES: ReadonlyArray<
   ['GET', '/api/v1/dashboard/insights', 'viewer'],
   // A read: the rule engine explains a run the caller can already see.
   ['POST', '/api/v1/copilot/explain', 'viewer'],
+  ['POST', '/api/v1/copilot/ask', 'viewer'],
   ['GET', '/api/v1/dashboard/quality-gates', 'viewer'],
   ['GET', '/api/v1/dashboard/quality-gates/:id', 'viewer'],
   ['GET', '/api/v1/dashboard/quarantine', 'viewer'],

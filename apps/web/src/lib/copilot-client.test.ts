@@ -45,3 +45,23 @@ describe('copilot client', () => {
     await expect(createCopilotClient('', fetchImpl).explainRun('x')).rejects.toThrow();
   });
 });
+
+describe('copilot client ask', () => {
+  it('posts the question and refuses a link that leaves the app', async () => {
+    const good = {
+      source: 'rules',
+      answer: 'Nothing is failing.',
+      citations: [],
+      links: [{ label: 'Runs', to: '/dashboard/runs' }],
+    };
+    const fetchImpl = respond(good);
+    expect((await createCopilotClient('', fetchImpl).ask('what fails')).answer).toBe(
+      'Nothing is failing.',
+    );
+    expect(JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body))).toEqual({
+      question: 'what fails',
+    });
+    const evil = respond({ ...good, links: [{ label: 'x', to: 'https://evil.example' }] });
+    await expect(createCopilotClient('', evil).ask('q')).rejects.toThrow();
+  });
+});

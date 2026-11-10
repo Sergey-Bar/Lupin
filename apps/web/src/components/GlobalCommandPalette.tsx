@@ -5,6 +5,7 @@ import { usePreferences } from '../theme/preferences.js';
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import { visibleRoutes } from '../route-manifest.js';
+import { useCopilot } from './CopilotPanel.js';
 
 const QUESTIONS = [
   {
@@ -44,6 +45,7 @@ export function GlobalCommandPalette() {
   const { theme, setTheme } = useTheme();
   const { preferences, update } = usePreferences();
   const navigate = useNavigate();
+  const copilot = useCopilot();
 
   // One entry per visible route, read from the manifest, so a screen added to the
   // navigation bar is in the palette too rather than in one and not the other.
@@ -87,5 +89,6 @@ export function GlobalCommandPalette() {
 
   useCommandActions(builtInActions);
 
-  return <CommandPalette actions={actions} />;
+  // Anything typed that is not a command can be asked; the answer opens in the side panel.
+  return <CommandPalette actions={actions} {...(copilot === null ? {} : { onAsk: copilot.ask })} />;
 }
