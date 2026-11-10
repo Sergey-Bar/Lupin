@@ -32,6 +32,8 @@ export const Route = createRoute({
           if (id === undefined) throw new Error('not found');
           return qa.getReadiness(id, 7);
         },
+        // Triage: the failures of the last 14 days grouped by root cause, server-side.
+        clusters: async (projectId) => (await qa.getInsights(14, projectId)).failureClusters,
         attention: {
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),
