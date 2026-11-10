@@ -198,7 +198,12 @@ export function healthItems(
   tone: 'bad' | 'warn' | 'info';
   action: { label: string; to: string };
 }> {
-  return allHealthItems(summary).filter((item) => item.title !== stated);
+  // Worst first, whatever order the findings were gathered in: the first item carries the
+  // page's one solid button, so it has to be real work and never "for context".
+  const RANK = { bad: 0, warn: 1, info: 2 } as const;
+  return allHealthItems(summary)
+    .filter((item) => item.title !== stated)
+    .sort((a, b) => RANK[a.tone] - RANK[b.tone]);
 }
 
 function allHealthItems(summary: HealthSummary): Array<{

@@ -270,6 +270,17 @@ describe('healthItems', () => {
     ]);
   });
 
+  it('puts a warning above something only for context, so the solid button is on real work', () => {
+    const items = healthItems({
+      wrong: [
+        { ...gap('x'), id: 'reason-gate', tone: 'info', title: 'No gate yet' },
+        gap('unit:api'),
+        gap('e2e:web'),
+      ],
+    } as never);
+    expect(items.map((item) => item.tone)).toEqual(['warn', 'info']);
+  });
+
   it('drops the finding the hero already states, so the page does not say it twice', () => {
     const summary = { wrong: [gap('unit:api')] } as never;
     const all = healthItems(summary);
