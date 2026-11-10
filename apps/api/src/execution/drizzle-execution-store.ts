@@ -175,6 +175,20 @@ function stringValue(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
 
+/**
+ * A `test.completed` event's `error`, as the two `tests` columns. A string is a message; an
+ * object is `{ code, message }`; anything else, or nothing, is no reason at all.
+ */
+function failureOf(raw: unknown): { errorCode: string | null; errorMessage: string | null } | null {
+  if (typeof raw === 'string') return normaliseFailure({ message: raw });
+  if (typeof raw !== 'object' || raw === null) return null;
+  const error = raw as Record<string, unknown>;
+  return normaliseFailure({
+    code: stringValue(error['code']),
+    message: stringValue(error['message']),
+  });
+}
+
 function nullableString(value: unknown): string | null {
   return typeof value === 'string' ? value : null;
 }
@@ -1384,6 +1398,9 @@ export class DrizzleExecutionStore implements ExecutionStore {
     const testDuration = numberValue(payload['durationMs'], 0) || null;
     const testTitle = stringValue(payload['title'], testId);
     const testFile = stringValue(payload['file'], '');
+    // Why it failed, bounded the same way the reporter path bounds it. Only a completion
+    // carries a reason; a `test.started` must not clear one an earlier attempt recorded.
+    const failure = input.type === 'test.completed' ? failureOf(payload['error']) : null;
     const stableId = testIdentity({
       file: testFile,
       describePath: Array.isArray(payload['describePath'])
@@ -1404,6 +1421,7 @@ export class DrizzleExecutionStore implements ExecutionStore {
         status: testStatus,
         durationMs: testDuration,
         retryCount: 0,
+        ...(failure ?? {}),
       })
       .onConflictDoUpdate({
         target: [tests.id, tests.runId],
@@ -1414,6 +1432,7 @@ export class DrizzleExecutionStore implements ExecutionStore {
           ...(typeof payload['title'] === 'string' ? { stableId } : {}),
           status: testStatus,
           durationMs: testDuration,
+          ...(failure ?? {}),
         },
       });
   }
