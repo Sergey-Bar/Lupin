@@ -144,7 +144,74 @@ function TestEvidence({ tests }: { tests: Run['tests'] }) {
       </p>
     );
   }
+  const passed = tests.filter((test) => !isFailure(test.status));
+  return (
+    <div className="space-y-4">
+      {groupFailures(tests).map((group) => (
+        <section
+          key={group.key}
+          data-testid="failure-group"
+          aria-label={`${String(group.tests.length)} ${group.tests.length === 1 ? 'test' : 'tests'}: ${group.message}`}
+          className="space-y-2"
+        >
+          {/* Sentry-style: one head per cause, the count first, so the biggest cause is read first. */}
+          <h3 data-testid="failure-group-head" className="flex items-baseline gap-3 text-sm">
+            <span className="shrink-0 font-semibold text-danger">
+              {group.tests.length} {group.tests.length === 1 ? 'test' : 'tests'}
+            </span>
+            <span className="min-w-0 truncate font-mono text-fg">{group.message}</span>
+          </h3>
+          <TestRows tests={group.tests} />
+        </section>
+      ))}
+      {passed.length === 0 ? null : (
+        <details data-testid="passed-tests" className="group" open={passed.length === tests.length}>
+          <summary className="cursor-pointer select-none rounded-md py-1 text-sm text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
+            {passed.length} passed
+          </summary>
+          <div className="mt-2">
+            <TestRows tests={passed} />
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
 
+/** A failed or timed-out test: what the failure groups are made of. */
+function isFailure(status: string): boolean {
+  return status === 'failed' || status === 'timed_out';
+}
+
+/**
+ * Failed tests grouped by what broke them, biggest group first.
+ *
+ * The key is the error message with what varies between occurrences of one cause taken out
+ * (quoted data, hex ids, numbers), the same idea as `failureSignature` on the server, so two
+ * timeouts on different ports are one group and a timeout and a declined card are two.
+ */
+export function groupFailures(tests: Run['tests']): Array<{
+  key: string;
+  message: string;
+  tests: Run['tests'];
+}> {
+  const groups = new Map<string, { key: string; message: string; tests: Run['tests'] }>();
+  for (const test of tests.filter((entry) => isFailure(entry.status))) {
+    const message = test.error?.message?.trim() || 'Failed with no message';
+    const key = message
+      .toLowerCase()
+      .replace(/(['"`]).*?\1/gu, '""')
+      .replace(/0x[0-9a-f]+|\b[0-9a-f]{8,}\b/gu, '#')
+      .replace(/\d+/gu, 'n')
+      .replace(/\s+/gu, ' ');
+    const group = groups.get(key) ?? { key, message, tests: [] };
+    group.tests = [...group.tests, test];
+    groups.set(key, group);
+  }
+  return [...groups.values()].sort((a, b) => b.tests.length - a.tests.length);
+}
+
+function TestRows({ tests }: { tests: Run['tests'] }) {
   return (
     /*
      * The evidence surfaces sit one step *below* the panels, not on them.

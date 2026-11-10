@@ -687,3 +687,40 @@ describe('the live run hero', () => {
     expect(hero).toHaveTextContent('4 of 10 tests reported · 1 failing so far');
   });
 });
+
+describe('the failures, grouped by what broke them', () => {
+  const test = (id: string, status: 'passed' | 'failed', message?: string) => ({
+    id,
+    title: `checkout › ${id}`,
+    file: 'e2e/checkout.spec.ts',
+    status,
+    durationMs: 1200,
+    attempts: [],
+    artifactIds: [],
+    metadata: {},
+    ...(message === undefined ? {} : { error: { code: 'ASSERTION_FAILED', message } }),
+  });
+
+  it('puts one group per error first, biggest first, and folds the passes', async () => {
+    const run = makeRun({
+      ...passedRun,
+      outcome: 'failed',
+      tests: [
+        test('pass-1', 'passed'),
+        test('a', 'failed', 'expected the cart to settle within 5000ms'),
+        test('b', 'failed', 'expected the cart to settle within 5000ms'),
+        test('c', 'failed', 'card was declined'),
+        test('pass-2', 'passed'),
+      ] as never,
+    });
+    render(<RunDetailPage id="run-123" api={detailApi(run)} />);
+    const groups = await screen.findAllByTestId('failure-group');
+    expect(
+      groups.map((group) => within(group).getByTestId('failure-group-head').textContent),
+    ).toEqual(['2 testsexpected the cart to settle within 5000ms', '1 testcard was declined']);
+    const passed = screen.getByTestId('passed-tests');
+    expect(passed.tagName).toBe('DETAILS');
+    expect(passed).not.toHaveAttribute('open');
+    expect(passed.querySelector('summary')).toHaveTextContent('2 passed');
+  });
+});
