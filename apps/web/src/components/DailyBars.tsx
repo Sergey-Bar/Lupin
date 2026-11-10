@@ -24,6 +24,13 @@ export function DailyBars({
   if (total === 0) return <p className="text-sm text-fg-muted">None in this window.</p>;
   const peak = days.reduce((best, day) => (day.value > best.value ? day : best));
   const summary = `${label}: ${String(total)} over ${String(days.length)} days, most on ${shortDate(peak.date)} (${String(peak.value)}).`;
+  // No chart without a comparison: the recent half of the window against the half before it.
+  // A count of failures, so more is worse.
+  const half = Math.floor(days.length / 2);
+  const sum = (part: readonly { value: number }[]) => part.reduce((s, day) => s + day.value, 0);
+  const recent = sum(days.slice(days.length - half));
+  const before = sum(days.slice(days.length - 2 * half, days.length - half));
+  const change = recent - before;
   return (
     <figure className="m-0 flex flex-col gap-2">
       <div role="img" aria-label={summary} className={cn('flex h-24 items-end gap-1', tone)}>
@@ -47,6 +54,21 @@ export function DailyBars({
         </span>
         <span>{shortDate(days.at(-1)?.date ?? peak.date)}</span>
       </figcaption>
+      {half === 0 ? null : (
+        <p data-testid="daily-compare" className="text-xs text-fg-muted">
+          {String(recent)} in the last {String(half)} days, vs {String(before)} in the{' '}
+          {String(half)} before{' '}
+          <span
+            className={cn(
+              'font-medium',
+              change > 0 ? 'text-danger' : change < 0 ? 'text-success' : 'text-fg-muted',
+            )}
+          >
+            {change > 0 ? '+' : change < 0 ? '−' : '±'}
+            {String(Math.abs(change))}
+          </span>
+        </p>
+      )}
       <div className="sr-only">
         <table>
           <caption>{label}</caption>

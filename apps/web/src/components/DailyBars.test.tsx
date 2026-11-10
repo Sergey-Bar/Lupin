@@ -40,3 +40,24 @@ describe('DailyBars', () => {
     expect(screen.queryAllByTestId('daily-bar')).toHaveLength(0);
   });
 });
+
+describe('DailyBars, compared with the days before', () => {
+  const series = (values: number[]) =>
+    values.map((value, index) => ({
+      date: `2026-11-${String(index + 1).padStart(2, '0')}`,
+      value,
+    }));
+
+  it('compares the recent half of the window with the half before it', () => {
+    render(<DailyBars days={series([1, 1, 1, 1, 3, 3, 3, 3])} label="Failed results" tone="" />);
+    const compare = screen.getByTestId('daily-compare');
+    expect(compare).toHaveTextContent('12 in the last 4 days, vs 4 in the 4 before');
+    // More failures is worse: the change is drawn as bad.
+    expect(within(compare).getByText('+8')).toHaveClass('text-danger');
+  });
+
+  it('says a fall in failures is good', () => {
+    render(<DailyBars days={series([5, 5, 0, 1])} label="Failed results" tone="" />);
+    expect(within(screen.getByTestId('daily-compare')).getByText('−9')).toHaveClass('text-success');
+  });
+});
