@@ -14,7 +14,7 @@ import { resetViewerRoleCache } from '../hooks/useViewerRole';
 import { expectNoBlockingAxeViolations } from '../test-axe';
 import { makeApi, makeRun } from '../test-utils';
 
-function renderAt(path: string, api = makeApi({ getRecentRuns: vi.fn(async () => []) })) {
+function renderAt(path: string, api = makeApi()) {
   const rootRoute = createRootRoute({
     component: () => (
       <ThemeProvider>
@@ -165,7 +165,7 @@ describe('SideNav', () => {
   });
 
   it('holds only the areas, Ask Lupin and Settings: no run list and no mode switch', async () => {
-    renderAt('/dashboard/now', makeApi({ getRecentRuns: vi.fn(async () => [makeRun()]) }));
+    renderAt('/dashboard/now', makeApi());
     const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest(
       'aside',
     ) as HTMLElement;

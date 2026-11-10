@@ -371,10 +371,14 @@ export function RunsListPage({
         detailsTitle="Every run"
         actions={headerActions}
         details={
-          // One list, the full width: the counts are in the status band above, and the
-          // release card and the recent list repeated what this page and Health already say.
-          <div data-testid="runs-list-page" className="flex h-[70vh] min-h-96 flex-col">
-            {table}
+          // One list, the full width: the counts are in the status band above. The release's
+          // own gate evidence follows the list (the release-readiness E2E reads it here); the
+          // side column and its second, shorter run list are gone.
+          <div className="flex flex-col gap-3">
+            <div data-testid="runs-list-page" className="flex h-[70vh] min-h-96 flex-col">
+              {table}
+            </div>
+            {readiness}
           </div>
         }
       />

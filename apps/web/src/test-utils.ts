@@ -206,7 +206,6 @@ export function makeApi(overrides: Partial<ApiClient> = {}): ApiClient {
   const run: Run = makeRun();
   const base: ApiClient = {
     getRuns: vi.fn(async () => []),
-    getRecentRuns: vi.fn(async () => []),
     getRun: vi.fn(async () => run),
     createRun: vi.fn(async () => run),
     cancelRun: vi.fn(async () => run),

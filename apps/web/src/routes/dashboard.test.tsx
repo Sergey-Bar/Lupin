@@ -170,7 +170,7 @@ describe('dashboard routes', () => {
     expect(onCreated).toHaveBeenCalledOnce();
   });
 
-  it('keeps the release card off the Runs page: the table is the list, Health is the verdict', async () => {
+  it('renders persisted readiness under the run table, and no second run list', async () => {
     const run = makeRun({ id: 'recent-run', projectId: 'registered-project', phase: 'running' });
     const readiness = {
       releaseId: 'release-1',
@@ -203,8 +203,17 @@ describe('dashboard routes', () => {
       }),
     );
     render(<MemoryRouter initialEntries={['/dashboard/runs']} />);
-    await waitFor(() => expect(screen.getByTestId('run-row-recent-run')).toBeInTheDocument());
-    expect(screen.queryByTestId('release-readiness')).toBeNull();
+    await waitFor(() => expect(screen.getByTestId('release-readiness')).toHaveTextContent('Ready'));
+    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('Ready');
+    expect(screen.getByTestId('release-readiness')).toHaveTextContent('browserPassed');
+    expect(screen.getByTestId('release-readiness')).toHaveTextContent('apiNot configured');
+    // After the list, not beside it, and no "recent executions" card repeating the table.
+    expect(
+      screen
+        .getByTestId('runs-list-page')
+        .compareDocumentPosition(screen.getByTestId('release-readiness')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(screen.queryByTestId('run-item-recent-run')).toBeNull();
     expect(
       screen

@@ -1,17 +1,14 @@
 import React, { useRef, useState } from 'react';
-import { createRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { createRoute, Outlet, useRouterState } from '@tanstack/react-router';
 import { Badge, Button } from '@lupin/ui';
 import { Route as rootRoute } from './__root.js';
 import type { CreateRunRequest, DomainReadinessStatus } from '@lupin/shared-contracts';
 import { useReleaseReadiness } from '../hooks/useDashboard.js';
-import { isRunActive } from '../hooks/useRuns.js';
 import { Dashboard } from '../components/Dashboard.js';
 import { Panel, Quiet } from '../components/kit.js';
 import { createQaClient } from '../lib/qa-client.js';
 import { defaultApiClient, type ApiClient, type Run } from '../lib/api.js';
 import { statusWord } from '../lib/status-word.js';
-import { Timestamp } from '../components/Timestamp.js';
-import { runTransitionName } from '../lib/view-transition.js';
 
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
@@ -282,67 +279,6 @@ export function ReleaseReadinessCard({
           No readiness has been evaluated. A run that names a release brings its evidence here.
         </Quiet>
       )}
-    </Panel>
-  );
-}
-
-export function RecentRuns({ runs, isLive }: { runs: Run[]; isLive: boolean }) {
-  // **Nothing, not an empty state.** This panel sits beside the full run table, which
-  // renders its own empty state. Two "there is nothing here" panels on one screen is noise
-  // that reads as two separate failures.
-  if (runs.length === 0) return null;
-
-  return (
-    <Panel
-      title="Recent executions"
-      action={<span className="text-xs text-fg-muted">{isLive ? 'Live' : 'Reconnecting'}</span>}
-    >
-      <div className="divide-y divide-border-default">
-        {runs.slice(0, 3).map((run) => (
-          <Link
-            key={run.id}
-            to="/dashboard/runs/$runId"
-            params={{ runId: run.id }}
-            data-testid={`run-item-${run.id}`}
-            className="flex items-center justify-between gap-3 rounded-md py-2 no-underline hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-          >
-            <div className="min-w-0">
-              <div
-                className="truncate font-mono text-xs"
-                title={run.suite ?? run.id}
-                style={{ viewTransitionName: runTransitionName(run.id) }}
-              >
-                {run.suite ?? run.id.slice(0, 8)}
-              </div>
-              <div className="text-xs text-fg-muted">
-                <Timestamp value={run.createdAt} empty="" />
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <Badge variant={isRunActive(run) ? 'default' : 'outline'}>{run.phase}</Badge>
-              {/*
-               * `role="status"` is a polite live region, so a screen-reader user hears
-               * "run-42 passed" the moment the status flips. Without it the badge silently
-               * changes colour and text under a user who is watching something else.
-               */}
-              <Badge
-                role="status"
-                aria-live="polite"
-                data-testid={`run-status-${run.id}`}
-                variant={
-                  run.outcome === 'passed'
-                    ? 'success'
-                    : run.outcome === 'failed'
-                      ? 'danger'
-                      : 'secondary'
-                }
-              >
-                {(run.outcome ?? (run.phase === 'running' ? 'running' : run.phase)).toLowerCase()}
-              </Badge>
-            </div>
-          </Link>
-        ))}
-      </div>
     </Panel>
   );
 }
