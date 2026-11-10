@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, EmptyState, Select } from '@lupin/ui';
+import { Button, ButtonLink, EmptyState, Select } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import { useViewerRole } from '../hooks/useViewerRole.js';
 import type { QaClient } from '../lib/qa-client.js';
@@ -146,20 +146,16 @@ function Onboarding({ title }: { title: string }): React.ReactElement {
           </p>
           {canConnect ? (
             <div className="flex flex-wrap gap-3">
-              <a
+              <ButtonLink
                 href={role === 'admin' ? '/dashboard/setup' : '/dashboard/settings/projects'}
                 data-testid="onboarding-connect"
-                className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-on-fill hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
               >
                 {role === 'admin' ? 'Start setup' : 'Connect a repository'}
-              </a>
+              </ButtonLink>
               {role === 'admin' ? (
-                <a
-                  href="/dashboard/settings/projects"
-                  className="inline-flex min-h-10 items-center text-sm text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-                >
+                <ButtonLink href="/dashboard/settings/projects" variant="link">
                   Just connect a repository
-                </a>
+                </ButtonLink>
               ) : null}
             </div>
           ) : (

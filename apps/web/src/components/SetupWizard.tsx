@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Check, CircleCheck } from '@lupin/ui';
+import { Button, ButtonLink, Check, CircleCheck } from '@lupin/ui';
 import type { Onboarding, OnboardingStepId } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { HealthClient, WhoAmI } from '../lib/health-client.js';
@@ -148,12 +148,7 @@ function FirstRun({ qa, who }: { qa: QaClient; who: WhoAmI }): React.ReactElemen
         command it will run, and start it.
       </p>
       <div>
-        <a
-          href="/dashboard/runner"
-          className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-on-fill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-        >
-          Open the runner
-        </a>
+        <ButtonLink href="/dashboard/runner">Open the runner</ButtonLink>
       </div>
       <p className="text-sm text-fg-muted">
         No command to run here? Upload results from CI with the lupin CLI instead; this step
@@ -298,12 +293,7 @@ function Finished({
           </ul>
         )}
         <div>
-          <a
-            href="/dashboard/now"
-            className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-on-fill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-          >
-            Go to the cockpit
-          </a>
+          <ButtonLink href="/dashboard/now">Go to Home</ButtonLink>
         </div>
       </div>
     </Panel>

@@ -13,6 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  ButtonLink,
 } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import {
@@ -136,12 +137,9 @@ export function SignIn({
       <form onSubmit={submit} className="w-full max-w-sm space-y-4" aria-label="Sign in">
         <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
         {sso ? (
-          <a
-            href="/api/v1/auth/oidc/start"
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-on-fill hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-          >
+          <ButtonLink href="/api/v1/auth/oidc/start" className="w-full">
             Sign in with single sign-on
-          </a>
+          </ButtonLink>
         ) : null}
         <p className="text-sm text-fg-muted">
           {sso ? 'Or paste' : 'Paste'} the access token an admin gave you, or the installation key.

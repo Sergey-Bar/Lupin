@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, cn } from '@lupin/ui';
+import { Button, ButtonLink, cn } from '@lupin/ui';
 
 /**
  * One big number, one sentence, one action.
@@ -42,12 +42,7 @@ export function StatusLine({
         <span className="text-base text-fg-muted">{sentence}</span>
       </div>
       {action === undefined ? null : action.href !== undefined ? (
-        <a
-          href={action.href}
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-on-fill hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-        >
-          {action.label}
-        </a>
+        <ButtonLink href={action.href}>{action.label}</ButtonLink>
       ) : (
         <Button className="min-h-11" onClick={action.onSelect}>
           {action.label}

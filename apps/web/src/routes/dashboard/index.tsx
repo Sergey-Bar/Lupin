@@ -16,6 +16,7 @@ import {
   TableRow,
   StatusDot,
   Hero,
+  ButtonLink,
 } from '@lupin/ui';
 import { areaHero } from '../../lib/hero.js';
 import { Route as dashboardRoute } from '../dashboard.js';
@@ -203,12 +204,9 @@ export function RunsListPage({
           title="No execution evidence"
           description="Start a tool from the Runner, launch a browser run, or let the dashboard show what is blocking you."
           action={
-            <a
-              href="/dashboard/runner"
-              className="rounded-md bg-primary px-4 py-2 text-sm text-on-fill no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-            >
+            <ButtonLink href="/dashboard/runner" variant="secondary">
               Open the runner
-            </a>
+            </ButtonLink>
           }
         />
       ) : (

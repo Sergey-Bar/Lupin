@@ -11,7 +11,7 @@ import { ActionCard, Hero, Row, Surface } from './Kit/Kit.js';
 import { Avatar, AvatarFallback, AvatarImage } from './Avatar/Avatar.js';
 import { Badge } from './Badge/Badge.js';
 import { Breadcrumbs } from './Breadcrumbs/Breadcrumbs.js';
-import { Button } from './Button/Button.js';
+import { Button, ButtonLink } from './Button/Button.js';
 import {
   Card,
   CardContent,
@@ -135,7 +135,17 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
       />
     ),
   },
-  { name: 'Button', element: <Button variant="primary">Queue browser run</Button> },
+  {
+    name: 'Button',
+    element: (
+      <>
+        <Button variant="primary">Queue browser run</Button>
+        <ButtonLink href="/dashboard/setup" variant="secondary">
+          Continue setup
+        </ButtonLink>
+      </>
+    ),
+  },
   {
     name: 'Card',
     element: (

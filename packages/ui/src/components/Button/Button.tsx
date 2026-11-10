@@ -1,4 +1,9 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import {
+  forwardRef,
+  type AnchorHTMLAttributes,
+  type ButtonHTMLAttributes,
+  type ReactNode,
+} from 'react';
 import { Loader2 } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils.js';
@@ -93,3 +98,29 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
+
+export interface ButtonLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement>, ButtonVariants {
+  href: string;
+  icon?: ReactNode;
+}
+
+/**
+ * A link that is drawn as a button: the same variants, height, radius and hover, so a screen
+ * never mixes a real button with a hand-styled look-alike. It navigates, so it stays an `<a>`
+ * (a reader can open it in a new tab); `apps/web/src/button-rule.test.ts` refuses the
+ * hand-written `bg-primary … text-on-fill` string this replaces.
+ */
+export const ButtonLink = forwardRef<HTMLAnchorElement, ButtonLinkProps>(
+  ({ variant = 'primary', size = 'md', icon, children, className, ...rest }, ref) => (
+    <a
+      ref={ref}
+      className={cn(buttonVariants({ variant, size }), 'cursor-pointer', className)}
+      {...rest}
+    >
+      {icon && <span className="shrink-0">{icon}</span>}
+      {children}
+    </a>
+  ),
+);
+
+ButtonLink.displayName = 'ButtonLink';
