@@ -31,13 +31,16 @@ const CATEGORY_LABEL: Record<Category, string> = {
 export function FailureClustersPanel({
   clusters,
   api,
+  className = 'flex-1',
 }: {
   clusters: QaInsights['failureClusters'];
   /** Absent: labels are shown and cannot be changed here. */
   api?: Pick<ApiClient, 'setTriageLabel'>;
+  /** Fills its column on Tests; on Home it is as tall as its rows. */
+  className?: string;
 }): React.ReactElement {
   return (
-    <Panel title="Failures by root cause" data-testid="failure-clusters" className="flex-1">
+    <Panel title="Failures by root cause" data-testid="failure-clusters" className={className}>
       {clusters === undefined ? (
         <Quiet data-testid="clusters-unreported">This API does not group failures by cause.</Quiet>
       ) : (

@@ -211,7 +211,7 @@ function TriageCauses({
   const clusters = useResource(() => load(projectId), [load, projectId]);
   if (clusters.status === 'loading') return <Skeleton className="h-40 w-full" />;
   if (clusters.status === 'error') return <ReadFailed failure={clusters} />;
-  return <FailureClustersPanel clusters={clusters.value} />;
+  return <FailureClustersPanel clusters={clusters.value} className="" />;
 }
 
 /**
