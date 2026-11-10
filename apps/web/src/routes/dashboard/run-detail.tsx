@@ -856,18 +856,19 @@ function TestPanel({ run }: { run: Run }) {
   return (
     <>
       <Panel title="Test attempts" className={evidenceFit(run.tests.length > 0)}>
-        {run.tests.some((test) => isFailure(test.status)) ? (
-          <>
-            <BranchHistory run={run} />
-            <CopilotExplain runId={run.id} />
-          </>
-        ) : null}
         <div
           tabIndex={0}
           role="region"
           aria-label="Test attempt list"
-          className="min-h-0 flex-1 overflow-y-auto rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
         >
+          {/* Inside the scroll region, so a long answer scrolls with the evidence it explains. */}
+          {run.tests.some((test) => isFailure(test.status)) ? (
+            <>
+              <BranchHistory run={run} />
+              <CopilotExplain runId={run.id} />
+            </>
+          ) : null}
           <TestEvidence tests={run.tests} />
         </div>
       </Panel>
