@@ -103,6 +103,8 @@ export function Shortcuts(): React.ReactElement {
           ))}
           <dt className="font-mono">a</dt>
           <dd>Take the page’s main action</dd>
+          <dt className="font-mono">e</dt>
+          <dd>Explain this run (on a run)</dd>
           <dt className="font-mono">j / k</dt>
           <dd>Next / previous row</dd>
           <dt className="font-mono">Enter</dt>

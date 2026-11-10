@@ -25,6 +25,7 @@ import { Bdi } from '../../components/Bidi.js';
 import { PageFrame, PageHeader, Panel } from '../../components/kit.js';
 import { Responsive } from '../../components/responsive.js';
 import { ScoreImpactBanner } from '../../components/ScoreImpactBanner.js';
+import { CopilotExplain, testAnchor } from '../../components/CopilotExplain.js';
 
 /**
  * `?from=cockpit&window=` is how the cockpit says it sent the person here. It is the only
@@ -230,6 +231,7 @@ function TestRows({ tests }: { tests: Run['tests'] }) {
       {tests.map((test) => (
         <details
           key={test.id}
+          id={testAnchor(test.id)}
           data-testid={`test-${test.id}`}
           className="rounded-md border border-border-default bg-surface-sunken p-4"
         >
@@ -853,6 +855,9 @@ function TestPanel({ run }: { run: Run }) {
   return (
     <>
       <Panel title="Test attempts" className={evidenceFit(run.tests.length > 0)}>
+        {run.tests.some((test) => isFailure(test.status)) ? (
+          <CopilotExplain runId={run.id} />
+        ) : null}
         <div
           tabIndex={0}
           role="region"
