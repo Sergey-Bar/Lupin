@@ -31,6 +31,21 @@ const pull = {
 } as unknown as GithubPullItem;
 
 describe('DeliveryArea', () => {
+  it('links to every Delivery page, so none of them is only reachable through a menu', async () => {
+    const listPulls = vi.fn(async () => ({ items: [pull], nextCursor: null }));
+    render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);
+    const nav = await screen.findByRole('navigation', { name: 'Delivery pages' });
+    expect(
+      [...nav.querySelectorAll('a')].map((link) => [link.textContent, link.getAttribute('href')]),
+    ).toEqual([
+      ['Pull requests', '/dashboard/prs'],
+      ['Issues', '/dashboard/issues'],
+      ['Repositories', '/dashboard/repos'],
+      ['AI code', '/dashboard/ai-code'],
+      ['Agents', '/dashboard/agents'],
+    ]);
+  });
+
   it('opens on the same status band as Runs and Tests once the pull requests are read', async () => {
     const listPulls = vi.fn(async () => ({ items: [pull], nextCursor: null }));
     render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);

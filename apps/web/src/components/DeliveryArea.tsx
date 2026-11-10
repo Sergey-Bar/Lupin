@@ -7,6 +7,14 @@ import { useResource } from '../hooks/useResource.js';
 import { pullItems } from '../lib/attention.js';
 import { isNothingYet } from '../lib/nothing-yet.js';
 
+const DELIVERY_PAGES: ReadonlyArray<readonly [string, string]> = [
+  ['Pull requests', '/dashboard/prs'],
+  ['Issues', '/dashboard/issues'],
+  ['Repositories', '/dashboard/repos'],
+  ['AI code', '/dashboard/ai-code'],
+  ['Agents', '/dashboard/agents'],
+];
+
 /**
  * The Delivery area: which pull requests are stuck and why, first; every pull request, issue
  * and repository list is under Details for the reader who wants the whole inbox.
@@ -47,6 +55,20 @@ export function DeliveryArea({
   return (
     <AreaPage
       title="Delivery"
+      subtitle={
+        // Every Delivery page in one quiet line: the More menu is a shortcut, not the only way in.
+        <nav aria-label="Delivery pages" className="flex flex-wrap gap-x-4 gap-y-1">
+          {DELIVERY_PAGES.map(([label, href]) => (
+            <a
+              key={href}
+              href={href}
+              className="inline-flex min-h-6 items-center rounded-sm text-fg-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+      }
       verdict={verdict}
       {...(pulls.status === 'ready' && pulls.value.items.length > 0
         ? {
