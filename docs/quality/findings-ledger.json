@@ -7499,6 +7499,63 @@
           "asserts": "A test stored with file '' reads back with file null instead of failing the contract."
         }
       ]
+    },
+    {
+      "id": "Q-59",
+      "title": "The rendering budget passed two routes it never measured",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "BRAND-2026-11",
+      "confirmed": true,
+      "confirmedOn": "2026-11-10",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "test:render is pr-blocking. Its page observer started LCP at 0, and measurementProblems only refuses a reading that is not a finite number, so a route that emitted no largest-contentful-paint entry read as a perfect 0 ms and passed. The spec also clicked before the page settled, and the browser stops reporting LCP at the first input, so /dashboard and /dashboard/runs/:runId were never measured.",
+      "resolution": "LCP starts as null, so an unreported reading is refused as unmeasured (seen failing on the two routes before the fix). The spec settles before the interaction. All four routes now read 164-216 ms against the 460 ms ceiling.",
+      "evidence": [
+        {
+          "path": "tests/e2e/performance/rendering-budget.spec.ts",
+          "asserts": "An LCP the browser never reported stays null and fails measurementProblems; the interaction happens after the page settles."
+        }
+      ]
+    },
+    {
+      "id": "Q-60",
+      "title": "A test reported as a runner event lost why it failed",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "BRAND-2026-11",
+      "confirmed": true,
+      "confirmedOn": "2026-11-10",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "The PostgreSQL store wrote a test.completed event into the tests row without its error, although normaliseFailure was already imported into that file, so every failure reported through the runner event stream read \"Failed with no message\".",
+      "resolution": "upsertTestRow stores failureOf(payload.error), bounded by normaliseFailure, on completion only.",
+      "evidence": [
+        {
+          "path": "apps/api/src/execution/runner-lifecycle.drizzle.test.ts",
+          "asserts": "A test.completed event carrying error { code, message } reads back with that error."
+        }
+      ]
+    },
+    {
+      "id": "Q-61",
+      "title": "A reporter failure sent in the contract shape lost its message",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "BRAND-2026-11",
+      "confirmed": true,
+      "confirmedOn": "2026-11-10",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "TestCompletedSchema in shared-contracts declares a flat errorMessage, while persistTestEnd read only a nested error { code, message }. A producer written against the published contract had every failure reason dropped.",
+      "resolution": "TestEndPayloadSchema reads errorCode and errorMessage too; the nested error wins when both are sent.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/reporter-failure-shape.test.ts",
+          "asserts": "A failure reason is kept from the nested shape and from the flat contract shape, and the nested one wins."
+        }
+      ]
     }
   ]
 }
