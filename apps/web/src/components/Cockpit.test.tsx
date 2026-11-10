@@ -6,7 +6,13 @@ import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { cockpitFixture, cockpitMetric } from '../test-utils.js';
 import { QaApiError } from '../lib/qa-client.js';
 import { greetingFor } from '../lib/focus.js';
-import { CockpitNumbers, CockpitPage, safeHref, type CockpitSources } from './Cockpit.js';
+import {
+  CockpitNumbers,
+  CockpitPage,
+  HOME_VIEW_KEY,
+  safeHref,
+  type CockpitSources,
+} from './Cockpit.js';
 import type { CockpitClient } from '../lib/cockpit-client.js';
 import { expectOnePrimary } from '../test-utils.js';
 
@@ -587,6 +593,94 @@ describe('choosing the project', () => {
       />,
     );
     expect(await screen.findByLabelText('Project')).toHaveValue('');
+  });
+});
+
+describe('the two Home views', () => {
+  const clusters = {
+    clusters: [
+      {
+        signature: 'timeout:locator.click',
+        message: 'TimeoutError: locator.click',
+        count: 4,
+        runs: 2,
+        tests: ['checkout › pays'],
+        firstSeen: '2026-10-24T10:00:00.000Z',
+        lastSeen: '2026-10-26T10:00:00.000Z',
+        branches: ['main'],
+      },
+    ],
+    totals: { failures: 4, causes: 1 },
+    summary: '4 failures, 1 cause',
+  } as never;
+
+  it('opens on Triage for an engineer: what needs you, then failures grouped by cause', async () => {
+    localStorage.removeItem(HOME_VIEW_KEY);
+    render(
+      <CockpitPage
+        sources={{ ...sources(), clusters: vi.fn(async () => clusters) }}
+        navigate={vi.fn()}
+        now={() => NOW}
+      />,
+    );
+    const views = screen.getByRole('group', { name: 'Home view' });
+    expect(within(views).getByRole('button', { name: 'Triage' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(await screen.findByTestId('clusters-summary')).toHaveTextContent('4 failures, 1 cause');
+  });
+
+  it('switches to Release for a lead, and remembers the choice', async () => {
+    const user = userEvent.setup();
+    localStorage.removeItem(HOME_VIEW_KEY);
+    const readiness = vi.fn(
+      async () =>
+        ({
+          verdict: 'caution',
+          reasons: [
+            {
+              code: 'q',
+              level: 'caution',
+              message: '2 quarantined tests await a decision',
+              evidence: '',
+            },
+            { code: 'ok', level: 'go', message: 'Coverage holds', evidence: '' },
+            {
+              code: 'p',
+              level: 'no-go',
+              message: 'Pass rate 78% is below the 80% floor',
+              evidence: '',
+            },
+          ],
+        }) as never,
+    );
+    const { unmount } = render(
+      <CockpitPage
+        sources={{ ...sources(), clusters: vi.fn(async () => clusters), readiness }}
+        navigate={vi.fn()}
+        now={() => NOW}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Release' }));
+    expect(await screen.findByRole('region', { name: 'Caution' })).toBeInTheDocument();
+    const why = await screen.findByRole('list', { name: 'Why this decision' });
+    expect(
+      within(why)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Pass rate 78% is below the 80% floor', '2 quarantined tests await a decision']);
+    expect(screen.queryByTestId('clusters-summary')).toBeNull();
+    expect(localStorage.getItem(HOME_VIEW_KEY)).toBe('release');
+    unmount();
+    render(
+      <CockpitPage
+        sources={{ ...sources(), clusters: vi.fn(async () => clusters), readiness }}
+        navigate={vi.fn()}
+        now={() => NOW}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Release' })).toHaveAttribute('aria-pressed', 'true');
   });
 });
 

@@ -1,7 +1,7 @@
 import React from 'react';
-import { ExternalLink, Hero, Select, Skeleton, Sparkline, Button, cn } from '@lupin/ui';
+import { ExternalLink, Hero, Select, Skeleton, Sparkline, StatusDot, Button, cn } from '@lupin/ui';
 import { heroVerdict } from '../lib/hero.js';
-import type { ReleaseReadinessCard } from '../lib/qa.js';
+import type { QaInsights, ReleaseReadinessCard } from '../lib/qa.js';
 import type { Cockpit, CockpitDriver, CockpitMetric, CockpitWindow } from '@lupin/shared-contracts';
 import { useCockpit } from '../hooks/useCockpit.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
@@ -23,6 +23,8 @@ import { Delta, PageFrame, PageBody, PageHeader, Panel, Segmented } from './kit.
 import { StatusLine } from './StatusLine.js';
 import { greetingFor } from '../lib/focus.js';
 import { isNothingYet } from '../lib/nothing-yet.js';
+import { FailureClustersPanel } from './InsightsCauses.js';
+import { ReadFailed } from './ReadFailed.js';
 
 /**
  * The cockpit: is the product better or worse than it was, and why.
@@ -43,6 +45,23 @@ export interface CockpitSources {
   attention: NowSources;
   /** The release verdict the hero leads with, for the chosen project; absent, no hero. */
   readiness?: (projectId: string | undefined) => Promise<ReleaseReadinessCard>;
+  /** Failures grouped by root cause, for the Triage view; absent, Triage lists what needs you only. */
+  clusters?: (projectId: string | undefined) => Promise<QaInsights['failureClusters']>;
+}
+
+/** Which Home a reader opens on: Triage for the engineer, Release for the lead. Kept per browser. */
+export const HOME_VIEW_KEY = 'lupin-home-view';
+type HomeView = 'triage' | 'release';
+const HOME_VIEWS: ReadonlyArray<{ value: HomeView; label: string }> = [
+  { value: 'triage', label: 'Triage' },
+  { value: 'release', label: 'Release' },
+];
+function readHomeView(): HomeView {
+  try {
+    return localStorage.getItem(HOME_VIEW_KEY) === 'release' ? 'release' : 'triage';
+  } catch {
+    return 'triage';
+  }
 }
 
 const PaceChart = React.lazy(() => import('./CockpitPaceChart.js'));
@@ -78,24 +97,42 @@ export function CockpitPage({
   onProjectChange?: (projectId: string | undefined) => void;
 }): React.ReactElement {
   const [projectId, setProjectId] = React.useState<string | undefined>(initialProjectId);
+  const [view, setView] = React.useState<HomeView>(readHomeView);
+  const choose = (next: HomeView) => {
+    setView(next);
+    try {
+      localStorage.setItem(HOME_VIEW_KEY, next);
+    } catch {
+      // A storage that refuses writes keeps the choice for this page only.
+    }
+  };
   return (
     <PageFrame data-testid="cockpit-page" className="gap-4 sm:gap-6">
       <PageHeader
         title={greetingFor((now ?? (() => new Date()))())}
         actions={
-          <ProjectPicker
-            load={sources.projects}
-            value={projectId}
-            onChange={(next) => {
-              setProjectId(next);
-              onProjectChange?.(next);
-            }}
-          />
+          <div className="flex flex-wrap items-end gap-3">
+            <Segmented<HomeView>
+              label="Home view"
+              options={HOME_VIEWS}
+              value={view}
+              onChange={choose}
+            />
+            <ProjectPicker
+              load={sources.projects}
+              value={projectId}
+              onChange={(next) => {
+                setProjectId(next);
+                onProjectChange?.(next);
+              }}
+            />
+          </div>
         }
       />
       {/* Home is two things: the verdict, then what needs you. The setup line lives in
           Settings and the product's numbers on Health, so nothing here competes with them. */}
       <PageBody>
+        {/* Release: the decision for a lead. Triage: what needs you, then failures by cause. */}
         {sources.readiness === undefined ? null : (
           <NowHero
             key={projectId ?? ''}
@@ -104,15 +141,77 @@ export function CockpitPage({
             navigate={navigate}
           />
         )}
-        <AttentionSection
-          sources={sources.attention}
-          navigate={navigate}
-          underVerdict={sources.readiness !== undefined}
-          {...(now === undefined ? {} : { now })}
-        />
+        {view === 'release' ? null : (
+          <AttentionSection
+            sources={sources.attention}
+            navigate={navigate}
+            underVerdict={sources.readiness !== undefined}
+            {...(now === undefined ? {} : { now })}
+          />
+        )}
+        {view === 'triage' && sources.clusters !== undefined ? (
+          <TriageCauses key={projectId ?? ''} load={sources.clusters} projectId={projectId} />
+        ) : null}
+        {view === 'release' && sources.readiness !== undefined ? (
+          <ReleaseReasons key={projectId ?? ''} load={sources.readiness} projectId={projectId} />
+        ) : null}
       </PageBody>
     </PageFrame>
   );
+}
+
+/**
+ * Release: every reason behind the decision, worst first, so a lead reads the whole case for
+ * go or no-go on one screen. Passing gates are left out; the band already says what holds.
+ */
+function ReleaseReasons({
+  load,
+  projectId,
+}: {
+  load: NonNullable<CockpitSources['readiness']>;
+  projectId: string | undefined;
+}): React.ReactElement {
+  const card = useResource(() => load(projectId), [load, projectId]);
+  if (card.status === 'loading') return <Skeleton className="h-32 w-full" />;
+  if (card.status === 'error') return <ReadFailed failure={card} />;
+  const RANK: Record<string, number> = { 'no-go': 0, caution: 1, unknown: 2 };
+  const reasons = card.value.reasons
+    .filter((reason) => reason.level !== 'go')
+    .sort((a, b) => (RANK[a.level] ?? 3) - (RANK[b.level] ?? 3));
+  return (
+    <Panel title="Why this decision">
+      {reasons.length === 0 ? (
+        <p className="text-sm text-fg-muted">Every release gate passes.</p>
+      ) : (
+        <ul aria-label="Why this decision" className="flex flex-col gap-2">
+          {reasons.map((reason) => (
+            <li key={reason.code} className="flex items-center gap-3 text-sm text-fg">
+              <StatusDot
+                status={
+                  reason.level === 'no-go' ? 'bad' : reason.level === 'caution' ? 'warn' : 'unknown'
+                }
+              />
+              {reason.message}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+/** Failures grouped by root cause, Sentry-style: one row per cause, biggest first. */
+function TriageCauses({
+  load,
+  projectId,
+}: {
+  load: NonNullable<CockpitSources['clusters']>;
+  projectId: string | undefined;
+}): React.ReactElement {
+  const clusters = useResource(() => load(projectId), [load, projectId]);
+  if (clusters.status === 'loading') return <Skeleton className="h-40 w-full" />;
+  if (clusters.status === 'error') return <ReadFailed failure={clusters} />;
+  return <FailureClustersPanel clusters={clusters.value} />;
 }
 
 /**
