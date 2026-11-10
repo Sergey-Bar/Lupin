@@ -318,9 +318,10 @@ system setting.
 
 ## Design language v2
 
-The redesign keeps every rule above and adds four, each with its gate:
+The redesign keeps every rule above and adds these, each with its gate:
 
-- **A display face.** Inter Display SemiBold sets the hero verdict and page titles (`font-display`); everything that is read stays in Geist. Committed once with its sha256 and upstream in `fonts-lock.json` (`fonts.test.ts`).
+- **A display face.** Inter Display SemiBold is committed once with its sha256 and upstream in `fonts-lock.json` (`fonts.test.ts`) and exposed as `font-display`. The full-width hero it was drawn for was replaced by the status band below, so no component sets it today; titles and everything read are in Geist.
 - **Depth.** Three elevations, `elevation-1` to `elevation-3`, each an existing plane step, so no new surface can fail contrast (`theme.test.ts`).
-- **The verdict glow.** `glow-go`, `glow-caution` and `glow-no-go` mix the verdict colour into transparency at no more than 25%, behind the hero only (`theme.test.ts`).
-- **An expressive tier.** `animate-reveal`: 300ms at most, an 8–12px rise on the arrival curve, for the hero and a page's first screen. Controls keep the calm tier, and reduced motion makes both instant (`motion.test.ts`).
+- **The status band.** Every area page opens on one compact band (`Hero` in `@lupin/ui`): a status mark, the verdict word in its colour, one reason, the numbers behind it, and one action, on the neutral plane. It replaced the full-width poster hero, whose one-word verdict on a tinted panel said little and read as a placeholder. The `glow-*` tokens and the expressive `animate-reveal` tier are still defined and tested (`theme.test.ts`, `motion.test.ts`), and no component uses them now.
+- **One button system.** At most one solid primary per screen, outlined for secondary, text for tertiary. A link drawn as a button is `ButtonLink`, which shares `buttonVariants` with `Button`; `apps/web/src/button-rule.test.ts` fails on a hand-written solid button, and the page tests assert one primary with `expectOnePrimary`.
+- **Lupin's violet by default.** The OpenCode palettes are a choice in Settings, not the default (`ThemeProvider.test.tsx`, `theme-boot.test.ts`).

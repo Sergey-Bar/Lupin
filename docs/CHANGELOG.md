@@ -2,6 +2,29 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
+## Unreleased - the console, simplified
+
+### Changed
+
+- **Three places.** The navigation is Home, Runs and Settings. Tests moved under Runs, and
+  Health and Delivery under Home, as named groups on the tab row. Every older address still opens
+  the page it always did.
+- **Home** is the release verdict and what needs you, nothing else. The setup checklist moved
+  to Settings, and the product's numbers (score, metrics, pace, the report) to Health, under
+  Details.
+- **The status band.** Runs, Tests, Health and Delivery open on one compact band: a mark, the
+  verdict, one reason, the numbers and one action. The Runs page shows its run table open, full
+  width, with no tile row or second run list beside it.
+- **One button system.** At most one solid button per screen; a link drawn as a button is the
+  new `ButtonLink`.
+- **Lupin's violet is the default palette**; the OpenCode palettes stay in Settings.
+- **Status marks** have a shape per state as well as a colour.
+
+### Removed
+
+- **Focus mode**, the **QA roles** and the sidebar's recent-runs list. A setting stored by an
+  older build is ignored.
+
 ## 4.0.0 - 2026-10-30 - the product is Lupin, with a redesigned console
 
 The product is renamed to **Lupin** everywhere, and the console takes the Lupin site's look.
