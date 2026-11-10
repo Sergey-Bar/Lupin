@@ -13,10 +13,11 @@ const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
   await page.goto(pathToFileURL(path.join(here, 'og-image.html')).href);
-  await page.evaluate(() => document.fonts.ready);
+  // Runs in the page, where `document` exists; Node's lint scope has no DOM globals.
+  await page.evaluate(() => globalThis.document.fonts.ready);
   const out = path.join(root, 'site/public/og-image.png');
   await page.screenshot({ path: out });
-  console.log(`wrote ${path.relative(root, out)}`);
+  console.info(`wrote ${path.relative(root, out)}`);
 } finally {
   await browser.close();
 }
