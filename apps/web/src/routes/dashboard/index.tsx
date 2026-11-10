@@ -19,14 +19,12 @@ import {
 } from '@lupin/ui';
 import { areaHero } from '../../lib/hero.js';
 import { Route as dashboardRoute } from '../dashboard.js';
-import { LaunchRunForm, RecentRuns, ReleaseReadinessCard } from '../dashboard.js';
+import { LaunchRunForm, ReleaseReadinessCard } from '../dashboard.js';
 import {
-  Kpi,
   PageFrame,
   PageHeader,
   Panel,
   PagerControls,
-  ScrollRegion,
   usePager,
   useFitCount,
 } from '../../components/kit.js';
@@ -35,7 +33,6 @@ import { defaultApiClient, type ApiClient, type Run } from '../../lib/api.js';
 import { Timestamp } from '../../components/Timestamp.js';
 import { formatDuration } from '../../lib/insights.js';
 import { runDetailPath } from '../../route-manifest.js';
-import { Responsive } from '../../components/responsive.js';
 import { AreaPage, type AreaItem } from '../../components/AreaPage.js';
 import { STUCK_MS, failedTests, failureTitle, retryLabel } from '../../lib/attention.js';
 
@@ -252,7 +249,16 @@ export function RunsListPage({
                       <TableCell className="hidden lg:table-cell">{run.projectId ?? '—'}</TableCell>
                     ) : null}
                     <TableCell className="hidden md:table-cell">
-                      <Badge variant={isRunActive(run) ? 'default' : 'outline'}>{run.phase}</Badge>
+                      {/* A polite live region on the badge alone, so a status flip is spoken
+                          without re-reading the row. */}
+                      <Badge
+                        data-testid={`run-status-${run.id}`}
+                        role="status"
+                        aria-live="polite"
+                        variant={isRunActive(run) ? 'default' : 'outline'}
+                      >
+                        {run.phase}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -288,7 +294,6 @@ export function RunsListPage({
     </>
   );
   const readiness = <ReleaseReadinessCard releaseId={latestReleaseId} api={api} />;
-  const recent = <RecentRuns runs={runs} isLive={isLive} />;
   const headerActions = (
     <>
       <span
@@ -351,8 +356,10 @@ export function RunsListPage({
             word={runsHero.word}
             reason={runsHero.reason}
             facts={[
-              { label: red === 1 ? 'Branch red' : 'Branches red', value: String(red) },
-              { label: 'Runs shown', value: String(runs.length) },
+              { label: 'Failed', value: String(failed), testId: 'stat-failed' },
+              { label: 'Passed', value: String(passed), testId: 'stat-passed' },
+              { label: 'Running', value: String(active), testId: 'stat-running' },
+              { label: 'Total', value: String(runs.length), testId: 'stat-total' },
             ]}
             eyebrow="Latest run on every branch"
           />
@@ -364,45 +371,10 @@ export function RunsListPage({
         detailsTitle="Every run"
         actions={headerActions}
         details={
-          // A height of its own: the table fits its rows to the panel, and a folded section
-          // has no height to give it.
-          <div data-testid="runs-list-page" className="flex h-[70vh] min-h-96 flex-col gap-3">
-            <section aria-label="Run totals" className="grid shrink-0 grid-cols-4 gap-2 sm:gap-3">
-              <Kpi data-testid="stat-total" label="Total runs" value={String(runs.length)} />
-              <Kpi
-                data-testid="stat-passed"
-                label="Passed"
-                value={String(passed)}
-                tone="text-success"
-              />
-              <Kpi
-                data-testid="stat-failed"
-                label="Failed"
-                value={String(failed)}
-                tone={failed > 0 ? 'text-danger' : undefined}
-              />
-              <Kpi data-testid="stat-running" label="Active" value={String(active)} />
-            </section>
-            <Responsive
-              label="Runs sections"
-              desktop={
-                <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_20rem] gap-3">
-                  {table}
-                  <ScrollRegion
-                    label="Release readiness and recent runs"
-                    className="flex flex-col gap-3"
-                  >
-                    {readiness}
-                    {recent}
-                  </ScrollRegion>
-                </div>
-              }
-              panels={[
-                { id: 'runs', label: 'Runs', node: table },
-                { id: 'readiness', label: 'Readiness', node: readiness },
-                { id: 'recent', label: 'Recent', node: recent },
-              ]}
-            />
+          // One list, the full width: the counts are in the status band above, and the
+          // release card and the recent list repeated what this page and Health already say.
+          <div data-testid="runs-list-page" className="flex h-[70vh] min-h-96 flex-col">
+            {table}
           </div>
         }
       />

@@ -170,7 +170,7 @@ describe('dashboard routes', () => {
     expect(onCreated).toHaveBeenCalledOnce();
   });
 
-  it('renders persisted readiness and recent canonical runs', async () => {
+  it('keeps the release card off the Runs page: the table is the list, Health is the verdict', async () => {
     const run = makeRun({ id: 'recent-run', projectId: 'registered-project', phase: 'running' });
     const readiness = {
       releaseId: 'release-1',
@@ -203,14 +203,14 @@ describe('dashboard routes', () => {
       }),
     );
     render(<MemoryRouter initialEntries={['/dashboard/runs']} />);
-    await waitFor(() => expect(screen.getByTestId('release-readiness')).toHaveTextContent('Ready'));
-    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('Ready');
-    expect(screen.getByTestId('release-readiness')).toHaveTextContent('browserPassed');
-    expect(screen.getByTestId('release-readiness')).toHaveTextContent('apiNot configured');
-    expect(screen.getByTestId('run-item-recent-run')).toHaveAttribute(
-      'href',
-      '/dashboard/runs/recent-run',
-    );
+    await waitFor(() => expect(screen.getByTestId('run-row-recent-run')).toBeInTheDocument());
+    expect(screen.queryByTestId('release-readiness')).toBeNull();
+    expect(screen.queryByTestId('run-item-recent-run')).toBeNull();
+    expect(
+      screen
+        .getByTestId('run-row-recent-run')
+        .querySelector('a[href="/dashboard/runs/recent-run"]'),
+    ).not.toBeNull();
   });
 
   it('shows the runs error state without placeholder success', async () => {
@@ -315,8 +315,8 @@ describe('dashboard routes', () => {
       }),
     );
     render(<MemoryRouter initialEntries={['/dashboard/runs']} />);
-    await waitFor(() => expect(screen.getByTestId(`run-item-${id}`)).toBeInTheDocument());
-    const card = screen.getByTestId(`run-item-${id}`);
+    await waitFor(() => expect(screen.getByTestId(`run-row-${id}`)).toBeInTheDocument());
+    const card = screen.getByTestId(`run-row-${id}`);
     expect(card).toHaveTextContent('abcdef12');
     expect(card).not.toHaveTextContent(id);
   });
@@ -337,7 +337,7 @@ describe('dashboard routes', () => {
     await waitFor(() => expect(screen.getByTestId('run-status-live-run')).toBeInTheDocument());
 
     const status = screen.getByTestId('run-status-live-run');
-    const card = screen.getByTestId('run-item-live-run');
+    const card = screen.getByTestId('run-row-live-run');
     // A live region on the card would re-announce the run id, the project and the
     // timestamp along with the one thing that changed.
     expect(status.closest('[aria-live]')).toBe(status);

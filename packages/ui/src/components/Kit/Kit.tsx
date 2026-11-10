@@ -66,7 +66,7 @@ export function Hero({
   /** A small label above the word, e.g. "Release readiness · Storefront". */
   eyebrow?: React.ReactNode;
   /** The numbers behind the verdict, shown as a short row: "2 Failing · 146 Passed". */
-  facts?: readonly { label: string; value: string }[];
+  facts?: readonly { label: string; value: string; testId?: string }[];
   /** The action, at the end of the band. */
   children?: React.ReactNode;
   className?: string;
@@ -100,7 +100,12 @@ export function Hero({
         <ul aria-label="In numbers" className="flex shrink-0 gap-6">
           {facts.map((fact) => (
             <li key={fact.label} className="flex flex-col">
-              <span className="text-xl font-semibold text-fg">{fact.value}</span>
+              <span
+                {...(fact.testId === undefined ? {} : { 'data-testid': fact.testId })}
+                className="text-xl font-semibold text-fg"
+              >
+                {fact.value}
+              </span>
               <span className="text-xs text-fg-muted">{fact.label}</span>
             </li>
           ))}

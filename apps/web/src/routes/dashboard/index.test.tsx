@@ -260,6 +260,11 @@ describe('RunsListPage', () => {
     expect(screen.getByTestId('stat-total')).toHaveTextContent('2');
     expect(screen.getByTestId('stat-passed')).toHaveTextContent('1');
     expect(screen.getByTestId('stat-failed')).toHaveTextContent('1');
+    // The counts are said once, in the status band, and the run table has the page to itself:
+    // no tile row repeating them, no side column with a second run list.
+    expect(screen.getByTestId('stat-failed').closest('section[data-verdict]')).not.toBeNull();
+    expect(screen.queryByRole('region', { name: 'Run totals' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Release readiness and recent runs' })).toBeNull();
   });
 
   it('renders active phases and canonical detail links', async () => {
