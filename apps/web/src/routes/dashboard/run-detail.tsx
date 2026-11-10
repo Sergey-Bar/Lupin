@@ -26,6 +26,7 @@ import { PageFrame, PageHeader, Panel } from '../../components/kit.js';
 import { Responsive } from '../../components/responsive.js';
 import { ScoreImpactBanner } from '../../components/ScoreImpactBanner.js';
 import { CopilotExplain, testAnchor } from '../../components/CopilotExplain.js';
+import { BranchHistory } from '../../components/BranchHistory.js';
 
 /**
  * `?from=cockpit&window=` is how the cockpit says it sent the person here. It is the only
@@ -856,7 +857,10 @@ function TestPanel({ run }: { run: Run }) {
     <>
       <Panel title="Test attempts" className={evidenceFit(run.tests.length > 0)}>
         {run.tests.some((test) => isFailure(test.status)) ? (
-          <CopilotExplain runId={run.id} />
+          <>
+            <BranchHistory run={run} />
+            <CopilotExplain runId={run.id} />
+          </>
         ) : null}
         <div
           tabIndex={0}
