@@ -261,5 +261,5 @@ export function render() {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const out = path.join(path.dirname(fileURLToPath(import.meta.url)), 'palettes.css');
   writeFileSync(out, render());
-  console.log(`wrote ${path.relative(process.cwd(), out)}`);
+  console.info(`wrote ${path.relative(process.cwd(), out)}`);
 }
