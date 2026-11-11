@@ -11,6 +11,7 @@ import {
   type HealthLetter,
   type PullRequestRisk,
   type Scorecard,
+  type TestTamperFinding,
 } from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
 import type { AiGovernanceCheck } from './repo-health-service.js';
@@ -87,6 +88,8 @@ export interface GateReport {
   tests?: CommitTests | null;
   /** The pull request's change risk at this head; the comment leads with it when present. */
   risk?: PullRequestRisk | null;
+  /** What `lupin diff-guard` found on this head; head-side findings become annotations. */
+  tamperFindings?: readonly TestTamperFinding[] | null;
 }
 
 const RISK_LABEL: Readonly<Record<ChangeRiskLevel, string>> = {
@@ -436,8 +439,166 @@ export interface PullRequestTarget {
 export type GitHubReport = {
   status: boolean;
   comment: 'created' | 'updated' | 'skipped' | 'failed';
+  /**
+   * The change-risk check run, present only when the report carried an assessment.
+   * `unavailable`: GitHub refused the token (a personal token cannot write check runs; an
+   * installation token, such as Actions' own, can), so the commit status stands alone.
+   */
+  check?: 'created' | 'updated' | 'unavailable' | 'failed';
   error?: string;
 };
+
+/**
+ * The check run's name. A second context beside `lupin/health`, never replacing it, so the
+ * branch rules that already require `lupin/health` keep working unchanged.
+ */
+export const CHECK_RUN_NAME = 'lupin/change-risk';
+/** GitHub accepts at most 50 annotations per request. */
+export const MAX_ANNOTATIONS = 50;
+
+interface Annotation {
+  path: string;
+  start_line: number;
+  end_line: number;
+  annotation_level: 'notice' | 'warning' | 'failure';
+  title: string;
+  message: string;
+}
+
+const TAMPER_TITLE: Readonly<Record<string, string>> = {
+  'skip-added': 'A test was skipped or focused',
+  'assertion-loosened': 'An assertion was loosened',
+  'empty-catch': 'An empty catch in a test',
+  'threshold-lowered': 'A threshold was lowered',
+  'ci-made-non-failing': 'A CI step can no longer fail',
+  'retry-added': 'A retry was added',
+};
+
+/** Consecutive line numbers as `[start, end]` ranges. */
+function ranges(lines: readonly number[]): Array<[number, number]> {
+  const sorted = [...new Set(lines)].sort((a, b) => a - b);
+  const out: Array<[number, number]> = [];
+  for (const line of sorted) {
+    const last = out.at(-1);
+    if (last !== undefined && line === last[1] + 1) last[1] = line;
+    else out.push([line, line]);
+  }
+  return out;
+}
+
+/**
+ * Annotations on the head: every tampered line the diff still has, then the uncovered lines of
+ * the files in a sensitive area. A removal is on the base side, which a check run cannot point
+ * at, so it is in the summary and not here.
+ */
+export function riskAnnotations(report: GateReport): Annotation[] {
+  const tampered: Annotation[] = (report.tamperFindings ?? []).flatMap((finding) =>
+    finding.side === 'head' && finding.line !== null && TAMPER_TITLE[finding.kind] !== undefined
+      ? [
+          {
+            path: finding.path,
+            start_line: finding.line,
+            end_line: finding.line,
+            annotation_level: 'failure' as const,
+            title: TAMPER_TITLE[finding.kind] as string,
+            message: 'lupin diff-guard: this change weakens the tests that judge it.',
+          },
+        ]
+      : [],
+  );
+  const sensitive = new Set(
+    report.risk?.blastRadius?.sensitiveAreas.flatMap((touch) => touch.paths) ?? [],
+  );
+  const uncovered: Annotation[] = (report.diffCoverage?.uncovered ?? [])
+    .filter((entry) => sensitive.has(entry.path))
+    .flatMap((entry) =>
+      ranges(entry.lines).map(([start, end]) => ({
+        path: entry.path,
+        start_line: start,
+        end_line: end,
+        annotation_level: 'warning' as const,
+        title: 'Not covered by any test',
+        message: 'Changed lines in a sensitive area that no test ran.',
+      })),
+    );
+  return [...tampered, ...uncovered].slice(0, MAX_ANNOTATIONS);
+}
+
+/** `failure` when the gate failed; `neutral` for a high risk it only reports; else `success`. */
+function conclusionOf(report: GateReport): 'failure' | 'neutral' | 'success' {
+  if (report.verdict.verdict !== 'passed') return 'failure';
+  const level = report.risk?.risk.level;
+  return level === 'high' || level === 'critical' || level === 'unknown' ? 'neutral' : 'success';
+}
+
+const CheckRunListSchema = z.object({
+  items: z.array(z.object({ id: z.number(), name: z.string().optional() })),
+});
+
+/** A refusal that means "this token may not", as opposed to a write that went wrong. */
+const refusedToken = (code: string | undefined) => /_(?:rejected_)?(?:403|404)$/u.test(code ?? '');
+
+type CheckOutcome = { check: NonNullable<GitHubReport['check']>; error?: string };
+
+/** A GitHub refusal as the check's outcome: the token may not, or the write went wrong. */
+function refusalOf(code: string | undefined): CheckOutcome {
+  return {
+    check: refusedToken(code) ? 'unavailable' : 'failed',
+    ...(code === undefined ? {} : { error: code }),
+  };
+}
+
+/** The run's state and output: the conclusion, the risk's own sentences, the annotations. */
+function checkRunBody(report: GateReport, risk: PullRequestRisk, sha: string) {
+  return {
+    status: 'completed',
+    conclusion: conclusionOf(report),
+    external_id: `${String(risk.pullRequest)}:${sha}`,
+    ...(report.detailsUrl === null ? {} : { details_url: report.detailsUrl }),
+    output: {
+      title: `Change risk: ${risk.risk.level} · ${String(risk.risk.score)} points`.slice(0, 255),
+      summary: riskSection(risk).join('\n'),
+      annotations: riskAnnotations(report),
+    },
+  };
+}
+
+/** Creates the head's check run, or updates the one that is already there. */
+async function upsertCheckRun(
+  github: ConnectorAdapter,
+  token: string,
+  base: { owner: string; repo: string },
+  sha: string,
+  report: GateReport,
+  risk: PullRequestRisk,
+): Promise<CheckOutcome> {
+  const listed = await github.execute(
+    {
+      operation: 'listCheckRuns',
+      input: { ...base, ref: sha, checkName: CHECK_RUN_NAME, pages: 1 },
+    },
+    token,
+  );
+  if (listed.status !== 'ok') return refusalOf(listed.error?.code);
+  const runs = CheckRunListSchema.safeParse(listed.data);
+  const existing = runs.success
+    ? runs.data.items.find((run) => run.name === CHECK_RUN_NAME)
+    : undefined;
+  const body = checkRunBody(report, risk, sha);
+  const request =
+    existing === undefined
+      ? {
+          operation: 'createCheckRun',
+          input: { ...base, name: CHECK_RUN_NAME, head_sha: sha, ...body },
+        }
+      : {
+          operation: 'updateCheckRun',
+          input: { ...base, checkRunId: String(existing.id), ...body },
+        };
+  const written = await github.execute(request, token);
+  if (written.status !== 'ok') return refusalOf(written.error?.code);
+  return { check: existing === undefined ? 'created' : 'updated' };
+}
 
 function statusDescription(report: GateReport): string {
   const fallback =
@@ -491,8 +652,11 @@ async function upsertComment(
 }
 
 /**
- * Posts the commit status, and creates or updates the one gate comment.
+ * Posts the commit status, the change-risk check run when the report carries an assessment,
+ * and creates or updates the one gate comment.
  *
+ * The status is always posted, because it is what branch protection already requires; the
+ * check run sits beside it and carries the factors and the line annotations a status cannot.
  * Returns what it did, never throws for a GitHub refusal: a gate whose verdict was computed
  * should be returned to the CI job even when GitHub said no to the comment.
  */
@@ -518,11 +682,17 @@ export async function reportToGitHub(
     token,
   );
   const posted = status.status === 'ok';
+  const risk = report.risk ?? null;
+  const check =
+    risk === null ? null : await upsertCheckRun(github, token, base, target.sha, report, risk);
+  const checked = check === null ? {} : { check: check.check };
+  const firstError = status.error?.code ?? check?.error;
   if (target.pullRequest === undefined) {
     return {
       status: posted,
       comment: 'skipped',
-      ...(status.error === undefined ? {} : { error: status.error.code }),
+      ...checked,
+      ...(firstError === undefined ? {} : { error: firstError }),
     };
   }
   const comment = await upsertComment(
@@ -532,7 +702,13 @@ export async function reportToGitHub(
     String(target.pullRequest),
     renderGateComment(report),
   );
-  return { status: posted, ...comment };
+  const error = comment.error ?? check?.error;
+  return {
+    status: posted,
+    comment: comment.comment,
+    ...checked,
+    ...(error === undefined ? {} : { error }),
+  };
 }
 // ─── Alerts ───────────────────────────────────────────────────────────────────
 

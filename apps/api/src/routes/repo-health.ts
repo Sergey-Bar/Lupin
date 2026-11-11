@@ -176,6 +176,13 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     requireReporterSecret: options.requireReporterSecret,
   });
 
+  /** The head's diff-guard findings, for the check run's annotations; none without a risk. */
+  const tamperFindingsFor = async (projectId: string, commit: string, risk: unknown) => {
+    if (risk === null) return null;
+    const status = await diffGuardStatus(options, projectId, commit);
+    return status.state === 'reported' ? status.report.findings : null;
+  };
+
   app.get('/api/v1/portfolio', viewer, async (context) => context.json(await portfolio(options)));
 
   app.get('/api/v1/projects/:id/health', viewer, async (context) =>
@@ -325,6 +332,7 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
               evals: result.evals,
               tests,
               risk,
+              tamperFindings: await tamperFindingsFor(projectId, commit, risk),
             },
           );
     await audit(options, {

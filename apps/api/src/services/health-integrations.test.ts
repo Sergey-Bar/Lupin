@@ -9,7 +9,9 @@ import {
   type Scorecard,
 } from '@lupin/shared-contracts';
 import {
+  CHECK_RUN_NAME,
   COMMENT_MARKER,
+  MAX_ANNOTATIONS,
   aiGovernanceSection,
   alertsFor,
   evalsSection,
@@ -22,10 +24,12 @@ import {
   renderGateComment,
   reportToGitHub,
   riskSection,
+  riskAnnotations,
   signWebhook,
   testsSection,
   diffCoverageLine,
   lineRanges,
+  type GateReport,
 } from './health-integrations.js';
 import type { AiGovernanceCheck } from './repo-health-service.js';
 
@@ -718,6 +722,196 @@ describe('the gate status and comment when GitHub refuses part of it', () => {
   it('creates a comment when the listing is not one it can read', async () => {
     const unreadable = fakeAdapter({ listIssueComments: { not: 'a list' } });
     expect((await reportToGitHub(unreadable.adapter, 't', target, report)).comment).toBe('created');
+  });
+});
+
+describe('the change-risk check run', () => {
+  const risk: PullRequestRisk = {
+    pullRequest: 3,
+    headSha: 'abc1234',
+    assessedAt: '2026-11-11T09:00:00.000Z',
+    blastRadius: {
+      version: 'blast-radius/1',
+      sensitiveAreas: [{ area: 'auth', count: 1, paths: ['src/auth/login.ts'] }],
+      teams: [],
+      individualOwners: null,
+      unownedPaths: null,
+      linkedTests: [],
+      linkedTestsTotal: 0,
+      truncated: false,
+    },
+    risk: {
+      level: 'high',
+      score: 55,
+      version: 'change-risk/1',
+      factors: [
+        { id: 'test-tampering', kind: 'risk', points: 40, detail: 'A skip.', evidence: null },
+        { id: 'ai-authorship', kind: 'risk', points: 15, detail: 'Agent.', evidence: null },
+      ],
+      missing: [],
+    },
+  };
+  const report = {
+    verdict: {
+      verdict: 'passed' as const,
+      reasons: [],
+      newFindings: { critical: 0, high: 0, total: 0 },
+    },
+    grade: grade('B'),
+    added: [],
+    branch: 'feature',
+    detailsUrl: 'https://lupin.example/dashboard/prs/p/3',
+    risk,
+    tamperFindings: [
+      {
+        kind: 'skip-added' as const,
+        path: 'src/auth/login.test.ts',
+        line: 9,
+        side: 'head' as const,
+      },
+      {
+        kind: 'assertion-removed' as const,
+        path: 'src/auth/login.test.ts',
+        line: 4,
+        side: 'base' as const,
+      },
+    ],
+    diffCoverage: {
+      commit: 'abc1234',
+      branch: 'feature',
+      changed: 4,
+      covered: 1,
+      executable: 4,
+      ratio: 0.25,
+      uncovered: [
+        { path: 'src/auth/login.ts', lines: [3, 4, 5, 9] },
+        { path: 'src/ui/button.ts', lines: [1] },
+      ],
+      unmeasuredFiles: [],
+      computedAt: '2026-11-11T09:00:00.000Z',
+    },
+  } as GateReport;
+  const target = { owner: 'o', repo: 'r', sha: 'abc1234', pullRequest: 3 };
+
+  it('posts the status, creates the check run with the factors and annotations, then the comment', async () => {
+    const github = fakeAdapter({ listCheckRuns: { items: [] }, listIssueComments: [] });
+    expect(await reportToGitHub(github.adapter, 't', target, report)).toEqual({
+      status: true,
+      comment: 'created',
+      check: 'created',
+    });
+    expect(github.requests.map((request) => request.operation)).toEqual([
+      'createCommitStatus',
+      'listCheckRuns',
+      'createCheckRun',
+      'listIssueComments',
+      'createIssueComment',
+    ]);
+    expect(github.requests[0]?.input).toMatchObject({ description: 'Risk high · Graded B' });
+    expect(github.requests[1]?.input).toMatchObject({ ref: 'abc1234', checkName: CHECK_RUN_NAME });
+    const created = github.requests[2]?.input as Record<string, unknown>;
+    expect(created).toMatchObject({
+      name: CHECK_RUN_NAME,
+      head_sha: 'abc1234',
+      status: 'completed',
+      // A high risk the policy only reports: neither green nor red.
+      conclusion: 'neutral',
+      external_id: '3:abc1234',
+      details_url: 'https://lupin.example/dashboard/prs/p/3',
+      output: { title: 'Change risk: high · 55 points' },
+    });
+    expect((created['output'] as { summary: string }).summary).toContain('| 40 | A skip. |');
+    expect((created['output'] as { annotations: unknown[] }).annotations).toEqual([
+      expect.objectContaining({
+        path: 'src/auth/login.test.ts',
+        start_line: 9,
+        annotation_level: 'failure',
+      }),
+      expect.objectContaining({ path: 'src/auth/login.ts', start_line: 3, end_line: 5 }),
+      expect.objectContaining({ path: 'src/auth/login.ts', start_line: 9, end_line: 9 }),
+    ]);
+  });
+
+  it('updates the head’s check run rather than adding a second one', async () => {
+    const github = fakeAdapter({
+      listCheckRuns: {
+        items: [
+          { id: 77, name: CHECK_RUN_NAME },
+          { id: 8, name: 'other' },
+        ],
+      },
+      listIssueComments: [],
+    });
+    expect((await reportToGitHub(github.adapter, 't', target, report)).check).toBe('updated');
+    expect(github.requests[2]).toMatchObject({
+      operation: 'updateCheckRun',
+      input: { checkRunId: '77', conclusion: 'neutral' },
+    });
+  });
+
+  it('keeps the status and the comment when the token cannot write check runs', async () => {
+    const github = fakeAdapter({ listIssueComments: [] }, ['listCheckRuns']);
+    expect(await reportToGitHub(github.adapter, 't', target, report)).toEqual({
+      status: true,
+      comment: 'created',
+      check: 'unavailable',
+      error: 'github_403',
+    });
+    expect(github.requests.map((request) => request.operation)).not.toContain('createCheckRun');
+  });
+
+  it('calls a refused write unavailable and any other failure failed, and fails a failing gate', async () => {
+    const refused = fakeAdapter({ listCheckRuns: { items: [] } }, ['createCheckRun']);
+    const failedGate = {
+      ...report,
+      verdict: { ...report.verdict, verdict: 'failed' as const, reasons: ['Risk.'] },
+    };
+    expect(
+      (
+        await reportToGitHub(
+          refused.adapter,
+          't',
+          { ...target, pullRequest: undefined },
+          failedGate,
+        )
+      ).check,
+    ).toBe('unavailable');
+    expect(refused.requests[2]?.input).toMatchObject({ conclusion: 'failure' });
+    const broken: ConnectorAdapter = {
+      manifest: { name: 'fake', version: '1', operations: {} },
+      execute: async (request) =>
+        request.operation === 'listCheckRuns'
+          ? {
+              status: 'error',
+              error: { code: 'github_502', retryable: true, message: 'x' },
+              attempts: 3,
+            }
+          : { status: 'ok', data: [], attempts: 1 },
+    };
+    expect(
+      await reportToGitHub(broken, 't', { ...target, pullRequest: undefined }, report),
+    ).toEqual({
+      status: true,
+      comment: 'skipped',
+      check: 'failed',
+      error: 'github_502',
+    });
+  });
+
+  it('posts no check run without an assessment, and caps the annotations GitHub accepts', async () => {
+    const github = fakeAdapter({ listIssueComments: [] });
+    const result = await reportToGitHub(github.adapter, 't', target, { ...report, risk: null });
+    expect(result).not.toHaveProperty('check');
+    const many = riskAnnotations({
+      ...report,
+      tamperFindings: Array.from({ length: MAX_ANNOTATIONS + 5 }, (_, line) => ({
+        kind: 'skip-added' as const,
+        path: 'a.test.ts',
+        line: line + 1,
+        side: 'head' as const,
+      })),
+    });
+    expect(many).toHaveLength(MAX_ANNOTATIONS);
   });
 });
 

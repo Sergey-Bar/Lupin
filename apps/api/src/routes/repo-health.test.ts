@@ -266,10 +266,12 @@ describe('the pull-request gate', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
       verdict: 'failed',
-      github: { status: true, comment: 'created' },
+      github: { status: true, comment: 'created', check: 'created' },
     });
     expect(requests.map((request) => request.operation)).toEqual([
       'createCommitStatus',
+      'listCheckRuns',
+      'createCheckRun',
       'listIssueComments',
       'createIssueComment',
     ]);
