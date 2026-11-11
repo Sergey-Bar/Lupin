@@ -53,6 +53,7 @@ import { diffCoverageStatus } from '../services/diff-coverage-service.js';
 import { diffGuardStatus, recordDiffGuard } from '../services/diff-guard-service.js';
 import {
   assessPullRequestRisk,
+  pullRequestRisk,
   riskFactsOf,
   riskGateReason,
   riskPolicyFor,
@@ -130,6 +131,8 @@ const DiffCoverageQuerySchema = z.object({ commit: Commit });
 
 /** 200 findings of a 500-character path each is ~120 kB; twice that is room, not a mirror. */
 const DIFF_GUARD_MAX_BYTES = 256_000;
+
+const PullRequestNumberSchema = z.coerce.number().int().min(1).max(2_147_483_647);
 
 const GateReportBodySchema = z.object({
   branch: z.string().trim().min(1).max(255),
@@ -486,6 +489,15 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     return context.json(
       await diffGuardStatus(options, context.req.param('id'), parsed.data.commit.toLowerCase()),
     );
+  });
+
+  /** A pull request's change risk: the latest assessment, and the history across its heads. */
+  app.get('/api/v1/projects/:id/pull-requests/:number/risk', viewer, async (context) => {
+    const parsed = PullRequestNumberSchema.safeParse(context.req.param('number'));
+    if (!parsed.success) {
+      return invalidRequest(context, 'A pull request number', parsed.error.issues);
+    }
+    return context.json(await pullRequestRisk(options, context.req.param('id'), parsed.data));
   });
 
   /** CODEOWNERS for a project with no checkout here, sent by its CI as plain text. */

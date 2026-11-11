@@ -16,6 +16,10 @@ const PullRequestsPage = lazyPage(
 );
 const ReposPage = lazyPage(() => import('../../components/GithubRepos.js'), 'ReposPage');
 const RepoDetailPage = lazyPage(() => import('../../components/GithubRepos.js'), 'RepoDetailPage');
+const PullRequestRiskPage = lazyPage(
+  () => import('../../components/PullRequestRisk.js'),
+  'PullRequestRiskPage',
+);
 
 /**
  * The GitHub section: pull requests and issues across every repository, the repositories with
@@ -75,5 +79,24 @@ export const RepoDetailRoute = createRoute({
     const github = React.useMemo(() => createGithubClient(), []);
     const health = React.useMemo(() => createHealthClient(), []);
     return <RepoDetailPage projectId={projectId} github={github} health={health} />;
+  },
+});
+
+/** One pull request's change risk. A number that is not one is "no such pull request". */
+export const PullRequestRiskRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '/prs/$projectId/$number',
+  component: () => {
+    const { projectId, number } = PullRequestRiskRoute.useParams();
+    const github = React.useMemo(() => createGithubClient(), []);
+    const parsed = Number(number);
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return (
+        <p className="max-w-measure p-6 text-sm text-fg-muted">
+          That is not a pull request number. Open one from the Pull requests list.
+        </p>
+      );
+    }
+    return <PullRequestRiskPage projectId={projectId} number={parsed} github={github} />;
   },
 });

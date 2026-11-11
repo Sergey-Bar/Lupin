@@ -1,6 +1,14 @@
-import { and, desc, eq, lt, or, sql, type SQL } from 'drizzle-orm';
-import { deliverySources, githubIssues, projects, pullRequests, repoGithubState } from '@lupin/db';
+import { and, desc, eq, inArray, lt, or, sql, type SQL } from 'drizzle-orm';
 import {
+  deliverySources,
+  githubIssues,
+  projects,
+  pullRequestRiskAssessments,
+  pullRequests,
+  repoGithubState,
+} from '@lupin/db';
+import {
+  ChangeRiskLevelSchema,
   GithubRepoStateSchema,
   type GithubInboxQuery,
   type GithubIssueItem,
@@ -55,6 +63,60 @@ function labelFilter(column: unknown, label: string): SQL {
   return sql`${column} @> ${JSON.stringify([label])}::jsonb`;
 }
 
+type PullRisk = NonNullable<GithubPullItem['risk']>;
+
+/**
+ * Each listed pull request's latest change-risk assessment, keyed `projectId:number`. One read
+ * for the page, bounded by the page's projects and numbers, newest first, so the first row seen
+ * for a pull request is its latest. `current` says whether it was assessed at today's head.
+ */
+async function latestRisks(
+  options: InboxOptions,
+  pulls: ReadonlyArray<{ projectId: string; number: number; headSha: string | null }>,
+): Promise<Map<string, PullRisk>> {
+  const risks = new Map<string, PullRisk>();
+  if (pulls.length === 0) return risks;
+  const heads = new Map(
+    pulls.map((pull) => [`${pull.projectId}:${String(pull.number)}`, pull.headSha]),
+  );
+  const rows = await options.db
+    .select({
+      projectId: pullRequestRiskAssessments.projectId,
+      prNumber: pullRequestRiskAssessments.prNumber,
+      headSha: pullRequestRiskAssessments.headSha,
+      level: pullRequestRiskAssessments.level,
+      score: pullRequestRiskAssessments.score,
+      assessedAt: pullRequestRiskAssessments.assessedAt,
+    })
+    .from(pullRequestRiskAssessments)
+    .where(
+      and(
+        eq(pullRequestRiskAssessments.workspaceId, options.workspaceId),
+        inArray(pullRequestRiskAssessments.projectId, [
+          ...new Set(pulls.map((pull) => pull.projectId)),
+        ]),
+        inArray(pullRequestRiskAssessments.prNumber, [
+          ...new Set(pulls.map((pull) => pull.number)),
+        ]),
+      ),
+    )
+    .orderBy(desc(pullRequestRiskAssessments.assessedAt), desc(pullRequestRiskAssessments.id));
+  for (const row of rows) {
+    const key = `${row.projectId}:${String(row.prNumber)}`;
+    const level = ChangeRiskLevelSchema.safeParse(row.level);
+    if (!heads.has(key) || risks.has(key) || !level.success) continue;
+    const head = heads.get(key) ?? null;
+    risks.set(key, {
+      level: level.data,
+      score: row.score,
+      headSha: row.headSha,
+      assessedAt: row.assessedAt.toISOString(),
+      current: head !== null && head.toLowerCase() === row.headSha,
+    });
+  }
+  return risks;
+}
+
 export async function listPullRequests(
   options: InboxOptions,
   query: GithubInboxQuery,
@@ -92,6 +154,10 @@ export async function listPullRequests(
     .limit(query.limit + 1);
   const shown = rows.slice(0, query.limit);
   const last = shown.at(-1);
+  const risks = await latestRisks(
+    options,
+    shown.map(({ pr }) => pr),
+  );
   return {
     items: shown.map(({ pr, projectName, repositoryUrl }) => ({
       id: pr.id,
@@ -116,6 +182,7 @@ export async function listPullRequests(
       additions: pr.additions,
       deletions: pr.deletions,
       headSha: pr.headSha,
+      risk: risks.get(`${pr.projectId}:${String(pr.number)}`) ?? null,
     })),
     nextCursor:
       rows.length > query.limit && last !== undefined

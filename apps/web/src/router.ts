@@ -23,7 +23,13 @@ import {
   PortfolioRoute,
   RepoHealthRoute,
 } from './routes/dashboard/portfolio.js';
-import { IssuesRoute, PrsRoute, RepoDetailRoute, ReposRoute } from './routes/dashboard/github.js';
+import {
+  IssuesRoute,
+  PrsRoute,
+  PullRequestRiskRoute,
+  RepoDetailRoute,
+  ReposRoute,
+} from './routes/dashboard/github.js';
 import { Route as reportsRoute } from './routes/dashboard/reports.js';
 import { Route as nowRoute } from './routes/dashboard/now.js';
 import { Route as metricRoute } from './routes/dashboard/metric.js';
@@ -82,6 +88,7 @@ const dashboardTree = dashboardRoute.addChildren([
   AiCodeRoute,
   AgentsRoute,
   PrsRoute,
+  PullRequestRiskRoute,
   IssuesRoute,
   ReposRoute,
   RepoDetailRoute,

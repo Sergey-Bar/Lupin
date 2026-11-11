@@ -462,3 +462,64 @@ describe('PullRequestsPage', () => {
     );
   });
 });
+
+describe('the change risk on the list', () => {
+  const risk = (level: 'low' | 'high' | 'critical', current = true) => ({
+    level,
+    score: level === 'low' ? 5 : 60,
+    headSha: 'b'.repeat(40),
+    assessedAt: '2026-10-23T11:00:00.000Z',
+    current,
+  });
+
+  it('links each assessed row to its risk, and says when it was for an older head', async () => {
+    render(
+      <PullRequestsPage
+        github={
+          client([
+            {
+              items: [
+                pull({ id: 'a', number: 1, title: 'Agent refactor', risk: risk('critical') }),
+                pull({ id: 'b', number: 2, title: 'Moved on', risk: risk('high', false) }),
+                pull({ id: 'c', number: 3, title: 'Never gated', risk: null }),
+              ],
+              nextCursor: null,
+            },
+          ]).github
+        }
+        now={() => NOW}
+      />,
+    );
+    const critical = await screen.findByRole('link', { name: 'Critical risk, 60 points: see why' });
+    expect(critical.getAttribute('href')).toBe('/dashboard/prs/p1/1');
+    expect(
+      screen.getByRole('link', { name: 'High risk (older head), 60 points: see why' }),
+    ).toBeTruthy();
+    expect(screen.queryAllByRole('link', { name: /see why/u })).toHaveLength(2);
+  });
+
+  it('narrows to high and above at the current head, counting them on the filter', async () => {
+    render(
+      <PullRequestsPage
+        github={
+          client([
+            {
+              items: [
+                pull({ id: 'a', number: 1, title: 'Agent refactor', risk: risk('critical') }),
+                pull({ id: 'b', number: 2, title: 'Moved on', risk: risk('high', false) }),
+                pull({ id: 'c', number: 3, title: 'Tidy', risk: risk('low') }),
+              ],
+              nextCursor: null,
+            },
+          ]).github
+        }
+        now={() => NOW}
+      />,
+    );
+    await screen.findAllByText('Agent refactor');
+    await userEvent.click(screen.getByRole('button', { name: 'High and above 1' }));
+    const rows = screen.getAllByTestId('pull-row').map((row) => row.textContent ?? '');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toContain('Agent refactor');
+  });
+});

@@ -1,5 +1,6 @@
 import type { DeliverySummary, GithubPullItem, Portfolio } from '@lupin/shared-contracts';
 import type { Run } from './api.js';
+import { RISK_WORD, pullRequestRiskPath, riskyPull } from './change-risk.js';
 
 /**
  * "What needs me now", as at most five items, worst first, each with one action.
@@ -174,13 +175,26 @@ export function isNew(item: AttentionItem, lastVisit: string | null): boolean {
 }
 
 /**
- * Open pull requests that are stuck, said as the work: blocked by failing checks (a red item),
- * or sent back for changes (a caution). Drafts are the author's own business and are skipped.
+ * Open pull requests worth a person, said as the work. A change assessed high or critical at its
+ * current head comes first, linking to its risk; otherwise one blocked by failing checks (a red
+ * item) or sent back for changes (a caution). One item per pull request. Drafts are the author's
+ * own business and are skipped.
  */
 export function pullItems(pulls: readonly GithubPullItem[]): AttentionItem[] {
   const items: AttentionItem[] = [];
   for (const pull of pulls) {
     if (pull.state !== 'open' || pull.draft) continue;
+    if (riskyPull(pull) && pull.risk !== null && pull.risk !== undefined) {
+      items.push({
+        id: `pull-${pull.id}`,
+        severity: pull.risk.level === 'critical' ? 'bad' : 'caution',
+        title: `PR #${String(pull.number)}: ${RISK_WORD[pull.risk.level].toLowerCase()} (${String(pull.risk.score)} points)`,
+        detail: `${pull.repository} · ${pull.title}`,
+        action: { label: 'See why', to: pullRequestRiskPath(pull.projectId, pull.number) },
+        at: pull.risk.assessedAt,
+      });
+      continue;
+    }
     const blocked = pull.checksState === 'failure';
     const changes = pull.reviewDecision === 'changes_requested';
     if (!blocked && !changes) continue;

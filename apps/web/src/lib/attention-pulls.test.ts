@@ -53,4 +53,36 @@ describe('pullItems', () => {
     });
     expect(ranked.items[0]?.title).toBe('PR #42 is blocked by failing checks');
   });
+
+  const risk = (level: string, current = true) => ({
+    level,
+    score: level === 'critical' ? 80 : 50,
+    headSha: 'b'.repeat(40),
+    assessedAt: '2026-11-10T00:00:00.000Z',
+    current,
+  });
+
+  it('puts a high or critical change risk first, once per pull request, linking to why', () => {
+    const items = pullItems([
+      pull({ id: 'a', number: 42, checksState: 'failure', risk: risk('critical') }),
+      pull({ id: 'b', number: 7, risk: risk('high') }),
+    ]);
+    expect(items.map((item) => [item.title, item.severity])).toEqual([
+      ['PR #42: critical risk (80 points)', 'bad'],
+      ['PR #7: high risk (50 points)', 'caution'],
+    ]);
+    expect(items[0]?.action).toEqual({ label: 'See why', to: '/dashboard/prs/proj/42' });
+    expect(items[0]?.at).toBe('2026-11-10T00:00:00.000Z');
+  });
+
+  it('says nothing about a risk assessed at an older head, a low one, or an unknown one', () => {
+    const items = pullItems([
+      pull({ id: 'a', number: 1, risk: risk('critical', false) }),
+      pull({ id: 'b', number: 2, risk: risk('low') }),
+      pull({ id: 'c', number: 3, risk: risk('unknown') }),
+      pull({ id: 'd', number: 4, risk: null }),
+      pull({ id: 'e', number: 5, risk: risk('critical'), draft: true }),
+    ]);
+    expect(items).toEqual([]);
+  });
 });

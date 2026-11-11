@@ -4,13 +4,15 @@ import {
   GithubPullPageSchema,
   GithubRepoItemSchema,
   GithubRepoListSchema,
+  PullRequestRiskHistorySchema,
   type GithubActionsBody,
   type GithubActionsResponse,
   type GithubIssueItem,
   type GithubPullItem,
   type GithubRepoItem,
+  type PullRequestRiskHistory,
 } from '@lupin/shared-contracts';
-import { createJsonTransport, queryString } from './json-transport.js';
+import { createJsonTransport, projectPath, queryString } from './json-transport.js';
 
 /** The filters the inbox understands. Each one that is `undefined` is simply not sent. */
 export interface InboxFilters {
@@ -38,6 +40,8 @@ export interface GithubClient {
   getRepo(projectId: string): Promise<GithubRepoItem>;
   /** Operator only. `dryRun` returns the plan and writes nothing. */
   runActions(body: GithubActionsBody): Promise<GithubActionsResponse>;
+  /** A pull request's change risk: the latest assessment and its history across heads. */
+  getPullRequestRisk(projectId: string, number: number): Promise<PullRequestRiskHistory>;
 }
 
 export function createGithubClient(baseUrl = '', fetchImpl: typeof fetch = fetch): GithubClient {
@@ -51,5 +55,10 @@ export function createGithubClient(baseUrl = '', fetchImpl: typeof fetch = fetch
     getRepo: (projectId) =>
       http.get(`/api/v1/github/repos/${encodeURIComponent(projectId)}`, GithubRepoItemSchema),
     runActions: (body) => http.post('/api/v1/github/actions', body, GithubActionsResponseSchema),
+    getPullRequestRisk: (projectId, number) =>
+      http.get(
+        `${projectPath(projectId)}/pull-requests/${String(number)}/risk`,
+        PullRequestRiskHistorySchema,
+      ),
   };
 }

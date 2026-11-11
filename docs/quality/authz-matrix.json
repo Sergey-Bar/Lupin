@@ -9,7 +9,7 @@
   ],
   "summary": {
     "admin": 40,
-    "viewer": 91,
+    "viewer": 92,
     "operator": 35,
     "open": 16,
     "runner-credential": 9,
@@ -1008,7 +1008,7 @@
       "path": "/api/v1/projects/:id/health/gate/report",
       "access": "reporter-secret",
       "workspaceScoped": false,
-      "evidenceTest": "apps/api/src/routes/ai-code.test.ts",
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {
@@ -1121,6 +1121,14 @@
       "access": "reporter-secret",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/agent-quality.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:id/pull-requests/:number/risk",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {

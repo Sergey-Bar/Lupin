@@ -295,6 +295,16 @@ export const pageGuidance = {
     remember:
       'A pull request GitHub has not said it can merge is Waiting, never Ready. The list is as fresh as the last sync.',
   },
+  'pr-risk': {
+    purpose: 'See how risky one pull request is, and exactly why.',
+    steps: [
+      'Read the band: the level, and the factor worth the most points.',
+      'Check each factor beside its points; the score is their sum.',
+      'Look at what was not measured: it keeps a change from ever reading low.',
+    ],
+    remember:
+      'The risk is the one assessed at a head commit. A newer push is not assessed until the gate runs on it again.',
+  },
   issues: {
     purpose: 'See open issues across your repositories and find the ones nobody has triaged.',
     steps: [

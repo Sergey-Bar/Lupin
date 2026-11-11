@@ -280,6 +280,14 @@ export const routeManifest = [
     tab: 'Pull requests',
     overflow: true,
   },
+  // One pull request's change risk, reached from its row, Home and the check run's link.
+  {
+    id: 'pr-risk',
+    path: '/dashboard/prs/:projectId/:number',
+    label: 'Pull request risk',
+    visible: false,
+    section: 'health',
+  },
   {
     id: 'issues',
     path: '/dashboard/issues',

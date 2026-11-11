@@ -1301,6 +1301,18 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/pull-requests/{number}/risk": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdPullRequestsNumberRisk",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "number", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/qa/flaky": {
       "get": {
         "operationId": "getApiV1ProjectsIdQaFlaky",
@@ -17551,7 +17563,27 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
-          "headSha": { "type": ["string", "null"] }
+          "headSha": { "type": ["string", "null"] },
+          "risk": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "string",
+                    "enum": ["low", "medium", "unknown", "high", "critical"]
+                  },
+                  "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                  "headSha": { "type": "string" },
+                  "assessedAt": { "type": "string" },
+                  "current": { "type": "boolean" }
+                },
+                "required": ["level", "score", "headSha", "assessedAt", "current"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          }
         },
         "required": [
           "id",
@@ -17633,7 +17665,27 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
                 },
-                "headSha": { "type": ["string", "null"] }
+                "headSha": { "type": ["string", "null"] },
+                "risk": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "level": {
+                          "type": "string",
+                          "enum": ["low", "medium", "unknown", "high", "critical"]
+                        },
+                        "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                        "headSha": { "type": "string" },
+                        "assessedAt": { "type": "string" },
+                        "current": { "type": "boolean" }
+                      },
+                      "required": ["level", "score", "headSha", "assessedAt", "current"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                }
               },
               "required": [
                 "id",

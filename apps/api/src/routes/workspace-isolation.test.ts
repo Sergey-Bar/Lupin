@@ -224,6 +224,14 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
       'routes/ai-code.ts',
     ],
   },
+  // Change risk: what `lupin diff-guard` sent per commit, and each pull request's assessed risk
+  // per head. `diff-guard-service.test.ts` and `change-risk-service.test.ts` prove another
+  // workspace can neither write nor read either for a project, and that a commit or pull request
+  // number both workspaces have, and a source file both failed with, never crosses.
+  {
+    family: 'change risk',
+    files: ['services/diff-guard-service.ts', 'services/change-risk-service.ts'],
+  },
   // The cockpit: health and scan snapshots, runs, pull requests, deployments and delivery
   // sources of one project. Every query filters on `workspace_id` before the project, and
   // `cockpit.test.ts` proves another workspace's project is a 404, that its newer readings do

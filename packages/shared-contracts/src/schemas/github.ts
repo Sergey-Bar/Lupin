@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { ChangeRiskLevelSchema } from './change-risk.js';
 
 /**
  * The GitHub command center's contracts: what the inbox returns and what an action asks for.
@@ -63,6 +64,21 @@ export const GithubPullItemSchema = z.object({
   deletions: z.number().int(),
   /** The head commit a merge must name, so a stale view cannot merge newer commits. */
   headSha: z.string().nullable(),
+  /**
+   * The latest change-risk assessment, `null` when the gate never assessed this pull request.
+   * `current` is false when it was assessed at another head: the risk of commits since is not
+   * known. Absent from an install that predates change risk.
+   */
+  risk: z
+    .object({
+      level: ChangeRiskLevelSchema,
+      score: z.number().int().min(0),
+      headSha: z.string(),
+      assessedAt: Instant,
+      current: z.boolean(),
+    })
+    .nullable()
+    .optional(),
 });
 export type GithubPullItem = z.infer<typeof GithubPullItemSchema>;
 

@@ -39,6 +39,16 @@ describe('the GitHub client', () => {
     await expect(createGithubClient('', impl).listPulls({ state: 'open' })).rejects.toThrow();
   });
 
+  it('reads a pull request’s change risk under its project, with the id encoded', async () => {
+    const { impl, calls } = fakeFetch({ pullRequest: 12, latest: null, history: [] });
+    expect(await createGithubClient('', impl).getPullRequestRisk('p/1', 12)).toEqual({
+      pullRequest: 12,
+      latest: null,
+      history: [],
+    });
+    expect(calls[0]?.url).toBe('/api/v1/projects/p%2F1/pull-requests/12/risk');
+  });
+
   it('reads one repository by id, encoded', async () => {
     const { impl, calls } = fakeFetch({ items: [] });
     await createGithubClient('', impl).listRepos();

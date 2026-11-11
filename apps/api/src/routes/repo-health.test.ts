@@ -15,6 +15,7 @@ import {
   PortfolioComponentsPageSchema,
   PortfolioSchema,
   ProjectHealthSchema,
+  PullRequestRiskHistorySchema,
   PullRequestRiskSchema,
   SbomComponentsPageSchema,
   SupplyChainPolicyRecordSchema,
@@ -812,5 +813,35 @@ describe('POST /api/v1/projects/:id/health/diff-guard', () => {
     const read = await app.request(`${path(projectId)}?commit=def5678`);
     expect(await read.json()).toEqual({ state: 'none', commit: 'def5678' });
     expect((await app.request(path(projectId))).status).toBe(400);
+  });
+});
+
+describe('GET /api/v1/projects/:id/pull-requests/:number/risk', () => {
+  it('reads what the gate assessed, latest first, and refuses a number that is not one', async () => {
+    const { app, projectId } = await harness();
+    const path = (number: string) => `/api/v1/projects/${projectId}/pull-requests/${number}/risk`;
+    expect(await (await app.request(path('5'))).json()).toEqual({
+      pullRequest: 5,
+      latest: null,
+      history: [],
+    });
+    await json(
+      app,
+      'POST',
+      `/api/v1/projects/${projectId}/health/gate/report`,
+      { branch: 'main', commit: 'abc1234', pullRequest: 5 },
+      { authorization: `Bearer ${SECRET}` },
+    );
+    const read = PullRequestRiskHistorySchema.parse(await (await app.request(path('5'))).json());
+    expect(read.latest).toMatchObject({ headSha: 'abc1234', risk: { level: 'unknown' } });
+    expect((await app.request(path('zero'))).status).toBe(400);
+    expect((await app.request(path('0'))).status).toBe(400);
+    expect(
+      (
+        await app.request(
+          '/api/v1/projects/00000000-0000-4000-8000-000000000000/pull-requests/5/risk',
+        )
+      ).status,
+    ).toBe(404);
   });
 });

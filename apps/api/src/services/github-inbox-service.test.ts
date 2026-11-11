@@ -175,6 +175,48 @@ describe('listPullRequests', () => {
     const page = await listPullRequests({ db, workspaceId: 'ws-1' }, query({ cursor: '%%%' }));
     expect(page.items).toHaveLength(1);
   });
+
+  it('carries each pull request’s latest change risk, and says when it was for another head', async () => {
+    const { db, alpha, beta, foreign } = await seed();
+    await pull(db, 'ws-1', alpha, { title: 'assessed', number: 7, headSha: 'B'.repeat(40) });
+    await pull(db, 'ws-1', beta, { title: 'moved on', number: 8, headSha: 'c'.repeat(40) });
+    await pull(db, 'ws-1', alpha, { title: 'never gated', number: 9 });
+    const assessment = (
+      workspaceId: string,
+      projectId: string,
+      prNumber: number,
+      headSha: string,
+      level: string,
+      daysAgo: number,
+    ) =>
+      db.insert(schema.pullRequestRiskAssessments).values({
+        workspaceId,
+        projectId,
+        prNumber,
+        headSha,
+        level,
+        score: level === 'critical' ? 80 : 10,
+        version: 'change-risk/1',
+        assessedAt: ago(daysAgo),
+      });
+    await assessment('ws-1', alpha, 7, 'a'.repeat(40), 'low', 3);
+    await assessment('ws-1', alpha, 7, 'b'.repeat(40), 'critical', 1);
+    await assessment('ws-1', beta, 8, 'b'.repeat(40), 'high', 1);
+    // Another workspace's assessment of a pull request with the same number is never read.
+    await assessment('ws-2', foreign, 9, 'd'.repeat(40), 'critical', 0);
+
+    const page = await listPullRequests({ db, workspaceId: 'ws-1' }, query());
+    const byTitle = new Map(page.items.map((item) => [item.title, item.risk]));
+    expect(byTitle.get('assessed')).toEqual({
+      level: 'critical',
+      score: 80,
+      headSha: 'b'.repeat(40),
+      assessedAt: ago(1).toISOString(),
+      current: true,
+    });
+    expect(byTitle.get('moved on')).toMatchObject({ level: 'high', current: false });
+    expect(byTitle.get('never gated')).toBeNull();
+  });
 });
 
 describe('cursors', () => {
