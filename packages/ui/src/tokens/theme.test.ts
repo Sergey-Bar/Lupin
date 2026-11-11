@@ -977,15 +977,21 @@ describe('design token source', () => {
 
     /**
      * `Alert` and `Toast` render `text-warning` on `bg-warning/10`, and
-     * `text-success` on `bg-success/10`. That pairing has to be measured as the
-     * blend it produces, because the 10% tint raises the background luminance and
-     * *lowers* the contrast — a ratio computed against the untinted surface would
+     * `text-success` on `bg-success/10`; the status pill (`Status`) does the same for all four
+     * tones, `text-info` on `bg-info/10` for a run in progress included. That pairing has to be
+     * measured as the blend it produces, because the 10% tint raises the background luminance
+     * and *lowers* the contrast — a ratio computed against the untinted surface would
      * pass while the shipped rendering failed.
      */
     it.each(BOTH_SELECTORS)(
       'meets 4.5:1 for a status colour on its own 10% tint in %s',
       (selector) => {
-        for (const token of ['--lupin-success', '--lupin-warning', '--lupin-danger']) {
+        for (const token of [
+          '--lupin-success',
+          '--lupin-warning',
+          '--lupin-danger',
+          '--lupin-info',
+        ]) {
           const tint = blend(
             variableValue(selector, token),
             variableValue(selector, '--lupin-surface'),

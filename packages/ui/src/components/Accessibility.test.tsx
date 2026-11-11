@@ -49,6 +49,7 @@ import { Splitter } from './Splitter/Splitter.js';
 import { Stack } from './Stack/Stack.js';
 import { StatCard } from './StatCard/StatCard.js';
 import { StatusDot } from './StatusDot/StatusDot.js';
+import { LiveDot, Status } from './Status/Status.js';
 import { Wordmark } from './Wordmark/Wordmark.js';
 import { ToolLogo } from './ToolLogo/ToolLogo.js';
 import { CountUp } from './CountUp/CountUp.js';
@@ -311,6 +312,16 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
     element: <StatCard title="Pass rate" value="98.4%" trend="up" description="Last 7 days" />,
   },
   { name: 'StatusDot', element: <StatusDot status="bad" label="Failing" /> },
+  {
+    name: 'Status',
+    element: (
+      <>
+        <Status state="failed" />
+        <Status state="running" size="lg" />
+        <LiveDot live />
+      </>
+    ),
+  },
   { name: 'CountUp', element: <CountUp value={128} /> },
   { name: 'Checkbox', element: <Checkbox aria-label="Select all" /> },
   {
@@ -436,7 +447,7 @@ describe('axe sweep over every shipped component', () => {
   it('covers every component directory that ships a component', () => {
     const shipped = shippedComponentNames();
     const covered = CASES.map((testCase) => testCase.name).sort();
-    expect(shipped.length).toBe(39);
+    expect(shipped.length).toBe(40);
     // Guards the case list below: a missing or extra entry fails here, with the
     // diff, rather than as a silently smaller sweep.
     expect(covered).toEqual(shipped);

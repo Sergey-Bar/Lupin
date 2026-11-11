@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Badge, Button, EmptyState, Hero, StatusDot, cn } from '@lupin/ui';
+import { Badge, Button, EmptyState, Hero, LiveDot, Status, StatusDot, cn } from '@lupin/ui';
 import type { CockpitWindow, RunPhase } from '@lupin/shared-contracts';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { useRunDetail } from '../../hooks/useDashboard.js';
@@ -84,13 +84,6 @@ const ACTIVE_PHASES = new Set<RunPhase>([
  */
 function formatDate(value: string | null | undefined): string {
   return formatDateWithFallback(value, 'Unknown');
-}
-
-function outcomeTone(outcome: string | null): 'success' | 'danger' | 'warning' | 'secondary' {
-  if (outcome === 'passed') return 'success';
-  if (outcome === 'failed') return 'danger';
-  if (outcome === 'unknown' || outcome === 'partial') return 'warning';
-  return 'secondary';
 }
 
 function PhaseTimeline({ phase }: { phase: RunPhase }) {
@@ -691,13 +684,12 @@ function RunHeader({
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-fg-muted">{isLive ? 'Live' : 'Reconnecting'}</span>
+        <LiveDot live={isLive} />
+        {/* The phase as the API spells it: a precise, quiet label beside the verdict. */}
         <Badge data-testid="run-phase" variant={isRunActive(run) ? 'default' : 'outline'}>
           {run.phase}
         </Badge>
-        <Badge data-testid="run-status" variant={outcomeTone(run.outcome)}>
-          {statusWord(run.outcome)}
-        </Badge>
+        <Status data-testid="run-status" size="lg" state={run.outcome} />
         {isRunActive(run) ? (
           <Button
             data-testid="cancel-run"

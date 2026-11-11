@@ -87,7 +87,7 @@ test.describe('reporter run lifecycle', () => {
     await expect(row, 'the seeded run must appear in the Runs table').toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByTestId(`run-outcome-${runId}`)).toHaveText('passed');
+    await expect(page.getByTestId(`run-outcome-${runId}`)).toHaveText('Passed');
     await expect(page.getByTestId('runs-list-empty')).toHaveCount(0);
     await expect(page.getByTestId('runs-list-error')).toHaveCount(0);
     await expect(page.getByTestId('runs-list-loading')).toHaveCount(0);
@@ -96,7 +96,7 @@ test.describe('reporter run lifecycle', () => {
     await row.getByRole('link').first().click();
     await expect(page).toHaveURL(new RegExp(`/dashboard/runs/${runId}$`));
     await expect(page.getByTestId('run-detail-page')).toBeVisible();
-    await expect(page.getByTestId('run-status')).toHaveText('PASSED');
+    await expect(page.getByTestId('run-status')).toHaveText('Passed');
     await expect(page.getByTestId('run-total')).toHaveText(String(TOTAL_TESTS));
     await expect(page.getByTestId('run-passed')).toHaveText(String(TOTAL_TESTS));
 

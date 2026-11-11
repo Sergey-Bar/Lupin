@@ -307,7 +307,7 @@ describe('dashboard routes', () => {
     const status = screen.getByTestId('run-status-live-run');
     expect(status).toHaveAttribute('role', 'status');
     expect(status).toHaveAttribute('aria-live', 'polite');
-    expect(status).toHaveTextContent('queued');
+    expect(status).toHaveTextContent('Queued');
   });
 
   it('names a run with no suite by its short id, the one the runs table uses', async () => {

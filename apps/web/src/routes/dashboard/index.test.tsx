@@ -202,9 +202,9 @@ describe('RunsListPage', () => {
     );
     renderRunsPage(makeApi({ getRuns: vi.fn().mockResolvedValue(runs) }));
     await waitFor(() => expect(screen.getByTestId('run-outcome-run-partial')).toBeInTheDocument());
-    expect(screen.getByTestId('run-outcome-run-partial')).toHaveTextContent('partial');
-    expect(screen.getByTestId('run-outcome-run-unknown')).toHaveTextContent('unknown');
-    expect(screen.getByTestId('run-outcome-run-cancelled')).toHaveTextContent('cancelled');
+    expect(screen.getByTestId('run-outcome-run-partial')).toHaveTextContent('Partial');
+    expect(screen.getByTestId('run-outcome-run-unknown')).toHaveTextContent('Unknown');
+    expect(screen.getByTestId('run-outcome-run-cancelled')).toHaveTextContent('Cancelled');
   });
 
   it('renders loading state initially', async () => {
@@ -262,8 +262,8 @@ describe('RunsListPage', () => {
     await waitFor(() => expect(screen.getByTestId('runs-list-page')).toBeInTheDocument());
     expect(screen.getByTestId('run-row-run-abc12345')).toBeInTheDocument();
     expect(screen.getByTestId('run-row-run-def67890')).toBeInTheDocument();
-    expect(screen.getByTestId('run-outcome-run-abc12345')).toHaveTextContent('passed');
-    expect(screen.getByTestId('run-outcome-run-def67890')).toHaveTextContent('failed');
+    expect(screen.getByTestId('run-outcome-run-abc12345')).toHaveTextContent('Passed');
+    expect(screen.getByTestId('run-outcome-run-def67890')).toHaveTextContent('Failed');
     expect(screen.getByTestId('stat-total')).toHaveTextContent('2');
     expect(screen.getByTestId('stat-passed')).toHaveTextContent('1');
     expect(screen.getByTestId('stat-failed')).toHaveTextContent('1');

@@ -47,7 +47,7 @@ test.describe('cancelling an in-flight run', () => {
 
     await expect(page.getByTestId('run-detail-page')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('run-phase')).toHaveText('cancelled');
-    await expect(page.getByTestId('run-status')).toHaveText('CANCELLED');
+    await expect(page.getByTestId('run-status')).toHaveText('Cancelled');
     // A cancelled run offers Retry, not a second Cancel — the action that is no
     // longer possible must not still be on screen.
     await expect(page.getByTestId('cancel-run')).toHaveCount(0);
@@ -99,7 +99,7 @@ test.describe('cancelling an in-flight run', () => {
     const settled = await waitForRunPhase(request, created.id, ['cancelled']);
     expect(settled.outcome).toBe('cancelled');
     await expect(page.getByTestId('run-phase')).toHaveText('cancelled');
-    await expect(page.getByTestId('run-status')).toHaveText('CANCELLED');
+    await expect(page.getByTestId('run-status')).toHaveText('Cancelled');
 
     saveEvidence('cancel-in-flight', 'cancelled-from-page.json', {
       runId: created.id,

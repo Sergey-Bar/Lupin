@@ -61,6 +61,7 @@ export * from './components/Meter/Meter.js';
 export * from './components/Sparkline/Sparkline.js';
 // A verdict as a mark, always paired with a word. See the header in its file.
 export * from './components/StatusDot/StatusDot.js';
+export * from './components/Status/Status.js';
 // Kit v2 (design language v2): Surface, Hero, Row, ActionCard. See the header in its file.
 export * from './components/Kit/Kit.js';
 // A reading with its unit, change and comparison. See the header in its file.

@@ -69,7 +69,7 @@ test.describe('failed run and its evidence', () => {
     await signInAndVisit(page, `/dashboard/runs/${created.id}`);
 
     await expect(page.getByTestId('run-detail-page')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('run-status')).toHaveText('FAILED');
+    await expect(page.getByTestId('run-status')).toHaveText('Failed');
     await expect(page.getByTestId('run-phase')).toHaveText('complete');
     await expect(page.getByTestId('run-failed')).toHaveText('1');
     await expect(page.getByTestId('run-passed')).toHaveText('1');
@@ -158,7 +158,7 @@ test.describe('failed run and its evidence', () => {
     // false failure.
     const row = page.getByTestId(`run-row-${created.id}`);
     await expect(row).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId(`run-outcome-${created.id}`)).toHaveText('failed');
+    await expect(page.getByTestId(`run-outcome-${created.id}`)).toHaveText('Failed');
     await expect(page.getByTestId('stat-failed')).not.toHaveText('0');
   });
 });

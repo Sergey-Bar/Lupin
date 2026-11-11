@@ -1,7 +1,6 @@
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import {
-  Badge,
   Button,
   Dialog,
   DialogClose,
@@ -14,7 +13,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  StatusDot,
+  LiveDot,
+  Status,
   Hero,
   ButtonLink,
 } from '@lupin/ui';
@@ -43,22 +43,6 @@ export const Route = createRoute({
   path: '/runs',
   component: () => <RunsListPage />,
 });
-
-function outcomeVariant(
-  outcome: Run['outcome'],
-): 'success' | 'danger' | 'warning' | 'default' | 'secondary' {
-  switch (outcome) {
-    case 'passed':
-      return 'success';
-    case 'failed':
-      return 'danger';
-    case 'partial':
-    case 'unknown':
-      return 'warning';
-    default:
-      return 'secondary';
-  }
-}
 
 /**
  * What the Runs area asks of a reader: each branch whose **newest** run is red, with one
@@ -271,8 +255,8 @@ export function RunsListPage({
                       <TableCell className="hidden lg:table-cell">{run.projectId ?? '—'}</TableCell>
                     ) : null}
                     <TableCell>
-                      {/* One status: the phase while it runs, the outcome once it ends. A polite
-                          live region on the badge alone, so a status flip is spoken without
+                      {/* One status pill: the phase while it runs, the outcome once it ends. A
+                          polite live region on it alone, so a status flip is spoken without
                           re-reading the row. */}
                       <span
                         data-testid={`run-status-${run.id}`}
@@ -281,14 +265,9 @@ export function RunsListPage({
                         className="inline-flex"
                       >
                         {isRunActive(run) ? (
-                          <Badge variant="default">{run.phase}</Badge>
+                          <Status state={run.phase} />
                         ) : (
-                          <Badge
-                            data-testid={`run-outcome-${run.id}`}
-                            variant={outcomeVariant(run.outcome)}
-                          >
-                            {run.outcome ?? 'PENDING'}
-                          </Badge>
+                          <Status data-testid={`run-outcome-${run.id}`} state={run.outcome} />
                         )}
                       </span>
                     </TableCell>
@@ -322,13 +301,7 @@ export function RunsListPage({
   // (Retry) owns the one solid fill otherwise.
   const headerActions = (primary: boolean) => (
     <>
-      <span
-        data-testid="runs-live-state"
-        className="inline-flex items-center gap-2 text-xs text-fg-muted"
-      >
-        <StatusDot status={isLive ? 'good' : 'unknown'} live={isLive} />
-        {isLive ? 'Live' : 'Reconnecting'}
-      </span>
+      <LiveDot data-testid="runs-live-state" live={isLive} />
       <Button
         data-testid="launch-run-open"
         variant={primary ? 'primary' : 'secondary'}
