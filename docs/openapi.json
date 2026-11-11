@@ -14232,6 +14232,143 @@
         "required": ["projectId", "commit", "branch", "state", "result"],
         "additionalProperties": false
       },
+      "DiffGuardReportSchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1, "maxLength": 50 },
+          "findings": {
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "test-deleted",
+                    "skip-added",
+                    "assertion-removed",
+                    "assertion-loosened",
+                    "empty-catch",
+                    "snapshot-bulk-update",
+                    "threshold-lowered",
+                    "ci-made-non-failing",
+                    "retry-added"
+                  ]
+                },
+                "path": { "type": "string", "minLength": 1, "maxLength": 500 },
+                "line": {
+                  "anyOf": [
+                    { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                    { "type": "null" }
+                  ]
+                },
+                "side": { "type": "string", "enum": ["base", "head"] }
+              },
+              "required": ["kind", "path", "line", "side"],
+              "additionalProperties": false
+            }
+          },
+          "counts": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "enum": [
+                "test-deleted",
+                "skip-added",
+                "assertion-removed",
+                "assertion-loosened",
+                "empty-catch",
+                "snapshot-bulk-update",
+                "threshold-lowered",
+                "ci-made-non-failing",
+                "retry-added"
+              ]
+            },
+            "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+          },
+          "filesChecked": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "truncated": { "type": "boolean" }
+        },
+        "required": ["version", "findings", "counts", "filesChecked", "truncated"],
+        "additionalProperties": false
+      },
+      "DiffGuardUploadSchema": {
+        "type": "object",
+        "properties": {
+          "commit": { "type": "string", "pattern": "^[0-9a-f]{7,64}$" },
+          "base": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "branch": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "report": {
+            "type": "object",
+            "properties": {
+              "version": { "type": "string", "minLength": 1, "maxLength": 50 },
+              "findings": {
+                "maxItems": 200,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "test-deleted",
+                        "skip-added",
+                        "assertion-removed",
+                        "assertion-loosened",
+                        "empty-catch",
+                        "snapshot-bulk-update",
+                        "threshold-lowered",
+                        "ci-made-non-failing",
+                        "retry-added"
+                      ]
+                    },
+                    "path": { "type": "string", "minLength": 1, "maxLength": 500 },
+                    "line": {
+                      "anyOf": [
+                        { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                        { "type": "null" }
+                      ]
+                    },
+                    "side": { "type": "string", "enum": ["base", "head"] }
+                  },
+                  "required": ["kind", "path", "line", "side"],
+                  "additionalProperties": false
+                }
+              },
+              "counts": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "enum": [
+                    "test-deleted",
+                    "skip-added",
+                    "assertion-removed",
+                    "assertion-loosened",
+                    "empty-catch",
+                    "snapshot-bulk-update",
+                    "threshold-lowered",
+                    "ci-made-non-failing",
+                    "retry-added"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "filesChecked": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "truncated": { "type": "boolean" }
+            },
+            "required": ["version", "findings", "counts", "filesChecked", "truncated"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["commit", "base", "report"],
+        "additionalProperties": false
+      },
       "Digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
       "DigestItemSchema": {
         "type": "object",
@@ -27947,6 +28084,35 @@
           "skipped": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
         },
         "required": ["id", "runId", "title", "file", "total", "passed", "failed", "skipped"],
+        "additionalProperties": false
+      },
+      "TestTamperFindingSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "test-deleted",
+              "skip-added",
+              "assertion-removed",
+              "assertion-loosened",
+              "empty-catch",
+              "snapshot-bulk-update",
+              "threshold-lowered",
+              "ci-made-non-failing",
+              "retry-added"
+            ]
+          },
+          "path": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "line": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          },
+          "side": { "type": "string", "enum": ["base", "head"] }
+        },
+        "required": ["kind", "path", "line", "side"],
         "additionalProperties": false
       },
       "TestTamperKindSchema": {

@@ -48,6 +48,40 @@ export const TEST_TAMPER_KINDS = [
 export const TestTamperKindSchema = z.enum(TEST_TAMPER_KINDS);
 export type TestTamperKind = z.infer<typeof TestTamperKindSchema>;
 
+/** Findings `lupin diff-guard` keeps in one report; every finding is still counted. */
+export const MAX_DIFF_GUARD_FINDINGS = 200;
+
+/**
+ * One way a change weakens a test: a kind, a path, a line and its side of the diff. Never the
+ * text of the line — the guard runs in CI precisely so that no source leaves the job.
+ */
+export const TestTamperFindingSchema = z.strictObject({
+  kind: TestTamperKindSchema,
+  path: z.string().min(1).max(500),
+  line: z.number().int().min(0).nullable(),
+  side: z.enum(['base', 'head']),
+});
+export type TestTamperFinding = z.infer<typeof TestTamperFindingSchema>;
+
+export const DiffGuardReportSchema = z.strictObject({
+  version: z.string().min(1).max(50),
+  findings: z.array(TestTamperFindingSchema).max(MAX_DIFF_GUARD_FINDINGS),
+  counts: z.partialRecord(TestTamperKindSchema, z.number().int().min(0)),
+  filesChecked: z.number().int().min(0),
+  truncated: z.boolean(),
+});
+export type DiffGuardReport = z.infer<typeof DiffGuardReportSchema>;
+
+/** What `lupin diff-guard` sends: the report, and the commit and base it was read against. */
+export const DiffGuardUploadSchema = z.strictObject({
+  commit: z.string().regex(/^[0-9a-f]{7,64}$/iu),
+  base: z.string().min(1).max(255),
+  branch: z.string().trim().min(1).max(255).optional(),
+  pullRequest: z.number().int().min(1).optional(),
+  report: DiffGuardReportSchema,
+});
+export type DiffGuardUpload = z.infer<typeof DiffGuardUploadSchema>;
+
 /** The evidence an assessment can read. A policy names which of them are required. */
 export const CHANGE_RISK_EVIDENCE = [
   'attribution',
