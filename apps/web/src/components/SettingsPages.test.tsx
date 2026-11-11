@@ -292,6 +292,37 @@ describe('Settings → Quality gates', () => {
     expect(screen.queryByLabelText('Minimum pass rate (%)')).toBeNull();
   });
 
+  it('offers a workspace admin only the gates the workspace owns, and says who changes the rest', async () => {
+    render(
+      <ToastProvider>
+        <QualityGatesSettingsPage
+          health={health({ role: 'admin', source: 'user', installationAdmin: false })}
+          client={settingsClient({
+            listGates: vi.fn(async () => [
+              { ...GATES[0]!, scope: 'installation' as const },
+              { ...GATES[1]!, id: 'own', scope: 'workspace' as const },
+              // An older API sends no scope: treated as shared, so nothing is offered.
+              { ...GATES[1]!, id: 'old' },
+            ]),
+          })}
+        />
+      </ToastProvider>,
+    );
+    const shared = await screen.findByTestId('gate-global');
+    expect(within(shared).queryByLabelText('Minimum pass rate (%)')).toBeNull();
+    expect(
+      within(shared).getByText(
+        'Every workspace shares this gate. An installation admin can change it.',
+      ),
+    ).toBeInTheDocument();
+    expect(within(screen.getByTestId('gate-old')).queryByRole('button')).toBeNull();
+    expect(
+      within(screen.getByTestId('gate-own')).getByLabelText('Minimum pass rate (%)'),
+    ).toBeInTheDocument();
+    // Every gate the dashboard creates is shared, so the form is an installation admin's.
+    expect(screen.queryByRole('form', { name: 'Add a gate' })).toBeNull();
+  });
+
   it('describes the edge thresholds in words', () => {
     expect(describeGate({ passRateThreshold: 0 })).toBe('Every run passes, whatever its tests do.');
   });

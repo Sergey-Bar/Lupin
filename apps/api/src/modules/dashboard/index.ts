@@ -7,7 +7,7 @@
 import { Hono } from 'hono';
 import type { RunRepository } from '../../repositories/run-repository.js';
 import type { QuarantineStore } from './quarantine.js';
-import type { QualityGateStore } from './quality-gates.js';
+import type { DashboardQualityGatesOptions, QualityGateStore } from './quality-gates.js';
 import { createDashboardRunsRoutes } from './runs.js';
 import { createDashboardTestsRoutes } from './tests.js';
 import { createTestHistoryRoutes } from './test-history.js';
@@ -29,6 +29,11 @@ export interface DashboardModuleOptions {
   quarantineStore?: QuarantineStore;
   /** Optional quality gate store (for production DB-backed wiring or tests) */
   qualityGateStore?: QualityGateStore;
+  /**
+   * The gate routes' two questions about the caller: who they are, for the audit row, and
+   * whether they may change what every workspace shares.
+   */
+  gateAccess: Pick<DashboardQualityGatesOptions, 'contextFor' | 'mayChangeInstallation'>;
 }
 
 // ---------------------------------------------------------------------------
@@ -48,7 +53,10 @@ export function createDashboardModule(options: DashboardModuleOptions): Hono {
   app.route('/', createDashboardTestsRoutes({ repository: options.repository }));
   app.route('/', createDashboardAnalyticsRoutes({ repository: options.repository }));
   app.route('/', createDashboardQuarantineRoutes({ store: quarantineStore }));
-  app.route('/', createDashboardQualityGatesRoutes({ store: qualityGateStore }));
+  app.route(
+    '/',
+    createDashboardQualityGatesRoutes({ store: qualityGateStore, ...options.gateAccess }),
+  );
 
   return app;
 }

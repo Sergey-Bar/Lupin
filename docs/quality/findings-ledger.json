@@ -7556,6 +7556,33 @@
           "asserts": "A failure reason is kept from the nested shape and from the flat contract shape, and the nested one wins."
         }
       ]
+    },
+    {
+      "id": "MNT-170",
+      "title": "Any workspace admin could change, rename or remove a quality gate every workspace shares",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "DrizzleQualityGateStore filtered list, get, update and remove by id only, and the gate routes checked the plain admin role. So an admin of any workspace could list every workspace's gates, edit or remove another workspace's scoped gate, and change or remove the installation-wide ones (workspace_id NULL: the default gate and every gate the dashboard creates), with the audit row written to the actor's workspace as anonymous. The measured harm is bounded: the run gate reads quality policies, not these rows, and the readiness threshold (passRateThreshold in scan-history-service.ts) reads only a workspace's own rows, so no verdict changed through this. What was exposed was the gates themselves and their audit trail.",
+      "resolution": "Every store statement is limited to installation rows and the store's own workspace, so another workspace's gate is not found. Creating a gate, and editing or removing an installation gate, needs mayChangeInstallation (the rule install-scoped settings use) and otherwise answers 403 INSTALLATION_ADMIN_REQUIRED. Each gate carries its scope, and Settings offers Save only where it would be accepted. The audit actor is the authenticated caller. Not covered by a test: the composition root's wiring of the two callbacks, which is typechecked but not exercised end to end.",
+      "evidence": [
+        {
+          "path": "apps/api/src/modules/dashboard/dashboard-stores.test.ts",
+          "asserts": "A store bound to one workspace cannot list, read, edit or remove another workspace's gate, on PGlite with every migration, and writes no audit row for the attempt."
+        },
+        {
+          "path": "apps/api/src/modules/dashboard/quality-gates.test.ts",
+          "asserts": "A caller who may not change the installation is refused creating a gate and editing or removing an installation gate, may edit and remove the workspace's own, sees each gate's scope, and is recorded as the authenticated caller."
+        },
+        {
+          "path": "apps/web/src/components/SettingsPages.test.tsx",
+          "asserts": "A workspace admin is offered controls only on the workspace's own gate, is told who changes a shared one, and is not offered the add form."
+        }
+      ]
     }
   ]
 }

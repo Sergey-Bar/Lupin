@@ -7,8 +7,8 @@
  * and the assertion meant the "type" of the body was never actually checked.
  */
 
-import { Hono } from 'hono';
-import { DomainError } from '../../errors/domain-error.js';
+import { Hono, type Context } from 'hono';
+import { DomainError, ErrorCode } from '../../errors/domain-error.js';
 import { randomUUID } from 'node:crypto';
 import { InMemoryAuditSink, type AuditEntry, type WriteContext } from './audit-sink.js';
 import { CreateQualityGateBodySchema, UpdateQualityGateBodySchema } from './schemas.js';
@@ -24,17 +24,26 @@ export interface QualityGate {
   /** Required pass rate (0–100) for a run to pass this gate */
   passRateThreshold: number;
   createdAt: string; // ISO-8601
+  /**
+   * `installation`: every workspace shares the row (`workspace_id` NULL), so only an
+   * installation admin may change it. `workspace`: the row belongs to the workspace reading it.
+   */
+  scope: QualityGateScope;
 }
 
-/** A gate as it arrives from a caller: no id, no timestamp. */
-export type NewQualityGate = Omit<QualityGate, 'id' | 'createdAt'>;
+export type QualityGateScope = 'installation' | 'workspace';
+
+/** A gate as it arrives from a caller: no id, no timestamp, and no say over its scope. */
+export type NewQualityGate = Omit<QualityGate, 'id' | 'createdAt' | 'scope'>;
 
 // ---------------------------------------------------------------------------
 // Store interface + in-memory implementation
 // ---------------------------------------------------------------------------
 
 export interface QualityGateStore {
+  /** The installation-wide gates and this workspace's own; never another workspace's. */
   list(): Promise<QualityGate[]>;
+  /** Creates an installation-wide gate, the only kind the dashboard creates. */
   add(gate: NewQualityGate, context?: WriteContext): Promise<QualityGate>;
   get(id: string): Promise<QualityGate | null>;
   /** The updated gate, or `null` when there is none with this id. */
@@ -53,7 +62,13 @@ export const DEFAULT_GATE_ID = 'global';
 export class InMemoryQualityGateStore implements QualityGateStore {
   private readonly _gates = new Map<string, QualityGate>();
 
-  constructor(private readonly audit: InMemoryAuditSink = new InMemoryAuditSink()) {}
+  /** @param initial gates already present, for a test that needs a workspace's own gate. */
+  constructor(
+    initial: readonly QualityGate[] = [],
+    private readonly audit: InMemoryAuditSink = new InMemoryAuditSink(),
+  ) {
+    for (const gate of initial) this._gates.set(gate.id, { ...gate });
+  }
 
   /** The creations this store recorded. Read by tests to assert attribution. */
   get recorded(): readonly AuditEntry[] {
@@ -70,6 +85,7 @@ export class InMemoryQualityGateStore implements QualityGateStore {
       ...gate,
       id,
       createdAt: new Date().toISOString(),
+      scope: 'installation',
     };
     this._gates.set(id, g);
     await this.audit.record({
@@ -125,10 +141,33 @@ export class InMemoryQualityGateStore implements QualityGateStore {
 export interface DashboardQualityGatesOptions {
   store: QualityGateStore;
   /**
-   * Who to attribute a creation to. `'anonymous'` by default, which is what an
+   * Who to attribute a write to. `'anonymous'` by default, which is what an
    * unauthenticated write is — a recorded value, not an omission.
    */
-  contextFor?: (c: { req: { header(name: string): string | undefined } }) => WriteContext;
+  contextFor?: (c: Context) => WriteContext | Promise<WriteContext>;
+  /**
+   * Whether this caller may change what every workspace shares: an installation admin, the
+   * rule `mayChangeInstallation` applies to install-scoped settings. Required, so a
+   * composition cannot forget it and leave a shared gate open to every workspace's admin
+   * (ledger MNT-170).
+   */
+  mayChangeInstallation: (c: Context) => Promise<boolean>;
+}
+
+const INSTALLATION_GATE_FIX =
+  'Every workspace shares this gate. Ask an installation admin to change it.';
+
+async function refuseSharedWrite(
+  options: DashboardQualityGatesOptions,
+  c: Context,
+  scope: QualityGateScope,
+): Promise<void> {
+  if (scope === 'workspace' || (await options.mayChangeInstallation(c))) return;
+  throw new DomainError(
+    ErrorCode.INSTALLATION_ADMIN_REQUIRED,
+    'Only an installation admin can change a gate every workspace shares.',
+    { details: { fix: INSTALLATION_GATE_FIX } },
+  );
 }
 
 /**
@@ -170,8 +209,10 @@ export function createDashboardQualityGatesRoutes(options: DashboardQualityGates
         details: { issues: parsed.error.issues },
       });
     }
+    // Every gate the dashboard creates is installation-wide (`workspace_id` NULL).
+    await refuseSharedWrite(options, c, 'installation');
 
-    const gate = await options.store.add(parsed.data, contextFor(c));
+    const gate = await options.store.add(parsed.data, await contextFor(c));
     return c.json(gate, 201);
   });
 
@@ -199,7 +240,11 @@ export function createDashboardQualityGatesRoutes(options: DashboardQualityGates
         ? {}
         : { passRateThreshold: parsed.data.passRateThreshold }),
     };
-    const gate = await options.store.update(c.req.param('id'), patch, contextFor(c));
+    const id = c.req.param('id');
+    const existing = await options.store.get(id);
+    if (!existing) throw new DomainError('QUALITY_GATE_NOT_FOUND', 'Quality gate not found');
+    await refuseSharedWrite(options, c, existing.scope);
+    const gate = await options.store.update(id, patch, await contextFor(c));
     if (!gate) throw new DomainError('QUALITY_GATE_NOT_FOUND', 'Quality gate not found');
     return c.json(gate);
   });
@@ -212,7 +257,10 @@ export function createDashboardQualityGatesRoutes(options: DashboardQualityGates
         details: { fix: 'Change its threshold instead; every evaluation falls back to it.' },
       });
     }
-    if (!(await options.store.remove(id, contextFor(c)))) {
+    const existing = await options.store.get(id);
+    if (!existing) throw new DomainError('QUALITY_GATE_NOT_FOUND', 'Quality gate not found');
+    await refuseSharedWrite(options, c, existing.scope);
+    if (!(await options.store.remove(id, await contextFor(c)))) {
       throw new DomainError('QUALITY_GATE_NOT_FOUND', 'Quality gate not found');
     }
     return c.json({ ok: true });

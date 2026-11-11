@@ -1,5 +1,5 @@
 /**
- * drizzle-stores.ts — the dashboard's Postgres-backed stores.
+ * drizzle-stores.ts â€” the dashboard's Postgres-backed stores.
  *
  * Three defects lived here, and all three were the same mistake: a field written
  * into, and read back out of, a column that meant something else.
@@ -15,17 +15,17 @@
  *    threshold becomes an invisible one, so the row is listed.
  * 3. A quarantine entry had no way to change state. It entered `pending` (the
  *    fail-closed default, so a fresh quarantine does not hide a test from the pass
- *    rate before a human decides) and stayed there forever — the only reachable
+ *    rate before a human decides) and stayed there forever â€” the only reachable
  *    state was the one that excludes nothing. `resolve()` adds the transition, with
  *    the rule stated once in `schemas.ts` and an audit row for the decision.
  */
 
 import { auditEvents, qualityGateConfig, quarantine } from '@lupin/db';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull, or } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
 import { randomUUID } from 'node:crypto';
-import type { QualityGate, QualityGateStore } from './quality-gates.js';
+import type { NewQualityGate, QualityGate, QualityGateStore } from './quality-gates.js';
 import type { NewQuarantineEntry, QuarantineEntry, QuarantineStore } from './quarantine.js';
 import {
   canTransitionQuarantine,
@@ -52,13 +52,14 @@ function mapGate(row: typeof qualityGateConfig.$inferSelect): QualityGate {
     name: row.name,
     passRateThreshold: row.passRateThreshold,
     createdAt: row.updatedAt.toISOString(),
+    scope: row.workspaceId === null ? 'installation' : 'workspace',
   };
 }
 
 export class DrizzleQualityGateStore implements QualityGateStore {
   /**
    * @param workspaceId the workspace whose operator makes these changes. The gate rows
-   *   stay installation-wide — `workspace_id` NULL is the default gate, by design — but
+   *   stay installation-wide â€” `workspace_id` NULL is the default gate, by design â€” but
    *   the audit row for creating one is this workspace's (ledger MNT-17).
    */
   constructor(
@@ -66,26 +67,39 @@ export class DrizzleQualityGateStore implements QualityGateStore {
     private readonly workspaceId: string,
   ) {}
 
+  /**
+   * The rows this workspace may see: the installation-wide ones and its own. Every read and
+   * write goes through it, so an id from another workspace is "no such gate" (ledger MNT-170).
+   */
+  private visible() {
+    return or(
+      isNull(qualityGateConfig.workspaceId),
+      eq(qualityGateConfig.workspaceId, this.workspaceId),
+    );
+  }
+
+  private one(id: string) {
+    return and(eq(qualityGateConfig.id, id), this.visible());
+  }
+
   async list(): Promise<QualityGate[]> {
     const rows = await this.db
       .select()
       .from(qualityGateConfig)
+      .where(this.visible())
       .orderBy(asc(qualityGateConfig.updatedAt));
     // Every row, including `global`. The previous `.where(ne(id, 'global'))` made a
-    // fresh install — where that row is the only one — report an empty list, so an
+    // fresh install â€” where that row is the only one â€” report an empty list, so an
     // operator could not see the threshold their evaluations were actually using.
     return rows.map(mapGate);
   }
 
-  async add(
-    gate: Omit<QualityGate, 'id' | 'createdAt'>,
-    context: WriteContext = systemContext(),
-  ): Promise<QualityGate> {
+  async add(gate: NewQualityGate, context: WriteContext = systemContext()): Promise<QualityGate> {
     const id = randomUUID();
     const now = new Date();
     // The gate row and its audit row are written together. A gate nobody can account
     // for is the failure the audit table exists to prevent, so recording it
-    // separately — or not at all — would be the same as not recording it.
+    // separately â€” or not at all â€” would be the same as not recording it.
     await this.db.transaction(async (tx) => {
       await tx.insert(qualityGateConfig).values({
         id,
@@ -116,15 +130,12 @@ export class DrizzleQualityGateStore implements QualityGateStore {
       name: gate.name,
       passRateThreshold: gate.passRateThreshold,
       createdAt: now.toISOString(),
+      scope: 'installation',
     };
   }
 
   async get(id: string): Promise<QualityGate | null> {
-    const rows = await this.db
-      .select()
-      .from(qualityGateConfig)
-      .where(eq(qualityGateConfig.id, id))
-      .limit(1);
+    const rows = await this.db.select().from(qualityGateConfig).where(this.one(id)).limit(1);
     const row = rows[0];
     if (row === undefined) return null;
     return mapGate(row);
@@ -132,7 +143,7 @@ export class DrizzleQualityGateStore implements QualityGateStore {
 
   async update(
     id: string,
-    patch: Partial<Omit<QualityGate, 'id' | 'createdAt'>>,
+    patch: Partial<NewQualityGate>,
     context: WriteContext = systemContext(),
   ): Promise<QualityGate | null> {
     const now = new Date();
@@ -140,7 +151,7 @@ export class DrizzleQualityGateStore implements QualityGateStore {
       const rows = await tx
         .update(qualityGateConfig)
         .set({ ...patch, updatedAt: now })
-        .where(eq(qualityGateConfig.id, id))
+        .where(this.one(id))
         .returning();
       if (rows.length === 0) return null;
       await tx.insert(auditEvents).values(
@@ -166,7 +177,7 @@ export class DrizzleQualityGateStore implements QualityGateStore {
     return this.db.transaction(async (tx) => {
       const rows = await tx
         .delete(qualityGateConfig)
-        .where(eq(qualityGateConfig.id, id))
+        .where(this.one(id))
         .returning({ id: qualityGateConfig.id });
       if (rows.length === 0) return false;
       await tx.insert(auditEvents).values(
@@ -256,8 +267,8 @@ export class DrizzleQuarantineStore implements QuarantineStore {
         reason: entry.reason ?? null,
         quarantinedAt: now,
         // Explicit rather than relying on the column default, so the value returned
-        // here is the value asked for. The default is `pending` — the fail-closed
-        // state — and stating it means a change to the column default cannot quietly
+        // here is the value asked for. The default is `pending` â€” the fail-closed
+        // state â€” and stating it means a change to the column default cannot quietly
         // make a fresh quarantine exclude a test.
         status: 'pending',
       });
@@ -299,7 +310,7 @@ export class DrizzleQuarantineStore implements QuarantineStore {
   async remove(id: string, context: WriteContext = systemContext()): Promise<boolean> {
     // Delete and record together. A removed entry whose removal is unrecorded is a
     // test that silently reappears in the pass rate with nobody having decided
-    // anything — the exact shape the audit table exists to rule out.
+    // anything â€” the exact shape the audit table exists to rule out.
     const removed = await this.db.transaction(async (tx) => {
       const rows = await tx.delete(quarantine).where(this.own(id)).returning({ id: quarantine.id });
       if (rows.length === 0) return false;

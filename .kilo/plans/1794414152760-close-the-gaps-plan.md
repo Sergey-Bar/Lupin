@@ -54,14 +54,18 @@ by a test written against the defect and watched failing. Ordered by harm.
 
 **Correctness and security**
 
-- D1. Installation-wide quality gates can be changed from any workspace. `list`, `get`,
-  `update` and `remove` in `apps/api/src/modules/dashboard/drizzle-stores.ts` filter by id
-  only, and the routes in `apps/api/src/modules/dashboard/quality-gates.ts` check the plain
-  admin role, so a workspace admin can lower the `global` default every workspace uses, and
-  the audit row lands in the actor's workspace, not the affected one. Require an installation
-  admin for gates whose workspace is NULL (the rule `mayChangeInstallation` already applies to
-  install-scoped settings), scope workspace gates to their workspace, and add a
-  cross-workspace isolation test.
+- D1. Done 2026-11-11 (ledger MNT-170). Installation-wide quality gates could be changed from
+  any workspace: `list`, `get`, `update` and `remove` in
+  `apps/api/src/modules/dashboard/drizzle-stores.ts` filtered by id only, and the routes in
+  `apps/api/src/modules/dashboard/quality-gates.ts` checked the plain admin role. Measured
+  harm, narrower than first written: the run gate reads quality policies, not these rows, and
+  the readiness threshold reads only a workspace's own rows, so no verdict changed; the gates
+  and their audit trail were exposed. Now every statement is limited to shared rows and the
+  store's own workspace, a shared gate needs an installation admin, each gate carries its
+  scope, and the audit row names the caller.
+- D1a. Found while fixing D1: Settings → Quality gates says "A run that misses its gate is
+  marked failed", but nothing marks a run failed from these rows; the run gate reads quality
+  policies. Either make a gate feed the run gate, or say what a gate does today.
 - D2. The run status change trusts a client header for the audit actor and can revive a
   finished run. `apps/api/src/modules/dashboard/runs.ts` records `x-actor-id` (or
   `anonymous`) instead of the authenticated caller, its audit sink is optional, and the

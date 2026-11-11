@@ -7,6 +7,7 @@
 import './instrument.js';
 import {
   recordClientAddress,
+  currentRequestId,
   requestContext,
   requireRequestId,
 } from './observability/request-context.js';
@@ -76,7 +77,7 @@ import { createCopilotRoutes } from './copilot/routes.js';
 import { createLiveAiGateway } from './observability/live-ai-gateway.js';
 import { createSettingsService } from './services/settings-service.js';
 import { createSettingTesters } from './services/settings-testers.js';
-import { createSettingsRoutes } from './routes/settings.js';
+import { createSettingsRoutes, mayChangeInstallation } from './routes/settings.js';
 import {
   createIdentitySettingsRoutes,
   currentIdentity,
@@ -1449,6 +1450,21 @@ function buildWorkspace(workspaceId: string) {
         repository: runRepository,
         quarantineStore: dashboardStores.quarantineStore,
         qualityGateStore: dashboardStores.qualityGateStore,
+        // A shared gate is installation configuration, decided by the rule install-scoped
+        // settings use (ledger MNT-170); the audit row names the caller who changed it.
+        gateAccess: {
+          contextFor: async (context) => ({
+            actorId: (await callerOf(context, access)).actor,
+            actorType: 'user',
+            requestId: currentRequestId() ?? null,
+          }),
+          mayChangeInstallation: async (context) =>
+            mayChangeInstallation(
+              await callerOf(context, access),
+              access,
+              workspaceId === defaultWorkspace,
+            ),
+        },
       }),
     );
     mountReportingRoutes(target);

@@ -55,6 +55,8 @@ export const QualityGateSchema = z.object({
   name: z.string(),
   passRateThreshold: z.number(),
   createdAt: z.string(),
+  /** Absent from an older API, and then read as shared: nothing is offered that may be refused. */
+  scope: z.enum(['installation', 'workspace']).optional(),
 });
 export type QualityGate = z.infer<typeof QualityGateSchema>;
 

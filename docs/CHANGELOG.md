@@ -64,6 +64,13 @@
 
 ### Changed
 
+- **A gate every workspace shares is changed only by an installation admin.** Creating,
+  editing or removing a quality gate with no workspace (the default gate and every gate the
+  dashboard creates) needs the same permission as an installation-wide setting, and answers
+  `403 INSTALLATION_ADMIN_REQUIRED` otherwise. A workspace never sees, edits or removes another
+  workspace's gate. Each gate now carries `scope` (`installation` or `workspace`), Settings →
+  Quality gates offers Save only where it would be accepted and says who can change the rest,
+  and the audit row names the caller instead of `anonymous` (ledger MNT-170).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the

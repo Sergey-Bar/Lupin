@@ -129,11 +129,38 @@ describe('DrizzleQualityGateStore', () => {
       "INSERT INTO workspaces (id, name, config_path, created_at) VALUES ('ws-a', 'ws-a', 'config', now()); INSERT INTO quality_gate_config (id, name, workspace_id, pass_rate_threshold, updated_at) VALUES ('scoped-1', 'Release gate', 'ws-a', 92, now())",
     );
 
-    const gate = await gates.get('scoped-1');
+    // Read by ws-a's own store: since MNT-170 another workspace's store cannot see the row.
+    const gate = await new DrizzleQualityGateStore(
+      drizzle(client, { schema }) as never,
+      'ws-a',
+    ).get('scoped-1');
 
     // The previous mapping returned `row.workspaceId` under the heading "name", so a
     // properly scoped gate was displayed as its workspace identifier.
     expect(gate?.name).toBe('Release gate');
+    expect(gate?.scope).toBe('workspace');
+  });
+
+  it('never reads, edits or removes another workspace’s gate (ledger MNT-170)', async () => {
+    await client.exec(
+      "INSERT INTO workspaces (id, name, config_path, created_at) VALUES ('ws-b', 'ws-b', 'config', now()); INSERT INTO quality_gate_config (id, name, workspace_id, pass_rate_threshold, updated_at) VALUES ('theirs-1', 'Their gate', 'ws-b', 97, now())",
+    );
+
+    expect((await gates.list()).map((gate) => gate.id)).not.toContain('theirs-1');
+    await expect(gates.get('theirs-1')).resolves.toBeNull();
+    await expect(gates.update('theirs-1', { passRateThreshold: 1 }, actor)).resolves.toBeNull();
+    await expect(gates.remove('theirs-1', actor)).resolves.toBe(false);
+
+    const stored = await client.query<{ pass_rate_threshold: number }>(
+      "SELECT pass_rate_threshold FROM quality_gate_config WHERE id = 'theirs-1'",
+    );
+    expect(stored.rows[0]?.pass_rate_threshold).toBe(97);
+    expect(await auditRowsFor('theirs-1')).toEqual([]);
+  });
+
+  it('marks the installation default as shared and a workspace’s own gate as its own', async () => {
+    const listed = await gates.list();
+    expect(listed.find((gate) => gate.id === 'global')?.scope).toBe('installation');
   });
 
   it('round-trips a created gate through its own name and leaves the scope unset', async () => {

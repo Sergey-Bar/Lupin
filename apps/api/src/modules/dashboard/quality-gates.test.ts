@@ -39,6 +39,7 @@ import { Hono } from 'hono';
 import {
   createDashboardQualityGatesRoutes,
   InMemoryQualityGateStore,
+  type DashboardQualityGatesOptions,
   type QualityGate,
   type QualityGateStore,
 } from './quality-gates.js';
@@ -89,10 +90,20 @@ const FOREIGN_GATE: QualityGate = {
   name: 'their main gate',
   passRateThreshold: 99,
   createdAt: '2026-09-01T00:00:00.000Z',
+  scope: 'workspace',
 };
 
-function mount(store: QualityGateStore): Hono {
-  return withErrorBoundary(createDashboardQualityGatesRoutes({ store }));
+function mount(
+  store: QualityGateStore,
+  options: Partial<Omit<DashboardQualityGatesOptions, 'store'>> = {},
+): Hono {
+  return withErrorBoundary(
+    createDashboardQualityGatesRoutes({
+      store,
+      mayChangeInstallation: async () => true,
+      ...options,
+    }),
+  );
 }
 
 function build(): { app: Hono; store: InMemoryQualityGateStore } {
@@ -400,5 +411,83 @@ describe('editing and removing a quality gate', () => {
     expect(await response.json()).toMatchObject({
       error: { details: { fix: expect.stringContaining('threshold') } },
     });
+  });
+});
+
+describe('who may change an installation-wide gate (ledger MNT-170)', () => {
+  const send = (app: Hono, method: string, path: string, body?: unknown) =>
+    Promise.resolve(
+      app.request(path, {
+        method,
+        headers: { 'content-type': 'application/json' },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      }),
+    );
+  const OWN: QualityGate = {
+    id: 'ours',
+    name: 'our gate',
+    passRateThreshold: 90,
+    createdAt: '2026-11-01T00:00:00.000Z',
+    scope: 'workspace',
+  };
+
+  it('refuses a workspace admin who creates, edits or removes a gate every workspace shares', async () => {
+    const store = new InMemoryQualityGateStore();
+    const shared = await store.add({ name: 'shared', passRateThreshold: 90 });
+    const app = mount(store, { mayChangeInstallation: async () => false });
+    const path = `/api/v1/dashboard/quality-gates/${shared.id}`;
+
+    const created = await post(app, { name: 'mine', passRateThreshold: 50 });
+    const edited = await send(app, 'PATCH', path, { passRateThreshold: 10 });
+    const removed = await send(app, 'DELETE', path);
+    const global = await send(app, 'PATCH', '/api/v1/dashboard/quality-gates/global', {
+      passRateThreshold: 10,
+    });
+
+    for (const response of [created, edited, removed]) {
+      expect(response.status).toBe(403);
+      expect(await response.json()).toMatchObject({
+        error: {
+          code: 'INSTALLATION_ADMIN_REQUIRED',
+          details: { fix: expect.stringContaining('installation') },
+        },
+      });
+    }
+    // The default gate is not in this store, so it answers as missing rather than as refused.
+    expect(global.status).toBe(404);
+    expect(await store.list()).toEqual([shared]);
+    expect(store.recorded.map((entry) => entry.action)).toEqual(['quality_gate.created']);
+  });
+
+  it('lets a workspace admin edit and remove a gate that belongs to the workspace', async () => {
+    const store = new InMemoryQualityGateStore([OWN]);
+    const app = mount(store, { mayChangeInstallation: async () => false });
+    const path = `/api/v1/dashboard/quality-gates/${OWN.id}`;
+
+    const edited = await send(app, 'PATCH', path, { passRateThreshold: 95 });
+    expect(edited.status).toBe(200);
+    expect(await edited.json()).toMatchObject({ passRateThreshold: 95, scope: 'workspace' });
+    expect((await send(app, 'DELETE', path)).status).toBe(200);
+  });
+
+  it('says which gates are shared, so a screen offers Save only where it would be accepted', async () => {
+    const store = new InMemoryQualityGateStore([OWN]);
+    await store.add({ name: 'shared', passRateThreshold: 90 });
+    const body = (await (
+      await mount(store).request('/api/v1/dashboard/quality-gates')
+    ).json()) as QualityGate[];
+    expect(body.map((gate) => [gate.name, gate.scope])).toEqual([
+      ['our gate', 'workspace'],
+      ['shared', 'installation'],
+    ]);
+  });
+
+  it('records the authenticated caller, not anonymous, when one is known', async () => {
+    const store = new InMemoryQualityGateStore();
+    const app = mount(store, {
+      contextFor: async () => ({ actorId: 'user:admin-1', actorType: 'user' }),
+    });
+    await post(app, { name: 'Gate', passRateThreshold: 90 });
+    expect(store.recorded.map((entry) => entry.actorId)).toEqual(['user:admin-1']);
   });
 });

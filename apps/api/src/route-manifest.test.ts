@@ -106,6 +106,7 @@ function mountedApp(): Hono {
       repository,
       quarantineStore: undefined,
       qualityGateStore: undefined,
+      gateAccess: { mayChangeInstallation: async () => true },
     }),
   );
   app.route(

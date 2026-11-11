@@ -608,11 +608,14 @@ function GateRow({
   gate,
   client,
   canEdit,
+  sharedNote,
   onChanged,
 }: {
   gate: QualityGate;
   client: SettingsClient;
   canEdit: boolean;
+  /** Say who can change a shared gate: shown to an admin who cannot, never to a viewer. */
+  sharedNote: boolean;
   onChanged: () => void;
 }): React.ReactElement {
   const toast = useToast();
@@ -688,6 +691,10 @@ function GateRow({
             </Button>
           )}
         </form>
+      ) : gate.scope !== 'workspace' && sharedNote ? (
+        <p className="text-sm text-fg-muted">
+          Every workspace shares this gate. An installation admin can change it.
+        </p>
       ) : null}
     </li>
   );
@@ -733,14 +740,20 @@ export function QualityGatesSettingsPage({
                         key={`${gate.id}:${String(gate.passRateThreshold)}`}
                         gate={gate}
                         client={client}
-                        canEdit={canAdminister(who)}
+                        // A shared gate is installation configuration (ledger MNT-170).
+                        canEdit={
+                          gate.scope === 'workspace'
+                            ? canAdminister(who)
+                            : canAdministerInstallation(who)
+                        }
+                        sharedNote={canAdminister(who)}
                         onChanged={refresh}
                       />
                     ))}
                   </ul>
                 )}
               </Panel>
-              {canAdminister(who) ? (
+              {canAdministerInstallation(who) ? (
                 <Panel title="Add a gate">
                   <form
                     aria-label="Add a gate"

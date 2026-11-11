@@ -61,7 +61,13 @@ function buildDashboardApp(repo: InMemoryRunRepository): Hono {
   app.route('/', createDashboardTestsRoutes({ repository: repo }));
   app.route('/', createDashboardAnalyticsRoutes({ repository: repo }));
   app.route('/', createDashboardQuarantineRoutes({ store: quarantineStore }));
-  app.route('/', createDashboardQualityGatesRoutes({ store: qualityGateStore }));
+  app.route(
+    '/',
+    createDashboardQualityGatesRoutes({
+      store: qualityGateStore,
+      mayChangeInstallation: async () => true,
+    }),
+  );
   return app;
 }
 

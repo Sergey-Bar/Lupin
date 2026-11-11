@@ -55,7 +55,10 @@ import { canTransitionQuarantine, QUARANTINE_STATUSES, QUARANTINE_TRANSITIONS } 
 function buildApp(store: InMemoryQuarantineStore, gates: InMemoryQualityGateStore): Hono {
   const app = withErrorBoundary(new Hono()).use(requestContext);
   app.route('/', createDashboardQuarantineRoutes({ store }));
-  app.route('/', createDashboardQualityGatesRoutes({ store: gates }));
+  app.route(
+    '/',
+    createDashboardQualityGatesRoutes({ store: gates, mayChangeInstallation: async () => true }),
+  );
   return app;
 }
 
