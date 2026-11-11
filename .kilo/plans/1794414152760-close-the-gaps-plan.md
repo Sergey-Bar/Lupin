@@ -206,11 +206,13 @@ by a test written against the defect and watched failing. Ordered by harm.
 
 **Build, database and supply chain**
 
-- D32. Drizzle snapshots stop at `0004` while `packages/db/drizzle/meta/_journal.json` reaches
+- D32. Done 2026-11-11 (MNT-193): `0059_snapshot.json` generated from the schema module;
+  `drizzle-kit generate` reports no changes and `snapshot.test.ts` holds it. Drizzle snapshots stop at `0004` while `packages/db/drizzle/meta/_journal.json` reaches
   `0059`, so `pnpm db:check` checks nothing after 0004 and `pnpm db:generate` would diff
   against a schema 55 migrations old. Regenerate a current snapshot, and add a test that the
   latest snapshot matches the latest journal entry.
-- D33. `apps/worker/src/postgres-store.ts` runs 28 hand-written queries with hand-typed rows,
+- D33. Done 2026-11-11 (MNT-194) by the second option: every query is `PREPARE`d against
+  the migrated schema in `tests/integration/src/worker-sql.test.ts`. `apps/worker/src/postgres-store.ts` runs 28 hand-written queries with hand-typed rows,
   so a renamed column typechecks and fails at run time. Move it onto the Drizzle schema, or
   add a test that every column it names exists in the schema.
 - D34. `pnpm-workspace.yaml` pins `typescript-eslint` to 8.72.1, the version its own comment

@@ -8053,6 +8053,44 @@
           "asserts": "No real register row cites an apps/web component that only its own test imports; a lazy import() is a use."
         }
       ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-193",
+      "band": "Major",
+      "title": "The drizzle snapshots stopped 55 migrations ago",
+      "summary": "packages/db/drizzle/meta held snapshots up to 0004 while the journal reached 0059; every later migration was written by hand. pnpm db:generate would have diffed the schema module against the 0004 snapshot and written every one of those migrations again, and pnpm db:check, which reads only the snapshots, was checking a schema from September.",
+      "resolution": "drizzle/meta/0059_snapshot.json is generated from the schema module, chained to the 0004 snapshot, and drizzle-kit generate now reports no changes. A test holds the newest snapshot to the newest journal entry and to the schema module, and proves it can see a difference. The schema module itself is held to the migration graph by the existing constraints and integration suites.",
+      "evidence": [
+        {
+          "path": "packages/db/src/schema/snapshot.test.ts",
+          "asserts": "The newest snapshot belongs to the newest journal entry, and generateMigration between it and the schema module is empty."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-194",
+      "band": "Major",
+      "title": "The worker sent 26 hand-written queries nothing checked against the schema",
+      "summary": "apps/worker/src/postgres-store.ts talks to PostgreSQL through pg with hand-typed rows, and its tests stub the pool. A column renamed in a migration still typechecked there and would have failed only when the worker ran the query in production.",
+      "resolution": "An integration test reads every query literal from the store and PREPAREs it against the real migration graph in PGlite, which resolves every table, column, function and parameter type without executing anything. It also refuses a query built at run time, which it could not check. Moving the store onto Drizzle was not done: the check gives the same protection without rewriting the lease and recovery queries.",
+      "evidence": [
+        {
+          "path": "tests/integration/src/worker-sql.test.ts",
+          "asserts": "Every statement in postgres-store.ts prepares against the migrated schema; a renamed column is refused."
+        }
+      ]
     }
   ]
 }

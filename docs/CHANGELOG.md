@@ -120,6 +120,10 @@ DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reporte
   a run is paged; run detail is split into its panels (MNT-191).
 - **An unused run explorer is gone**, and the capability register cites the screens people
   use (MNT-192).
+- **The database tooling describes the database.** The Drizzle snapshot is current, so
+  `pnpm db:generate` no longer would rewrite 55 migrations and `pnpm db:check` checks today's
+  schema (MNT-193). Every query the worker sends is checked against the migrated schema, so a
+  renamed column fails a test instead of a production run (MNT-194).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the
