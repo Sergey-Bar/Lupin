@@ -63,7 +63,11 @@ interface Harness {
   store: Map<string, RunRecord>;
 }
 
-function build(initial: RunRecord = run()): Harness {
+/**
+ * @param race a status another writer gives the run between the route's read and its write,
+ *   which is the window a check-then-write leaves open (ledger MNT-171).
+ */
+function build(initial: RunRecord = run(), race?: RunRecord['status']): Harness {
   const store = new Map([[initial.id, initial]]);
   const audit = new InMemoryAuditSink();
 
@@ -71,15 +75,20 @@ function build(initial: RunRecord = run()): Harness {
     repository: {
       getRun: async (id: string) => store.get(id) ?? null,
       listRuns: async () => [...store.values()],
-      patchRun: async (id: string, patch: Partial<RunRecord>) => {
+      patchRun: async (id: string, patch: Partial<RunRecord> & { ifStatus?: string }) => {
         const current = store.get(id);
-        if (!current) return null;
-        const next = { ...current, ...patch };
-        store.set(id, next);
-        return next;
+        if (!current) return false;
+        if (race !== undefined) store.set(id, { ...current, status: race });
+        const now = store.get(id) as RunRecord;
+        if (patch.ifStatus !== undefined && now.status !== patch.ifStatus) return false;
+        const { ifStatus: _ifStatus, ...change } = patch;
+        store.set(id, { ...now, ...change });
+        return true;
       },
     } as never,
     audit,
+    // The authenticated caller, as the composition root resolves it.
+    contextFor: async () => ({ actorId: 'user:7', actorType: 'user' }),
   };
 
   const app = withErrorBoundary(createDashboardRunsRoutes(options));
@@ -93,7 +102,8 @@ function build(initial: RunRecord = run()): Harness {
     patch: async (status, id = initial.id) =>
       await app.request(`/api/v1/dashboard/runs/${id}/status`, {
         method: 'PATCH',
-        headers: { 'content-type': 'application/json', 'x-actor-id': 'user-7' },
+        // A header anyone can send: it must not decide who the audit trail names.
+        headers: { 'content-type': 'application/json', 'x-actor-id': 'forged-admin' },
         body: JSON.stringify({ status }),
       }),
   };
@@ -116,7 +126,9 @@ describe('a run status change is recorded', () => {
     expect(entry?.action).toBe('run.status_changed');
     expect(entry?.resourceType).toBe('run');
     expect(entry?.resourceId).toBe('run-1');
-    expect(entry?.actorId).toBe('user-7');
+    // The authenticated caller, never the `x-actor-id` the request carried (MNT-171).
+    expect(entry?.actorId).toBe('user:7');
+    expect(entry?.details).toEqual({ from: 'running', to: 'interrupted' });
   });
 
   it('records nothing when the status did not change', async () => {
@@ -162,6 +174,18 @@ describe('a terminal run does not come back to life', () => {
     const harness = build(run({ status: 'passed' }));
     const response = await harness.patch('passed');
     expect(response.status).toBe(200);
+  });
+
+  it('does not revive a run that finished between the check and the write (MNT-171)', async () => {
+    const harness = build(run({ status: 'running' }), 'passed');
+    const response = await harness.patch('interrupted');
+
+    expect(response.status).toBe(409);
+    const body = (await response.json()) as unknown as BoundaryBody;
+    expect(body.error.code).toBe('RUN_STATUS_TERMINAL');
+    expect(body.error.details.from).toBe('passed');
+    expect(harness.store.get('run-1')?.status).toBe('passed');
+    expect(harness.audit.entries).toEqual([]);
   });
 });
 

@@ -4,13 +4,12 @@
  * GET   /api/v1/dashboard/runs/:id        — retrieve a single run record
  * PATCH /api/v1/dashboard/runs/:id/status — update a run's status field
  */
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { DomainError } from '../../errors/domain-error.js';
 import { PERSISTED_RUN_STATUS_VALUES } from '@lupin/shared-contracts';
 import type { RunRepository } from '../../repositories/run-repository.js';
-import { currentRequestId } from '../../observability/request-context.js';
 import { isTerminalRunStatus } from './terminal-status.js';
-import type { AuditSink } from './audit-sink.js';
+import type { AuditSink, WriteContext } from './audit-sink.js';
 import { PatchRunStatusBodySchema } from './schemas.js';
 
 // ---------------------------------------------------------------------------
@@ -20,15 +19,12 @@ import { PatchRunStatusBodySchema } from './schemas.js';
 export interface DashboardRunsOptions {
   repository: RunRepository;
   /**
-   * Where a status change is recorded.
-   *
-   * Optional so the three existing call sites keep compiling, and **that is a
-   * compromise, not a design**: an absent sink means the write is still unaudited,
-   * which is the defect this route carries. Wiring it everywhere is a one-line change
-   * per composition root and is the reason the option is visible here rather than
-   * hidden.
+   * Where a status change is recorded. Required: the production composition passed none,
+   * so every status change there went unaudited (ledger MNT-171).
    */
-  audit?: AuditSink;
+  audit: AuditSink;
+  /** The authenticated caller a change is attributed to; never a header the client sends. */
+  contextFor: (c: Context) => WriteContext | Promise<WriteContext>;
 }
 
 // ---------------------------------------------------------------------------
@@ -99,30 +95,32 @@ export function createDashboardRunsRoutes(options: DashboardRunsOptions): Hono {
     // that reads it: a finished release marked running is a report that will never
     // settle. The refusal is 409 rather than 400 — the request was well formed and
     // the resource exists, but its current state forbids the change.
-    // A terminal phase is terminal. Accepting a transition out of one is how a
-    // *concluded* run comes back to life, and the value is a claim in every context
-    // that reads it: a finished release marked running is a report that will never
-    // settle. The refusal is 409 rather than 400 — the request was well formed and
-    // the resource exists, but its current state forbids the change.
     if (isTerminalRunStatus(run.status)) {
       throw new DomainError('RUN_STATUS_TERMINAL', 'Run is in a terminal status', {
         details: { from: run.status, to: next },
       });
     }
 
-    await options.repository.patchRun(id, { status: next });
+    // `ifStatus` makes the terminal check above a condition of the write: a run that
+    // finished after it was read is refused here, not revived (ledger MNT-171).
+    const applied = await options.repository.patchRun(id, { status: next, ifStatus: run.status });
+    if (!applied) {
+      const current = await options.repository.getRun(id);
+      if (!current) throw new DomainError('RUN_VANISHED', 'Run not found');
+      throw new DomainError('RUN_STATUS_TERMINAL', 'Run is in a terminal status', {
+        details: { from: current.status, to: next },
+      });
+    }
 
     // The record, for the same reason quarantine writes one: a status change is a
     // claim about a run, and "who moved this run and when" has to be answerable
-    // later. `audit-sink.ts` has sat unreferenced in this module for the whole
-    // time this route was unaudited.
-    await options.audit?.record({
+    // later.
+    await options.audit.record({
       action: 'run.status_changed',
       resourceType: 'run',
       resourceId: id,
-      actorId: c.req.header('x-actor-id') ?? 'anonymous',
-      actorType: 'user',
-      requestId: currentRequestId() ?? null,
+      ...(await options.contextFor(c)),
+      details: { from: run.status, to: next },
     });
 
     const updated = await options.repository.getRun(id);

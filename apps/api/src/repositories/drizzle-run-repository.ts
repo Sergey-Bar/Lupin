@@ -184,15 +184,10 @@ export class DrizzleRunRepository implements RunRepository {
     }
   }
 
-  async patchRun(id: string, patch: RunPatch): Promise<void> {
-    const existing = await this.db
-      .select({ id: runs.id })
-      .from(runs)
-      .where(this.ownRun(id))
-      .limit(1);
-    if (existing.length === 0) return; // no-op per interface contract
-
-    await this.db
+  async patchRun(id: string, patch: RunPatch): Promise<boolean> {
+    // One statement: the workspace, and the status the caller read when it names one, are
+    // conditions of the write itself, so nothing can move the run between a check and it.
+    const written = await this.db
       .update(runs)
       .set({
         ...(patch.status !== undefined && { status: patch.status }),
@@ -218,7 +213,13 @@ export class DrizzleRunRepository implements RunRepository {
           skipped: sql`${runs.skipped} + ${patch.skippedDelta}`,
         }),
       })
-      .where(this.ownRun(id));
+      .where(
+        patch.ifStatus === undefined
+          ? this.ownRun(id)
+          : and(this.ownRun(id), eq(runs.status, patch.ifStatus)),
+      )
+      .returning({ id: runs.id });
+    return written.length > 0;
   }
 
   async getRun(id: string): Promise<RunRecord | null> {

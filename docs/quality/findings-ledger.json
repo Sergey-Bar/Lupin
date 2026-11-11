@@ -7583,6 +7583,41 @@
           "asserts": "A workspace admin is offered controls only on the workspace's own gate, is told who changes a shared one, and is not offered the add form."
         }
       ]
+    },
+    {
+      "id": "MNT-171",
+      "title": "Run status changes went unaudited in production, could revive a finished run, and dashboard decisions were recorded as anonymous",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "Three defects on the dashboard's write routes. (1) PATCH /api/v1/dashboard/runs/:id/status took its audit sink as an option, and the production composition passed none, so no status change there was ever recorded; when a sink was passed, the actor was the x-actor-id header, which any caller can set. (2) The handler read the run, checked that its status was not terminal, then wrote unconditionally, so a run that finished between the read and the write was moved out of its terminal status, which is what the check exists to prevent. (3) The quarantine routes, and the gate routes before MNT-170, were composed without a caller, so every quarantine creation, approval, rejection, release and removal was recorded as anonymous, although an approval removes a test from the pass rate. Row X-2 recorded (1) as fixed on the strength of a test that passed the sink in by hand.",
+      "resolution": "The audit sink and the caller are required options of the run routes, and the composition passes a DrizzleAuditSink bound to the workspace, which throws rather than swallowing a failed insert. The actor is the authenticated caller (a token is recorded as a service), never a header. patchRun takes ifStatus and is one conditional UPDATE in the Drizzle repository, returning whether a row was written; the route turns a lost race into the same 409 RUN_STATUS_TERMINAL with the status the run is actually in. The quarantine routes take the same caller. Not done: the status write and its audit row are two statements, not one transaction, so a failed audit insert after a successful write answers 500 with the status changed.",
+      "evidence": [
+        {
+          "path": "apps/api/src/modules/dashboard/runs-status.test.ts",
+          "asserts": "The audit row names the authenticated caller and not a forged x-actor-id, records from and to, and a run that finishes between the read and the write is refused with 409 and no audit row."
+        },
+        {
+          "path": "apps/api/src/repositories/drizzle-run-repository.test.ts",
+          "asserts": "On PGlite, patchRun with ifStatus writes nothing when the run has moved on, writes when it has not, and answers false for a missing run."
+        },
+        {
+          "path": "apps/api/src/repositories/in-memory-run-repository.test.ts",
+          "asserts": "The in-memory repository honours ifStatus and reports whether it wrote."
+        },
+        {
+          "path": "apps/api/src/modules/dashboard/dashboard-stores.test.ts",
+          "asserts": "DrizzleAuditSink writes the row under its workspace with the given actor, and throws when the row cannot be written."
+        },
+        {
+          "path": "apps/api/src/modules/dashboard/quarantine.test.ts",
+          "asserts": "Creating, approving, releasing and removing a quarantine entry are each recorded under the authenticated caller."
+        }
+      ]
     }
   ]
 }

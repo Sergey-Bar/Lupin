@@ -167,6 +167,11 @@ import {
   DrizzleQuarantineStore,
   DrizzleQualityGateStore,
 } from './modules/dashboard/drizzle-stores.js';
+import {
+  DrizzleAuditSink,
+  InMemoryAuditSink,
+  type AuditSink,
+} from './modules/dashboard/audit-sink.js';
 // No auth middleware: the install is open. See the note where it used to be mounted,
 // and ADR-006 for the posture. The session and key routes stay mounted — they mint
 // nothing anybody is required to hold.
@@ -355,12 +360,13 @@ function createRunRepository(workspaceId: string): RunRepository {
 function createDashboardStores(workspaceId: string): {
   quarantineStore: QuarantineStore;
   qualityGateStore?: DrizzleQualityGateStore;
+  audit: AuditSink;
 } {
   if (!databaseResources) {
     assertInMemoryAllowed(runtimeConfig, 'dashboard stores');
     // Created here rather than inside the dashboard module, so the gate and the dashboard
     // read one quarantine.
-    return { quarantineStore: new InMemoryQuarantineStore() };
+    return { quarantineStore: new InMemoryQuarantineStore(), audit: new InMemoryAuditSink() };
   }
   // Bound to the workspace being composed, as every other store is. Both used to be composed
   // with none: `quarantine` had no column to scope by, and every audit row they wrote
@@ -368,6 +374,8 @@ function createDashboardStores(workspaceId: string): {
   return {
     quarantineStore: new DrizzleQuarantineStore(databaseResources.db, workspaceId),
     qualityGateStore: new DrizzleQualityGateStore(databaseResources.db, workspaceId),
+    // The run status change had no sink here, so it was never audited (ledger MNT-171).
+    audit: new DrizzleAuditSink(databaseResources.db, workspaceId),
   };
 }
 
@@ -1450,14 +1458,19 @@ function buildWorkspace(workspaceId: string) {
         repository: runRepository,
         quarantineStore: dashboardStores.quarantineStore,
         qualityGateStore: dashboardStores.qualityGateStore,
+        audit: dashboardStores.audit,
         // A shared gate is installation configuration, decided by the rule install-scoped
         // settings use (ledger MNT-170); the audit row names the caller who changed it.
-        gateAccess: {
-          contextFor: async (context) => ({
-            actorId: (await callerOf(context, access)).actor,
-            actorType: 'user',
-            requestId: currentRequestId() ?? null,
-          }),
+        caller: {
+          contextFor: async (context) => {
+            const actor = (await callerOf(context, access)).actor;
+            return {
+              actorId: actor,
+              // An access token is a machine's credential; everything else is a person.
+              actorType: actor.startsWith('token:') ? 'service' : 'user',
+              requestId: currentRequestId() ?? null,
+            };
+          },
           mayChangeInstallation: async (context) =>
             mayChangeInstallation(
               await callerOf(context, access),

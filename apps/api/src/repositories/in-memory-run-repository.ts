@@ -37,9 +37,10 @@ export class InMemoryRunRepository implements RunRepository {
     this._runs.set(run.id, { ...run });
   }
 
-  async patchRun(id: string, patch: RunPatch): Promise<void> {
+  async patchRun(id: string, patch: RunPatch): Promise<boolean> {
     const existing = this._runs.get(id);
-    if (!existing) return; // no-op per interface contract
+    if (!existing) return false; // no-op per interface contract
+    if (patch.ifStatus !== undefined && existing.status !== patch.ifStatus) return false;
 
     const updated: RunRecord = { ...existing };
 
@@ -54,6 +55,7 @@ export class InMemoryRunRepository implements RunRepository {
     if (patch.skippedDelta !== undefined) updated.skipped += patch.skippedDelta;
 
     this._runs.set(id, updated);
+    return true;
   }
 
   async getRun(id: string): Promise<RunRecord | null> {

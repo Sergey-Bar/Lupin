@@ -6,6 +6,7 @@ import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import * as schema from '@lupin/db';
 import { DrizzleQualityGateStore, DrizzleQuarantineStore } from './drizzle-stores.js';
+import { DrizzleAuditSink } from './audit-sink.js';
 import { ResolveQuarantineBodySchema } from './schemas.js';
 import { DEFAULT_WORKSPACE_ID } from '../../repositories/run-repository.js';
 
@@ -375,5 +376,36 @@ describe('DrizzleQualityGateStore edits', () => {
     expect(await gates.update('missing-gate', { name: 'x' })).toBeNull();
     expect(await gates.remove('missing-gate')).toBe(false);
     expect(await auditRowsFor('missing-gate')).toEqual([]);
+  });
+});
+
+describe('DrizzleAuditSink (ledger MNT-171)', () => {
+  it('writes the row under its own workspace, with the actor it was given', async () => {
+    const sink = new DrizzleAuditSink(drizzle(client, { schema }) as never, DEFAULT_WORKSPACE_ID);
+    await sink.record({
+      action: 'run.status_changed',
+      resourceType: 'run',
+      resourceId: 'audited-run',
+      actorId: 'user:7',
+      actorType: 'user',
+      details: { from: 'running', to: 'interrupted' },
+    });
+    const rows = await client.query<{ workspace_id: string; actor_id: string }>(
+      "SELECT workspace_id, actor_id FROM audit_events WHERE resource_id = 'audited-run'",
+    );
+    expect(rows.rows).toEqual([{ workspace_id: DEFAULT_WORKSPACE_ID, actor_id: 'user:7' }]);
+  });
+
+  it('throws when the row cannot be written, so a change is never reported as recorded', async () => {
+    const sink = new DrizzleAuditSink(drizzle(client, { schema }) as never, 'no-such-workspace');
+    await expect(
+      sink.record({
+        action: 'run.status_changed',
+        resourceType: 'run',
+        resourceId: 'unrecorded-run',
+        actorId: 'user:7',
+        actorType: 'user',
+      }),
+    ).rejects.toThrow();
   });
 });

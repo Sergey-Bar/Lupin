@@ -14,6 +14,7 @@ import { createChatRoutes } from './routes/chat.js';
 import { aiGatewayOrUnconfigured } from './observability/ai-gateway.js';
 import { createAuthRoutes } from './routes/auth.js';
 import { createDashboardModule } from './modules/dashboard/index.js';
+import { InMemoryAuditSink } from './modules/dashboard/audit-sink.js';
 import { createErrorBoundary } from './errors/boundary.js';
 import { InMemoryExecutionStore } from './execution/in-memory-execution-store.js';
 import { InMemoryRunRepository } from './repositories/in-memory-run-repository.js';
@@ -106,7 +107,11 @@ function mountedApp(): Hono {
       repository,
       quarantineStore: undefined,
       qualityGateStore: undefined,
-      gateAccess: { mayChangeInstallation: async () => true },
+      audit: new InMemoryAuditSink(),
+      caller: {
+        contextFor: () => ({ actorId: 'test', actorType: 'user' }),
+        mayChangeInstallation: async () => true,
+      },
     }),
   );
   app.route(

@@ -43,6 +43,7 @@ import { withErrorBoundary } from '../../test-support/error-boundary-app.js';
 import { Hono } from 'hono';
 import { InMemoryRunRepository } from '../../repositories/in-memory-run-repository.js';
 import { createDashboardRunsRoutes } from './runs.js';
+import { InMemoryAuditSink } from './audit-sink.js';
 import { createDashboardTestsRoutes } from './tests.js';
 import { createDashboardAnalyticsRoutes } from './analytics.js';
 import { createDashboardQuarantineRoutes, InMemoryQuarantineStore } from './quarantine.js';
@@ -57,7 +58,14 @@ function buildDashboardApp(repo: InMemoryRunRepository): Hono {
   const app = withErrorBoundary(new Hono());
   const quarantineStore = new InMemoryQuarantineStore();
   const qualityGateStore = new InMemoryQualityGateStore();
-  app.route('/', createDashboardRunsRoutes({ repository: repo }));
+  app.route(
+    '/',
+    createDashboardRunsRoutes({
+      repository: repo,
+      audit: new InMemoryAuditSink(),
+      contextFor: () => ({ actorId: 'test', actorType: 'user' }),
+    }),
+  );
   app.route('/', createDashboardTestsRoutes({ repository: repo }));
   app.route('/', createDashboardAnalyticsRoutes({ repository: repo }));
   app.route('/', createDashboardQuarantineRoutes({ store: quarantineStore }));

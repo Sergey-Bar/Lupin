@@ -71,6 +71,12 @@
   workspace's gate. Each gate now carries `scope` (`installation` or `workspace`), Settings →
   Quality gates offers Save only where it would be accepted and says who can change the rest,
   and the audit row names the caller instead of `anonymous` (ledger MNT-170).
+- **Every dashboard decision names who made it.** A run status change is now audited (the
+  production install recorded none), under the authenticated caller rather than an
+  `x-actor-id` header anyone can send, and is refused with `409 RUN_STATUS_TERMINAL` when the
+  run finished in the meantime instead of being revived. Quarantine creations, approvals,
+  rejections, releases and removals are recorded under the caller, not `anonymous`
+  (ledger MNT-171).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the

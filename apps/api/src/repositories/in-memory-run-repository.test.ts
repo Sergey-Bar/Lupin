@@ -95,6 +95,20 @@ describe('InMemoryRunRepository', () => {
     expect(repo.getAllTests()).toEqual([]);
   });
 
+  it('writes a status only when the run is still in the status the caller read (MNT-171)', async () => {
+    const repo = new InMemoryRunRepository();
+    await repo.upsertRun(makeRun({ id: 'cas', status: 'passed' }));
+
+    await expect(
+      repo.patchRun('cas', { status: 'interrupted', ifStatus: 'running' }),
+    ).resolves.toBe(false);
+    expect((await repo.getRun('cas'))?.status).toBe('passed');
+    await expect(repo.patchRun('cas', { status: 'failed', ifStatus: 'passed' })).resolves.toBe(
+      true,
+    );
+    await expect(repo.patchRun('missing-run', { status: 'failed' })).resolves.toBe(false);
+  });
+
   it('upserts and patches tests by composite test id and run id', async () => {
     const repo = new InMemoryRunRepository();
 

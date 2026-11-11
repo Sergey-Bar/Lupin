@@ -66,12 +66,15 @@ by a test written against the defect and watched failing. Ordered by harm.
 - D1a. Found while fixing D1: Settings → Quality gates says "A run that misses its gate is
   marked failed", but nothing marks a run failed from these rows; the run gate reads quality
   policies. Either make a gate feed the run gate, or say what a gate does today.
-- D2. The run status change trusts a client header for the audit actor and can revive a
-  finished run. `apps/api/src/modules/dashboard/runs.ts` records `x-actor-id` (or
-  `anonymous`) instead of the authenticated caller, its audit sink is optional, and the
-  terminal check and the write in `apps/api/src/repositories/drizzle-run-repository.ts` are
-  a read then an unconditional update. Record the caller, make the sink required, and make
-  the update a compare-and-set on the status read, as the quarantine decision already is.
+- D2. Done 2026-11-11 (ledger MNT-171), and worse than first written: the production
+  composition passed no audit sink, so run status changes were never audited, and every
+  quarantine decision was recorded as `anonymous`. The run status change trusted a client
+  header for the audit actor and could revive a finished run. `apps/api/src/modules/dashboard/runs.ts` recorded `x-actor-id` (or
+  `anonymous`) instead of the authenticated caller, its audit sink was optional, and the
+  terminal check and the write in `apps/api/src/repositories/drizzle-run-repository.ts` were
+  a read then an unconditional update. Now the caller and the sink are required, the write is
+  a compare-and-set, and quarantine writes name the caller. Left open: the status write and
+  its audit row are not one transaction.
 - D3. Failures are reported as "not configured". `apps/api/src/services/github-app-service.ts`
   turns every GitHub refusal and network error into "no token" and parses the vault entry
   outside a try; `apps/api/src/index.ts` turns a vault or database fault in `tokenFor` into

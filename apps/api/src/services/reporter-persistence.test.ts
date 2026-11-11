@@ -52,7 +52,7 @@ class RecordingRunRepository extends InMemoryRunRepository {
 
   override async patchRun(id: string, patch: Parameters<InMemoryRunRepository['patchRun']>[1]) {
     this.calls.push(`patchRun(${id}, ${JSON.stringify(patch)})`);
-    await super.patchRun(id, patch);
+    return super.patchRun(id, patch);
   }
 
   override async upsertTest(test: TestRecord): Promise<void> {

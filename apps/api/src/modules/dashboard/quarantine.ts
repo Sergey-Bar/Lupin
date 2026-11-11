@@ -1,12 +1,12 @@
 /**
- * quarantine.ts — the quarantine store, its routes, and the decision they record.
+ * quarantine.ts â€” the quarantine store, its routes, and the decision they record.
  *
  * The write paths validate with Zod rather than hand-rolled field checks, and every
  * mutation is attributed. See `schemas.ts` for why the body handling changed, and
  * `audit-sink.ts` for why an approval leaves a record.
  */
 
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { DomainError } from '../../errors/domain-error.js';
 import { randomUUID } from 'node:crypto';
 import type { ResolveQuarantineOutcome } from './drizzle-stores.js';
@@ -49,7 +49,7 @@ export interface QuarantineEntry {
    *
    * `pending` is the fail-closed default: a test that has been quarantined but not
    * yet decided on still counts in the pass rate, because nobody has yet claimed it
-   * does not count. `approved` is the claim — it removes the test — so it is only
+   * does not count. `approved` is the claim â€” it removes the test â€” so it is only
    * reachable through a decision that records who made it and why.
    */
   status: QuarantineStatus;
@@ -183,7 +183,7 @@ export interface DashboardQuarantineOptions {
    * credited for is answerable ("nobody"), whereas a row naming a session that
    * never existed is not.
    */
-  contextFor?: (c: { req: { header(name: string): string | undefined } }) => WriteContext;
+  contextFor?: (c: Context) => WriteContext | Promise<WriteContext>;
 }
 
 /**
@@ -191,7 +191,7 @@ export interface DashboardQuarantineOptions {
  *
  * The request is not an input: the id comes from the request context, so there is
  * nothing here for a caller to supply and nothing that can disagree (ledger O-1b).
- * Outside a request — a test, a background job — the id is absent rather than
+ * Outside a request â€” a test, a background job â€” the id is absent rather than
  * invented, because a fabricated correlatable-looking id in an audit row is worse than
  * a missing one.
  */
@@ -207,7 +207,7 @@ function defaultContext(): WriteContext {
  * Reads a body that may be absent, and reports why it was rejected.
  *
  * `c.req.json()` **throws** on an empty or malformed body, and the throw used to
- * escape the handler — so `POST` with no body produced an unhandled rejection that
+ * escape the handler â€” so `POST` with no body produced an unhandled rejection that
  * the error boundary rendered as a 500, identical to a genuine fault, and the
  * validation below never ran. `.catch(() => null)` turns that into the ordinary
  * "invalid body" answer, and a `null` body is a body that failed to parse rather
@@ -221,13 +221,13 @@ export function createDashboardQuarantineRoutes(options: DashboardQuarantineOpti
   const app = new Hono();
   const contextFor = options.contextFor ?? defaultContext;
 
-  // ── GET /api/v1/dashboard/quarantine ─────────────────────────────────────
+  // â”€â”€ GET /api/v1/dashboard/quarantine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.get('/api/v1/dashboard/quarantine', async (c) => {
     const entries = await options.store.list();
     return c.json(entries);
   });
 
-  // ── POST /api/v1/dashboard/quarantine ────────────────────────────────────
+  // â”€â”€ POST /api/v1/dashboard/quarantine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post('/api/v1/dashboard/quarantine', async (c) => {
     const parsed = AddQuarantineEntryBodySchema.safeParse(await readBody(c));
     if (!parsed.success) {
@@ -243,13 +243,13 @@ export function createDashboardQuarantineRoutes(options: DashboardQuarantineOpti
         stableId: parsed.data.stableId ?? null,
         reason: parsed.data.reason ?? null,
       },
-      contextFor(c),
+      await contextFor(c),
     );
 
     return c.json(entry, 201);
   });
 
-  // ── PATCH /api/v1/dashboard/quarantine/:id ───────────────────────────────
+  // â”€â”€ PATCH /api/v1/dashboard/quarantine/:id â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.patch('/api/v1/dashboard/quarantine/:id', async (c) => {
     const id = c.req.param('id');
     const parsed = ResolveQuarantineBodySchema.safeParse(await readBody(c));
@@ -258,7 +258,7 @@ export function createDashboardQuarantineRoutes(options: DashboardQuarantineOpti
         details: { issues: parsed.error.issues },
       });
     }
-    const outcome = await options.store.resolve(id, parsed.data, contextFor(c));
+    const outcome = await options.store.resolve(id, parsed.data, await contextFor(c));
     if (outcome.kind === 'not_found') {
       throw new DomainError('QUARANTINE_ENTRY_NOT_FOUND', 'Quarantine entry not found');
     }
@@ -282,10 +282,10 @@ export function createDashboardQuarantineRoutes(options: DashboardQuarantineOpti
     return c.json(outcome.entry);
   });
 
-  // ── DELETE /api/v1/dashboard/quarantine/:id ─────────────────────────────
+  // â”€â”€ DELETE /api/v1/dashboard/quarantine/:id â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.delete('/api/v1/dashboard/quarantine/:id', async (c) => {
     const id = c.req.param('id');
-    const removed = await options.store.remove(id, contextFor(c));
+    const removed = await options.store.remove(id, await contextFor(c));
     if (!removed) {
       throw new DomainError('QUARANTINE_ENTRY_NOT_FOUND', 'Quarantine entry not found');
     }
