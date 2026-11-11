@@ -15,7 +15,8 @@ import {
   Wordmark,
   cn,
 } from '@lupin/ui';
-import type { ApiClient } from '../lib/api.js';
+import { defaultApiClient, type ApiClient } from '../lib/api.js';
+import { runsNeedingYou } from '../lib/attention.js';
 import {
   navTree,
   routeFor,
@@ -25,6 +26,7 @@ import {
   type SectionId,
 } from '../route-manifest.js';
 import { useViewerRole } from '../hooks/useViewerRole.js';
+import { publishRuns, useLatestRuns } from '../hooks/useRuns.js';
 
 /** Whether the sidebar is the icon rail or the full column, kept per browser. */
 export const SIDEBAR_KEY = 'lupin-sidebar';
@@ -43,6 +45,41 @@ const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
   health: ShieldCheck,
   settings: Settings,
 };
+
+type PlaceCounts = Partial<Record<SectionId, number>>;
+
+/**
+ * How many things each place asks of you, read once per place you move to. Runs counts what
+ * the Runs page lists (`runsNeedingYou`), so the badge and the page cannot disagree. A failed
+ * read shows no count: a number that might be wrong is worse than none.
+ */
+function usePlaceCounts(api: Pick<ApiClient, 'getRuns'>, section: SectionId | null): PlaceCounts {
+  const runs = useLatestRuns();
+  React.useEffect(() => {
+    // Settings mode lists no places, and on Runs the page's own `useRuns` reads the list and
+    // shares it, so a second fetch there would only double the request.
+    if (section === 'settings' || section === 'runs') return undefined;
+    const controller = new AbortController();
+    api.getRuns({ signal: controller.signal }).then(
+      (list) => {
+        if (!controller.signal.aborted) publishRuns(list);
+      },
+      () => undefined,
+    );
+    return () => controller.abort();
+  }, [api, section]);
+  return React.useMemo(() => {
+    if (runs === null) return {};
+    const { red, stuck } = runsNeedingYou(runs, new Date());
+    return { runs: red.length + stuck.length };
+  }, [runs]);
+}
+
+/** "Runs, 2 need you": the count said in words, since the badge itself is hidden. */
+function placeLabel(label: string, count: number): string {
+  if (count === 0) return label;
+  return `${label}, ${count} ${count === 1 ? 'needs' : 'need'} you`;
+}
 
 function read(key: string): string | null {
   try {
@@ -133,7 +170,7 @@ function useListKeys<T extends HTMLElement>(onEscape?: () => void): (node: T | n
  * icon rail and a place opens as a flyout of its pages. Below `lg` the top bar's drawer shows
  * the same list (`SidebarList`).
  */
-export function SideNav(_props: { api?: ApiClient }): React.ReactElement {
+export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.ReactElement {
   const { path, section } = useCurrentPage();
   const [collapsed, setCollapsed] = React.useState(() => read(SIDEBAR_KEY) !== 'expanded');
   const settingsMode = section === 'settings';
@@ -159,7 +196,7 @@ export function SideNav(_props: { api?: ApiClient }): React.ReactElement {
       <div className={collapsed ? 'flex justify-center pb-2' : 'px-3 pb-2'}>
         <AskButton compact={collapsed} />
       </div>
-      <SidebarList collapsed={collapsed} className={collapsed ? 'px-2' : 'px-3'} />
+      <SidebarList api={api} collapsed={collapsed} className={collapsed ? 'px-2' : 'px-3'} />
       {settingsMode ? null : <SettingsFoot collapsed={collapsed} />}
     </aside>
   );
@@ -229,10 +266,12 @@ function SettingsFoot({ collapsed }: { collapsed: boolean }): React.ReactElement
  * draw the same thing, so a page can never be reachable from one and not the other.
  */
 export function SidebarList({
+  api = defaultApiClient,
   collapsed = false,
   className,
   onNavigate,
 }: {
+  api?: Pick<ApiClient, 'getRuns'>;
   collapsed?: boolean;
   className?: string;
   /** Called after a link is followed; the drawer closes itself. */
@@ -240,6 +279,7 @@ export function SidebarList({
 }): React.ReactElement {
   const { pageId, section } = useCurrentPage();
   const role = useViewerRole();
+  const counts = usePlaceCounts(api, section);
   const tree = navTree(role);
   if (section === 'settings') {
     const settings = tree.find((group) => group.id === 'settings');
@@ -256,6 +296,7 @@ export function SidebarList({
   return (
     <AppList
       groups={tree.filter((group) => group.id !== 'settings')}
+      counts={counts}
       pageId={pageId}
       section={section}
       collapsed={collapsed}
@@ -267,6 +308,7 @@ export function SidebarList({
 
 function AppList({
   groups,
+  counts,
   pageId,
   section,
   collapsed,
@@ -274,6 +316,7 @@ function AppList({
   onNavigate,
 }: {
   groups: NavGroup[];
+  counts: PlaceCounts;
   pageId: string | undefined;
   section: SectionId | null;
   collapsed: boolean;
@@ -304,6 +347,7 @@ function AppList({
           <PlaceGroup
             key={group.id}
             group={group}
+            count={counts[group.id] ?? 0}
             pageId={pageId}
             here={group.id === section}
             open={collapsed ? flyout === group.id : isOpen(group.id)}
@@ -321,8 +365,35 @@ function AppList({
   );
 }
 
+/**
+ * How many things a place asks of you: a number in the column, a dot on the rail. Hidden from
+ * assistive tech because the group's own name already says it in words.
+ */
+function PlaceCount({ count, dot = false }: { count: number; dot?: boolean }): React.ReactNode {
+  if (count === 0) return null;
+  if (dot) {
+    return (
+      <span
+        data-testid="place-count"
+        aria-hidden="true"
+        className="absolute end-2 top-1.5 h-2 w-2 rounded-full bg-danger"
+      />
+    );
+  }
+  return (
+    <span
+      data-testid="place-count"
+      aria-hidden="true"
+      className="min-w-5 rounded-full bg-danger/10 px-1.5 text-center text-xs font-semibold tabular-nums text-danger"
+    >
+      {count}
+    </span>
+  );
+}
+
 function PlaceGroup({
   group,
+  count,
   pageId,
   here,
   open,
@@ -332,6 +403,7 @@ function PlaceGroup({
   onNavigate,
 }: {
   group: NavGroup;
+  count: number;
   pageId: string | undefined;
   here: boolean;
   open: boolean;
@@ -351,10 +423,10 @@ function PlaceGroup({
         aria-expanded={open}
         aria-controls={listId}
         title={collapsed ? group.label : undefined}
-        aria-label={group.label}
+        aria-label={placeLabel(group.label, count)}
         onClick={onFlip}
         className={cn(
-          collapsed ? 'justify-center' : 'px-2',
+          collapsed ? 'relative justify-center' : 'px-2',
           'flex min-h-9 w-full items-center gap-2.5 rounded-md text-sm transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
           here
             ? 'font-semibold text-fg'
@@ -362,9 +434,11 @@ function PlaceGroup({
         )}
       >
         <Icon size={16} aria-hidden="true" className={here ? 'text-accent' : undefined} />
+        {collapsed ? <PlaceCount count={count} dot /> : null}
         {collapsed ? null : (
           <>
             <span className="flex-1 text-start">{group.label}</span>
+            <PlaceCount count={count} />
             <ChevronRight
               size={14}
               aria-hidden="true"

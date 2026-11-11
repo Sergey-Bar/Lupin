@@ -200,3 +200,40 @@ export function pullItems(pulls: readonly GithubPullItem[]): AttentionItem[] {
   }
   return items;
 }
+
+/**
+ * The runs the Runs area asks a reader about: each branch whose newest *finished* run is red,
+ * then any run that has been going for over an hour. One function, so the Runs page and the
+ * sidebar's count can never disagree about what needs you.
+ */
+export function runsNeedingYou(runs: readonly Run[], now: Date): { red: Run[]; stuck: Run[] } {
+  const ordered = [...runs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const red = [...newestFinishedPerBranch(ordered)].filter(
+    (run) => run.outcome === 'failed' || run.outcome === 'blocked',
+  );
+  // Running runs have no outcome, so they are looked at apart from the per-branch verdict.
+  const stuck = ordered.filter((run) => isStuckRun(run, now));
+  return { red, stuck };
+}
+
+/**
+ * A branch is judged by its newest *finished* run: a queued or cancelled retry says nothing
+ * about whether the code is green, and must not hide the red run behind it.
+ */
+function newestFinishedPerBranch(ordered: readonly Run[]): Iterable<Run> {
+  const newest = new Map<string, Run>();
+  for (const run of ordered) {
+    if (run.outcome === null || run.outcome === 'cancelled') continue;
+    const key = run.branch ?? run.suite ?? run.id;
+    if (!newest.has(key)) newest.set(key, run);
+  }
+  return newest.values();
+}
+
+function isStuckRun(run: Run, now: Date): boolean {
+  return (
+    run.phase === 'running' &&
+    run.startedAt !== null &&
+    now.getTime() - new Date(run.startedAt).getTime() > STUCK_MS
+  );
+}

@@ -36,7 +36,7 @@ import { Timestamp } from '../../components/Timestamp.js';
 import { formatDuration } from '../../lib/insights.js';
 import { runDetailPath } from '../../route-manifest.js';
 import { AreaPage, type AreaItem } from '../../components/AreaPage.js';
-import { STUCK_MS, failedTests, failureTitle, retryLabel } from '../../lib/attention.js';
+import { failedTests, failureTitle, retryLabel, runsNeedingYou } from '../../lib/attention.js';
 
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
@@ -54,27 +54,8 @@ export function runAreaItems(
   api: Pick<ApiClient, 'retryRun'>,
   now: Date,
 ): AreaItem[] {
-  const ordered = [...runs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const red = [...newestFinishedPerBranch(ordered)]
-    .filter((run) => run.outcome === 'failed' || run.outcome === 'blocked')
-    .map((run) => redItem(run, api));
-  // Running runs have no outcome, so they are looked at apart from the per-branch verdict.
-  const stuck = ordered.filter((run) => isStuckRun(run, now)).map(stuckItem);
-  return [...red, ...stuck];
-}
-
-/**
- * A branch is judged by its newest *finished* run: a queued or cancelled retry says nothing
- * about whether the code is green, and must not hide the red run behind it.
- */
-function newestFinishedPerBranch(ordered: readonly Run[]): Iterable<Run> {
-  const newest = new Map<string, Run>();
-  for (const run of ordered) {
-    if (run.outcome === null || run.outcome === 'cancelled') continue;
-    const key = run.branch ?? run.suite ?? run.id;
-    if (!newest.has(key)) newest.set(key, run);
-  }
-  return newest.values();
+  const { red, stuck } = runsNeedingYou(runs, now);
+  return [...red.map((run) => redItem(run, api)), ...stuck.map(stuckItem)];
 }
 
 function redItem(run: Run, api: Pick<ApiClient, 'retryRun'>): AreaItem {
@@ -93,14 +74,6 @@ function redItem(run: Run, api: Pick<ApiClient, 'retryRun'>): AreaItem {
       },
     },
   };
-}
-
-function isStuckRun(run: Run, now: Date): boolean {
-  return (
-    run.phase === 'running' &&
-    run.startedAt !== null &&
-    now.getTime() - new Date(run.startedAt).getTime() > STUCK_MS
-  );
 }
 
 function stuckItem(run: Run): AreaItem {

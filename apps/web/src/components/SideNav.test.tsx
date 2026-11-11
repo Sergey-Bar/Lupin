@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import {
   createMemoryHistory,
   createRootRoute,
@@ -11,8 +11,9 @@ import { SIDEBAR_GROUPS_KEY, SIDEBAR_KEY, SIDEBAR_RETURN_KEY, SideNav } from './
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { PreferencesProvider } from '../theme/preferences';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
+import { publishRuns, resetLatestRuns } from '../hooks/useRuns';
 import { expectNoBlockingAxeViolations } from '../test-axe';
-import { makeApi } from '../test-utils';
+import { makeApi, makeRun } from '../test-utils';
 
 function renderAt(path: string, api = makeApi()) {
   const rootRoute = createRootRoute({
@@ -46,6 +47,7 @@ function signedInAs(role: 'viewer' | 'operator' | 'admin') {
 describe('SideNav, app mode', () => {
   beforeEach(() => {
     resetViewerRoleCache();
+    resetLatestRuns();
     localStorage.clear();
     localStorage.setItem(SIDEBAR_KEY, 'expanded');
     vi.stubGlobal(
@@ -66,6 +68,60 @@ describe('SideNav, app mode', () => {
     const settings = within(aside).getByRole('link', { name: 'Settings' });
     expect(nav.contains(settings)).toBe(false);
     expect(within(aside).queryByTestId('theme-toggle')).toBeNull();
+  });
+
+  it('counts on the Runs group what the Runs page asks of you, and says it in words', async () => {
+    const api = makeApi({
+      getRuns: vi.fn(async () => [
+        makeRun({ id: 'a', branch: 'main', phase: 'complete', outcome: 'failed' }),
+        makeRun({ id: 'b', branch: 'release', phase: 'complete', outcome: 'blocked' }),
+        makeRun({ id: 'c', branch: 'docs', phase: 'complete', outcome: 'passed' }),
+      ]),
+    });
+    renderAt('/dashboard/now', api);
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    const runs = await within(nav).findByRole('button', { name: 'Runs, 2 need you' });
+    expect(within(runs).getByTestId('place-count')).toHaveTextContent('2');
+    expect(within(nav).getByRole('button', { name: 'Home' })).toBeInTheDocument();
+  });
+
+  it('on Runs, counts from the list the page already read rather than fetching it again', async () => {
+    const api = makeApi();
+    renderAt('/dashboard/runs', api);
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    act(() =>
+      publishRuns([makeRun({ id: 'a', branch: 'main', phase: 'complete', outcome: 'failed' })]),
+    );
+    expect(
+      await within(nav).findByRole('button', { name: 'Runs, 1 needs you' }),
+    ).toBeInTheDocument();
+    expect(api.getRuns).not.toHaveBeenCalled();
+  });
+
+  it('shows no count when nothing needs you, and keeps the plain name', async () => {
+    const api = makeApi({
+      getRuns: vi.fn(async () => [
+        makeRun({ id: 'a', branch: 'main', phase: 'complete', outcome: 'passed' }),
+      ]),
+    });
+    renderAt('/dashboard/now', api);
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    await waitFor(() => expect(api.getRuns).toHaveBeenCalled());
+    expect(within(nav).getByRole('button', { name: 'Runs' })).toBeInTheDocument();
+    expect(within(nav).queryByTestId('place-count')).toBeNull();
+  });
+
+  it('keeps the count as a dot on the collapsed rail, still named in words', async () => {
+    localStorage.setItem(SIDEBAR_KEY, 'collapsed');
+    const api = makeApi({
+      getRuns: vi.fn(async () => [
+        makeRun({ id: 'a', branch: 'main', phase: 'complete', outcome: 'failed' }),
+      ]),
+    });
+    renderAt('/dashboard/now', api);
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    const runs = await within(nav).findByRole('button', { name: 'Runs, 1 needs you' });
+    expect(within(runs).getByTestId('place-count')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('opens the group of the page you are on, with every page of that place in it', async () => {
@@ -303,6 +359,7 @@ describe('SideNav, app mode', () => {
 describe('SideNav, Settings mode', () => {
   beforeEach(() => {
     resetViewerRoleCache();
+    resetLatestRuns();
     localStorage.clear();
     localStorage.setItem(SIDEBAR_KEY, 'expanded');
   });

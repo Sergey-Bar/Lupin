@@ -1,6 +1,33 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { defaultApiClient, isAbortError, type Run, type RunEvent } from '../lib/api.js';
 import { useRequestLifecycle } from './use-request-lifecycle.js';
+
+/**
+ * The newest run list anyone in this tab has read, so the sidebar's count reuses the list the
+ * Runs page already holds instead of fetching it a second time. `null` until a list lands.
+ */
+let latestRuns: readonly Run[] | null = null;
+const latestListeners = new Set<() => void>();
+
+export function publishRuns(runs: readonly Run[]): void {
+  latestRuns = runs;
+  for (const listener of latestListeners) listener();
+}
+
+/** For tests: forget the shared list between cases. */
+export function resetLatestRuns(): void {
+  latestRuns = null;
+}
+
+export function useLatestRuns(): readonly Run[] | null {
+  return useSyncExternalStore(
+    (listener) => {
+      latestListeners.add(listener);
+      return () => latestListeners.delete(listener);
+    },
+    () => latestRuns,
+  );
+}
 
 const ACTIVE_PHASES = new Set<Run['phase']>([
   'queued',
@@ -70,6 +97,7 @@ export function useRuns(api = defaultApiClient) {
           if (!mountedRef.current) return;
           runsRef.current = data;
           setRuns(data);
+          publishRuns(data);
           setError(null);
           setIsLoading(false);
         } catch (caught) {
@@ -122,6 +150,7 @@ export function useRuns(api = defaultApiClient) {
           const updated = [...current];
           updated[index] = projectRunEvent(updated[index] as Run, event);
           runsRef.current = updated;
+          publishRuns(updated);
           return updated;
         });
         const needsRefresh =
