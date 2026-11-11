@@ -558,8 +558,13 @@
  *    the opaque step with no filter.
  */
 :root {
-  --lupin-translucent-opacity: 90%;
-  --lupin-translucent-blur: 16px;
+  /*
+   * A vibrant material, Apple-style: the colour behind comes through blurred and saturated, so
+   * the chrome reads as glass rather than a frosted slab. 88% is one step above 87%, the lowest tint at which every
+   * text token still clears 4.5:1 over pure black and pure white (`theme.test.ts`).
+   */
+  --lupin-translucent-opacity: 88%;
+  --lupin-translucent-blur: 28px;
   /*
    * The one ambient gradient: a faint violet light from the top of the page, for the
    * sign-in screen, first-run and empty states only. Drawn from the accent and the page,
@@ -578,12 +583,12 @@
   --lupin-gradient-shell:
     radial-gradient(
       60% 50% at 0% 0%,
-      color-mix(in oklab, var(--lupin-accent) 14%, transparent),
+      color-mix(in oklab, var(--lupin-accent) 20%, transparent),
       transparent 70%
     ),
     radial-gradient(
       55% 45% at 100% 100%,
-      color-mix(in oklab, var(--lupin-accent-2) 11%, transparent),
+      color-mix(in oklab, var(--lupin-accent-2) 16%, transparent),
       transparent 70%
     );
   /* The one primary fill per screen: the brand blue running into its partner. */
@@ -603,7 +608,7 @@
       var(--lupin-surface-raised) var(--lupin-translucent-opacity),
       transparent
     );
-    backdrop-filter: blur(var(--lupin-translucent-blur)) saturate(140%);
+    backdrop-filter: blur(var(--lupin-translucent-blur)) saturate(180%);
   }
 
   @media (prefers-reduced-transparency: reduce) {
@@ -624,6 +629,19 @@
 
 @utility bg-ambient {
   background-image: var(--lupin-gradient-ambient);
+}
+
+/*
+ * A chart bar lit from its foot to its top in its own tone (`currentColor`, so the bar keeps
+ * whichever chart token its parent sets): the instrument look, not a flat block.
+ */
+@utility bg-chart-bar {
+  background-color: currentColor;
+  background-image: linear-gradient(
+    to top,
+    color-mix(in oklab, currentColor 55%, var(--lupin-surface)),
+    currentColor
+  );
 }
 
 /* The app shell only: the glow behind the translucent chrome. */

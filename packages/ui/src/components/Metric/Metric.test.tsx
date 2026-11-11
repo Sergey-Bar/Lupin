@@ -21,6 +21,16 @@ describe('Metric', () => {
     expect(screen.getByText('+2')).toHaveClass('text-danger');
   });
 
+  it('draws numbers in the display face, tight and tabular, like a dashboard of instruments', () => {
+    render(<Metric label="Runs" value="25" />);
+    expect(screen.getByText('25')).toHaveClass(
+      'font-display',
+      'tracking-tight',
+      'tabular-nums',
+      'text-2xl',
+    );
+  });
+
   it('draws no change at all when there is nothing to compare with', () => {
     render(<Metric label="Runs" value="25" />);
     expect(screen.getByRole('group', { name: 'Runs' }).textContent).toBe('25Runs');

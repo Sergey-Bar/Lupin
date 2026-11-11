@@ -58,7 +58,7 @@ export function DailyBars({
               <div
                 data-testid="daily-bar"
                 title={`${shortDate(day.date)}: ${String(day.value)}`}
-                className="min-h-0.5 rounded-t-sm bg-current opacity-90"
+                className="min-h-0.5 rounded-t-md bg-chart-bar"
                 style={{ height: `${String(Math.round((day.value / peak.value) * 100))}%` }}
               />
             )}

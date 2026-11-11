@@ -77,7 +77,7 @@ function AreaDetails({
   if (open) {
     return (
       <section aria-labelledby="area-details-title" className="flex flex-col gap-3">
-        <h2 id="area-details-title" className="text-sm font-semibold text-fg">
+        <h2 id="area-details-title" className="text-lg font-semibold tracking-tight text-fg">
           {title}
         </h2>
         {details}

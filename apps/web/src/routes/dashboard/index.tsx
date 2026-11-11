@@ -362,7 +362,7 @@ export function RunsListPage({
           // own gate evidence follows the list (the release-readiness E2E reads it here); the
           // side column and its second, shorter run list are gone.
           <div className="flex flex-col gap-3">
-            <div data-testid="runs-list-page" className="flex h-[70vh] min-h-96 flex-col">
+            <div data-testid="runs-list-page" className="flex h-[66vh] min-h-96 flex-col">
               {table}
             </div>
             {readiness}

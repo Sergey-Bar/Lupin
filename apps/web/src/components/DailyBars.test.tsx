@@ -28,7 +28,8 @@ describe('DailyBars', () => {
     expect(empty).toHaveAttribute('data-empty', 'true');
     expect(empty).toHaveClass('h-0.5', 'bg-border-strong');
     expect(busy).not.toHaveAttribute('data-empty');
-    expect(busy).toHaveClass('bg-current');
+    // The bar lights from its foot to its top, in the chart tone, rather than a flat block.
+    expect(busy).toHaveClass('bg-chart-bar', 'rounded-t-md');
   });
 
   it('labels the busiest day with its count, on the bar itself', () => {

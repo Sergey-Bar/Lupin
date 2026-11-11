@@ -49,7 +49,10 @@ describe('AreaPage', () => {
       detailsOpen: true,
     });
     expect(screen.queryByTestId('area-details')).toBeNull();
-    expect(screen.getByRole('heading', { level: 2, name: 'All runs' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'All runs' })).toHaveClass(
+      'text-lg',
+      'tracking-tight',
+    );
     expect(screen.getByText('the run table')).toBeVisible();
   });
 

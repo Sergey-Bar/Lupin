@@ -100,7 +100,10 @@ export function Hero({
         )}
         <div className="flex items-center gap-3">
           <StatusDot status={MARK[verdict]} />
-          <Heading id={id} className={cn('text-xl font-semibold', WORD_TONE[verdict])}>
+          <Heading
+            id={id}
+            className={cn('font-display text-2xl font-semibold tracking-tight', WORD_TONE[verdict])}
+          >
             {word}
           </Heading>
         </div>

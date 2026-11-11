@@ -22,7 +22,7 @@ describe('Hero', () => {
     expect(hero).toHaveClass('bg-surface');
     expect(hero.className).not.toMatch(/bg-glow|py-1[04]|text-[68]xl/u);
     const heading = within(hero).getByRole('heading', { level: 1, name: 'No-go' });
-    expect(heading).toHaveClass('text-xl', 'text-danger');
+    expect(heading).toHaveClass('font-display', 'text-2xl', 'tracking-tight', 'text-danger');
     expect(hero).toHaveTextContent('Pass rate 73.5% is below the 80% floor');
   });
 

@@ -1659,6 +1659,20 @@ describe('the plane is flat', () => {
     },
   );
 
+  it('is a vibrant material, not a frosted slab: a deep blur, raised saturation, a real tint', () => {
+    // Apple's materials read as glass because the colour behind them comes through, blurred
+    // and saturated. The tint can only drop as far as the legibility test above allows (88%
+    // was measured as the floor), so the vibrancy comes from a deeper blur and saturation.
+    const opacity = Number.parseFloat(themeValueAnywhere('--lupin-translucent-opacity'));
+    expect(opacity).toBeLessThan(90);
+    expect(
+      Number.parseFloat(themeValueAnywhere('--lupin-translucent-blur')),
+    ).toBeGreaterThanOrEqual(24);
+    const utility = utilityBody('surface-translucent');
+    const saturate = /saturate\((\d+)%\)/u.exec(utility)?.[1];
+    expect(Number(saturate)).toBeGreaterThanOrEqual(170);
+  });
+
   it('publishes one ambient gradient, and only as a token', () => {
     expect(declarations).toMatch(/--lupin-gradient-ambient\s*:/);
     // The gradient is drawn from the accent and the plane, never from a literal colour.

@@ -46,8 +46,8 @@ export function Metric({
         <span
           {...(testId === undefined ? {} : { 'data-testid': testId })}
           className={cn(
-            'font-semibold tabular-nums text-fg',
-            size === 'lg' ? 'font-display text-4xl' : 'text-xl',
+            'font-display font-semibold tracking-tight tabular-nums text-fg',
+            size === 'lg' ? 'text-4xl' : 'text-2xl',
           )}
         >
           {value}
