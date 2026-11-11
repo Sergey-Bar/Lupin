@@ -185,44 +185,56 @@ export async function authenticateToken(options: Options, token: string): Promis
     : { actor: `token:${row.id}`, role: row.role as Role, uploaderFor: null };
 }
 
+/** What an audited decision says about itself. */
+export interface AuditEntryInput {
+  actor: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * One row in `audit_events`, or a thrown error: for a decision that must not stand without
+ * its record (a break-glass sign-in, ledger MNT-173).
+ */
+export async function recordAudit(options: Options, entry: AuditEntryInput): Promise<void> {
+  const now = new Date();
+  await options.db.insert(auditEvents).values({
+    timestamp: now,
+    actorId: entry.actor,
+    // A token, a Cloudflare service token and a SCIM connection are machines.
+    actorType:
+      entry.actor.startsWith('token:') ||
+      entry.actor.startsWith('cf-service:') ||
+      entry.actor.startsWith('scim:')
+        ? 'service'
+        : 'user',
+    action: entry.action,
+    resourceType: entry.resourceType,
+    resourceId: entry.resourceId,
+    details: entry.details ?? {},
+    workspaceId: options.workspaceId,
+    createdAt: now,
+    // Where the decision came from. The chain columns are the database's to write.
+    ...requestAuditFields(),
+  });
+}
+
 /**
  * One row in `audit_events` for a decision a person or a pipeline made.
  *
- * Never throws: a failed audit write is logged by the caller's boundary rather than undoing a
- * decision that has already been made.
+ * Never throws: the decision has already been made and stands. A row the table refuses is
+ * reported on stderr with its action, because the comment that used to say "logged by the
+ * caller's boundary" described nothing: no boundary saw it (ledger MNT-173).
  */
-export async function audit(
-  options: Options,
-  entry: {
-    actor: string;
-    action: string;
-    resourceType: string;
-    resourceId: string;
-    details?: Record<string, unknown>;
-  },
-): Promise<void> {
-  const now = new Date();
+export async function audit(options: Options, entry: AuditEntryInput): Promise<void> {
   try {
-    await options.db.insert(auditEvents).values({
-      timestamp: now,
-      actorId: entry.actor,
-      // A token, a Cloudflare service token and a SCIM connection are machines.
-      actorType:
-        entry.actor.startsWith('token:') ||
-        entry.actor.startsWith('cf-service:') ||
-        entry.actor.startsWith('scim:')
-          ? 'service'
-          : 'user',
-      action: entry.action,
-      resourceType: entry.resourceType,
-      resourceId: entry.resourceId,
-      details: entry.details ?? {},
-      workspaceId: options.workspaceId,
-      createdAt: now,
-      // Where the decision came from. The chain columns are the database's to write.
-      ...requestAuditFields(),
-    });
-  } catch {
-    // The decision stands; an audit table that refuses a row is an operations problem.
+    await recordAudit(options, entry);
+  } catch (error) {
+    console.error(
+      `audit row lost: ${entry.action} on ${entry.resourceType} ${entry.resourceId} ` +
+        `in ${options.workspaceId}: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }

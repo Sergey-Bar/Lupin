@@ -107,7 +107,7 @@ import { ingestScanArtifact } from './services/repo-health-service.js';
 import { poolCapabilities } from './services/runner-pool.js';
 import { readGitToken } from './services/git-credential-service.js';
 import { rotateVaultSecrets } from './services/vault-secrets.js';
-import { audit, authenticateToken } from './services/access-service.js';
+import { authenticateToken, recordAudit } from './services/access-service.js';
 import {
   alertsFor,
   deliverAlerts,
@@ -711,11 +711,12 @@ const authRoutes = createAuthRoutes({
     },
     breakGlass: runtimeConfig.breakGlass === true,
     // Every break-glass sign-in is loud: a warning in the log and a row in the audit trail.
-    onBreakGlass: (context) => {
+    // Awaited, and not swallowed: a use the trail cannot record is refused (ledger MNT-173).
+    onBreakGlass: async (context) => {
       const client = defaultClientKey(context, runtimeConfig.trustProxy ?? false);
       logger.warn('break-glass sign-in with the installation key', { client });
       if (databaseResources !== undefined) {
-        void audit(
+        await recordAudit(
           {
             db: databaseResources.db as never,
             workspaceId: runtimeConfig.workspaceId ?? DEFAULT_WORKSPACE_ID,
@@ -851,6 +852,7 @@ const deliveryHooks = {
     return typeof secret === 'string' && secret !== '' ? secret : undefined;
   },
   ...(deliverySyncer === undefined ? {} : { syncNow: () => deliverySyncer.runOnce() }),
+  log: (message: string, fields: Record<string, unknown>) => logger.warn(message, fields),
 };
 
 /**
@@ -1173,6 +1175,7 @@ function buildWorkspace(workspaceId: string) {
         store: executionStore,
         workspaceId: workspaceId,
         gateway: gateways.chat,
+        log: (message, fields) => logger.warn(message, { workspaceId, ...fields }),
         // Owners from the project's own CODEOWNERS, read in this workspace only.
         ...(databaseResources === undefined
           ? {}
@@ -1234,6 +1237,7 @@ function buildWorkspace(workspaceId: string) {
       const appTokens = createGitHubAppTokens({
         vault: { ...registry, vaultSecret: runtimeConfig.vaultSecret },
         apiBase: runtimeConfig.githubApiUrl,
+        log: (message, fields) => logger.warn(message, { workspaceId, ...fields }),
       });
       /**
        * The configured workspace exists before anything is written under it.
@@ -1329,9 +1333,20 @@ function buildWorkspace(workspaceId: string) {
               // GitHub App, minted for the one repository and kept until it nears expiry.
               tokenFor: async (projectId) => {
                 const vault = { ...registry, vaultSecret: runtimeConfig.vaultSecret };
-                const own = await readGitToken(vault, projectId).catch(() => null);
+                // A failed read falls back as before, but says so: a vault or database fault
+                // is not the same as "this project has no token" (ledger MNT-172).
+                const own = await readGitToken(vault, projectId).catch((error: unknown) => {
+                  logger.warn('git token could not be read', { projectId, error: String(error) });
+                  return null;
+                });
                 if (own !== null) return own;
-                const source = await projectSource(registry, projectId).catch(() => null);
+                const source = await projectSource(registry, projectId).catch((error: unknown) => {
+                  logger.warn('project source could not be read', {
+                    projectId,
+                    error: String(error),
+                  });
+                  return null;
+                });
                 const repository = githubRepository(source?.repositoryUrl ?? null);
                 return repository === null ? null : appTokens.tokenFor(repository);
               },

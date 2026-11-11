@@ -25,6 +25,8 @@ export function createCopilotRoutes(options: {
   gateway?: AiGateway;
   /** Who owns a test file in a project, from its CODEOWNERS; absent, causes name no owner. */
   ownersFor?: (projectId: string) => Promise<OwnerLookup>;
+  /** Where a failed owner lookup is reported: the explanation goes out without owners. */
+  log?: (message: string, fields: Record<string, unknown>) => void;
 }): Hono {
   const app = new Hono();
   app.post('/api/v1/copilot/explain', async (context) => {
@@ -32,10 +34,17 @@ export function createCopilotRoutes(options: {
     if (!parsed.success) throw new DomainError('VALIDATION_FAILED', 'Body needs a runId');
     const run = await options.store.getRun(parsed.data.runId, options.workspaceId);
     if (!run) throw new DomainError('RUN_NOT_FOUND', 'Run not found');
+    const projectId = run.projectId;
     const owners =
-      run.projectId === null || options.ownersFor === undefined
+      projectId === null || options.ownersFor === undefined
         ? undefined
-        : await options.ownersFor(run.projectId).catch(() => undefined);
+        : await options.ownersFor(projectId).catch((error: unknown) => {
+            options.log?.('copilot: CODEOWNERS could not be read', {
+              projectId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            return undefined;
+          });
     const explained = explainRun(run, owners);
     const narration = await narrate(
       {

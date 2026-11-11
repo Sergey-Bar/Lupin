@@ -36,6 +36,8 @@ export interface DeliveryRouteOptions extends DeliveryOptions {
   uploader: MiddlewareHandler;
   /** Runs queued syncs now, after `POST …/sync`, rather than at the next interval. */
   syncNow?: () => Promise<unknown>;
+  /** Where a sync that fails after its 202 is reported, so the failure is not lost. */
+  log?: (message: string, fields: Record<string, unknown>) => void;
 }
 
 /** One deployment or incident is a few hundred bytes; 64 kB leaves room for a long `shas`. */
@@ -90,8 +92,14 @@ export function createDeliveryRoutes(options: DeliveryRouteOptions): Hono {
       resourceId: queued.syncId,
       details: { projectId: context.req.param('id'), duplicate: queued.duplicate },
     });
-    // Not awaited: the answer is "queued", and the sync reports through the source.
-    void options.syncNow?.().catch(() => undefined);
+    // Not awaited: the answer is "queued". A failure after the 202 is logged with the project,
+    // instead of being dropped (ledger MNT-172).
+    void options.syncNow?.().catch((error: unknown) =>
+      options.log?.('delivery sync failed after it was queued', {
+        projectId: context.req.param('id'),
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
     return context.json(queued, 202);
   });
 

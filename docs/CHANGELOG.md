@@ -77,6 +77,13 @@
   run finished in the meantime instead of being revived. Quarantine creations, approvals,
   rejections, releases and removals are recorded under the caller, not `anonymous`
   (ledger MNT-171).
+- **A fault no longer reads as "not configured".** A GitHub App that GitHub refuses or cannot
+  reach, a corrupt stored app, a failed read of a project's token, a delivery sync that fails
+  after its `202`, and a CODEOWNERS read that fails are each logged with their cause; the
+  fallback behaviour is unchanged (ledger MNT-172).
+- **A break-glass sign-in that cannot be audited is refused** with `503
+DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reported on stderr
+  instead of being dropped (ledger MNT-173).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the

@@ -162,3 +162,33 @@ describe('POST /api/v1/copilot/explain owners', () => {
     expect(body.causes[0]?.owners).toEqual([]);
   });
 });
+
+describe('POST /api/v1/copilot/explain when the owners cannot be read (ledger MNT-172)', () => {
+  it('still explains the run, and says the owners could not be read', async () => {
+    const log: Array<[string, Record<string, unknown>]> = [];
+    const run = { ...failedRun('run-a'), projectId: 'p-a' } as ExecutionRun;
+    const store = {
+      getRun: async (id: string, ws?: string) => (ws === 'ws-a' && id === 'run-a' ? run : null),
+    } as unknown as ExecutionStore;
+    const app = withErrorBoundary(new Hono());
+    app.route(
+      '/',
+      createCopilotRoutes({
+        store,
+        workspaceId: 'ws-a',
+        ownersFor: async () => {
+          throw new Error('database unavailable');
+        },
+        log: (message, fields) => log.push([message, fields]),
+      }),
+    );
+    const response = await explain(app, { runId: 'run-a' });
+    expect(response.status).toBe(200);
+    expect(log).toEqual([
+      [
+        'copilot: CODEOWNERS could not be read',
+        { projectId: 'p-a', error: 'database unavailable' },
+      ],
+    ]);
+  });
+});

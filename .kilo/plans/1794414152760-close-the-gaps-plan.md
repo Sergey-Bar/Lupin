@@ -75,13 +75,13 @@ by a test written against the defect and watched failing. Ordered by harm.
   a read then an unconditional update. Now the caller and the sink are required, the write is
   a compare-and-set, and quarantine writes name the caller. Left open: the status write and
   its audit row are not one transaction.
-- D3. Failures are reported as "not configured". `apps/api/src/services/github-app-service.ts`
+- D3. Done 2026-11-11 (ledger MNT-172). Failures were reported as "not configured". `apps/api/src/services/github-app-service.ts`
   turns every GitHub refusal and network error into "no token" and parses the vault entry
   outside a try; `apps/api/src/index.ts` turns a vault or database fault in `tokenFor` into
   "no token"; `apps/api/src/routes/delivery.ts` discards a failed sync after answering 202;
   `apps/api/src/copilot/routes.ts` hides a CODEOWNERS failure. Each keeps its fallback and
   logs the cause with the request id, and a corrupt vault entry answers as corrupt.
-- D4. The break-glass sign-in is audited with `void audit(...)` in `apps/api/src/index.ts`,
+- D4. Done 2026-11-11 (ledger MNT-173). The break-glass sign-in was audited with `void audit(...)` in `apps/api/src/index.ts`,
   and `audit` in `apps/api/src/services/access-service.ts` swallows insert failures. The one
   event documented as always audited can go unrecorded. Await it, and refuse break-glass when
   the audit row cannot be written.

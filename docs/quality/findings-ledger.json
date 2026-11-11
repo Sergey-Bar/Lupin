@@ -7618,6 +7618,56 @@
           "asserts": "Creating, approving, releasing and removing a quarantine entry are each recorded under the authenticated caller."
         }
       ]
+    },
+    {
+      "id": "MNT-172",
+      "title": "Outages and corrupt credentials read as \"not configured\", with nothing logged",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "Four places turned a fault into the answer for an absent setting and logged nothing. createGitHubAppTokens collapsed every GitHub refusal (a 401 for a key GitHub no longer accepts, a 403) and every network error into \"no token\", and parsed the stored app outside a try, so a corrupt vault entry threw out of tokenFor instead of answering. The composition root's tokenFor turned a vault or database fault reading a project's token or source into \"no token\". POST /api/v1/projects/:id/delivery/sync answered 202 and dropped a failure of the sync it started. The copilot's explain hid a failed CODEOWNERS read. Each looked healthy to an operator while it was failing.",
+      "resolution": "Each keeps its fallback (the gate verdict is still returned without a post, the explanation without owners) and now reports the cause: the GitHub App names the step and the HTTP status or the error class, never a token or key, and treats a 404 on the installation as the answer it is; a stored app that does not parse is answered as unreadable without throwing; the delivery sync and the copilot log the project and the error; the composition root logs a failed token or source read with the project id. Not covered by a test: the composition root wiring of these logs, which is typechecked only.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/github-app-service.test.ts",
+          "asserts": "A refusal and an unreachable GitHub are each logged with the step and the status or error class, and a stored app that is not JSON answers null and is logged as unreadable instead of throwing."
+        },
+        {
+          "path": "apps/api/src/routes/delivery.test.ts",
+          "asserts": "A sync that fails after its 202 is logged with the project and the error."
+        },
+        {
+          "path": "apps/api/src/copilot/routes.test.ts",
+          "asserts": "An explanation still answers 200 when CODEOWNERS cannot be read, and the failure is logged with the project."
+        }
+      ]
+    },
+    {
+      "id": "MNT-173",
+      "title": "A break-glass sign-in could go unaudited, and every failed audit write was dropped silently",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "The break-glass hook called audit() with void, so the sign-in did not wait for the row, and audit() caught every insert failure with an empty block whose comment said the caller's boundary logged it; no boundary saw it. The one event the operations guide documents as always audited (every use of break-glass) could therefore leave no row, and so could any other audited decision, with nothing on any log.",
+      "resolution": "recordAudit writes the row or throws. The break-glass hook awaits it, and the sign-in route issues a session only once the hook resolves, answering 503 DEPENDENCY_UNAVAILABLE with a fix otherwise. audit() keeps its contract (the decision has been made and stands) but reports a lost row on stderr with the action, resource and workspace.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/auth-sso.test.ts",
+          "asserts": "Under break-glass, a hook that cannot record the use makes the sign-in answer 503 with no session cookie."
+        },
+        {
+          "path": "apps/api/src/services/audit-write.test.ts",
+          "asserts": "recordAudit writes a row and throws when the row is refused; audit never throws and reports the lost row with its action."
+        }
+      ]
     }
   ]
 }

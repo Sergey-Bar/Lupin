@@ -9,6 +9,7 @@ import {
   hasGitHubApp,
   storeGitHubApp,
 } from './github-app-service.js';
+import { storeVaultSecret } from './vault-secrets.js';
 
 const closers: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -126,6 +127,48 @@ describe('GitHub App installation tokens', () => {
       now: () => NOW,
     }).tokenFor({ owner: 'a', repo: 'b' });
     expect(remote.calls[0]?.url).toBe('https://ghe.acme.test/api/v3/repos/a/b/installation');
+  });
+
+  it('says why there is no token, instead of reading as an app that is not set (MNT-172)', async () => {
+    const { vault } = await setup();
+    await storeGitHubApp(vault, { appId: '12345', privateKey: PEM });
+    const log = vi.fn();
+    const refused = createGitHubAppTokens({
+      vault,
+      fetch: (async () => new Response('{}', { status: 401 })) as unknown as typeof fetch,
+      now: () => NOW,
+      log,
+    });
+    expect(await refused.tokenFor({ owner: 'acme', repo: 'shop' })).toBeNull();
+    expect(log).toHaveBeenCalledWith('github app: GitHub refused the request', {
+      step: 'installation',
+      status: 401,
+    });
+
+    const unreachable = createGitHubAppTokens({
+      vault,
+      fetch: (async () => {
+        throw new TypeError('fetch failed');
+      }) as unknown as typeof fetch,
+      now: () => NOW,
+      log,
+    });
+    expect(await unreachable.tokenFor({ owner: 'acme', repo: 'shop' })).toBeNull();
+    expect(log).toHaveBeenCalledWith('github app: GitHub could not be reached', {
+      step: 'installation',
+      error: 'TypeError',
+    });
+  });
+
+  it('answers a stored entry it cannot read as corrupt, without throwing', async () => {
+    const { vault } = await setup();
+    await storeVaultSecret(vault, 'github-app', 'not json', 'A GitHub App key');
+    const log = vi.fn();
+    const tokens = createGitHubAppTokens({ vault, fetch: github().fetch, now: () => NOW, log });
+    await expect(tokens.tokenFor({ owner: 'acme', repo: 'shop' })).resolves.toBeNull();
+    expect(log).toHaveBeenCalledWith('github app: the stored app is unreadable', {
+      reason: 'not the shape saved from Settings',
+    });
   });
 });
 

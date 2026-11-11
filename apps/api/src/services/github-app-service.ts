@@ -109,13 +109,25 @@ export function createGitHubAppTokens(deps: {
   /** GitHub's API, `https://api.github.com` unless a GitHub Enterprise Server is named. */
   apiBase?: string | undefined;
   now?: () => Date;
+  /**
+   * Why there is no token, when there is none for a reason other than "no app". Every refusal
+   * still answers `null` (the verdict is returned without a post), but an outage no longer
+   * reads as an app that was never set (ledger MNT-172). Never given a token or a key.
+   */
+  log?: (message: string, fields: Record<string, unknown>) => void;
 }): GitHubAppTokens {
   const fetchImpl = deps.fetch ?? fetch;
   const now = () => deps.now?.() ?? new Date();
+  const log = deps.log ?? (() => undefined);
   const api = (deps.apiBase ?? 'https://api.github.com').replace(/\/+$/u, '');
   const cache = new Map<string, { token: string; until: number }>();
 
-  async function ask(path: string, method: 'GET' | 'POST', jwt: string): Promise<unknown> {
+  async function ask(
+    step: 'installation' | 'token',
+    path: string,
+    method: 'GET' | 'POST',
+    jwt: string,
+  ): Promise<unknown> {
     try {
       const response = await fetchImpl(`${api}${path}`, {
         method,
@@ -126,10 +138,44 @@ export function createGitHubAppTokens(deps: {
           'x-github-api-version': '2022-11-28',
         },
       });
+      // A 404 on the installation is the app not being installed there: an answer, not a fault.
+      if (!response.ok && !(step === 'installation' && response.status === 404)) {
+        log('github app: GitHub refused the request', { step, status: response.status });
+      }
       return response.ok ? ((await response.json()) as unknown) : null;
-    } catch {
+    } catch (error) {
+      log('github app: GitHub could not be reached', {
+        step,
+        error: error instanceof Error ? error.name : 'unknown',
+      });
       return null;
     }
+  }
+
+  /** The stored app, `null` when none is set or it cannot be read; never throws. */
+  async function storedApp(): Promise<z.infer<typeof StoredSchema> | null> {
+    let raw: string | null;
+    try {
+      raw = await readVaultSecret(deps.vault, ENTRY, WHAT);
+    } catch (error) {
+      log('github app: the stored app is unreadable', {
+        reason: error instanceof Error ? error.message : 'the vault refused the read',
+      });
+      return null;
+    }
+    if (raw === null) return null;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw) as unknown;
+    } catch {
+      parsed = undefined;
+    }
+    const stored = StoredSchema.safeParse(parsed);
+    if (stored.success) return stored.data;
+    log('github app: the stored app is unreadable', {
+      reason: 'not the shape saved from Settings',
+    });
+    return null;
   }
 
   return {
@@ -137,15 +183,21 @@ export function createGitHubAppTokens(deps: {
       const key = `${owner}/${repo}`.toLowerCase();
       const cached = cache.get(key);
       if (cached !== undefined && cached.until > now().getTime()) return cached.token;
-      const raw = await readVaultSecret(deps.vault, ENTRY, WHAT).catch(() => null);
-      const stored = raw === null ? null : StoredSchema.safeParse(JSON.parse(raw) as unknown);
-      if (stored === null || !stored.success) return null;
-      const jwt = appJwt(stored.data.appId, stored.data.privateKey, now());
+      const stored = await storedApp();
+      if (stored === null) return null;
+      const jwt = appJwt(stored.appId, stored.privateKey, now());
       const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/installation`;
-      const installation = InstallationSchema.safeParse(await ask(path, 'GET', jwt));
+      const installation = InstallationSchema.safeParse(
+        await ask('installation', path, 'GET', jwt),
+      );
       if (!installation.success) return null;
       const granted = AccessTokenSchema.safeParse(
-        await ask(`/app/installations/${String(installation.data.id)}/access_tokens`, 'POST', jwt),
+        await ask(
+          'token',
+          `/app/installations/${String(installation.data.id)}/access_tokens`,
+          'POST',
+          jwt,
+        ),
       );
       if (!granted.success) return null;
       const expires = Date.parse(granted.data.expires_at);
