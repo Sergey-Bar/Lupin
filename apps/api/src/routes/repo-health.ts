@@ -52,6 +52,7 @@ import {
 import { diffCoverageStatus } from '../services/diff-coverage-service.js';
 import { diffGuardStatus, recordDiffGuard } from '../services/diff-guard-service.js';
 import { projectPace } from '../services/pace-service.js';
+import { portfolioPhases, pullRequestPhases, repositoryPhases } from '../services/phase-service.js';
 import {
   assessPullRequestRisk,
   pullRequestRisk,
@@ -136,6 +137,8 @@ const DIFF_GUARD_MAX_BYTES = 256_000;
 const PullRequestNumberSchema = z.coerce.number().int().min(1).max(2_147_483_647);
 
 const PaceQuerySchema = z.object({ weeks: z.coerce.number().int().min(1).max(52).default(8) });
+
+const PhaseQuerySchema = z.object({ days: z.coerce.number().int().min(1).max(366).default(30) });
 
 const GateReportBodySchema = z.object({
   branch: z.string().trim().min(1).max(255),
@@ -492,6 +495,38 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     return context.json(
       await diffGuardStatus(options, context.req.param('id'), parsed.data.commit.toLowerCase()),
     );
+  });
+
+  /** Each SDLC phase across the repository's changes, the bottleneck, and what is stuck. */
+  app.get('/api/v1/projects/:id/phases', viewer, async (context) => {
+    const parsed = PhaseQuerySchema.safeParse(context.req.query());
+    if (!parsed.success)
+      return invalidRequest(context, 'Invalid phases query', parsed.error.issues);
+    return context.json(await repositoryPhases(options, context.req.param('id'), parsed.data.days));
+  });
+
+  /** One pull request's SDLC phases; 404 when the delivery sync has not read it. */
+  app.get('/api/v1/projects/:id/pull-requests/:number/phases', viewer, async (context) => {
+    const parsed = PullRequestNumberSchema.safeParse(context.req.param('number'));
+    if (!parsed.success) {
+      return invalidRequest(context, 'A pull request number', parsed.error.issues);
+    }
+    const strip = await pullRequestPhases(options, context.req.param('id'), parsed.data);
+    if (strip === null) {
+      throw new DomainError(
+        ErrorCode.NOT_FOUND,
+        `The delivery sync has not read pull request #${String(parsed.data)}`,
+      );
+    }
+    return context.json(strip);
+  });
+
+  /** Every repository's shape per SDLC phase, worst first. */
+  app.get('/api/v1/portfolio/phases', viewer, async (context) => {
+    const parsed = PhaseQuerySchema.safeParse(context.req.query());
+    if (!parsed.success)
+      return invalidRequest(context, 'Invalid phases query', parsed.error.issues);
+    return context.json(await portfolioPhases(options, parsed.data.days));
   });
 
   /** Whether testing keeps up: weekly code and test pace, and the untested-change debt. */

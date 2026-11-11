@@ -420,6 +420,22 @@
       "shownToFail": "fc.check refutes a debt that is each week's own uncovered lines rather than the running total."
     },
     {
+      "id": "PHASE-1",
+      "statement": "An SDLC phase with no evidence is not_measured, never done, and a strip with an unmeasured phase is never good.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/sdlc-phases.property.test.ts",
+      "seed": 20261113,
+      "shownToFail": "Reading an unread pull-request body as a linked issue fails PHASE-1 on the first generated input."
+    },
+    {
+      "id": "PHASE-2",
+      "statement": "No SDLC phase is pending or in progress while a later phase is done: a phase a change went past is skipped.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/sdlc-phases.property.test.ts",
+      "seed": 20261113,
+      "shownToFail": "Removing the passed-over pass (markPassedOver) fails PHASE-2."
+    },
+    {
       "id": "EVAL-1",
       "statement": "An identical baseline and candidate eval run is never a fail, for any run and any comparison seed.",
       "package": "packages/reporting",

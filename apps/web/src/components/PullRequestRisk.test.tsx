@@ -1,5 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
-import type { PullRequestRisk, PullRequestRiskHistory } from '@lupin/shared-contracts';
+import type { PhaseStrip, PullRequestRisk, PullRequestRiskHistory } from '@lupin/shared-contracts';
 import { expectOnePrimary } from '../test-utils.js';
 import { PullRequestRiskPage } from './PullRequestRisk.js';
 
@@ -65,12 +65,17 @@ const assessment = (overrides: Partial<PullRequestRisk> = {}): PullRequestRisk =
   ...overrides,
 });
 
-function page(read: () => Promise<PullRequestRiskHistory>) {
+function page(
+  read: () => Promise<PullRequestRiskHistory>,
+  phases: () => Promise<PhaseStrip> = async () => {
+    throw new Error('The delivery sync has not read pull request #12');
+  },
+) {
   return render(
     <PullRequestRiskPage
       projectId="p-1"
       number={12}
-      github={{ getPullRequestRisk: read }}
+      github={{ getPullRequestRisk: read, getPullRequestPhases: phases }}
       now={() => NOW}
     />,
   );
@@ -135,6 +140,7 @@ describe('PullRequestRiskPage', () => {
         number={12}
         github={{
           getPullRequestRisk: async () => ({ pullRequest: 12, latest: null, history: [] }),
+          getPullRequestPhases: async () => Promise.reject(new Error('not synced')),
         }}
       />,
     );

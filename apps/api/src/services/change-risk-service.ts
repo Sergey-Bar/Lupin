@@ -1,6 +1,12 @@
 import { and, desc, eq, inArray, notInArray } from 'drizzle-orm';
 import { pullRequestRiskAssessments, pullRequests, testFailureCorrelations } from '@lupin/db';
-import { assessChangeRisk, blastRadius, riskBlocks, type ChangeRiskInput } from '@lupin/reporting';
+import {
+  assessChangeRisk,
+  blastRadius,
+  phaseStrip,
+  riskBlocks,
+  type ChangeRiskInput,
+} from '@lupin/reporting';
 import {
   BlastRadiusSummarySchema,
   ChangeRiskSchema,
@@ -14,6 +20,7 @@ import {
 import type { CommitTests } from './commit-tests.js';
 import { tamperForRisk, type DiffGuardOptions } from './diff-guard-service.js';
 import { projectRow, type ProjectRow } from './health-findings.js';
+import { phaseInputOf } from './phase-service.js';
 import {
   healthPolicyOf,
   ownerRules,
@@ -192,6 +199,20 @@ export async function assessPullRequestRisk(
   const row = await syncedPullRequest(options, project.id, facts.pullRequest);
   const radius = await radiusOf(options, project, row);
   const head = facts.commit.toLowerCase();
+  const tampering = await tamperForRisk(options, project.id, head);
+  const assessedAt = options.now?.() ?? new Date();
+  // The phases the change went past, from the same synced row: a factor of its own.
+  const skippedPhases =
+    row === undefined
+      ? []
+      : phaseStrip(
+          phaseInputOf(row, {
+            now: assessedAt,
+            testTotal: facts.tests?.total,
+            tampered: (tampering?.findings ?? 0) > 0,
+            level: undefined,
+          }),
+        ).skipped;
   const input: ChangeRiskInput = {
     attribution:
       facts.attribution?.attribution ??
@@ -214,9 +235,8 @@ export async function assessPullRequestRisk(
           },
     evalRegressions: facts.evalRegressions,
     blastRadius: radius?.forRisk ?? null,
-    tampering: await tamperForRisk(options, project.id, head),
-    // The SDLC phase model fills this in its own wave; nothing is claimed skipped before it.
-    skippedPhases: [],
+    tampering,
+    skippedPhases,
     evidence: {
       attribution: `pull-request:${String(facts.pullRequest)}`,
       'diff-coverage': `commit:${head}`,
@@ -230,7 +250,6 @@ export async function assessPullRequestRisk(
     input,
     policy.require === undefined ? {} : { require: policy.require },
   );
-  const assessedAt = options.now?.() ?? new Date();
   const values = {
     level: risk.level,
     score: risk.score,

@@ -7,6 +7,7 @@ import type {
   ProjectEvals,
   PaceReport,
   ProjectHealth,
+  RepositoryPhases,
   Scorecard,
 } from '@lupin/shared-contracts';
 import { useResource, type Resource } from '../hooks/useResource.js';
@@ -22,6 +23,7 @@ import { repoHealthPath } from '../route-manifest.js';
 import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import { Loaded, ProjectPage, projectLink } from './ProjectPage.js';
 import { PacePanel } from './PacePanel.js';
+import { PhaseBandPanel } from './Phases.js';
 import { ScorecardCard } from './ScorecardCard.js';
 
 /**
@@ -72,6 +74,7 @@ interface Reads {
   supplyChain: Resource<Scorecard>;
   testEffectiveness: Resource<Scorecard>;
   pace: Resource<PaceReport>;
+  phases: Resource<RepositoryPhases>;
 }
 
 function useReads(clients: Repo360Clients, projectId: string): Reads {
@@ -96,6 +99,7 @@ function useReads(clients: Repo360Clients, projectId: string): Reads {
       [clients.health, projectId],
     ),
     pace: useResource(() => clients.health.getPace(projectId, 8), [clients.health, projectId]),
+    phases: useResource(() => clients.health.getPhases(projectId, 30), [clients.health, projectId]),
   };
 }
 
@@ -165,7 +169,10 @@ function Repo360Body({
           </Panel>
           <FixNextPanel items={fixNext} settled={settled(reads)} />
         </div>
-        <PacePanel pace={reads.pace} />
+        <div className="grid gap-3 xl:grid-cols-2">
+          <PacePanel pace={reads.pace} />
+          <PhaseBandPanel phases={reads.phases} />
+        </div>
         <section aria-label="Scorecards" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <ReadCards
             resource={reads.delivery}

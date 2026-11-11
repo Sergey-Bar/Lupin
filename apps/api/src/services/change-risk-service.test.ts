@@ -175,6 +175,20 @@ describe('assessPullRequestRisk', () => {
     expect(assessed.risk.factors[0]?.detail).toBe('Written by an agent (codex).');
   });
 
+  it('counts the SDLC phases the change went past without doing', async () => {
+    const { db, options, projectId } = await setup();
+    await insertPr(db, projectId, {
+      state: 'merged',
+      mergedAt: NOW,
+      body: 'Refactor the cart totals',
+    });
+    const assessed = await assessPullRequestRisk(options, projectId, facts());
+    expect(assessed.risk.factors.find((factor) => factor.id === 'skipped-phases')).toMatchObject({
+      points: 20,
+      detail: 'Skipped phases: plan, review.',
+    });
+  });
+
   it('applies the project’s required evidence', async () => {
     const { db, options, projectId } = await setup({
       health: { risk: { require: ['tests', 'diff-coverage', 'tampering'] } },

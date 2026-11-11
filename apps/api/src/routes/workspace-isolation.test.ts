@@ -236,6 +236,10 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   // `pace-service.test.ts` proves another workspace's project is a 404 and that its merges and
   // tests never count toward a project's own.
   { family: 'pace', files: ['services/pace-service.ts'] },
+  // SDLC phases: one project's pull requests, its runs on their heads, diff-guard and the risk
+  // assessments, and every project of the workspace for the portfolio. `phase-service.test.ts`
+  // proves another workspace's project is a 404 and its rows never join a project's own.
+  { family: 'sdlc phases', files: ['services/phase-service.ts'] },
   // The cockpit: health and scan snapshots, runs, pull requests, deployments and delivery
   // sources of one project. Every query filters on `workspace_id` before the project, and
   // `cockpit.test.ts` proves another workspace's project is a 404, that its newer readings do

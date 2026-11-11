@@ -5,12 +5,14 @@ import {
   GithubRepoItemSchema,
   GithubRepoListSchema,
   PullRequestRiskHistorySchema,
+  PhaseStripSchema,
   type GithubActionsBody,
   type GithubActionsResponse,
   type GithubIssueItem,
   type GithubPullItem,
   type GithubRepoItem,
   type PullRequestRiskHistory,
+  type PhaseStrip,
 } from '@lupin/shared-contracts';
 import { createJsonTransport, projectPath, queryString } from './json-transport.js';
 
@@ -42,6 +44,8 @@ export interface GithubClient {
   runActions(body: GithubActionsBody): Promise<GithubActionsResponse>;
   /** A pull request's change risk: the latest assessment and its history across heads. */
   getPullRequestRisk(projectId: string, number: number): Promise<PullRequestRiskHistory>;
+  /** A pull request's SDLC phases. Refused when the delivery sync has not read it. */
+  getPullRequestPhases(projectId: string, number: number): Promise<PhaseStrip>;
 }
 
 export function createGithubClient(baseUrl = '', fetchImpl: typeof fetch = fetch): GithubClient {
@@ -59,6 +63,11 @@ export function createGithubClient(baseUrl = '', fetchImpl: typeof fetch = fetch
       http.get(
         `${projectPath(projectId)}/pull-requests/${String(number)}/risk`,
         PullRequestRiskHistorySchema,
+      ),
+    getPullRequestPhases: (projectId, number) =>
+      http.get(
+        `${projectPath(projectId)}/pull-requests/${String(number)}/phases`,
+        PhaseStripSchema,
       ),
   };
 }

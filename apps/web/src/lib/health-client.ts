@@ -11,6 +11,8 @@ import {
   QuarantinePolicySchema,
   ScorecardSchema,
   PaceReportSchema,
+  PortfolioPhasesSchema,
+  RepositoryPhasesSchema,
   type FindingSeverity,
   type FindingState,
   type HealthDimension,
@@ -26,6 +28,8 @@ import {
   type PortfolioHeatmap,
   type Scorecard,
   type PaceReport,
+  type PortfolioPhases,
+  type RepositoryPhases,
 } from '@lupin/shared-contracts';
 import { parse } from './qa-client.js';
 
@@ -53,6 +57,10 @@ export interface HealthClient {
   getTestEffectiveness(projectId: string): Promise<Scorecard>;
   /** Whether testing keeps up with the code: weekly pace and the untested-change debt. */
   getPace(projectId: string, weeks?: number): Promise<PaceReport>;
+  /** Each SDLC phase across the repository's changes, the bottleneck, and what is stuck. */
+  getPhases(projectId: string, days?: number): Promise<RepositoryPhases>;
+  /** Every repository's shape per SDLC phase, worst first. */
+  getPortfolioPhases(days?: number): Promise<PortfolioPhases>;
   getHealth(projectId: string): Promise<ProjectHealth>;
   getFindings(projectId: string, query?: FindingQuery): Promise<HealthFindingsPage>;
   getHistory(projectId: string, days: number): Promise<HealthHistory>;
@@ -192,6 +200,10 @@ export function createHealthClient(baseUrl = '', fetchImpl: typeof fetch = fetch
     getHeatmap: () => get('/api/v1/portfolio/heatmap', PortfolioHeatmapSchema),
     getTestEffectiveness: (projectId) =>
       get(`${project(projectId)}/test-effectiveness/scorecard`, ScorecardSchema),
+    getPhases: (projectId, days = 30) =>
+      get(`${project(projectId)}/phases?days=${String(days)}`, RepositoryPhasesSchema),
+    getPortfolioPhases: (days = 30) =>
+      get(`/api/v1/portfolio/phases?days=${String(days)}`, PortfolioPhasesSchema),
     getPace: (projectId, weeks = 8) =>
       get(`${project(projectId)}/pace?weeks=${String(weeks)}`, PaceReportSchema),
     getHealth: (projectId) => get(`${project(projectId)}/health`, ProjectHealthSchema),

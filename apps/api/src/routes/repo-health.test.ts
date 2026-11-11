@@ -16,6 +16,9 @@ import {
   PortfolioSchema,
   ProjectHealthSchema,
   PaceReportSchema,
+  PhaseStripSchema,
+  PortfolioPhasesSchema,
+  RepositoryPhasesSchema,
   PullRequestRiskHistorySchema,
   PullRequestRiskSchema,
   SbomComponentsPageSchema,
@@ -854,5 +857,41 @@ describe('GET /api/v1/projects/:id/pace', () => {
     expect(PaceReportSchema.parse(await read.json())).toMatchObject({ status: 'not_configured' });
     expect((await app.request(`/api/v1/projects/${projectId}/pace?weeks=0`)).status).toBe(400);
     expect((await app.request(`/api/v1/projects/${projectId}/pace?weeks=53`)).status).toBe(400);
+  });
+});
+
+describe('the SDLC phase reads', () => {
+  it('serves a repository’s phases, the portfolio’s, and 404s a pull request nobody synced', async () => {
+    const { app, projectId } = await harness();
+    const repository = await app.request(`/api/v1/projects/${projectId}/phases?days=14`);
+    expect(RepositoryPhasesSchema.parse(await repository.json())).toMatchObject({
+      windowDays: 14,
+      configured: false,
+    });
+    expect((await app.request(`/api/v1/projects/${projectId}/phases?days=0`)).status).toBe(400);
+    const portfolio = await app.request('/api/v1/portfolio/phases');
+    expect(PortfolioPhasesSchema.parse(await portfolio.json()).projects).toHaveLength(1);
+    expect((await app.request(`/api/v1/projects/${projectId}/pull-requests/3/phases`)).status).toBe(
+      404,
+    );
+    expect((await app.request(`/api/v1/projects/${projectId}/pull-requests/x/phases`)).status).toBe(
+      400,
+    );
+  });
+
+  it('serves a synced pull request’s strip', async () => {
+    const { app, db, projectId } = await harness();
+    await db.insert(schema.pullRequests).values({
+      workspaceId: 'ws-1',
+      projectId,
+      externalId: '3',
+      number: 3,
+      state: 'open',
+      title: 'Cart',
+      openedAt: new Date(),
+      lastActivityAt: new Date(),
+    });
+    const strip = await app.request(`/api/v1/projects/${projectId}/pull-requests/3/phases`);
+    expect(PhaseStripSchema.parse(await strip.json()).pullRequest).toBe(3);
   });
 });

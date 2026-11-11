@@ -7,6 +7,7 @@ import type { GithubClient } from '../lib/github-client.js';
 import { formatRelative } from '../lib/intl.js';
 import { Bdi, UserText } from './Bidi.js';
 import { PageBody, PageFrame, PageHeader, Panel } from './kit.js';
+import { PhaseStripPanel } from './Phases.js';
 
 /**
  * One pull request's change risk: the status band, every factor with its points and its own
@@ -24,11 +25,15 @@ export function PullRequestRiskPage({
 }: {
   projectId: string;
   number: number;
-  github: Pick<GithubClient, 'getPullRequestRisk'>;
+  github: Pick<GithubClient, 'getPullRequestRisk' | 'getPullRequestPhases'>;
   now?: () => Date;
 }): React.ReactElement {
   const read = useResource(
     () => github.getPullRequestRisk(projectId, number),
+    [github, projectId, number],
+  );
+  const phases = useResource(
+    () => github.getPullRequestPhases(projectId, number),
     [github, projectId, number],
   );
   const title = `Pull request #${String(number)}`;
@@ -46,7 +51,10 @@ export function PullRequestRiskPage({
             <AlertDescription>{read.message}</AlertDescription>
           </Alert>
         ) : (
-          <RiskBody history={read.value} now={now()} />
+          <div className="flex flex-col gap-4">
+            <RiskBody history={read.value} now={now()} />
+            <PhaseStripPanel strip={phases} />
+          </div>
         )}
       </PageBody>
     </PageFrame>
