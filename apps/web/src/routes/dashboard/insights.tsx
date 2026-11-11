@@ -157,6 +157,8 @@ function InsightsBody({
             <Segmented label="Window" options={WINDOWS} value={days} onChange={setDays} />
           </>
         }
+        detailsOpen
+        detailsTitle="Everything else"
         details={
           <div data-testid="insights-page" className="flex flex-col gap-4">
             {trend.status === 'ready' ? (

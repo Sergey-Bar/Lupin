@@ -191,10 +191,11 @@ function qaWithScore(overrides: Partial<QaClient> = {}): QaClient {
 }
 
 describe('the dashboard', () => {
-  it('carries how the product is doing under Details, for the project it is about', async () => {
+  it('shows how the product is doing, open on the page, for the project it is about', async () => {
     const cockpit = vi.fn(async () => cockpitFixture());
     renderDashboard(qaWithScore(), makeApi(), undefined, cockpit);
-    const details = await screen.findByTestId('area-details');
+    // Open, not folded: a lead should not have to click to see past three items.
+    const details = await screen.findByRole('region', { name: 'Everything else' });
     const numbers = await within(details).findByTestId('cockpit-numbers');
     expect(await within(numbers).findByTestId('cockpit-status')).toHaveTextContent('74');
     expect(cockpit).toHaveBeenCalledWith(

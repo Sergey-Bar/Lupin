@@ -197,6 +197,8 @@ function DashboardBody({
             />
           </>
         }
+        detailsOpen
+        detailsTitle="Everything else"
         details={<div data-testid="dashboard">{dense}</div>}
       />
     );
