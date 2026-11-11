@@ -1,4 +1,5 @@
 import { dedupeByKey, type EcosystemDetector } from './detector.js';
+import { detectCCpp } from './ecosystems/c-cpp.js';
 import { detectDotnet } from './ecosystems/dotnet.js';
 import { detectGo } from './ecosystems/go.js';
 import { detectJava } from './ecosystems/java.js';
@@ -31,6 +32,9 @@ const DETECTORS: readonly EcosystemDetector[] = [
   detectPython,
   detectRuby,
   detectPhp,
+  // Last: a root build file of its own is the only way to be read as embedded, so a web
+  // repository that also builds a native module stays what it mainly is.
+  detectCCpp,
 ];
 
 /**

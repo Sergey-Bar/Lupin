@@ -56,6 +56,8 @@ const ECOSYSTEM_MARKERS: ReadonlyArray<readonly [RegExp, string]> = [
   [/(^|\/)Cargo\.toml$/u, 'rust'],
   [/(^|\/)(pom\.xml|build\.gradle(\.kts)?)$/u, 'java'],
   [/\.(csproj|fsproj|sln)$/u, 'dotnet'],
+  // Embedded C and C++: a root build file of its own, not one vendored under a subdirectory.
+  [/^(CMakeLists\.txt|platformio\.ini|west\.yml|project\.yml)$/u, 'c-cpp'],
   [/(^|\/)Gemfile$/u, 'ruby'],
   [/(^|\/)composer\.json$/u, 'php'],
   [/(^|\/)Package\.swift$|\.xcodeproj\//u, 'swift'],

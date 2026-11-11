@@ -161,3 +161,29 @@ describe('the scan, against the expanded catalogue', () => {
     expect(scan.toolbox.find((entry) => entry.id === 'xcuitest')?.status).toBe('in-use');
   });
 });
+
+describe('the scan, for an embedded C/C++ repository', () => {
+  it('names the ecosystem, sees the embedded tools in use, and recommends one for unit', async () => {
+    const scan = await scanRepository(
+      literalView({
+        'platformio.ini': '[env:esp32dev]\ntest_framework = unity\n',
+        'test/test_main.c': '#include <unity.h>\n',
+      }),
+      NOW,
+    );
+    expect(scan.ecosystems).toContain('c-cpp');
+    expect(scan.detected.map((tool) => tool.id)).toEqual(
+      expect.arrayContaining(['platformio', 'unity']),
+    );
+    expect(RepoScanSchema.safeParse(scan).success).toBe(true);
+  });
+
+  it('recommends GoogleTest to a CMake project that tests nothing yet', async () => {
+    const scan = await scanRepository(literalView({ 'CMakeLists.txt': 'project(fw C)\n' }), NOW);
+    expect(scan.ecosystems).toContain('c-cpp');
+    const unit = scan.toolbox.find(
+      (entry) => entry.capability === 'unit' && entry.status === 'recommended',
+    );
+    expect(unit?.id).toBe('googletest');
+  });
+});
