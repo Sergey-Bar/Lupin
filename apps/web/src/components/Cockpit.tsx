@@ -114,6 +114,7 @@ export function CockpitPage({
   return (
     <PageFrame data-testid="cockpit-page" className="gap-4 sm:gap-6">
       <PageHeader
+        visibleTitle
         title={greetingFor((now ?? (() => new Date()))())}
         actions={
           <div className="flex flex-wrap items-end gap-3">
