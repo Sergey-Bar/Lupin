@@ -61,6 +61,7 @@ export * from './cockpit.js';
 export * from './change-risk.js';
 export * from './pace.js';
 export * from './sdlc.js';
+export * from './briefing.js';
 export * from './scorecard.js';
 export * from './notifications.js';
 export * from './supply-chain.js';

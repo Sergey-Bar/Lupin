@@ -2,6 +2,7 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod/v4';
 import {
+  BriefingResponseSchema,
   DiffGuardUploadSchema,
   FINDING_SEVERITIES,
   FINDING_STATES,
@@ -10,6 +11,7 @@ import {
   isUploadReportFormat,
   SupplyChainPolicySchema,
   TriageFindingBodySchema,
+  type Briefing,
 } from '@lupin/shared-contracts';
 import { MAX_HEALTH_REPORT_BYTES } from '@lupin/reporter';
 import type { ConnectorAdapter } from '@lupin/connectors-sdk';
@@ -54,6 +56,12 @@ import { diffGuardStatus, recordDiffGuard } from '../services/diff-guard-service
 import { projectPace } from '../services/pace-service.js';
 import { portfolioPhases, pullRequestPhases, repositoryPhases } from '../services/phase-service.js';
 import {
+  BRIEFING_DEFAULT_DAYS,
+  portfolioBriefing,
+  repositoryBriefing,
+} from '../services/briefing-service.js';
+import type { Narrator } from '../services/narration-service.js';
+import {
   assessPullRequestRisk,
   pullRequestRisk,
   riskFactsOf,
@@ -85,6 +93,11 @@ export interface RepoHealthRouteOptions extends HealthScanOptions {
    * section. Absent, or no run for the commit: the section is left out.
    */
   commitTests?: (projectId: string, commit: string) => Promise<CommitTests | null>;
+  /**
+   * Rewords a briefing as prose, held to its items. Absent: a narration asked for is answered
+   * `unavailable`, and the briefing stands as written.
+   */
+  narrator?: Narrator;
 }
 
 const UploadQuerySchema = z.object({
@@ -139,6 +152,11 @@ const PullRequestNumberSchema = z.coerce.number().int().min(1).max(2_147_483_647
 const PaceQuerySchema = z.object({ weeks: z.coerce.number().int().min(1).max(52).default(8) });
 
 const PhaseQuerySchema = z.object({ days: z.coerce.number().int().min(1).max(366).default(30) });
+
+const BriefingQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(366).default(BRIEFING_DEFAULT_DAYS),
+  narrate: z.enum(['true', 'false']).default('false'),
+});
 
 const GateReportBodySchema = z.object({
   branch: z.string().trim().min(1).max(255),
@@ -527,6 +545,37 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     if (!parsed.success)
       return invalidRequest(context, 'Invalid phases query', parsed.error.issues);
     return context.json(await portfolioPhases(options, parsed.data.days));
+  });
+
+  /** The briefing and, when asked for, its narration; a narration is never asked for by default. */
+  const briefingResponse = async (briefing: Briefing, narrate: boolean) => {
+    if (!narrate) return { briefing, narration: null };
+    const narration =
+      options.narrator === undefined
+        ? {
+            status: 'unavailable' as const,
+            reason: 'No model provider is configured; the briefing stands as written.',
+          }
+        : await options.narrator.narrate(briefing);
+    return BriefingResponseSchema.parse({ briefing, narration });
+  };
+
+  /** What happened in one repository over the window: deterministic, every line cited. */
+  app.get('/api/v1/projects/:id/briefing', viewer, async (context) => {
+    const parsed = BriefingQuerySchema.safeParse(context.req.query());
+    if (!parsed.success)
+      return invalidRequest(context, 'Invalid briefing query', parsed.error.issues);
+    const briefing = await repositoryBriefing(options, context.req.param('id'), parsed.data.days);
+    return context.json(await briefingResponse(briefing, parsed.data.narrate === 'true'));
+  });
+
+  /** What happened across the workspace's repositories over the window. */
+  app.get('/api/v1/portfolio/briefing', viewer, async (context) => {
+    const parsed = BriefingQuerySchema.safeParse(context.req.query());
+    if (!parsed.success)
+      return invalidRequest(context, 'Invalid briefing query', parsed.error.issues);
+    const briefing = await portfolioBriefing(options, parsed.data.days);
+    return context.json(await briefingResponse(briefing, parsed.data.narrate === 'true'));
   });
 
   /** Whether testing keeps up: weekly code and test pace, and the untested-change debt. */

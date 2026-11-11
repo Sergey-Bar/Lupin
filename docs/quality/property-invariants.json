@@ -436,6 +436,22 @@
       "shownToFail": "Removing the passed-over pass (markPassedOver) fails PHASE-2."
     },
     {
+      "id": "BRIEF-1",
+      "statement": "Every briefing item cites at least one piece of evidence, and item ids are unique within a briefing.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/briefing.property.test.ts",
+      "seed": 20261114,
+      "shownToFail": "BriefingItemSchema refuses an item with no evidence; giving two bottlenecks one id fails BRIEF-1."
+    },
+    {
+      "id": "BRIEF-2",
+      "statement": "A briefing over a window where nothing happened is the one 'nothing happened' line, never a list of zeros, and its shape is never good.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/briefing.property.test.ts",
+      "seed": 20261114,
+      "shownToFail": "Emitting the merged line for zero merges fails BRIEF-2 on the first generated window."
+    },
+    {
       "id": "EVAL-1",
       "statement": "An identical baseline and candidate eval run is never a fail, for any run and any comparison seed.",
       "package": "packages/reporting",

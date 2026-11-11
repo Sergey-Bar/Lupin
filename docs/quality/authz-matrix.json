@@ -9,7 +9,7 @@
   ],
   "summary": {
     "admin": 40,
-    "viewer": 92,
+    "viewer": 98,
     "operator": 35,
     "open": 16,
     "runner-credential": 9,
@@ -656,7 +656,7 @@
       "path": "/api/v1/portfolio",
       "access": "viewer",
       "workspaceScoped": false,
-      "evidenceTest": "apps/api/src/services/access-service.test.ts",
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {
@@ -665,6 +665,14 @@
       "access": "viewer",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/ai-code.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/portfolio/briefing",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {
@@ -693,6 +701,14 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/portfolio/phases",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/projects",
       "access": "viewer",
       "workspaceScoped": false,
@@ -712,7 +728,7 @@
       "path": "/api/v1/projects/:id",
       "access": "admin",
       "workspaceScoped": true,
-      "evidenceTest": "apps/api/src/routes/projects.test.ts",
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {
@@ -720,7 +736,7 @@
       "path": "/api/v1/projects/:id",
       "access": "viewer",
       "workspaceScoped": false,
-      "evidenceTest": "apps/api/src/routes/projects.test.ts",
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {
@@ -728,7 +744,7 @@
       "path": "/api/v1/projects/:id",
       "access": "operator",
       "workspaceScoped": true,
-      "evidenceTest": "apps/api/src/routes/projects.test.ts",
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {
@@ -761,6 +777,14 @@
       "access": "viewer",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/ai-code.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:id/briefing",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {
@@ -1121,6 +1145,30 @@
       "access": "reporter-secret",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/agent-quality.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:id/pace",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:id/phases",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:id/pull-requests/:number/phases",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {

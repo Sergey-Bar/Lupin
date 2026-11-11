@@ -219,6 +219,9 @@ export async function pruneExpiredSpansEverywhere(
 /** The agent name an installation test-proposal completion's span carries. */
 export const TEST_PROPOSAL_AGENT_NAME = 'lupin-test-proposals';
 
+/** The agent name a briefing narration's span carries. */
+export const BRIEFING_AGENT_NAME = 'lupin-briefing';
+
 /**
  * One installation completion, as a `self` span. Never content. `agentName` tells chat
  * (the default) from the other installation callers of the same gateway.

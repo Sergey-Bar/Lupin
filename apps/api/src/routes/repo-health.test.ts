@@ -9,6 +9,7 @@ import * as schema from '@lupin/db';
 import {
   DiffCoverageStatusSchema,
   DiffGuardStatusSchema,
+  BriefingResponseSchema,
   HealthFindingsPageSchema,
   HealthHistorySchema,
   HealthUploadResultSchema,
@@ -893,5 +894,56 @@ describe('the SDLC phase reads', () => {
     });
     const strip = await app.request(`/api/v1/projects/${projectId}/pull-requests/3/phases`);
     expect(PhaseStripSchema.parse(await strip.json()).pullRequest).toBe(3);
+  });
+});
+
+describe('the briefing reads', () => {
+  it('serves a repository’s and the portfolio’s briefing, with no narration unless asked', async () => {
+    const { app, projectId } = await harness();
+    const repository = BriefingResponseSchema.parse(
+      await (await app.request(`/api/v1/projects/${projectId}/briefing?days=14`)).json(),
+    );
+    expect(repository.briefing.windowDays).toBe(14);
+    expect(repository.briefing.scope).toMatchObject({ kind: 'repository', projectId });
+    expect(repository.narration).toBeNull();
+    const portfolio = BriefingResponseSchema.parse(
+      await (await app.request('/api/v1/portfolio/briefing')).json(),
+    );
+    expect(portfolio.briefing.scope).toEqual({ kind: 'portfolio', projects: 1 });
+    expect((await app.request(`/api/v1/projects/${projectId}/briefing?days=0`)).status).toBe(400);
+    expect((await app.request('/api/v1/portfolio/briefing?narrate=yes')).status).toBe(400);
+  });
+
+  it('answers a narration asked for with no narrator as unavailable, the briefing intact', async () => {
+    const { app, projectId } = await harness();
+    const read = BriefingResponseSchema.parse(
+      await (await app.request(`/api/v1/projects/${projectId}/briefing?narrate=true`)).json(),
+    );
+    expect(read.narration?.status).toBe('unavailable');
+    expect(read.briefing.items.length).toBeGreaterThan(0);
+  });
+
+  it('hands the briefing it composed to the narrator, and returns what it said', async () => {
+    const seen: string[] = [];
+    const { app } = await harness({
+      secret: SECRET,
+      extra: {
+        narrator: {
+          narrate: async (briefing) => {
+            seen.push(briefing.headline);
+            return { status: 'rejected', model: 'm', reason: 'Sentence 1 uses 9.' };
+          },
+        },
+      },
+    });
+    const read = BriefingResponseSchema.parse(
+      await (await app.request('/api/v1/portfolio/briefing?narrate=true')).json(),
+    );
+    expect(read.narration).toEqual({
+      status: 'rejected',
+      model: 'm',
+      reason: 'Sentence 1 uses 9.',
+    });
+    expect(seen).toEqual([read.briefing.headline]);
   });
 });

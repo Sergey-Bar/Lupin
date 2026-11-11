@@ -142,7 +142,9 @@ import {
   SELF_AGENT_NAME,
   selfInstrumented,
   TEST_PROPOSAL_AGENT_NAME,
+  BRIEFING_AGENT_NAME,
 } from './services/genai-span-service.js';
+import { createNarrator } from './services/narration-service.js';
 import { Lifecycle, closeHttpServer, installShutdownHandlers } from './bootstrap/lifecycle.js';
 // T18: dashboard module — runs detail, tests listing, analytics, quarantine, quality gates
 import { createDashboardModule } from './modules/dashboard/index.js';
@@ -422,14 +424,20 @@ inBackground(
  * `chat` span — model, tokens, duration, outcome; never content — with no project
  * (`source = 'self'`, agent `lupin-chat`), read by `GET /api/v1/chat/runtime`. A test
  * proposal asks the same provider, instrumented the same way, under the agent name
- * `lupin-test-proposals` so the runtime page tells them from chat. Each resolved provider is
+ * `lupin-test-proposals` so the runtime page tells them from chat. A briefing narration is
+ * `lupin-briefing`. Each resolved provider is
  * decorated with its own name, so a span records the provider that actually answered.
  *
  * **Built per workspace** (ADR-014), so a workspace's spans are written in that workspace,
  * where its runtime page reads them. Unconfigured, both refuse each request with the reason.
  */
-function selfGateways(workspaceId: string): { chat: AiGateway; testProposals: AiGateway | null } {
-  if (databaseResources === undefined) return { chat: aiGateway, testProposals: aiGateway };
+function selfGateways(workspaceId: string): {
+  chat: AiGateway;
+  testProposals: AiGateway | null;
+  briefing: AiGateway | null;
+} {
+  if (databaseResources === undefined)
+    return { chat: aiGateway, testProposals: aiGateway, briefing: aiGateway };
   const spans = { db: databaseResources.db as never, workspaceId };
   const instrumented = (agent: string, what: string) =>
     createLiveAiGateway(settingsService, {
@@ -441,6 +449,7 @@ function selfGateways(workspaceId: string): { chat: AiGateway; testProposals: Ai
   return {
     chat: instrumented(SELF_AGENT_NAME, 'chat'),
     testProposals: instrumented(TEST_PROPOSAL_AGENT_NAME, 'test proposal'),
+    briefing: instrumented(BRIEFING_AGENT_NAME, 'briefing narration'),
   };
 }
 
@@ -1275,6 +1284,9 @@ function buildWorkspace(workspaceId: string) {
           health: {
             ...healthHooks,
             detailsUrl: dashboardUrl,
+            // The briefing's optional prose: the configured provider, instrumented as
+            // `lupin-briefing`, sent the briefing's sentences and nothing else.
+            narrator: createNarrator({ gateway: gateways.briefing }),
             // The commit's test run, read with the same quarantine and the same rule the gate and
             // `lupin test` use.
             commitTests: (projectId, commit) =>

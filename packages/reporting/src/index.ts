@@ -28,4 +28,5 @@ export * from './change-risk.js';
 export * from './blast-radius.js';
 export * from './pace.js';
 export * from './sdlc-phases.js';
+export * from './briefing.js';
 export * from './cockpit-html.js';
