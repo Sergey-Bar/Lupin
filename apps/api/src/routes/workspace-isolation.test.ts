@@ -232,6 +232,10 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
     family: 'change risk',
     files: ['services/diff-guard-service.ts', 'services/change-risk-service.ts'],
   },
+  // Pace: merged pull requests, their diff coverage, and tests first seen, of one project.
+  // `pace-service.test.ts` proves another workspace's project is a 404 and that its merges and
+  // tests never count toward a project's own.
+  { family: 'pace', files: ['services/pace-service.ts'] },
   // The cockpit: health and scan snapshots, runs, pull requests, deployments and delivery
   // sources of one project. Every query filters on `workspace_id` before the project, and
   // `cockpit.test.ts` proves another workspace's project is a 404, that its newer readings do

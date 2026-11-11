@@ -15,6 +15,7 @@ import {
   PortfolioComponentsPageSchema,
   PortfolioSchema,
   ProjectHealthSchema,
+  PaceReportSchema,
   PullRequestRiskHistorySchema,
   PullRequestRiskSchema,
   SbomComponentsPageSchema,
@@ -843,5 +844,15 @@ describe('GET /api/v1/projects/:id/pull-requests/:number/risk', () => {
         )
       ).status,
     ).toBe(404);
+  });
+});
+
+describe('GET /api/v1/projects/:id/pace', () => {
+  it('answers the pace in its contract, and refuses a window it will not read', async () => {
+    const { app, projectId } = await harness();
+    const read = await app.request(`/api/v1/projects/${projectId}/pace?weeks=4`);
+    expect(PaceReportSchema.parse(await read.json())).toMatchObject({ status: 'not_configured' });
+    expect((await app.request(`/api/v1/projects/${projectId}/pace?weeks=0`)).status).toBe(400);
+    expect((await app.request(`/api/v1/projects/${projectId}/pace?weeks=53`)).status).toBe(400);
   });
 });

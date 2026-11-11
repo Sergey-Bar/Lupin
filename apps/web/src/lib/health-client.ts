@@ -10,6 +10,7 @@ import {
   ProjectQuarantineSchema,
   QuarantinePolicySchema,
   ScorecardSchema,
+  PaceReportSchema,
   type FindingSeverity,
   type FindingState,
   type HealthDimension,
@@ -24,6 +25,7 @@ import {
   type TriageFindingBody,
   type PortfolioHeatmap,
   type Scorecard,
+  type PaceReport,
 } from '@lupin/shared-contracts';
 import { parse } from './qa-client.js';
 
@@ -49,6 +51,8 @@ export interface HealthClient {
   getHeatmap(): Promise<PortfolioHeatmap>;
   /** The test-effectiveness scorecard: mutation score, diff coverage, flakes and causes. */
   getTestEffectiveness(projectId: string): Promise<Scorecard>;
+  /** Whether testing keeps up with the code: weekly pace and the untested-change debt. */
+  getPace(projectId: string, weeks?: number): Promise<PaceReport>;
   getHealth(projectId: string): Promise<ProjectHealth>;
   getFindings(projectId: string, query?: FindingQuery): Promise<HealthFindingsPage>;
   getHistory(projectId: string, days: number): Promise<HealthHistory>;
@@ -188,6 +192,8 @@ export function createHealthClient(baseUrl = '', fetchImpl: typeof fetch = fetch
     getHeatmap: () => get('/api/v1/portfolio/heatmap', PortfolioHeatmapSchema),
     getTestEffectiveness: (projectId) =>
       get(`${project(projectId)}/test-effectiveness/scorecard`, ScorecardSchema),
+    getPace: (projectId, weeks = 8) =>
+      get(`${project(projectId)}/pace?weeks=${String(weeks)}`, PaceReportSchema),
     getHealth: (projectId) => get(`${project(projectId)}/health`, ProjectHealthSchema),
     getFindings: (projectId, query = {}) =>
       get(`${project(projectId)}/health/findings${search(query)}`, HealthFindingsPageSchema),

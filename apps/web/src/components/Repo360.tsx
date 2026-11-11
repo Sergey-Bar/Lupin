@@ -5,6 +5,7 @@ import type {
   AiCodeReport,
   DeliveryReport,
   ProjectEvals,
+  PaceReport,
   ProjectHealth,
   Scorecard,
 } from '@lupin/shared-contracts';
@@ -20,6 +21,7 @@ import type { SupplyChainClient } from '../lib/supply-chain-client.js';
 import { repoHealthPath } from '../route-manifest.js';
 import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import { Loaded, ProjectPage, projectLink } from './ProjectPage.js';
+import { PacePanel } from './PacePanel.js';
 import { ScorecardCard } from './ScorecardCard.js';
 
 /**
@@ -69,6 +71,7 @@ interface Reads {
   evals: Resource<ProjectEvals>;
   supplyChain: Resource<Scorecard>;
   testEffectiveness: Resource<Scorecard>;
+  pace: Resource<PaceReport>;
 }
 
 function useReads(clients: Repo360Clients, projectId: string): Reads {
@@ -92,6 +95,7 @@ function useReads(clients: Repo360Clients, projectId: string): Reads {
       () => clients.health.getTestEffectiveness(projectId),
       [clients.health, projectId],
     ),
+    pace: useResource(() => clients.health.getPace(projectId, 8), [clients.health, projectId]),
   };
 }
 
@@ -161,6 +165,7 @@ function Repo360Body({
           </Panel>
           <FixNextPanel items={fixNext} settled={settled(reads)} />
         </div>
+        <PacePanel pace={reads.pace} />
         <section aria-label="Scorecards" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <ReadCards
             resource={reads.delivery}

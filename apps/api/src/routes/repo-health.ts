@@ -51,6 +51,7 @@ import {
 } from '../services/supply-chain-service.js';
 import { diffCoverageStatus } from '../services/diff-coverage-service.js';
 import { diffGuardStatus, recordDiffGuard } from '../services/diff-guard-service.js';
+import { projectPace } from '../services/pace-service.js';
 import {
   assessPullRequestRisk,
   pullRequestRisk,
@@ -133,6 +134,8 @@ const DiffCoverageQuerySchema = z.object({ commit: Commit });
 const DIFF_GUARD_MAX_BYTES = 256_000;
 
 const PullRequestNumberSchema = z.coerce.number().int().min(1).max(2_147_483_647);
+
+const PaceQuerySchema = z.object({ weeks: z.coerce.number().int().min(1).max(52).default(8) });
 
 const GateReportBodySchema = z.object({
   branch: z.string().trim().min(1).max(255),
@@ -489,6 +492,13 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     return context.json(
       await diffGuardStatus(options, context.req.param('id'), parsed.data.commit.toLowerCase()),
     );
+  });
+
+  /** Whether testing keeps up: weekly code and test pace, and the untested-change debt. */
+  app.get('/api/v1/projects/:id/pace', viewer, async (context) => {
+    const parsed = PaceQuerySchema.safeParse(context.req.query());
+    if (!parsed.success) return invalidRequest(context, 'Invalid pace query', parsed.error.issues);
+    return context.json(await projectPace(options, context.req.param('id'), parsed.data.weeks));
   });
 
   /** A pull request's change risk: the latest assessment, and the history across its heads. */

@@ -148,6 +148,7 @@ function client(overrides: Partial<HealthClient> = {}): HealthClient {
     getPortfolio: vi.fn(async () => ({ projects: [] })),
     getHeatmap: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
     getTestEffectiveness: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
+    getPace: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
     getHealth: vi.fn(async () => health()),
     getFindings: vi.fn(async () => ({ findings: [FINDING], total: 1, offset: 0, limit: 25 })),
     getHistory: vi.fn(async () => ({ projectId: PROJECT, branch: 'main', points: [] })),

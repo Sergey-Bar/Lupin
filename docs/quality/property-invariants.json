@@ -404,6 +404,22 @@
       "shownToFail": "ChangeRiskSchema refuses a score that differs from the sum (packages/shared-contracts/src/schemas/change-risk.test.ts)."
     },
     {
+      "id": "PACE-1",
+      "statement": "Changed lines whose diff coverage was not measured are counted as unmeasured, never as covered or uncovered.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/pace.property.test.ts",
+      "seed": 20261112,
+      "shownToFail": "Counting a merge with no coverage as fully covered fails PACE-1 on the first generated input."
+    },
+    {
+      "id": "PACE-2",
+      "statement": "Untested-change debt is a running total: it never decreases from one week to the next.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/pace.property.test.ts",
+      "seed": 20261112,
+      "shownToFail": "fc.check refutes a debt that is each week's own uncovered lines rather than the running total."
+    },
+    {
       "id": "EVAL-1",
       "statement": "An identical baseline and candidate eval run is never a fail, for any run and any comparison seed.",
       "package": "packages/reporting",
