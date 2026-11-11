@@ -24,6 +24,15 @@ describe('testStem', () => {
     expect(testStem('pkg/handler_test.go')).toBe('handler');
     expect(testStem('src\\__tests__\\price.ts')).toBe('price');
   });
+
+  it('reads a file at the repository root, and a name with no extension or a leading dot', () => {
+    expect(testStem('cart.test.ts')).toBe('cart');
+    expect(testStem('.env')).toBe('.env');
+    expect(testStem('Makefile')).toBe('Makefile');
+    expect(selectTests(['cart.ts'], ['cart.test.ts', 'src/cart.test.ts']).tests).toEqual([
+      { path: 'cart.test.ts', reason: 'named', source: 'cart.ts' },
+    ]);
+  });
 });
 
 describe('selectTests', () => {

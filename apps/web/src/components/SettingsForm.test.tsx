@@ -304,6 +304,35 @@ describe('the GitHub App panel', () => {
     expect(within(panel).getByRole('button', { name: 'Replace the app' })).toBeInTheDocument();
   });
 
+  it('removes a connected app, and says why when the server refuses', async () => {
+    const user = userEvent.setup();
+    let set = true;
+    const client = settingsClient({
+      githubAppState: vi.fn(async () => set),
+      deleteGitHubApp: vi.fn(async () => {
+        set = false;
+      }),
+      putGitHubApp: vi.fn(async () => {
+        throw new SettingsApiError(400, 'That is not a private key.', 'VALIDATION', null);
+      }),
+    });
+    render(
+      <ToastProvider>
+        <IntegrationsSettingsPage health={health()} client={client} />
+      </ToastProvider>,
+    );
+    const panel = await screen.findByTestId('github-app');
+    expect(await within(panel).findByText('Connected')).toBeInTheDocument();
+    await user.type(within(panel).getByLabelText('App ID'), '42');
+    await user.type(within(panel).getByLabelText('Private key (.pem)'), 'nope');
+    await user.click(within(panel).getByRole('button', { name: 'Replace the app' }));
+    expect(await screen.findByText('That is not a private key.')).toBeInTheDocument();
+    expect(within(panel).getByLabelText('App ID')).toHaveValue('42');
+    await user.click(within(panel).getByRole('button', { name: 'Remove' }));
+    expect(client.deleteGitHubApp).toHaveBeenCalledTimes(1);
+    expect(await within(panel).findByText('Not set')).toBeInTheDocument();
+  });
+
   it('is not drawn for an operator, who is asked to find an admin', async () => {
     render(
       <ToastProvider>

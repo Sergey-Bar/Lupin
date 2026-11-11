@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { run } from './cli.js';
 import { EXIT } from './errors.js';
-import { gitlabTarget } from './gitlab-post.js';
+import { gitlabTarget, mergeRequestOf, postToGitLab } from './gitlab-post.js';
 
 const PROJECT = '11111111-1111-4111-8111-111111111111';
 // Both assembled at runtime: a credential-shaped literal is what the secret scanners look for.
@@ -156,5 +156,117 @@ describe('lupin gate --post on GitLab CI', () => {
     expect(gitlabTarget({ LUPIN_GITLAB_TOKEN: 't', CI_PROJECT_ID: '1' }).api.href).toBe(
       'https://gitlab.com/api/v4',
     );
+    expect(() => gitlabTarget({ LUPIN_GITLAB_TOKEN: 't' })).toThrow(/CI_PROJECT_ID/u);
+    expect(() => gitlabTarget({})).toThrow(/LUPIN_GITLAB_TOKEN/u);
+    expect(() =>
+      gitlabTarget({ LUPIN_GITLAB_TOKEN: 't', CI_PROJECT_ID: '1', CI_API_V4_URL: 'not a url' }),
+    ).toThrow('CI_API_V4_URL is not a URL.');
+    expect(() =>
+      gitlabTarget({
+        LUPIN_GITLAB_TOKEN: 't',
+        CI_PROJECT_ID: '1',
+        CI_API_V4_URL: 'https://u:p@gitlab.example/api/v4',
+      }),
+    ).toThrow(/no credentials/u);
+  });
+
+  it('reads the merge request only from a positive whole number', () => {
+    expect(mergeRequestOf({ CI_MERGE_REQUEST_IID: '7' })).toBe(7);
+    for (const iid of [undefined, '', '0', '-1', '2.5', 'x']) {
+      expect(mergeRequestOf({ CI_MERGE_REQUEST_IID: iid }), String(iid)).toBeUndefined();
+    }
+  });
+});
+
+describe('postToGitLab', () => {
+  type Answer = { status: number; text: string } | 'unreachable';
+  const target = {
+    api: new URL('https://gitlab.example/api/v4/'),
+    project: '42',
+    token: GITLAB_TOKEN,
+  };
+  const bare = {
+    sha: SHA,
+    status: { state: 'success' },
+    checkRun: null,
+    comment: { marker: '<!-- m -->', body: '<!-- m -->\nbody' },
+  } as unknown as Parameters<typeof postToGitLab>[2];
+  function forge(answer: (method: string, url: string) => Answer) {
+    const calls: Array<{ method: string; url: string; body: unknown }> = [];
+    const fetchImpl = (async (url: URL, init: RequestInit) => {
+      calls.push({
+        method: String(init.method),
+        url: url.href,
+        body: typeof init.body === 'string' ? JSON.parse(init.body) : undefined,
+      });
+      const reply = answer(String(init.method), url.href);
+      if (reply === 'unreachable') throw new TypeError('fetch failed');
+      return new Response(reply.text === '' ? null : reply.text, { status: reply.status });
+    }) as unknown as typeof fetch;
+    return { calls, fetchImpl };
+  }
+
+  it('sends a passing status with the default name, and no fields the server did not give', async () => {
+    const { calls, fetchImpl } = forge(() => ({ status: 201, text: '' }));
+    expect(await postToGitLab(fetchImpl, target, bare, undefined)).toEqual([
+      'Posted the commit status (created).',
+    ]);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(`https://gitlab.example/api/v4/projects/42/statuses/${SHA}`);
+    expect(calls[0]?.body).toEqual({ state: 'success', name: 'lupin/health' });
+  });
+
+  it('cuts a description to the 255 characters GitLab accepts', async () => {
+    const { calls, fetchImpl } = forge(() => ({ status: 201, text: '{}' }));
+    const long = { ...bare, status: { state: 'failure', description: 'x'.repeat(300) } };
+    await postToGitLab(fetchImpl, target, long, undefined);
+    expect((calls[0]?.body as { description: string }).description).toHaveLength(255);
+  });
+
+  it('says GitLab was unreachable rather than naming an HTTP status it never sent', async () => {
+    const { fetchImpl } = forge(() => 'unreachable');
+    expect(await postToGitLab(fetchImpl, target, bare, 7)).toEqual([
+      "GitLab refused the commit status (unreachable); the gate's verdict stands.",
+      "GitLab refused the merge request note (unreachable); the gate's verdict stands.",
+    ]);
+  });
+
+  it('writes no note when it cannot read the existing ones', async () => {
+    const { calls, fetchImpl } = forge((method) =>
+      method === 'GET' ? { status: 404, text: 'not json' } : { status: 201, text: '{}' },
+    );
+    expect(await postToGitLab(fetchImpl, target, bare, 7)).toContain(
+      "GitLab refused the merge request note (HTTP 404); the gate's verdict stands.",
+    );
+    expect(calls.map((call) => call.method)).toEqual(['POST', 'GET']);
+  });
+
+  it('reports a refused note write, and treats a list that is not an array as no notes', async () => {
+    const { calls, fetchImpl } = forge((method, url) =>
+      method === 'GET'
+        ? { status: 200, text: '{"id":1}' }
+        : url.endsWith('/notes')
+          ? { status: 422, text: '{}' }
+          : { status: 201, text: '{}' },
+    );
+    expect(await postToGitLab(fetchImpl, target, bare, 7)).toContain(
+      "GitLab refused the merge request note (HTTP 422); the gate's verdict stands.",
+    );
+    expect(calls.at(-1)?.method).toBe('POST');
+  });
+
+  it('skips a note without an id, and posts no note when the server rendered none', async () => {
+    const { calls, fetchImpl } = forge((method) =>
+      method === 'GET'
+        ? { status: 200, text: JSON.stringify([{ body: '<!-- m -->\nold' }, 'junk']) }
+        : { status: 201, text: '{}' },
+    );
+    expect(await postToGitLab(fetchImpl, target, bare, 7)).toContain(
+      'Posted the merge request note (created).',
+    );
+    expect(calls.at(-1)?.method).toBe('POST');
+    const quiet = forge(() => ({ status: 201, text: '{}' }));
+    await postToGitLab(quiet.fetchImpl, target, { ...bare, comment: null }, 7);
+    expect(quiet.calls).toHaveLength(1);
   });
 });

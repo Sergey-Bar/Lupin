@@ -66,6 +66,19 @@ describe('lupin impact', () => {
     ]);
   });
 
+  it('says a test was picked because it changed, and runs real git when none is given', async () => {
+    const { io, out } = harness('src/cart.test.ts\n');
+    await run(['impact'], io);
+    expect(out).toEqual([
+      'impact: 1 test file(s) for 1 changed file(s), selected by name:',
+      '  - src/cart.test.ts (changed)',
+    ]);
+    const real = harness('');
+    const { git: _git, ...withoutGit } = real.io;
+    expect(await run(['impact', '--base', 'HEAD'], withoutGit)).toBe(EXIT.ok);
+    expect(real.out).toEqual(['impact: 0 test file(s) for 0 changed file(s), selected by name:']);
+  });
+
   it('answers JSON for a script', async () => {
     const { io, out } = harness('src/cart.test.ts\n');
     await run(['impact', '--format', 'json', '--base', 'origin/develop'], io);
