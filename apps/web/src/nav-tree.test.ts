@@ -2,14 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { navTree, routeManifest } from './route-manifest.js';
 
 describe('navTree, the sidebar built from the manifest', () => {
-  it('lists every tab exactly once, plus the visible pages of a place with no tabs', () => {
+  it('lists every tab exactly once, and no untabbed alias of a page', () => {
     const pages = navTree('admin').flatMap((group) => group.pages.map((page) => page.id));
-    const tabbed = new Set(
-      routeManifest.filter((route) => 'tab' in route).map((route) => route.section),
-    );
-    const expected = routeManifest
-      .filter((route) => ('tab' in route ? true : route.visible && !tabbed.has(route.section)))
-      .map((route) => route.id);
+    const expected = routeManifest.filter((route) => 'tab' in route).map((route) => route.id);
     expect([...pages].sort()).toEqual([...expected].sort());
     expect(new Set(pages).size).toBe(pages.length);
   });
@@ -28,6 +23,16 @@ describe('navTree, the sidebar built from the manifest', () => {
     const settings = navTree('viewer').find((group) => group.id === 'settings');
     expect(settings?.pages.some((page) => page.id === 'settings-members')).toBe(false);
     expect(settings?.pages.some((page) => page.id === 'settings-appearance')).toBe(true);
+  });
+
+  it('lists only the visible pages of a place that has no tabs, for a reader with no role', () => {
+    // Health has tabs; every place does today, so this pins the role-null path instead.
+    const tree = navTree(null);
+    const settings = tree.find((group) => group.id === 'settings');
+    expect(settings?.pages.map((page) => page.id)).toEqual(
+      expect.arrayContaining(['settings-appearance', 'map', 'toolbox']),
+    );
+    expect(settings?.pages.some((page) => page.id === 'settings-identity')).toBe(false);
   });
 
   it('names the Settings groups in order: Personal, Workspace, Install, Tools', () => {

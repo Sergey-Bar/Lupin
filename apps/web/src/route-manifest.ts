@@ -662,9 +662,9 @@ export function navTree(role: ViewerRole | null): NavGroup[] {
         route.section === section.id && roleMeets((route as { access?: TabAccess }).access, role),
     );
     const withTabs = inSection.filter((route): route is TabRoute => 'tab' in route);
-    // A place with tabs lists its tabs; its older untabbed aliases still resolve by address.
-    const ordered =
-      withTabs.length > 0 ? tabGroups(withTabs).flat() : inSection.filter((route) => route.visible);
+    // Every place has tabs; its older untabbed aliases still resolve by address and are not
+    // listed, so one page never appears twice.
+    const ordered = tabGroups(withTabs).flat();
     return {
       id: section.id,
       label: section.label,
@@ -674,7 +674,7 @@ export function navTree(role: ViewerRole | null): NavGroup[] {
         return {
           id: route.id,
           path: route.path,
-          label: 'tab' in route ? route.tab : route.label,
+          label: route.tab,
           ...(group === undefined ? {} : { group }),
         };
       }),

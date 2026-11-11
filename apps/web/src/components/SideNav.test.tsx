@@ -7,7 +7,7 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
-import { SIDEBAR_KEY, SideNav } from './SideNav';
+import { SIDEBAR_GROUPS_KEY, SIDEBAR_KEY, SIDEBAR_RETURN_KEY, SideNav } from './SideNav';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { PreferencesProvider } from '../theme/preferences';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
@@ -26,13 +26,27 @@ function renderAt(path: string, api = makeApi()) {
   });
   const router = createRouter({ routeTree: rootRoute });
   router.update({ history: createMemoryHistory({ initialEntries: [path] }) });
-  return render(<RouterProvider router={router} />);
+  return { ...render(<RouterProvider router={router} />), router };
 }
 
-describe('SideNav', () => {
+/** The viewer's role, answered by the who-am-I endpoint the role hook reads. */
+function signedInAs(role: 'viewer' | 'operator' | 'admin') {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify({ actor: 'you', role, mode: 'enforced' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+    ),
+  );
+}
+
+describe('SideNav, app mode', () => {
   beforeEach(() => {
     resetViewerRoleCache();
-    // Most of this file is about the open sidebar; the rail has its own tests below.
+    localStorage.clear();
     localStorage.setItem(SIDEBAR_KEY, 'expanded');
     vi.stubGlobal(
       'fetch',
@@ -41,37 +55,96 @@ describe('SideNav', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('is a pyramid: five areas, no sub-tab lists, and Settings pinned at the bottom', async () => {
+  it('lists the four places as groups, and keeps Settings out of the list, pinned below it', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    const areas = within(nav)
-      .getAllByRole('link')
-      .filter((link) => !link.closest('[aria-label="Recent runs"]'))
-      .map((link) => link.textContent);
-    expect(areas).toEqual(['Home', 'Runs', 'Tests', 'Health']);
+    const places = within(nav)
+      .getAllByRole('button', { name: /^(Home|Runs|Tests|Health)/u })
+      .map((button) => button.getAttribute('data-place'));
+    expect(places).toEqual(['now', 'runs', 'tests', 'health']);
     const aside = nav.closest('aside') as HTMLElement;
     const settings = within(aside).getByRole('link', { name: 'Settings' });
     expect(nav.contains(settings)).toBe(false);
     expect(within(aside).queryByTestId('theme-toggle')).toBeNull();
   });
 
-  it('starts as an icon rail, each area named for hover and for a screen reader', async () => {
+  it('opens the group of the page you are on, with every page of that place in it', async () => {
+    renderAt('/dashboard/prs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    const health = within(nav).getByRole('button', { name: 'Health' });
+    expect(health).toHaveAttribute('aria-expanded', 'true');
+    const pages = within(screen.getByRole('list', { name: 'Health pages' }))
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+    // Every Health page, the ones the old "More" menu held included.
+    expect(pages).toEqual(expect.arrayContaining(['Overview', 'Supply chain', 'Pull requests']));
+    expect(within(nav).getByRole('button', { name: 'Runs' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+
+  it('opens and closes a group on a click, and remembers what is open', async () => {
+    renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    const tests = within(nav).getByRole('button', { name: 'Tests' });
+    fireEvent.click(tests);
+    expect(tests).toHaveAttribute('aria-expanded', 'true');
+    expect(JSON.parse(localStorage.getItem(SIDEBAR_GROUPS_KEY) ?? '[]')).toContain('tests');
+    fireEvent.click(tests);
+    expect(tests).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('marks the page you are on, by aria-current and an accent bar, not by colour alone', async () => {
+    renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    const current = within(nav)
+      .getAllByRole('link')
+      .filter((link) => link.getAttribute('aria-current') === 'page');
+    expect(current.map((link) => link.textContent)).toEqual(['Runs']);
+    expect(current[0]).toHaveClass('font-semibold', 'before:start-0', 'before:bg-accent');
+  });
+
+  it('opens a group at its first page from the group itself', async () => {
+    renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    fireEvent.click(within(nav).getByRole('button', { name: 'Home' }));
+    expect(
+      within(screen.getByRole('list', { name: 'Home pages' })).getAllByRole('link')[0],
+    ).toHaveAttribute('href', '/dashboard/now');
+  });
+
+  it('moves between the pages it lists with the arrow keys', async () => {
+    renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    const runs = within(nav).getByRole('link', { name: 'Runs' });
+    runs.focus();
+    fireEvent.keyDown(runs, { key: 'ArrowDown' });
+    expect(document.activeElement).not.toBe(runs);
+    expect(nav.contains(document.activeElement)).toBe(true);
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(runs);
+  });
+
+  it('starts as an icon rail, each place named for hover and for a screen reader', async () => {
     localStorage.removeItem(SIDEBAR_KEY);
     renderAt('/dashboard/now');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
     const aside = nav.closest('aside') as HTMLElement;
     expect(aside).toHaveAttribute('data-collapsed', 'true');
     expect(aside).toHaveClass('w-14');
-    const runs = within(nav).getByRole('link', { name: 'Runs' });
-    expect(runs).toHaveAttribute('title', 'Runs');
+    expect(within(nav).getByRole('button', { name: 'Runs' })).toHaveAttribute('title', 'Runs');
   });
 
-  it('marks the current area with an accent bar on its leading edge, not a grey fill alone', async () => {
-    renderAt('/dashboard/runs');
+  it('opens a place as a flyout from the rail, and closes it on Escape', async () => {
+    localStorage.removeItem(SIDEBAR_KEY);
+    renderAt('/dashboard/now');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    const runs = within(nav).getByRole('link', { name: 'Runs' });
-    expect(runs).toHaveClass('before:start-0', 'before:bg-accent');
-    expect(within(nav).getByRole('link', { name: 'Home' })).not.toHaveClass('before:bg-accent');
+    fireEvent.click(within(nav).getByRole('button', { name: 'Health' }));
+    const flyout = await screen.findByRole('list', { name: 'Health pages' });
+    expect(within(flyout).getAllByRole('link').length).toBeGreaterThan(3);
+    fireEvent.keyDown(flyout, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('list', { name: 'Health pages' })).toBeNull());
   });
 
   it('expands and collapses from one button, and remembers the choice', async () => {
@@ -88,77 +161,31 @@ describe('SideNav', () => {
     expect(localStorage.getItem(SIDEBAR_KEY)).toBe('collapsed');
   });
 
-  it('moves to the next or previous area when the wheel turns over the areas', async () => {
-    renderAt('/dashboard/runs');
-    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    fireEvent.wheel(within(nav).getByRole('link', { name: 'Runs' }), { deltaY: -120 });
-    await waitFor(() =>
-      expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute(
-        'aria-current',
-        'page',
-      ),
-    );
-  });
-
   it('draws Settings as one icon with a name, not a labelled row', async () => {
     renderAt('/dashboard/now');
-    const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest(
-      'aside',
-    ) as HTMLElement;
-    const settings = within(aside).getByRole('link', { name: 'Settings' });
+    const aside = await screen.findByTestId('side-nav');
+    const settings = await within(aside).findByRole('link', { name: 'Settings' });
     expect(settings.textContent).toBe('');
     expect(settings).toHaveAttribute('title', 'Settings');
-  });
-
-  it('opens an area by its first page', async () => {
-    renderAt('/dashboard/runs');
-    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute(
-      'href',
-      '/dashboard/now',
-    );
-  });
-
-  it('marks Settings current on any settings page, including the moved Toolbox', async () => {
-    renderAt('/dashboard/toolbox');
-    const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest(
-      'aside',
-    ) as HTMLElement;
-    expect(within(aside).getByRole('link', { name: 'Settings' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-  });
-
-  it('marks the page you are on, by aria-current and not by colour alone', async () => {
-    renderAt('/dashboard/runs');
-    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    const current = within(nav)
-      .getAllByRole('link')
-      .filter((link) => link.getAttribute('aria-current') === 'page');
-    expect(current.map((link) => link.textContent)).toEqual(['Runs']);
-    expect(current[0]).toHaveClass('font-semibold');
   });
 
   it('stays in place while the page scrolls, and scrolls its own list when it is long', async () => {
     renderAt('/dashboard/now');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    const aside = nav.closest('aside');
-    expect(aside).toHaveClass('sticky', 'top-0', 'h-dvh');
+    expect(nav.closest('aside')).toHaveClass('sticky', 'top-0', 'h-dvh');
     expect(nav).toHaveClass('overflow-y-auto');
   });
 
-  it('is the desktop layout only; below lg the top and bottom bars take over', async () => {
+  it('is the desktop layout only; below lg the top bar and its drawer take over', async () => {
     renderAt('/dashboard/now');
-    const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest('aside');
-    expect(aside).toHaveClass('hidden', 'lg:flex');
+    expect(await screen.findByTestId('side-nav')).toHaveClass('hidden', 'lg:flex');
   });
 
   it('carries the wordmark, and no theme control', async () => {
     renderAt('/dashboard/now');
-    const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest('aside');
-    expect(within(aside as HTMLElement).getByTestId('side-wordmark')).toHaveTextContent('Lupin.');
-    expect(within(aside as HTMLElement).queryByTestId('theme-toggle')).toBeNull();
+    const aside = await screen.findByTestId('side-nav');
+    expect(within(aside).getByTestId('side-wordmark')).toHaveTextContent('Lupin.');
+    expect(within(aside).queryByTestId('theme-toggle')).toBeNull();
   });
 
   it('adds no headings, so the page keeps its own outline', async () => {
@@ -167,34 +194,167 @@ describe('SideNav', () => {
     expect(within(nav).queryAllByRole('heading')).toHaveLength(0);
   });
 
-  it('holds only the areas, Ask Lupin and Settings: no run list and no mode switch', async () => {
+  it('holds no run list and no mode switch', async () => {
     renderAt('/dashboard/now', makeApi());
-    const aside = (await screen.findByRole('navigation', { name: 'Sidebar' })).closest(
-      'aside',
-    ) as HTMLElement;
+    const aside = await screen.findByTestId('side-nav');
     expect(within(aside).queryByRole('list', { name: 'Recent runs' })).toBeNull();
     expect(within(aside).queryByRole('button', { name: 'Focus mode' })).toBeNull();
-    const names = within(aside)
-      .getAllByRole('button')
-      .map((button) => button.getAttribute('aria-label') ?? button.textContent ?? '');
-    expect(names).toHaveLength(2);
-    expect(names[0]).toMatch(/sidebar$/u);
-    expect(names[1]).toMatch(/^Ask Lupin/u);
   });
 
   it('leads with Ask Lupin, which opens the command palette', async () => {
     const heard = vi.fn();
     document.addEventListener('keydown', heard);
     renderAt('/dashboard/now');
-    const ask = await screen.findByRole('button', { name: /Ask Lupin/u });
-    ask.click();
+    (await screen.findByRole('button', { name: /Ask Lupin/u })).click();
     expect(heard).toHaveBeenCalledWith(expect.objectContaining({ key: 'k', ctrlKey: true }));
     document.removeEventListener('keydown', heard);
   });
 
-  it('has no serious or critical axe violations', async () => {
-    const { container } = renderAt('/dashboard/runs');
+  it('jumps to the first and last page with Home and End, and ignores other keys', async () => {
+    renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    const runs = within(nav).getByRole('link', { name: 'Runs' });
+    runs.focus();
+    fireEvent.keyDown(runs, { key: 'Home' });
+    expect(document.activeElement).toBe(within(nav).getByRole('button', { name: 'Home' }));
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'End' });
+    expect(document.activeElement).toBe(within(nav).getByRole('button', { name: 'Health' }));
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'x' });
+    expect(document.activeElement).toBe(within(nav).getByRole('button', { name: 'Health' }));
+  });
+
+  it('follows a page from the rail flyout, and closes the flyout as it goes', async () => {
+    localStorage.removeItem(SIDEBAR_KEY);
+    const { router } = renderAt('/dashboard/now');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    fireEvent.click(within(nav).getByRole('button', { name: 'Runs' }));
+    const flyout = await screen.findByRole('list', { name: 'Runs pages' });
+    fireEvent.click(within(flyout).getAllByRole('link')[0] as HTMLElement);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard/runs'));
+    expect(screen.queryByRole('list', { name: 'Runs pages' })).toBeNull();
+  });
+
+  it('opens with nothing remembered when the stored groups are not a list, or not JSON', async () => {
+    localStorage.setItem(SIDEBAR_GROUPS_KEY, '{"not":"a list"}');
+    const first = renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    expect(within(nav).getByRole('button', { name: 'Tests' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    first.unmount();
+    localStorage.setItem(SIDEBAR_GROUPS_KEY, 'not json');
+    renderAt('/dashboard/runs');
+    expect(
+      within(await screen.findByRole('navigation', { name: 'Sidebar' })).getByRole('button', {
+        name: 'Tests',
+      }),
+    ).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('still works when storage refuses every read and write', async () => {
+    const first = renderAt('/dashboard/now');
     await screen.findByRole('navigation', { name: 'Sidebar' });
+    first.unmount();
+    // Only the sidebar's keys refuse: the router keeps its own storage working.
+    const ours = new Set([SIDEBAR_KEY, SIDEBAR_GROUPS_KEY, SIDEBAR_RETURN_KEY]);
+    const realGet = Storage.prototype.getItem;
+    const realSet = Storage.prototype.setItem;
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (ours.has(key)) throw new Error('denied');
+      return realGet.call(this, key);
+    });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (ours.has(key)) throw new Error('denied');
+      realSet.call(this, key, value);
+    });
+    try {
+      renderAt('/dashboard/runs');
+      const again = await screen.findByRole('navigation', { name: 'Sidebar' });
+      // A refused storage is the rail, and opening a place still works for this page.
+      expect(screen.getByTestId('side-nav')).toHaveAttribute('data-collapsed', 'true');
+      fireEvent.click(within(again).getByRole('button', { name: 'Tests' }));
+      expect(await screen.findByRole('list', { name: 'Tests pages' })).toBeInTheDocument();
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+    }
+  });
+
+  it('has no serious or critical axe violations, open or as a rail', async () => {
+    const { container, unmount } = renderAt('/dashboard/runs');
+    await screen.findByRole('navigation', { name: 'Sidebar' });
+    await expectNoBlockingAxeViolations(container);
+    unmount();
+    localStorage.removeItem(SIDEBAR_KEY);
+    const rail = renderAt('/dashboard/runs');
+    await screen.findByRole('navigation', { name: 'Sidebar' });
+    await expectNoBlockingAxeViolations(rail.container);
+  });
+});
+
+describe('SideNav, Settings mode', () => {
+  beforeEach(() => {
+    resetViewerRoleCache();
+    localStorage.clear();
+    localStorage.setItem(SIDEBAR_KEY, 'expanded');
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('swaps to the Settings list on any settings page, the moved Toolbox included', async () => {
+    signedInAs('admin');
+    renderAt('/dashboard/toolbox');
+    const nav = await screen.findByRole('navigation', { name: 'Settings' });
+    await within(nav).findByRole('list', { name: 'Install' });
+    expect(within(nav).getByRole('link', { name: 'Toolbox' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    const groups = within(nav)
+      .getAllByRole('list')
+      .map((list) => list.getAttribute('aria-label'));
+    expect(groups).toEqual(['Personal', 'Workspace', 'Install', 'Tools']);
+    expect(screen.queryByRole('navigation', { name: 'Sidebar' })).toBeNull();
+  });
+
+  it('lists only what the role may open', async () => {
+    signedInAs('viewer');
+    renderAt('/dashboard/settings');
+    const nav = await screen.findByRole('navigation', { name: 'Settings' });
+    expect(within(nav).getByRole('link', { name: 'Appearance' })).toBeInTheDocument();
+    await waitFor(() => expect(within(nav).queryByRole('link', { name: 'Members' })).toBeNull());
+  });
+
+  it('goes back to the page you were on before Settings', async () => {
+    signedInAs('admin');
+    const { router } = renderAt('/dashboard/insights');
+    await screen.findByRole('navigation', { name: 'Sidebar' });
+    expect(localStorage.getItem(SIDEBAR_RETURN_KEY)).toBe('/dashboard/insights');
+    await router.navigate({ to: '/dashboard/settings' });
+    const back = await screen.findByRole('link', { name: /Back to Lupin/u });
+    expect(back).toHaveAttribute('href', '/dashboard/insights');
+  });
+
+  it('goes back to Home when there is nowhere remembered', async () => {
+    signedInAs('admin');
+    renderAt('/dashboard/settings');
+    expect(await screen.findByRole('link', { name: /Back to Lupin/u })).toHaveAttribute(
+      'href',
+      '/dashboard/now',
+    );
+  });
+
+  it('has no serious or critical axe violations', async () => {
+    signedInAs('admin');
+    const { container } = renderAt('/dashboard/settings/projects');
+    await screen.findByRole('navigation', { name: 'Settings' });
     await expectNoBlockingAxeViolations(container);
   });
 });
