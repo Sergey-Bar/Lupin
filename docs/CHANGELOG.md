@@ -39,6 +39,9 @@
   measured) and the reason and age of the one you are on. A signal not measured, or evidence
   older than seven days, is never Good. `GET /api/v1/projects/:id/shape`,
   `GET …/pull-requests/:number/shape`, `GET /api/v1/portfolio/shape`, viewer.
+- **`lupin impact`** prints the tests a change needs first: the test files it touched and the
+  tests named after the source files it touched, with the changed sources no test is named after.
+  It runs in the job and sends nothing; `--format paths` feeds a test runner directly.
 - **Quiet hours for scheduled reports.** A schedule can name hours, in its own timezone, when
   nothing is delivered; a report due inside them is queued and sent when they end, and while
   one waits a later one is folded into it rather than piling up behind it.

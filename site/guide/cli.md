@@ -78,6 +78,25 @@ in, so the absolute paths it wrote become repository-relative.
 A misspelt option is refused rather than ignored: a step that silently dropped `--commit` would
 gate the wrong commit.
 
+## Run the tests this change needs first
+
+`lupin impact` reads the branch's changed files and prints the tests to run first: the test files
+the change touched, and the tests named after the source files it touched (`cart.ts` →
+`cart.test.ts`, `__tests__/cart.ts`, `test_cart.py`, `cart_test.go`), the nearest one first. It
+also lists the changed source files no test is named after, so a change nothing covers is seen.
+
+```bash
+lupin impact --base origin/main               # what to run, and why
+npx vitest run $(lupin impact --format paths) # straight into the test runner
+lupin impact --format json                    # for a script
+```
+
+It reads git in the job and sends nothing, so it needs no token and no Lupin install. When the
+change touched what every test depends on (a manifest, a lockfile, a `tsconfig`, a test runner
+config), the selection is not trusted: the text says to run everything, and `--format paths`
+prints every test file. The selection is by name only; a test that covers a file it is not named
+after is not found, which is why it is a list to run first and not a list to run instead.
+
 ## Exit codes
 
 | Code | Meaning                                                         |

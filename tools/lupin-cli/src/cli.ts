@@ -1,5 +1,6 @@
 import { agentConfig, deploy, gate, report, upload, type Io } from './commands.js';
 import { diffGuard } from './diff-guard-command.js';
+import { impact } from './impact-command.js';
 import { CliError, EXIT } from './errors.js';
 import { shard } from './shard-command.js';
 import { test } from './test-command.js';
@@ -12,6 +13,7 @@ Usage:
   lupin shard --total <n> --index <i> [--as-of <time>] (-- <files…> | --files-from <path>)
   lupin gate --branch <b> --commit <sha> [--pr <number>] [--post]
   lupin diff-guard [--base <ref>] [--commit <sha>] [--pr <number>] [--dry-run] [--fail-on-findings]
+  lupin impact [--base <ref>] [--format text|paths|json]
   lupin deploy --environment <name> --status success|failure [--sha <sha>] [--id <id>] [--url <url>]
   lupin agent-config [--branch <b>] [--commit <sha>] [--dir <path>]
   lupin report --out <path> [--window 7d|release] [--branch <b>]
@@ -35,6 +37,12 @@ deleted tests, added skips, removed or loosened assertions, lowered thresholds, 
 cannot fail, added retries. It sends kinds, paths and line numbers, never a line of source;
 --dry-run sends nothing. The base defaults to LUPIN_BASE, then origin/$GITHUB_BASE_REF.
 
+\`impact\` prints the tests to run first for this branch's change: the test files it touched and
+the tests named after the source files it touched, with the changed sources no test is named
+after. It reads git here and sends nothing, so it needs no token. --format paths prints one test
+file per line for a test runner, or every test file when a manifest, lockfile or test config
+changed.
+
 Every command takes --project <id>, or reads LUPIN_PROJECT.
 Environment: LUPIN_URL (https://, or http:// to loopback only), LUPIN_TOKEN (lup_…).
 Exit codes: 0 done or gate passed, 1 gate failed, 2 usage, 3 refused or unreachable, 4 credential refused.
@@ -53,6 +61,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   deploy,
   report,
   'diff-guard': diffGuard,
+  impact,
   'agent-config': agentConfig,
 };
 

@@ -81,7 +81,7 @@ export const runGit: Git = gitWith({ limit: MAX_DIFF_BYTES });
  */
 const REF = /^(?!-)(?!.*\.\.)[\w./@^~-]{1,255}$/u;
 
-function baseOf(io: Io, flag: string | undefined): string {
+export function baseOf(io: Io, flag: string | undefined): string {
   const fromCi = io.env['GITHUB_BASE_REF'];
   const base = flag ?? io.env['LUPIN_BASE'] ?? (fromCi ? `origin/${fromCi}` : undefined);
   if (base === undefined || base === '') {
