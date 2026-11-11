@@ -130,3 +130,13 @@ Recorded here as tasks land, so the next session starts from the tree rather tha
   only; a subscription still cannot be edited; a retry after a failed send is not held by
   quiet hours; pages with the project in their path (a pull request, Repository 360) ignore
   the scope by design.
+- **Wave 4, tasks 20–24: landed** on `feat/qa-control-ai-age`. Task 20: a GitHub App
+  (`github-app-service.ts`, RS256 app token, installation tokens cached to five minutes before
+  expiry, Settings → Integrations panel). Task 21: GitLab CI (`gitlab-post.ts`: status and one
+  merge-request note from the job). Task 22: `lupin impact` (selection by name, run everything on
+  a manifest or config change). Task 23: **decided against building SAML in the app**; SAML stays
+  behind Cloudflare Access so the app parses no XML signatures, and the comparison page says so.
+  Task 24: `site/guide/compare.md` rewritten for the new rows.
+- **Left from Wave 4:** server-side GitLab sync (merge requests, pipelines, deployments); the
+  GitHub App's `pull_request` webhook reassessing risk; impact selection by coverage, because
+  nothing writes `test_failure_correlations` yet; no run against real GitHub or GitLab.
