@@ -163,7 +163,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
         <Panel title="Quarantined tests" data-testid="quarantine-list" className="flex-1">
           <Paged items={data} reservedPx={460} label="quarantine">
             {(page) => (
-              <Table>
+              <Table aria-label="Quarantined tests">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Test</TableHead>

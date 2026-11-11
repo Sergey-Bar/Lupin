@@ -311,7 +311,7 @@ function SeriesChart({ metric }: { metric: CockpitMetric }): React.ReactElement 
         </text>
       </svg>
       <figcaption className="sr-only">The readings of {metric.label}, oldest first.</figcaption>
-      <Table>
+      <Table aria-label={`${metric.label} readings`}>
         <TableHeader>
           <TableRow>
             <TableHead>Recorded</TableHead>

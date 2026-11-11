@@ -8007,6 +8007,52 @@
           "asserts": "formatBytes reads byte counts in binary steps with at most one decimal."
         }
       ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-191",
+      "band": "Minor",
+      "title": "Nine tables had no name, the artifact list scrolled, and run detail was 1,135 lines",
+      "summary": "Nine data tables had neither an aria-label nor a caption, so a screen reader listed them unnamed: the quarantine list, the project quarantine table, the score matrix, four gap tables, the analytics days and the metric readings. The run-detail artifact list was one scrolling region against the no-scroll rule every other list follows. routes/dashboard/run-detail.tsx was 1,135 lines, and ten more components were over 600.",
+      "resolution": "Each table is named, and a rule test refuses an unnamed one. The artifact list is paged with its range stated. run-detail.tsx is split along its panels into components/run-detail/evidence.tsx and panels.tsx (336, 415 and 407 lines). The other ten are held by a size ratchet rather than split in this change: none may grow, no new file may pass 600, and a ceiling leaves the list once its file is under the limit.",
+      "evidence": [
+        {
+          "path": "apps/web/src/table-name-rule.test.ts",
+          "asserts": "Every Table under apps/web/src has an aria-label or a caption."
+        },
+        {
+          "path": "apps/web/src/component-size.test.ts",
+          "asserts": "No component is over 600 lines or its recorded ceiling, and a ceiling is dropped once its file fits."
+        },
+        {
+          "path": "apps/web/src/routes/dashboard/run-detail.test.tsx",
+          "asserts": "Forty artifacts are paged, the range is stated, and Next moves the page."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-192",
+      "band": "Minor",
+      "title": "The register cited a component nothing mounted as evidence for a real capability",
+      "summary": "reporting.explorer was real on the strength of apps/web/src/components/dashboard/RunExplorer.tsx, which only its own test and the axe sweep rendered. The gate that knew it was dead checked documents calling things unused, not register rows citing them; and it did not count a lazy import() as a use, so five routed pages would have read as dead too.",
+      "resolution": "RunExplorer, its test, its axe case and its fixture are deleted. The row now cites the runs list, run detail and quarantine screens and their tests, and says the canonical result route has no screen. docs-paths refuses a real row citing a web component only its own test mounts, and counts a lazy import() as a use.",
+      "evidence": [
+        {
+          "path": "scripts/lib/docs-paths.test.mjs",
+          "asserts": "No real register row cites an apps/web component that only its own test imports; a lazy import() is a use."
+        }
+      ]
     }
   ]
 }

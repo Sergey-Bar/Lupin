@@ -192,9 +192,15 @@ by a test written against the defect and watched failing. Ordered by harm.
   File"), a "Submit" button, three dots instead of an ellipsis, an empty-state line that
   repeats its title, and `text-error` beside `text-danger`. The run-detail artifact list
   shows raw byte counts and three dots after the checksum.
-- D30. Tables without captions (8 of 36 have one), the unpaged artifact list on run detail,
+- D30. Done 2026-11-11 (MNT-191), in part: nine unnamed tables are named (the other 19 had
+  an `aria-label`, so "8 of 36 have a caption" overstated it), the artifact list is paged,
+  and `run-detail.tsx` is split into `components/run-detail/`. The other ten components over
+  600 lines are held by `component-size.test.ts` rather than split here: splitting files
+  nobody is changing carries regression risk for no change in behaviour, so each is split
+  when next changed. Tables without captions (8 of 36 have one), the unpaged artifact list on run detail,
   and components over 600 lines (`run-detail.tsx` at 1133) split along their panels.
-- D31. `apps/web/src/components/dashboard/RunExplorer.tsx` is imported only by its own test,
+- D31. Done 2026-11-11 (MNT-192): deleted, the row repointed at the screens, and a gate that
+  refuses the next one. `apps/web/src/components/dashboard/RunExplorer.tsx` is imported only by its own test,
   and the register row `reporting.explorer` cites it as evidence. Delete it and point the row
   at the screen that is used.
 

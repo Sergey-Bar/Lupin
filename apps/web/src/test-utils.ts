@@ -1335,41 +1335,6 @@ export function serverRefusal(detail: string, status = 500): Error & { detail: s
   return Object.assign(new Error(`API answered ${String(status)}`), { status, detail });
 }
 
-/** A canonical run result as `GET /api/v1/reporting/runs/:id` answers it, contract version 2. */
-export function makeCanonicalRunResult() {
-  return {
-    contractVersion: '2',
-    identity: { runId: 'run-1', workspaceId: 'workspace-1' },
-    status: 'passed',
-    startedAt: '2026-09-25T00:00:00.000Z',
-    attempts: [
-      {
-        index: 1,
-        testId: 'test-1',
-        specPath: 'tests/example.spec.ts',
-        title: 'Example',
-        status: 'passed',
-        rawStatus: 'passed',
-        startedAt: '2026-09-25T00:00:00.000Z',
-        evidence: [],
-        flakiness: 'unknown',
-      },
-    ],
-    evidence: [],
-    provenance: {
-      producer: 'playwright',
-      producerVersion: '1',
-      adapterVersion: '1',
-      sourceDigest: 'a'.repeat(64),
-      sourceUri: 'artifact://run/report.json',
-    },
-    retention: { class: 'standard' },
-    proof: { state: 'verified', digest: 'a'.repeat(64), verifier: 'test' },
-    completeness: { state: 'complete', missingShards: [], duplicateShards: [] },
-    raw: {},
-  };
-}
-
 /** One dimension of a grade, unmeasured unless told otherwise. */
 export function makeDimension(
   overrides: Partial<DimensionScore> & Pick<DimensionScore, 'dimension'>,

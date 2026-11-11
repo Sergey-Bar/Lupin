@@ -137,8 +137,9 @@ describe('JUnit adapter', () => {
 
   it('numbers each testcase’s attempt 1, not a running ordinal across the document', () => {
     // A JUnit `<testcase>` is one test with one attempt. `playwright-json.ts` puts
-    // `attemptIndex + 1` here — the attempt's ordinal within one test — and
-    // `RunExplorer.tsx:36` renders it as "attempt N". A running ordinal across the
+    // `attemptIndex + 1` here — the attempt's ordinal within one test — and the
+    // explorer that read it rendered "attempt N" (`RunExplorer`, deleted since, ledger
+    // MNT-192). A running ordinal across the
     // document made the second testcase in a report claim its only attempt was
     // attempt 2, so a consumer keying on `(testId, index)` had no consistent identity
     // across the two producers.

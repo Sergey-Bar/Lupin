@@ -116,6 +116,10 @@ DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reporte
   filters, the copilot follow-up, the GitHub App key and two checkboxes use the library
   controls, so every field has the same height and focus ring (MNT-189). Quarantine copy is
   in sentences, and artifact sizes read as `1.5 KB` (MNT-190).
+- **Every table has a name**, so a screen reader can tell them apart; a long artifact list on
+  a run is paged; run detail is split into its panels (MNT-191).
+- **An unused run explorer is gone**, and the capability register cites the screens people
+  use (MNT-192).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the

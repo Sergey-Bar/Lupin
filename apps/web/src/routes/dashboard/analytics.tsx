@@ -111,7 +111,7 @@ export function AnalyticsPage({ api, qa }: { api?: ApiClient; qa?: QaClient }) {
         {trend.status === 'ready' ? (
           <Paged items={trend.value.buckets.slice().reverse()} reservedPx={460} label="day">
             {(page) => (
-              <Table>
+              <Table aria-label="Runs by day">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Day</TableHead>

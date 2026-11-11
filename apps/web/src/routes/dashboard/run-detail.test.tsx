@@ -480,6 +480,24 @@ describe('RunDetailPage', () => {
     );
   });
 
+  // Forty artifacts were one scrolling list, against the page's no-scroll rule (ledger MNT-191).
+  it('pages a long artifact list, and says which page it is on', async () => {
+    const many = Array.from({ length: 40 }, (_, index) => ({
+      ...artifact,
+      id: `artifact-${String(index)}`,
+      name: `file-${String(index)}.zip`,
+    }));
+    render(
+      <RunDetailPage id="run-123" api={detailApi(makeRun({ ...passedRun, artifacts: many }))} />,
+    );
+    expect(await screen.findByRole('link', { name: 'file-0.zip' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'file-39.zip' })).toBeNull();
+    const pages = screen.getByRole('navigation', { name: 'artifacts pages' });
+    expect(pages).toHaveTextContent(/^1–\d+ of 40/u);
+    fireEvent.click(screen.getByRole('button', { name: 'Next artifacts page' }));
+    expect(screen.queryByRole('link', { name: 'file-0.zip' })).toBeNull();
+  });
+
   /**
    * A finished run says Reconnecting, and nothing on the page says Live.
    *

@@ -148,7 +148,7 @@ function Matrix({ score }: { score: QaScore }): React.ReactElement {
       <p className="mb-2 max-w-measure text-pretty text-xs text-fg-muted">
         Every cell carries its own components, so no number here is unexplained.
       </p>
-      <Table>
+      <Table aria-label="Score by category and surface">
         <TableHeader>
           <TableRow>
             <TableHead>Category</TableHead>

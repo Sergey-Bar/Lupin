@@ -10,11 +10,10 @@ import {
 } from '@tanstack/react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectNoBlockingAxeViolations } from './test-axe.js';
-import { RunExplorer } from './components/dashboard/RunExplorer.js';
 import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@lupin/ui';
 import { BottomTabBar, NavBar } from './components/NavBar.js';
 import { ThemeProvider } from './theme/ThemeProvider.js';
-import { makeApi, makeCanonicalRunResult, makeRun } from './test-utils.js';
+import { makeApi, makeRun } from './test-utils.js';
 import { RunDetailPage } from './routes/dashboard/run-detail.js';
 import { QuarantinePage } from './routes/dashboard/quarantine.js';
 
@@ -85,20 +84,6 @@ describe('axe sweep over the client components', () => {
         <Skeleton data-testid="loading" />
       </div>,
     );
-    await expectNoBlockingAxeViolations(container);
-  });
-
-  it('reports no violations for the run evidence explorer', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(JSON.stringify({ result: makeCanonicalRunResult() }), { status: 200 }),
-        ),
-    );
-    const { container } = render(<RunExplorer runId="run-1" />);
-    await waitFor(() => expect(screen.getByTestId('run-explorer')).toBeInTheDocument());
     await expectNoBlockingAxeViolations(container);
   });
 });

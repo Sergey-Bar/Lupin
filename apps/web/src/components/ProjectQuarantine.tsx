@@ -108,7 +108,7 @@ export function ProjectQuarantine({
           {view.value.entries.length === 0 ? (
             <Quiet>No test of this project is quarantined.</Quiet>
           ) : (
-            <Table>
+            <Table aria-label="Quarantined tests">
               <TableHeader>
                 <TableRow>
                   <TableHead>Test</TableHead>
