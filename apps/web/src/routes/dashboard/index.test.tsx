@@ -303,6 +303,12 @@ describe('RunsListPage', () => {
     expect(within(row).getByTestId('run-ref-run-12345678x')).toHaveTextContent(
       'run-1234 · c0ffee1',
     );
+    // On a phone the Tests column hides and its count rides on the run's second line.
+    expect(screen.getByRole('columnheader', { name: 'Tests' })).toHaveClass(
+      'hidden',
+      'sm:table-cell',
+    );
+    expect(within(row).getByTestId('run-tests-inline-run-12345678x')).toHaveClass('sm:hidden');
     // The panel is the "Every run" section's only list, so it carries no second title.
     expect(screen.queryByText('All runs')).toBeNull();
   });

@@ -105,9 +105,19 @@ function RunName({ run }: { run: Run }): React.ReactElement {
       <p data-testid={`run-ref-${run.id}`} className="font-mono text-xs text-fg-muted">
         {id}
         {run.commit === null ? null : ` · ${run.commit.slice(0, 7)}`}
+        <span data-testid={`run-tests-inline-${run.id}`} className="sm:hidden">
+          {` · ${testsText(run)}`}
+        </span>
       </p>
     </div>
   );
+}
+
+/** Passed of total, the reading the Tests column and a phone's second line share. */
+function testsText(run: Run): string {
+  return run.summary.total > 0
+    ? `${String(run.summary.passed)}/${String(run.summary.total)}`
+    : 'No tests reported';
 }
 
 export function runVerdict(count: number): string {
@@ -225,7 +235,7 @@ export function RunsListPage({
                   {showDuration ? (
                     <TableHead className="hidden sm:table-cell text-end">Duration</TableHead>
                   ) : null}
-                  <TableHead className="text-end">Tests</TableHead>
+                  <TableHead className="hidden sm:table-cell text-end">Tests</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -264,10 +274,8 @@ export function RunsListPage({
                           : '—'}
                       </TableCell>
                     ) : null}
-                    <TableCell numeric>
-                      {run.summary.total > 0
-                        ? `${run.summary.passed}/${run.summary.total}`
-                        : 'No tests reported'}
+                    <TableCell numeric className="hidden sm:table-cell">
+                      {testsText(run)}
                     </TableCell>
                   </TableRow>
                 ))}
