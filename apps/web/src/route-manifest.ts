@@ -632,3 +632,52 @@ export function repo360Path(projectId: string): string {
 export function testHistoryPath(key: string): string {
   return `/dashboard/test?key=${encodeURIComponent(key)}`;
 }
+
+/** One page in the sidebar: its address, its name there, and the named group it sits in. */
+export interface NavPage {
+  id: string;
+  path: string;
+  label: string;
+  group?: string;
+}
+
+/** One place in the sidebar and every page under it, in the order the sidebar draws them. */
+export interface NavGroup {
+  id: SectionId;
+  label: string;
+  path: string;
+  pages: NavPage[];
+}
+
+/**
+ * The sidebar, built from the manifest: the five places, each with every page the role may
+ * open. A page is listed when it is visible or has a tab; a page reached only by a link (a run,
+ * a metric, a repository) is not, and still marks its place current. Named groups are gathered
+ * the way `tabGroups` gathers them, so Settings reads Personal, Workspace, Install, Tools.
+ */
+export function navTree(role: ViewerRole | null): NavGroup[] {
+  return SECTIONS.map((section) => {
+    const inSection = routeManifest.filter(
+      (route) =>
+        route.section === section.id && roleMeets((route as { access?: TabAccess }).access, role),
+    );
+    const withTabs = inSection.filter((route): route is TabRoute => 'tab' in route);
+    // A place with tabs lists its tabs; its older untabbed aliases still resolve by address.
+    const ordered =
+      withTabs.length > 0 ? tabGroups(withTabs).flat() : inSection.filter((route) => route.visible);
+    return {
+      id: section.id,
+      label: section.label,
+      path: section.path,
+      pages: ordered.map((route) => {
+        const group = (route as { group?: string }).group;
+        return {
+          id: route.id,
+          path: route.path,
+          label: 'tab' in route ? route.tab : route.label,
+          ...(group === undefined ? {} : { group }),
+        };
+      }),
+    };
+  });
+}
