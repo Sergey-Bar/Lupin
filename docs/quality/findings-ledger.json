@@ -5484,7 +5484,7 @@
       "status": "fixed",
       "wave": "MAINT-2026-10",
       "summary": "Coverage was above 90% in every one of the five packages and the first honest mutation scores were 88.88 (`shared-contracts`), 83.05 (`reporting`), 88.46 (`auth`), 72.27 (`orchestration`) and 68.90 (`runner-sdk`). The survivors were not noise. The ones worth naming:\n\n- `packages/auth`: a session is accepted at the instant of its expiry (`<=` survived as `<`), and `deleteExpired` kept a session one tick past it (`>` survived as `>=`); the length guard in `verifyCredential` could be replaced by `true`, so a truncated stored hash would throw a `RangeError` out of `timingSafeEqual` instead of failing the login; `isAdmin` (`some`) survived as `every`; and the two 'burn a constant-time comparison' calls in `verifySharedSecret` could be deleted unnoticed, because the observable is a side effect and no test observed it.\n- `packages/shared-contracts`: `isAdminPermission`, which decides who is an administrator, had **no test inside the package** (ten NoCoverage mutants); it was exercised only from `packages/auth`. The repo-relative path rule for drafted files accepted an unanchored drive-letter match and a `||` for `&&`. The SSE frame builder renamed any event whose payload carried a `type`.\n- `packages/orchestration`: five of the nine states' transitions, every terminal row, the minute and hour bounds of `nextOccurrence`, the strictly-after rule, and the `status`/`terminal` fields of `deriveRunState` were each pinned by at most one example.\n- `packages/runner-sdk`: the error classes' names and messages, option validation at `open`, the private-directory diagnosis (`process.getuid?.() ?? null` survived as `&&`, which would turn root's uid 0 into 'no uid' and skip the ownership check), and every state-file validation branch were untested.\n\nNo real defect in shipped behaviour was found: each survivor was a missing assertion, not a wrong result. The remaining survivors are listed honestly in the resolution rather than disabled.",
-      "resolution": "Fixed with behavioural tests only. **No mutant was excluded and no `// Stryker disable` was added.** Scores before and after (`pnpm mutation`, Windows, 2026-10-22): `shared-contracts` 88.88 to 91.43, `reporting` 83.05 (unchanged; no tests added), `auth` 88.46 to 94.23, `orchestration` 72.27 to 96.53, `runner-sdk` 68.90 to 79.11. Recorded in `docs/quality/mutation-baseline.json` and ratcheted by `pnpm mutation:ratchet`.\n\n**What still survives, and why it was left.** Six in `auth` are equivalent mutants: `Buffer.from(x, '')` and `update(x, '')` fall back to UTF-8, and the empty-input guard in `verifySharedSecret` is redundant with the length check that follows it, in result and in the number of comparisons. The seven in `orchestration` are equivalent in the same way (`Set.has` of `null`, `undefined` or a non-string is false whatever the guard in front of it says, and a non-number hour is rejected by the integer check behind its own guard). In `runner-sdk` the survivors are mostly error-message string literals on I/O failure paths and the compaction thresholds; the 75 target is met, so these are the next place to look, not an exclusion.",
+      "resolution": "Fixed with behavioural tests only. **No mutant was excluded and no `// Stryker disable` was added.** Scores before and after (`pnpm mutation`, Windows, 2026-10-22): `shared-contracts` 88.88 to 91.43, `reporting` 83.05 (unchanged; no tests added), `auth` 88.46 to 94.23, `orchestration` 72.27 to 96.53, `runner-sdk` 68.90 to 79.11. Recorded in `docs/quality/mutation-baseline.json` and ratcheted by `pnpm mutation:ratchet`.\n\n**What still survives, and why it was left.** Six in `auth` are equivalent mutants: `Buffer.from(x, '')` and `update(x, '')` fall back to UTF-8, and the empty-input guard in `verifySharedSecret` is redundant with the length check that follows it, in result and in the number of comparisons. The seven in `orchestration` are equivalent in the same way (`Set.has` of `null`, `undefined` or a non-string is false whatever the guard in front of it says, and a non-number hour is rejected by the integer check behind its own guard). In `runner-sdk` the survivors are mostly error-message string literals on I/O failure paths and the compaction thresholds; the 75 target is met, so these are the next place to look, not an exclusion.\n\n**2026-11-11:** the `nextOccurrence` boundary suite was deleted with the function it covered, which nothing outside its tests imported (MNT-177); its evidence entry went with it.",
       "confirmed": true,
       "confirmedOn": "2026-10-22",
       "confirmedBy": "Each new test was written against the surviving mutant it names, and the package was re-mutated: `auth` went from 12 survivors to 6, `orchestration` from 56 to 7.",
@@ -5504,10 +5504,6 @@
         {
           "path": "packages/orchestration/src/state-machine.table.test.ts",
           "asserts": "All 81 `canTransition` pairs and the terminal flag of every state, against a second written-out copy of the table."
-        },
-        {
-          "path": "packages/orchestration/src/schedule.boundaries.test.ts",
-          "asserts": "Minutes 0 and 59 and hours 0 and 23 are accepted, one outside each is refused with its own message, and a clock standing on the occurrence moves to the next day."
         },
         {
           "path": "packages/runner-sdk/src/spool-contract.test.ts",
@@ -7666,6 +7662,120 @@
         {
           "path": "apps/api/src/services/audit-write.test.ts",
           "asserts": "recordAudit writes a row and throws when the row is refused; audit never throws and reports the lost row with its action."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-174",
+      "band": "Minor",
+      "title": "The OIDC discovery cache grew without bound, keyed by plaintext client secrets, and the flow cookie was cast",
+      "summary": "createOidcRoutes cached discovery per issuer, client and client secret in a Map that was never evicted, with the plaintext secret as part of the key, so every identity draft an admin tested stayed in memory with its secret for the life of the process. openFlow checked the HMAC and then cast the decoded JSON to Flow, checking only expiresAt.",
+      "resolution": "The key is a SHA-256 digest of the three values, and the cache keeps at most eight configurations, dropping the oldest. The flow cookie is parsed against a schema after its signature checks out, so a signed value missing a part is refused rather than used.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/oidc-cache.test.ts",
+          "asserts": "The cache key holds no secret and differs per secret, the cache never exceeds its bound, and a signed flow missing a part or with a non-numeric expiry is refused."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-175",
+      "band": "Major",
+      "title": "Nothing enforced the one-API-process-per-database assumption that several in-process states rely on",
+      "summary": "The rate limiters, the one-admin-change-at-a-time queue in routes/members.ts (which guards the last-admin rule), the GitHub App token cache and the OIDC discovery cache are correct only with one API process per database, as ADR-006 states. A second process started against the same database was accepted silently, doubling every rate budget and letting two admin changes race the last-admin check.",
+      "resolution": "At boot, with a database, the API takes a session advisory lock with its own key and holds it until shutdown. A second production API is refused with a message naming ADR-006; outside production it warns and starts, because the E2E profile matrix boots an API beside the suite one by design. Not distributed: the state stays in the process, and the lock makes that a checked fact.",
+      "evidence": [
+        {
+          "path": "apps/api/src/infrastructure/single-process.test.ts",
+          "asserts": "The first process holds the lock until release, a second production process is refused, and a second development process is warned and started."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-176",
+      "band": "Minor",
+      "title": "GET /api/v1/schedules answered a literal empty list whatever POST had stored",
+      "summary": "The legacy process-local orchestration routes stored a schedule on POST and answered GET with `{ schedules: [] }`, so a schedule could never be read back. Its test was named \"creates and lists schedules\" and checked only the 200. The family answers 503 in production.",
+      "resolution": "GET answers what the service stored, and the test asserts the listed schedule.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/orchestration.test.ts",
+          "asserts": "A schedule created through POST is listed by GET."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-177",
+      "band": "Minor",
+      "title": "A second, dead scheduler in @lupin/orchestration that threw for a rule its own type allows",
+      "summary": "packages/orchestration/src/schedule.ts exported nextOccurrence, imported by nothing but its own tests, beside the real nextOccurrence in apps/api/src/services/notification-service.ts (croner, with timezones). Its ScheduleRule type allowed hour '*', for which a numeric minute threw 'Invalid hour', and 'step' ignored both fields.",
+      "resolution": "Deleted with its tests, and the package no longer exports it; a test fails if it returns.",
+      "evidence": [
+        {
+          "path": "packages/orchestration/src/orchestration.test.ts",
+          "asserts": "The package exports no nextOccurrence."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-178",
+      "band": "Minor",
+      "title": "Nothing held the flaky leaderboard to the flake-cost model, and the model said they disagreed",
+      "summary": "The insights leaderboard already read flakeCost, but the model's own header still said the leaderboard divided by every appearance and that nothing asserted the two agreed, which a reader of either file would believe. No test held the leaderboard's score, observations, flips and flaky count to the model's, so a later edit to either could split them unseen.",
+      "resolution": "flake-cost.ts names itself the one place the score is computed and lists its readers. insights.test.ts asserts, over runs that include running, unknown and blocked results, that every leaderboard entry carries the model's numbers; a seeded change to the leaderboard's denominator failed it.",
+      "evidence": [
+        {
+          "path": "apps/api/src/execution/insights.test.ts",
+          "asserts": "Every leaderboard entry's score, runs, flips and flaky count equal flakeCost's for that test, including runs with results the model does not observe."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-179",
+      "band": "Minor",
+      "title": "The authz matrix claimed a workspace scope it could not measure",
+      "summary": "docs/quality/authz-matrix.json carried workspaceScoped per route, computed by searching the handler's source for a workspace identifier. Handlers that use a store bound to their workspace at construction (the dashboard runs and quarantine routes) read false, and so did the quality gate routes that really were unscoped (MNT-170), so the column could not tell a leak from a scoped route. 177 of 230 rows read false.",
+      "resolution": "The column is gone from the generator, the committed matrix and the API test, and the matrix says where scope is proved instead: the cross-workspace isolation tests and tenancy-scope.json. The generator test fails if a row carries the claim again.",
+      "evidence": [
+        {
+          "path": "scripts/lib/authz-matrix.test.mjs",
+          "asserts": "A generated row and every committed row carry no workspaceScoped claim."
         }
       ]
     }

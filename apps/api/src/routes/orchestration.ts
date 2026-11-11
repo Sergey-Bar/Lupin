@@ -32,7 +32,9 @@ export function createOrchestrationRoutes(service: OrchestrationService) {
       throw new DomainError('INVALID_AUTOMATION_DEFINITION', 'Invalid automation definition');
     return context.json({ automation: service.createAutomation(parsed.data) }, 201);
   });
-  app.get('/api/v1/schedules', (context) => context.json({ schedules: [] }));
+  // What POST stored, read back. It answered a literal empty list (ledger MNT-176). This whole
+  // family is process-local and answers 503 in production (`mountLegacyProcessLocalRoutes`).
+  app.get('/api/v1/schedules', (context) => context.json({ schedules: service.listSchedules() }));
   app.post('/api/v1/schedules', async (context) => {
     const parsed = ScheduleSchema.omit({ id: true }).safeParse(
       await context.req.json().catch(() => null),

@@ -84,6 +84,14 @@
 - **A break-glass sign-in that cannot be audited is refused** with `503
 DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reported on stderr
   instead of being dropped (ledger MNT-173).
+- **One API process per database is checked.** A second production API against the same
+  database is refused at boot, and warned about elsewhere (ledger MNT-175).
+- **Smaller fixes.** The OIDC discovery cache is bounded and no longer keys on client secrets,
+  and the sign-in flow cookie is parsed against a schema (MNT-174). `GET /api/v1/schedules`
+  lists what `POST` stored (MNT-176). A dead second scheduler is gone from
+  `@lupin/orchestration` (MNT-177). The flaky leaderboard is held to the flake-cost model by a
+  test (MNT-178). The authz matrix no longer carries a `workspaceScoped` column it could not
+  measure (MNT-179).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the

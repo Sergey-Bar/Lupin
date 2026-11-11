@@ -37,7 +37,6 @@ export const OPEN = 'open';
  * @property {string} method
  * @property {string} path
  * @property {string} access `open`, or the tagged class(es) joined with `+`
- * @property {boolean} workspaceScoped the endpoint's own code names the workspace
  * @property {string | null} evidenceTest the test file that exercises this route
  * @property {string} composition `always`, or `database` for a group mounted only with DATABASE_URL
  */
@@ -120,28 +119,13 @@ export function isEndpoint(route) {
   return route.method !== 'ALL' && !route.path.includes('*') && tagOf(route.handler) === undefined;
 }
 
-/**
- * Whether the endpoint's own code names the workspace.
- *
- * **What this is and is not.** It reads the handler's source for the identifiers this API uses
- * for the tenancy boundary (`ws`, `workspace`, `workspaceId`, `WORKSPACE`). It is a statement
- * about the handler, derived from the code; it is not a proof that the data layer filters, and
- * a handler that delegates to a store bound to a workspace elsewhere reports `false`. The
- * cross-workspace isolation tests (`tenancy-scope.json`) are what prove the filter; this
- * column is the prompt to look for one.
- *
- * @param {readonly unknown[]} handlers
- * @returns {boolean}
+/*
+ * There is no `workspaceScoped` column (ledger MNT-179). It read the handler's source for a
+ * workspace identifier, so a handler using a store bound to its workspace at construction read
+ * `false` beside one that filtered nothing at all, and a reader could not tell a leak from a
+ * scoped route. Which routes are workspace-scoped is proved by the cross-workspace isolation
+ * tests and `docs/quality/tenancy-scope.json`, not claimed here.
  */
-export function namesWorkspace(handlers) {
-  return handlers.some(
-    (handler) =>
-      typeof handler === 'function' &&
-      /\b(ws|workspace|workspaceId|workspaceID|WORKSPACE_ID|DEFAULT_WORKSPACE_ID)\b/.test(
-        Function.prototype.toString.call(handler),
-      ),
-  );
-}
 
 /**
  * A pattern that finds a route in a test's text, with each parameter free.
@@ -214,9 +198,6 @@ export function describeRoutes({ routes, tests, composition = 'always' }) {
       method: route.method,
       path: route.path,
       access: classes.length === 0 ? OPEN : classes.join('+'),
-      workspaceScoped: namesWorkspace(
-        chain.filter((entry) => isEndpoint(entry)).map((entry) => entry.handler),
-      ),
       evidenceTest: evidenceFor(route.path, tests),
       composition,
     });
@@ -296,7 +277,7 @@ export function compareMatrix(committed, generated, tests) {
 function rowFindings(key, listed, row, tests) {
   /** @type {string[]} */
   const findings = [];
-  for (const field of /** @type {const} */ (['access', 'workspaceScoped', 'composition'])) {
+  for (const field of /** @type {const} */ (['access', 'composition'])) {
     if (listed[field] !== row[field]) {
       findings.push(
         `${key}: ${field} is ${JSON.stringify(listed[field])} in the matrix and ` +

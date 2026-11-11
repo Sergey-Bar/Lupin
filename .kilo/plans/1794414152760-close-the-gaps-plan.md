@@ -63,7 +63,7 @@ by a test written against the defect and watched failing. Ordered by harm.
   and their audit trail were exposed. Now every statement is limited to shared rows and the
   store's own workspace, a shared gate needs an installation admin, each gate carries its
   scope, and the audit row names the caller.
-- D1a. Found while fixing D1: Settings → Quality gates says "A run that misses its gate is
+- D1a. Found while fixing D1: Settings â†’ Quality gates says "A run that misses its gate is
   marked failed", but nothing marks a run failed from these rows; the run gate reads quality
   policies. Either make a gate feed the run gate, or say what a gate does today.
 - D2. Done 2026-11-11 (ledger MNT-171), and worse than first written: the production
@@ -85,28 +85,28 @@ by a test written against the defect and watched failing. Ordered by harm.
   and `audit` in `apps/api/src/services/access-service.ts` swallows insert failures. The one
   event documented as always audited can go unrecorded. Await it, and refuse break-glass when
   the audit row cannot be written.
-- D5. The OIDC discovery cache in `apps/api/src/routes/oidc.ts` is never evicted and keys
+- D5. Done 2026-11-11 (MNT-174). The OIDC discovery cache in `apps/api/src/routes/oidc.ts` is never evicted and keys
   entries by the plaintext client secret, so every tested identity draft stays in memory with
   its secret for the life of the process. Key by a hash, bound the cache, and evict on apply.
   Parse the OIDC flow cookie with a schema instead of a cast.
-- D6. Process-local state that splits with two API processes: the rate limiters in
+- D6. Done 2026-11-11 (MNT-175). Process-local state that splits with two API processes: the rate limiters in
   `apps/api/src/middleware/rate-limit.ts`, the admin-change lock in
   `apps/api/src/routes/members.ts`, the GitHub App token cache and the OIDC cache. ADR-006 is
   one process, so the fix is to state it at startup (refuse a second API process against the
   same database, through an advisory lock) rather than to distribute the state.
-- D7. The legacy orchestration routes answer `GET /api/v1/schedules` with a literal empty list
+- D7. Done 2026-11-11 (MNT-176), by reading back what was stored. The legacy orchestration routes answer `GET /api/v1/schedules` with a literal empty list
   while `POST` stores one (`apps/api/src/routes/orchestration.ts`), over the in-memory
   `apps/api/src/services/orchestration-service.ts` and `apps/api/src/services/runner-control.ts`.
   They are 503 in production already; remove them outside production too, or read back what
   was stored, and take their rows out of the authz matrix.
-- D8. `packages/orchestration/src/schedule.ts` exports a `nextOccurrence` that throws for an
+- D8. Done 2026-11-11 (MNT-177). `packages/orchestration/src/schedule.ts` exports a `nextOccurrence` that throws for an
   hour of `'*'` its own type allows, ignores the minute for `'step'`, and is imported only by
   its tests, beside a different `nextOccurrence` in
   `apps/api/src/services/notification-service.ts`. Delete the dead one.
-- D9. The flaky leaderboard in `apps/api/src/execution/insights.ts` and flake cost in
+- D9. Done 2026-11-11 (MNT-178); the code already shared one formula, the test and the comment were missing. The flaky leaderboard in `apps/api/src/execution/insights.ts` and flake cost in
   `packages/reporting/src/flake-cost.ts` count flakiness over different denominators and
   nothing asserts they agree. One function, used by both, with a property test.
-- D10. The authz matrix's `workspaceScoped` flag marks scoped handlers (runs, quarantine) and
+- D10. Done 2026-11-11 (MNT-179), by dropping the column. The authz matrix's `workspaceScoped` flag marks scoped handlers (runs, quarantine) and
   the unscoped quality gates the same way, so it cannot find a leak. Derive it from the store a
   handler uses, or drop the column and rely on isolation tests, and say which in
   `docs/quality/authz-matrix.json`.

@@ -199,6 +199,7 @@ import {
   LocalArtifactStore,
 } from './infrastructure/artifact-store.js';
 import { S3ArtifactBytesStore } from './infrastructure/s3-artifact-bytes.js';
+import { claimSingleProcess, type SingleProcessClaim } from './infrastructure/single-process.js';
 import type { ArtifactBytesStore } from './execution/drizzle-execution-store.js';
 
 const runtimeConfig = getConfig();
@@ -242,6 +243,8 @@ const databaseUrl = runtimeConfig.databaseUrl;
  * `DATABASE_URL` — and exhausting them was a matter of traffic, not scale.
  */
 const databaseResources = databaseUrl ? createDbResources(databaseUrl) : undefined;
+/** Set at boot once the process holds the one-API-per-database lock (ledger MNT-175). */
+let singleProcess: SingleProcessClaim | undefined;
 
 /**
  * The installation's settings: environment first, then what an admin saved from Settings,
@@ -1769,6 +1772,11 @@ if (databaseResources !== undefined) {
     viewFor: (repoPath) => fileSystemView(repoPath),
   };
   await ensureWorkspace(registry);
+  // One API process per database (ADR-006, ledger MNT-175): held until shutdown.
+  singleProcess = await claimSingleProcess(databaseResources.pool, {
+    production: runtimeConfig.nodeEnv === 'production',
+    warn: (message) => logger.warn(message),
+  });
   const previousVaultSecret = process.env['VAULT_SECRET_PREVIOUS']?.trim();
   if (
     previousVaultSecret !== undefined &&
@@ -1817,6 +1825,9 @@ if (runtimeConfig.nodeEnv !== 'test') {
     });
   });
   if (databaseResources) lifecycle.add('database pool', () => databaseResources.close());
+  // After the pool, so it is given back before the pool closes.
+  const claim = singleProcess;
+  if (claim) lifecycle.add('single-process lock', () => claim.release());
   if (settingsPoll) lifecycle.add('settings poll', () => clearInterval(settingsPoll));
   if (retentionSweep) lifecycle.add('outbox retention sweep', () => retentionSweep.stop());
   if (spanRetentionSweep) {

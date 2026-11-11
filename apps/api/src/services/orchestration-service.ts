@@ -24,6 +24,10 @@ export class OrchestrationService {
     return schedule;
   }
 
+  listSchedules(): Schedule[] {
+    return [...this.schedules.values()];
+  }
+
   enqueue(automationId: string): JobEnvelope {
     const automation = this.automations.get(automationId);
     if (!automation) throw new Error('Automation not found');

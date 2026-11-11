@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { flakeCost } from '@lupin/reporting';
 import { QaInsightsSchema } from '@lupin/shared-contracts';
 import { InMemoryExecutionStore } from './in-memory-execution-store.js';
-import { belongsTo, buildInsights, createInsightsRoutes } from './insights.js';
+import { belongsTo, buildInsights, createInsightsRoutes, flakeObservationsOf } from './insights.js';
 import type { ExecutionRun, ExecutionTestResult } from './types.js';
 
 const NOW = new Date('2026-10-20T12:00:00.000Z');
@@ -95,6 +96,30 @@ describe('buildInsights', () => {
       score: 0.333,
     });
     expect(insights.flakyLeaderboard[0]?.key).toBe('a.spec.ts › flips');
+  });
+
+  it('scores each test exactly as flakeCost does, including runs with unobserved results (MNT-178)', () => {
+    const runs = [
+      run('2026-10-18T08:00:00.000Z', 'passed', [test('t', 'passed'), test('u', 'flaky')]),
+      run('2026-10-19T08:00:00.000Z', 'failed', [test('t', 'failed'), test('u', 'passed')]),
+      // Results the flake model does not observe must not change the leaderboard's denominator.
+      run('2026-10-19T09:00:00.000Z', null, [test('t', 'running'), test('u', 'unknown')]),
+      run('2026-10-20T08:00:00.000Z', 'passed', [test('t', 'passed'), test('u', 'blocked')]),
+    ];
+    const insights = buildInsights(runs, NOW, 7, false);
+    const costs = new Map(
+      flakeCost(flakeObservationsOf(runs)).map((cost) => [cost.testKey, cost] as const),
+    );
+    expect(insights.flakyLeaderboard.length).toBeGreaterThan(0);
+    for (const entry of insights.flakyLeaderboard) {
+      const cost = costs.get(entry.key);
+      expect(entry).toMatchObject({
+        score: cost?.flakyScore,
+        runs: cost?.observations,
+        flips: cost?.flips,
+        flaky: cost?.flakyResults,
+      });
+    }
   });
 
   it('ranks the slowest tests by p95 and compares the median with the window before', () => {

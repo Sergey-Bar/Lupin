@@ -5,12 +5,11 @@
  *
  * A `flaky` result (failed, then passed on a retry) and a flip between `passed` and a
  * failure across consecutive runs are the two kinds of disagreement, and the score is
- * `(flaky + flips) / observations` — the formula `FlakyTestSchema` documents and
- * `apps/api/src/execution/insights.ts` computes for the leaderboard. Restated here because
- * the API's version is private to a route. **The two differ in one input:** the leaderboard
- * divides by every appearance of a test, while `flakeObservationsOf` hands this model only
- * `passed`, `failed`, `flaky`, `timed_out` and `skipped` results, so a test with `running`,
- * `unknown` or `blocked` results scores higher here than there. Nothing asserts the two agree.
+ * `(flaky + flips) / observations` — the formula `FlakyTestSchema` documents. **This is the
+ * one place it is computed:** the insights leaderboard (`apps/api/src/execution/insights.ts`),
+ * the quarantine suggestions, the auto-quarantine policy and the scorecard all read
+ * `flakeCost`, over the same `flakeObservationsOf`, and `insights.test.ts` asserts the
+ * leaderboard's numbers equal this model's for every test (ledger MNT-178).
  *
  * ## A test that only ever fails is not a quarantine candidate
  *

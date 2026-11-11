@@ -33,7 +33,6 @@ interface Row {
   method: string;
   path: string;
   access: string;
-  workspaceScoped: boolean;
   evidenceTest: string | null;
   composition: string;
 }
