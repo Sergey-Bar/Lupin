@@ -28,19 +28,27 @@ export function isGitLabCi(env: Readonly<Record<string, string | undefined>>): b
   return env['GITLAB_CI'] === 'true';
 }
 
+/** The variables a GitLab job reads here: one place, so a page naming them names real ones. */
+export const GITLAB_ENV = {
+  token: 'LUPIN_GITLAB_TOKEN',
+  project: 'CI_PROJECT_ID',
+  api: 'CI_API_V4_URL',
+  mergeRequest: 'CI_MERGE_REQUEST_IID',
+} as const;
+
 /** Where to post, from GitLab CI's own variables. Refused before the gate is even asked. */
 export function gitlabTarget(env: Readonly<Record<string, string | undefined>>): GitLabTarget {
-  const token = env['LUPIN_GITLAB_TOKEN']?.trim() ?? '';
+  const token = env[GITLAB_ENV.token]?.trim() ?? '';
   if (token === '') {
     throw usage(
       '--post on GitLab needs LUPIN_GITLAB_TOKEN: a project access token with the api scope, as a masked CI/CD variable.',
     );
   }
-  const project = env['CI_PROJECT_ID']?.trim() ?? '';
+  const project = env[GITLAB_ENV.project]?.trim() ?? '';
   if (!/^\d{1,20}$/u.test(project)) throw usage('--post on GitLab needs CI_PROJECT_ID.');
   let api: URL;
   try {
-    api = new URL(env['CI_API_V4_URL']?.trim() || 'https://gitlab.com/api/v4');
+    api = new URL(env[GITLAB_ENV.api]?.trim() || 'https://gitlab.com/api/v4');
   } catch {
     throw usage('CI_API_V4_URL is not a URL.');
   }
@@ -54,7 +62,7 @@ export function gitlabTarget(env: Readonly<Record<string, string | undefined>>):
 export function mergeRequestOf(
   env: Readonly<Record<string, string | undefined>>,
 ): number | undefined {
-  const iid = Number(env['CI_MERGE_REQUEST_IID']);
+  const iid = Number(env[GITLAB_ENV.mergeRequest]);
   return Number.isInteger(iid) && iid > 0 ? iid : undefined;
 }
 

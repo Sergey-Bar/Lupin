@@ -101,7 +101,7 @@ lupin:
 `gate --post` writes the verdict as a commit status named `lupin/health` and the gate's comment
 as one merge request note, updated on every push. GitLab has no check runs, so the risk factors
 are in the note. Give it `LUPIN_GITLAB_TOKEN`, a project access token with the `api` scope, as a
-masked variable: `CI_JOB_TOKEN` cannot write statuses or notes. That token goes only to
+masked variable: GitLab's job token cannot write statuses or notes. That token goes only to
 `CI_API_V4_URL`, which must be `https://`, and never to Lupin; a refusal from GitLab is printed
 and never changes the exit code.
 
