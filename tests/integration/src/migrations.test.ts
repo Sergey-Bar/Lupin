@@ -199,6 +199,7 @@ describe('migration graph', () => {
       '0055_report_audience_format',
       '0056_email_channel',
       '0057_settings_onboarding',
+      '0058_change_risk',
     ]);
   });
 
