@@ -46,6 +46,7 @@ import { createAccessRoutes } from './access.js';
 import { createAuditRoutes } from './audit.js';
 import { createMembersRoutes } from './members.js';
 import { createProjectAdminRoutes } from './project-admin.js';
+import { createGitHubAppRoutes } from './github-app.js';
 import { createOnboardingRoutes } from './onboarding.js';
 import { createScimRoutes } from './scim.js';
 import { defaultClientKey } from './auth.js';
@@ -369,6 +370,16 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
   app.route(
     '/',
     createProjectAdminRoutes({
+      db: options.db,
+      workspaceId: options.workspaceId,
+      vaultSecret: options.vaultSecret,
+      access,
+    }),
+  );
+  // Settings → Integrations: the workspace's GitHub App, a vault entry like a project token.
+  app.route(
+    '/',
+    createGitHubAppRoutes({
       db: options.db,
       workspaceId: options.workspaceId,
       vaultSecret: options.vaultSecret,

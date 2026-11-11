@@ -8,9 +8,9 @@
     "`composition: database` rows are mounted only when `DATABASE_URL` is set, so the in-memory composition cannot send them a request; the class is still read from their guards."
   ],
   "summary": {
-    "admin": 40,
+    "admin": 42,
     "viewer": 101,
-    "operator": 35,
+    "operator": 36,
     "open": 16,
     "runner-credential": 9,
     "reporter-secret": 14,
@@ -1650,6 +1650,30 @@
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/settings.test.ts",
       "composition": "always"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/settings/github-app",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/github-app.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings/github-app",
+      "access": "operator",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/github-app.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/settings/github-app",
+      "access": "admin",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/github-app.test.ts",
+      "composition": "database"
     },
     {
       "method": "POST",

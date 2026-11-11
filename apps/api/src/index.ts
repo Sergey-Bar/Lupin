@@ -107,7 +107,14 @@ import { poolCapabilities } from './services/runner-pool.js';
 import { readGitToken } from './services/git-credential-service.js';
 import { rotateVaultSecrets } from './services/vault-secrets.js';
 import { audit, authenticateToken } from './services/access-service.js';
-import { alertsFor, deliverAlerts, useGitHubApi } from './services/health-integrations.js';
+import {
+  alertsFor,
+  deliverAlerts,
+  githubRepository,
+  useGitHubApi,
+} from './services/health-integrations.js';
+import { createGitHubAppTokens } from './services/github-app-service.js';
+import { projectSource } from './services/repo-health-service.js';
 import type { ReportEvent } from './services/repo-health-service.js';
 import { createGitHubAdapter } from '@lupin/connectors-github';
 import { jiraAdapter } from '@lupin/connectors-jira';
@@ -1214,6 +1221,11 @@ function buildWorkspace(workspaceId: string) {
         workspaceId: workspaceId,
         viewFor: (repoPath) => fileSystemView(repoPath),
       };
+      // The workspace's GitHub App, when an admin stored one: installation tokens per repository.
+      const appTokens = createGitHubAppTokens({
+        vault: { ...registry, vaultSecret: runtimeConfig.vaultSecret },
+        apiBase: runtimeConfig.githubApiUrl,
+      });
       /**
        * The configured workspace exists before anything is written under it.
        *
@@ -1304,11 +1316,16 @@ function buildWorkspace(workspaceId: string) {
               ),
             github: {
               adapter: githubAdapter,
-              tokenFor: (projectId) =>
-                readGitToken(
-                  { ...registry, vaultSecret: runtimeConfig.vaultSecret },
-                  projectId,
-                ).catch(() => null),
+              // The project's own token first (set for it on purpose), then the workspace's
+              // GitHub App, minted for the one repository and kept until it nears expiry.
+              tokenFor: async (projectId) => {
+                const vault = { ...registry, vaultSecret: runtimeConfig.vaultSecret };
+                const own = await readGitToken(vault, projectId).catch(() => null);
+                if (own !== null) return own;
+                const source = await projectSource(registry, projectId).catch(() => null);
+                const repository = githubRepository(source?.repositoryUrl ?? null);
+                return repository === null ? null : appTokens.tokenFor(repository);
+              },
             },
             reporterSecret: runtimeConfig.reporterSecret,
             requireReporterSecret: runtimeConfig.nodeEnv === 'production',

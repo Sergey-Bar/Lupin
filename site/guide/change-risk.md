@@ -86,6 +86,13 @@ With a GitHub token of its own, the server posts the `lupin/health` status as it
 sticky comment with the risk. A personal token cannot write check runs: the status and the
 comment still post, and the check reads as unavailable.
 
+**A GitHub App is the better token.** Create an app with read and write access to checks,
+commit statuses and pull requests, install it on your repositories, and paste its App ID and a
+private key under **Settings → Integrations → GitHub App** (admin). The server then posts as the
+app, with an installation token for each repository that lasts an hour and reaches only where
+the app is installed, so check runs work and no comment is signed by a person. A project with
+its own token keeps using it. The key is sealed in the vault and never shown again.
+
 A LAN install, or one with no token, has the job post instead, with its own token:
 
 ```yaml

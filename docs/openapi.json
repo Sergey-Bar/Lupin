@@ -1953,6 +1953,26 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/settings/github-app": {
+      "delete": {
+        "operationId": "deleteApiV1SettingsGithubApp",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/github-app.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "get": {
+        "operationId": "getApiV1SettingsGithubApp",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/github-app.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "put": {
+        "operationId": "putApiV1SettingsGithubApp",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/github-app.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/settings/identity/apply": {
       "post": {
         "operationId": "postApiV1SettingsIdentityApply",

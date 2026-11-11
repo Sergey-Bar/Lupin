@@ -56,10 +56,13 @@ function InstallationGroupPage({
   page,
   health,
   client,
+  children,
 }: {
   page: GroupPage;
   health: HealthClient;
   client: SettingsClient;
+  /** More of the page, under the form, for a reader who may administer it. */
+  children?: (who: WhoAmI) => React.ReactNode;
 }): React.ReactElement {
   return (
     <PageFrame data-testid={`settings-${page.group}`}>
@@ -68,15 +71,18 @@ function InstallationGroupPage({
         <AccessGate health={health}>
           {(who) =>
             canAdminister(who) ? (
-              <Panel title={page.sections[0]?.title ?? page.title}>
-                <SettingsForm
-                  client={client}
-                  group={page.group}
-                  title={page.title}
-                  canEdit={canAdministerInstallation(who)}
-                  {...(page.testKey === undefined ? {} : { testKey: page.testKey })}
-                />
-              </Panel>
+              <>
+                <Panel title={page.sections[0]?.title ?? page.title}>
+                  <SettingsForm
+                    client={client}
+                    group={page.group}
+                    title={page.title}
+                    canEdit={canAdministerInstallation(who)}
+                    {...(page.testKey === undefined ? {} : { testKey: page.testKey })}
+                  />
+                </Panel>
+                {children?.(who)}
+              </>
             ) : (
               <AskAnAdmin who={who} />
             )
@@ -107,7 +113,116 @@ export function IntegrationsSettingsPage(props: {
   health: HealthClient;
   client: SettingsClient;
 }): React.ReactElement {
-  return <InstallationGroupPage page={GROUP_PAGES.integrations} {...props} />;
+  return (
+    <InstallationGroupPage page={GROUP_PAGES.integrations} {...props}>
+      {(who) => <GitHubAppPanel client={props.client} canEdit={canAdminister(who)} />}
+    </InstallationGroupPage>
+  );
+}
+
+/**
+ * The workspace's GitHub App: whether one is set, and an admin's paste of its App ID and
+ * private key. The server then posts as the app, with a token per repository it is installed
+ * on; a project's own token still wins. The key is never shown again.
+ */
+function GitHubAppPanel({
+  client,
+  canEdit,
+}: {
+  client: SettingsClient;
+  canEdit: boolean;
+}): React.ReactElement {
+  const toast = useToast();
+  const [version, setVersion] = React.useState(0);
+  const state = useResource(() => client.githubAppState(), [client, version]);
+  const [appId, setAppId] = React.useState('');
+  const [privateKey, setPrivateKey] = React.useState('');
+  const id = React.useId();
+  const act = (action: () => Promise<void>, success: string) =>
+    action().then(
+      () => {
+        toast({ tone: 'success', title: success });
+        setAppId('');
+        setPrivateKey('');
+        setVersion((count) => count + 1);
+      },
+      (error: unknown) =>
+        toast({
+          tone: 'danger',
+          title: 'GitHub App',
+          description: explain(error, 'The request failed.'),
+        }),
+    );
+  const set = state.status === 'ready' && state.value;
+  return (
+    <Panel
+      title="GitHub App"
+      data-testid="github-app"
+      action={
+        state.status === 'ready' ? (
+          <Badge variant={set ? 'success' : 'outline'}>{set ? 'Connected' : 'Not set'}</Badge>
+        ) : null
+      }
+    >
+      <div className="grid gap-3">
+        <p className="max-w-measure text-sm text-fg-muted">
+          Post statuses, check runs and comments as your GitHub App instead of a person’s token.
+          Install the app on the repositories, then paste its App ID and a private key it generated.
+          A project with its own token keeps using it.
+        </p>
+        {canEdit ? (
+          <form
+            className="grid gap-3"
+            aria-label="GitHub App"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void act(() => client.putGitHubApp({ appId, privateKey }), 'GitHub App saved');
+            }}
+          >
+            <Input
+              id={`${id}-app-id`}
+              label="App ID"
+              value={appId}
+              inputMode="numeric"
+              required
+              onChange={(event) => setAppId(event.target.value)}
+            />
+            <label className="grid gap-1 text-sm" htmlFor={`${id}-key`}>
+              <span className="font-medium text-fg">Private key (.pem)</span>
+              <textarea
+                id={`${id}-key`}
+                value={privateKey}
+                required
+                rows={4}
+                spellCheck={false}
+                autoComplete="off"
+                onChange={(event) => setPrivateKey(event.target.value)}
+                className="rounded-md border border-border bg-surface px-3 py-2 font-mono text-xs text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+              />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" variant="outline">
+                {set ? 'Replace the app' : 'Save the app'}
+              </Button>
+              {set ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => void act(() => client.deleteGitHubApp(), 'GitHub App removed')}
+                >
+                  Remove
+                </Button>
+              ) : null}
+            </div>
+          </form>
+        ) : (
+          <p className="max-w-measure text-sm text-fg-muted">
+            Ask an admin to connect a GitHub App.
+          </p>
+        )}
+      </div>
+    </Panel>
+  );
 }
 
 export function SessionsSettingsPage(props: {

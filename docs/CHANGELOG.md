@@ -39,6 +39,9 @@
   measured) and the reason and age of the one you are on. A signal not measured, or evidence
   older than seven days, is never Good. `GET /api/v1/projects/:id/shape`,
   `GET …/pull-requests/:number/shape`, `GET /api/v1/portfolio/shape`, viewer.
+- **GitHub App.** An admin pastes an app's ID and private key under Settings → Integrations, and
+  the server posts statuses, check runs and comments as the app, with an hour-long token per
+  repository it is installed on. A project's own token still wins.
 - **GitLab CI.** Every `lupin` command reads GitLab's own variables, and `lupin gate --post`
   in a GitLab job posts the verdict as a commit status and the gate's comment as one merge
   request note, with a project access token that never reaches Lupin.

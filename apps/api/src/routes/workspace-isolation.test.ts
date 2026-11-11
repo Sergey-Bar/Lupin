@@ -249,6 +249,10 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   // delivery sync time, and each workspace project for the portfolio. `shape-service.test.ts`
   // proves another workspace's project is a 404 and its rows stamped onto this one are unread.
   { family: 'shape', files: ['services/shape-service.ts'] },
+  // The GitHub App: one vault entry per workspace, read and written through the vault with the
+  // caller's workspace. `github-app-service.test.ts` proves another workspace's app is neither
+  // seen as set nor used to mint a token.
+  { family: 'github app', files: ['routes/github-app.ts', 'services/github-app-service.ts'] },
   // The cockpit: health and scan snapshots, runs, pull requests, deployments and delivery
   // sources of one project. Every query filters on `workspace_id` before the project, and
   // `cockpit.test.ts` proves another workspace's project is a 404, that its newer readings do
