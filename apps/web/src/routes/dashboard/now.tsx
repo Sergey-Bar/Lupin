@@ -7,6 +7,7 @@ import { createHealthClient } from '../../lib/health-client.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
 import { createGithubClient } from '../../lib/github-client.js';
+import { homeProject, rememberHomeProject } from '../../lib/home-project.js';
 
 /** The landing page: is the product better or worse than before, and what needs you. `/` lands here. */
 export const Route = createRoute({
@@ -53,14 +54,15 @@ export const Route = createRoute({
       <CockpitPage
         sources={sources}
         navigate={(to) => void navigate({ to })}
-        initialProjectId={project}
-        onProjectChange={(next) =>
+        initialProjectId={homeProject(project)}
+        onProjectChange={(next) => {
+          rememberHomeProject(next);
           void navigate({
             to: '/dashboard/now',
             search: next === undefined ? {} : { project: next },
             replace: true,
-          })
-        }
+          });
+        }}
       />
     );
   },
