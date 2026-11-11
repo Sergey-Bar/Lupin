@@ -22,6 +22,7 @@ const SUBSCRIPTION = {
   projectId: null,
   audience: 'general',
   format: 'chat',
+  quietHours: null,
 };
 const DELIVERY = {
   id: 'd1',
