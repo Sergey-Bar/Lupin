@@ -145,6 +145,20 @@ describe('dashboard routes', () => {
     expect(screen.queryByTestId('dashboard')).not.toBeInTheDocument();
   });
 
+  it('opens a run at its address, and says so when there is no such run', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith('/api/v1/auth/session')) return new Response('{}', { status: 200 });
+        if (url.endsWith('/api/v1/runs')) return new Response('[]', { status: 200 });
+        return new Response(JSON.stringify({ error: { message: 'not found' } }), { status: 404 });
+      }),
+    );
+    render(<MemoryRouter initialEntries={['/dashboard/runs/missing-run']} />);
+    expect(await screen.findByTestId('run-not-found')).toHaveTextContent('missing-run');
+  });
+
   it('creates a canonical browser run with registered execution context', async () => {
     const createRun = vi.fn().mockResolvedValue(makeRun({ id: 'created-run' }));
     const onCreated = vi.fn();

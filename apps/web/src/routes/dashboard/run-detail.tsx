@@ -183,7 +183,7 @@ function RunDetailLoading({ id }: { id: string }) {
     <PageFrame>
       <PageHeader title="Run detail" />
       <div data-testid="run-detail-loading" className="text-sm text-fg-muted">
-        Loading canonical run {id}...
+        Reading run {id}…
       </div>
     </PageFrame>
   );

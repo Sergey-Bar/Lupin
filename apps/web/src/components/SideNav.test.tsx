@@ -233,6 +233,24 @@ describe('SideNav, app mode', () => {
     expect(tests).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('opens what it remembered on the next visit, and ignores a list that is not names', async () => {
+    localStorage.setItem(SIDEBAR_GROUPS_KEY, JSON.stringify(['tests']));
+    const first = renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    expect(within(nav).getByRole('button', { name: 'Tests' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    first.unmount();
+    localStorage.setItem(SIDEBAR_GROUPS_KEY, JSON.stringify(['tests', 3]));
+    renderAt('/dashboard/runs');
+    const again = await screen.findByRole('navigation', { name: 'Sidebar' });
+    expect(within(again).getByRole('button', { name: 'Tests' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+
   it('marks the page you are on, by aria-current and an accent bar, not by colour alone', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });

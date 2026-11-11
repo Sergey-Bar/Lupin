@@ -290,6 +290,20 @@ describe('Settings → Quality gates', () => {
     );
   });
 
+  it('says why a gate was not added, and keeps the name typed', async () => {
+    const user = userEvent.setup();
+    const { client } = gatesPage();
+    vi.mocked(client.createGate).mockRejectedValueOnce(
+      Object.assign(new Error('API answered 409'), { detail: 'A gate named Nightly exists.' }),
+    );
+    await screen.findByTestId('gate-global');
+    const add = screen.getByRole('form', { name: 'Add a gate' });
+    await user.type(within(add).getByLabelText('Name'), 'Nightly');
+    await user.click(within(add).getByRole('button', { name: 'Add gate' }));
+    expect(await screen.findByText('Could not add the gate')).toBeInTheDocument();
+    expect(within(add).getByLabelText('Name')).toHaveValue('Nightly');
+  });
+
   it('shows a viewer the rules but no controls', async () => {
     gatesPage('viewer');
     await screen.findByTestId('gate-global');
