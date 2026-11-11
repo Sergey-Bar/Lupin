@@ -726,6 +726,7 @@ describe('each channel gets its own rendering', () => {
     areas: [],
     actions: [],
     cockpit: null,
+    briefing: null,
     link: null,
   };
   const channel = (kind: string, settings: Record<string, string> = {}) => ({

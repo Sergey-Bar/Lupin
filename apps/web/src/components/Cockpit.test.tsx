@@ -701,6 +701,41 @@ describe('the two Home views', () => {
     );
     expect(trend).toHaveBeenCalledWith(undefined);
   });
+
+  it('carries the week’s briefing on Release only, for the project chosen', async () => {
+    const user = userEvent.setup();
+    localStorage.removeItem(HOME_VIEW_KEY);
+    const briefing = vi.fn(async () => ({
+      briefing: {
+        version: 'briefing/1',
+        scope: { kind: 'portfolio' as const, projects: 2 },
+        windowDays: 7,
+        generatedAt: NOW.toISOString(),
+        shape: 'bad' as const,
+        headline: '4 pull requests merged, 3 AI-written.',
+        items: [
+          {
+            id: 'riskier.tampered',
+            section: 'riskier' as const,
+            tone: 'bad' as const,
+            text: '1 merged with changes that weakened its tests.',
+            evidence: ['diff-guard:portfolio:7d'],
+            link: '/dashboard/prs',
+          },
+        ],
+      },
+      narration: null,
+    }));
+    render(<CockpitPage sources={{ ...sources(), briefing }} navigate={vi.fn()} now={() => NOW} />);
+    expect(screen.queryByTestId('briefing-card')).toBeNull();
+    expect(briefing).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Release' }));
+    const card = await screen.findByTestId('briefing-card');
+    expect(await within(card).findByText('4 pull requests merged, 3 AI-written.')).toBeVisible();
+    expect(within(card).getByText('1 merged with changes that weakened its tests.')).toBeVisible();
+    expect(briefing).toHaveBeenCalledWith(undefined);
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
 });
 
 describe('the hero verdict', () => {

@@ -18,6 +18,16 @@ export const pageGuidance = {
     remember:
       'A metric that was not measured, or has nothing earlier to compare with, is not a metric that held steady.',
   },
+  briefing: {
+    purpose: 'Catch up on what happened while you were away, every line cited.',
+    steps: [
+      'Read the shape and the one-sentence summary at the top.',
+      'Go through the sections: what shipped, what got riskier, how quality moved, and what needs a decision.',
+      'Open a line to act on it, or its Read from fold to see where the number came from.',
+    ],
+    remember:
+      'A window where nothing happened says so once. Word it for me asks the configured model; a wording that uses a number the lines do not state is thrown away.',
+  },
   metric: {
     purpose:
       'See one metric of the dashboard in detail: its readings, what moved it, and where to act.',

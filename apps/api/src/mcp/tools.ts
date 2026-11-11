@@ -2,6 +2,7 @@ import { z } from 'zod/v4';
 import {
   AgentQualitySnapshotSchema,
   AiCodeReportSchema,
+  BriefingSchema,
   DeliveryReportSchema,
   FINDING_SEVERITIES,
   FINDING_STATES,
@@ -16,6 +17,7 @@ import {
 } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { aiCodeReport } from '../services/ai-code-service.js';
+import { portfolioBriefing, repositoryBriefing } from '../services/briefing-service.js';
 import { deliveryReport } from '../services/delivery-service.js';
 import { projectEvals } from '../services/eval-service.js';
 import { projectAgentRuntime } from '../services/genai-span-service.js';
@@ -307,6 +309,30 @@ const getTestEffectiveness = projectTool({
   },
 });
 
+const getBriefing: McpTool = {
+  name: 'get_briefing',
+  title: 'Briefing',
+  description:
+    'What happened over a window, every line cited: what shipped, what got riskier, how quality moved, where changes are stuck and what needs a decision. One project, or every project when projectId is omitted. Deterministic; never worded by a model.',
+  input: {
+    projectId: ProjectId.optional().describe(
+      'The project id, from list_projects; every project when omitted.',
+    ),
+    days: Days(7),
+  },
+  run: async (scope, args) => {
+    const parsed = z.object({ projectId: ProjectId.optional(), days: Days(7) }).parse(args);
+    // A caller pinned to one project reads that project's briefing, never the portfolio's.
+    const projectId = parsed.projectId ?? scope.pinned;
+    const value = BriefingSchema.parse(
+      projectId === null
+        ? await portfolioBriefing(scope.health, parsed.days)
+        : await repositoryBriefing(scope.health, allowed(scope, projectId), parsed.days),
+    );
+    return { summary: value.headline, value };
+  },
+};
+
 export const MCP_TOOLS: readonly McpTool[] = [
   listProjects,
   getHealth,
@@ -317,4 +343,5 @@ export const MCP_TOOLS: readonly McpTool[] = [
   getAiCode,
   getSupplyChain,
   getTestEffectiveness,
+  getBriefing,
 ];

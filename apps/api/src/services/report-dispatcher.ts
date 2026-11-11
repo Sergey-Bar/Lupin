@@ -10,10 +10,13 @@ import {
   renderSlack,
   renderTeams,
   renderTelegram,
+  reportBriefingOf,
+  type ReportBriefing,
   type ReportModel,
 } from '@lupin/reporting';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 import { loadCockpitDigest } from './cockpit-digest.js';
+import { portfolioBriefing, repositoryBriefing } from './briefing-service.js';
 import {
   channelWithSecret,
   loadReport,
@@ -260,6 +263,29 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
   type Scoped = Parameters<typeof loadReport>[0];
 
   /**
+   * The briefing's block for the digest: the subscription's repository, or the portfolio. A
+   * briefing that cannot be read is logged and left out; the report is still sent.
+   */
+  async function briefingFor(
+    scoped: Scoped,
+    project: string | null,
+    windowDays: number,
+  ): Promise<ReportBriefing | null> {
+    try {
+      const briefing =
+        project === null
+          ? await portfolioBriefing(scoped, windowDays)
+          : await repositoryBriefing(scoped, project, windowDays);
+      return reportBriefingOf(briefing);
+    } catch (error) {
+      options.log?.('briefing unavailable', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+  }
+
+  /**
    * The report for one delivery: what it always said, with the cockpit at its head when the
    * workspace has one, and the chart beside it. A report without a cockpit is the report it
    * always was.
@@ -268,23 +294,27 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
     scoped: Scoped,
     subscription: Awaited<ReturnType<typeof subscriptionOf>>,
   ): Promise<{ model: ReportModel; image: TrendChart | null; fullHtml: string | null }> {
+    const project = projectOfScope(subscription?.projectScope);
+    const windowDays = subscription?.cadence === 'daily' ? 1 : 7;
     const digest = await loadCockpitDigest(
       scoped,
       (error) =>
         options.log?.('cockpit digest unavailable', {
           error: error instanceof Error ? error.message : String(error),
         }),
-      projectOfScope(subscription?.projectScope),
+      project,
     );
+    const briefing = await briefingFor(scoped, project, windowDays);
     const model = composeReport(
       applyLens(
         {
           ...(await loadReport(scoped, {
             title: subscription?.name ?? 'Test report from Lupin',
-            windowDays: subscription?.cadence === 'daily' ? 1 : 7,
+            windowDays,
             link: options.link,
           })),
           ...(digest === null ? {} : { cockpit: digest.cockpit }),
+          ...(briefing === null ? {} : { briefing }),
         },
         // The audience tunes which areas lead; a subscription from before the column existed,
         // or a test send with no subscription, is `general` — the report exactly as it was.

@@ -73,6 +73,14 @@ export const routeManifest = [
     visible: false,
     section: 'now',
   },
+  // The briefing in full, reached from Home's card; `?project=` narrows it to one repository.
+  {
+    id: 'briefing',
+    path: '/dashboard/briefing',
+    label: 'Briefing',
+    visible: false,
+    section: 'now',
+  },
   {
     id: 'portfolio',
     path: '/dashboard/portfolio',

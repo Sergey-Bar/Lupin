@@ -1,4 +1,4 @@
-import type { DigestItem, ScorecardStatus } from '@lupin/shared-contracts';
+import type { Briefing, DigestItem, ScorecardStatus } from '@lupin/shared-contracts';
 
 /**
  * The scheduled report: one model, read in five seconds, rendered for five chat platforms.
@@ -42,6 +42,15 @@ export interface ReportInput {
   fixNext?: readonly ReportFix[];
   /** The cockpit's headline and what moved. Absent when the workspace has no project to read. */
   cockpit?: ReportCockpit;
+  /** What happened over the period, from the briefing. Absent: no briefing block. */
+  briefing?: ReportBriefing;
+}
+
+/** The briefing, as the digest carries it: its headline and its few worst lines. */
+export interface ReportBriefing {
+  headline: string;
+  /** At most {@link MAX_BRIEFING_LINES}, worst first. */
+  lines: readonly ReportLine[];
 }
 
 /** One project's scorecard in one area, as the digest reads it: verdict, score and why. */
@@ -101,6 +110,8 @@ export interface ReportModel {
   actions: string[];
   /** The cockpit's headline and changes, led with; `null` when there is none. */
   cockpit: { headline: string; tone: ReportCockpit['tone']; changes: ReportLine[] } | null;
+  /** The briefing's headline and worst lines, after the cockpit; `null` when there is none. */
+  briefing: { headline: string; lines: ReportLine[] } | null;
   link: string | null;
 }
 
@@ -108,6 +119,22 @@ export const MAX_ITEMS = 3;
 export const MAX_AREAS = 3;
 export const MAX_ACTIONS = 3;
 export const MAX_CHANGES = 3;
+export const MAX_BRIEFING_LINES = 3;
+
+/**
+ * The briefing's part of a digest: its headline, and the lines that need someone (what got
+ * riskier, what needs a decision, anything bad or cautionary) worst first. Its plain notes
+ * (what merged, what deployed) are already in the headline.
+ */
+export function reportBriefingOf(briefing: Briefing): ReportBriefing {
+  const lines = briefing.items
+    .filter((item) => item.tone === 'bad' || item.tone === 'caution')
+    .map((item, order) => ({ line: { tone: item.tone, text: item.text }, order }))
+    .sort((a, b) => TONE_RANK[a.line.tone] - TONE_RANK[b.line.tone] || a.order - b.order)
+    .slice(0, MAX_BRIEFING_LINES)
+    .map(({ line }) => line);
+  return { headline: briefing.headline, lines };
+}
 
 const EMOJI: Record<ReportStatus, string> = { good: '🟢', caution: '🟡', bad: '🔴' };
 const TONE_RANK: Record<ReportLine['tone'], number> = { bad: 0, caution: 1, neutral: 2, good: 3 };
@@ -204,9 +231,19 @@ export function composeReport(input: ReportInput): ReportModel {
     cockpit === null
       ? []
       : [{ tone: cockpit.tone === 'good' ? 'good' : 'caution', text: cockpit.headline }];
+  const briefing =
+    input.briefing === undefined
+      ? null
+      : {
+          headline: input.briefing.headline,
+          lines: input.briefing.lines.slice(0, MAX_BRIEFING_LINES).map((line) => ({ ...line })),
+        };
+  // The briefing's lines can make a report yellow, never red: red is for an item that
+  // needs someone now, and the briefing reports what already happened.
+  const briefingLines = briefing?.lines ?? [];
   const status: ReportStatus = input.attention.some((item) => item.severity === 'bad')
     ? 'bad'
-    : [...lines, ...areas, ...cockpitLines].some(
+    : [...lines, ...areas, ...cockpitLines, ...briefingLines].some(
           (line) => line.tone === 'bad' || line.tone === 'caution',
         )
       ? 'caution'
@@ -221,6 +258,7 @@ export function composeReport(input: ReportInput): ReportModel {
     areas,
     actions: topActions(input),
     cockpit,
+    briefing,
     link: safeLink(input.link),
   };
 }
@@ -283,6 +321,13 @@ function plainLines(model: ReportModel): [string, ...string[]] {
       : [
           model.cockpit.headline,
           ...model.cockpit.changes.map((change) => `${BULLET[change.tone]} ${change.text}`),
+        ]),
+    // What happened while nobody was looking, after whether it is better or worse.
+    ...(model.briefing === null
+      ? []
+      : [
+          `While you were away: ${model.briefing.headline}`,
+          ...model.briefing.lines.map((line) => `${BULLET[line.tone]} ${line.text}`),
         ]),
     model.sentence,
     ...model.items.map((item) => `${BULLET[item.tone]} ${item.text}`),

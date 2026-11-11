@@ -1299,6 +1299,7 @@ export function makeHealthDouble(
     getPace: vi.fn(never),
     getPhases: vi.fn(never),
     getPortfolioPhases: vi.fn(never),
+    getBriefing: vi.fn(never),
     getHealth: vi.fn(never),
     getFindings: vi.fn(never),
     getHistory: vi.fn(never),

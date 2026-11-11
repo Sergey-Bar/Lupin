@@ -116,7 +116,8 @@ across its heads. **Home** lists an open pull request whose current head is high
 
 ## What it does not do yet
 
-- The SDLC phase factor is always empty until the phase model lands.
+- A skipped SDLC phase adds points only for the phases the [phase model](/guide/phases-and-pace)
+  can read; whether the gate passed at merge is not stored, so it never counts.
 - `diff-guard` reads the diff it is given. A shallow clone without the base branch fails with the
   step to fix it, and a diff over 64 MiB is read in part and says so.
 - The composite action shows the risk in the job summary; `diff-guard` and `--post` are CLI steps.

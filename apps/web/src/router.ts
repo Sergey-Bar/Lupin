@@ -17,6 +17,7 @@ import { FlakyRoute, GapsRoute, HollowRoute, StructureRoute } from './routes/das
 import {
   AccessRoute,
   AuditRoute,
+  BriefingRoute,
   DeploymentRoute,
   MembersRoute,
   PairRoute,
@@ -59,6 +60,7 @@ import { SetupRoute } from './routes/dashboard/setup.js';
 const dashboardTree = dashboardRoute.addChildren([
   nowRoute,
   metricRoute,
+  BriefingRoute,
   PortfolioRoute,
   RepoHealthRoute,
   Repo360Route,

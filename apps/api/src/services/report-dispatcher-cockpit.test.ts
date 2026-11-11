@@ -187,6 +187,19 @@ describe('the report with the cockpit', () => {
     expect(row?.rendered?.split('\n')[1]).toContain('Down 6 points since last week');
   });
 
+  it('says what happened over the week, from the briefing, after the cockpit', async () => {
+    const { db, options } = await setup();
+    await seedCockpit(db);
+    const { adapter } = scripted([ok]);
+    await deliverTo(db, options, telegram, { telegram: adapter });
+    const [row] = await db.select().from(schema.reportDeliveries);
+    const rendered = row?.rendered ?? '';
+    expect(rendered).toContain('While you were away: 1 pull request merged, 0 AI-written.');
+    expect(rendered.indexOf('While you were away')).toBeGreaterThan(
+      rendered.indexOf('Down 6 points since last week'),
+    );
+  });
+
   it('sends the text when Telegram refuses the picture before sending anything', async () => {
     const { db, options } = await setup();
     await seedCockpit(db);

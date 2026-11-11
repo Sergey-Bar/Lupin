@@ -177,6 +177,28 @@ export const pageJourneys: Record<string, Journey> = {
     takeaway:
       'The score is a sum of stated factors. Missing test results or coverage make a change unknown, never low.',
   },
+  'guide/phases-and-pace.md': {
+    audience: 'QA leads · managers',
+    goal: 'See which phase holds changes up, and whether testing keeps up with the code.',
+    stages: [
+      ['Sync delivery', 'Turn on delivery sync so Lupin reads the pull requests.'],
+      ['Find the bottleneck', 'Open Repository 360 and read the phase band and what is stuck.'],
+      ['Watch the debt', 'Read the pace rows, and upload coverage where lines are not measured.'],
+    ],
+    takeaway:
+      'A phase with no evidence is not measured, never done, and the untested-change debt never goes down.',
+  },
+  'guide/briefing.md': {
+    audience: 'QA leads · managers · anyone back from time off',
+    goal: 'Catch up on what happened in one screen, and check any line.',
+    stages: [
+      ['Read the card', 'Open Home, switch to Release, and read the briefing card.'],
+      ['Open the briefing', 'Go through each section, and open a line to act on it.'],
+      ['Check a line', 'Open Read from to see the evidence behind its number.'],
+    ],
+    takeaway:
+      'Every line is a count with its source. A model may reword them, and is thrown out if it adds a number.',
+  },
   'guide/mcp.md': {
     audience: 'Developers using an AI editor',
     goal: 'Ask your editor questions about recorded quality evidence.',

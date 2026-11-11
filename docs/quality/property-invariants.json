@@ -493,7 +493,7 @@
     },
     {
       "id": "DIGEST-1",
-      "statement": "Every rendering of a scheduled report fits its platform limit at any limit from 80 characters up (Telegram, Slack, plain text for WhatsApp and Signal), and a report never shows more than three items, with the rest counted, nor more than three area lines, three actions or three cockpit changes, with no action listed twice, and the cockpit's headline and changes (as hostile as every other line) obey the same limits.",
+      "statement": "Every rendering of a scheduled report fits its platform limit at any limit from 80 characters up (Telegram, Slack, plain text for WhatsApp and Signal), and a report never shows more than three items, with the rest counted, nor more than three area lines, three actions or three cockpit changes, with no action listed twice, and the cockpit's headline and changes (as hostile as every other line) obey the same limits; a briefing's headline and at most three of its lines obey them too.",
       "package": "packages/reporting",
       "testFile": "packages/reporting/src/report.property.test.ts",
       "seed": 20261025,

@@ -19,6 +19,7 @@ Every tool reads. None of them writes, triages, starts a scan or spends the mode
 | `get_ai_code`            | How much merged change an AI wrote, and whether it fares worse. Never names a person.               |
 | `get_supply_chain`       | SLSA level, licence violations, fixable criticals, vulnerable components, VEX coverage, SBOM age.   |
 | `get_test_effectiveness` | Mutation score, diff coverage of the latest commits, flaky tests and their cost, failure causes.    |
+| `get_briefing`           | What happened over a window, every line cited. One project, or all of them when none is named.      |
 
 Each answer is two text blocks: a one-line summary, and the full contract as JSON — the same
 shape the matching API route returns. A refusal is a tool error that starts with the stable

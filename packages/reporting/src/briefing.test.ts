@@ -67,6 +67,15 @@ describe('composeBriefing', () => {
       briefing.items.find((item) => item.id === 'decide.pr-0d1d4b5e-7b0b-4f7b-9b40-4a8f0b7f1a11-12')
         ?.link,
     ).toBe(`/dashboard/prs/${PROJECT}/12`);
+    // The pull-request list takes `?project=`, so a repository's lines open it narrowed to it.
+    expect(briefing.items.find((item) => item.id === 'shipped.merged')?.link).toBe(
+      `/dashboard/prs?project=${PROJECT}`,
+    );
+    expect(
+      composeBriefing(busy({ scope: { kind: 'portfolio', projects: 2 } })).items.find(
+        (item) => item.id === 'riskier.tampered',
+      )?.link,
+    ).toBe('/dashboard/prs');
     expect(briefing.headline).toBe(
       '14 pull requests merged, 9 AI-written; 2 merged at high risk or above; Review is the bottleneck: 11 changes waiting over 48 hours.',
     );

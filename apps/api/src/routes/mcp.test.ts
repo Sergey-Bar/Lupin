@@ -7,6 +7,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import {
   AgentQualitySnapshotSchema,
   AiCodeReportSchema,
+  BriefingSchema,
   DeliveryReportSchema,
   HealthFindingsPageSchema,
   HealthGateResponseSchema,
@@ -171,6 +172,15 @@ describe('the MCP server at /api/v1/mcp', () => {
       ScorecardSchema.parse(tests.value).metrics.find((metric) => metric.key === 'flaky-tests')
         ?.status,
     ).toBe('insufficient');
+
+    const portfolioBriefing = await call('get_briefing', { days: 14 });
+    expect(BriefingSchema.parse(portfolioBriefing.value)).toMatchObject({
+      scope: { kind: 'portfolio', projects: 2 },
+      windowDays: 14,
+    });
+    expect(portfolioBriefing.summary).toBe(BriefingSchema.parse(portfolioBriefing.value).headline);
+    const projectBriefing = await call('get_briefing', { projectId });
+    expect(BriefingSchema.parse(projectBriefing.value).scope).toMatchObject({ name: 'Alpha' });
   });
 
   it('refuses a caller with no token, a CI uploader token, and another workspace’s token', async () => {
@@ -211,6 +221,12 @@ describe('the MCP server at /api/v1/mcp', () => {
     expect(PortfolioSchema.parse(listed.value).projects.map((entry) => entry.projectId)).toEqual([
       projectId,
     ]);
+    // With no project named, a pinned caller's briefing is its own project's, never everyone's.
+    const briefing = answer(await client.callTool({ name: 'get_briefing', arguments: {} }));
+    expect(BriefingSchema.parse(briefing.value).scope).toMatchObject({
+      kind: 'repository',
+      projectId,
+    });
   });
 
   it('refuses a pinned caller every project tool on another project, before any read', async () => {

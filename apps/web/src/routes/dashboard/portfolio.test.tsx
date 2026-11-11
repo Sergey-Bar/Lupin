@@ -18,6 +18,28 @@ function stubApi(role: 'admin' | null) {
       if (url.endsWith('/api/v1/auth/whoami'))
         return reply({ actor: 'anonymous', role, mode: role === null ? 'enforced' : 'open' });
       if (url.endsWith('/api/v1/portfolio')) return reply({ projects: [] });
+      if (url.includes('/api/v1/portfolio/briefing?days=7&narrate=false'))
+        return reply({
+          briefing: {
+            version: 'briefing/1',
+            scope: { kind: 'portfolio', projects: 0 },
+            windowDays: 7,
+            generatedAt: '2026-11-11T12:00:00.000Z',
+            shape: 'unknown',
+            headline: 'Nothing happened in the last 7 days.',
+            items: [
+              {
+                id: 'shape.quiet',
+                section: 'shape',
+                tone: 'neutral',
+                text: 'Nothing happened in the last 7 days.',
+                evidence: ['window:7d'],
+                link: null,
+              },
+            ],
+          },
+          narration: null,
+        });
       if (url.endsWith('/api/v1/access-tokens')) return reply({ tokens: [] });
       if (url.endsWith('/api/v1/members')) return reply({ members: [] });
       if (url.includes('/api/v1/audit?')) return reply({ events: [], next: null });
@@ -53,6 +75,14 @@ describe('the repository-health routes', () => {
     stubApi('admin');
     render(<MemoryRouter initialEntries={['/dashboard/repo/p-1']} />);
     expect(await screen.findByText('No project p-1', {}, { timeout: 10_000 })).toBeInTheDocument();
+  });
+
+  it('opens the briefing, for the portfolio with no project chosen', async () => {
+    stubApi('admin');
+    render(<MemoryRouter initialEntries={['/dashboard/briefing']} />);
+    expect(
+      await screen.findByTestId('briefing-headline', {}, { timeout: 10_000 }),
+    ).toHaveTextContent('Nothing happened in the last 7 days.');
   });
 
   it('opens the access page', async () => {

@@ -2,7 +2,14 @@ import React from 'react';
 import { ExternalLink, Hero, Select, Skeleton, Sparkline, StatusDot, Button, cn } from '@lupin/ui';
 import { heroVerdict } from '../lib/hero.js';
 import type { QaInsights, ReleaseReadinessCard } from '../lib/qa.js';
-import type { Cockpit, CockpitDriver, CockpitMetric, CockpitWindow } from '@lupin/shared-contracts';
+import type {
+  BriefingResponse,
+  Cockpit,
+  CockpitDriver,
+  CockpitMetric,
+  CockpitWindow,
+} from '@lupin/shared-contracts';
+import { BriefingCard } from './Briefing.js';
 import { useCockpit } from '../hooks/useCockpit.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
 import { useResource } from '../hooks/useResource.js';
@@ -52,6 +59,8 @@ export interface CockpitSources {
   trend?: (
     projectId: string | undefined,
   ) => Promise<ReadonlyArray<{ date: string; failed: number }>>;
+  /** What happened over the last week, for the Release view's card; absent, no card. */
+  briefing?: (projectId: string | undefined) => Promise<BriefingResponse>;
 }
 
 /** Which Home a reader opens on: Triage for the engineer, Release for the lead. Kept per browser. */
@@ -161,6 +170,13 @@ export function CockpitPage({
         {view === 'release' && sources.readiness !== undefined ? (
           <ReleaseReasons key={projectId ?? ''} load={sources.readiness} projectId={projectId} />
         ) : null}
+        {view === 'release' && sources.briefing !== undefined ? (
+          <HomeBriefing
+            key={`briefing-${projectId ?? ''}`}
+            load={sources.briefing}
+            projectId={projectId}
+          />
+        ) : null}
         {view === 'release' && sources.trend !== undefined ? (
           <ReleaseTrend
             key={`trend-${projectId ?? ''}`}
@@ -171,6 +187,21 @@ export function CockpitPage({
       </PageBody>
     </PageFrame>
   );
+}
+
+/**
+ * Release: what happened over the last week, so a lead coming back reads it before deciding.
+ * Read on its own, so a slow briefing never holds the verdict back.
+ */
+function HomeBriefing({
+  load,
+  projectId,
+}: {
+  load: NonNullable<CockpitSources['briefing']>;
+  projectId: string | undefined;
+}): React.ReactElement {
+  const read = useResource(() => load(projectId), [load, projectId]);
+  return <BriefingCard read={read} projectId={projectId} />;
 }
 
 /**

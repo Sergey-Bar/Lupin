@@ -19,6 +19,22 @@
   `POST /api/v1/projects/:id/health/diff-guard`, uploader.
 - **`lupin gate --post`** posts the gate's status, check run and comment with the job's own
   `GITHUB_TOKEN`, for an install that holds no GitHub token (a LAN install).
+- **SDLC phases.** Every synced pull request is placed in plan, code, test, review and release,
+  each done, in progress, not yet, skipped or not measured with its reason and hours. A pull
+  request's page shows its strip, Repository 360 the bottleneck and what is stuck, and Portfolio
+  every repository's shape per phase. A phase with no evidence is never done, and a skipped one
+  adds to the change risk. `GET …/pull-requests/:number/phases`, `GET …/phases`,
+  `GET /api/v1/portfolio/phases`, viewer.
+- **Pace.** Repository 360 shows, per week, changed lines and their AI share, new tests per
+  1,000 lines, and the untested-change debt, which never goes down. Unmeasured coverage is counted
+  apart, never as covered. `GET /api/v1/projects/:id/pace?weeks=`, viewer.
+- **The briefing.** What happened over a window, for one repository or all of them, in five
+  sections, every line naming its evidence: a card on Home's Release view, `/dashboard/briefing`,
+  a "While you were away" block in every scheduled report, and the MCP tool `get_briefing`.
+  **Word it for me** asks the configured model to reword the lines; a wording that cites a line
+  that is not there, or uses a number its lines do not say, is thrown away with the reason.
+  `GET /api/v1/projects/:id/briefing` and `GET /api/v1/portfolio/briefing`, viewer.
+- **The scheduled report says which tests** turned flaky, started failing, got fixed or slowed.
 - **The copilot.** "Explain this run" (or `e`) on a failed run answers from the run's own
   results, groups the failures by cause and links every test it names. Its proposed actions
   (retry the failed tests, quarantine a flaky one) run only after one confirmation, through the

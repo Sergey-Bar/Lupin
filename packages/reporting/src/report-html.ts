@@ -57,16 +57,32 @@ export interface FullReportOptions {
   scope?: string;
 }
 
+function cockpitSection(cockpit: ReportModel['cockpit']): string {
+  if (cockpit === null) return '';
+  const tone = cockpit.tone === 'good' ? 'good' : cockpit.tone === 'bad' ? 'bad' : 'caution';
+  const moved =
+    cockpit.changes.length === 0 ? '' : `<ul class="lines">${lineItems(cockpit.changes)}</ul>`;
+  return `<section class="status tone-${tone}" aria-label="Headline"><p class="headline">${escapeHtml(cockpit.headline)}</p></section>${section('What moved', moved)}`;
+}
+
+function briefingSection(briefing: ReportModel['briefing']): string {
+  if (briefing === null) return '';
+  const lines =
+    briefing.lines.length === 0 ? '' : `<ul class="lines">${lineItems(briefing.lines)}</ul>`;
+  return section(
+    'While you were away',
+    `<p class="headline">${escapeHtml(briefing.headline)}</p>${lines}`,
+  );
+}
+
 export function renderFullReport(model: ReportModel, options: FullReportOptions): string {
   const generated = options.generatedAt.slice(0, 16).replace('T', ' ');
   const scopeParts = [options.scope, `generated ${generated} UTC`].filter(
     (part): part is string => typeof part === 'string' && part.length > 0,
   );
   const link = safeHref(model.link);
-  const cockpit =
-    model.cockpit === null
-      ? ''
-      : `<section class="status tone-${model.cockpit.tone === 'good' ? 'good' : model.cockpit.tone === 'bad' ? 'bad' : 'caution'}" aria-label="Headline"><p class="headline">${escapeHtml(model.cockpit.headline)}</p></section>${section('What moved', model.cockpit.changes.length === 0 ? '' : `<ul class="lines">${lineItems(model.cockpit.changes)}</ul>`)}`;
+  const cockpit = cockpitSection(model.cockpit);
+  const briefing = briefingSection(model.briefing);
   const items = section(
     'Needs a person',
     model.items.length === 0
@@ -102,6 +118,7 @@ export function renderFullReport(model: ReportModel, options: FullReportOptions)
     '<main>',
     `<header><h1>${escapeHtml(model.title)}</h1><p class="scope">${escapeHtml(STATUS_WORD[model.status])} \u00B7 ${scopeParts.map(escapeHtml).join(' \u00B7 ')}</p><p class="headline">${escapeHtml(model.sentence)}</p>${open}</header>`,
     cockpit,
+    briefing,
     items,
     areas,
     actions,

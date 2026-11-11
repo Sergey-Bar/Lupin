@@ -13,6 +13,7 @@ import { PairPage } from '../../components/Pairing.js';
 
 // Loaded when the route is first opened; see `components/lazy-page.tsx`.
 const Portfolio = lazyPage(() => import('../../components/Portfolio.js'), 'Portfolio');
+const BriefingPage = lazyPage(() => import('../../components/Briefing.js'), 'BriefingPage');
 const RepoHealth = lazyPage(() => import('../../components/RepoHealth.js'), 'RepoHealth');
 const DeploymentPage = lazyPage(() => import('../../components/Deployment.js'), 'DeploymentPage');
 const AuditPage = lazyPage(() => import('../../components/People.js'), 'AuditPage');
@@ -33,6 +34,25 @@ export const PortfolioRoute = createRoute({
             aiCode={createAiCodeClient()}
           />
         )}
+      </AccessGate>
+    );
+  },
+});
+
+/** What happened over the window, for the portfolio or, with `?project=`, one repository. */
+export const BriefingRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '/briefing',
+  validateSearch: (search: Record<string, unknown>): { project?: string } =>
+    typeof search['project'] === 'string' && search['project'] !== ''
+      ? { project: search['project'].slice(0, 100) }
+      : {},
+  component: () => {
+    const { project } = BriefingRoute.useSearch();
+    const health = React.useMemo(() => createHealthClient(), []);
+    return (
+      <AccessGate health={health}>
+        {() => <BriefingPage health={health} projectId={project} />}
       </AccessGate>
     );
   },

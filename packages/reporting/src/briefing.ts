@@ -71,6 +71,13 @@ function scopeKey(scope: BriefingScope): string {
   return scope.kind === 'repository' ? `project:${scope.projectId}` : 'portfolio';
 }
 
+/** The pull-request list, narrowed to the repository when the briefing is about one. */
+function pullRequestsLink(scope: BriefingScope): string {
+  return scope.kind === 'repository'
+    ? `/dashboard/prs?project=${encodeURIComponent(scope.projectId)}`
+    : '/dashboard/prs';
+}
+
 function shapeItems(input: BriefingInput): BriefingItem[] {
   const items: BriefingItem[] = [];
   const pace = input.pace;
@@ -132,7 +139,7 @@ function shippedItems(input: BriefingInput): BriefingItem[] {
         tone: 'neutral',
         text: `${plural(input.merged.total, 'pull request', 'pull requests')} merged, ${n(input.merged.ai)} AI-written.`,
         evidence: [`pull-requests:merged:${window}`],
-        link: '/dashboard/prs?state=merged',
+        link: pullRequestsLink(input.scope),
       }),
     );
   }
@@ -182,7 +189,7 @@ function riskierItems(input: BriefingInput): BriefingItem[] {
         tone: 'bad',
         text,
         evidence: [`${source}:${window}`],
-        link: '/dashboard/prs',
+        link: pullRequestsLink(input.scope),
       }),
     );
 }

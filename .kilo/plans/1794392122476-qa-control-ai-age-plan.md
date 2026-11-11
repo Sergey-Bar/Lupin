@@ -108,3 +108,13 @@ Recorded here as tasks land, so the next session starts from the tree rather tha
   `diff-guard` and `--post` inputs on the composite action (it shells out with curl and jq, and
   a second implementation of the CLI in bash would be a second authority); a run of
   `pnpm test:render` on the reference host for the new page.
+- **Wave 2, tasks 10–16: landed** on `feat/qa-control-ai-age`. The digest's flaky, failing,
+  fixed and slowed lines; pace (PACE-1, PACE-2); SDLC phases (PHASE-1..3) with the strip, band
+  and portfolio grid; the briefing (BRIEF-1, BRIEF-2) on Home's Release view, its own page, every
+  scheduled report (DIGEST-1/2 extended) and the MCP tool `get_briefing`; narration held to the
+  briefing's citations and numbers. Capability rows `quality.pace`, `delivery.sdlc-phases`,
+  `reporting.briefing`, `reporting.narration`; guides `site/guide/phases-and-pace.md` and
+  `site/guide/briefing.md`.
+- **Left from Wave 2:** the per-workspace opt-in to send diff hunks to the model (narration sees
+  the briefing's sentences only); `gatePassedAtMerge` is always not measured, because an
+  assessment does not store the gate's verdict; no run against a real model is recorded.

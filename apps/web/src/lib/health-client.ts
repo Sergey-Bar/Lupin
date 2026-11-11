@@ -13,6 +13,8 @@ import {
   PaceReportSchema,
   PortfolioPhasesSchema,
   RepositoryPhasesSchema,
+  BriefingResponseSchema,
+  type BriefingResponse,
   type FindingSeverity,
   type FindingState,
   type HealthDimension,
@@ -61,6 +63,14 @@ export interface HealthClient {
   getPhases(projectId: string, days?: number): Promise<RepositoryPhases>;
   /** Every repository's shape per SDLC phase, worst first. */
   getPortfolioPhases(days?: number): Promise<PortfolioPhases>;
+  /**
+   * What happened over the window, every line cited: one repository, or the portfolio when
+   * `projectId` is null. `narrate` asks the configured model to reword it, held to its lines.
+   */
+  getBriefing(
+    projectId: string | null,
+    options?: { days?: number; narrate?: boolean },
+  ): Promise<BriefingResponse>;
   getHealth(projectId: string): Promise<ProjectHealth>;
   getFindings(projectId: string, query?: FindingQuery): Promise<HealthFindingsPage>;
   getHistory(projectId: string, days: number): Promise<HealthHistory>;
@@ -204,6 +214,11 @@ export function createHealthClient(baseUrl = '', fetchImpl: typeof fetch = fetch
       get(`${project(projectId)}/phases?days=${String(days)}`, RepositoryPhasesSchema),
     getPortfolioPhases: (days = 30) =>
       get(`/api/v1/portfolio/phases?days=${String(days)}`, PortfolioPhasesSchema),
+    getBriefing: (projectId, { days = 7, narrate = false } = {}) =>
+      get(
+        `${projectId === null ? '/api/v1/portfolio' : project(projectId)}/briefing?days=${String(days)}&narrate=${String(narrate)}`,
+        BriefingResponseSchema,
+      ),
     getPace: (projectId, weeks = 8) =>
       get(`${project(projectId)}/pace?weeks=${String(weeks)}`, PaceReportSchema),
     getHealth: (projectId) => get(`${project(projectId)}/health`, ProjectHealthSchema),

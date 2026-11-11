@@ -68,6 +68,8 @@ export const Route = createRoute({
             date: bucket.date,
             failed: bucket.failed,
           })),
+        // The week's briefing: the chosen repository's, or the portfolio's with none chosen.
+        briefing: (projectId) => health.getBriefing(projectId ?? null, { days: 7 }),
         attention: {
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),

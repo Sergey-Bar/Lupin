@@ -22,6 +22,7 @@ export const MCP_TOOL_NAMES = [
   'get_ai_code',
   'get_supply_chain',
   'get_test_effectiveness',
+  'get_briefing',
 ] as const;
 export type McpToolName = (typeof MCP_TOOL_NAMES)[number];
 

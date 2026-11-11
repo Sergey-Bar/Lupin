@@ -9,7 +9,7 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                   |
 | ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 75    | implemented and exercised, with the stated qualification.                 |
+| **real**     | 79    | implemented and exercised, with the stated qualification.                 |
 | **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
 | **missing**  | 1     | no usable implementation exists in the target.                            |
 | **deferred** | 6     | intentionally outside the launch scope pending a separate decision.       |
@@ -57,6 +57,10 @@ its source, then run `pnpm site:generate`.
 | A pull request's change risk, assessed per head                                                     | `real`     |
 | `lupin diff-guard`: changes that weaken the tests                                                   | `real`     |
 | The change-risk check run on a pull request                                                         | `real`     |
+| Whether testing keeps up with the code, per repository and week                                     | `real`     |
+| The SDLC phase of every change, repository and portfolio                                            | `real`     |
+| The briefing: what happened over a window, every line cited                                         | `real`     |
+| Optional prose for a briefing, held to its lines                                                    | `real`     |
 | The verdict posted from CI, for an install with no GitHub token                                     | `real`     |
 | Supply-chain and test-effectiveness scorecards per project                                          | `real`     |
 | Portfolio heatmap of every dimension and scorecard                                                  | `real`     |
