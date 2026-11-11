@@ -143,6 +143,8 @@ export const pageJourneys: Record<string, Journey> = {
       ['Send', 'Run that command through lupin test, which uploads its JUnit report.'],
       ['Read', 'See the run, its board, its failures by cause and their owners.'],
     ],
+    takeaway:
+      'A firmware failure is read the same way as any other, with the board it ran on beside it.',
   },
   'guide/cli.md': {
     audience: 'Developers · CI owners',
