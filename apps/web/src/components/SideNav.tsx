@@ -27,6 +27,8 @@ import {
 } from '../route-manifest.js';
 import { useViewerRole } from '../hooks/useViewerRole.js';
 import { publishRuns, useLatestRuns } from '../hooks/useRuns.js';
+import { createSettingsClient } from '../lib/settings-client.js';
+import type { Onboarding } from '@lupin/shared-contracts';
 
 /** Whether the sidebar is the icon rail or the full column, kept per browser. */
 export const SIDEBAR_KEY = 'lupin-sidebar';
@@ -170,7 +172,14 @@ function useListKeys<T extends HTMLElement>(onEscape?: () => void): (node: T | n
  * icon rail and a place opens as a flyout of its pages. Below `lg` the top bar's drawer shows
  * the same list (`SidebarList`).
  */
-export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.ReactElement {
+export function SideNav({
+  api = defaultApiClient,
+  onboarding = readOnboarding,
+}: {
+  api?: ApiClient;
+  /** Setup progress, for the "Finish setup" chip. */
+  onboarding?: () => Promise<Onboarding>;
+}): React.ReactElement {
   const { path, section } = useCurrentPage();
   const [collapsed, setCollapsed] = React.useState(() => read(SIDEBAR_KEY) !== 'expanded');
   const settingsMode = section === 'settings';
@@ -197,8 +206,67 @@ export function SideNav({ api = defaultApiClient }: { api?: ApiClient }): React.
         <AskButton compact={collapsed} />
       </div>
       <SidebarList api={api} collapsed={collapsed} className={collapsed ? 'px-2' : 'px-3'} />
+      {settingsMode || collapsed ? null : <SetupChip onboarding={onboarding} section={section} />}
       {settingsMode ? null : <SettingsFoot collapsed={collapsed} />}
     </aside>
+  );
+}
+
+function readOnboarding(): Promise<Onboarding> {
+  return createSettingsClient().getOnboarding();
+}
+
+/**
+ * "Finish setup · 2 of 6", above Settings, while setup is unfinished and not dismissed. Read
+ * again on each move between places, so a step done elsewhere counts. A failed read shows
+ * nothing: setup is an offer.
+ */
+function SetupChip({
+  onboarding,
+  section,
+}: {
+  onboarding: () => Promise<Onboarding>;
+  section: SectionId | null;
+}): React.ReactElement | null {
+  const [progress, setProgress] = React.useState<Onboarding | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    onboarding().then(
+      (value) => {
+        if (live) setProgress(value);
+      },
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [onboarding, section]);
+  if (progress === null || progress.dismissed || progress.done >= progress.total) return null;
+  const { done, total } = progress;
+  return (
+    <div className="shrink-0 px-3 pb-2">
+      <Link
+        to="/dashboard/setup"
+        aria-label={`Finish setup, ${done} of ${total} done`}
+        className={cn(
+          'grid gap-1.5 rounded-md border border-border px-3 py-2 text-sm text-fg transition-colors duration-100 hover:bg-surface-raised motion-reduce:transition-none',
+          FOCUS,
+        )}
+      >
+        <span className="font-medium">
+          Finish setup{' '}
+          <span className="text-fg-muted">
+            · {done} of {total}
+          </span>
+        </span>
+        <span aria-hidden="true" className="h-1 overflow-hidden rounded-full bg-surface-muted">
+          <span
+            className="block h-full rounded-full bg-primary"
+            style={{ width: `${String((done / total) * 100)}%` }}
+          />
+        </span>
+      </Link>
+    </div>
   );
 }
 

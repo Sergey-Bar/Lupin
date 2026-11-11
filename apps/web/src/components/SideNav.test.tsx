@@ -14,13 +14,18 @@ import { resetViewerRoleCache } from '../hooks/useViewerRole';
 import { publishRuns, resetLatestRuns } from '../hooks/useRuns';
 import { expectNoBlockingAxeViolations } from '../test-axe';
 import { makeApi, makeRun } from '../test-utils';
+import type { Onboarding } from '@lupin/shared-contracts';
 
-function renderAt(path: string, api = makeApi()) {
+function renderAt(
+  path: string,
+  api = makeApi(),
+  onboarding: () => Promise<Onboarding> = async () => Promise.reject(new Error('unread')),
+) {
   const rootRoute = createRootRoute({
     component: () => (
       <ThemeProvider>
         <PreferencesProvider>
-          <SideNav api={api} />
+          <SideNav api={api} onboarding={onboarding} />
         </PreferencesProvider>
       </ThemeProvider>
     ),
@@ -122,6 +127,23 @@ describe('SideNav, app mode', () => {
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
     const runs = await within(nav).findByRole('button', { name: 'Runs, 1 needs you' });
     expect(within(runs).getByTestId('place-count')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('offers "Finish setup" with how far it got, until setup is done or dismissed', async () => {
+    const left = {
+      steps: [],
+      done: 2,
+      total: 6,
+      dismissed: false,
+    };
+    const { unmount } = renderAt('/dashboard/now', makeApi(), async () => left);
+    const chip = await screen.findByRole('link', { name: 'Finish setup, 2 of 6 done' });
+    expect(chip).toHaveAttribute('href', '/dashboard/setup');
+    expect(chip).toHaveTextContent('Finish setup · 2 of 6');
+    unmount();
+    renderAt('/dashboard/now', makeApi(), async () => ({ ...left, done: 6 }));
+    await screen.findByRole('navigation', { name: 'Sidebar' });
+    await waitFor(() => expect(screen.queryByRole('link', { name: /Finish setup/u })).toBeNull());
   });
 
   it('opens the group of the page you are on, with every page of that place in it', async () => {
