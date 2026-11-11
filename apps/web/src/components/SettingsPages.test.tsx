@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { QaClient } from '../lib/qa-client.js';
@@ -280,9 +280,13 @@ describe('Settings → Quality gates', () => {
     await waitFor(() => expect(client.deleteGate).toHaveBeenCalledWith('g2'));
     const add = screen.getByRole('form', { name: 'Add a gate' });
     await user.type(within(add).getByLabelText('Name'), 'Nightly');
+    // The threshold typed is the one sent.
+    fireEvent.change(within(add).getByLabelText('Minimum pass rate (%)'), {
+      target: { value: '95' },
+    });
     await user.click(within(add).getByRole('button', { name: 'Add gate' }));
     await waitFor(() =>
-      expect(client.createGate).toHaveBeenCalledWith({ name: 'Nightly', passRateThreshold: 90 }),
+      expect(client.createGate).toHaveBeenCalledWith({ name: 'Nightly', passRateThreshold: 95 }),
     );
   });
 

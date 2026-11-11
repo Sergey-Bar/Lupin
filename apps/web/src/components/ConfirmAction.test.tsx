@@ -64,4 +64,23 @@ describe('ConfirmAction', () => {
     await user.click(yes);
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
+
+  it('does not act on Enter while the typed name is wrong', async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    render(
+      <ConfirmAction
+        label="Revoke"
+        title="Revoke ci-token?"
+        consequence="Every job using it is refused from now on."
+        typed="ci-token"
+        onConfirm={onConfirm}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Revoke' }));
+    // Enter submits the form, so the disabled button is not the only guard.
+    await user.type(screen.getByLabelText('Type ci-token to confirm'), 'ci-toke{Enter}');
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Yes, revoke' })).toBeDisabled();
+  });
 });

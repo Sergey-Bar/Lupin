@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { RunDetailPage } from './run-detail.js';
+import { Route, RunDetailPage } from './run-detail.js';
 import {
   cockpitFixture,
   cockpitMetric,
@@ -122,6 +122,19 @@ function detailApi(run: Run | null, overrides: Partial<ApiClient> = {}): ApiClie
 }
 
 describe('RunDetailPage', () => {
+  // Only `?from=cockpit` makes this page ask the cockpit anything, so the address is the rule.
+  it('reads a cockpit referral from the address, and nothing else', () => {
+    const validate = Route.options.validateSearch as (search: Record<string, unknown>) => unknown;
+    expect(validate({ from: 'cockpit', window: 'release' })).toEqual({
+      from: 'cockpit',
+      window: 'release',
+    });
+    expect(validate({ from: 'cockpit', window: 'forever' })).toEqual({
+      from: 'cockpit',
+      window: '7d',
+    });
+    expect(validate({ from: 'runs', window: 'release' })).toEqual({});
+  });
   it('leads a failed run with what failed: the tests, their errors and the gate', async () => {
     render(<RunDetailPage id="run-123" api={detailApi(passedRun)} />);
     const failed = await screen.findByTestId('run-what-failed');

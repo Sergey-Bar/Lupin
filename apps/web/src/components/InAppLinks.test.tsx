@@ -90,5 +90,7 @@ describe('in-app links', () => {
     expect(inAppHref('https://lupin.local/dashboard/now#tests', origin)).toBe(
       '/dashboard/now#tests',
     );
+    // An address the URL parser refuses is the browser's to deal with.
+    expect(inAppHref('http://[::1', origin)).toBeNull();
   });
 });

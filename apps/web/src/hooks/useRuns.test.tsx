@@ -308,6 +308,11 @@ describe('useRuns', () => {
     });
     const { unmount } = renderHook(() => useRuns(api));
     await act(() => vi.advanceTimersByTimeAsync(0));
+    // Hiding the tab is not a reason to read.
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
     await act(() => vi.advanceTimersByTimeAsync(20_000));
     expect(api.getRuns).toHaveBeenCalledTimes(1);
     visibility.mockReturnValue('visible');

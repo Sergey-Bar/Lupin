@@ -150,6 +150,8 @@ describe('dashboard routes', () => {
     const onCreated = vi.fn();
     render(<LaunchRunForm api={makeApi({ createRun })} onCreated={onCreated} />);
     fillLaunchForm();
+    // The timeout is typed in seconds and sent in milliseconds.
+    fireEvent.change(screen.getByTestId('launch-timeout'), { target: { value: '90' } });
     fireEvent.click(screen.getByTestId('launch-run-submit'));
 
     await waitFor(() => expect(createRun).toHaveBeenCalledOnce());
@@ -164,6 +166,7 @@ describe('dashboard routes', () => {
       framework: 'playwright',
       source: 'web',
       selection: { paths: ['e2e/smoke.spec.ts'] },
+      timeoutMs: 90_000,
     });
     expect(request.idempotencyKey).toBeTruthy();
     await waitFor(() =>
