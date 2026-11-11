@@ -58,6 +58,7 @@ export * from './copilot.js';
 export * from './tui-commands.js';
 export * from './health.js';
 export * from './cockpit.js';
+export * from './change-risk.js';
 export * from './scorecard.js';
 export * from './notifications.js';
 export * from './supply-chain.js';

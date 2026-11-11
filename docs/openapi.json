@@ -11218,6 +11218,129 @@
         "required": ["capability", "covered", "providers", "weight"],
         "additionalProperties": false
       },
+      "ChangeRiskEvidenceSchema": {
+        "type": "string",
+        "enum": ["attribution", "tests", "diff-coverage", "findings", "tampering", "evals"]
+      },
+      "ChangeRiskFactorIdSchema": {
+        "type": "string",
+        "enum": [
+          "ai-authorship",
+          "size",
+          "no-tests-touched",
+          "diff-coverage",
+          "new-findings",
+          "failed-tests",
+          "unexcused-flaky",
+          "no-human-approval",
+          "eval-regression",
+          "blast-radius",
+          "test-tampering",
+          "skipped-phases",
+          "attribution",
+          "tests",
+          "findings",
+          "tampering",
+          "evals"
+        ]
+      },
+      "ChangeRiskFactorSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "ai-authorship",
+              "size",
+              "no-tests-touched",
+              "diff-coverage",
+              "new-findings",
+              "failed-tests",
+              "unexcused-flaky",
+              "no-human-approval",
+              "eval-regression",
+              "blast-radius",
+              "test-tampering",
+              "skipped-phases",
+              "attribution",
+              "tests",
+              "findings",
+              "tampering",
+              "evals"
+            ]
+          },
+          "kind": { "type": "string", "enum": ["risk", "missing"] },
+          "points": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "evidence": {
+            "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 500 }, { "type": "null" }]
+          }
+        },
+        "required": ["id", "kind", "points", "detail", "evidence"],
+        "additionalProperties": false
+      },
+      "ChangeRiskLevelSchema": {
+        "type": "string",
+        "enum": ["low", "medium", "unknown", "high", "critical"]
+      },
+      "ChangeRiskSchema": {
+        "type": "object",
+        "properties": {
+          "level": { "type": "string", "enum": ["low", "medium", "unknown", "high", "critical"] },
+          "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "version": { "type": "string", "minLength": 1 },
+          "factors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "ai-authorship",
+                    "size",
+                    "no-tests-touched",
+                    "diff-coverage",
+                    "new-findings",
+                    "failed-tests",
+                    "unexcused-flaky",
+                    "no-human-approval",
+                    "eval-regression",
+                    "blast-radius",
+                    "test-tampering",
+                    "skipped-phases",
+                    "attribution",
+                    "tests",
+                    "findings",
+                    "tampering",
+                    "evals"
+                  ]
+                },
+                "kind": { "type": "string", "enum": ["risk", "missing"] },
+                "points": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+                "evidence": {
+                  "anyOf": [
+                    { "type": "string", "minLength": 1, "maxLength": 500 },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": ["id", "kind", "points", "detail", "evidence"],
+              "additionalProperties": false
+            }
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["attribution", "tests", "diff-coverage", "findings", "tampering", "evals"]
+            }
+          }
+        },
+        "required": ["level", "score", "version", "factors", "missing"],
+        "additionalProperties": false
+      },
       "ChannelSummarySchema": {
         "type": "object",
         "properties": {
@@ -27825,6 +27948,20 @@
         },
         "required": ["id", "runId", "title", "file", "total", "passed", "failed", "skipped"],
         "additionalProperties": false
+      },
+      "TestTamperKindSchema": {
+        "type": "string",
+        "enum": [
+          "test-deleted",
+          "skip-added",
+          "assertion-removed",
+          "assertion-loosened",
+          "empty-catch",
+          "snapshot-bulk-update",
+          "threshold-lowered",
+          "ci-made-non-failing",
+          "retry-added"
+        ]
       },
       "TestUpdatedSchema": {
         "type": "object",

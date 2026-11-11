@@ -24,4 +24,5 @@ export * from './test-effectiveness-scorecard.js';
 export * from './cockpit.js';
 export * from './cockpit-digest.js';
 export * from './cockpit-risk.js';
+export * from './change-risk.js';
 export * from './cockpit-html.js';

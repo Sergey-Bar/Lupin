@@ -380,6 +380,30 @@
       "shownToFail": "fc.check refutes a gate that applies its rules to everyone."
     },
     {
+      "id": "RISK-1",
+      "statement": "Adding risk evidence never lowers a change's risk level or score: the same change made worse on every axis, with the same evidence present, ranks at or above where it was.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/change-risk.property.test.ts",
+      "seed": 20261111,
+      "shownToFail": "Scoring a 1000-line change 5 points (below the 400-line band's 10) fails RISK-1 after 163 runs."
+    },
+    {
+      "id": "RISK-2",
+      "statement": "A change whose required evidence (test results, diff coverage) is missing is never low or medium risk: unknown at best, and a measured high or critical stands.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/change-risk.property.test.ts",
+      "seed": 20261111,
+      "shownToFail": "Disabling the missing-evidence rule fails RISK-2 on the first generated clean change; fc.check refutes a model that defaults unmeasured coverage to 100."
+    },
+    {
+      "id": "RISK-3",
+      "statement": "A change-risk score is exactly the sum of its factor points, and missing-evidence factors carry none.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/change-risk.property.test.ts",
+      "seed": 20261111,
+      "shownToFail": "ChangeRiskSchema refuses a score that differs from the sum (packages/shared-contracts/src/schemas/change-risk.test.ts)."
+    },
+    {
       "id": "EVAL-1",
       "statement": "An identical baseline and candidate eval run is never a fail, for any run and any comparison seed.",
       "package": "packages/reporting",
