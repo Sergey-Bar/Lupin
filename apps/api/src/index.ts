@@ -11,7 +11,8 @@ import {
   requireRequestId,
 } from './observability/request-context.js';
 import { randomUUID } from 'node:crypto';
-import { sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
+import { projects } from '@lupin/db';
 import { Hono, type Context } from 'hono';
 import { createErrorBoundary } from './errors/boundary.js';
 import { withClassifiedErrors } from './errors/db-errors.js';
@@ -119,7 +120,7 @@ import { whatsappAdapter } from '@lupin/connectors-whatsapp';
 import { createReportDispatcher } from './services/report-dispatcher.js';
 import { createDeliverySyncer } from './services/delivery-syncer.js';
 import { getCookie } from 'hono/cookie';
-import { DEFAULT_IGNORED, fileSystemView } from '@lupin/projects';
+import { DEFAULT_IGNORED, fileSystemView, ownerOf, parseCodeowners } from '@lupin/projects';
 import { createRepoScanner } from './services/repo-scan-service.js';
 import { createProjectsRoutes } from './routes/projects.js';
 import {
@@ -1147,6 +1148,22 @@ function buildWorkspace(workspaceId: string) {
         store: executionStore,
         workspaceId: workspaceId,
         gateway: gateways.chat,
+        // Owners from the project's own CODEOWNERS, read in this workspace only.
+        ...(databaseResources === undefined
+          ? {}
+          : {
+              ownersFor: async (projectId: string) => {
+                const rows = await databaseResources.db
+                  .select({ settings: projects.settings })
+                  .from(projects)
+                  .where(and(eq(projects.workspaceId, workspaceId), eq(projects.id, projectId)))
+                  .limit(1);
+                const health = rows[0]?.settings['health'] as { codeowners?: unknown } | undefined;
+                const rules =
+                  typeof health?.codeowners === 'string' ? parseCodeowners(health.codeowners) : [];
+                return (file: string | null) => ownerOf(rules, file);
+              },
+            }),
       }),
     );
     // Settings → AI, Integrations, Identity, Sessions & retention. Installation-wide, so every

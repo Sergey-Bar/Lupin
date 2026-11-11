@@ -112,6 +112,9 @@ function Answer({
                 <span className="me-2 font-sans font-semibold text-danger">{cause.count}×</span>
                 {cause.message}
               </p>
+              {cause.owners.length === 0 ? null : (
+                <p className="text-xs text-fg-muted">Owned by {cause.owners.join(', ')}</p>
+              )}
               <p className="flex flex-wrap gap-x-3 text-xs">
                 {cause.tests.map((testId) => (
                   <a

@@ -37,7 +37,12 @@ export interface Cause {
   message: string;
   count: number;
   tests: string[];
+  /** Who owns the files of this cause's tests, from the project's CODEOWNERS; empty if nobody. */
+  owners: string[];
 }
+
+/** The owner of a test file, or null; supplied by the caller, which knows the project. */
+export type OwnerLookup = (file: string | null) => string | null;
 
 export interface RunExplanation {
   source: 'rules';
@@ -84,22 +89,28 @@ function plural(count: number, word: string): string {
   return `${String(count)} ${word}${count === 1 ? '' : 's'}`;
 }
 
-export function explainRun(run: ExecutionRun): RunExplanation {
-  const tests = run.tests ?? [];
-  const failed = tests.filter((test) => FAILED.has(test.status));
-  const flaky = tests.filter((test) => test.status === 'flaky');
-  const where = run.branch ? ` on ${run.branch}` : '';
-
+/** Failed tests grouped by cause, biggest first, each with the owners of its tests' files. */
+function groupCauses(failed: readonly ExecutionTestResult[], ownerOf: OwnerLookup): Cause[] {
   const groups = new Map<string, Cause>();
   for (const test of failed) {
     const message = redact(test.error?.message?.trim() || 'Failed with no message');
     const key = signature(message);
-    const cause = groups.get(key) ?? { message, count: 0, tests: [] };
+    const cause = groups.get(key) ?? { message, count: 0, tests: [], owners: [] };
     cause.count += 1;
     cause.tests.push(test.id);
+    const owner = ownerOf(test.file ?? null);
+    if (owner !== null && !cause.owners.includes(owner)) cause.owners.push(owner);
     groups.set(key, cause);
   }
-  const causes = [...groups.values()].sort((a, b) => b.count - a.count);
+  return [...groups.values()].sort((a, b) => b.count - a.count);
+}
+
+export function explainRun(run: ExecutionRun, ownerOf: OwnerLookup = () => null): RunExplanation {
+  const tests = run.tests ?? [];
+  const failed = tests.filter((test) => FAILED.has(test.status));
+  const flaky = tests.filter((test) => test.status === 'flaky');
+  const where = run.branch ? ` on ${run.branch}` : '';
+  const causes = groupCauses(failed, ownerOf);
 
   const citations: Citation[] = [{ kind: 'run', id: run.id }];
   for (const test of [...failed, ...flaky])

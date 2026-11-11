@@ -32,7 +32,15 @@ export const RunExplanationSchema = z.object({
   runId: z.string(),
   source: z.literal('rules'),
   summary: z.string(),
-  causes: z.array(z.object({ message: z.string(), count: z.number(), tests: z.array(z.string()) })),
+  causes: z.array(
+    z.object({
+      message: z.string(),
+      count: z.number(),
+      tests: z.array(z.string()),
+      /** Optional so an older server's answer still parses. */
+      owners: z.array(z.string()).default([]),
+    }),
+  ),
   citations: z.array(CitationSchema),
   actions: z.array(ProposedActionSchema),
   /** Optional so an older server's answer still parses. */

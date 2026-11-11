@@ -106,3 +106,23 @@ describe('explainRun, the copilot rule engine', () => {
     expect(answer.causes[0]?.message).toBe('auth failed for [redacted]');
   });
 });
+
+describe('explainRun owners', () => {
+  it('names who owns each cause, from the files of its tests', () => {
+    const answer = explainRun(
+      run([
+        test('a', 'failed', 'boom'),
+        { ...test('b', 'failed', 'boom'), file: 'e2e/pay.spec.ts' },
+      ]),
+      (file) => (file === 'e2e/pay.spec.ts' ? '@payments' : file === null ? null : '@web'),
+    );
+    expect(answer.causes[0]?.owners).toEqual(['@web', '@payments']);
+  });
+
+  it('leaves owners empty when nothing owns the files, or no lookup is given', () => {
+    expect(explainRun(run([test('a', 'failed', 'boom')]), () => null).causes[0]?.owners).toEqual(
+      [],
+    );
+    expect(explainRun(run([test('a', 'failed', 'boom')])).causes[0]?.owners).toEqual([]);
+  });
+});

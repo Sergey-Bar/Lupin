@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { DomainError } from '../errors/domain-error.js';
 import type { ExecutionStore } from '../execution/types.js';
-import { explainRun } from './explain.js';
+import { explainRun, type OwnerLookup } from './explain.js';
 import { answerQuestion } from './ask.js';
 import { narrate } from './narrate.js';
 import type { AiGateway } from '@lupin/automation';
@@ -23,6 +23,8 @@ export function createCopilotRoutes(options: {
   workspaceId: string;
   /** The model configured in Settings; absent or unconfigured, the rules answer alone. */
   gateway?: AiGateway;
+  /** Who owns a test file in a project, from its CODEOWNERS; absent, causes name no owner. */
+  ownersFor?: (projectId: string) => Promise<OwnerLookup>;
 }): Hono {
   const app = new Hono();
   app.post('/api/v1/copilot/explain', async (context) => {
@@ -30,7 +32,11 @@ export function createCopilotRoutes(options: {
     if (!parsed.success) throw new DomainError('VALIDATION_FAILED', 'Body needs a runId');
     const run = await options.store.getRun(parsed.data.runId, options.workspaceId);
     if (!run) throw new DomainError('RUN_NOT_FOUND', 'Run not found');
-    const explained = explainRun(run);
+    const owners =
+      run.projectId === null || options.ownersFor === undefined
+        ? undefined
+        : await options.ownersFor(run.projectId).catch(() => undefined);
+    const explained = explainRun(run, owners);
     const narration = await narrate(
       {
         summary: explained.summary,

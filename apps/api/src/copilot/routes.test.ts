@@ -116,3 +116,49 @@ describe('POST /api/v1/copilot/ask', () => {
     expect((await ask(harness('ws-a'), { question: 'x'.repeat(501) })).status).toBe(422);
   });
 });
+
+describe('POST /api/v1/copilot/explain owners', () => {
+  it('names the owner of each cause from the run project, asking only for that project', async () => {
+    const asked: string[] = [];
+    const run = { ...failedRun('run-a'), projectId: 'p-a' } as ExecutionRun;
+    const store = {
+      getRun: async (id: string, ws?: string) => (ws === 'ws-a' && id === 'run-a' ? run : null),
+    } as unknown as ExecutionStore;
+    const app = withErrorBoundary(new Hono());
+    app.route(
+      '/',
+      createCopilotRoutes({
+        store,
+        workspaceId: 'ws-a',
+        ownersFor: async (projectId) => {
+          asked.push(projectId);
+          return (file) => (file === 'e2e/checkout.spec.ts' ? '@checkout-team' : null);
+        },
+      }),
+    );
+    const response = await explain(app, { runId: 'run-a' });
+    const body = (await response.json()) as { causes: Array<{ owners: string[] }> };
+    expect(body.causes[0]?.owners).toEqual(['@checkout-team']);
+    expect(asked).toEqual(['p-a']);
+  });
+
+  it('still explains, with no owners, when the owner lookup fails', async () => {
+    const run = { ...failedRun('run-a'), projectId: 'p-a' } as ExecutionRun;
+    const store = { getRun: async () => run } as unknown as ExecutionStore;
+    const app = withErrorBoundary(new Hono());
+    app.route(
+      '/',
+      createCopilotRoutes({
+        store,
+        workspaceId: 'ws-a',
+        ownersFor: async () => {
+          throw new Error('db down');
+        },
+      }),
+    );
+    const response = await explain(app, { runId: 'run-a' });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { causes: Array<{ owners: string[] }> };
+    expect(body.causes[0]?.owners).toEqual([]);
+  });
+});

@@ -7,7 +7,7 @@ const ANSWER: RunExplanation = {
   runId: 'run-1',
   source: 'rules',
   summary: '2 of 3 tests failed, all for one cause.',
-  causes: [{ message: 'expected 200, got 500', count: 2, tests: ['t1', 't2'] }],
+  causes: [{ message: 'expected 200, got 500', count: 2, tests: ['t1', 't2'], owners: [] }],
   citations: [{ kind: 'run', id: 'run-1' }],
   actions: [],
 };
@@ -82,6 +82,16 @@ describe('CopilotExplain', () => {
     const answer = await screen.findByTestId('copilot-answer');
     expect(answer).toHaveTextContent('On main, 2 of 3 tests failed.');
     expect(answer).toHaveTextContent('Written by gpt-x from this run');
+  });
+
+  it('names who owns each cause, when the project has CODEOWNERS', async () => {
+    const owned: RunExplanation = {
+      ...ANSWER,
+      causes: [{ ...ANSWER.causes[0]!, owners: ['@payments', '@web'] }],
+    };
+    render(<CopilotExplain runId="run-1" client={client(async () => owned)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Explain this run' }));
+    expect(await screen.findByText('Owned by @payments, @web')).toBeInTheDocument();
   });
 
   it('explains on e, but not while the reader is typing in a field', async () => {
