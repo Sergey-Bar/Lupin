@@ -33,15 +33,36 @@ export function DailyBars({
   const change = recent - before;
   return (
     <figure className="m-0 flex flex-col gap-2">
-      <div role="img" aria-label={summary} className={cn('flex h-24 items-end gap-1', tone)}>
+      <div role="img" aria-label={summary} className={cn('flex h-28 items-end gap-1 pt-5', tone)}>
         {days.map((day) => (
-          <div
-            key={day.date}
-            data-testid="daily-bar"
-            title={`${shortDate(day.date)}: ${String(day.value)}`}
-            className="min-h-px flex-1 rounded-t-sm bg-current opacity-90"
-            style={{ height: `${String(Math.round((day.value / peak.value) * 100))}%` }}
-          />
+          <div key={day.date} className="relative flex h-full flex-1 flex-col justify-end">
+            {day === peak ? (
+              <span
+                data-testid="daily-peak"
+                aria-hidden="true"
+                className="absolute inset-x-0 mb-1 text-center text-xs font-medium tabular-nums text-fg"
+                style={{ bottom: `${String(Math.round((day.value / peak.value) * 100))}%` }}
+              >
+                {String(day.value)}
+              </span>
+            ) : null}
+            {day.value === 0 ? (
+              // A day with none still has its place: a stub on the baseline, not a gap.
+              <div
+                data-testid="daily-bar"
+                data-empty="true"
+                title={`${shortDate(day.date)}: 0`}
+                className="h-0.5 rounded-full bg-border-strong"
+              />
+            ) : (
+              <div
+                data-testid="daily-bar"
+                title={`${shortDate(day.date)}: ${String(day.value)}`}
+                className="min-h-0.5 rounded-t-sm bg-current opacity-90"
+                style={{ height: `${String(Math.round((day.value / peak.value) * 100))}%` }}
+              />
+            )}
+          </div>
         ))}
       </div>
       <figcaption

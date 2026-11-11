@@ -22,6 +22,23 @@ describe('DailyBars', () => {
     );
   });
 
+  it('draws a quiet stub for a day with none, so every day of the window is visible', () => {
+    render(<DailyBars days={days} label="Flaky results per day" tone="text-chart-flaky" />);
+    const [, empty, busy] = screen.getAllByTestId('daily-bar');
+    expect(empty).toHaveAttribute('data-empty', 'true');
+    expect(empty).toHaveClass('h-0.5', 'bg-border-strong');
+    expect(busy).not.toHaveAttribute('data-empty');
+    expect(busy).toHaveClass('bg-current');
+  });
+
+  it('labels the busiest day with its count, on the bar itself', () => {
+    render(<DailyBars days={days} label="Flaky results per day" tone="text-chart-flaky" />);
+    const peak = screen.getByTestId('daily-peak');
+    expect(peak).toHaveTextContent('4');
+    expect(peak).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getAllByTestId('daily-bar')[2]?.parentElement).toContainElement(peak);
+  });
+
   it('keeps every number readable to a screen reader as a table', () => {
     render(<DailyBars days={days} label="Flaky results per day" tone="text-chart-flaky" />);
     const table = screen.getByRole('table', { name: 'Flaky results per day' });
