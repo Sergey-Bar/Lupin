@@ -82,7 +82,7 @@ export const runGit: Git = gitWith({ limit: MAX_DIFF_BYTES });
 const REF = /^(?!-)(?!.*\.\.)[\w./@^~-]{1,255}$/u;
 
 export function baseOf(io: Io, flag: string | undefined): string {
-  const fromCi = io.env['GITHUB_BASE_REF'];
+  const fromCi = io.env['GITHUB_BASE_REF'] || io.env['CI_MERGE_REQUEST_TARGET_BRANCH_NAME'];
   const base = flag ?? io.env['LUPIN_BASE'] ?? (fromCi ? `origin/${fromCi}` : undefined);
   if (base === undefined || base === '') {
     throw usage('Name the branch to compare with: --base origin/main, or set LUPIN_BASE.');

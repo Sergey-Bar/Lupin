@@ -78,6 +78,36 @@ in, so the absolute paths it wrote become repository-relative.
 A misspelt option is refused rather than ignored: a step that silently dropped `--commit` would
 gate the wrong commit.
 
+## GitLab CI
+
+Every command runs in a GitLab job too. The CLI reads the branch, commit, merge request and
+target branch from GitLab's own variables (`CI_MERGE_REQUEST_SOURCE_BRANCH_NAME`,
+`CI_COMMIT_SHA`, `CI_MERGE_REQUEST_IID`, `CI_MERGE_REQUEST_TARGET_BRANCH_NAME`), so a merge
+request pipeline needs no flags:
+
+```yaml
+lupin:
+  image: node:24
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    GIT_DEPTH: 0 # diff-guard and impact compare with the target branch
+  script:
+    - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx --yes @lupin/cli diff-guard --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx --yes @lupin/cli gate --post
+```
+
+`gate --post` writes the verdict as a commit status named `lupin/health` and the gate's comment
+as one merge request note, updated on every push. GitLab has no check runs, so the risk factors
+are in the note. Give it `LUPIN_GITLAB_TOKEN`, a project access token with the `api` scope, as a
+masked variable: `CI_JOB_TOKEN` cannot write statuses or notes. That token goes only to
+`CI_API_V4_URL`, which must be `https://`, and never to Lupin; a refusal from GitLab is printed
+and never changes the exit code.
+
+What is not there yet: the server does not sync merge requests, pipelines or deployments from
+GitLab, so delivery metrics, SDLC phases and the pull request pages are GitHub only.
+
 ## Run the tests this change needs first
 
 `lupin impact` reads the branch's changed files and prints the tests to run first: the test files

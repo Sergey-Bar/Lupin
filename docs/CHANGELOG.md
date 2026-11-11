@@ -39,6 +39,9 @@
   measured) and the reason and age of the one you are on. A signal not measured, or evidence
   older than seven days, is never Good. `GET /api/v1/projects/:id/shape`,
   `GET …/pull-requests/:number/shape`, `GET /api/v1/portfolio/shape`, viewer.
+- **GitLab CI.** Every `lupin` command reads GitLab's own variables, and `lupin gate --post`
+  in a GitLab job posts the verdict as a commit status and the gate's comment as one merge
+  request note, with a project access token that never reaches Lupin.
 - **`lupin impact`** prints the tests a change needs first: the test files it touched and the
   tests named after the source files it touched, with the changed sources no test is named after.
   It runs in the job and sends nothing; `--format paths` feeds a test runner directly.

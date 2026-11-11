@@ -9,7 +9,7 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                   |
 | ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 82    | implemented and exercised, with the stated qualification.                 |
+| **real**     | 83    | implemented and exercised, with the stated qualification.                 |
 | **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
 | **missing**  | 1     | no usable implementation exists in the target.                            |
 | **deferred** | 6     | intentionally outside the launch scope pending a separate decision.       |
@@ -62,6 +62,7 @@ its source, then run `pnpm site:generate`.
 | Good shape or bad shape, and how fresh, at every level                                              | `real`     |
 | Quiet hours, and one waiting report per schedule                                                    | `real`     |
 | `lupin impact`: the tests a change needs first                                                      | `real`     |
+| The CLI in GitLab CI, and the gate posted to a merge request                                        | `real`     |
 | The briefing: what happened over a window, every line cited                                         | `real`     |
 | Optional prose for a briefing, held to its lines                                                    | `real`     |
 | The verdict posted from CI, for an install with no GitHub token                                     | `real`     |

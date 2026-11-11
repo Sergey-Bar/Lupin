@@ -4,6 +4,13 @@ import { collectAgentConfig } from './agent-config.js';
 import { optional, parseOptions, required } from './args.js';
 import { CliError, EXIT, usage, type ExitCode } from './errors.js';
 import { githubTarget, payloadOf, postToGitHub, type GitHubTarget } from './github-post.js';
+import {
+  gitlabTarget,
+  isGitLabCi,
+  mergeRequestOf,
+  postToGitLab,
+  type GitLabTarget,
+} from './gitlab-post.js';
 import { send } from './http.js';
 import { projectUrl, resolveTarget, type Target } from './target.js';
 
@@ -21,13 +28,20 @@ export interface Io {
 const COMMIT = /^[0-9a-f]{7,64}$/iu;
 const DIGEST = /^sha256:[0-9a-f]{64}$/iu;
 
-/** The branch and commit CI is building, from the flags or GitHub Actions' own variables. */
+/** The branch and commit CI is building, from the flags or GitHub Actions' or GitLab CI's own variables. */
 export function branchOf(io: Io, flag: string | undefined): string | undefined {
-  return flag ?? io.env['LUPIN_BRANCH'] ?? (io.env['GITHUB_HEAD_REF'] || io.env['GITHUB_REF_NAME']);
+  return (
+    flag ??
+    io.env['LUPIN_BRANCH'] ??
+    (io.env['GITHUB_HEAD_REF'] ||
+      io.env['GITHUB_REF_NAME'] ||
+      io.env['CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'] ||
+      io.env['CI_COMMIT_REF_NAME'])
+  );
 }
 
 export function commitOf(io: Io, flag: string | undefined): string | undefined {
-  const commit = flag ?? io.env['LUPIN_COMMIT'] ?? io.env['GITHUB_SHA'];
+  const commit = flag ?? io.env['LUPIN_COMMIT'] ?? io.env['GITHUB_SHA'] ?? io.env['CI_COMMIT_SHA'];
   if (commit !== undefined && commit !== '' && !COMMIT.test(commit)) {
     throw usage(`Not a commit sha: ${commit}`);
   }
@@ -104,7 +118,7 @@ function riskLine(answer: GateAnswer | null): string | null {
 /** `--post`: the server's rendering, posted with the job's own token. Never changes the exit. */
 async function post(
   io: Io,
-  github: GitHubTarget,
+  forge: { kind: 'github'; target: GitHubTarget } | { kind: 'gitlab'; target: GitLabTarget },
   answer: GateAnswer,
   pullRequest: number | undefined,
 ): Promise<void> {
@@ -117,7 +131,18 @@ async function post(
     io.out('The server sent nothing to post; this install may predate --post.');
     return;
   }
-  for (const line of await postToGitHub(io.fetch, github, payload, pullRequest)) io.out(line);
+  const lines =
+    forge.kind === 'github'
+      ? await postToGitHub(io.fetch, forge.target, payload, pullRequest)
+      : await postToGitLab(io.fetch, forge.target, payload, pullRequest);
+  for (const line of lines) io.out(line);
+}
+
+/** Where `--post` writes: GitLab inside a GitLab CI job, GitHub everywhere else. */
+function forgeOf(io: Io) {
+  return isGitLabCi(io.env)
+    ? { kind: 'gitlab' as const, target: gitlabTarget(io.env) }
+    : { kind: 'github' as const, target: githubTarget(io.env) };
 }
 
 /** `lupin gate --branch <b> --commit <sha> [--pr <n>] [--post]` — exits 1 when the gate fails. */
@@ -130,9 +155,11 @@ export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
   const commit = commitOf(io, optional(parsed, 'commit'));
   if (branch === undefined || branch === '') throw usage('--branch is required');
   if (commit === undefined) throw usage('--commit is required');
-  const pullRequest = pullRequestOf(optional(parsed, 'pr'));
-  // Checked before the gate is asked, so a job missing GITHUB_TOKEN says so at once.
-  const github = parsed.switches.has('post') ? githubTarget(io.env) : null;
+  const pullRequest =
+    pullRequestOf(optional(parsed, 'pr')) ??
+    (isGitLabCi(io.env) ? mergeRequestOf(io.env) : undefined);
+  // Checked before the gate is asked, so a job missing its forge token says so at once.
+  const forge = parsed.switches.has('post') ? forgeOf(io) : null;
   const destination = target(io, parsed);
   const answer = (await send(
     io.fetch,
@@ -156,7 +183,7 @@ export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
   const risk = riskLine(answer);
   if (risk !== null) io.out(risk);
   for (const reason of reasons) io.out(`- ${reason}`);
-  if (github !== null) await post(io, github, answer, pullRequest);
+  if (forge !== null) await post(io, forge, answer, pullRequest);
   return answer.verdict === 'passed' ? EXIT.ok : EXIT.gateFailed;
 }
 
