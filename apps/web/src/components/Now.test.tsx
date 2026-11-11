@@ -389,12 +389,14 @@ describe('AttentionSection, as one focus', () => {
     expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^\/dashboard\/runs\//u));
   });
 
-  it('says it in one calm sentence, and marks what is new since last time', async () => {
+  it('says it in one calm sentence, as the first card’s label, and marks what is new', async () => {
     localStorage.setItem(LAST_VISIT_KEY, '2026-10-25T10:00:00.000Z');
     render(<AttentionSection sources={sources()} navigate={vi.fn()} now={() => NOW} />);
-    expect(await screen.findByTestId('focus-sentence')).toHaveTextContent(
-      'One thing needs you. 1 is new since your last visit.',
-    );
+    const sentence = await screen.findByTestId('focus-sentence');
+    expect(sentence).toHaveTextContent('One thing needs you. 1 is new since your last visit.');
+    // Said once: inside the card, not as a line above it with a second "Start here" label.
+    expect(screen.getByTestId('focus-first')).toContainElement(sentence);
+    expect(screen.queryByText('Start here')).toBeNull();
     expect(screen.getByText('new')).toBeTruthy();
   });
 

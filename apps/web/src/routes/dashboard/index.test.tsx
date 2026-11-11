@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-router';
 import { RunsListPage, runAreaItems, runVerdict } from './index.js';
 import { makeApi, makeRun } from '../../test-utils.js';
+import { failureTitle as failureTitleFor } from '../../lib/attention.js';
 import type { ApiClient } from '../../lib/api.js';
 import { expectOnePrimary } from '../../test-utils.js';
 
@@ -184,7 +185,9 @@ describe('RunsListPage', () => {
     await waitFor(() => expect(screen.getByTestId('area-runs')).toBeInTheDocument());
     const hero = screen.getByRole('region', { name: 'Failing' });
     expect(hero).toHaveTextContent('One branch needs you.');
-    expect(screen.getByTestId(`area-item-run-${failedRun.id}`)).toBeInTheDocument();
+    // The red run leads the band with the retry; it is not repeated as a card below.
+    expect(hero).toHaveTextContent(failureTitleFor(failedRun));
+    expect(screen.queryByTestId(`area-item-run-${failedRun.id}`)).toBeNull();
     expect(screen.queryByTestId('area-details')).toBeNull();
     expect(screen.getByRole('region', { name: 'Every run' })).toContainElement(
       screen.getByTestId(`run-row-${failedRun.id}`),

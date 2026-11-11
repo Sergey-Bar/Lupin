@@ -1,7 +1,9 @@
 import React from 'react';
-import { Badge, Button, StatusDot, cn } from '@lupin/ui';
+import { Badge, Button, Hero, StatusDot, cn } from '@lupin/ui';
 import { PageBody, PageFrame, PageHeader } from './kit.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
+
+type HeroProps = React.ComponentProps<typeof Hero>;
 
 /**
  * One area of the pyramid (Tests, Health, Delivery), drawn the same way every time so a reader
@@ -132,8 +134,13 @@ export function AreaPage({
   }, [key]);
   const [doneIds, setDone] = React.useState<readonly string[]>([]);
   const live = items.filter((entry) => !doneIds.includes(entry.id));
-  const top = live.slice(0, ABOVE_THE_FOLD);
-  const rest = live.slice(ABOVE_THE_FOLD);
+  // With a status band, the first thing to do is said in the band with the page's one primary
+  // button, and the list below starts at the second: one focal point, nothing said twice.
+  const bandHero = React.isValidElement<HeroProps>(hero) && hero.type === Hero ? hero : null;
+  const lead = bandHero === null ? undefined : live[0];
+  const listed = lead === undefined ? live : live.slice(1);
+  const top = listed.slice(0, ABOVE_THE_FOLD);
+  const rest = listed.slice(ABOVE_THE_FOLD);
   // "For context" and "Fine" items are information, not work, so they are not counted.
   const needing = live.filter((entry) => entry.tone === 'bad' || entry.tone === 'warn').length;
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -173,7 +180,14 @@ export function AreaPage({
         {...(subtitle === undefined ? {} : { subtitle })}
       />
       <PageBody>
-        {hero}
+        <AreaBand
+          hero={hero}
+          bandHero={bandHero}
+          lead={lead}
+          navigate={navigate}
+          finish={finish}
+          announce={announce}
+        />
         {/* With a hero the verdict is already said, at display size; once is enough. */}
         {hero !== undefined ? null : (
           <p data-testid="area-verdict" className="text-lg text-fg-muted">
@@ -197,7 +211,7 @@ export function AreaPage({
               <Row
                 key={entry.id}
                 entry={entry}
-                primary={index === 0}
+                primary={index === 0 && lead === undefined}
                 fresh={isFresh(entry, lastVisit)}
                 className={STAGGER[index] ?? ''}
                 navigate={navigate}
@@ -279,6 +293,77 @@ function useRowAction(
     }
   };
   return { state, leaving, act };
+}
+
+/** The page's band: led by the first thing to do when there is one, else as the page drew it. */
+function AreaBand({
+  hero,
+  bandHero,
+  lead,
+  navigate,
+  finish,
+  announce,
+}: {
+  hero: React.ReactNode;
+  bandHero: React.ReactElement<HeroProps> | null;
+  lead: AreaItem | undefined;
+  navigate: (to: string) => void;
+  finish: (entry: AreaItem) => void;
+  announce: (entry: AreaItem) => void;
+}): React.ReactNode {
+  if (bandHero === null || lead === undefined) return hero;
+  return (
+    <BandLead
+      key={lead.id}
+      hero={bandHero}
+      entry={lead}
+      navigate={navigate}
+      onDone={() => finish(lead)}
+      onSucceeded={() => announce(lead)}
+    />
+  );
+}
+
+/**
+ * The band, leading with the first thing to do: its title as the reason, its detail under it,
+ * and its action as the page's one primary button at the end of the band.
+ */
+function BandLead({
+  hero,
+  entry,
+  navigate,
+  onDone,
+  onSucceeded,
+}: {
+  hero: React.ReactElement<HeroProps>;
+  entry: AreaItem;
+  navigate: (to: string) => void;
+  onDone: () => void;
+  onSucceeded: () => void;
+}): React.ReactElement {
+  const { state, act } = useRowAction(entry, navigate, onDone, onSucceeded);
+  const reason = (
+    <>
+      <span className="block text-base font-medium text-fg">{entry.title}</span>
+      <span className="block text-fg-muted">
+        {entry.detail}
+        {hero.props.reason === undefined || hero.props.reason === '' ? null : (
+          <> · {hero.props.reason}</>
+        )}
+      </span>
+      {state.error === null ? null : (
+        <span role="alert" className="mt-1 block text-danger">
+          {state.error}
+        </span>
+      )}
+    </>
+  );
+  return React.cloneElement(hero, {
+    reason,
+    children: (
+      <RowButton primary busy={state.busy} action={entry.action} onClick={() => void act()} />
+    ),
+  });
 }
 
 function Row({
@@ -366,6 +451,7 @@ function RowButton({
     <Button
       data-primary="true"
       aria-keyshortcuts="a"
+      title={`${label} (A)`}
       variant="primary"
       size="md"
       className="shrink-0"
@@ -373,12 +459,6 @@ function RowButton({
       onClick={onClick}
     >
       {label}
-      <kbd
-        aria-hidden="true"
-        className="ms-2 hidden rounded border border-current px-1 font-mono text-xs opacity-60 sm:inline"
-      >
-        A
-      </kbd>
     </Button>
   );
 }

@@ -164,20 +164,23 @@ export function AttentionSection({
       data-testid="now-page"
       className="flex flex-col gap-6"
     >
-      <p id="focus-sentence" data-testid="focus-sentence" className="text-lg text-fg-muted">
-        {focusSentence(state.total, fresh)}
-      </p>
       {focus.first === undefined ? (
-        <EmptyState
-          headingLevel={2}
-          data-testid="now-clear"
-          title="All clear"
-          description="No failing run, no falling grade, no lost report."
-        />
+        <>
+          <p id="focus-sentence" data-testid="focus-sentence" className="text-lg text-fg-muted">
+            {focusSentence(state.total, fresh)}
+          </p>
+          <EmptyState
+            headingLevel={2}
+            data-testid="now-clear"
+            title="All clear"
+            description="No failing run, no falling grade, no lost report."
+          />
+        </>
       ) : (
         <>
           <FirstThing
             item={focus.first}
+            sentence={focusSentence(state.total, fresh)}
             isNew={isNew(focus.first, lastVisit)}
             navigate={navigate}
             {...(sources.retryRun === undefined ? {} : { retryRun: sources.retryRun })}
@@ -238,11 +241,14 @@ export function AttentionSection({
  */
 function FirstThing({
   item,
+  sentence,
   isNew: fresh,
   navigate,
   retryRun,
 }: {
   item: AttentionItem;
+  /** How much needs you, said once, as the card's own label rather than a line above it. */
+  sentence: string;
   isNew: boolean;
   navigate: (to: string) => void;
   retryRun?: (runId: string, scope: 'all' | 'failed') => Promise<{ id: string }>;
@@ -271,7 +277,9 @@ function FirstThing({
       className="flex animate-fade-in flex-col gap-4 rounded-lg bg-surface p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8"
     >
       <div className="min-w-0">
-        <p className="text-xs font-medium text-fg-muted">Start here</p>
+        <p id="focus-sentence" data-testid="focus-sentence" className="text-sm text-fg-muted">
+          {sentence}
+        </p>
         <h2 className="mt-1 flex items-center gap-3 text-2xl font-semibold tracking-tight">
           <StatusDot status={item.severity === 'bad' ? 'bad' : 'warn'} />
           <span className="line-clamp-2">{item.title}</span>
@@ -287,18 +295,13 @@ function FirstThing({
             <Button
               data-primary="true"
               aria-keyshortcuts="a"
+              title={`${retryLabel(item.auto?.failed ?? 0)} (A)`}
               className="min-h-11"
               disabled={auto.state === 'busy'}
               onClick={() => void act()}
             >
               <RotateCcw size={16} aria-hidden="true" />
               {auto.state === 'busy' ? 'Retrying' : retryLabel(item.auto?.failed ?? 0)}
-              <kbd
-                aria-hidden="true"
-                className="ms-1 hidden rounded border border-current px-1 font-mono text-xs opacity-60 sm:inline"
-              >
-                A
-              </kbd>
             </Button>
           ) : null}
           {auto.state === 'done' ? (

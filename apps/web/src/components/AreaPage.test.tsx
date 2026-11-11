@@ -3,6 +3,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { commandStore } from '../hooks/useCommandActions.js';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { Hero } from '@lupin/ui';
 import { AreaPage, type AreaItem } from './AreaPage.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 
@@ -254,13 +255,66 @@ describe('AreaPage', () => {
     expect(run).toHaveBeenCalledOnce();
   });
 
-  it('shows the A shortcut on the one primary button, and announces it', () => {
+  it('names the A shortcut in the tooltip, not as a badge inside the button', () => {
     show([item('a'), item('b')]);
     const primary = within(screen.getByTestId('area-item-a')).getByRole('button', { name: 'Open' });
     expect(primary).toHaveAttribute('aria-keyshortcuts', 'a');
-    expect(primary.querySelector('kbd')).toHaveTextContent('A');
+    expect(primary).toHaveAttribute('title', 'Open (A)');
+    expect(primary.querySelector('kbd')).toBeNull();
     const other = within(screen.getByTestId('area-item-b')).getByRole('button', { name: 'Open' });
     expect(other).not.toHaveAttribute('aria-keyshortcuts');
+  });
+
+  it('puts the first thing to do in the status band, so the page has one focal point', async () => {
+    const user = userEvent.setup();
+    const { navigate } = show([item('a'), item('b')], {
+      hero: <Hero headingLevel={2} verdict="no-go" word="Failing" reason="One branch needs you." />,
+    });
+    const band = screen.getByRole('region', { name: 'Failing' });
+    // The band says what to fix and offers the one primary button for it; its own count
+    // stays, on the detail line.
+    expect(within(band).getByText('item a')).toBeInTheDocument();
+    expect(band).toHaveTextContent('why it matters · One branch needs you.');
+    const primary = within(band).getByRole('button', { name: 'Open' });
+    expect(primary).toHaveAttribute('data-primary', 'true');
+    // The list starts at the second item, quietly, so nothing is said twice.
+    expect(screen.queryByTestId('area-item-a')).toBeNull();
+    const second = within(screen.getByTestId('area-item-b')).getByRole('button', { name: 'Open' });
+    expect(second).toHaveAttribute('data-primary', 'false');
+    expect(document.querySelectorAll('[data-primary="true"]')).toHaveLength(1);
+    await user.click(primary);
+    expect(navigate).toHaveBeenCalledWith('/x/a');
+  });
+
+  it('runs the band’s action, says it is done, and hands the band to the next item', async () => {
+    const user = userEvent.setup();
+    const run = vi.fn(async () => undefined);
+    show([item('a', { action: { label: 'Retry', run } }), item('b')], {
+      hero: <Hero headingLevel={2} verdict="no-go" word="Failing" reason="Two need you." />,
+    });
+    const band = screen.getByRole('region', { name: 'Failing' });
+    await user.click(within(band).getByRole('button', { name: 'Retry' }));
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole('status')).toHaveTextContent('Done: item a');
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('region', { name: 'Failing' })).getByText('item b'),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      within(screen.getByRole('region', { name: 'Failing' })).getByRole('button', {
+        name: 'Open',
+      }),
+    ).toHaveAttribute('data-primary', 'true');
+  });
+
+  it('keeps the band’s own reason when nothing needs you', () => {
+    show([], {
+      hero: <Hero headingLevel={2} verdict="go" word="Green" reason="Every branch passed." />,
+    });
+    const band = screen.getByRole('region', { name: 'Green' });
+    expect(within(band).getByText('Every branch passed.')).toBeInTheDocument();
+    expect(within(band).queryByRole('button')).toBeNull();
   });
 
   it('has no serious or critical axe violations', async () => {
