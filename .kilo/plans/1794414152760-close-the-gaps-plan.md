@@ -12,7 +12,8 @@ the task that names them, so `scripts/lib/docs-paths.test.mjs` keeps checking on
 The owner asked for the plan without answering these, so each is stated and can be overturned
 before its wave starts.
 
-- Order: QA actions first (what a person cannot do today), then access hardening, then test
+- Order: defects and drift first (Wave 0), then QA actions (what a person cannot do today),
+  then access hardening, then test
   intelligence, then gate breadth, then formats and integrations, then the screens that read
   across projects, then platform.
 - A release sign-off is a record, not a gate: it never changes a verdict, it records who
@@ -27,8 +28,14 @@ before its wave starts.
 - A gate domain other than browser is computed only from uploaded evidence. With no upload it
   stays `not_configured`, never `passed`.
 - Not in this plan: high availability and Kubernetes (ADR-006), Bitbucket and Azure DevOps,
-  TestRail, Xray and Zephyr, mobile device farms, native OpenAI and Anthropic adapters, and a
-  translated interface. Each is a product decision rather than a gap in what exists.
+  Jenkins, CircleCI and Buildkite, TestRail, Xray and Zephyr, Linear, PagerDuty and Opsgenie
+  beyond outbound webhooks, interactive Slack and Teams messages, mobile device farms, native
+  OpenAI and Anthropic adapters, MCP write tools, forecasting, and a translated interface.
+  Each is a product decision rather than a gap in what exists, and each is named here so its
+  absence is a decision a reader can see.
+- Wave 0 comes first: defects and drift are fixed before new surface is added on top of them.
+- The toolchain upgrades (Node 26, Effect 4, TypeScript 7, PostgreSQL 18) stay with their
+  ledger rows and are not repeated here.
 
 ## Rules every task keeps
 
@@ -38,6 +45,168 @@ missing evidence is never a pass; no per-person data; every table workspace-scop
 `docs/quality/authz-matrix.json` row; tests written first and watched failing; every write
 audited; each feature ends with a guide page, a CHANGELOG line, a regenerated
 `docs/openapi.json` when the API changed, and a `real` capability-register row.
+
+## Wave 0: fix what is wrong before adding anything
+
+Found by a second sweep on 2026-11-11, each confirmed by reading the code. Every item first
+becomes a row in `docs/quality/findings-ledger.json` with `provenance: "hand"`, then is closed
+by a test written against the defect and watched failing. Ordered by harm.
+
+**Correctness and security**
+
+- D1. Installation-wide quality gates can be changed from any workspace. `list`, `get`,
+  `update` and `remove` in `apps/api/src/modules/dashboard/drizzle-stores.ts` filter by id
+  only, and the routes in `apps/api/src/modules/dashboard/quality-gates.ts` check the plain
+  admin role, so a workspace admin can lower the `global` default every workspace uses, and
+  the audit row lands in the actor's workspace, not the affected one. Require an installation
+  admin for gates whose workspace is NULL (the rule `mayChangeInstallation` already applies to
+  install-scoped settings), scope workspace gates to their workspace, and add a
+  cross-workspace isolation test.
+- D2. The run status change trusts a client header for the audit actor and can revive a
+  finished run. `apps/api/src/modules/dashboard/runs.ts` records `x-actor-id` (or
+  `anonymous`) instead of the authenticated caller, its audit sink is optional, and the
+  terminal check and the write in `apps/api/src/repositories/drizzle-run-repository.ts` are
+  a read then an unconditional update. Record the caller, make the sink required, and make
+  the update a compare-and-set on the status read, as the quarantine decision already is.
+- D3. Failures are reported as "not configured". `apps/api/src/services/github-app-service.ts`
+  turns every GitHub refusal and network error into "no token" and parses the vault entry
+  outside a try; `apps/api/src/index.ts` turns a vault or database fault in `tokenFor` into
+  "no token"; `apps/api/src/routes/delivery.ts` discards a failed sync after answering 202;
+  `apps/api/src/copilot/routes.ts` hides a CODEOWNERS failure. Each keeps its fallback and
+  logs the cause with the request id, and a corrupt vault entry answers as corrupt.
+- D4. The break-glass sign-in is audited with `void audit(...)` in `apps/api/src/index.ts`,
+  and `audit` in `apps/api/src/services/access-service.ts` swallows insert failures. The one
+  event documented as always audited can go unrecorded. Await it, and refuse break-glass when
+  the audit row cannot be written.
+- D5. The OIDC discovery cache in `apps/api/src/routes/oidc.ts` is never evicted and keys
+  entries by the plaintext client secret, so every tested identity draft stays in memory with
+  its secret for the life of the process. Key by a hash, bound the cache, and evict on apply.
+  Parse the OIDC flow cookie with a schema instead of a cast.
+- D6. Process-local state that splits with two API processes: the rate limiters in
+  `apps/api/src/middleware/rate-limit.ts`, the admin-change lock in
+  `apps/api/src/routes/members.ts`, the GitHub App token cache and the OIDC cache. ADR-006 is
+  one process, so the fix is to state it at startup (refuse a second API process against the
+  same database, through an advisory lock) rather than to distribute the state.
+- D7. The legacy orchestration routes answer `GET /api/v1/schedules` with a literal empty list
+  while `POST` stores one (`apps/api/src/routes/orchestration.ts`), over the in-memory
+  `apps/api/src/services/orchestration-service.ts` and `apps/api/src/services/runner-control.ts`.
+  They are 503 in production already; remove them outside production too, or read back what
+  was stored, and take their rows out of the authz matrix.
+- D8. `packages/orchestration/src/schedule.ts` exports a `nextOccurrence` that throws for an
+  hour of `'*'` its own type allows, ignores the minute for `'step'`, and is imported only by
+  its tests, beside a different `nextOccurrence` in
+  `apps/api/src/services/notification-service.ts`. Delete the dead one.
+- D9. The flaky leaderboard in `apps/api/src/execution/insights.ts` and flake cost in
+  `packages/reporting/src/flake-cost.ts` count flakiness over different denominators and
+  nothing asserts they agree. One function, used by both, with a property test.
+- D10. The authz matrix's `workspaceScoped` flag marks scoped handlers (runs, quarantine) and
+  the unscoped quality gates the same way, so it cannot find a leak. Derive it from the store a
+  handler uses, or drop the column and rely on isolation tests, and say which in
+  `docs/quality/authz-matrix.json`.
+
+**Stale statements that a reader will quote**
+
+- D11. `apps/api/src/index.ts` says twice that there is no authentication middleware and that
+  the install is open, beside route guards, SSO enforcement and break-glass in the same file.
+  The same wording is in `apps/web/src/lib/api.ts`, `apps/web/src/router.ts` and the
+  palette's "no Sign out" comment. Rewrite each to the real posture: open on loopback in solo,
+  guarded with LAN mode or a team or enterprise profile.
+- D12. `site/guide/sending-results.md` and `README.md` list four upload formats; the API also
+  reads Allure (`packages/shared-contracts/src/schemas/report-formats.ts`). The comment in that
+  file says SARIF has no ingestible format, though the health door reads SARIF. The register
+  row `reporting.lifecycle` says five adapters where there are six. Fix all four.
+- D13. `site/guide/notifications.md` and `README.md` leave out the email channel, which the
+  dispatcher sends.
+- D14. `site/guide/cli.md` documents `diff-guard` only inside the GitLab example; it belongs in
+  the command list with the others.
+- D15. `AGENTS.md` names `/setup` as the first run (it is `/dashboard/setup`), a
+  .kilo/command directory that does not exist, Vitest 4 (the catalog is on 5), and omits
+  `apps/tui`; its coverage table rounds floors up past the recorded baseline and omits about
+  twenty packages. Fix the facts, or generate the table from
+  `docs/quality/coverage-baseline.json`.
+- D16. The register row `tool.zap` is `missing` while its own text says the parser exists and
+  is wired. Split it into the parser (real) and the producer (missing).
+- D17. `apps/api/src/execution/maturity.ts` still lists JUnit as the legacy adapter and k6 and
+  Bruno as absent. Covered by task 20; recorded here so the drift has a ledger row.
+- D18. The rendering budget in `tests/performance/rendering-budget.json` measures `/dashboard`,
+  not the landing page `/dashboard/now`, and its comment names an "Overview" that is no longer
+  the landing. Add the landing page and record its ceiling.
+- D19. Each of the 22 translated site homes links to English guides with translated button
+  labels (`site/.vitepress/config.mts`). Say on each home that the guides are in English.
+- D20. Stale comments in `apps/web/src/routes/dashboard/settings.tsx` ("wired in Task 5") and
+  the header of `apps/web/src/route-manifest.ts` (Delivery as an area).
+
+**Frontend defects**
+
+- D21. Five admin pages exist twice, at `/dashboard/access|members|audit|deployment|reports`
+  (`apps/web/src/routes/dashboard/portfolio.tsx`, `apps/web/src/routes/dashboard/reports.tsx`)
+  and under `/dashboard/settings/*`. The top-level copies are in the palette with no admin
+  floor, so a viewer is offered pages the API refuses, and the sidebar highlights nothing on
+  them. Redirect the old paths to the settings ones and filter the palette by role.
+- D22. `g d` in `apps/web/src/components/Shortcuts.tsx` says Delivery and opens Pull requests;
+  `g s` and `g a` open the duplicate paths; `g n` says Now where the sidebar says Home.
+- D23. Palette questions in `apps/web/src/components/GlobalCommandPalette.tsx` land on general
+  pages: "Can we ship?" opens Health instead of Home, flaky and slow open Tests instead of the
+  flaky page, coverage opens Health instead of the gaps page. Palette labels use the manifest
+  label ("Dashboard", "Insights", "Launch") rather than what the sidebar shows; "Toggle Theme"
+  is title case.
+- D24. Destructive actions take effect on one click: revoke token
+  (`apps/web/src/components/Access.tsx`), remove or disable a member and change a role
+  (`apps/web/src/components/People.tsx`), remove a GitHub App, a project token or a quality
+  gate (`apps/web/src/components/SettingsPages.tsx`), remove a channel or a schedule
+  (`apps/web/src/components/Notifications.tsx`). Use the confirmation pattern project delete
+  already has, typed for revoke, remove member and remove app.
+- D25. Internal links written as plain anchors reload the whole app: the back link and the
+  retried-run link in `apps/web/src/routes/dashboard/run-detail.tsx`, and the queued-run link
+  in `apps/web/src/routes/dashboard.tsx`. Use the router's link, and sweep the other anchors.
+- D26. Silent failures: `apps/web/src/hooks/useViewerRole.ts` turns a failed role read into no
+  role, so admin pages vanish from the sidebar with no message; `Access.tsx` hides SSO when the
+  sign-in methods fail; the Home onboarding fetch ignores errors. Show a stated failure and
+  retry.
+- D27. `apps/web/src/hooks/useRuns.ts` polls every 5 seconds while the event stream is down,
+  with no backoff on a failing API and no pause in a hidden tab.
+- D28. Forms built from raw inputs with local class strings (quarantine, the launch form,
+  runner, toolbox, delivery, supply chain, copilot) instead of the `Input` from `@lupin/ui`,
+  with one alert line rather than a message per field.
+- D29. Quarantine copy: title case ("Error Loading Quarantine List", "Test Title", "Test
+  File"), a "Submit" button, three dots instead of an ellipsis, an empty-state line that
+  repeats its title, and `text-error` beside `text-danger`. The run-detail artifact list
+  shows raw byte counts and three dots after the checksum.
+- D30. Tables without captions (8 of 36 have one), the unpaged artifact list on run detail,
+  and components over 600 lines (`run-detail.tsx` at 1133) split along their panels.
+- D31. `apps/web/src/components/dashboard/RunExplorer.tsx` is imported only by its own test,
+  and the register row `reporting.explorer` cites it as evidence. Delete it and point the row
+  at the screen that is used.
+
+**Build, database and supply chain**
+
+- D32. Drizzle snapshots stop at `0004` while `packages/db/drizzle/meta/_journal.json` reaches
+  `0059`, so `pnpm db:check` checks nothing after 0004 and `pnpm db:generate` would diff
+  against a schema 55 migrations old. Regenerate a current snapshot, and add a test that the
+  latest snapshot matches the latest journal entry.
+- D33. `apps/worker/src/postgres-store.ts` runs 28 hand-written queries with hand-typed rows,
+  so a renamed column typechecks and fails at run time. Move it onto the Drizzle schema, or
+  add a test that every column it names exists in the schema.
+- D34. `pnpm-workspace.yaml` pins `typescript-eslint` to 8.72.1, the version its own comment
+  says runs lint out of memory, while `.github/dependabot.yml` ignores that version; lint runs
+  with a 6 GB heap to cope. Pin 8.72.0 or record why 8.72.1 stays.
+- D35. Compose images in `infra/compose/docker-compose.unified.yml` (postgres, seaweedfs,
+  signal, cloudflared) and the CI service image are pinned by tag only, and Dependabot does not
+  watch `/infra/compose`. Pin by digest and add the directory.
+- D36. Compose services other than signal and cloudflared have no restart policy and none has
+  a memory or CPU limit, so a reboot leaves the install down and a runaway runner can starve
+  PostgreSQL. `infra/docker/web.Dockerfile` and `infra/docker/edge.Dockerfile` have no
+  HEALTHCHECK of their own.
+- D37. `@electric-sql/pglite` is declared four times with two ranges outside the catalog.
+- D38. `semantic-review/`, `.worktrees/` and `.kiro/` are neither tracked nor ignored, and the
+  root helper scripts are ignored only through a local exclude. Add them to `.gitignore`.
+- D39. A `pnpm test` flake in `@lupin/unified-web`, recorded in
+  `.kilo/plans/1791152400000-frontend-finish-plan.md`, was never investigated and has no
+  ledger row. `apps/api/src/routes/audit.test.ts` sleeps on the real clock.
+- D40. The nightly quality-baseline upload ignores a missing report, so a run that produced
+  nothing is green. Fail when the report is absent.
+- D41. CI rebuilds the workspace in every job with no shared build cache. Cache the build
+  output between jobs.
 
 ## Wave 1: QA can act on what it sees
 
@@ -74,7 +243,8 @@ audited; each feature ends with a guide page, a CHANGELOG line, a regenerated
    permissions through the existing guard so the authz matrix records them. Per-project roles
    are deferred and stated as deferred.
 8. API rate limit. A per-token and per-client budget on every route outside the probes, with
-   `retry-after`, distinct from the sign-in limiter.
+   `retry-after`. Today only sign-in, token sign-in, OIDC, pairing and the GitHub webhook are
+   limited.
 9. Outbound address guard. One function refuses private, loopback, link-local and metadata
    addresses for every admin-configured URL (webhooks, the Ollama base URL, the OIDC issuer,
    email and Signal bridges), with an explicit allowlist setting for a LAN install that needs
@@ -159,6 +329,22 @@ audited; each feature ends with a guide page, a CHANGELOG line, a regenerated
     health and audit as files a restore or another install can read.
 35. Live updates for more than runs. Gate verdicts, sign-offs, quarantine decisions and health
     reports on the event stream.
+36. Model spend that is enforced. Workspace and project budgets stop gateway calls when spent,
+    with a stated refusal, instead of only being reported; a default price table ships for the
+    common models.
+37. Test output treated as untrusted. Failure messages and logs that reach a model are fenced
+    and labelled as data, and narration that follows an instruction found in them is
+    discarded.
+38. Backups that leave the host. A configured off-host target for `backup`, and a documented
+    path to point-in-time recovery with PostgreSQL WAL archiving.
+39. Gates that graduate. `skill-scan`, the nightly smoke job and mutation lose
+    `continue-on-error` after a recorded run each (ledger rows MNT-30 and MNT-90), and k6 moves
+    from nightly to the release gate.
+40. Complexity to 10. The 51 functions at 11 or 12 are split, and the ceiling in
+    `docs/quality/complexity-baseline.json` drops to 10 (ledger row Q-1).
+41. Documentation that teaches. A tutorial per CI provider and per framework, a troubleshooting
+    page, and a migration page from ReportPortal and TestRail.
+42. Runner sharding. One run split across runners by the shard planner, with one verdict.
 
 ## How each wave is closed
 
@@ -170,3 +356,4 @@ its progress entry rather than claiming it.
 ## Progress
 
 - 2026-11-11: plan written and committed.
+- 2026-11-11: second sweep added Wave 0 (D1 to D41) and tasks 36 to 42.
