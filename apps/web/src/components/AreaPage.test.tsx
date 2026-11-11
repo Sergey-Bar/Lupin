@@ -317,6 +317,16 @@ describe('AreaPage', () => {
     expect(within(band).queryByRole('button')).toBeNull();
   });
 
+  it('draws every item as the same quiet card the band and the panels are', () => {
+    show([item('a'), item('b')]);
+    expect(screen.getByTestId('area-item-a')).toHaveClass(
+      'rounded-lg',
+      'border',
+      'border-border',
+      'bg-surface',
+    );
+  });
+
   it('has no serious or critical axe violations', async () => {
     const { container } = show(
       ['a', 'b', 'c', 'd'].map((id) => item(id)),

@@ -394,7 +394,7 @@ function Row({
       onAnimationEnd={leaving ? onDone : undefined}
       className={cn(
         leaving ? 'animate-fade-out' : 'animate-fade-in',
-        'flex flex-col gap-3 rounded-lg bg-surface p-4 sm:flex-row sm:items-center sm:justify-between',
+        'flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between',
         primary && 'p-6',
         className,
       )}

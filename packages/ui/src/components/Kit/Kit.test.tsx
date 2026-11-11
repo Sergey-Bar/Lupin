@@ -55,6 +55,14 @@ describe('Hero', () => {
     render(<Hero verdict="go" word="Ready" reason="All gates pass" />);
     expect(screen.getByRole('region', { name: 'Ready' })).toHaveClass('animate-fade-in');
   });
+
+  it('is the same flat card as every other surface: colour on the mark and word only', () => {
+    render(<Hero verdict="no-go" word="No-go" reason="Below the floor" />);
+    const hero = screen.getByRole('region', { name: 'No-go' });
+    expect(hero).toHaveClass('rounded-lg', 'border', 'border-border', 'bg-surface');
+    // No coloured edge and no shadow: a page surface is flat, an overlay is raised.
+    expect(hero.className).not.toMatch(/border-t-|shadow-/u);
+  });
 });
 
 describe('Row', () => {

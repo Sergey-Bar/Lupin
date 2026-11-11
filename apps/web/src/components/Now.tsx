@@ -274,7 +274,7 @@ function FirstThing({
     <article
       data-testid="focus-first"
       aria-label="Start here"
-      className="flex animate-fade-in flex-col gap-4 rounded-lg bg-surface p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8"
+      className="flex animate-fade-in flex-col gap-4 rounded-lg border border-border bg-surface p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8"
     >
       <div className="min-w-0">
         <p id="focus-sentence" data-testid="focus-sentence" className="text-sm text-fg-muted">
