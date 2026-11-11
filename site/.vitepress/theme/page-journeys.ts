@@ -135,6 +135,15 @@ export const pageJourneys: Record<string, Journey> = {
     takeaway:
       'A test proposal is a patch for a person to review. Lupin does not apply it to the repository.',
   },
+  'guide/embedded.md': {
+    audience: 'Firmware and device QA engineers',
+    goal: 'Put firmware and hardware-in-the-loop results in the same quality record.',
+    stages: [
+      ['Connect', 'Connect the repository; Lupin proposes the test command from its build files.'],
+      ['Send', 'Run that command through lupin test, which uploads its JUnit report.'],
+      ['Read', 'See the run, its board, its failures by cause and their owners.'],
+    ],
+  },
   'guide/cli.md': {
     audience: 'Developers · CI owners',
     goal: 'Make your CI reports part of the same quality record.',

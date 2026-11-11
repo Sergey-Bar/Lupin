@@ -146,6 +146,7 @@ export default defineConfig({
         collapsed: true,
         items: [
           { text: 'Send results from any CI (CLI)', link: '/guide/cli' },
+          { text: 'Embedded and firmware QA', link: '/guide/embedded' },
           { text: 'GitHub command center', link: '/guide/github-command-center' },
           { text: 'Ask your editor (MCP)', link: '/guide/mcp' },
           { text: 'Serve your network (LAN mode)', link: '/guide/lan-mode' },
