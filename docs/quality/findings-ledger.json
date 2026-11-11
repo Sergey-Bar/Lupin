@@ -8091,6 +8091,63 @@
           "asserts": "Every statement in postgres-store.ts prepares against the migrated schema; a renamed column is refused."
         }
       ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-195",
+      "band": "Minor",
+      "title": "Dependabot was told to skip the typescript-eslint version the catalog installs",
+      "summary": "pnpm-workspace.yaml pinned typescript-eslint to 8.72.1 under a comment saying 8.72.1 runs lint out of memory and 8.72.0 lints clean, and .github/dependabot.yml ignored 8.72.1 for the same reason. 5b8a912e had moved the pin to 8.72.1 and given the root lint and the complexity gate a 6 GB heap, because the tree had outgrown 4 GB on 8.72.0 as well, and left both comments and the ignore describing the reversed decision.",
+      "resolution": "The catalog comment says what happened and why 8.72.1 stays (it lints within the 6 GB heap; return to a caret range when typescript-eslint#13109 is fixed), and the ignore is removed. A test refuses a Dependabot version ignore that names the version the catalog pins exactly.",
+      "evidence": [
+        {
+          "path": "scripts/lib/dependabot-ignores.test.mjs",
+          "asserts": "No Dependabot ignore names the exact version the catalog installs."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-196",
+      "band": "Major",
+      "title": "Compose and CI images were pinned by tag only, and nothing watched the compose files",
+      "summary": "postgres, seaweedfs, signal-cli-rest-api and cloudflared in infra/compose, and the postgres service image in five CI jobs, were pinned by tag, which the publisher can move. Dependabot watched the Dockerfiles but not /infra/compose.",
+      "resolution": "Each is pinned by tag and the registry index digest read on 2026-11-11. Dependabot watches /infra/compose with the docker-compose ecosystem. Tests refuse an unpinned third-party compose image, hold the CI postgres to the compose pin (Dependabot cannot update a workflow service image), and require the Dependabot entry.",
+      "evidence": [
+        {
+          "path": "scripts/lib/compose-contract.test.mjs",
+          "asserts": "Every third-party compose image is pinned by digest, the CI postgres matches the compose pin, and Dependabot watches /infra/compose."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-197",
+      "band": "Major",
+      "title": "A reboot left the install down, and no service had a resource limit",
+      "summary": "In infra/compose/docker-compose.unified.yml only signal and cloudflared had a restart policy, so a host reboot or a crash left PostgreSQL, the API, the worker, the runner, the web and the edge stopped. No service had a memory or CPU limit, so a runaway runner could starve PostgreSQL. The web and edge images declared no HEALTHCHECK, and the edge started once web had merely started.",
+      "resolution": "Every long-running service has restart: unless-stopped, a mem_limit and a cpus limit sized for the single-node reference install and overridable in an override file; the one-shot migrate keeps restart: no. The web and edge images declare a HEALTHCHECK and the edge waits for a healthy web. Tests hold all three. The images were not rebuilt here: the Docker engine was not running.",
+      "evidence": [
+        {
+          "path": "scripts/lib/compose-contract.test.mjs",
+          "asserts": "Every service but migrate has restart, mem_limit and cpus; the api, worker, runner, web and edge images declare a HEALTHCHECK."
+        }
+      ]
     }
   ]
 }

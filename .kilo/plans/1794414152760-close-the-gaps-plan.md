@@ -215,13 +215,17 @@ by a test written against the defect and watched failing. Ordered by harm.
   the migrated schema in `tests/integration/src/worker-sql.test.ts`. `apps/worker/src/postgres-store.ts` runs 28 hand-written queries with hand-typed rows,
   so a renamed column typechecks and fails at run time. Move it onto the Drizzle schema, or
   add a test that every column it names exists in the schema.
-- D34. `pnpm-workspace.yaml` pins `typescript-eslint` to 8.72.1, the version its own comment
+- D34. Done 2026-11-11 (MNT-195): 8.72.1 stays (it lints within the 6 GB heap 5b8a912e
+  gave lint); the stale comment and the contradicting ignore are fixed, and a test refuses
+  the next one. `pnpm-workspace.yaml` pins `typescript-eslint` to 8.72.1, the version its own comment
   says runs lint out of memory, while `.github/dependabot.yml` ignores that version; lint runs
   with a 6 GB heap to cope. Pin 8.72.0 or record why 8.72.1 stays.
-- D35. Compose images in `infra/compose/docker-compose.unified.yml` (postgres, seaweedfs,
+- D35. Done 2026-11-11 (MNT-196): digests from the registry, Dependabot `docker-compose` for
+  `/infra/compose`, and the CI postgres held to the compose pin. Compose images in `infra/compose/docker-compose.unified.yml` (postgres, seaweedfs,
   signal, cloudflared) and the CI service image are pinned by tag only, and Dependabot does not
   watch `/infra/compose`. Pin by digest and add the directory.
-- D36. Compose services other than signal and cloudflared have no restart policy and none has
+- D36. Done 2026-11-11 (MNT-197), images not rebuilt (no Docker engine on this host).
+  Compose services other than signal and cloudflared have no restart policy and none has
   a memory or CPU limit, so a reboot leaves the install down and a runaway runner can starve
   PostgreSQL. `infra/docker/web.Dockerfile` and `infra/docker/edge.Dockerfile` have no
   HEALTHCHECK of their own.

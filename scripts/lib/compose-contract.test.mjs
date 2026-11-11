@@ -421,3 +421,136 @@ test('the HTTPS door is the edge only, never a second service', () => {
   ].join('\n');
   assert.ok(has(frontDoorProblems('x.yml', compose), /`api` publishes/));
 });
+
+// ─── Images are pinned by digest, and something moves the digest (ledger MNT-196) ─────
+
+const DIGEST_PINNED = /^[^@\s]+:[^@\s]+@sha256:[0-9a-f]{64}$/u;
+
+/** @param {string} text @returns {string[]} every `image:` value, quotes removed */
+function imagesIn(text) {
+  return [...text.matchAll(/^\s+image:\s*['"]?([^'"\s#]+)['"]?/gmu)].map((match) => match[1] ?? '');
+}
+
+test('the image extractor reads an image, quoted or not, and a digest pin is recognised', () => {
+  assert.deepEqual(imagesIn('services:\n  db:\n    image: "postgres:16"\n'), ['postgres:16']);
+  assert.ok(DIGEST_PINNED.test(`postgres:16-alpine@sha256:${'a'.repeat(64)}`));
+  assert.ok(!DIGEST_PINNED.test('postgres:16-alpine'));
+});
+
+test('every third-party compose image is pinned by tag and digest', () => {
+  // A tag is a pointer the publisher can move; the digest is the bytes that were reviewed.
+  // The images this repository builds are named by `${…}` and are the release's to pin.
+  const unpinned = COMPOSE_FILES.flatMap((file) =>
+    imagesIn(readFileSync(path.join(REPO_ROOT, file), 'utf8'))
+      .filter((image) => !image.startsWith('${') && !DIGEST_PINNED.test(image))
+      .map((image) => `${file}: ${image}`),
+  );
+  assert.deepEqual(unpinned, []);
+});
+
+test('the CI database is the compose database, digest and all', () => {
+  // Dependabot updates compose files and cannot update a workflow's service image, so the
+  // workflows are held to the compose pin and move with it.
+  const compose = imagesIn(
+    readFileSync(path.join(REPO_ROOT, 'infra/compose/docker-compose.unified.yml'), 'utf8'),
+  ).find((image) => image.startsWith('postgres:'));
+  assert.ok(compose !== undefined, 'the production stack declares no postgres image');
+  const workflows = ['nightly.yml', 'unified-ci.yml'];
+  const drift = workflows.flatMap((name) =>
+    imagesIn(readFileSync(path.join(REPO_ROOT, '.github/workflows', name), 'utf8'))
+      .filter((image) => image.startsWith('postgres:') && image !== compose)
+      .map((image) => `${name}: ${image}`),
+  );
+  assert.deepEqual(drift, []);
+});
+
+test('dependabot watches the compose files, so a digest does not go stale', () => {
+  const config = readFileSync(path.join(REPO_ROOT, '.github/dependabot.yml'), 'utf8');
+  const block = config.slice(config.indexOf("package-ecosystem: 'docker-compose'"));
+  assert.ok(config.includes("package-ecosystem: 'docker-compose'"), 'no docker-compose ecosystem');
+  assert.ok(
+    block.includes("'/infra/compose'"),
+    'the docker-compose ecosystem misses /infra/compose',
+  );
+});
+
+// ─── A reboot brings the stack back, and no service starves another (ledger MNT-197) ─────
+
+/**
+ * The top-level keys of each service in a compose file.
+ *
+ * @param {string} text
+ * @returns {Map<string, Set<string>>}
+ */
+function serviceKeysIn(text) {
+  /** @type {Map<string, Set<string>>} */
+  const services = new Map();
+  let inServices = false;
+  /** @type {Set<string> | null} */
+  let current = null;
+  for (const line of text.split(/\r?\n/u)) {
+    if (/^\S/u.test(line)) {
+      inServices = line.startsWith('services:');
+      current = null;
+      continue;
+    }
+    if (!inServices) continue;
+    const service = /^ {2}([a-z][\w-]*):\s*$/u.exec(line);
+    if (service !== null) {
+      current = new Set();
+      services.set(service[1] ?? '', current);
+      continue;
+    }
+    const key = /^ {4}([a-z_]+):/u.exec(line);
+    if (key !== null && current !== null) current.add(key[1] ?? '');
+  }
+  return services;
+}
+
+test('the service-key reader sees each service and only its own keys', () => {
+  const compose = [
+    'services:',
+    '  a:',
+    '    restart: unless-stopped',
+    '    environment:',
+    '      mem_limit: not-a-key',
+    '  b:',
+    '    cpus: 1',
+    'volumes:',
+    '  c:',
+    '    driver: local',
+    '',
+  ].join('\n');
+  const keys = serviceKeysIn(compose);
+  assert.deepEqual([...keys.keys()], ['a', 'b']);
+  assert.deepEqual([...(keys.get('a') ?? [])], ['restart', 'environment']);
+});
+
+test('every long-running service restarts, and has a memory and a CPU limit', () => {
+  const text = readFileSync(
+    path.join(REPO_ROOT, 'infra/compose/docker-compose.unified.yml'),
+    'utf8',
+  );
+  const services = serviceKeysIn(text);
+  assert.ok(services.size >= 8, 'read too few services to mean anything');
+  const problems = [];
+  for (const [name, keys] of services) {
+    if (name === 'migrate') continue; // one-shot: `restart: 'no'` is the point of it
+    for (const required of ['restart', 'mem_limit', 'cpus']) {
+      if (!keys.has(required)) problems.push(`${name}: no ${required}`);
+    }
+  }
+  assert.deepEqual(problems, []);
+});
+
+test('every long-running image says how to tell it is healthy', () => {
+  // The migration image runs once and exits; every other image is a service a restart
+  // policy and `depends_on: service_healthy` need a health signal from.
+  const missing = ['api', 'worker', 'runner', 'web', 'edge'].filter(
+    (image) =>
+      !/^HEALTHCHECK /mu.test(
+        readFileSync(path.join(REPO_ROOT, `infra/docker/${image}.Dockerfile`), 'utf8'),
+      ),
+  );
+  assert.deepEqual(missing, []);
+});

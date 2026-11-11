@@ -27,10 +27,6 @@ updates:
     ignore:
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
-      # 8.72.1 runs `pnpm lint` out of memory (the pin in pnpm-workspace.yaml says how
-      # that was found). Only that version is skipped, so the next patch is still proposed.
-      - dependency-name: 'typescript-eslint'
-        versions: ['8.72.1']
 
   - package-ecosystem: 'github-actions'
     directory: '/'
@@ -66,3 +62,19 @@ updates:
     ignore:
       - dependency-name: 'node'
         update-types: ['version-update:semver-major']
+
+  # The compose stacks pin third-party images by tag and digest (ledger MNT-196,
+  # `scripts/lib/compose-contract.test.mjs`), so a rebuilt image reaches them only through a
+  # pull request that moves both. The CI database is held to the compose postgres pin by the
+  # same test, so the pull request that moves it here fails until the workflows move with it.
+  - package-ecosystem: 'docker-compose'
+    directories:
+      - '/infra/compose'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+    groups:
+      compose-minor-and-patch:
+        update-types: ['minor', 'patch']

@@ -77,7 +77,7 @@ jobs:
     continue-on-error: true
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16-alpine@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
         env:
           POSTGRES_USER: lupin
           POSTGRES_DB: lupin
@@ -280,7 +280,7 @@ jobs:
     # are trustworthy enough to block a pull request.
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16-alpine@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
         env:
           POSTGRES_USER: lupin
           POSTGRES_DB: lupin

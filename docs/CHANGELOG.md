@@ -124,6 +124,10 @@ DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reporte
   `pnpm db:generate` no longer would rewrite 55 migrations and `pnpm db:check` checks today's
   schema (MNT-193). Every query the worker sends is checked against the migrated schema, so a
   renamed column fails a test instead of a production run (MNT-194).
+- **The install survives a reboot.** Every long-running service restarts on its own and has
+  a memory and CPU limit, so a runaway runner cannot starve the database; the web and edge
+  images report their health (MNT-197). Third-party images are pinned by digest, and
+  Dependabot now watches the compose files (MNT-196).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the

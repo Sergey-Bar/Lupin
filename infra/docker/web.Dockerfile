@@ -31,3 +31,6 @@ COPY infra/nginx/web.conf /etc/nginx/conf.d/default.conf
 # as root, and dropping to `nginx` removes the reason entirely.
 EXPOSE 8080
 USER nginx
+# `/` is the app shell (`try_files … /index.html`), so a 200 here means nginx is up and the
+# bundle is in place (ledger MNT-197). busybox `wget` ships in the alpine image.
+HEALTHCHECK --interval=10s --timeout=5s --retries=12 CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
