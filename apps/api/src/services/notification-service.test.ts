@@ -21,6 +21,7 @@ import {
   loadReport,
   nextOccurrence,
   queueTestDelivery,
+  slowerTests,
   updateChannel,
 } from './notification-service.js';
 import { createReportDispatcher, requestFor } from './report-dispatcher.js';
@@ -362,6 +363,32 @@ async function seedRuns(
   }
 }
 
+describe('slowerTests', () => {
+  const durations = (entries: Record<string, number[]>) =>
+    new Map(Object.entries(entries).map(([key, ms]) => [key, { title: key, ms }]));
+
+  it('names a test whose median grew past both floors, worst first', () => {
+    expect(
+      slowerTests(
+        durations({ a: [400, 400, 400], b: [300, 300, 300], c: [10, 10, 10, 12] }),
+        durations({ a: [100, 100, 100], b: [200, 200, 200], c: [4, 4, 4, 4] }),
+      ),
+    ).toEqual([
+      { key: 'a', title: 'a', changePct: 300 },
+      { key: 'b', title: 'b', changePct: 50 },
+    ]);
+  });
+
+  it('says nothing with too few runs on either side, under 50ms, or with no earlier window', () => {
+    expect(
+      slowerTests(
+        durations({ few: [900, 900], tiny: [130, 130, 130], fresh: [900, 900, 900] }),
+        durations({ few: [100, 100, 100], tiny: [100, 100, 100] }),
+      ),
+    ).toEqual([]);
+  });
+});
+
 describe('what a report says', () => {
   it('counts the window’s runs, its pass rate, and the suites that failed', async () => {
     const { db, options } = await setup();
@@ -388,6 +415,64 @@ describe('what a report says', () => {
       passRate: null,
       attention: [],
     });
+  });
+
+  it('says which tests turned flaky, started failing, got fixed and slowed, against the window before', async () => {
+    const { db, options } = await setup();
+    const DAY = 86_400_000;
+    const run = async (workspaceId: string, at: Date) => {
+      const [row] = await db
+        .insert(schema.runs)
+        .values({ workspaceId, startedAt: at, status: 'passed', suite: 'unit' })
+        .returning({ id: schema.runs.id });
+      return (row as { id: string }).id;
+    };
+    const test = (
+      runId: string,
+      stableId: string,
+      status: string,
+      durationMs = 100,
+      workspaceId = 'ws-1',
+    ) =>
+      db.insert(schema.tests).values({
+        id: `${runId}:${stableId}`,
+        runId,
+        workspaceId,
+        title: stableId,
+        file: 'a.test.ts',
+        stableId,
+        status: status as never,
+        durationMs,
+      });
+    // The window before: `old-flaky` flipped, `cart` and `pay` ran green at 100ms.
+    for (let index = 0; index < 3; index += 1) {
+      const before = await run('ws-1', new Date(NOW.getTime() - DAY - (index + 1) * 60_000));
+      await test(before, 'old-flaky', index === 0 ? 'flaky' : 'passed');
+      await test(before, 'cart', 'passed', 100);
+      await test(before, 'search', 'passed', 100);
+      await test(before, 'pay', 'passed');
+    }
+    // This window: `cart` turned flaky, `search` slowed to 400ms, `pay` started failing, `old-flaky` held.
+    for (let index = 0; index < 3; index += 1) {
+      const now = await run('ws-1', new Date(NOW.getTime() - (index + 1) * 60_000));
+      await test(now, 'old-flaky', 'passed');
+      await test(now, 'cart', index === 0 ? 'flaky' : 'passed', 400);
+      await test(now, 'search', 'passed', 400);
+      await test(now, 'pay', index === 0 ? 'failed' : 'passed');
+    }
+    // Another workspace's flaky test is never this workspace's news.
+    const foreign = await run('ws-2', new Date(NOW.getTime() - 60_000));
+    await test(foreign, 'theirs', 'flaky', 100, 'ws-2');
+
+    const report = await loadReport(options, { title: 'Daily', windowDays: 1, link: null });
+    expect(report.digest.map((item) => [item.kind, item.tone, item.text])).toEqual(
+      expect.arrayContaining([
+        ['new-flaky', 'bad', '1 new flaky test'],
+        ['new-failure', 'bad', '1 newly failing test'],
+        ['new-flaky', 'good', '1 flaky test fixed'],
+        ['newly-slow', 'bad', 'search is 300% slower'],
+      ]),
+    );
   });
 });
 
