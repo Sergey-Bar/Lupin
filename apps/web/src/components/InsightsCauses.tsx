@@ -121,7 +121,7 @@ function ClusterList({
       </p>
       <ol className="min-h-0 flex-1 space-y-2 overflow-y-auto text-sm">
         {clusters.clusters.map((cluster) => (
-          <li key={cluster.signature} data-testid="failure-cluster">
+          <li key={cluster.signature} data-testid="failure-cluster" className="group">
             <p className="flex items-baseline justify-between gap-2">
               <span className="min-w-0 truncate font-mono text-xs" title={cluster.sampleMessage}>
                 {cluster.errorType === null
@@ -252,7 +252,7 @@ function AskAboutCause({ message }: { message: string }) {
     <button
       type="button"
       onClick={() => copilot.ask(`Why does "${quoted}" fail?`)}
-      className="inline-flex min-h-6 items-center rounded-sm text-xs text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+      className="inline-flex min-h-6 items-center rounded-sm text-xs text-accent underline-offset-2 opacity-0 transition-opacity duration-100 hover:underline group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 motion-reduce:transition-none [@media(hover:none)]:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
     >
       Ask Lupin
     </button>

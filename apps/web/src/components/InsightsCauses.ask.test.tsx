@@ -38,6 +38,24 @@ describe('a failure cause asks the copilot', () => {
     expect(await screen.findByText('It failed 3 times.')).toBeInTheDocument();
   });
 
+  it('stays quiet until its row is pointed at or focused, and shows on a touch screen', () => {
+    render(
+      <CopilotProvider askImpl={vi.fn()}>
+        <FailureClustersPanel clusters={CLUSTERS as never} />
+      </CopilotProvider>,
+    );
+    const ask = screen.getByRole('button', { name: 'Ask Lupin' });
+    // One "Ask Lupin" per row read as noise; it appears for the row you are on.
+    expect(screen.getByTestId('failure-cluster')).toHaveClass('group');
+    expect(ask).toHaveClass(
+      'opacity-0',
+      'group-hover:opacity-100',
+      'group-focus-within:opacity-100',
+      'focus-visible:opacity-100',
+      '[@media(hover:none)]:opacity-100',
+    );
+  });
+
   it('offers nothing outside the shell, where no panel would open', () => {
     render(<FailureClustersPanel clusters={CLUSTERS as never} />);
     expect(screen.queryByRole('button', { name: 'Ask Lupin' })).toBeNull();
