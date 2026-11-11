@@ -442,12 +442,17 @@ scripts/             Gate scripts, all `.mjs`, plus `scripts/lib/` node:test sui
   `src/lib/notifications-client.ts`, consumed by custom
   hooks in `src/hooks/` (`useRuns`, `useDashboard`, `useCommandActions`). There is **no**
   TanStack Query and **no** `apps/web/src/store/` directory.
-- **Landing page**: `/` redirects to `/dashboard/now` (Home). The navigation is three places,
-  Home, Runs and Settings; Tests sits under Runs and Health and Delivery under Home, as named
-  groups on the tab row, and every older path still resolves (`route-manifest.test.ts`). Home is
+- **Landing page**: `/` redirects to `/dashboard/now` (Home). The navigation is one collapsible
+  sidebar (`components/SideNav.tsx`, from `navTree` in `route-manifest.ts`): Home, Runs, Tests
+  and Health are groups listing their pages, and Settings swaps the sidebar to its own list.
+  There is no tab row and no visible page title (`PageHeader` keeps it `sr-only`). Every older
+  path still resolves (`route-manifest.test.ts`). `/setup` is the full-screen first run, drawn
+  outside the app frame (`isFullScreen` in `routes/__root.tsx`). Home is
   the release verdict and what needs you, nothing else. Attention ranking is the pure
-  `src/lib/attention.ts`; an area page opens on the status band (`Hero` in `@lupin/ui`: a mark,
-  the word, one reason, the numbers, one action), then one list, then Details. Feedback goes
+  `src/lib/attention.ts`, and `runsNeedingYou` there is the one judgement the Runs page and the
+  sidebar count share; an area page opens on the status band (`Hero` in `@lupin/ui`: a mark,
+  the word, one reason, the numbers, one action), then one list, then Details. A run or test
+  status is the `Status` pill from `@lupin/ui`. Feedback goes
   through `useToast` (`src/components/Toasts.tsx`).
 - **Buttons**: at most one solid primary per screen, outlined for secondary, text for tertiary.
   A link drawn as a button is `ButtonLink`; `src/button-rule.test.ts` fails on a hand-written

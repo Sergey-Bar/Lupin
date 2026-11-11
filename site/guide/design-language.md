@@ -289,10 +289,19 @@ the page drawn from the accent, used on entry screens only — today, the first-
 
 ## The Overview and the Map
 
-**Four sections, and every old page is a tab.** Overview, Runs, Insights and Map are the
-only top-level destinations (`apps/web/src/route-manifest.ts`, `SECTIONS`). From `lg` up the
-sections sit in the top bar beside the **Lupin.** wordmark; below it they are a bottom tab
-bar with 56px targets.
+**One sidebar, and every page is in it.** Home, Runs, Tests and Health are groups in a single
+collapsible sidebar (`apps/web/src/route-manifest.ts`, `navTree`); the place you are on opens
+by itself and lists its pages, and there is no tab row. Collapsed, the sidebar is an icon rail
+and a group opens as a flyout. Settings swaps the list for its own, with **Back to Lupin**.
+Below `lg` the same list is a drawer from the top bar, beside a bottom tab bar with 56px
+targets. Pages carry no visible title: the sidebar already says where you are, and the title
+stays for screen readers. A group counts what needs you there ("Runs, 2 need you"), and
+unfinished setup is one **Finish setup · n of 6** chip above Settings.
+
+**First run is full-screen.** `/setup` (also `/dashboard/setup`) draws without the app frame:
+one step per screen under a step strip, repository and first run before the optional AI,
+reports and teammates, with Back, Skip and **Do this later**. A fresh install is sent there
+from Home once.
 
 **The Overview answers in order and stops.** The verdict first — Go, Caution or No-go, in
 words and an icon as well as a colour — then _What's wrong_ beside _What's good_, each

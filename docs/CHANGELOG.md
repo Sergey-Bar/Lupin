@@ -18,6 +18,13 @@
 
 ### Changed
 
+- **One sidebar.** Every place is a group in one collapsible sidebar, and the tab rows are
+  gone; Settings swaps the sidebar to its own list with Back to Lupin. On a phone the same list
+  opens as a drawer. Pages open on their content; the title is kept for screen readers.
+- **Status** is one pill everywhere, a shape and a word as well as a colour; Flaky reads
+  Unstable. The Runs group counts the runs that need you.
+- **First run** is a full-screen setup at `/setup`: repository and first run first, then the
+  optional steps, with Do this later. Unfinished setup is a Finish setup chip in the sidebar.
 - **Five places.** The navigation is Home, Runs, Tests, Health and Settings; Health keeps four
   tabs and puts the rest under More. Every older address still opens the page it always did.
 - **Type and colour.** Inter and JetBrains Mono replace Geist; the accent is blue, not violet.
