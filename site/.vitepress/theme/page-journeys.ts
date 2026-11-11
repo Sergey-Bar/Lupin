@@ -163,6 +163,20 @@ export const pageJourneys: Record<string, Journey> = {
     takeaway:
       'An upload and a gate answer different questions: stored evidence does not automatically mean a passing policy.',
   },
+  'guide/change-risk.md': {
+    audience: 'QA engineers · reviewers · leads',
+    goal: 'Know which pull requests to read first, and exactly why.',
+    stages: [
+      ['Guard the tests', 'Run lupin diff-guard in CI to report changes that weaken the tests.'],
+      ['Gate the change', 'Run lupin gate on the pull request; add --post on a LAN install.'],
+      [
+        'Read the risk',
+        'Open the factors on the pull request or its page, and act on the top one.',
+      ],
+    ],
+    takeaway:
+      'The score is a sum of stated factors. Missing test results or coverage make a change unknown, never low.',
+  },
   'guide/mcp.md': {
     audience: 'Developers using an AI editor',
     goal: 'Ask your editor questions about recorded quality evidence.',
