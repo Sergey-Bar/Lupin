@@ -590,6 +590,24 @@ describe('RunDetailPage', () => {
     fireEvent.click(screen.getByTestId('cancel-run'));
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('cancel rejected'));
   });
+
+  it('names the board or rig an embedded run needed, and nothing for one that needed none', async () => {
+    const firmware = makeRun({
+      ...passedRun,
+      id: 'run-fw',
+      requiredCapabilities: ['hil', 'board:esp32-s3'],
+      labels: ['nightly'],
+    });
+    const { unmount } = render(<RunDetailPage id={firmware.id} api={detailApi(firmware)} />);
+    expect(await screen.findByTestId('run-target')).toHaveTextContent(
+      'hil · board:esp32-s3 · nightly',
+    );
+    unmount();
+    const plain = makeRun({ ...passedRun, requiredCapabilities: [], labels: [] });
+    render(<RunDetailPage id={plain.id} api={detailApi(plain)} />);
+    await screen.findByTestId('run-phase');
+    expect(screen.queryByTestId('run-target')).toBeNull();
+  });
 });
 
 describe('RunDetailPage from the cockpit', () => {

@@ -806,6 +806,14 @@ function SummaryPanels({ run }: { run: Run }) {
             <ContextItem label="Project" testId="run-project" value={run.projectId} />
           ) : null}
           {run.environmentId ? <ContextItem label="Environment" value={run.environmentId} /> : null}
+          {/* Embedded: the board, rig or bench the run needed, then its labels. */}
+          {run.requiredCapabilities.length + run.labels.length > 0 ? (
+            <ContextItem
+              label="Target"
+              testId="run-target"
+              value={<Bdi>{[...run.requiredCapabilities, ...run.labels].join(' · ')}</Bdi>}
+            />
+          ) : null}
           {run.releaseId ? <ContextItem label="Release" value={run.releaseId} /> : null}
           <ContextItem
             label="Branch / Commit"
