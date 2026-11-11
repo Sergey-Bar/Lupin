@@ -25,7 +25,6 @@ import { Bdi } from '../../components/Bidi.js';
 import {
   PageFrame,
   PageHeader,
-  Panel,
   PagerControls,
   usePager,
   useFitCount,
@@ -87,6 +86,30 @@ function stuckItem(run: Run): AreaItem {
   };
 }
 
+/**
+ * A run as a person names it: the branch (or the suite) in the body face, the link to the run,
+ * and its id and commit as a quiet second line for the reader matching it against CI.
+ */
+function RunName({ run }: { run: Run }): React.ReactElement {
+  const id = run.id.slice(0, 8);
+  const name = run.branch ?? run.suite ?? `Run ${id}`;
+  return (
+    <div className="min-w-0">
+      <a
+        href={runDetailPath(run.id)}
+        aria-label={`${name}, run ${id}`}
+        className="inline-flex min-h-6 max-w-full items-center rounded-sm text-sm font-medium text-fg hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+      >
+        <Bdi className="truncate">{name}</Bdi>
+      </a>
+      <p data-testid={`run-ref-${run.id}`} className="font-mono text-xs text-fg-muted">
+        {id}
+        {run.commit === null ? null : ` · ${run.commit.slice(0, 7)}`}
+      </p>
+    </div>
+  );
+}
+
 export function runVerdict(count: number): string {
   // Says what it judges: the newest run per branch, which can be green while Home's release
   // verdict (the window's pass rate) is No-go. Naming the scope is what keeps them consistent.
@@ -113,8 +136,9 @@ export function RunsListPage({
 }) {
   const { runs, isLoading, error, isLive, refresh } = useRuns(api);
   const [launching, setLaunching] = React.useState(false);
-  // The table measures its own panel: a row is ~56px under a ~44px head.
-  const [size, tableBox] = useFitCount(56, 8, 44);
+  // The table measures its own panel: a row is ~74px (the name and its id line) under a ~44px
+  // head, with ~40px kept for the pager beneath it.
+  const [size, tableBox] = useFitCount(74, 8, 44 + 40);
   const pager = usePager(runs, size);
   const showProject = runs.some((run) => run.projectId != null);
   const showDuration = runs.some((run) => run.summary.durationMs != null);
@@ -179,7 +203,11 @@ export function RunsListPage({
           }
         />
       ) : (
-        <Panel title="All runs" data-testid="runs-table">
+        // The "Every run" section names this list; a second title on the panel said it twice.
+        <div
+          data-testid="runs-table"
+          className="flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-border bg-surface p-4 sm:p-5"
+        >
           {/*
             A column no run fills is a column of dashes. Reporter-sent runs carry neither a
             project nor a duration, so both columns appear only once some run has one.
@@ -188,12 +216,11 @@ export function RunsListPage({
             <Table aria-label="Runs">
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-32">Status</TableHead>
                   <TableHead>Run</TableHead>
-                  <TableHead className="hidden md:table-cell">Branch</TableHead>
                   {showProject ? (
                     <TableHead className="hidden lg:table-cell">Project</TableHead>
                   ) : null}
-                  <TableHead>Status</TableHead>
                   <TableHead className="hidden md:table-cell">Created</TableHead>
                   {showDuration ? (
                     <TableHead className="hidden sm:table-cell text-end">Duration</TableHead>
@@ -204,29 +231,6 @@ export function RunsListPage({
               <TableBody>
                 {pager.items.map((run) => (
                   <TableRow key={run.id} data-testid={`run-row-${run.id}`}>
-                    <TableCell>
-                      <a
-                        href={runDetailPath(run.id)}
-                        className="inline-flex min-h-6 items-center rounded-sm font-mono text-xs text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-                      >
-                        {run.suite ?? run.id.slice(0, 8)}
-                      </a>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {run.branch === null ? (
-                        <span className="text-fg-muted">—</span>
-                      ) : (
-                        <span className="font-mono text-xs">
-                          <Bdi>{run.branch}</Bdi>
-                          {run.commit === null ? null : (
-                            <span className="ms-2 text-fg-muted">{run.commit.slice(0, 7)}</span>
-                          )}
-                        </span>
-                      )}
-                    </TableCell>
-                    {showProject ? (
-                      <TableCell className="hidden lg:table-cell">{run.projectId ?? '—'}</TableCell>
-                    ) : null}
                     <TableCell>
                       {/* One status pill: the phase while it runs, the outcome once it ends. A
                           polite live region on it alone, so a status flip is spoken without
@@ -244,6 +248,12 @@ export function RunsListPage({
                         )}
                       </span>
                     </TableCell>
+                    <TableCell>
+                      <RunName run={run} />
+                    </TableCell>
+                    {showProject ? (
+                      <TableCell className="hidden lg:table-cell">{run.projectId ?? '—'}</TableCell>
+                    ) : null}
                     <TableCell className="hidden md:table-cell">
                       <Timestamp value={run.createdAt} empty="Not started" />
                     </TableCell>
@@ -265,7 +275,7 @@ export function RunsListPage({
             </Table>
           </div>
           <PagerControls pager={pager} label="run" />
-        </Panel>
+        </div>
       )}
     </>
   );

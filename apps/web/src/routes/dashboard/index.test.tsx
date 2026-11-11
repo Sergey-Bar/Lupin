@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import {
   createMemoryHistory,
   createRootRoute,
@@ -281,8 +281,30 @@ describe('RunsListPage', () => {
     const activeRun = makeRun({ id: 'run-active', projectId: 'project', phase: 'running' });
     renderRunsPage(makeApi({ getRuns: vi.fn().mockResolvedValue([activeRun]) }));
     await waitFor(() => expect(screen.getByTestId('stat-running')).toHaveTextContent('1'));
-    const link = screen.getByRole('link', { name: 'run-acti' });
+    const link = screen.getByRole('link', { name: 'main, run run-acti' });
     expect(link).toHaveAttribute('href', '/dashboard/runs/run-active');
+  });
+
+  it('leads each row with its status and branch, and keeps the run id as a quiet second line', async () => {
+    const run = makeRun({
+      id: 'run-12345678x',
+      branch: 'feat/pay',
+      commit: 'c0ffee12',
+      phase: 'complete',
+      outcome: 'failed',
+    });
+    renderRunsPage(makeApi({ getRuns: vi.fn().mockResolvedValue([run]) }));
+    const row = await screen.findByTestId('run-row-run-12345678x');
+    const headers = screen.getAllByRole('columnheader').map((cell) => cell.textContent);
+    expect(headers.slice(0, 2)).toEqual(['Status', 'Run']);
+    const link = within(row).getByRole('link', { name: 'feat/pay, run run-1234' });
+    expect(link).toHaveTextContent('feat/pay');
+    expect(link).not.toHaveClass('font-mono');
+    expect(within(row).getByTestId('run-ref-run-12345678x')).toHaveTextContent(
+      'run-1234 · c0ffee1',
+    );
+    // The panel is the "Every run" section's only list, so it carries no second title.
+    expect(screen.queryByText('All runs')).toBeNull();
   });
 
   it('drops the project and duration columns when no run reports them', async () => {
