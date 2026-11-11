@@ -174,16 +174,21 @@ by a test written against the defect and watched failing. Ordered by harm.
   per-link sweep, so all ~40 anchors and any new one are covered. Internal links written as plain anchors reload the whole app: the back link and the
   retried-run link in `apps/web/src/routes/dashboard/run-detail.tsx`, and the queued-run link
   in `apps/web/src/routes/dashboard.tsx`. Use the router's link, and sweep the other anchors.
-- D26. Silent failures: `apps/web/src/hooks/useViewerRole.ts` turns a failed role read into no
+- D26. Done 2026-11-11 (MNT-187): the role read and the sign-in methods read state their
+  failure with a retry. The Home first-run check stays silent by design (its fallback is
+  staying on Home, which reports its own reads). Silent failures: `apps/web/src/hooks/useViewerRole.ts` turns a failed role read into no
   role, so admin pages vanish from the sidebar with no message; `Access.tsx` hides SSO when the
   sign-in methods fail; the Home onboarding fetch ignores errors. Show a stated failure and
   retry.
-- D27. `apps/web/src/hooks/useRuns.ts` polls every 5 seconds while the event stream is down,
+- D27. Done 2026-11-11 (MNT-188): backoff to a minute, and no poll in a hidden tab.
+  `apps/web/src/hooks/useRuns.ts` polls every 5 seconds while the event stream is down,
   with no backoff on a failing API and no pause in a hidden tab.
-- D28. Forms built from raw inputs with local class strings (quarantine, the launch form,
+- D28. Done 2026-11-11 (MNT-189): all seventeen controls are library ones, held by
+  `form-control-rule.test.ts`. Server errors stay one alert per form, because the API names
+  no field. Forms built from raw inputs with local class strings (quarantine, the launch form,
   runner, toolbox, delivery, supply chain, copilot) instead of the `Input` from `@lupin/ui`,
   with one alert line rather than a message per field.
-- D29. Quarantine copy: title case ("Error Loading Quarantine List", "Test Title", "Test
+- D29. Done 2026-11-11 (MNT-190). Quarantine copy: title case ("Error Loading Quarantine List", "Test Title", "Test
   File"), a "Submit" button, three dots instead of an ellipsis, an empty-state line that
   repeats its title, and `text-error` beside `text-danger`. The run-detail artifact list
   shows raw byte counts and three dots after the checksum.

@@ -404,6 +404,10 @@ describe('RunDetailPage', () => {
       'href',
       '/api/v1/artifacts/artifact-1',
     );
+    // A size a person reads, and an ellipsis with the whole checksum on hover (ledger MNT-190).
+    const meta = screen.getByTitle(`SHA-256 ${'a'.repeat(64)}`);
+    expect(meta).toHaveTextContent(`SHA-256 ${'a'.repeat(12)}…`);
+    expect(meta.parentElement).toHaveTextContent('trace · 1 KB ·');
     expect(screen.getByTestId('run-gate')).toHaveTextContent('Browser tests failed');
     expect(screen.getByTestId('run-readiness')).toHaveTextContent('Not configured');
   });

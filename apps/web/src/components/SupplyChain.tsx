@@ -10,6 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Checkbox,
 } from '@lupin/ui';
 import type {
   DiffCoverageStatus,
@@ -646,11 +647,9 @@ function PolicyForm({
           onChange={(event) => setBuilders(event.target.value)}
         />
         <label className="flex min-h-11 items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={failOnUnknown}
             onChange={(event) => setFailOnUnknown(event.target.checked)}
-            className="h-5 w-5 accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
           />
           An unknown licence is a violation
         </label>

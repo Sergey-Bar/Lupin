@@ -103,20 +103,24 @@ export function SignIn({
   const [credential, setCredential] = React.useState('');
   const [error, setError] = React.useState<string | null>(refusalFromLocation);
   const [busy, setBusy] = React.useState(false);
-  const [sso, setSso] = React.useState(false);
+  const [sso, setSso] = React.useState<'yes' | 'no' | 'unknown'>('no');
+  const [check, setCheck] = React.useState(0);
   const id = React.useId();
   React.useEffect(() => {
     let live = true;
+    // A failed read is said, with a retry, rather than read as "no single sign-on" (MNT-187).
     health
       .signInMethods?.()
       .then((methods) => {
-        if (live) setSso(methods.oidc);
+        if (live) setSso(methods.oidc ? 'yes' : 'no');
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (live) setSso('unknown');
+      });
     return () => {
       live = false;
     };
-  }, [health]);
+  }, [health, check]);
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true);
@@ -137,13 +141,27 @@ export function SignIn({
     <PageFrame data-testid="sign-in" className="h-auto items-center justify-center py-16">
       <form onSubmit={submit} className="w-full max-w-sm space-y-4" aria-label="Sign in">
         <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
-        {sso ? (
+        {sso === 'yes' ? (
           <ButtonLink href="/api/v1/auth/oidc/start" className="w-full">
             Sign in with single sign-on
           </ButtonLink>
         ) : null}
+        {sso === 'unknown' ? (
+          <p className="text-sm text-warning">
+            Single sign-on could not be checked.{' '}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setCheck((count) => count + 1)}
+            >
+              Check again
+            </Button>
+          </p>
+        ) : null}
         <p className="text-sm text-fg-muted">
-          {sso ? 'Or paste' : 'Paste'} the access token an admin gave you, or the installation key.
+          {sso === 'yes' ? 'Or paste' : 'Paste'} the access token an admin gave you, or the
+          installation key.
         </p>
         <Input
           id={`${id}-credential`}

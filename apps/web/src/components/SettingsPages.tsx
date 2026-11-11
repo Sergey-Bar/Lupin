@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, Input } from '@lupin/ui';
+import { Badge, Button, Input, Textarea } from '@lupin/ui';
 import type { SettingGroup } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { HealthClient, WhoAmI } from '../lib/health-client.js';
@@ -188,19 +188,17 @@ function GitHubAppPanel({
               required
               onChange={(event) => setAppId(event.target.value)}
             />
-            <label className="grid gap-1 text-sm" htmlFor={`${id}-key`}>
-              <span className="font-medium text-fg">Private key (.pem)</span>
-              <textarea
-                id={`${id}-key`}
-                value={privateKey}
-                required
-                rows={4}
-                spellCheck={false}
-                autoComplete="off"
-                onChange={(event) => setPrivateKey(event.target.value)}
-                className="rounded-md border border-border bg-surface px-3 py-2 font-mono text-xs text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-              />
-            </label>
+            <Textarea
+              id={`${id}-key`}
+              label="Private key (.pem)"
+              value={privateKey}
+              required
+              rows={4}
+              spellCheck={false}
+              autoComplete="off"
+              onChange={(event) => setPrivateKey(event.target.value)}
+              className="font-mono text-xs"
+            />
             <div className="flex flex-wrap gap-2">
               <Button type="submit" variant="outline">
                 {set ? 'Replace the app' : 'Save the app'}

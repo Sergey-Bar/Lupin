@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { createRoute, Outlet, useRouterState } from '@tanstack/react-router';
-import { Badge, Button } from '@lupin/ui';
+import { Badge, Button, Input, Textarea } from '@lupin/ui';
 import { Route as rootRoute } from './__root.js';
 import type { CreateRunRequest, DomainReadinessStatus } from '@lupin/shared-contracts';
 import { useReleaseReadiness } from '../hooks/useDashboard.js';
@@ -93,8 +93,7 @@ export function LaunchRunForm({ api, onCreated }: { api: ApiClient; onCreated: (
     }
   };
 
-  const inputClass =
-    'mt-1 min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-sm outline-none hover:border-fg-muted focus:border-accent';
+  const id = React.useId();
 
   return (
     <div>
@@ -110,82 +109,68 @@ export function LaunchRunForm({ api, onCreated }: { api: ApiClient; onCreated: (
         onSubmit={(event) => void submitAsync(event)}
         className="mt-5 grid gap-4 md:grid-cols-2"
       >
-        <label className="text-sm font-medium">
-          Project ID
-          <input
-            data-testid="launch-project-id"
-            required
-            value={projectId}
-            onChange={(event) => setProjectId(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Environment ID
-          <input
-            data-testid="launch-environment-id"
-            required
-            value={environmentId}
-            onChange={(event) => setEnvironmentId(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Release ID
-          <input
-            data-testid="launch-release-id"
-            required
-            value={releaseId}
-            onChange={(event) => setReleaseId(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Branch
-          <input
-            data-testid="launch-branch"
-            required
-            value={branch}
-            onChange={(event) => setBranch(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Commit
-          <input
-            data-testid="launch-commit"
-            required
-            value={commit}
-            onChange={(event) => setCommit(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Timeout (seconds)
-          <input
-            data-testid="launch-timeout"
-            required
-            type="number"
-            min="1"
-            value={timeoutSeconds}
-            onChange={(event) => setTimeoutSeconds(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium md:col-span-2">
-          Test path selection
-          <textarea
+        <Input
+          id={`${id}-project`}
+          label="Project ID"
+          data-testid="launch-project-id"
+          required
+          value={projectId}
+          onChange={(event) => setProjectId(event.target.value)}
+        />
+        <Input
+          id={`${id}-environment`}
+          label="Environment ID"
+          data-testid="launch-environment-id"
+          required
+          value={environmentId}
+          onChange={(event) => setEnvironmentId(event.target.value)}
+        />
+        <Input
+          id={`${id}-release`}
+          label="Release ID"
+          data-testid="launch-release-id"
+          required
+          value={releaseId}
+          onChange={(event) => setReleaseId(event.target.value)}
+        />
+        <Input
+          id={`${id}-branch`}
+          label="Branch"
+          data-testid="launch-branch"
+          required
+          value={branch}
+          onChange={(event) => setBranch(event.target.value)}
+        />
+        <Input
+          id={`${id}-commit`}
+          label="Commit"
+          data-testid="launch-commit"
+          required
+          value={commit}
+          onChange={(event) => setCommit(event.target.value)}
+        />
+        <Input
+          id={`${id}-timeout`}
+          label="Timeout (seconds)"
+          data-testid="launch-timeout"
+          required
+          type="number"
+          min="1"
+          value={timeoutSeconds}
+          onChange={(event) => setTimeoutSeconds(event.target.value)}
+        />
+        <div className="md:col-span-2">
+          <Textarea
+            id={`${id}-selection`}
+            label="Test path selection"
             data-testid="launch-selection"
             rows={3}
             value={selection}
             onChange={(event) => setSelection(event.target.value)}
             placeholder="e2e/fixtures/playwright-smoke/pass.spec.ts"
-            className={inputClass}
+            helperText="Comma or newline separated. Leave empty for the registered project default."
           />
-          <span className="mt-1 block text-xs font-normal text-fg-muted">
-            Comma or newline separated. Leave empty for the registered project default.
-          </span>
-        </label>
+        </div>
         <div className="md:col-span-2">
           <Button data-testid="launch-run-submit" type="submit" loading={isSubmitting}>
             Queue browser run

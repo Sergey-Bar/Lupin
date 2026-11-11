@@ -34,28 +34,34 @@ describe('dashboard routes', () => {
    * the fix cost a line of coverage, which is a trade a red ratchet is right to
    * refuse — so the fix and its test land together.
    *
-   * Asserted on **`setInterval`**, not on the rendered output: two pollers and one
+   * Asserted on **the armed poll timer**, not on the rendered output: two pollers and one
    * list render the same page, and the leak is the poller.
    */
   it('arms one run poller on the runs route, not one per level', async () => {
-    // Counted as **live** intervals, not as calls. `clearInterval` has to be
-    // intercepted too, or an effect that re-runs looks like three mounted pollers
-    // when only one is still armed — and "how many are armed" is the claim.
-    let nextId = 1;
+    // Counted as **live** timers, not as calls. `clearTimeout` has to be intercepted too, or
+    // an effect that re-runs looks like three mounted pollers when only one is still armed —
+    // and "how many are armed" is the claim. The poll is a chain of five-second timeouts
+    // (ledger MNT-188); every other timer, `waitFor`'s among them, goes through untouched.
+    let nextId = -1;
     const live = new Map<number, () => void>();
-    const arm = vi.spyOn(window, 'setInterval').mockImplementation(((
+    const realSetTimeout = window.setTimeout.bind(window);
+    const realClearTimeout = window.clearTimeout.bind(window);
+    const arm = vi.spyOn(window, 'setTimeout').mockImplementation(((
       handler: TimerHandler,
       ms?: number,
+      ...rest: unknown[]
     ) => {
-      if (ms !== 5_000 || typeof handler !== 'function') return 0 as unknown as number;
+      if (ms !== 5_000 || typeof handler !== 'function')
+        return realSetTimeout(handler, ms, ...rest);
       const id = nextId;
-      nextId += 1;
+      nextId -= 1;
       live.set(id, handler as () => void);
       return id as unknown as number;
-    }) as typeof window.setInterval);
-    const disarm = vi.spyOn(window, 'clearInterval').mockImplementation(((id?: number) => {
-      live.delete(id as unknown as number);
-    }) as typeof window.clearInterval);
+    }) as typeof window.setTimeout);
+    const disarm = vi.spyOn(window, 'clearTimeout').mockImplementation(((id?: number) => {
+      if (id !== undefined && live.has(id)) live.delete(id);
+      else realClearTimeout(id);
+    }) as typeof window.clearTimeout);
     const runListFetches = () =>
       vi
         .mocked(globalThis.fetch)
@@ -80,7 +86,7 @@ describe('dashboard routes', () => {
 
     // One tick, one fetch. Two mounted copies would fetch twice per cycle.
     const before = runListFetches();
-    for (const tick of live.values()) tick();
+    for (const tick of [...live.values()]) tick();
     await waitFor(() => expect(runListFetches()).toBe(before + 1));
     arm.mockRestore();
     disarm.mockRestore();

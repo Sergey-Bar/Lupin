@@ -87,6 +87,41 @@ describe('SideNav, app mode', () => {
     expect(within(aside).queryByTestId('theme-toggle')).toBeNull();
   });
 
+  // A failed role read hid the admin pages and said nothing (ledger MNT-187).
+  it.each(['expanded', 'collapsed'])(
+    'says, on the %s sidebar, that the role could not be read, and retries',
+    async (width) => {
+      localStorage.setItem(SIDEBAR_KEY, width);
+      let up = false;
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () =>
+          up
+            ? new Response(JSON.stringify({ actor: 'you', role: 'admin', mode: 'enforced' }), {
+                status: 200,
+              })
+            : new Response('down', { status: 503 }),
+        ),
+      );
+      renderAt('/dashboard/runs');
+      const retry = await screen.findByRole('button', { name: /role could not be read/iu });
+      up = true;
+      fireEvent.click(retry);
+      await waitFor(() =>
+        expect(screen.queryByRole('button', { name: /role could not be read/iu })).toBeNull(),
+      );
+    },
+  );
+
+  it('says nothing when the caller is simply signed out', async () => {
+    renderAt('/dashboard/runs');
+    await screen.findByRole('navigation', { name: 'Sidebar' });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.queryByRole('button', { name: /role could not be read/iu })).toBeNull();
+  });
+
   it('marks Home as the page you are on when you are on it', async () => {
     renderAt('/dashboard/now');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });

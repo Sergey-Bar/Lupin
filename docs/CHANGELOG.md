@@ -108,6 +108,14 @@ DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reporte
   name to be typed (ledger MNT-185).
 - **Links stay in the app.** Following a link to another page no longer reloads the whole app
   (ledger MNT-186).
+- **Failures are said.** When your role cannot be read, the sidebar says so and offers a
+  retry instead of quietly hiding the admin pages; the sign-in screen says when it could not
+  check for single sign-on (ledger MNT-187). The run list stops polling a hidden tab and backs
+  off to a minute while the API fails (MNT-188).
+- **One set of form controls.** The launch and quarantine forms, the runner and toolbox
+  filters, the copilot follow-up, the GitHub App key and two checkboxes use the library
+  controls, so every field has the same height and focus ring (MNT-189). Quarantine copy is
+  in sentences, and artifact sizes read as `1.5 KB` (MNT-190).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the

@@ -29,6 +29,9 @@ export function useLatestRuns(): readonly Run[] | null {
   );
 }
 
+const POLL_MS = 5000;
+const POLL_MAX_MS = 60_000;
+
 const ACTIVE_PHASES = new Set<Run['phase']>([
   'queued',
   'assigned',
@@ -79,6 +82,8 @@ export function useRuns(api = defaultApiClient) {
   /** Mirrors `isLive` for the poll interval, whose closure is created once. */
   const isLiveRef = useRef(false);
   const runsRef = useRef<Run[]>([]);
+  /** Failed loads in a row, which the stream-down poll backs off by. */
+  const failuresRef = useRef(0);
   const mountedRef = useRef(true);
   const { begin: beginLoad, cancelAll: cancelLoads } = useRequestLifecycle();
   /** The load in flight, if any — what an event-driven refresh waits behind. */
@@ -96,6 +101,7 @@ export function useRuns(api = defaultApiClient) {
           const data = await api.getRuns({ signal });
           if (!mountedRef.current) return;
           runsRef.current = data;
+          failuresRef.current = 0;
           setRuns(data);
           publishRuns(data);
           setError(null);
@@ -105,6 +111,7 @@ export function useRuns(api = defaultApiClient) {
           // failure and must not replace a rendered list with an error. Nor does
           // it end the loading state: the request that superseded it will.
           if (isAbortError(caught)) return;
+          failuresRef.current += 1;
           if (mountedRef.current) {
             setError(caught instanceof Error ? caught : new Error('Failed to fetch runs'));
             setIsLoading(false);
@@ -180,17 +187,35 @@ export function useRuns(api = defaultApiClient) {
     // authoritative and this does nothing; disconnected, it is what keeps the
     // page honest.
     //
-    // A ref rather than the state value, because the interval closure is created
+    // A ref rather than the state value, because the timer closure is created
     // once and would otherwise capture the first render's `false` forever.
-    const poll = window.setInterval(() => {
-      if (isLiveRef.current) return;
-      void refresh();
-    }, 5000);
+    //
+    // **It backs off and pauses** (ledger MNT-188). A chain of timeouts rather than an
+    // interval, so each wait can depend on the last answer: five seconds, doubled for each
+    // failure in a row up to a minute. A hidden tab is not polled at all, and is read once
+    // when it is shown again.
+    let timer: number | undefined;
+    const schedule = () => {
+      const wait = Math.min(POLL_MS * 2 ** Math.max(failuresRef.current - 1, 0), POLL_MAX_MS);
+      timer = window.setTimeout(() => void tick(), wait);
+    };
+    const tick = async () => {
+      if (!isLiveRef.current && document.visibilityState !== 'hidden') await refresh();
+      if (mountedRef.current) schedule();
+    };
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible' || isLiveRef.current) return;
+      window.clearTimeout(timer);
+      void tick();
+    };
+    schedule();
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       mountedRef.current = false;
       cancelLoads();
       unsubscribe();
-      window.clearInterval(poll);
+      window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [api, refresh, requestRefresh, cancelLoads]);
 

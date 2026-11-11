@@ -7919,6 +7919,94 @@
           "asserts": "A plain click on an internal link is prevented and navigates in place; new-tab, download, API, external and fragment links are not intercepted."
         }
       ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-187",
+      "band": "Major",
+      "title": "A failed role read and a failed sign-in-methods read were silent",
+      "summary": "useViewerRole turned any failed whoami read into no role, so the admin pages left the sidebar and the palette with no message, as if the caller were a viewer. The sign-in screen turned a failed /api/v1/features read into \"no single sign-on\", so an install with SSO showed only the token field.",
+      "resolution": "useViewerRoleRead reports failed separately from signed out (401 and 403 are an answer); the sidebar says the role could not be read, on the full column and the icon rail, and its retry re-reads for every holder. The sign-in screen says single sign-on could not be checked, with Check again. The Home first-run check stays silent by design: its fallback is staying on Home, which reports its own failed reads.",
+      "evidence": [
+        {
+          "path": "apps/web/src/hooks/useViewerRole.test.ts",
+          "asserts": "A 500 is failed and a retry recovers the role; a 401 is not a failure."
+        },
+        {
+          "path": "apps/web/src/components/SideNav.test.tsx",
+          "asserts": "The sidebar names the failed role read on both widths and clears it on retry."
+        },
+        {
+          "path": "apps/web/src/components/SignIn.test.tsx",
+          "asserts": "A failed sign-in-methods read is said, and checking again offers single sign-on."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-188",
+      "band": "Minor",
+      "title": "The run poll had no backoff and ran in hidden tabs",
+      "summary": "While the run event stream was down, useRuns fetched the run list every five seconds forever: against an API that kept failing, and in a tab nobody was looking at.",
+      "resolution": "The poll is a chain of timeouts: five seconds, doubled for each failure in a row up to a minute. A hidden tab is not polled, and is read once when shown again.",
+      "evidence": [
+        {
+          "path": "apps/web/src/hooks/useRuns.test.tsx",
+          "asserts": "After two failures the next attempt waits ten seconds; a hidden tab makes no request for twenty seconds and one on becoming visible."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-189",
+      "band": "Minor",
+      "title": "Seventeen form controls were hand-styled instead of the library ones",
+      "summary": "The launch form, the quarantine form, the runner and toolbox filters, the runner group menu, the copilot follow-up, the GitHub App key and two checkboxes were raw input, textarea and select elements with local class strings. Each drew its own height and border, and the launch form set outline-none with no focus ring in its place.",
+      "resolution": "Each is Input, Textarea, Select or Checkbox from @lupin/ui, and a test refuses a raw control in application code. Server errors stay one alert per form: the API does not name a field.",
+      "evidence": [
+        {
+          "path": "apps/web/src/form-control-rule.test.ts",
+          "asserts": "No .tsx file under apps/web/src draws a raw input, textarea or select."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-190",
+      "band": "Minor",
+      "title": "Quarantine copy and the artifact list read like placeholders",
+      "summary": "The quarantine page said \"Error Loading Quarantine List\", \"Test Title\", \"Test File\", \"Loading quarantine list...\" and \"Submit\", its empty state repeated its title, and its add error used text-error beside text-danger. The run-detail artifact list showed raw byte counts and three dots after the checksum.",
+      "resolution": "Sentence-case labels, a Quarantine button, an ellipsis, an empty state that says what quarantine does, and text-danger. Artifact sizes go through formatBytes (1.5 KB, 50 MB), and the whole checksum is on hover.",
+      "evidence": [
+        {
+          "path": "apps/web/src/routes/dashboard/quarantine.test.tsx",
+          "asserts": "The loading, error, empty and form copy is in sentences and names its action."
+        },
+        {
+          "path": "apps/web/src/lib/format.test.ts",
+          "asserts": "formatBytes reads byte counts in binary steps with at most one decimal."
+        }
+      ]
     }
   ]
 }

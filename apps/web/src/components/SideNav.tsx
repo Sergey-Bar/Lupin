@@ -3,6 +3,7 @@ import { Link, useRouterState } from '@tanstack/react-router';
 import {
   ChevronLeft,
   ChevronRight,
+  CircleAlert,
   FlaskConical,
   House,
   LayoutGrid,
@@ -27,7 +28,7 @@ import {
   type NavPage,
   type SectionId,
 } from '../route-manifest.js';
-import { useViewerRole } from '../hooks/useViewerRole.js';
+import { useViewerRoleRead } from '../hooks/useViewerRole.js';
 import { publishRuns, useLatestRuns } from '../hooks/useRuns.js';
 import { useResource } from '../hooks/useResource.js';
 import { useScope } from '../hooks/useScope.js';
@@ -373,24 +374,32 @@ export function SidebarList({
   onNavigate?: () => void;
 }): React.ReactElement {
   const { pageId, section } = useCurrentPage();
-  const role = useViewerRole();
+  const viewer = useViewerRoleRead();
+  const role = viewer.role;
   const counts = usePlaceCounts(api, section);
   const scope = useScope();
   const tree = navTree(role);
+  const roleNotice = viewer.failed ? (
+    <RoleReadFailed collapsed={collapsed} onRetry={viewer.retry} className={className} />
+  ) : null;
   if (section === 'settings') {
     const settings = tree.find((group) => group.id === 'settings');
     return (
-      <SettingsList
-        pages={settings?.pages ?? []}
-        pageId={pageId}
-        collapsed={collapsed}
-        className={className}
-        onNavigate={onNavigate}
-      />
+      <>
+        {roleNotice}
+        <SettingsList
+          pages={settings?.pages ?? []}
+          pageId={pageId}
+          collapsed={collapsed}
+          className={className}
+          onNavigate={onNavigate}
+        />
+      </>
     );
   }
   return (
     <>
+      {roleNotice}
       <ScopeSwitcher
         projects={projects}
         value={scope.projectId}
@@ -410,6 +419,45 @@ export function SidebarList({
         onNavigate={onNavigate}
       />
     </>
+  );
+}
+
+/**
+ * The role could not be read, so the pages that need one are missing (ledger MNT-187). Said
+ * once, above the list, with the retry as the control; on the icon rail the control is the
+ * icon and the sentence is its name.
+ */
+function RoleReadFailed({
+  collapsed,
+  onRetry,
+  className,
+}: {
+  collapsed: boolean;
+  onRetry: () => void;
+  className?: string | undefined;
+}): React.ReactElement {
+  const sentence = 'Your role could not be read, so some pages are hidden. Retry';
+  return (
+    <div className={cn('shrink-0 pb-2', collapsed ? 'flex justify-center' : '', className)}>
+      <button
+        type="button"
+        onClick={onRetry}
+        aria-label={sentence}
+        title={collapsed ? sentence : undefined}
+        className={cn(
+          'inline-flex items-center gap-2 rounded-md text-start text-xs text-warning transition-colors duration-100 hover:bg-surface-raised motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
+          collapsed ? 'h-11 w-11 justify-center' : 'w-full px-2 py-1.5',
+        )}
+      >
+        <CircleAlert size={16} aria-hidden="true" className="shrink-0" />
+        {collapsed ? null : (
+          <span>
+            Your role could not be read, so some pages are hidden.{' '}
+            <span className="font-medium underline">Retry</span>
+          </span>
+        )}
+      </button>
+    </div>
   );
 }
 

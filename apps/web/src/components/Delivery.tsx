@@ -11,6 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Checkbox,
 } from '@lupin/ui';
 import type {
   DeliveryReport,
@@ -515,12 +516,7 @@ function SourceForm({
       <SourceSummary source={source} />
       <div className="grid gap-2 sm:grid-cols-4 sm:items-end">
         <label className="flex min-h-11 items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(event) => setEnabled(event.target.checked)}
-            className="h-5 w-5 accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-          />
+          <Checkbox checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
           Read from GitHub
         </label>
         <Select

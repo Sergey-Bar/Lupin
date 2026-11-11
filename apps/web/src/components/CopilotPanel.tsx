@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Button, X } from '@lupin/ui';
+import { Button, Input, X } from '@lupin/ui';
 import { createCopilotClient, type QuestionAnswer } from '../lib/copilot-client.js';
 
 /**
@@ -144,13 +144,13 @@ function CopilotPanel({
         <label className="sr-only" htmlFor="copilot-question">
           Ask a follow-up
         </label>
-        <input
+        <Input
           id="copilot-question"
           value={draft}
           maxLength={500}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Ask a follow-up…"
-          className="h-11 min-w-0 flex-1 rounded-md border border-border-strong bg-transparent px-3 text-sm text-fg placeholder:text-fg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+          className="min-w-0"
         />
         <Button type="submit">Ask</Button>
       </form>

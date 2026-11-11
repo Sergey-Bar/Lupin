@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   ExternalLink,
+  Input,
   Search,
   Select,
   ToolLogo,
@@ -276,22 +277,22 @@ function ToolboxCatalogue({
         />
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <label className="relative block min-w-0 basis-full sm:basis-auto sm:flex-1">
-          <span className="sr-only">Search the toolbox</span>
+        <div className="relative min-w-0 basis-full sm:basis-auto sm:flex-1">
           <Search
             size={14}
             aria-hidden="true"
             className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-fg-muted"
           />
-          <input
+          <Input
             type="search"
+            aria-label="Search the toolbox"
             data-testid="toolbox-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search tools"
-            className="min-h-11 w-full rounded-lg border border-border bg-surface-raised ps-9 pe-3 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            className="ps-9"
           />
-        </label>
+        </div>
         <label className="flex items-center gap-2 text-sm text-fg-muted">
           <span className="hidden sm:inline">Capability</span>
           <Select

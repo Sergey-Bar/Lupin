@@ -275,6 +275,52 @@ describe('useRuns', () => {
     vi.useRealTimers();
   });
 
+  /*
+   * With the stream down the poll ran every five seconds forever: against a failing API, and
+   * in a tab nobody was looking at (ledger MNT-188).
+   */
+  it('backs off while the API keeps failing', async () => {
+    vi.useFakeTimers();
+    const api = makeApi({
+      getRuns: vi.fn().mockRejectedValue(new Error('down')),
+      subscribeToRunEvents: vi.fn(() => () => undefined),
+    });
+    const { unmount } = renderHook(() => useRuns(api));
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(api.getRuns).toHaveBeenCalledTimes(1);
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(api.getRuns).toHaveBeenCalledTimes(2);
+    // Two failures in a row: the next attempt waits ten seconds, not five.
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(api.getRuns).toHaveBeenCalledTimes(2);
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(api.getRuns).toHaveBeenCalledTimes(3);
+    unmount();
+    vi.useRealTimers();
+  });
+
+  it('does not poll a hidden tab, and catches up when it is shown', async () => {
+    vi.useFakeTimers();
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    const api = makeApi({
+      getRuns: vi.fn().mockResolvedValue([makeRun({ id: 'r' })]),
+      subscribeToRunEvents: vi.fn(() => () => undefined),
+    });
+    const { unmount } = renderHook(() => useRuns(api));
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    await act(() => vi.advanceTimersByTimeAsync(20_000));
+    expect(api.getRuns).toHaveBeenCalledTimes(1);
+    visibility.mockReturnValue('visible');
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(api.getRuns).toHaveBeenCalledTimes(2);
+    unmount();
+    visibility.mockRestore();
+    vi.useRealTimers();
+  });
+
   it('classifies active and terminal phases explicitly', () => {
     const active = [
       'queued',

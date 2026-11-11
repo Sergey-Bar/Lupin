@@ -70,6 +70,34 @@ describe('QuarantinePage', () => {
     await waitFor(() => expect(screen.getByTestId('quarantine-empty')).toBeInTheDocument());
   });
 
+  // The copy was title case, "Submit", three dots, and an empty line that repeated its title
+  // (ledger MNT-190).
+  it('speaks in sentences, and names its action', async () => {
+    const { unmount } = render(
+      <QuarantinePage
+        api={stubApi({ getQuarantine: vi.fn(() => new Promise<QuarantineEntry[]>(() => {})) })}
+      />,
+    );
+    expect(screen.getByText('Reading the quarantine list…')).toBeInTheDocument();
+    unmount();
+    const failed = render(
+      <QuarantinePage
+        api={stubApi({ getQuarantine: vi.fn().mockRejectedValue(new Error('x')) })}
+      />,
+    );
+    expect(
+      await screen.findByRole('heading', { name: 'The quarantine list could not be read' }),
+    ).toBeInTheDocument();
+    failed.unmount();
+    render(<QuarantinePage api={stubApi({ getQuarantine: vi.fn().mockResolvedValue([]) })} />);
+    const empty = await screen.findByTestId('quarantine-empty');
+    expect(empty).not.toHaveTextContent(/currently no tests/iu);
+    fireEvent.click(screen.getByTestId('add-quarantine-btn'));
+    expect(await screen.findByLabelText('Test title')).toBeInTheDocument();
+    expect(screen.getByLabelText('Test file')).toBeInTheDocument();
+    expect(screen.getByTestId('submit-quarantine-btn')).toHaveTextContent('Quarantine');
+  });
+
   /**
    * The route renders `<QuarantinePage />` with no props, so the default is the
    * production call shape and every other case here passes a stub.

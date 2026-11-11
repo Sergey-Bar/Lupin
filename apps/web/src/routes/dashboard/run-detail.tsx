@@ -16,7 +16,7 @@ import {
 } from '../../lib/api.js';
 import { createCockpitClient, type CockpitClient } from '../../lib/cockpit-client.js';
 import { runTransitionName } from '../../lib/view-transition.js';
-import { formatDate as formatDateWithFallback } from '../../lib/format.js';
+import { formatBytes, formatDate as formatDateWithFallback } from '../../lib/format.js';
 import { formatDuration } from '../../lib/insights.js';
 import { describeGateReason } from '../../lib/gate-reason.js';
 import { statusWord } from '../../lib/status-word.js';
@@ -908,8 +908,10 @@ function ArtifactPanel({
                     {artifact.name ?? artifact.kind}
                   </a>
                   <div className="mt-0.5 truncate text-xs text-fg-muted">
-                    {artifact.kind} · {artifact.sizeBytes} bytes · SHA-256{' '}
-                    {artifact.checksum.slice(0, 12)}...
+                    {artifact.kind} · {formatBytes(artifact.sizeBytes)} ·{' '}
+                    <span title={`SHA-256 ${artifact.checksum}`}>
+                      SHA-256 {artifact.checksum.slice(0, 12)}…
+                    </span>
                   </div>
                 </li>
               ))}
