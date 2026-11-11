@@ -124,9 +124,10 @@ const dashboardTree = dashboardRoute.addChildren([
  * that child and the root — and a rendered redirect between two matching routes is
  * a cycle; see the comment in `routes/__root.tsx`.
  *
- * **No login route.** The install is open: one tenant, one operator, self-hosted,
- * and nothing behind this to authenticate *to* (ADR-006). The route and its
- * `AuthGuard` are gone rather than unreachable, so there is no second way back in.
+ * **No login route.** Signing in happens on the Access page (the installation key or an access
+ * token) or at the identity provider (OIDC, Cloudflare Access), and the API's guards decide
+ * what a caller may do. A separate `/login` page and its `AuthGuard` are gone rather than
+ * unreachable, so there is no second way in to keep in step with the first.
  */
 export const routeTree = rootRoute.addChildren([dashboardTree]);
 

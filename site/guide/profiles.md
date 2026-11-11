@@ -22,7 +22,7 @@ secrets are kept when you change it.
 .\start.cmd --profile team
 ```
 
-The Deployment page in the app (_Map → Deployment_) shows the profile the install is running
+The Deployment page in the app (_Settings → Deployment_) shows the profile the install is running
 and what to do next.
 
 ## Solo
@@ -95,7 +95,7 @@ Everything in `team`, plus:
 - **An audit trail an auditor accepts.** Every decision is a row chained to the one before it,
   and the database refuses to edit, delete or truncate it. The chain covers the event itself
   (who, what, when, the resource and the details), not the request it came in on (IP address,
-  user agent, request id). Admins read it, check it and export it on _Map → Audit_ (or at
+  user agent, request id). Admins read it, check it and export it on _Settings → Audit_ (or at
   `GET /api/v1/audit`, `/audit/verify` and `/audit/export`), and
   [one command](/guide/operations-enterprise#the-audit-trail) checks every workspace's chain
   against the database. Keep the head hash somewhere else, from the NDJSON export or from
@@ -118,7 +118,7 @@ Everything in `team`, plus:
   of that workspace and the access tokens they made there, and nothing else, unless it was
   their last: a person left in no workspace is deactivated.
 
-People who signed in appear on _Map → Members_, where an admin changes a role, disables someone
+People who signed in appear on _Settings → Members_, where an admin changes a role, disables someone
 or removes them. Removing someone takes away their membership of that workspace and the access
 tokens they made there: their sessions go on serving the other workspaces they are in.
 Disabling someone is their whole account, signed out everywhere and every token they made
@@ -134,7 +134,7 @@ On `team` and `enterprise`, one install holds several workspaces — one per tea
 client — each with its own projects, runs, tokens, members and audit trail. A person's role is
 set per workspace, so the same person can be an admin in one and a viewer in another.
 
-- **Creating one.** On _Map → Deployment_, the installation's admin or an admin of the default
+- **Creating one.** On _Settings → Deployment_, the installation's admin or an admin of the default
   workspace fills in _New workspace_ (or calls `POST /api/v1/workspaces` with `{id, name}`).
   A person who creates one becomes its first admin. On `solo` and `startup` the install keeps the one
   workspace, and creating another is refused with the profile to move to.

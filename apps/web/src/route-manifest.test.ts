@@ -114,7 +114,7 @@ describe('route manifest', () => {
     }
   });
 
-  it('has no login route: the install is open (ADR-006)', () => {
+  it('has no login route: signing in happens on the Access page or at the provider', () => {
     expect(routeManifest.map((route): string => route.path)).not.toContain('/login');
     expect(isApplicationPath('/login')).toBe(false);
   });

@@ -62,8 +62,8 @@ export const SettingsAppearanceRoute = createRoute({
 
 /**
  * The remaining Settings tabs are registered here so the tab row never links to a dead
- * path. Reports is the live reports surface; the admin surfaces are wired in Task 5 and
- * until then render the Appearance page so the section stays navigable.
+ * path: Reports, Members, Access, Audit, Deployment and the installation pages, each the same
+ * page the older top-level path opens.
  */
 export const SettingsReportsRoute = createRoute({
   getParentRoute: () => dashboardRoute,

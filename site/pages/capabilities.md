@@ -9,7 +9,7 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                   |
 | ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 84    | implemented and exercised, with the stated qualification.                 |
+| **real**     | 85    | implemented and exercised, with the stated qualification.                 |
 | **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
 | **missing**  | 1     | no usable implementation exists in the target.                            |
 | **deferred** | 6     | intentionally outside the launch scope pending a separate decision.       |
@@ -94,7 +94,8 @@ its source, then run `pnpm site:generate`.
 | Duration-balanced CI sharding                                                                       | `real`     |
 | Allure results importer                                                                             | `real`     |
 | k6 load execution and threshold adapter                                                             | `real`     |
-| ZAP finding and SARIF adapter                                                                       | `missing`  |
+| ZAP scan producer: an image that runs a scan                                                        | `missing`  |
+| ZAP XML import                                                                                      | `real`     |
 | Provider-backed chat                                                                                | `mock`     |
 | AI test proposals from surviving mutants and uncovered diff lines                                   | `real`     |
 | Browser/API/load/security/mobile agents                                                             | `mock`     |

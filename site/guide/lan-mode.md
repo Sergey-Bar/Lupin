@@ -43,7 +43,7 @@ own gateway in that range.
 
 ## Signing devices in
 
-- **Pair a device (easiest).** On the server's browser, open **Map → Access**, type a device
+- **Pair a device (easiest).** On the server's browser, open **Settings → Access**, type a device
   name, pick viewer or operator, and press **Get a code**. Scan the QR code with the phone,
   or open `/dashboard/pair` on the device and type the six digits. A code works once, for
   ten minutes, and never mints an admin. Paired devices appear in the token list, named

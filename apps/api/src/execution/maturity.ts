@@ -34,9 +34,9 @@ const INTEGRATION_MATURITY_SOURCE = [
     domain: 'import',
     level: 'L2',
     capabilities: ['import', 'normalized-results'],
-    adapterVersion: 'legacy-1',
+    adapterVersion: 'junit-xml',
     evidenceStatus: 'verified',
-    evidence: ['legacy-reporter-upload'],
+    evidence: ['reporter-upload-door'],
   },
   {
     id: 'playwright-json',
@@ -108,15 +108,18 @@ const INTEGRATION_MATURITY_SOURCE = [
     evidenceStatus: 'unsupported',
     evidence: [],
   },
+  // Built and tested against the runner's own adapter (`apps/runner/src/api-run.ts`), queued by
+  // the `api` agent; `implemented`, not `verified`, because no run against a real service
+  // is recorded (ledger MNT-182).
   {
     id: 'bruno',
     name: 'Bruno',
     domain: 'api',
-    level: 'L0',
-    capabilities: [],
-    adapterVersion: 'none',
-    evidenceStatus: 'not_configured',
-    evidence: [],
+    level: 'L2',
+    capabilities: ['api', 'test-execution'],
+    adapterVersion: 'api-run',
+    evidenceStatus: 'implemented',
+    evidence: ['api-agent', 'runner-api-run'],
   },
   {
     id: 'newman',
@@ -128,15 +131,18 @@ const INTEGRATION_MATURITY_SOURCE = [
     evidenceStatus: 'unsupported',
     evidence: [],
   },
+  // The runner's bounded k6 adapter (`apps/runner/src/k6-execution.ts`), queued by the `load`
+  // agent. `implemented`: the runner image is still a stub (`runner.oci`), so a k6 run needs
+  // a runner host with k6 installed (ledger MNT-182).
   {
     id: 'k6',
     name: 'k6',
     domain: 'performance',
-    level: 'L0',
-    capabilities: [],
-    adapterVersion: 'none',
-    evidenceStatus: 'not_configured',
-    evidence: [],
+    level: 'L2',
+    capabilities: ['k6', 'test-execution'],
+    adapterVersion: 'k6-execution',
+    evidenceStatus: 'implemented',
+    evidence: ['load-agent', 'runner-k6-execution'],
   },
   {
     id: 'zap',

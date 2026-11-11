@@ -18,8 +18,8 @@
 
 <p align="center"><a href="site/guide/install.md"><strong>Get started</strong></a> &nbsp; · &nbsp; <a href="site/guide/concepts.md">Explore the concepts</a> &nbsp; · &nbsp; <a href="https://sergey-bar.github.io/Lupin/">Documentation</a></p>
 
-Lupin is a local-first QA control plane. Send it the reports your test tools already produce — Playwright, JUnit, k6 or
-OWASP ZAP. It keeps each run, retry and artifact together, then shows your team what
+Lupin is a local-first QA control plane. Send it the reports your test tools already produce — Playwright, JUnit, Allure, k6
+or OWASP ZAP, and SARIF, coverage, SBOM and mutation reports for repository health. It keeps each run, retry and artifact together, then shows your team what
 passed, what needs attention and what was never measured.
 
 ![The runs view](docs/assets/runs.png)
@@ -38,7 +38,7 @@ passed, what needs attention and what was never measured.
 - **Live Playwright reporter and balanced CI shards.** `@lupin/playwright-reporter` streams a run with failure traces; `lupin shard` splits files by measured duration. An Allure results importer is on the upload door. See [how Lupin compares](site/guide/compare.md), including what it does not do.
 - **Live run updates** over server-sent events, and a runner that executes declared commands outside the API process.
 - **A "Now" page** that answers "what needs me?" in five items or fewer, with focus mode, compact density, reduced motion and keyboard shortcuts (`?` lists them).
-- **Scheduled reports**, daily, weekly or custom, to Slack, Microsoft Teams, Telegram, WhatsApp, Signal or the built-in inbox — see [scheduled reports](site/guide/notifications.md).
+- **Scheduled reports**, daily, weekly or custom, to Slack, Microsoft Teams, Telegram, WhatsApp, Signal, email or the built-in inbox — see [scheduled reports](site/guide/notifications.md).
 - **One server for your whole network.** `LUPIN_LAN_MODE=1` turns on sign-in everywhere, HTTPS with a local certificate, device pairing by QR code, a client allowlist and remote runners — see [LAN mode](site/guide/lan-mode.md).
 
 ## Why it is interesting to an SDET

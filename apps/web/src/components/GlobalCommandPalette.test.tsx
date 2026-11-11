@@ -140,7 +140,7 @@ describe('GlobalCommandPalette keyboard and accessibility', () => {
 
     const labels = screen.getAllByRole('option').map((option) => option.textContent);
     expect(labels).toEqual(
-      // No 'Sign Out': the install is open and there is no session to end.
+      // No 'Sign Out': signing out is on the Access page, beside the sign-in it ends.
       expect.arrayContaining(['Go to Overview', 'Go to Runs', 'Go to Map', 'Toggle Theme']),
     );
     expect(labels).not.toContain('Sign Out');

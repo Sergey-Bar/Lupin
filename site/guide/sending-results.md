@@ -1,6 +1,6 @@
 ---
 title: Sending results
-description: Get a Playwright, JUnit, k6 or ZAP report into Lupin from any CI job.
+description: Get a Playwright, JUnit, Allure, k6 or ZAP report into Lupin from any CI job.
 outline: deep
 ---
 
@@ -32,7 +32,7 @@ curl --fail-with-body \
 | Field                     | Purpose                                                                                                                              |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `file`                    | The report. Exactly one file part.                                                                                                   |
-| `format`                  | Which adapter reads it: `playwright`, `junit`, `k6` or `zap`. See below for what happens when you omit it.                           |
+| `format`                  | Which adapter reads it: `playwright`, `junit`, `allure`, `k6` or `zap`. See below for what happens when you omit it.                 |
 | `runId`                   | Your identity for the run. Omit it and the report's own SHA-256 becomes the id, so a re-upload is a replay rather than a second run. |
 | `branch`                  | Shown on the run and used to filter trends.                                                                                          |
 | `commitSha`               | The commit under test.                                                                                                               |
@@ -74,6 +74,27 @@ curl -H "Authorization: Bearer $REPORTER_SECRET" \
 
 The parser does not expand external entities, caps failure messages, and treats a
 truncated or malformed document as a run of `unknown` status — never as a pass.
+
+## Allure
+
+For a team moving off Allure. Allure writes one file per result, so join them into one JSON
+document and send it with `format=allure`:
+
+```bash
+jq -s . allure-results/*-result.json > allure.json
+curl -H "Authorization: Bearer $REPORTER_SECRET" \
+  -F file=@allure.json -F format=allure \
+  http://127.0.0.1:3000/api/v1/reporter/upload
+```
+
+Several results with one identity are one test's attempts, and a test whose attempts disagree
+is `flaky`, as for Playwright. Allure lists attachments by file name only, so none are carried.
+
+## Health reports
+
+SARIF, coverage (lcov, Cobertura, JaCoCo and others), SBOM, VEX, mutation, axe and eval
+reports are not test runs. They go to the repository health door with
+[`lupin upload`](/guide/cli), which names every format it accepts.
 
 ## k6 and OWASP ZAP
 

@@ -198,11 +198,12 @@ let sessionExpiryHandled = false;
 /**
  * The default action on expiry: stay put.
  *
- * The install is open (ADR-006) and there is no login route. This used to be a full
- * navigation to `/login`, which rendered an empty page and stranded the reader; a 401
- * now surfaces as the failing screen's own error state, and subscribers still hear
- * about it once. A deployment that puts a login in front of the product registers its
- * own responder with `setSessionExpiredResponder`.
+ * There is no login route in this app: a session starts on the Access page (a key or a
+ * token) or at the identity provider, never on a page of its own. A navigation to `/login`
+ * used to render an empty page and strand the reader; a 401 now surfaces as the failing
+ * screen's own error state, and subscribers still hear about it once. A deployment that puts
+ * a login in front of the product registers its own responder with
+ * `setSessionExpiredResponder`.
  */
 function defaultSessionExpiredResponder(_returnPath: string): void {
   // Intentionally empty.

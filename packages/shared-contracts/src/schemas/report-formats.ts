@@ -36,8 +36,9 @@ import { z } from 'zod/v4';
  *
  * A **producer** is who wrote the document; a **format** is the shape they wrote it in.
  * They are different questions and the table below maps one onto the other. `robot`,
- * `sarif` and `otel` are producers with no ingestible format here — SARIF export is not
- * built (capability register, `tool.zap`) and OTLP is not a test report at all — and
+ * `sarif` and `otel` are producers with no ingestible format **on this door** — SARIF is read
+ * by the repository health door (`packages/reporter/src/adapters/sarif.ts`, `lupin upload
+ * --format sarif`), not as a test run, and OTLP is not a test report at all — and
  * `generic` exists for a result whose writer could not be named. Naming them here rather
  * than omitting them is what makes their absence a decision rather than a gap.
  */

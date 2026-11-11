@@ -40,11 +40,12 @@ This is a **pnpm workspace monorepo** containing the unified Lupin platform.
 | `apps/web`                  | Unified Web              | React 19, Vite, TanStack Router, Tailwind CSS 4 |
 | `apps/runner`               | Execution boundary       | Node, rootless process control                  |
 | `apps/worker`               | Lease and recovery loop  | Node, worker resilience                         |
+| `apps/tui`                  | Terminal view            | Node, the same API                              |
 | `tools/lupin-cli`           | `lupin`, the CI CLI      | Node, no runtime dependencies                   |
 | `tools/playwright-reporter` | Live Playwright reporter | Node, no runtime dependencies                   |
 | `site`                      | Documentation site       | VitePress                                       |
 
-The platform uses **pnpm 11**, **Node.js 24+**, **TypeScript 6.0**, and **Vitest 4** for unit tests. ESLint is at **10**, and its major changed which config file it loads: it resolves from each linted file's own directory and uses that directory as the base path for `files` patterns, so a nested `eslint.config.js` — even one that only re-exports the root — silently disables every path-scoped rule beneath it. There are none, and `scripts/lib/eslint-plugin-compatibility.test.mjs` refuses one.
+The platform uses **pnpm 11**, **Node.js 24+**, **TypeScript 6.0**, and **Vitest 5** for unit tests. ESLint is at **10**, and its major changed which config file it loads: it resolves from each linted file's own directory and uses that directory as the base path for `files` patterns, so a nested `eslint.config.js` — even one that only re-exports the root — silently disables every path-scoped rule beneath it. There are none, and `scripts/lib/eslint-plugin-compatibility.test.mjs` refuses one.
 
 pnpm 11 refuses a package published in the last 24 hours, against the whole lockfile rather than only new resolutions. A same-day release cannot be adopted; the wait is a day, and `pnpm audit --fix` exempts a security patch from it.
 
@@ -214,7 +215,7 @@ which is why both exist.
 | `.kilo/kilo.jsonc`        | Project config. Four lines today.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `.kilo/agent/*.md`        | **The eleven personas**, in Kilo's format: `mode`, `steps`, `color`, and `permission`. The three read-only ones carry `permission: edit: deny`, so "DO NOT edit files" is enforced by the harness rather than by prose — a guard you can forget to call is weaker than a permission you cannot call.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `.kilo/skills/*/SKILL.md` | **The twenty-one project skills.** Five authored here — `ledger-row`, `evidence-test`, `no-second-authority`, `gate-tiering`, `capability-evidence` — and sixteen vendored: four from `vercel-labs/agent-skills` and `supabase/agent-skills`, and twelve design-craft skills from `emilkowalski/skills`, `jakubkrehel/skills`, `ibelick/ui-skills`, `zeke/swiss-design-skill`, `MengTo/Skills`, `prototyper-ui` and `addyosmani/web-quality-skills`. **`scripts/skill-scan.mjs` derives the vendored list from `.kilo/skills-lock.json` rather than holding a literal**, and `scripts/lib/skill-scan.test.mjs` fails if the two disagree in either direction — a hand-written list said `4 authored, 4 vendored` over a tree of twenty-one directories, because the number came from the array and the skills came from the lock. |
-| `.kilo/command/*.md`      | **Three commands**, because the other two layers are only half a workflow without them: `/gate` (which gate applies, and can it pass today), `/close` (close a ledger row, or say why not), `/boundary` (add a table to the tenancy register, or diagnose a regression). Each composes a skill with the gate that decides it; none is a wrapper around one `pnpm` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `.kilo/command/*.md`      | **Not in this tree.** Three commands (`/gate`, `/close`, `/boundary`) were written in an older local history and never committed to this branch; until they are, the skills and the gates are invoked directly.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `.kilo/plans/`            | **The one planning system.** The only one of the three that is tracked in git.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `.kilo/worktrees/`        | Agent Manager worktrees.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
@@ -344,7 +345,6 @@ run rather than on more code:
 .kilo/                The canonical project config root
   agent/              The eleven reviewer personas, in Kilo's format
   skills/             The twenty-one project skills (five authored, sixteen vendored)
-  command/            Three commands: /gate, /close, /boundary
   plans/              The one planning system; the only one tracked in git
 apps/
   api/               Hono v4 API (:3000); Effect only in src/bootstrap. src/mcp/ is the read-only
@@ -352,6 +352,7 @@ apps/
   web/               React 19 + TanStack Router + Tailwind CSS 4 (:5173)
   runner/            Rootless execution boundary
   worker/            Lease, readiness, and recovery loop
+  tui/               Terminal view of the same API
 packages/
   auth/              Installation sessions and credentials
   automation/        AI gateway ports and streaming adapters
@@ -446,8 +447,8 @@ scripts/             Gate scripts, all `.mjs`, plus `scripts/lib/` node:test sui
   sidebar (`components/SideNav.tsx`, from `navTree` in `route-manifest.ts`): Home, Runs, Tests
   and Health are groups listing their pages, and Settings swaps the sidebar to its own list.
   There is no tab row and no visible page title (`PageHeader` keeps it `sr-only`). Every older
-  path still resolves (`route-manifest.test.ts`). `/setup` is the full-screen first run, drawn
-  outside the app frame (`isFullScreen` in `routes/__root.tsx`). Home is
+  path still resolves (`route-manifest.test.ts`). `/dashboard/setup` is the full-screen first run (a bare `/setup`
+  redirects there), drawn outside the app frame (`isFullScreen` in `routes/__root.tsx`). Home is
   the release verdict and what needs you, nothing else. Attention ranking is the pure
   `src/lib/attention.ts`, and `runsNeedingYou` there is the one judgement the Runs page and the
   sidebar count share; an area page opens on the status band (`Hero` in `@lupin/ui`: a mark,
@@ -469,7 +470,7 @@ scripts/             Gate scripts, all `.mjs`, plus `scripts/lib/` node:test sui
 
 ### Testing
 
-- **Framework**: Vitest 4 with `globals: true`.
+- **Framework**: Vitest 5 with `globals: true`.
 - **Coverage floors are enforced by `pnpm coverage:ratchet`, not by per-package Vitest
   `thresholds`.** `.config/vitest.shared.ts` sets `STANDARD_THRESHOLDS` (90/80/90/90) and
   explicitly declines to apply them per package, because four packages sit well below

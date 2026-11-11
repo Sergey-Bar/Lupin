@@ -172,9 +172,9 @@ import {
   InMemoryAuditSink,
   type AuditSink,
 } from './modules/dashboard/audit-sink.js';
-// No auth middleware: the install is open. See the note where it used to be mounted,
-// and ADR-006 for the posture. The session and key routes stay mounted — they mint
-// nothing anybody is required to hold.
+// No global authentication middleware: every route carries its own guard (`http/access.ts`,
+// `http/route-access.ts`), and the posture is chosen by configuration. See the note where the
+// middleware used to be mounted.
 import { createRequestDeadline } from './middleware/request-deadline.js';
 import { createSecurityHeaders } from './middleware/security-headers.js';
 import { getConfig } from './config.js';
@@ -1573,27 +1573,24 @@ app.use(
 );
 
 /**
- * **No authentication middleware.** The install is open.
+ * **No global authentication middleware; every route is guarded where it is declared.**
  *
- * Removed rather than bypassed, on 2026-09-30. A self-hosted, single-tenant install
- * has one operator and no second party to authenticate *to*: `WORKSPACE_ID` is the
- * only tenancy boundary the product has, and ADR-006 puts multi-tenant isolation
- * out of scope for v1.0.0. A credential in front of it would be an obstacle with
- * nothing behind it — and one that had already produced three defects of its own:
- * two files holding the key and disagreeing (E2E-1), a runner secret the lane never
- * had (E2E-1's sibling), and a "this route is not public" check that was itself
- * authenticated and proved nothing.
+ * The one middleware that once stood in front of everything was removed on 2026-09-30. Who may
+ * call a route is now read from the route: a guard from `http/access.ts`, or a role row in
+ * `http/route-access.ts`, and `docs/quality/authz-matrix.json` is generated from those guards
+ * (ledger MNT-180 replaced the note that said the install had no authentication at all).
  *
- * **What this means, stated plainly rather than left to be discovered.** Anything
- * that can reach the API can read every run, download every artifact, and cancel
- * runs. That is the correct posture for a box on an operator's own network, and it
- * is the wrong posture for the same box on a public interface. The boundary is the
- * network, so **bind the API to loopback** — `HOST=127.0.0.1`, which is already the
- * default — and put a reverse proxy in front of it if it must be reachable from
- * anywhere else.
+ * **What the guards admit depends on the configuration, stated plainly:**
  *
- * The session and key routes are still mounted: they mint nothing and are no longer
- * required, and a client that happens to send a credential is not refused for it.
+ * - `solo` with `ACCESS_CONTROL=open`, bound to loopback (the default): the guards admit the
+ *   single operator ADR-006 describes, so anything that can reach the API can read and act.
+ *   That is why the startup policy (`checkExposurePolicy`) refuses this mode on any
+ *   non-loopback bind.
+ * - LAN mode (`LUPIN_LAN_MODE=1`), and the `startup`, `team` and `enterprise` profiles:
+ *   enforced. A browser signs in with a session (the installation key, an access token, OIDC,
+ *   or Cloudflare Access), CI uses an access token, and each route refuses a caller below its
+ *   role. Under enforced single sign-on the installation key signs no browser in unless
+ *   break-glass is on, and every break-glass use is audited.
  */
 
 /**

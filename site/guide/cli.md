@@ -34,6 +34,14 @@ lupin upload --format slsa-provenance --file provenance.json --digest sha256:<64
 # The pull-request gate: exits 1 when it fails, printing every reason
 lupin gate --branch "$BRANCH" --commit "$SHA" --pr 42
 
+# Changes on this branch that weaken the tests: deleted tests, added skips, loosened
+# assertions, lowered thresholds, CI steps that cannot fail. Sends kinds, paths and line
+# numbers, never source; --dry-run sends nothing, --fail-on-findings fails the job.
+lupin diff-guard --base origin/main
+
+# The tests to run first for this branch's change, chosen by file name; sends nothing.
+lupin impact --format paths
+
 # Run the tests, send the report, and keep the command's exit code unless every failure is an
 # approved quarantined test. The command runs without a shell; on Windows, `-- cmd /c npx …`.
 lupin test --format playwright-json --report results.json -- npx playwright test --reporter=json

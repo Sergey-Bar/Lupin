@@ -1,10 +1,11 @@
 /**
  * Every navigable page, and the section it belongs to.
  *
- * ## A pyramid: five areas, then Settings
+ * ## Four areas, then Settings
  *
- * Now (the one thing to do), Runs, Tests, Health and Delivery are the five areas a reader
- * works in; everything an admin configures, or opens rarely, is under Settings. Every old URL
+ * Home (the release verdict and what needs you), Runs, Tests and Health are the areas a
+ * reader works in; Delivery, AI code and Agents sit under Health. Everything an admin
+ * configures, or opens rarely, is under Settings. Every old URL
  * is still a page: `section` only decides where it sits, and `route-manifest.test.ts` pins
  * every path.
  *

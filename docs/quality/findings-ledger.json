@@ -7778,6 +7778,86 @@
           "asserts": "A generated row and every committed row carry no workspaceScoped claim."
         }
       ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-180",
+      "band": "Major",
+      "title": "The composition root said the API has no authentication, beside the guards that authenticate it",
+      "summary": "apps/api/src/index.ts said twice that there was no authentication middleware and that the install was open, that anything able to reach the API could read every run and cancel runs, and that the session and key routes minted nothing anybody needed. The same file wires SSO enforcement and break-glass, every route carries a guard (http/access.ts, http/route-access.ts), and LAN mode and the startup, team and enterprise profiles enforce sign-in. apps/web/src/lib/api.ts, apps/web/src/router.ts, a route-manifest test name and the command palette repeated 'the install is open'. A security reviewer reading the composition root first would have been told the wrong posture.",
+      "resolution": "Each statement now gives the real posture: no global middleware, a guard on every route, open only for the solo profile with ACCESS_CONTROL=open on a loopback bind (which the startup policy refuses anywhere else), enforced under LAN mode and every larger profile. No behaviour changed.",
+      "evidence": [
+        {
+          "path": "apps/api/src/startup-policy.ts",
+          "asserts": "checkExposurePolicy refuses ACCESS_CONTROL=open on a non-loopback bind, the condition the rewritten note states."
+        },
+        {
+          "path": "packages/config/src/profiles.test.ts",
+          "asserts": "solo is open and startup, team and enterprise are enforced, as the note says."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-181",
+      "band": "Minor",
+      "title": "The guides and the register under-stated what the product reads and sends",
+      "summary": "site/guide/sending-results.md and README.md listed four upload formats while the door read Allure too; the notifications guide and README left out email, which the dispatcher sends; site/guide/cli.md showed diff-guard only inside a GitLab example and impact not at all in its command list; a comment in report-formats.ts said SARIF had no ingestible format; the register row reporting.lifecycle counted five adapters where there are six; tool.zap read missing while its own text said the parser was wired; and six guides sent readers to Map → Access, Reports, Audit, Members and Deployment, which are under Settings.",
+      "resolution": "Each statement corrected. tool.zap is split into tool.zap (the producer, missing) and tool.zap-import (real). guide-claims.test.mjs reads the upload formats, the channel kinds and the CLI commands from their contracts and fails when a guide omits one; against the guides before this change it failed on Allure, email and diff-guard.",
+      "evidence": [
+        {
+          "path": "scripts/lib/guide-claims.test.mjs",
+          "asserts": "The upload guide names every upload format, the reports guide every channel kind, and the CLI guide every command."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-182",
+      "band": "Minor",
+      "title": "The integration maturity table listed k6 and Bruno as absent and JUnit as the legacy upload",
+      "summary": "apps/api/src/execution/maturity.ts, served at GET /api/v1/integrations/maturity, gave k6 and Bruno level L0, no capability and adapter 'none', although the load and api agents queue jobs for both and the runner executes them; JUnit was described as the legacy reporter upload rather than the junit-xml adapter.",
+      "resolution": "k6 and Bruno name their runner adapters and capabilities at L2, `implemented` rather than `verified` because no run against a real service and no built runner image is recorded. JUnit names junit-xml and the upload door. A test reads the framework each agent queues and fails when its row names no adapter.",
+      "evidence": [
+        {
+          "path": "apps/api/src/execution/maturity.test.ts",
+          "asserts": "Every framework an agent adapter queues has a row with an adapter and capabilities, and JUnit is described by junit-xml."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-183",
+      "band": "Minor",
+      "title": "AGENTS.md and two code comments described a tree that is not this one",
+      "summary": "AGENTS.md named /setup as the first run (it is /dashboard/setup), described a .kilo/command directory with three commands that exists only in an older local history, said Vitest 4 (the catalog is on 5), and left apps/tui out of the overview and the tree. apps/web/src/routes/dashboard/settings.tsx said the admin tabs would be wired in a future task and rendered Appearance meanwhile; they are wired. The header of route-manifest.ts named Delivery as one of five areas; it sits under Health.",
+      "resolution": "Each corrected; the .kilo/command row now says the commands are not in this tree. The coverage-floor table is left as it is: docs-drift holds it to the baseline.",
+      "evidence": [
+        {
+          "path": "apps/web/src/routes/__root.tsx",
+          "asserts": "isFullScreen is /dashboard/setup, the path AGENTS.md now names."
+        }
+      ]
     }
   ]
 }

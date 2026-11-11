@@ -63,7 +63,7 @@ by a test written against the defect and watched failing. Ordered by harm.
   and their audit trail were exposed. Now every statement is limited to shared rows and the
   store's own workspace, a shared gate needs an installation admin, each gate carries its
   scope, and the audit row names the caller.
-- D1a. Found while fixing D1: Settings â†’ Quality gates says "A run that misses its gate is
+- D1a. Found while fixing D1: Settings Ã¢â€ â€™ Quality gates says "A run that misses its gate is
   marked failed", but nothing marks a run failed from these rows; the run gate reads quality
   policies. Either make a gate feed the run gate, or say what a gate does today.
 - D2. Done 2026-11-11 (ledger MNT-171), and worse than first written: the production
@@ -113,34 +113,34 @@ by a test written against the defect and watched failing. Ordered by harm.
 
 **Stale statements that a reader will quote**
 
-- D11. `apps/api/src/index.ts` says twice that there is no authentication middleware and that
+- D11. Done 2026-11-11 (MNT-180). `apps/api/src/index.ts` says twice that there is no authentication middleware and that
   the install is open, beside route guards, SSO enforcement and break-glass in the same file.
   The same wording is in `apps/web/src/lib/api.ts`, `apps/web/src/router.ts` and the
   palette's "no Sign out" comment. Rewrite each to the real posture: open on loopback in solo,
   guarded with LAN mode or a team or enterprise profile.
-- D12. `site/guide/sending-results.md` and `README.md` list four upload formats; the API also
+- D12. Done 2026-11-11 (MNT-181), with the stale Map paths in six guides. `site/guide/sending-results.md` and `README.md` list four upload formats; the API also
   reads Allure (`packages/shared-contracts/src/schemas/report-formats.ts`). The comment in that
   file says SARIF has no ingestible format, though the health door reads SARIF. The register
   row `reporting.lifecycle` says five adapters where there are six. Fix all four.
-- D13. `site/guide/notifications.md` and `README.md` leave out the email channel, which the
+- D13. Done 2026-11-11 (MNT-181). `site/guide/notifications.md` and `README.md` leave out the email channel, which the
   dispatcher sends.
-- D14. `site/guide/cli.md` documents `diff-guard` only inside the GitLab example; it belongs in
+- D14. Done 2026-11-11 (MNT-181). `site/guide/cli.md` documents `diff-guard` only inside the GitLab example; it belongs in
   the command list with the others.
-- D15. `AGENTS.md` names `/setup` as the first run (it is `/dashboard/setup`), a
+- D15. Done 2026-11-11 (MNT-183); the coverage table is held by docs-drift and left. `AGENTS.md` names `/setup` as the first run (it is `/dashboard/setup`), a
   .kilo/command directory that does not exist, Vitest 4 (the catalog is on 5), and omits
   `apps/tui`; its coverage table rounds floors up past the recorded baseline and omits about
   twenty packages. Fix the facts, or generate the table from
   `docs/quality/coverage-baseline.json`.
-- D16. The register row `tool.zap` is `missing` while its own text says the parser exists and
+- D16. Done 2026-11-11 (MNT-181). The register row `tool.zap` is `missing` while its own text says the parser exists and
   is wired. Split it into the parser (real) and the producer (missing).
-- D17. `apps/api/src/execution/maturity.ts` still lists JUnit as the legacy adapter and k6 and
+- D17. Done 2026-11-11 (MNT-182). `apps/api/src/execution/maturity.ts` still lists JUnit as the legacy adapter and k6 and
   Bruno as absent. Covered by task 20; recorded here so the drift has a ledger row.
-- D18. The rendering budget in `tests/performance/rendering-budget.json` measures `/dashboard`,
+- D18. Half done 2026-11-11: the description is corrected; recording a ceiling for `/dashboard/now` needs `pnpm render:baseline` on the reference install, which this host is not. The rendering budget in `tests/performance/rendering-budget.json` measures `/dashboard`,
   not the landing page `/dashboard/now`, and its comment names an "Overview" that is no longer
   the landing. Add the landing page and record its ceiling.
-- D19. Each of the 22 translated site homes links to English guides with translated button
+- D19. Already handled, found on 2026-11-11: each translated home shows a banner in its own language saying the docs are in English (`site/.vitepress/theme/LocalizedHome.vue`). No change. Each of the 22 translated site homes links to English guides with translated button
   labels (`site/.vitepress/config.mts`). Say on each home that the guides are in English.
-- D20. Stale comments in `apps/web/src/routes/dashboard/settings.tsx` ("wired in Task 5") and
+- D20. Done 2026-11-11 (MNT-183). Stale comments in `apps/web/src/routes/dashboard/settings.tsx` ("wired in Task 5") and
   the header of `apps/web/src/route-manifest.ts` (Delivery as an area).
 
 **Frontend defects**

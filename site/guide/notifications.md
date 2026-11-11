@@ -1,7 +1,7 @@
 # Scheduled reports
 
 A short report — daily, weekly, or on your own schedule — to Slack, Microsoft Teams,
-Telegram, WhatsApp, Signal, or Lupin's own inbox. Open **Map → Reports**.
+Telegram, WhatsApp, Signal, email, or Lupin's own inbox. Open **Settings → Reports**.
 
 ## What a report looks like
 
@@ -141,6 +141,23 @@ as an optional service in the compose file.
    (comma-separated numbers or group ids), and bridge URL `http://signal:8080`.
 
 The bridge is reached only from inside the compose network; it is never published.
+
+### Email
+
+Lupin has no SMTP client of its own. It sends email through a small HTTP bridge you run: your
+mail provider's send API, or a container that speaks SMTP on one side and answers
+`POST /send` on the other.
+
+1. Run a bridge that accepts `POST /send` with JSON `{ from, to: [..], subject, text, html? }`
+   and answers 2xx when the message is sent, and a 4xx `{ "error": "..." }` when it refuses.
+   `GET /about` is used to test the connection.
+2. In Lupin: Email, the sender, the recipients (comma-separated) and a subject, and the
+   bridge's base URL as the credential.
+3. Choose the report format on the schedule: _full_ sends the rich HTML report with a text
+   alternative, _chat_ sends the digest as text.
+
+A bridge error after a send (a 5xx) is not retried, because the message may have arrived.
+This has been tested against a stand-in bridge, not a real mail provider.
 
 ## How it works
 

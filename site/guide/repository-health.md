@@ -202,7 +202,7 @@ There are four roles:
 | ---------- | ------------------------------------------------------------------------- |
 | `viewer`   | read every grade, finding and trend                                       |
 | `operator` | also register repositories, start scans, triage, set schedules and alerts |
-| `admin`    | also issue and revoke access tokens (**Map → Access**)                    |
+| `admin`    | also issue and revoke access tokens (**Settings → Access**)               |
 | `uploader` | send reports and CODEOWNERS to one project, from CI                       |
 
 Signing in with the installation key makes you the admin. Every decision is written to the

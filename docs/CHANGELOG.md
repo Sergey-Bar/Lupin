@@ -92,6 +92,12 @@ DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reporte
   `@lupin/orchestration` (MNT-177). The flaky leaderboard is held to the flake-cost model by a
   test (MNT-178). The authz matrix no longer carries a `workspaceScoped` column it could not
   measure (MNT-179).
+- **The docs say what the product does.** The composition root no longer says the API has no
+  authentication (MNT-180). The guides name Allure, email, `diff-guard` and `impact`, point at
+  Settings rather than Map, and a test holds them to the contracts; the capability register
+  splits ZAP import (real) from a ZAP producer (missing) (MNT-181). The integration maturity
+  table names the k6 and Bruno adapters (MNT-182), and `AGENTS.md` describes this tree
+  (MNT-183).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the

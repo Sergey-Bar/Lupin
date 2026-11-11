@@ -1,7 +1,8 @@
 {
   "$comment": [
-    "Rendering ceilings for the four primary flows: the Overview, the runs list, run",
-    "detail and quarantine. A **baseline**, not a live observation — `pnpm test:render`",
+    "Rendering ceilings for four flows: the Health overview (`/dashboard`), the runs list, run",
+    "detail and quarantine. The landing page, Home (`/dashboard/now`), is not measured yet: it",
+    "needs a reading on the reference install (plan D18). A **baseline**, not a live observation — `pnpm test:render`",
     "measures a real browser and compares against this.",
     "",
     "The shape is the ratchet the repository already uses for coverage and complexity:",
@@ -95,7 +96,7 @@
   "recordedOn": "2026-10-21",
   "routes": {
     "/dashboard": {
-      "$why": "The Overview: the first paint a person sees, and the screen that answers \"can I ship\". It replaced /login, which no longer exists (ADR-006). Opaque like everything else, Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
+      "$why": "The Health overview. It was the first paint a person saw until `/` moved to Home (`/dashboard/now`), which this budget does not measure yet. It replaced /login, which no longer exists (ADR-006). Opaque like everything else, Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
       "glassStackDepth": 1,
       "lcpMs": 460,
       "inpMs": 150,

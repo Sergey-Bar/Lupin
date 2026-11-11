@@ -80,9 +80,8 @@ export function GlobalCommandPalette() {
         keywords: question.keywords,
         onSelect: () => void navigate({ to: question.to }),
       })),
-      // **No "Sign Out" action.** There is no session to end on an open install, and a
-      // palette entry that navigated to a route which no longer exists would leave the
-      // user on a dead link.
+      // **No "Sign out" here.** Signing out is on the Access page, beside the sign-in it
+      // ends, where the reader can see which credential this browser holds.
     ],
     [navigate, setTheme, theme, preferences, update],
   );
