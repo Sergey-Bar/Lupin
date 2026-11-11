@@ -1352,8 +1352,8 @@ async function writeSettings(
 }
 
 /** CODEOWNERS: the uploaded copy first, then the local checkout's own, else `null`. */
-async function ownerRules(
-  options: RepoHealthOptions,
+export async function ownerRules(
+  options: Pick<RepoHealthOptions, 'readRepositoryFile'>,
   project: ProjectRow,
 ): Promise<OwnerRule[] | null> {
   const uploaded = settingsOf(project).codeowners;

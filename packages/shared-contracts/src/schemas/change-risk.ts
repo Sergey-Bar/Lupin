@@ -171,3 +171,63 @@ export const ChangeRiskSchema = z
     path: ['level'],
   });
 export type ChangeRisk = z.infer<typeof ChangeRiskSchema>;
+
+/**
+ * The project's change-risk policy (`lupin.config.json` → `health.risk`). Report-only unless
+ * `blockAt` is set: installing Lupin never turns a team's pull requests red on day one.
+ */
+export const ChangeRiskPolicySchema = z.strictObject({
+  /** The evidence without which a change is never `low`. Default: tests and diff coverage. */
+  require: z.array(ChangeRiskEvidenceSchema).max(CHANGE_RISK_EVIDENCE.length).optional(),
+  /** The level at which the gate fails. `null` or absent: reported, never blocking. */
+  blockAt: z.enum(['high', 'critical']).nullable().optional(),
+  /** Whether an `unknown` level fails a gate that blocks at all. Default `false`. */
+  blockOnUnknown: z.boolean().optional(),
+});
+export type ChangeRiskPolicyBlock = z.infer<typeof ChangeRiskPolicySchema>;
+
+/** What a change can break beyond its own lines. Teams are named; people are only counted. */
+export const BlastRadiusSummarySchema = z.object({
+  version: z.string().min(1),
+  sensitiveAreas: z.array(
+    z.object({
+      area: z.string().min(1),
+      count: z.number().int().min(1),
+      paths: z.array(z.string()).max(5),
+    }),
+  ),
+  teams: z.array(z.string()),
+  individualOwners: z.number().int().min(0).nullable(),
+  unownedPaths: z.number().int().min(0).nullable(),
+  linkedTests: z.array(
+    z.object({
+      testStableId: z.string().min(1),
+      failures: z.number().int().min(1),
+      files: z.number().int().min(1),
+    }),
+  ),
+  linkedTestsTotal: z.number().int().min(0),
+  truncated: z.boolean(),
+});
+export type BlastRadiusSummary = z.infer<typeof BlastRadiusSummarySchema>;
+
+/** One assessment of a pull request at one head commit. */
+export const PullRequestRiskSchema = z.object({
+  pullRequest: z.number().int().min(1),
+  headSha: z.string().min(1),
+  risk: ChangeRiskSchema,
+  blastRadius: BlastRadiusSummarySchema.nullable(),
+  assessedAt: z.iso.datetime({ offset: true }),
+});
+export type PullRequestRisk = z.infer<typeof PullRequestRiskSchema>;
+
+/** `GET /api/v1/projects/:id/pull-requests/:number/risk`: the latest first, then earlier heads. */
+export const PullRequestRiskHistorySchema = z.object({
+  pullRequest: z.number().int().min(1),
+  latest: PullRequestRiskSchema.nullable(),
+  /** At most {@link RISK_HISTORY_LIMIT}, newest first, including the latest. */
+  history: z.array(PullRequestRiskSchema),
+});
+export type PullRequestRiskHistory = z.infer<typeof PullRequestRiskHistorySchema>;
+
+export const RISK_HISTORY_LIMIT = 20;

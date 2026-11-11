@@ -9469,6 +9469,64 @@
         ],
         "additionalProperties": false
       },
+      "BlastRadiusSummarySchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "sensitiveAreas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "area": { "type": "string", "minLength": 1 },
+                "count": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                "paths": { "maxItems": 5, "type": "array", "items": { "type": "string" } }
+              },
+              "required": ["area", "count", "paths"],
+              "additionalProperties": false
+            }
+          },
+          "teams": { "type": "array", "items": { "type": "string" } },
+          "individualOwners": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          },
+          "unownedPaths": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          },
+          "linkedTests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "testStableId": { "type": "string", "minLength": 1 },
+                "failures": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                "files": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 }
+              },
+              "required": ["testStableId", "failures", "files"],
+              "additionalProperties": false
+            }
+          },
+          "linkedTestsTotal": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "truncated": { "type": "boolean" }
+        },
+        "required": [
+          "version",
+          "sensitiveAreas",
+          "teams",
+          "individualOwners",
+          "unownedPaths",
+          "linkedTests",
+          "linkedTestsTotal",
+          "truncated"
+        ],
+        "additionalProperties": false
+      },
       "BranchPassRateSchema": {
         "type": "object",
         "properties": {
@@ -11302,6 +11360,24 @@
       "ChangeRiskLevelSchema": {
         "type": "string",
         "enum": ["low", "medium", "unknown", "high", "critical"]
+      },
+      "ChangeRiskPolicySchema": {
+        "type": "object",
+        "properties": {
+          "require": {
+            "maxItems": 6,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["attribution", "tests", "diff-coverage", "findings", "tampering", "evals"]
+            }
+          },
+          "blockAt": {
+            "anyOf": [{ "type": "string", "enum": ["high", "critical"] }, { "type": "null" }]
+          },
+          "blockOnUnknown": { "type": "boolean" }
+        },
+        "additionalProperties": false
       },
       "ChangeRiskSchema": {
         "type": "object",
@@ -19499,6 +19575,31 @@
               "traceRetentionDays": { "type": "integer", "minimum": 1, "maximum": 90 }
             },
             "additionalProperties": false
+          },
+          "risk": {
+            "type": "object",
+            "properties": {
+              "require": {
+                "maxItems": 6,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "attribution",
+                    "tests",
+                    "diff-coverage",
+                    "findings",
+                    "tampering",
+                    "evals"
+                  ]
+                }
+              },
+              "blockAt": {
+                "anyOf": [{ "type": "string", "enum": ["high", "critical"] }, { "type": "null" }]
+              },
+              "blockOnUnknown": { "type": "boolean" }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -23687,6 +23788,513 @@
           }
         },
         "required": ["policy", "windowDays", "entries"],
+        "additionalProperties": false
+      },
+      "PullRequestRiskHistorySchema": {
+        "type": "object",
+        "properties": {
+          "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                  "headSha": { "type": "string", "minLength": 1 },
+                  "risk": {
+                    "type": "object",
+                    "properties": {
+                      "level": {
+                        "type": "string",
+                        "enum": ["low", "medium", "unknown", "high", "critical"]
+                      },
+                      "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                      "version": { "type": "string", "minLength": 1 },
+                      "factors": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "enum": [
+                                "ai-authorship",
+                                "size",
+                                "no-tests-touched",
+                                "diff-coverage",
+                                "new-findings",
+                                "failed-tests",
+                                "unexcused-flaky",
+                                "no-human-approval",
+                                "eval-regression",
+                                "blast-radius",
+                                "test-tampering",
+                                "skipped-phases",
+                                "attribution",
+                                "tests",
+                                "findings",
+                                "tampering",
+                                "evals"
+                              ]
+                            },
+                            "kind": { "type": "string", "enum": ["risk", "missing"] },
+                            "points": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+                            "evidence": {
+                              "anyOf": [
+                                { "type": "string", "minLength": 1, "maxLength": 500 },
+                                { "type": "null" }
+                              ]
+                            }
+                          },
+                          "required": ["id", "kind", "points", "detail", "evidence"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "missing": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "attribution",
+                            "tests",
+                            "diff-coverage",
+                            "findings",
+                            "tampering",
+                            "evals"
+                          ]
+                        }
+                      }
+                    },
+                    "required": ["level", "score", "version", "factors", "missing"],
+                    "additionalProperties": false
+                  },
+                  "blastRadius": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "version": { "type": "string", "minLength": 1 },
+                          "sensitiveAreas": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "area": { "type": "string", "minLength": 1 },
+                                "count": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                },
+                                "paths": {
+                                  "maxItems": 5,
+                                  "type": "array",
+                                  "items": { "type": "string" }
+                                }
+                              },
+                              "required": ["area", "count", "paths"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "teams": { "type": "array", "items": { "type": "string" } },
+                          "individualOwners": {
+                            "anyOf": [
+                              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                              { "type": "null" }
+                            ]
+                          },
+                          "unownedPaths": {
+                            "anyOf": [
+                              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                              { "type": "null" }
+                            ]
+                          },
+                          "linkedTests": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "testStableId": { "type": "string", "minLength": 1 },
+                                "failures": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                },
+                                "files": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": ["testStableId", "failures", "files"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "linkedTestsTotal": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "truncated": { "type": "boolean" }
+                        },
+                        "required": [
+                          "version",
+                          "sensitiveAreas",
+                          "teams",
+                          "individualOwners",
+                          "unownedPaths",
+                          "linkedTests",
+                          "linkedTestsTotal",
+                          "truncated"
+                        ],
+                        "additionalProperties": false
+                      },
+                      { "type": "null" }
+                    ]
+                  },
+                  "assessedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["pullRequest", "headSha", "risk", "blastRadius", "assessedAt"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                "headSha": { "type": "string", "minLength": 1 },
+                "risk": {
+                  "type": "object",
+                  "properties": {
+                    "level": {
+                      "type": "string",
+                      "enum": ["low", "medium", "unknown", "high", "critical"]
+                    },
+                    "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                    "version": { "type": "string", "minLength": 1 },
+                    "factors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "enum": [
+                              "ai-authorship",
+                              "size",
+                              "no-tests-touched",
+                              "diff-coverage",
+                              "new-findings",
+                              "failed-tests",
+                              "unexcused-flaky",
+                              "no-human-approval",
+                              "eval-regression",
+                              "blast-radius",
+                              "test-tampering",
+                              "skipped-phases",
+                              "attribution",
+                              "tests",
+                              "findings",
+                              "tampering",
+                              "evals"
+                            ]
+                          },
+                          "kind": { "type": "string", "enum": ["risk", "missing"] },
+                          "points": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+                          "evidence": {
+                            "anyOf": [
+                              { "type": "string", "minLength": 1, "maxLength": 500 },
+                              { "type": "null" }
+                            ]
+                          }
+                        },
+                        "required": ["id", "kind", "points", "detail", "evidence"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "missing": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "attribution",
+                          "tests",
+                          "diff-coverage",
+                          "findings",
+                          "tampering",
+                          "evals"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["level", "score", "version", "factors", "missing"],
+                  "additionalProperties": false
+                },
+                "blastRadius": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "version": { "type": "string", "minLength": 1 },
+                        "sensitiveAreas": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "area": { "type": "string", "minLength": 1 },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "paths": {
+                                "maxItems": 5,
+                                "type": "array",
+                                "items": { "type": "string" }
+                              }
+                            },
+                            "required": ["area", "count", "paths"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "teams": { "type": "array", "items": { "type": "string" } },
+                        "individualOwners": {
+                          "anyOf": [
+                            { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                            { "type": "null" }
+                          ]
+                        },
+                        "unownedPaths": {
+                          "anyOf": [
+                            { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                            { "type": "null" }
+                          ]
+                        },
+                        "linkedTests": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "testStableId": { "type": "string", "minLength": 1 },
+                              "failures": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "files": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": ["testStableId", "failures", "files"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "linkedTestsTotal": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "truncated": { "type": "boolean" }
+                      },
+                      "required": [
+                        "version",
+                        "sensitiveAreas",
+                        "teams",
+                        "individualOwners",
+                        "unownedPaths",
+                        "linkedTests",
+                        "linkedTestsTotal",
+                        "truncated"
+                      ],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "assessedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": ["pullRequest", "headSha", "risk", "blastRadius", "assessedAt"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["pullRequest", "latest", "history"],
+        "additionalProperties": false
+      },
+      "PullRequestRiskSchema": {
+        "type": "object",
+        "properties": {
+          "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "headSha": { "type": "string", "minLength": 1 },
+          "risk": {
+            "type": "object",
+            "properties": {
+              "level": {
+                "type": "string",
+                "enum": ["low", "medium", "unknown", "high", "critical"]
+              },
+              "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "version": { "type": "string", "minLength": 1 },
+              "factors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "enum": [
+                        "ai-authorship",
+                        "size",
+                        "no-tests-touched",
+                        "diff-coverage",
+                        "new-findings",
+                        "failed-tests",
+                        "unexcused-flaky",
+                        "no-human-approval",
+                        "eval-regression",
+                        "blast-radius",
+                        "test-tampering",
+                        "skipped-phases",
+                        "attribution",
+                        "tests",
+                        "findings",
+                        "tampering",
+                        "evals"
+                      ]
+                    },
+                    "kind": { "type": "string", "enum": ["risk", "missing"] },
+                    "points": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                    "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+                    "evidence": {
+                      "anyOf": [
+                        { "type": "string", "minLength": 1, "maxLength": 500 },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["id", "kind", "points", "detail", "evidence"],
+                  "additionalProperties": false
+                }
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "attribution",
+                    "tests",
+                    "diff-coverage",
+                    "findings",
+                    "tampering",
+                    "evals"
+                  ]
+                }
+              }
+            },
+            "required": ["level", "score", "version", "factors", "missing"],
+            "additionalProperties": false
+          },
+          "blastRadius": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "version": { "type": "string", "minLength": 1 },
+                  "sensitiveAreas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "area": { "type": "string", "minLength": 1 },
+                        "count": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                        "paths": { "maxItems": 5, "type": "array", "items": { "type": "string" } }
+                      },
+                      "required": ["area", "count", "paths"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "teams": { "type": "array", "items": { "type": "string" } },
+                  "individualOwners": {
+                    "anyOf": [
+                      { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                      { "type": "null" }
+                    ]
+                  },
+                  "unownedPaths": {
+                    "anyOf": [
+                      { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                      { "type": "null" }
+                    ]
+                  },
+                  "linkedTests": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "testStableId": { "type": "string", "minLength": 1 },
+                        "failures": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "files": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 }
+                      },
+                      "required": ["testStableId", "failures", "files"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "linkedTestsTotal": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "truncated": { "type": "boolean" }
+                },
+                "required": [
+                  "version",
+                  "sensitiveAreas",
+                  "teams",
+                  "individualOwners",
+                  "unownedPaths",
+                  "linkedTests",
+                  "linkedTestsTotal",
+                  "truncated"
+                ],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          },
+          "assessedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": ["pullRequest", "headSha", "risk", "blastRadius", "assessedAt"],
         "additionalProperties": false
       },
       "PushDeploymentBodySchema": {
