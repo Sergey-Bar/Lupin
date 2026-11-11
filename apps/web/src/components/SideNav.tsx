@@ -6,6 +6,7 @@ import {
   FlaskConical,
   House,
   LayoutGrid,
+  Layers,
   ListChecks,
   PanelLeftClose,
   PanelLeftOpen,
@@ -13,6 +14,7 @@ import {
   ShieldCheck,
   Sparkles,
   Wordmark,
+  Select,
   cn,
 } from '@lupin/ui';
 import { defaultApiClient, type ApiClient } from '../lib/api.js';
@@ -27,8 +29,19 @@ import {
 } from '../route-manifest.js';
 import { useViewerRole } from '../hooks/useViewerRole.js';
 import { publishRuns, useLatestRuns } from '../hooks/useRuns.js';
+import { useResource } from '../hooks/useResource.js';
+import { useScope } from '../hooks/useScope.js';
+import { scopeSearch } from '../lib/scope.js';
+import { createQaClient } from '../lib/qa-client.js';
 import { createSettingsClient } from '../lib/settings-client.js';
 import type { Onboarding } from '@lupin/shared-contracts';
+
+/** The projects the scope switcher offers. */
+export type ScopeProjects = () => Promise<ReadonlyArray<{ id: string; name: string }>>;
+
+function readProjects(): Promise<ReadonlyArray<{ id: string; name: string }>> {
+  return createQaClient().listProjects();
+}
 
 /** Whether the sidebar is the icon rail or the full column, kept per browser. */
 export const SIDEBAR_KEY = 'lupin-sidebar';
@@ -175,10 +188,13 @@ function useListKeys<T extends HTMLElement>(onEscape?: () => void): (node: T | n
 export function SideNav({
   api = defaultApiClient,
   onboarding = readOnboarding,
+  projects = readProjects,
 }: {
   api?: ApiClient;
   /** Setup progress, for the "Finish setup" chip. */
   onboarding?: () => Promise<Onboarding>;
+  /** The projects the scope switcher offers. */
+  projects?: ScopeProjects;
 }): React.ReactElement {
   const { path, section } = useCurrentPage();
   const [collapsed, setCollapsed] = React.useState(() => read(SIDEBAR_KEY) !== 'expanded');
@@ -205,7 +221,13 @@ export function SideNav({
       <div className={collapsed ? 'flex justify-center pb-2' : 'px-3 pb-2'}>
         <AskButton compact={collapsed} />
       </div>
-      <SidebarList api={api} collapsed={collapsed} className={collapsed ? 'px-2' : 'px-3'} />
+      <SidebarList
+        api={api}
+        projects={projects}
+        collapsed={collapsed}
+        onExpand={toggle}
+        className={collapsed ? 'px-2' : 'px-3'}
+      />
       {settingsMode || collapsed ? null : <SetupChip onboarding={onboarding} section={section} />}
       {settingsMode ? null : <SettingsFoot collapsed={collapsed} />}
     </aside>
@@ -335,12 +357,17 @@ function SettingsFoot({ collapsed }: { collapsed: boolean }): React.ReactElement
  */
 export function SidebarList({
   api = defaultApiClient,
+  projects = readProjects,
   collapsed = false,
+  onExpand,
   className,
   onNavigate,
 }: {
   api?: Pick<ApiClient, 'getRuns'>;
+  projects?: ScopeProjects;
   collapsed?: boolean;
+  /** Opens the full column from the rail, for a control that needs the room. */
+  onExpand?: () => void;
   className?: string;
   /** Called after a link is followed; the drawer closes itself. */
   onNavigate?: () => void;
@@ -348,6 +375,7 @@ export function SidebarList({
   const { pageId, section } = useCurrentPage();
   const role = useViewerRole();
   const counts = usePlaceCounts(api, section);
+  const scope = useScope();
   const tree = navTree(role);
   if (section === 'settings') {
     const settings = tree.find((group) => group.id === 'settings');
@@ -362,15 +390,90 @@ export function SidebarList({
     );
   }
   return (
-    <AppList
-      groups={tree.filter((group) => group.id !== 'settings')}
-      counts={counts}
-      pageId={pageId}
-      section={section}
-      collapsed={collapsed}
-      className={className}
-      onNavigate={onNavigate}
-    />
+    <>
+      <ScopeSwitcher
+        projects={projects}
+        value={scope.projectId}
+        onChange={scope.choose}
+        collapsed={collapsed}
+        onExpand={onExpand}
+        className={className}
+      />
+      <AppList
+        groups={tree.filter((group) => group.id !== 'settings')}
+        counts={counts}
+        pageId={pageId}
+        section={section}
+        scope={scope.projectId}
+        collapsed={collapsed}
+        className={className}
+        onNavigate={onNavigate}
+      />
+    </>
+  );
+}
+
+/**
+ * Which project every page is about, or every project: the one place the scope is chosen.
+ * Hidden with fewer than two projects (a choice of one is not a control) and when the list
+ * cannot be read, so the pages open as they would with nothing chosen. A remembered project
+ * that is no longer registered reads as every project.
+ */
+function ScopeSwitcher({
+  projects,
+  value,
+  onChange,
+  collapsed,
+  onExpand,
+  className,
+}: {
+  projects: ScopeProjects;
+  value: string | undefined;
+  onChange: (next: string | undefined) => void;
+  /** On the icon rail the switcher is a button that names the scope and opens the column. */
+  collapsed: boolean;
+  onExpand?: (() => void) | undefined;
+  className?: string | undefined;
+}): React.ReactElement | null {
+  const list = useResource(() => projects(), [projects]);
+  if (list.status !== 'ready' || list.value.length < 2) return null;
+  const chosen = list.value.find((project) => project.id === value);
+  if (collapsed) {
+    const name = chosen?.name ?? 'All projects';
+    return (
+      <div className={cn('flex shrink-0 justify-center pb-2', className)}>
+        <button
+          type="button"
+          data-testid="scope-switcher-rail"
+          onClick={onExpand}
+          aria-label={`Project scope: ${name}. Open the sidebar to change it`}
+          title={`Project scope: ${name}`}
+          className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-fg-muted transition-colors duration-100 hover:bg-surface-raised hover:text-fg motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+        >
+          <Layers size={16} aria-hidden="true" />
+          {chosen === undefined ? null : (
+            <span
+              aria-hidden="true"
+              className="absolute end-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent"
+            />
+          )}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className={cn('shrink-0 pb-2', className)} data-testid="scope-switcher">
+      <Select
+        id="scope-switcher-select"
+        label="Project scope"
+        value={chosen === undefined ? '' : chosen.id}
+        onChange={(event) => onChange(event.target.value === '' ? undefined : event.target.value)}
+        options={[
+          { value: '', label: 'All projects' },
+          ...list.value.map((project) => ({ value: project.id, label: project.name })),
+        ]}
+      />
+    </div>
   );
 }
 
@@ -379,6 +482,7 @@ function AppList({
   counts,
   pageId,
   section,
+  scope,
   collapsed,
   className,
   onNavigate,
@@ -387,6 +491,8 @@ function AppList({
   counts: PlaceCounts;
   pageId: string | undefined;
   section: SectionId | null;
+  /** The chosen project: a link to a page that reads `?project=` carries it. */
+  scope: string | undefined;
   collapsed: boolean;
   className?: string | undefined;
   onNavigate?: (() => void) | undefined;
@@ -417,6 +523,7 @@ function AppList({
               key={group.id}
               group={group}
               page={group.pages[0]}
+              scope={scope}
               count={counts[group.id] ?? 0}
               current={group.pages[0].id === pageId}
               collapsed={collapsed}
@@ -429,6 +536,7 @@ function AppList({
             <PlaceGroup
               key={group.id}
               group={group}
+              scope={scope}
               count={counts[group.id] ?? 0}
               pageId={pageId}
               here={group.id === section}
@@ -455,6 +563,7 @@ function AppList({
 function PlaceLink({
   group,
   page,
+  scope,
   count,
   current,
   collapsed,
@@ -462,6 +571,7 @@ function PlaceLink({
 }: {
   group: NavGroup;
   page: NavPage;
+  scope: string | undefined;
   count: number;
   current: boolean;
   collapsed: boolean;
@@ -472,6 +582,7 @@ function PlaceLink({
     <li>
       <Link
         to={page.path}
+        search={scopeSearch(page.id, scope)}
         data-place={group.id}
         aria-current={current ? 'page' : undefined}
         aria-label={placeLabel(group.label, count)}
@@ -526,6 +637,7 @@ function PlaceCount({ count, dot = false }: { count: number; dot?: boolean }): R
 
 function PlaceGroup({
   group,
+  scope,
   count,
   pageId,
   here,
@@ -536,6 +648,7 @@ function PlaceGroup({
   onNavigate,
 }: {
   group: NavGroup;
+  scope: string | undefined;
   count: number;
   pageId: string | undefined;
   here: boolean;
@@ -597,7 +710,12 @@ function PlaceGroup({
         >
           {group.pages.map((page) => (
             <li key={page.id}>
-              <PageLink page={page} current={page.id === pageId} onNavigate={onNavigate} />
+              <PageLink
+                page={page}
+                scope={scope}
+                current={page.id === pageId}
+                onNavigate={onNavigate}
+              />
             </li>
           ))}
         </ul>
@@ -671,16 +789,20 @@ function SettingsList({
 
 function PageLink({
   page,
+  scope,
   current,
   onNavigate,
 }: {
   page: NavPage;
+  /** The chosen project; carried only by a page that reads `?project=`. Settings has none. */
+  scope?: string | undefined;
   current: boolean;
   onNavigate?: (() => void) | undefined;
 }): React.ReactElement {
   return (
     <Link
       to={page.path}
+      search={scopeSearch(page.id, scope)}
       activeOptions={{ exact: true }}
       aria-current={current ? 'page' : undefined}
       {...(onNavigate === undefined ? {} : { onClick: onNavigate })}

@@ -7,9 +7,9 @@ import { createHealthClient } from '../../lib/health-client.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
 import { createGithubClient } from '../../lib/github-client.js';
-import { homeProject, rememberHomeProject } from '../../lib/home-project.js';
 import { putOffSetup, setupPutOff, shouldOpenSetup } from '../../lib/first-run.js';
 import { createSettingsClient } from '../../lib/settings-client.js';
+import { useScope } from '../../hooks/useScope.js';
 
 /**
  * A fresh install has nothing for Home to judge, so Home hands the reader to setup, once per
@@ -35,7 +35,10 @@ function useFirstRunRedirect(open: () => void): void {
   }, []);
 }
 
-/** The landing page: is the product better or worse than before, and what needs you. `/` lands here. */
+/**
+ * The landing page: is the product better or worse than before, and what needs you. `/` lands
+ * here. Which project it is about is the scope chosen in the sidebar; `?project=` names it.
+ */
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/now',
@@ -45,7 +48,7 @@ export const Route = createRoute({
       : {},
   component: function NowRoute() {
     const navigate = useNavigate();
-    const { project } = Route.useSearch();
+    const { projectId } = useScope();
     useFirstRunRedirect(() => void navigate({ to: '/dashboard/setup', replace: true }));
     const sources = React.useMemo<CockpitSources>(() => {
       const health = createHealthClient();
@@ -53,7 +56,6 @@ export const Route = createRoute({
       const qa = createQaClient();
       const github = createGithubClient();
       return {
-        projects: async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name })),
         // The hero's verdict: the chosen project, else the first registered one.
         readiness: async (projectId) => {
           const id = projectId ?? (await qa.listProjects())[0]?.id;
@@ -83,15 +85,7 @@ export const Route = createRoute({
       <CockpitPage
         sources={sources}
         navigate={(to) => void navigate({ to })}
-        initialProjectId={homeProject(project)}
-        onProjectChange={(next) => {
-          rememberHomeProject(next);
-          void navigate({
-            to: '/dashboard/now',
-            search: next === undefined ? {} : { project: next },
-            replace: true,
-          });
-        }}
+        projectId={projectId}
       />
     );
   },

@@ -6,6 +6,7 @@ import type { QaClient } from '../lib/qa-client.js';
 import type { RegisteredProject } from '../lib/qa.js';
 import { PageFrame, PageHeader, Quiet } from './kit.js';
 import { isNothingYet } from '../lib/nothing-yet.js';
+import { readScope, SCOPE_EVENT, writeScope } from '../lib/scope.js';
 
 /**
  * Reads the registry once and hands each project-scoped screen its subject.
@@ -37,6 +38,7 @@ export function ProjectGate({
   const [attempt, setAttempt] = React.useState(0);
   const registry = useResource<RegisteredProject[]>(() => qa.listProjects(), [qa, attempt]);
   const [chosen, choose] = React.useState<string | null>(() => readChoice());
+  useScopeChoice(choose);
   if (registry.status === 'loading') {
     return (
       <PageFrame data-testid="project-gate-loading">
@@ -101,28 +103,25 @@ export function ProjectGate({
 }
 
 /**
- * The chosen project, shared by every project screen and kept across reloads.
- *
- * `localStorage` rather than the URL because the choice is the reader's, not the page's:
- * moving from the dashboard to the runner should stay on the repository they picked.
- * A stored id that is no longer registered falls back to the first project.
+ * The chosen project, shared by every project screen and kept across reloads: the one scope
+ * (`lib/scope.ts`) the sidebar chooses. A stored id that is no longer registered falls back
+ * to the first project.
  */
-const CHOICE_KEY = 'lupin-project';
-
 function readChoice(): string | null {
-  try {
-    return localStorage.getItem(CHOICE_KEY);
-  } catch {
-    return null;
-  }
+  return readScope() ?? null;
 }
 
 function writeChoice(projectId: string): void {
-  try {
-    localStorage.setItem(CHOICE_KEY, projectId);
-  } catch {
-    // A storage that refuses writes leaves the choice for this page only, which is still a choice.
-  }
+  writeScope(projectId);
+}
+
+/** Follows the scope when it is chosen elsewhere (the sidebar) while this screen is open. */
+function useScopeChoice(choose: (projectId: string | null) => void): void {
+  React.useEffect(() => {
+    const heard = () => choose(readChoice());
+    window.addEventListener(SCOPE_EVENT, heard);
+    return () => window.removeEventListener(SCOPE_EVENT, heard);
+  }, [choose]);
 }
 
 /**

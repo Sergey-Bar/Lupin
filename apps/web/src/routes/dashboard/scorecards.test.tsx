@@ -35,6 +35,8 @@ beforeAll(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // A link that names a project makes it the remembered scope; each case starts with none.
+  localStorage.clear();
 });
 
 describe('the scorecard routes', () => {
@@ -64,6 +66,19 @@ describe('the scorecard routes', () => {
       (await screen.findAllByText(/Not reported here/u, {}, { timeout: 10_000 })).length,
     ).toBeGreaterThan(0);
     expect(seen.some((url) => url.includes('/projects/project-1/delivery?days=30'))).toBe(true);
+  });
+
+  it('opens a page on the project a link named before, once it is the scope', async () => {
+    localStorage.setItem('lupin-project', 'project-2');
+    const seen: string[] = [];
+    stubApi(seen);
+    render(<MemoryRouter initialEntries={['/dashboard/delivery']} />);
+    expect(await screen.findByTestId('delivery-page', {}, { timeout: 10_000 })).toBeInTheDocument();
+    await waitFor(
+      () =>
+        expect(seen.some((url) => url.includes('/projects/project-2/delivery?days=30'))).toBe(true),
+      { timeout: 10_000 },
+    );
   });
 
   it('opens the 360 by the id in its path', async () => {

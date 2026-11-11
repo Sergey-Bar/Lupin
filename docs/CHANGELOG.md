@@ -47,6 +47,11 @@
 
 ### Changed
 
+- **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
+  the pages are about, kept in the address (`?project=`) and remembered in the browser; every
+  sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the
+  scope. Home's own project menu is gone, and Home and the project screens no longer remember two
+  different choices.
 - **One sidebar.** Every place is a group in one collapsible sidebar, and the tab rows are
   gone; Settings swaps the sidebar to its own list with Back to Lupin. On a phone the same list
   opens as a drawer. Pages open on their content; the title is kept for screen readers.

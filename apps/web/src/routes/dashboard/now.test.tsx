@@ -104,8 +104,11 @@ describe('the Now route', () => {
     RENDER_TIMEOUT_MS * 2,
   );
   it(
-    'asks about the project the address names, and follows the choice in the address',
+    'asks about the project the address names, and follows the sidebar’s scope',
     async () => {
+      localStorage.clear();
+      // The full column: on the icon rail the scope is a button that opens it.
+      localStorage.setItem('lupin-sidebar', 'expanded');
       const asked = stubFetch();
       window.scrollTo = () => undefined;
       render(<MemoryRouter initialEntries={['/dashboard/now?project=p-1']} />);
@@ -115,8 +118,14 @@ describe('the Now route', () => {
           timeout: RENDER_TIMEOUT_MS,
         },
       );
-      const select = await screen.findByLabelText('Project');
+      // Home has no picker of its own: the scope is chosen once, in the sidebar.
+      const select = await screen.findByLabelText(
+        'Project scope',
+        {},
+        { timeout: RENDER_TIMEOUT_MS },
+      );
       expect(select).toHaveValue('p-1');
+      expect(screen.queryByLabelText('Project')).toBeNull();
       await userEvent.setup().selectOptions(select, 'p-2');
       await waitFor(
         () => expect(asked.some((url) => url.includes('/projects/p-2/readiness'))).toBe(true),
@@ -124,10 +133,12 @@ describe('the Now route', () => {
           timeout: RENDER_TIMEOUT_MS,
         },
       );
-      await userEvent.setup().selectOptions(await screen.findByLabelText('Project'), '');
-      await waitFor(() => expect(screen.getByLabelText('Project')).toHaveValue(''), {
+      expect(localStorage.getItem('lupin-project')).toBe('p-2');
+      await userEvent.setup().selectOptions(await screen.findByLabelText('Project scope'), '');
+      await waitFor(() => expect(screen.getByLabelText('Project scope')).toHaveValue(''), {
         timeout: RENDER_TIMEOUT_MS,
       });
+      expect(localStorage.getItem('lupin-project')).toBeNull();
     },
     RENDER_TIMEOUT_MS * 2,
   );

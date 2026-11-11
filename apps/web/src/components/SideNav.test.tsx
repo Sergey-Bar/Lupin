@@ -7,7 +7,13 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
-import { SIDEBAR_GROUPS_KEY, SIDEBAR_KEY, SIDEBAR_RETURN_KEY, SideNav } from './SideNav';
+import {
+  SIDEBAR_GROUPS_KEY,
+  SIDEBAR_KEY,
+  SIDEBAR_RETURN_KEY,
+  SideNav,
+  type ScopeProjects,
+} from './SideNav';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { PreferencesProvider } from '../theme/preferences';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
@@ -20,12 +26,13 @@ function renderAt(
   path: string,
   api = makeApi(),
   onboarding: () => Promise<Onboarding> = async () => Promise.reject(new Error('unread')),
+  projects: ScopeProjects = async () => Promise.reject(new Error('unread')),
 ) {
   const rootRoute = createRootRoute({
     component: () => (
       <ThemeProvider>
         <PreferencesProvider>
-          <SideNav api={api} onboarding={onboarding} />
+          <SideNav api={api} onboarding={onboarding} projects={projects} />
         </PreferencesProvider>
       </ThemeProvider>
     ),
@@ -453,5 +460,103 @@ describe('SideNav, Settings mode', () => {
     const { container } = renderAt('/dashboard/settings/projects');
     await screen.findByRole('navigation', { name: 'Settings' });
     await expectNoBlockingAxeViolations(container);
+  });
+});
+
+describe('SideNav, the project scope', () => {
+  const TWO: ScopeProjects = async () => [
+    { id: 'p-1', name: 'Shop' },
+    { id: 'p-2', name: 'Website' },
+  ];
+  beforeEach(() => {
+    resetViewerRoleCache();
+    resetLatestRuns();
+    localStorage.clear();
+    localStorage.setItem(SIDEBAR_KEY, 'expanded');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: 401 })),
+    );
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('offers every project and each one, and is not drawn for one project or a failed read', async () => {
+    const view = renderAt('/dashboard/now', makeApi(), undefined, TWO);
+    const select = await screen.findByLabelText('Project scope');
+    expect(
+      within(select)
+        .getAllByRole('option')
+        .map((option) => option.textContent),
+    ).toEqual(['All projects', 'Shop', 'Website']);
+    expect(select).toHaveValue('');
+    view.unmount();
+    renderAt('/dashboard/now', makeApi(), undefined, async () => [{ id: 'p-1', name: 'Shop' }]);
+    await screen.findByRole('navigation', { name: 'Sidebar' });
+    await act(async () => Promise.resolve());
+    expect(screen.queryByLabelText('Project scope')).toBeNull();
+  });
+
+  it('keeps the scope on every link to a page that reads it, and off the rest', async () => {
+    renderAt('/dashboard/now', makeApi(), undefined, TWO);
+    fireEvent.change(await screen.findByLabelText('Project scope'), { target: { value: 'p-2' } });
+    const nav = screen.getByRole('navigation', { name: 'Sidebar' });
+    await waitFor(() =>
+      expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute(
+        'href',
+        '/dashboard/now?project=p-2',
+      ),
+    );
+    fireEvent.click(within(nav).getByRole('button', { name: 'Runs' }));
+    const runsPages = await screen.findByRole('list', { name: 'Runs pages' });
+    for (const link of within(runsPages).getAllByRole('link')) {
+      expect(link.getAttribute('href')).not.toContain('project=');
+    }
+    fireEvent.click(within(nav).getByRole('button', { name: 'Health' }));
+    const healthPages = await screen.findByRole('list', { name: 'Health pages' });
+    expect(within(healthPages).getByRole('link', { name: 'Pull requests' })).toHaveAttribute(
+      'href',
+      '/dashboard/prs?project=p-2',
+    );
+    expect(localStorage.getItem('lupin-project')).toBe('p-2');
+  });
+
+  it('names the scope on the icon rail, and opens the column to change it', async () => {
+    localStorage.setItem(SIDEBAR_KEY, 'collapsed');
+    localStorage.setItem('lupin-project', 'p-2');
+    renderAt('/dashboard/runs', makeApi(), undefined, TWO);
+    const rail = await screen.findByRole('button', {
+      name: 'Project scope: Website. Open the sidebar to change it',
+    });
+    expect(screen.queryByLabelText('Project scope')).toBeNull();
+    fireEvent.click(rail);
+    expect(await screen.findByLabelText('Project scope')).toHaveValue('p-2');
+  });
+
+  it('rewrites the address of a page that reads the scope, and leaves another page’s alone', async () => {
+    const { router } = renderAt('/dashboard/prs', makeApi(), undefined, TWO);
+    fireEvent.change(await screen.findByLabelText('Project scope'), { target: { value: 'p-1' } });
+    await waitFor(() =>
+      expect(router.state.location.search).toEqual(expect.objectContaining({ project: 'p-1' })),
+    );
+    fireEvent.change(screen.getByLabelText('Project scope'), { target: { value: '' } });
+    await waitFor(() => expect(router.state.location.search).not.toHaveProperty('project'));
+    const runs = renderAt('/dashboard/runs', makeApi(), undefined, TWO);
+    const selects = await screen.findAllByLabelText('Project scope');
+    fireEvent.change(selects.at(-1) as HTMLElement, { target: { value: 'p-2' } });
+    await waitFor(() => expect(localStorage.getItem('lupin-project')).toBe('p-2'));
+    expect(runs.router.state.location.pathname).toBe('/dashboard/runs');
+    expect(runs.router.state.location.search).not.toHaveProperty('project');
+  });
+
+  it('opens on the project a link names, and remembers it', async () => {
+    renderAt('/dashboard/prs?project=p-2', makeApi(), undefined, TWO);
+    expect(await screen.findByLabelText('Project scope')).toHaveValue('p-2');
+    await waitFor(() => expect(localStorage.getItem('lupin-project')).toBe('p-2'));
+  });
+
+  it('reads a remembered project that is no longer registered as every project', async () => {
+    localStorage.setItem('lupin-project', 'gone');
+    renderAt('/dashboard/now', makeApi(), undefined, TWO);
+    expect(await screen.findByLabelText('Project scope')).toHaveValue('');
   });
 });

@@ -20,9 +20,8 @@ const NOW = new Date('2026-10-26T12:00:00.000Z');
 
 type Getter = CockpitClient['getCockpit'];
 
-function sources(projects: CockpitSources['projects'] = async () => []): CockpitSources {
+function sources(): CockpitSources {
   return {
-    projects,
     attention: {
       runs: vi.fn(async () => []),
       portfolio: vi.fn(async () => ({ projects: [] })),
@@ -490,44 +489,49 @@ describe('the pull requests worth a look', () => {
   });
 });
 
-describe('choosing the project', () => {
-  const PROJECTS = [
-    { id: 'p-1', name: 'Service' },
-    { id: 'p-2', name: 'Website' },
-  ];
-
-  it('offers the projects, with the latest report as the default', async () => {
-    render(
-      <CockpitPage
-        sources={sources(async () => PROJECTS)}
-        navigate={() => undefined}
-        now={() => NOW}
-      />,
-    );
-    const select = await screen.findByLabelText('Project');
-    expect(
-      within(select)
-        .getAllByRole('option')
-        .map((option) => option.textContent),
-    ).toEqual(['Latest report', 'Service', 'Website']);
-    expect(select).toHaveValue('');
+describe('the project Home is about', () => {
+  it('has no picker of its own: the sidebar chooses the scope', async () => {
+    showHome();
+    await screen.findByTestId('now-page');
+    expect(screen.queryByLabelText('Project')).toBeNull();
+    expect(screen.queryByTestId('cockpit-project')).toBeNull();
   });
 
-  it('reads the chosen project and tells the address', async () => {
-    const user = userEvent.setup();
+  it('reads the verdict and the causes for the project it is given', async () => {
     const readiness = vi.fn(async () => ({ verdict: 'go', reasons: [] }) as never);
-    const onProjectChange = vi.fn();
+    const clusters = vi.fn(async () => undefined);
     render(
       <CockpitPage
-        sources={{ ...sources(async () => PROJECTS), readiness }}
+        sources={{ ...sources(), readiness, clusters }}
         navigate={() => undefined}
         now={() => NOW}
-        onProjectChange={onProjectChange}
+        projectId="p-2"
       />,
     );
-    await user.selectOptions(await screen.findByLabelText('Project'), 'p-2');
-    expect(onProjectChange).toHaveBeenCalledWith('p-2');
     await waitFor(() => expect(readiness).toHaveBeenLastCalledWith('p-2'));
+    expect(clusters).toHaveBeenLastCalledWith('p-2');
+  });
+
+  it('follows the scope when it changes, without a reload', async () => {
+    const readiness = vi.fn(async () => ({ verdict: 'go', reasons: [] }) as never);
+    const view = render(
+      <CockpitPage
+        sources={{ ...sources(), readiness }}
+        navigate={() => undefined}
+        now={() => NOW}
+        projectId="p-1"
+      />,
+    );
+    await waitFor(() => expect(readiness).toHaveBeenLastCalledWith('p-1'));
+    view.rerender(
+      <CockpitPage
+        sources={{ ...sources(), readiness }}
+        navigate={() => undefined}
+        now={() => NOW}
+      />,
+    );
+    // Every project: the verdict is the latest report's, so the source is asked with none.
+    await waitFor(() => expect(readiness).toHaveBeenLastCalledWith(undefined));
   });
 
   it('reads the numbers for the project it is given, and links its metrics to it', async () => {
@@ -541,58 +545,6 @@ describe('choosing the project', () => {
       'href',
       '/dashboard/metric/coverage?window=7d&project=p-2',
     );
-  });
-
-  it('opens on the project the address names, and goes back to the default on request', async () => {
-    const user = userEvent.setup();
-    const onProjectChange = vi.fn();
-    render(
-      <CockpitPage
-        sources={sources(async () => PROJECTS)}
-        navigate={() => undefined}
-        now={() => NOW}
-        initialProjectId="p-1"
-        onProjectChange={onProjectChange}
-      />,
-    );
-    const select = await screen.findByLabelText('Project');
-    expect(select).toHaveValue('p-1');
-    await user.selectOptions(select, '');
-    expect(onProjectChange).toHaveBeenLastCalledWith(undefined);
-  });
-
-  it('shows no picker for one project, or when the list cannot be read', async () => {
-    const { unmount } = render(
-      <CockpitPage
-        sources={sources(async () => [PROJECTS[0] as (typeof PROJECTS)[number]])}
-        navigate={() => undefined}
-        now={() => NOW}
-      />,
-    );
-    await screen.findByTestId('now-page');
-    expect(screen.queryByLabelText('Project')).toBeNull();
-    unmount();
-    render(
-      <CockpitPage
-        sources={sources(() => Promise.reject(new Error('offline')))}
-        navigate={() => undefined}
-        now={() => NOW}
-      />,
-    );
-    await screen.findByTestId('now-page');
-    expect(screen.queryByLabelText('Project')).toBeNull();
-  });
-
-  it('falls back to the default for a project that is not in the list', async () => {
-    render(
-      <CockpitPage
-        sources={sources(async () => PROJECTS)}
-        navigate={() => undefined}
-        now={() => NOW}
-        initialProjectId="gone"
-      />,
-    );
-    expect(await screen.findByLabelText('Project')).toHaveValue('');
   });
 });
 

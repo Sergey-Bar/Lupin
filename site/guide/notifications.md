@@ -44,10 +44,13 @@ text. A failure that may have delivered the message is not followed by a second 
 
 ### The link in a report
 
-The dashboard has a **Project** menu when the workspace has more than one project. The
-choice is kept in the address (`?project=`), so a shared link opens the same project, and its
-metric pages and the run banner stay on that project. _Latest report_ is the default: the
-project that reported most recently. A schedule can name its own project (the _Project_ menu on\nthe Reports page, shown when there is more than one), and its dashboard section is then about\nthat project; without one it follows that default.
+The **Project scope** menu at the top of the sidebar, shown when the workspace has more than
+one project, chooses which project the pages are about. The choice is kept in the address
+(`?project=`), so a shared link opens the same project, and every sidebar link to a page that
+reads it keeps it. _All projects_ is the default: Home's verdict is then the project that
+reported most recently. A schedule can name its own project (the _Project_ menu on the Reports
+page, shown when there is more than one), and its dashboard section is then about that project;
+without one it follows that default.
 
 The one link at the foot of a report opens the dashboard. It uses the address in
 `LUPIN_PUBLIC_URL` (`PUBLIC_APP_URL` outside the compose stack). While that address is a

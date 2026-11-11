@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Hero, Select, Skeleton, Sparkline, StatusDot, Button, cn } from '@lupin/ui';
+import { ExternalLink, Hero, Skeleton, Sparkline, StatusDot, Button, cn } from '@lupin/ui';
 import { heroVerdict } from '../lib/hero.js';
 import type { QaInsights, ReleaseReadinessCard } from '../lib/qa.js';
 import type {
@@ -48,8 +48,6 @@ import { DailyBars } from './DailyBars.js';
  * missing reading cannot be mistaken for a flat one.
  */
 export interface CockpitSources {
-  /** The projects the person may choose between. */
-  projects: () => Promise<ReadonlyArray<{ id: string; name: string }>>;
   attention: NowSources;
   /** The release verdict the hero leads with, for the chosen project; absent, no hero. */
   readiness?: (projectId: string | undefined) => Promise<ReleaseReadinessCard>;
@@ -99,18 +97,17 @@ export function CockpitPage({
   sources,
   navigate,
   now,
-  initialProjectId,
-  onProjectChange,
+  projectId,
 }: {
   sources: CockpitSources;
   navigate: (to: string) => void;
   now?: () => Date;
-  /** From the address (?project=), so a link names the project it was about. */
-  initialProjectId?: string | undefined;
-  /** Told when the person chooses, so the address can follow. */
-  onProjectChange?: (projectId: string | undefined) => void;
+  /**
+   * The project scope, chosen in the sidebar (`useScope`); `undefined` is every project, where
+   * the verdict is the latest report's. Home has no picker of its own.
+   */
+  projectId?: string | undefined;
 }): React.ReactElement {
-  const [projectId, setProjectId] = React.useState<string | undefined>(initialProjectId);
   const [view, setView] = React.useState<HomeView>(readHomeView);
   const choose = (next: HomeView) => {
     setView(next);
@@ -126,22 +123,12 @@ export function CockpitPage({
         visibleTitle
         title={greetingFor((now ?? (() => new Date()))())}
         actions={
-          <div className="flex flex-wrap items-end gap-3">
-            <Segmented<HomeView>
-              label="Home view"
-              options={HOME_VIEWS}
-              value={view}
-              onChange={choose}
-            />
-            <ProjectPicker
-              load={sources.projects}
-              value={projectId}
-              onChange={(next) => {
-                setProjectId(next);
-                onProjectChange?.(next);
-              }}
-            />
-          </div>
+          <Segmented<HomeView>
+            label="Home view"
+            options={HOME_VIEWS}
+            value={view}
+            onChange={choose}
+          />
         }
       />
       {/* Home is two things: the verdict, then what needs you. The setup line lives in
@@ -494,39 +481,6 @@ function RiskSection({ risks }: { risks: Cockpit['risks'] }): React.ReactElement
         </>
       )}
     </Panel>
-  );
-}
-
-/**
- * Chooses which project the cockpit is about. Hidden when there is nothing to choose between,
- * and when the list cannot be read: the cockpit still opens on the project that reported last,
- * which is what it did before there was a choice. "Latest report" names that default plainly.
- */
-function ProjectPicker({
-  load,
-  value,
-  onChange,
-}: {
-  load: CockpitSources['projects'];
-  value: string | undefined;
-  onChange: (projectId: string | undefined) => void;
-}): React.ReactElement | null {
-  const state = useResource(() => load(), [load]);
-  if (state.status !== 'ready' || state.value.length < 2) return null;
-  const known = state.value.some((project) => project.id === value);
-  return (
-    <div className="w-56" data-testid="cockpit-project">
-      <Select
-        id="cockpit-project-select"
-        label="Project"
-        value={known ? value : ''}
-        onChange={(event) => onChange(event.target.value === '' ? undefined : event.target.value)}
-        options={[
-          { value: '', label: 'Latest report' },
-          ...state.value.map((project) => ({ value: project.id, label: project.name })),
-        ]}
-      />
-    </div>
   );
 }
 
