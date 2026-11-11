@@ -51,6 +51,7 @@ import { healthItems, summarizeHealth, type HealthSummary } from '../lib/health-
 import { AreaPage } from './AreaPage.js';
 import { Responsive } from './responsive.js';
 import { TrendChart } from './TrendChart.js';
+import { useUrlChoice } from '../hooks/useUrlChoice.js';
 
 /**
  * The Overview: can I ship, what is wrong, what is good — and then the detail.
@@ -136,7 +137,8 @@ function DashboardBody({
   switcher: React.ReactNode;
   cockpit?: CockpitClient['getCockpit'];
 }): React.ReactElement {
-  const [days, setDays] = React.useState<WindowValue>('14');
+  // In the URL, so a shared or reloaded link opens on the same window.
+  const [days, setDays] = useUrlChoice<WindowValue>('days', ['7', '14', '30'], '14');
   const snapshot = useResource<Snapshot>(
     (signal) => loadSnapshot(api, qa, project.id, signal),
     [api, qa, project.id],

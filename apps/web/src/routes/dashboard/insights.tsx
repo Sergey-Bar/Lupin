@@ -1,3 +1,4 @@
+import { useUrlChoice } from '../../hooks/useUrlChoice.js';
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Button, Flame, GitBranch, Hero, Sparkline, Timer, cn } from '@lupin/ui';
@@ -98,7 +99,8 @@ function InsightsBody({
   switcher: React.ReactNode;
   navigate: (to: string) => void;
 }): React.ReactElement {
-  const [days, setDays] = React.useState<WindowValue>('14');
+  // In the URL, so a shared or reloaded link opens on the same window.
+  const [days, setDays] = useUrlChoice<WindowValue>('days', ['7', '14', '30', '90'], '14');
   const insights = useResource<QaInsights>(
     () => qa.getInsights(Number(days), project.id),
     [qa, days, project.id],
