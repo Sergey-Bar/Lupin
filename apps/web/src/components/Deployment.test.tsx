@@ -72,7 +72,7 @@ describe('the deployment page', () => {
     expect(screen.getByTestId('deployment-access')).toHaveTextContent('enforced');
     expect(
       within(screen.getByTestId('deployment-status')).getByRole('link', { name: 'Issue access' }),
-    ).toHaveAttribute('href', '/dashboard/access');
+    ).toHaveAttribute('href', '/dashboard/settings/access');
   });
 
   it('says when this browser came in through Cloudflare Access', async () => {

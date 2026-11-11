@@ -1,5 +1,6 @@
 import React from 'react';
 import { ReadFailed } from './ReadFailed.js';
+import { ConfirmAction } from './ConfirmAction.js';
 import {
   Badge,
   Button,
@@ -266,9 +267,12 @@ function Channels({
             <Button size="sm" variant="ghost" onClick={() => test(channel)}>
               Send a test
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => remove(channel)}>
-              Remove
-            </Button>
+            <ConfirmAction
+              label="Remove"
+              title={`Remove ${channel.name}?`}
+              consequence="Its schedules stop sending, and its stored credential is deleted."
+              onConfirm={() => remove(channel)}
+            />
           </span>
         </li>
       ))}
@@ -555,9 +559,12 @@ function Schedules({
                   {quietText(subscription.quietHours)}
                 </span>
               </span>
-              <Button size="sm" variant="ghost" onClick={() => remove(subscription.id)}>
-                Remove
-              </Button>
+              <ConfirmAction
+                label="Remove"
+                title={`Remove "${subscription.describe}"?`}
+                consequence="No more reports are sent on this schedule. A report already queued still goes out."
+                onConfirm={() => remove(subscription.id)}
+              />
             </li>
           ))}
         </ul>

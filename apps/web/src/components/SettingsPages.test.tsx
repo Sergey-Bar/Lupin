@@ -10,6 +10,7 @@ import { ConnectRepository } from './ConnectRepository.js';
 import { ProjectsSettingsPage, QualityGatesSettingsPage, describeGate } from './SettingsPages.js';
 import { health, settingsClient } from '../test-utils.js';
 import { ToastProvider } from './Toasts.js';
+import { confirmAction } from '../test-confirm.js';
 
 const SHOP: RegisteredProject = {
   id: 'p1',
@@ -158,7 +159,7 @@ describe('Settings → Projects', () => {
     await user.click(within(row).getByRole('button', { name: 'Save token' }));
     await waitFor(() => expect(client.putGitToken).toHaveBeenCalledWith('p1', 'new-token'));
     await user.click(within(row).getByRole('button', { name: 'Access token' }));
-    await user.click(within(row).getByRole('button', { name: 'Remove token' }));
+    await confirmAction(user, row, 'Remove token');
     await waitFor(() => expect(client.deleteGitToken).toHaveBeenCalledWith('p1'));
   });
 
@@ -275,7 +276,7 @@ describe('Settings → Quality gates', () => {
     await waitFor(() =>
       expect(client.updateGate).toHaveBeenCalledWith('global', { passRateThreshold: 95 }),
     );
-    await user.click(within(screen.getByTestId('gate-g2')).getByRole('button', { name: 'Remove' }));
+    await confirmAction(user, screen.getByTestId('gate-g2'), 'Remove');
     await waitFor(() => expect(client.deleteGate).toHaveBeenCalledWith('g2'));
     const add = screen.getByRole('form', { name: 'Add a gate' });
     await user.type(within(add).getByLabelText('Name'), 'Nightly');

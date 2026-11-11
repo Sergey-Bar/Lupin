@@ -20,6 +20,7 @@ import { ago } from '../lib/health-view.js';
 import { AccessGate } from './Access.js';
 import { PageFrame, PageBody, PageHeader, PagerControls, Panel, Quiet, usePager } from './kit.js';
 import { StatusLine } from './StatusLine.js';
+import { ConfirmAction } from './ConfirmAction.js';
 
 /**
  * People and the audit trail (ADR-014, team and enterprise). Both pages are an admin's: the
@@ -120,24 +121,34 @@ function MembersBody({ admin }: { admin: AdminClient }): React.ReactElement {
                       {member.lastLoginAt === null ? 'never' : ago(member.lastLoginAt)}
                     </TableCell>
                     <TableCell className="text-end">
-                      <Button
-                        variant="ghost"
-                        className="min-h-11"
-                        aria-label={`${member.disabled ? 'Enable' : 'Disable'} ${member.email}`}
-                        onClick={() =>
-                          act(admin.updateMember(member.userId, { disabled: !member.disabled }))
-                        }
-                      >
-                        {member.disabled ? 'Enable' : 'Disable'}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="min-h-11"
-                        aria-label={`Remove ${member.email}`}
-                        onClick={() => act(admin.removeMember(member.userId))}
-                      >
-                        Remove
-                      </Button>
+                      {member.disabled ? (
+                        <Button
+                          variant="ghost"
+                          className="min-h-11"
+                          aria-label={`Enable ${member.email}`}
+                          onClick={() =>
+                            act(admin.updateMember(member.userId, { disabled: false }))
+                          }
+                        >
+                          Enable
+                        </Button>
+                      ) : (
+                        <ConfirmAction
+                          label="Disable"
+                          title={`Disable ${member.email}?`}
+                          consequence="They are signed out of every session at once, and every access token they made is revoked, in every workspace."
+                          onConfirm={() =>
+                            act(admin.updateMember(member.userId, { disabled: true }))
+                          }
+                        />
+                      )}
+                      <ConfirmAction
+                        label="Remove"
+                        title={`Remove ${member.email} from this workspace?`}
+                        consequence="They lose their role here, and the access tokens they made here are revoked."
+                        typed={member.email}
+                        onConfirm={() => act(admin.removeMember(member.userId))}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

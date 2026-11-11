@@ -7858,6 +7858,67 @@
           "asserts": "isFullScreen is /dashboard/setup, the path AGENTS.md now names."
         }
       ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-184",
+      "band": "Major",
+      "title": "Five admin pages had two addresses, and the palette and shortcuts disagreed with the sidebar",
+      "summary": "Access, Members, Audit trail, Deployment and Reports were routed at /dashboard/<page> and at /dashboard/settings/<page>. The command palette offered the old copies to every role, including pages a viewer cannot open; the g d shortcut was labelled Delivery and opened Pull requests; g s and g a opened the old addresses; and \"Can we ship?\" opened Health rather than Home, where the release verdict is.",
+      "resolution": "The old addresses redirect to the Settings page (legacySettingsPath in __root.tsx beforeLoad) and are no longer visible in the manifest. The palette filters routes by the caller role. Every shortcut goes to an address the sidebar uses, and \"Can we ship?\" opens /dashboard/now. The flaky and slow questions stay on Tests, which holds both leaderboards.",
+      "evidence": [
+        {
+          "path": "apps/web/src/navigation-consistency.test.ts",
+          "asserts": "Each old admin address maps to its Settings page; a viewer is offered no admin page and nobody is offered a page twice; every shortcut targets a sidebar address; \"ship\" opens Home."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-185",
+      "band": "Major",
+      "title": "Destructive settings actions took effect on one click",
+      "summary": "Revoking an API token, disabling or removing a member, removing the GitHub App, a project token, a quality gate, a notification channel or a scheduled report all happened on a single click with no confirmation. Deleting a project was the only destructive action that asked.",
+      "resolution": "A ConfirmAction dialog guards each one; revoking a token, removing a member and removing the GitHub App also require the name to be typed. Changing a member role through its select is not confirmed: it is reversible from the same control.",
+      "evidence": [
+        {
+          "path": "apps/web/src/components/ConfirmAction.test.tsx",
+          "asserts": "The action runs only after confirmation, and only once the typed name matches."
+        },
+        {
+          "path": "apps/web/src/components/People.test.tsx",
+          "asserts": "Disable and Remove call the client only after the dialog is confirmed."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-186",
+      "band": "Minor",
+      "title": "About forty internal links reloaded the whole app",
+      "summary": "Links between pages, ButtonLinks among them, were plain anchors. Following one did a full page load: it dropped client state and re-ran every request.",
+      "resolution": "One click handler at the root (useInAppLinks) routes plain clicks on same-origin, non-API links through the router. Modified clicks, target, download, fragments, other origins and /api are left to the browser.",
+      "evidence": [
+        {
+          "path": "apps/web/src/components/InAppLinks.test.tsx",
+          "asserts": "A plain click on an internal link is prevented and navigates in place; new-tab, download, API, external and fragment links are not intercepted."
+        }
+      ]
     }
   ]
 }

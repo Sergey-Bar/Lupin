@@ -141,7 +141,7 @@ function deliveryItems(deliveries: readonly DeliverySummary[]): AttentionItem[] 
           ? 'A report did not arrive'
           : `${String(failed.length)} reports did not arrive`,
       detail: latest.errorCode ?? 'Delivery failed',
-      action: { label: 'Open reports', to: '/dashboard/reports' },
+      action: { label: 'Open reports', to: '/dashboard/settings/reports' },
       at: latest.scheduledFor,
     },
   ];

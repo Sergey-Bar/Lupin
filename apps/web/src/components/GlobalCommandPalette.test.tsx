@@ -32,8 +32,9 @@ describe('GlobalCommandPalette', () => {
     );
     const ask = (question: string) => matchActions(commandStore.getActions(), question)[0];
     for (const [question, to] of [
-      ['can we ship', '/dashboard'],
-      ['is the release ready', '/dashboard'],
+      // Home holds the release verdict (ledger MNT-184).
+      ['can we ship', '/dashboard/now'],
+      ['is the release ready', '/dashboard/now'],
       ['which tests are flaky', '/dashboard/insights'],
       ['why did main fail', '/dashboard/now'],
       ['slowest tests', '/dashboard/insights'],
@@ -141,7 +142,7 @@ describe('GlobalCommandPalette keyboard and accessibility', () => {
     const labels = screen.getAllByRole('option').map((option) => option.textContent);
     expect(labels).toEqual(
       // No 'Sign Out': signing out is on the Access page, beside the sign-in it ends.
-      expect.arrayContaining(['Go to Overview', 'Go to Runs', 'Go to Map', 'Toggle Theme']),
+      expect.arrayContaining(['Go to Overview', 'Go to Runs', 'Go to Map', 'Toggle theme']),
     );
     expect(labels).not.toContain('Sign Out');
   });

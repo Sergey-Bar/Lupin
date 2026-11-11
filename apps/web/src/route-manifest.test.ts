@@ -87,15 +87,17 @@ describe('route manifest', () => {
       '/dashboard/agents',
       '/dashboard/health',
       '/dashboard/supply-chain',
-      '/dashboard/access',
-      '/dashboard/members',
-      '/dashboard/audit',
-      '/dashboard/deployment',
-      '/dashboard/reports',
       '/dashboard/prs',
       '/dashboard/issues',
       '/dashboard/repos',
       '/dashboard/settings',
+      // The admin pages, at their one address under Settings; the old top-level paths
+      // redirect there and are not offered (ledger MNT-184).
+      '/dashboard/settings/reports',
+      '/dashboard/settings/members',
+      '/dashboard/settings/access',
+      '/dashboard/settings/audit',
+      '/dashboard/settings/deployment',
       '/dashboard/map',
       '/dashboard/toolbox',
     ]);

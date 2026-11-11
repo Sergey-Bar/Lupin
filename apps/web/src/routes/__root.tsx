@@ -12,6 +12,7 @@ import { PreferencesProvider } from '../theme/preferences.js';
 import { createHealthClient } from '../lib/health-client.js';
 import { PageContent } from '../components/PageContent.js';
 import { documentTitleFor } from '../lib/document-title.js';
+import { useInAppLinks } from '../components/InAppLinks.js';
 
 export const Route = createRootRoute({
   /**
@@ -32,9 +33,23 @@ export const Route = createRootRoute({
   beforeLoad: ({ location }) => {
     if (location.pathname === '/') throw redirect({ to: '/dashboard/now' });
     if (location.pathname === '/setup') throw redirect({ to: '/dashboard/setup' });
+    // One address per page (ledger MNT-184): a bookmark to an old admin path keeps working.
+    const settings = legacySettingsPath(location.pathname);
+    if (settings !== null) throw redirect({ to: settings, search: location.search as never });
   },
   component: RootComponent,
 });
+
+/** The five admin pages that moved under Settings, from their old top-level paths. */
+const MOVED_TO_SETTINGS = ['access', 'members', 'audit', 'deployment', 'reports'] as const;
+
+/** The Settings address for an old top-level admin path, or `null` for any other path. */
+export function legacySettingsPath(pathname: string): string | null {
+  const page = /^\/dashboard\/([a-z]+)\/?$/u.exec(pathname)?.[1];
+  return page !== undefined && (MOVED_TO_SETTINGS as readonly string[]).includes(page)
+    ? `/dashboard/settings/${page}`
+    : null;
+}
 
 /** Paths drawn without the app frame. */
 export function isFullScreen(pathname: string): boolean {
@@ -42,6 +57,8 @@ export function isFullScreen(pathname: string): boolean {
 }
 
 function RootComponent() {
+  // Every link to a page of this app navigates in place (ledger MNT-186).
+  useInAppLinks();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const health = React.useMemo(() => createHealthClient(), []);
   React.useEffect(() => {

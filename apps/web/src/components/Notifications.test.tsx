@@ -6,6 +6,7 @@ import type { NotificationsClient } from '../lib/notifications-client.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { KIND_GUIDES, NotificationsPage, type ProjectChoices } from './Notifications.js';
 import { TOAST_MS, ToastProvider, useToast } from './Toasts.js';
+import { confirmAction } from '../test-confirm.js';
 
 const INBOX = {
   id: 'c1',
@@ -269,14 +270,12 @@ describe('NotificationsPage', () => {
     });
     page(api);
     const row = await screen.findByTestId('channel-c1');
-    await user.click(within(row).getByRole('button', { name: 'Remove' }));
+    await confirmAction(user, row, 'Remove');
     expect(await screen.findByText('Lupin inbox removed')).toBeTruthy();
-    await user.click(
-      within(await screen.findByTestId('channel-c1')).getByRole('button', { name: 'Remove' }),
-    );
+    await confirmAction(user, await screen.findByTestId('channel-c1'), 'Remove');
     expect((await screen.findAllByText('Could not remove it')).length).toBeGreaterThan(0);
     const schedules = screen.getByRole('list', { name: 'Scheduled reports' });
-    await user.click(within(schedules).getByRole('button', { name: 'Remove' }));
+    await confirmAction(user, schedules, 'Remove');
     await user.click(screen.getByRole('button', { name: 'Schedule' }));
     expect(await screen.findByText('Could not schedule it')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Add Lupin inbox' }));

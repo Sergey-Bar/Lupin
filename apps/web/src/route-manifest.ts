@@ -54,7 +54,7 @@ export const routeManifest = [
   {
     id: 'now',
     path: '/dashboard/now',
-    label: 'Dashboard',
+    label: 'Home',
     visible: true,
     section: 'now',
     tab: 'Now',
@@ -138,7 +138,7 @@ export const routeManifest = [
   {
     id: 'insights',
     path: '/dashboard/insights',
-    label: 'Insights',
+    label: 'Tests',
     visible: true,
     section: 'tests',
     tab: 'Tests',
@@ -249,35 +249,35 @@ export const routeManifest = [
     id: 'access',
     path: '/dashboard/access',
     label: 'Access',
-    visible: true,
+    visible: false,
     section: 'settings',
   },
   {
     id: 'members',
     path: '/dashboard/members',
     label: 'Members',
-    visible: true,
+    visible: false,
     section: 'settings',
   },
   {
     id: 'audit',
     path: '/dashboard/audit',
     label: 'Audit trail',
-    visible: true,
+    visible: false,
     section: 'settings',
   },
   {
     id: 'deployment',
     path: '/dashboard/deployment',
     label: 'Deployment',
-    visible: true,
+    visible: false,
     section: 'settings',
   },
   {
     id: 'reports',
     path: '/dashboard/reports',
     label: 'Reports',
-    visible: true,
+    visible: false,
     section: 'settings',
   },
   {
@@ -330,9 +330,9 @@ export const routeManifest = [
     section: 'settings',
   },
   // Settings — the one place a reader changes how the product behaves. The landing is
-  // Appearance (the one visible entry, so the section appears once in the nav and the
-  // palette); the other tabs reuse the admin and report surfaces under `settings/*` and
-  // stay out of the palette (`visible: false`) while still drawing the section's tab row.
+  // Appearance. Reports, Members, Access, Audit and Deployment are visible here, with their
+  // role floors, because this is now their one address: the old top-level paths redirect
+  // (`routes/__root.tsx`, ledger MNT-184). The other settings tabs stay out of the palette.
   //
   // The tab row reads workspace first (what this team owns), then installation (what the
   // whole install shares). Appearance leads because it is the landing, and the one tab every
@@ -358,8 +358,8 @@ export const routeManifest = [
   {
     id: 'settings-reports',
     path: '/dashboard/settings/reports',
-    label: 'Report settings',
-    visible: false,
+    label: 'Reports',
+    visible: true,
     section: 'settings',
     tab: 'Reports',
     group: 'Workspace',
@@ -376,8 +376,8 @@ export const routeManifest = [
   {
     id: 'settings-members',
     path: '/dashboard/settings/members',
-    label: 'Member settings',
-    visible: false,
+    label: 'Members',
+    visible: true,
     section: 'settings',
     tab: 'Members',
     group: 'Workspace',
@@ -426,8 +426,8 @@ export const routeManifest = [
   {
     id: 'settings-access',
     path: '/dashboard/settings/access',
-    label: 'Access settings',
-    visible: false,
+    label: 'Access',
+    visible: true,
     section: 'settings',
     tab: 'Access',
     group: 'Install',
@@ -436,8 +436,8 @@ export const routeManifest = [
   {
     id: 'settings-audit',
     path: '/dashboard/settings/audit',
-    label: 'Audit settings',
-    visible: false,
+    label: 'Audit trail',
+    visible: true,
     section: 'settings',
     tab: 'Audit',
     group: 'Install',
@@ -446,8 +446,8 @@ export const routeManifest = [
   {
     id: 'settings-deployment',
     path: '/dashboard/settings/deployment',
-    label: 'Deployment settings',
-    visible: false,
+    label: 'Deployment',
+    visible: true,
     section: 'settings',
     tab: 'Deployment',
     group: 'Install',

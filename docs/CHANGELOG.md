@@ -98,6 +98,16 @@ DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reporte
   splits ZAP import (real) from a ZAP producer (missing) (MNT-181). The integration maturity
   table names the k6 and Bruno adapters (MNT-182), and `AGENTS.md` describes this tree
   (MNT-183).
+- **One address per page.** Access, Members, Audit trail, Deployment and Reports live under
+  Settings; their old addresses redirect there. The command palette offers only pages the
+  signed-in role can open, "Can we ship?" opens Home, and every `g` shortcut opens the page its
+  name says (ledger MNT-184).
+- **Destructive actions ask first.** Revoking a token, disabling or removing a member, and
+  removing the GitHub App, a project token, a quality gate, a channel or a scheduled report
+  each open a confirmation; revoking, removing a member and removing the app also ask for the
+  name to be typed (ledger MNT-185).
+- **Links stay in the app.** Following a link to another page no longer reloads the whole app
+  (ledger MNT-186).
 - **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
   the pages are about, kept in the address (`?project=`) and remembered in the browser; every
   sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { SettingsApiError, type SettingsClient } from '../lib/settings-client.js';
 import { health, read, settingsClient } from '../test-utils.js';
+import { confirmAction } from '../test-confirm.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { SettingsForm, isEnvLocked } from './SettingsForm.js';
 import { AiSettingsPage, IntegrationsSettingsPage, SessionsSettingsPage } from './SettingsPages.js';
@@ -328,7 +329,12 @@ describe('the GitHub App panel', () => {
     await user.click(within(panel).getByRole('button', { name: 'Replace the app' }));
     expect(await screen.findByText('That is not a private key.')).toBeInTheDocument();
     expect(within(panel).getByLabelText('App ID')).toHaveValue('42');
-    await user.click(within(panel).getByRole('button', { name: 'Remove' }));
+    await confirmAction(
+      user,
+      within(panel).getByRole('form', { name: 'GitHub App' }),
+      'Remove',
+      'GitHub App',
+    );
     expect(client.deleteGitHubApp).toHaveBeenCalledTimes(1);
     expect(await within(panel).findByText('Not set')).toBeInTheDocument();
   });

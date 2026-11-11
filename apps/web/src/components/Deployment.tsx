@@ -35,19 +35,19 @@ const PROFILES: Record<Profile, ProfileDescription> = {
     label: 'Startup',
     audience: 'A small team on one network, or remote through Cloudflare.',
     adds: 'Sign-in required, access tokens with roles, device pairing.',
-    next: { label: 'Issue access', href: '/dashboard/access' },
+    next: { label: 'Issue access', href: '/dashboard/settings/access' },
   },
   team: {
     label: 'Team',
     audience: 'Several teams sharing one install.',
     adds: 'User accounts, single sign-on and a workspace per team.',
-    next: { label: 'Issue access', href: '/dashboard/access' },
+    next: { label: 'Issue access', href: '/dashboard/settings/access' },
   },
   enterprise: {
     label: 'Enterprise',
     audience: 'An organisation with an identity provider and auditors.',
     adds: 'Enforced single sign-on, provisioning and an exportable audit log.',
-    next: { label: 'Issue access', href: '/dashboard/access' },
+    next: { label: 'Issue access', href: '/dashboard/settings/access' },
   },
 };
 

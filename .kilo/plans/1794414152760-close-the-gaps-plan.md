@@ -63,7 +63,7 @@ by a test written against the defect and watched failing. Ordered by harm.
   and their audit trail were exposed. Now every statement is limited to shared rows and the
   store's own workspace, a shared gate needs an installation admin, each gate carries its
   scope, and the audit row names the caller.
-- D1a. Found while fixing D1: Settings Ã¢â€ â€™ Quality gates says "A run that misses its gate is
+- D1a. Found while fixing D1: Settings → Quality gates says "A run that misses its gate is
   marked failed", but nothing marks a run failed from these rows; the run gate reads quality
   policies. Either make a gate feed the run gate, or say what a gate does today.
 - D2. Done 2026-11-11 (ledger MNT-171), and worse than first written: the production
@@ -145,25 +145,33 @@ by a test written against the defect and watched failing. Ordered by harm.
 
 **Frontend defects**
 
-- D21. Five admin pages exist twice, at `/dashboard/access|members|audit|deployment|reports`
+- D21. Done 2026-11-11 (MNT-184): the old paths redirect (`legacySettingsPath` in
+  `__root.tsx`), are hidden in the manifest, and the palette filters by role. Five admin pages exist twice, at `/dashboard/access|members|audit|deployment|reports`
   (`apps/web/src/routes/dashboard/portfolio.tsx`, `apps/web/src/routes/dashboard/reports.tsx`)
   and under `/dashboard/settings/*`. The top-level copies are in the palette with no admin
   floor, so a viewer is offered pages the API refuses, and the sidebar highlights nothing on
   them. Redirect the old paths to the settings ones and filter the palette by role.
-- D22. `g d` in `apps/web/src/components/Shortcuts.tsx` says Delivery and opens Pull requests;
+- D22. Done 2026-11-11 (MNT-184): every `GO_TO` target is a sidebar address, held by
+  `navigation-consistency.test.ts`. `g d` in `apps/web/src/components/Shortcuts.tsx` says Delivery and opens Pull requests;
   `g s` and `g a` open the duplicate paths; `g n` says Now where the sidebar says Home.
-- D23. Palette questions in `apps/web/src/components/GlobalCommandPalette.tsx` land on general
+- D23. Done 2026-11-11 (MNT-184), in part by design: "Can we ship?" opens Home, labels are the
+  sidebar's ("Home", "Tests"), "Toggle theme" is sentence case. Flaky, slow and coverage stay on
+  Tests and Health: the flaky and gaps pages need a project id a palette question does not
+  have, and Tests holds both leaderboards. Palette questions in `apps/web/src/components/GlobalCommandPalette.tsx` land on general
   pages: "Can we ship?" opens Health instead of Home, flaky and slow open Tests instead of the
   flaky page, coverage opens Health instead of the gaps page. Palette labels use the manifest
   label ("Dashboard", "Insights", "Launch") rather than what the sidebar shows; "Toggle Theme"
   is title case.
-- D24. Destructive actions take effect on one click: revoke token
+- D24. Done 2026-11-11 (MNT-185) with `ConfirmAction`; typed for revoke, remove member and
+  remove app. A role change through its select is not confirmed: it is undone from the same
+  control. Destructive actions take effect on one click: revoke token
   (`apps/web/src/components/Access.tsx`), remove or disable a member and change a role
   (`apps/web/src/components/People.tsx`), remove a GitHub App, a project token or a quality
   gate (`apps/web/src/components/SettingsPages.tsx`), remove a channel or a schedule
   (`apps/web/src/components/Notifications.tsx`). Use the confirmation pattern project delete
   already has, typed for revoke, remove member and remove app.
-- D25. Internal links written as plain anchors reload the whole app: the back link and the
+- D25. Done 2026-11-11 (MNT-186) by one root click handler (`useInAppLinks`) rather than a
+  per-link sweep, so all ~40 anchors and any new one are covered. Internal links written as plain anchors reload the whole app: the back link and the
   retried-run link in `apps/web/src/routes/dashboard/run-detail.tsx`, and the queued-run link
   in `apps/web/src/routes/dashboard.tsx`. Use the router's link, and sweep the other anchors.
 - D26. Silent failures: `apps/web/src/hooks/useViewerRole.ts` turns a failed role read into no

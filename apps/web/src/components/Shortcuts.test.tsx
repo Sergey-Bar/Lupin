@@ -132,7 +132,7 @@ describe('keyboard shortcuts', () => {
       r: '/dashboard/runs',
       t: '/dashboard/insights',
       h: '/dashboard',
-      d: '/dashboard/prs',
+      d: '/dashboard/delivery',
       ',': '/dashboard/settings',
     });
   });

@@ -1,18 +1,28 @@
 import { CommandPalette } from '@lupin/ui';
 import { useCommandStore, useCommandActions } from '../hooks/useCommandActions.js';
+import { useViewerRole } from '../hooks/useViewerRole.js';
 import { useTheme } from '../theme/ThemeProvider.js';
 import { usePreferences } from '../theme/preferences.js';
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
-import { visibleRoutes } from '../route-manifest.js';
+import { roleMeets, visibleRoutes, type TabAccess, type ViewerRole } from '../route-manifest.js';
 import { useCopilot } from './CopilotPanel.js';
 
-const QUESTIONS = [
+/**
+ * The pages the palette offers `role`: visible, and only those the role may open, so a viewer
+ * is never sent to a page the API refuses (ledger MNT-184).
+ */
+export function paletteRoutes(role: ViewerRole | null) {
+  return visibleRoutes.filter((route) => roleMeets((route as { access?: TabAccess }).access, role));
+}
+
+export const QUESTIONS = [
   {
     id: 'ship',
     label: 'Can we ship? Release readiness',
     keywords: ['release', 'ready', 'readiness', 'ship', 'go', 'no-go', 'blocking'],
-    to: '/dashboard',
+    // Home: the release verdict and what blocks it.
+    to: '/dashboard/now',
   },
   {
     id: 'failing',
@@ -46,19 +56,20 @@ export function GlobalCommandPalette() {
   const { preferences, update } = usePreferences();
   const navigate = useNavigate();
   const copilot = useCopilot();
+  const role = useViewerRole();
 
-  // One entry per visible route, read from the manifest, so a screen added to the
-  // navigation bar is in the palette too rather than in one and not the other.
+  // One entry per page the caller may open, read from the manifest, so a screen added to the
+  // navigation is in the palette too rather than in one and not the other.
   const builtInActions = useMemo(
     () => [
-      ...visibleRoutes.map((route) => ({
+      ...paletteRoutes(role).map((route) => ({
         id: `nav-${route.id}`,
         label: `Go to ${route.label}`,
         onSelect: () => void navigate({ to: route.path }),
       })),
       {
         id: 'theme-toggle',
-        label: 'Toggle Theme',
+        label: 'Toggle theme',
         onSelect: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
       },
       {
@@ -83,7 +94,7 @@ export function GlobalCommandPalette() {
       // **No "Sign out" here.** Signing out is on the Access page, beside the sign-in it
       // ends, where the reader can see which credential this browser holds.
     ],
-    [navigate, setTheme, theme, preferences, update],
+    [navigate, setTheme, theme, preferences, update, role],
   );
 
   useCommandActions(builtInActions);

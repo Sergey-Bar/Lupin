@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { confirmAction } from '../test-confirm.js';
 import {
   HEALTH_DIMENSIONS,
   isOptInDimension,
@@ -489,9 +490,7 @@ describe('AccessGate and AccessPage', () => {
     await user.click(screen.getByRole('button', { name: 'Issue' }));
     expect(await screen.findByTestId('issued-token')).toHaveTextContent('lup_issued-once');
     expect(api.createToken).toHaveBeenCalledWith({ name: 'Ana', role: 'viewer' });
-    await user.click(
-      within(await screen.findByTestId('token-t1')).getByRole('button', { name: 'Revoke' }),
-    );
+    await confirmAction(user, await screen.findByTestId('token-t1'), 'Revoke', 'Ana');
     expect(api.revokeToken).toHaveBeenCalledWith('t1');
   });
 });

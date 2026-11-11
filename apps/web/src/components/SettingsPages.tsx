@@ -8,6 +8,7 @@ import type { QaClient } from '../lib/qa-client.js';
 import { canAdminister, canAdministerInstallation, canOperate } from '../lib/roles.js';
 import { explain, type QualityGate, type SettingsClient } from '../lib/settings-client.js';
 import { AccessGate } from './Access.js';
+import { ConfirmAction } from './ConfirmAction.js';
 import { Bdi, UserText } from './Bidi.js';
 import { ConnectRepository } from './ConnectRepository.js';
 import { PageBody, PageFrame, PageHeader, Panel } from './kit.js';
@@ -205,13 +206,13 @@ function GitHubAppPanel({
                 {set ? 'Replace the app' : 'Save the app'}
               </Button>
               {set ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => void act(() => client.deleteGitHubApp(), 'GitHub App removed')}
-                >
-                  Remove
-                </Button>
+                <ConfirmAction
+                  label="Remove"
+                  title="Remove the GitHub App?"
+                  consequence="Statuses, check runs and comments stop posting as the app at once. A project with its own token keeps posting with it."
+                  typed="GitHub App"
+                  onConfirm={() => act(() => client.deleteGitHubApp(), 'GitHub App removed')}
+                />
               ) : null}
             </div>
           </form>
@@ -328,20 +329,19 @@ function TokenForm({
           Save token
         </Button>
         {hasToken ? (
-          <Button
-            type="button"
-            size="sm"
+          <ConfirmAction
+            label="Remove token"
             variant="outline"
-            onClick={() =>
-              void run(
+            title="Remove this project's access token?"
+            consequence="Lupin stops reading the repository with it; the workspace's GitHub App, if one is set, is used instead."
+            onConfirm={() =>
+              run(
                 () => client.deleteGitToken(project.id),
                 'Token removed',
                 'Could not remove the token',
               )
             }
-          >
-            Remove token
-          </Button>
+          />
         ) : null}
       </div>
     </form>
@@ -681,14 +681,12 @@ function GateRow({
             Save
           </Button>
           {gate.id === 'global' ? null : (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => void act(() => client.deleteGate(gate.id), 'Gate removed')}
-            >
-              Remove
-            </Button>
+            <ConfirmAction
+              label="Remove"
+              title={`Remove the gate ${gate.name}?`}
+              consequence="Its threshold no longer applies; the default gate's does."
+              onConfirm={() => act(() => client.deleteGate(gate.id), 'Gate removed')}
+            />
           )}
         </form>
       ) : gate.scope !== 'workspace' && sharedNote ? (

@@ -16,6 +16,7 @@ import {
   ButtonLink,
 } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
+import { ConfirmAction } from './ConfirmAction.js';
 import {
   TOKEN_ROLES,
   type AccessTokenSummary,
@@ -319,18 +320,18 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
                     </TableCell>
                     <TableCell>
                       {token.revokedAt === null ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
+                        <ConfirmAction
+                          label="Revoke"
+                          title={`Revoke ${token.name}?`}
+                          consequence="Every job and device using this token is refused from now on. A revoked token cannot be turned back on; issue a new one instead."
+                          typed={token.name}
+                          onConfirm={() => {
                             health
                               .revokeToken(token.id)
                               .then(() => setVersion((value) => value + 1))
                               .catch(describe);
                           }}
-                        >
-                          Revoke
-                        </Button>
+                        />
                       ) : null}
                     </TableCell>
                   </TableRow>
