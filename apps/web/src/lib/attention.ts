@@ -174,6 +174,40 @@ export function isNew(item: AttentionItem, lastVisit: string | null): boolean {
   return lastVisit !== null && item.at > lastVisit;
 }
 
+/** The risk item: a high or critical change at its current head, linking to why. */
+function riskItem(pull: GithubPullItem): AttentionItem | null {
+  const risk = pull.risk;
+  if (!riskyPull(pull) || risk === null || risk === undefined) return null;
+  return {
+    id: `pull-${pull.id}`,
+    severity: risk.level === 'critical' ? 'bad' : 'caution',
+    title: `PR #${String(pull.number)}: ${RISK_WORD[risk.level].toLowerCase()} (${String(risk.score)} points)`,
+    detail: `${pull.repository} · ${pull.title}`,
+    action: { label: 'See why', to: pullRequestRiskPath(pull.projectId, pull.number) },
+    at: risk.assessedAt,
+  };
+}
+
+/** The stuck item: blocked by failing checks, or sent back for changes. */
+function stuckItem(pull: GithubPullItem): AttentionItem | null {
+  const blocked = pull.checksState === 'failure';
+  const changes = pull.reviewDecision === 'changes_requested';
+  if (!blocked && !changes) return null;
+  return {
+    id: `pull-${pull.id}`,
+    severity: blocked ? 'bad' : 'caution',
+    title: blocked
+      ? `PR #${String(pull.number)} is blocked by failing checks`
+      : `PR #${String(pull.number)} needs changes`,
+    detail: `${pull.repository} · ${pull.title}`,
+    action: {
+      label: 'Open PR',
+      to: `/dashboard/prs?project=${encodeURIComponent(pull.projectId)}`,
+    },
+    at: pull.lastActivityAt,
+  };
+}
+
 /**
  * Open pull requests worth a person, said as the work. A change assessed high or critical at its
  * current head comes first, linking to its risk; otherwise one blocked by failing checks (a red
@@ -181,38 +215,10 @@ export function isNew(item: AttentionItem, lastVisit: string | null): boolean {
  * own business and are skipped.
  */
 export function pullItems(pulls: readonly GithubPullItem[]): AttentionItem[] {
-  const items: AttentionItem[] = [];
-  for (const pull of pulls) {
-    if (pull.state !== 'open' || pull.draft) continue;
-    if (riskyPull(pull) && pull.risk !== null && pull.risk !== undefined) {
-      items.push({
-        id: `pull-${pull.id}`,
-        severity: pull.risk.level === 'critical' ? 'bad' : 'caution',
-        title: `PR #${String(pull.number)}: ${RISK_WORD[pull.risk.level].toLowerCase()} (${String(pull.risk.score)} points)`,
-        detail: `${pull.repository} · ${pull.title}`,
-        action: { label: 'See why', to: pullRequestRiskPath(pull.projectId, pull.number) },
-        at: pull.risk.assessedAt,
-      });
-      continue;
-    }
-    const blocked = pull.checksState === 'failure';
-    const changes = pull.reviewDecision === 'changes_requested';
-    if (!blocked && !changes) continue;
-    items.push({
-      id: `pull-${pull.id}`,
-      severity: blocked ? 'bad' : 'caution',
-      title: blocked
-        ? `PR #${String(pull.number)} is blocked by failing checks`
-        : `PR #${String(pull.number)} needs changes`,
-      detail: `${pull.repository} · ${pull.title}`,
-      action: {
-        label: 'Open PR',
-        to: `/dashboard/prs?project=${encodeURIComponent(pull.projectId)}`,
-      },
-      at: pull.lastActivityAt,
-    });
-  }
-  return items;
+  return pulls.flatMap((pull) => {
+    if (pull.state !== 'open' || pull.draft) return [];
+    return riskItem(pull) ?? stuckItem(pull) ?? [];
+  });
 }
 
 /**
