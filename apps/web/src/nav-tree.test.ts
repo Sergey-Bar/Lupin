@@ -35,6 +35,16 @@ describe('navTree, the sidebar built from the manifest', () => {
     expect(settings?.pages.some((page) => page.id === 'settings-identity')).toBe(false);
   });
 
+  it('never names a page after the place it is in: the first page reads as the overview', () => {
+    for (const group of navTree('admin')) {
+      for (const page of group.pages) expect(page.label).not.toBe(group.label);
+    }
+    const runs = navTree('admin').find((group) => group.id === 'runs');
+    expect(runs?.pages[0]?.label).toBe('All runs');
+    const tests = navTree('admin').find((group) => group.id === 'tests');
+    expect(tests?.pages[0]?.label).toBe('Overview');
+  });
+
   it('names the Settings groups in order: Personal, Workspace, Install, Tools', () => {
     const settings = navTree('admin').find((group) => group.id === 'settings');
     const names = [...new Set(settings?.pages.map((page) => page.group))];

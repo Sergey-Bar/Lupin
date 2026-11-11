@@ -62,17 +62,35 @@ describe('SideNav, app mode', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('lists the four places as groups, and keeps Settings out of the list, pinned below it', async () => {
+  it('lists the four places, and keeps Settings out of the list, pinned below it', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    const places = within(nav)
-      .getAllByRole('button', { name: /^(Home|Runs|Tests|Health)/u })
-      .map((button) => button.getAttribute('data-place'));
+    const places = [...nav.querySelectorAll('[data-place]')].map((place) =>
+      place.getAttribute('data-place'),
+    );
     expect(places).toEqual(['now', 'runs', 'tests', 'health']);
+    // A place with one page is that page: a link, with nothing to open.
+    const home = within(nav).getByRole('link', { name: 'Home' });
+    expect(home).toHaveAttribute('data-place', 'now');
+    expect(home).toHaveAttribute('href', '/dashboard/now');
+    expect(home).not.toHaveAttribute('aria-expanded');
     const aside = nav.closest('aside') as HTMLElement;
     const settings = within(aside).getByRole('link', { name: 'Settings' });
     expect(nav.contains(settings)).toBe(false);
     expect(within(aside).queryByTestId('theme-toggle')).toBeNull();
+  });
+
+  it('marks Home as the page you are on when you are on it', async () => {
+    renderAt('/dashboard/now');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('follows Home in one click, with no list to open first', async () => {
+    const { router } = renderAt('/dashboard/runs');
+    const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
+    fireEvent.click(within(nav).getByRole('link', { name: 'Home' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard/now'));
   });
 
   it('counts on the Runs group what the Runs page asks of you, and says it in words', async () => {
@@ -87,7 +105,7 @@ describe('SideNav, app mode', () => {
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
     const runs = await within(nav).findByRole('button', { name: 'Runs, 2 need you' });
     expect(within(runs).getByTestId('place-count')).toHaveTextContent('2');
-    expect(within(nav).getByRole('button', { name: 'Home' })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Home' })).toBeInTheDocument();
   });
 
   it('on Runs, counts from the list the page already read rather than fetching it again', async () => {
@@ -179,23 +197,23 @@ describe('SideNav, app mode', () => {
     const current = within(nav)
       .getAllByRole('link')
       .filter((link) => link.getAttribute('aria-current') === 'page');
-    expect(current.map((link) => link.textContent)).toEqual(['Runs']);
+    expect(current.map((link) => link.textContent)).toEqual(['All runs']);
     expect(current[0]).toHaveClass('font-semibold', 'before:start-0', 'before:bg-accent');
   });
 
   it('opens a group at its first page from the group itself', async () => {
-    renderAt('/dashboard/runs');
+    renderAt('/dashboard/now');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    fireEvent.click(within(nav).getByRole('button', { name: 'Home' }));
+    fireEvent.click(within(nav).getByRole('button', { name: 'Runs' }));
     expect(
-      within(screen.getByRole('list', { name: 'Home pages' })).getAllByRole('link')[0],
-    ).toHaveAttribute('href', '/dashboard/now');
+      within(screen.getByRole('list', { name: 'Runs pages' })).getAllByRole('link')[0],
+    ).toHaveAttribute('href', '/dashboard/runs');
   });
 
   it('moves between the pages it lists with the arrow keys', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    const runs = within(nav).getByRole('link', { name: 'Runs' });
+    const runs = within(nav).getByRole('link', { name: 'All runs' });
     runs.focus();
     fireEvent.keyDown(runs, { key: 'ArrowDown' });
     expect(document.activeElement).not.toBe(runs);
@@ -291,10 +309,10 @@ describe('SideNav, app mode', () => {
   it('jumps to the first and last page with Home and End, and ignores other keys', async () => {
     renderAt('/dashboard/runs');
     const nav = await screen.findByRole('navigation', { name: 'Sidebar' });
-    const runs = within(nav).getByRole('link', { name: 'Runs' });
+    const runs = within(nav).getByRole('link', { name: 'All runs' });
     runs.focus();
     fireEvent.keyDown(runs, { key: 'Home' });
-    expect(document.activeElement).toBe(within(nav).getByRole('button', { name: 'Home' }));
+    expect(document.activeElement).toBe(within(nav).getByRole('link', { name: 'Home' }));
     fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'End' });
     expect(document.activeElement).toBe(within(nav).getByRole('button', { name: 'Health' }));
     fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'x' });

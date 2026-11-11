@@ -411,25 +411,90 @@ function AppList({
       className={cn('min-h-0 flex-1 overflow-y-auto pb-4 pt-2', className)}
     >
       <ul className="flex flex-col gap-0.5">
-        {groups.map((group) => (
-          <PlaceGroup
-            key={group.id}
-            group={group}
-            count={counts[group.id] ?? 0}
-            pageId={pageId}
-            here={group.id === section}
-            open={collapsed ? flyout === group.id : isOpen(group.id)}
-            collapsed={collapsed}
-            onFlip={() => flip(group.id)}
-            onClose={() => setFlyout(null)}
-            onNavigate={() => {
-              setFlyout(null);
-              onNavigate?.();
-            }}
-          />
-        ))}
+        {groups.map((group) =>
+          group.pages.length === 1 && group.pages[0] !== undefined ? (
+            <PlaceLink
+              key={group.id}
+              group={group}
+              page={group.pages[0]}
+              count={counts[group.id] ?? 0}
+              current={group.pages[0].id === pageId}
+              collapsed={collapsed}
+              onNavigate={() => {
+                setFlyout(null);
+                onNavigate?.();
+              }}
+            />
+          ) : (
+            <PlaceGroup
+              key={group.id}
+              group={group}
+              count={counts[group.id] ?? 0}
+              pageId={pageId}
+              here={group.id === section}
+              open={collapsed ? flyout === group.id : isOpen(group.id)}
+              collapsed={collapsed}
+              onFlip={() => flip(group.id)}
+              onClose={() => setFlyout(null)}
+              onNavigate={() => {
+                setFlyout(null);
+                onNavigate?.();
+              }}
+            />
+          ),
+        )}
       </ul>
     </nav>
+  );
+}
+
+/**
+ * A place with one page is that page: a link, not a group that opens to a list of one. It
+ * carries the place's icon, count and name, and marks itself current like any page.
+ */
+function PlaceLink({
+  group,
+  page,
+  count,
+  current,
+  collapsed,
+  onNavigate,
+}: {
+  group: NavGroup;
+  page: NavPage;
+  count: number;
+  current: boolean;
+  collapsed: boolean;
+  onNavigate: () => void;
+}): React.ReactElement {
+  const Icon = SECTION_ICONS[group.id];
+  return (
+    <li>
+      <Link
+        to={page.path}
+        data-place={group.id}
+        aria-current={current ? 'page' : undefined}
+        aria-label={placeLabel(group.label, count)}
+        title={collapsed ? group.label : undefined}
+        onClick={onNavigate}
+        className={cn(
+          collapsed ? 'relative justify-center' : 'px-2',
+          'flex min-h-9 w-full items-center gap-2.5 rounded-md text-sm transition-colors duration-100 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
+          current
+            ? 'bg-surface-muted font-semibold text-fg'
+            : 'font-medium text-fg-muted hover:bg-surface-raised hover:text-fg',
+        )}
+      >
+        <Icon size={16} aria-hidden="true" className={current ? 'text-accent' : undefined} />
+        {collapsed ? <PlaceCount count={count} dot /> : null}
+        {collapsed ? null : (
+          <>
+            <span className="flex-1 text-start">{group.label}</span>
+            <PlaceCount count={count} />
+          </>
+        )}
+      </Link>
+    </li>
   );
 }
 

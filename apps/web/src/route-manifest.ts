@@ -674,10 +674,19 @@ export function navTree(role: ViewerRole | null): NavGroup[] {
         return {
           id: route.id,
           path: route.path,
-          label: route.tab,
+          label: sidebarLabel(section.id, section.label, route.tab),
           ...(group === undefined ? {} : { group }),
         };
       }),
     };
   });
+}
+
+/**
+ * A page named after its own place reads twice in the sidebar ("Runs > Runs"). The sidebar
+ * calls it what it is: the overview of the place, or for Runs the list of every run.
+ */
+function sidebarLabel(section: SectionId, place: string, tab: string): string {
+  if (tab !== place) return tab;
+  return section === 'runs' ? 'All runs' : 'Overview';
 }
