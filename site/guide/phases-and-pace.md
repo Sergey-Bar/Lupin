@@ -1,10 +1,10 @@
 ---
-title: Phases and pace
-description: Where every change is in plan, code, test, review and release, which phase is holding work up, and whether testing keeps up with the code.
+title: Phases, pace and shape
+description: Where every change is in plan, code, test, review and release, which phase is holding work up, whether testing keeps up with the code, and whether each level is in good shape.
 outline: deep
 ---
 
-# Phases and pace
+# Phases, pace and shape
 
 Two questions a QA lead asks every week: where is each change stuck, and are the tests keeping
 up with how fast code arrives? Lupin answers both from what it already reads: pull requests,
@@ -60,6 +60,30 @@ never counted as covered, and never silently as untested either. To measure them
 coverage for the commit (see [Repository health](/guide/repository-health#supply-chain-accessibility-mutation-and-diff-coverage)).
 
 `GET /api/v1/projects/:id/pace?weeks=8` returns the same rows.
+
+## Good shape or bad shape
+
+Every level has one verdict, **Good**, **Caution**, **Bad** or **Not measured**, and says how
+fresh its evidence is. The zoom bar at the top of Portfolio, Repository 360 and a pull request's
+page shows the levels above you, each with its verdict, and the reason and age of the one you
+are on.
+
+| Level        | Read from                                                                                    |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| Pull request | Its change risk at the latest head, and its five phases                                      |
+| Repository   | Its health grade, its last finished run, its phases over 30 days, its open high-risk changes |
+| Portfolio    | Every repository's signals together                                                          |
+
+Three rules hold at every level:
+
+- **A signal that was not measured keeps the verdict from Good.** It reads Caution and names
+  what is missing ("Not measured: tests.").
+- **Evidence older than seven days keeps the verdict from Good,** and the bar says _stale_. A
+  stale Bad stays Bad: old bad news is still bad news.
+- **A bad signal never improves the verdict.**
+
+The reads are `GET /api/v1/projects/:id/shape`, `GET /api/v1/projects/:id/pull-requests/:number/shape`
+and `GET /api/v1/portfolio/shape`.
 
 ## What it does not do yet
 

@@ -167,7 +167,7 @@ async function deploymentsSince(
 }
 
 /** Open changes assessed high or critical at their current head, worst first. */
-async function openDecisions(
+export async function openDecisions(
   options: BriefingOptions,
   project: { id: string; name: string },
 ): Promise<BriefingDecision[]> {

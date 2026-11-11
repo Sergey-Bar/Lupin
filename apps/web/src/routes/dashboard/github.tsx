@@ -89,6 +89,7 @@ export const PullRequestRiskRoute = createRoute({
   component: () => {
     const { projectId, number } = PullRequestRiskRoute.useParams();
     const github = React.useMemo(() => createGithubClient(), []);
+    const health = React.useMemo(() => createHealthClient(), []);
     const parsed = Number(number);
     if (!Number.isInteger(parsed) || parsed < 1) {
       return (
@@ -97,6 +98,8 @@ export const PullRequestRiskRoute = createRoute({
         </p>
       );
     }
-    return <PullRequestRiskPage projectId={projectId} number={parsed} github={github} />;
+    return (
+      <PullRequestRiskPage projectId={projectId} number={parsed} github={github} shapes={health} />
+    );
   },
 });

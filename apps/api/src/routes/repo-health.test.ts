@@ -10,6 +10,8 @@ import {
   DiffCoverageStatusSchema,
   DiffGuardStatusSchema,
   BriefingResponseSchema,
+  PortfolioShapeSchema,
+  ScopedShapeSchema,
   HealthFindingsPageSchema,
   HealthHistorySchema,
   HealthUploadResultSchema,
@@ -894,6 +896,40 @@ describe('the SDLC phase reads', () => {
     });
     const strip = await app.request(`/api/v1/projects/${projectId}/pull-requests/3/phases`);
     expect(PhaseStripSchema.parse(await strip.json()).pullRequest).toBe(3);
+  });
+});
+
+describe('the shape reads', () => {
+  it('serves a repository’s, a pull request’s and the portfolio’s shape', async () => {
+    const { app, db, projectId } = await harness();
+    const repository = ScopedShapeSchema.parse(
+      await (await app.request(`/api/v1/projects/${projectId}/shape`)).json(),
+    );
+    expect(repository).toMatchObject({ projectId, shape: 'unknown', freshness: 'never' });
+    expect((await app.request(`/api/v1/projects/${projectId}/pull-requests/4/shape`)).status).toBe(
+      404,
+    );
+    expect((await app.request(`/api/v1/projects/${projectId}/pull-requests/x/shape`)).status).toBe(
+      400,
+    );
+    await db.insert(schema.pullRequests).values({
+      workspaceId: 'ws-1',
+      projectId,
+      externalId: '4',
+      number: 4,
+      state: 'open',
+      title: 'Cart',
+      openedAt: new Date(),
+      lastActivityAt: new Date(),
+    });
+    const pull = ScopedShapeSchema.parse(
+      await (await app.request(`/api/v1/projects/${projectId}/pull-requests/4/shape`)).json(),
+    );
+    expect(pull.pullRequest).toBe(4);
+    const portfolio = PortfolioShapeSchema.parse(
+      await (await app.request('/api/v1/portfolio/shape')).json(),
+    );
+    expect(portfolio.projects.map((entry) => entry.projectId)).toEqual([projectId]);
   });
 });
 

@@ -137,7 +137,7 @@ export default defineConfig({
           { text: 'Scheduled reports', link: '/guide/notifications' },
           { text: 'AI-written code', link: '/guide/ai-code' },
           { text: 'Change risk', link: '/guide/change-risk' },
-          { text: 'Phases and pace', link: '/guide/phases-and-pace' },
+          { text: 'Phases, pace and shape', link: '/guide/phases-and-pace' },
           { text: 'The briefing', link: '/guide/briefing' },
           { text: 'Agent quality', link: '/guide/agents' },
           { text: 'Issues and test proposals', link: '/guide/issues-and-test-proposals' },

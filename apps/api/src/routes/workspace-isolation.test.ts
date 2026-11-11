@@ -245,6 +245,10 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   // `briefing-service.test.ts` proves another workspace's project is a 404 and its rows stamped
   // onto this project are never counted.
   { family: 'briefing', files: ['services/briefing-service.ts'] },
+  // Shape: one project's latest health snapshot, last finished run, phases, open risk and
+  // delivery sync time, and each workspace project for the portfolio. `shape-service.test.ts`
+  // proves another workspace's project is a 404 and its rows stamped onto this one are unread.
+  { family: 'shape', files: ['services/shape-service.ts'] },
   // The cockpit: health and scan snapshots, runs, pull requests, deployments and delivery
   // sources of one project. Every query filters on `workspace_id` before the project, and
   // `cockpit.test.ts` proves another workspace's project is a 404, that its newer readings do

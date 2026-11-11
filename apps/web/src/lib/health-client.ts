@@ -15,6 +15,10 @@ import {
   RepositoryPhasesSchema,
   BriefingResponseSchema,
   type BriefingResponse,
+  PortfolioShapeSchema,
+  ScopedShapeSchema,
+  type PortfolioShape,
+  type ScopedShape,
   type FindingSeverity,
   type FindingState,
   type HealthDimension,
@@ -71,6 +75,12 @@ export interface HealthClient {
     projectId: string | null,
     options?: { days?: number; narrate?: boolean },
   ): Promise<BriefingResponse>;
+  /** Good or bad shape, and how fresh the evidence is: one repository. */
+  getShape(projectId: string): Promise<ScopedShape>;
+  /** One pull request's shape. Refused when the delivery sync has not read it. */
+  getPullRequestShape(projectId: string, number: number): Promise<ScopedShape>;
+  /** The workspace's shape, and every repository's, worst first. */
+  getPortfolioShape(): Promise<PortfolioShape>;
   getHealth(projectId: string): Promise<ProjectHealth>;
   getFindings(projectId: string, query?: FindingQuery): Promise<HealthFindingsPage>;
   getHistory(projectId: string, days: number): Promise<HealthHistory>;
@@ -219,6 +229,10 @@ export function createHealthClient(baseUrl = '', fetchImpl: typeof fetch = fetch
         `${projectId === null ? '/api/v1/portfolio' : project(projectId)}/briefing?days=${String(days)}&narrate=${String(narrate)}`,
         BriefingResponseSchema,
       ),
+    getShape: (projectId) => get(`${project(projectId)}/shape`, ScopedShapeSchema),
+    getPullRequestShape: (projectId, number) =>
+      get(`${project(projectId)}/pull-requests/${String(number)}/shape`, ScopedShapeSchema),
+    getPortfolioShape: () => get('/api/v1/portfolio/shape', PortfolioShapeSchema),
     getPace: (projectId, weeks = 8) =>
       get(`${project(projectId)}/pace?weeks=${String(weeks)}`, PaceReportSchema),
     getHealth: (projectId) => get(`${project(projectId)}/health`, ProjectHealthSchema),

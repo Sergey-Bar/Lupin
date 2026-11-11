@@ -452,6 +452,30 @@
       "shownToFail": "Emitting the merged line for zero merges fails BRIEF-2 on the first generated window."
     },
     {
+      "id": "SHAPE-1",
+      "statement": "A shape verdict with any signal not measured (no shape, or no time) is never good, at any level.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/shape.property.test.ts",
+      "seed": 20261115,
+      "shownToFail": "fc.check refutes a reading that calls good every set of signals with nothing bad or cautionary in it."
+    },
+    {
+      "id": "SHAPE-2",
+      "statement": "A shape verdict whose evidence is all older than the stale window is never good and reads as stale; a stale bad verdict stays bad.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/shape.property.test.ts",
+      "seed": 20261115,
+      "shownToFail": "Dropping the stale check from shapeReading fails SHAPE-2 on the first generated good signal."
+    },
+    {
+      "id": "SHAPE-3",
+      "statement": "Adding a bad signal to any set of signals never moves the verdict up the order bad, caution, unknown, good, and never leaves it good.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/shape.property.test.ts",
+      "seed": 20261115,
+      "shownToFail": "Ranking a measured bad signal below caution in shapeReading fails SHAPE-3."
+    },
+    {
       "id": "EVAL-1",
       "statement": "An identical baseline and candidate eval run is never a fail, for any run and any comparison seed.",
       "package": "packages/reporting",

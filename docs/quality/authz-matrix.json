@@ -9,7 +9,7 @@
   ],
   "summary": {
     "admin": 40,
-    "viewer": 98,
+    "viewer": 101,
     "operator": 35,
     "open": 16,
     "runner-credential": 9,
@@ -709,6 +709,14 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/portfolio/shape",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/projects",
       "access": "viewer",
       "workspaceScoped": false,
@@ -1181,6 +1189,14 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/projects/:id/pull-requests/:number/shape",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/projects/:id/qa/flaky",
       "access": "viewer",
       "workspaceScoped": false,
@@ -1265,6 +1281,14 @@
       "access": "viewer",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/projects.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:id/shape",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"
     },
     {

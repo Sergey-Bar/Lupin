@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import type { PhaseStrip, PullRequestRisk, PullRequestRiskHistory } from '@lupin/shared-contracts';
 import { expectOnePrimary } from '../test-utils.js';
 import { PullRequestRiskPage } from './PullRequestRisk.js';
@@ -130,6 +130,62 @@ describe('PullRequestRiskPage', () => {
     expect(rows[0]?.textContent).toContain('Critical risk');
     expect(rows[1]?.textContent).toContain('Medium risk');
     expect(rows[1]?.textContent).toContain('aaaaaaaaaaaa');
+  });
+
+  it('zooms from the portfolio to the repository to this pull request, each with its shape', async () => {
+    const reading = (shape: 'good' | 'caution' | 'bad', reason: string) => ({
+      version: 'shape/1',
+      shape,
+      freshness: 'fresh' as const,
+      measuredAt: '2026-11-11T10:00:00.000Z',
+      reason,
+      signals: [],
+    });
+    render(
+      <PullRequestRiskPage
+        projectId="p-1"
+        number={12}
+        github={{
+          getPullRequestRisk: async () => ({ pullRequest: 12, latest: null, history: [] }),
+          getPullRequestPhases: async () => Promise.reject(new Error('not synced')),
+        }}
+        shapes={{
+          getPortfolioShape: async () => ({
+            evaluatedAt: '2026-11-11T12:00:00.000Z',
+            overall: reading('caution', 'Not measured: tests.'),
+            projects: [],
+            total: 0,
+            truncated: false,
+          }),
+          getShape: async () => ({
+            ...reading('good', 'Fine.'),
+            projectId: 'p-1',
+            name: 'Shop',
+            pullRequest: null,
+          }),
+          getPullRequestShape: async () => ({
+            ...reading('bad', 'Change risk critical, 90 points.'),
+            projectId: 'p-1',
+            name: 'Shop',
+            pullRequest: 12,
+          }),
+        }}
+        now={() => NOW}
+      />,
+    );
+    const zoom = await screen.findByRole('navigation', { name: 'Zoom' });
+    await waitFor(() =>
+      expect(
+        within(zoom)
+          .getAllByRole('listitem')
+          .map((level) => level.textContent),
+      ).toEqual(['PortfolioCaution', '/ShopGood', '/#12Bad']),
+    );
+    expect(within(zoom).getByRole('link', { name: 'Shop' })).toHaveAttribute(
+      'href',
+      '/dashboard/repo/p-1/overview',
+    );
+    expect(screen.getByTestId('zoom-reason')).toHaveTextContent('Change risk critical, 90 points.');
   });
 
   it('says a pull request the gate never assessed was not assessed, and how to change that', async () => {

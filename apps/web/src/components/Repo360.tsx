@@ -25,6 +25,7 @@ import { Loaded, ProjectPage, projectLink } from './ProjectPage.js';
 import { PacePanel } from './PacePanel.js';
 import { PhaseBandPanel } from './Phases.js';
 import { ScorecardCard } from './ScorecardCard.js';
+import { ZoomBar } from './ZoomBar.js';
 
 /**
  * Repository 360: the grade, every scorecard beside it, and one list of what to fix next.
@@ -107,6 +108,28 @@ function ready<T>(resource: Resource<T>): T | null {
   return resource.status === 'ready' ? resource.value : null;
 }
 
+/** The portfolio, then this repository, each with its shape. */
+function RepoZoom({
+  health,
+  projectId,
+  name,
+}: {
+  health: HealthClient;
+  projectId: string;
+  name: string;
+}): React.ReactElement {
+  const portfolio = useResource(async () => (await health.getPortfolioShape()).overall, [health]);
+  const repository = useResource(() => health.getShape(projectId), [health, projectId]);
+  return (
+    <ZoomBar
+      levels={[
+        { label: 'Portfolio', href: '/dashboard/portfolio', reading: portfolio },
+        { label: name, href: null, reading: repository },
+      ]}
+    />
+  );
+}
+
 /** Every scorecard that has arrived, with the page it links to. */
 export function scorecardSources(reads: Reads, projectId: string): ScorecardSource[] {
   const link = (path: string) => projectLink(path, projectId);
@@ -161,6 +184,7 @@ function Repo360Body({
         subtitle={`${name}: the grade, every scorecard, and what to fix next`}
       />
       <PageBody>
+        <RepoZoom health={clients.health} projectId={projectId} name={name} />
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
           <Panel title="Grade" data-testid="repo-360-grade">
             <Loaded resource={reads.health} label="the grade" testId="repo-360-grade">

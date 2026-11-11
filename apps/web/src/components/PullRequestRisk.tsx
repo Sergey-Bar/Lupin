@@ -4,10 +4,13 @@ import type { PullRequestRisk, PullRequestRiskHistory } from '@lupin/shared-cont
 import { useResource } from '../hooks/useResource.js';
 import { EVIDENCE_LABEL, RISK_BADGE, RISK_WORD, riskHero } from '../lib/change-risk.js';
 import type { GithubClient } from '../lib/github-client.js';
+import type { HealthClient } from '../lib/health-client.js';
 import { formatRelative } from '../lib/intl.js';
+import { repo360Path } from '../route-manifest.js';
 import { Bdi, UserText } from './Bidi.js';
 import { PageBody, PageFrame, PageHeader, Panel } from './kit.js';
 import { PhaseStripPanel } from './Phases.js';
+import { ZoomBar } from './ZoomBar.js';
 
 /**
  * One pull request's change risk: the status band, every factor with its points and its own
@@ -21,11 +24,14 @@ export function PullRequestRiskPage({
   projectId,
   number,
   github,
+  shapes,
   now = () => new Date(),
 }: {
   projectId: string;
   number: number;
   github: Pick<GithubClient, 'getPullRequestRisk' | 'getPullRequestPhases'>;
+  /** The three levels' shapes, for the zoom bar; absent, no bar. */
+  shapes?: Pick<HealthClient, 'getPortfolioShape' | 'getShape' | 'getPullRequestShape'>;
   now?: () => Date;
 }): React.ReactElement {
   const read = useResource(
@@ -41,6 +47,9 @@ export function PullRequestRiskPage({
     <PageFrame>
       <PageHeader title={`${title} change risk`} />
       <PageBody label={`${title} change risk`}>
+        {shapes === undefined ? null : (
+          <PullRequestZoom shapes={shapes} projectId={projectId} number={number} now={now} />
+        )}
         {read.status === 'loading' ? (
           <p data-testid="pr-risk-loading" className="max-w-measure text-sm text-fg-muted">
             Reading the change risk of {title}…
@@ -58,6 +67,40 @@ export function PullRequestRiskPage({
         )}
       </PageBody>
     </PageFrame>
+  );
+}
+
+/** The portfolio, the repository and this pull request, each with its shape. */
+function PullRequestZoom({
+  shapes,
+  projectId,
+  number,
+  now,
+}: {
+  shapes: NonNullable<React.ComponentProps<typeof PullRequestRiskPage>['shapes']>;
+  projectId: string;
+  number: number;
+  now: () => Date;
+}): React.ReactElement {
+  const portfolio = useResource(async () => (await shapes.getPortfolioShape()).overall, [shapes]);
+  const repository = useResource(() => shapes.getShape(projectId), [shapes, projectId]);
+  const pull = useResource(
+    () => shapes.getPullRequestShape(projectId, number),
+    [shapes, projectId, number],
+  );
+  return (
+    <ZoomBar
+      now={now}
+      levels={[
+        { label: 'Portfolio', href: '/dashboard/portfolio', reading: portfolio },
+        {
+          label: repository.status === 'ready' ? repository.value.name : 'Repository',
+          href: repo360Path(projectId),
+          reading: repository,
+        },
+        { label: `#${String(number)}`, href: null, reading: pull },
+      ]}
+    />
   );
 }
 

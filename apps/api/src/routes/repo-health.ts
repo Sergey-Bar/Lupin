@@ -61,6 +61,7 @@ import {
   repositoryBriefing,
 } from '../services/briefing-service.js';
 import type { Narrator } from '../services/narration-service.js';
+import { portfolioShape, pullRequestShape, repositoryShape } from '../services/shape-service.js';
 import {
   assessPullRequestRisk,
   pullRequestRisk,
@@ -546,6 +547,32 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
       return invalidRequest(context, 'Invalid phases query', parsed.error.issues);
     return context.json(await portfolioPhases(options, parsed.data.days));
   });
+
+  /** Good or bad shape, and how fresh: one repository. */
+  app.get('/api/v1/projects/:id/shape', viewer, async (context) =>
+    context.json(await repositoryShape(options, context.req.param('id'))),
+  );
+
+  /** One pull request's shape; 404 when the delivery sync has not read it. */
+  app.get('/api/v1/projects/:id/pull-requests/:number/shape', viewer, async (context) => {
+    const parsed = PullRequestNumberSchema.safeParse(context.req.param('number'));
+    if (!parsed.success) {
+      return invalidRequest(context, 'A pull request number', parsed.error.issues);
+    }
+    const shape = await pullRequestShape(options, context.req.param('id'), parsed.data);
+    if (shape === null) {
+      throw new DomainError(
+        ErrorCode.NOT_FOUND,
+        `The delivery sync has not read pull request #${String(parsed.data)}`,
+      );
+    }
+    return context.json(shape);
+  });
+
+  /** The workspace's shape, and every repository's, worst first. */
+  app.get('/api/v1/portfolio/shape', viewer, async (context) =>
+    context.json(await portfolioShape(options)),
+  );
 
   /** The briefing and, when asked for, its narration; a narration is never asked for by default. */
   const briefingResponse = async (briefing: Briefing, narrate: boolean) => {

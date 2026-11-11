@@ -179,14 +179,18 @@ export const pageJourneys: Record<string, Journey> = {
   },
   'guide/phases-and-pace.md': {
     audience: 'QA leads · managers',
-    goal: 'See which phase holds changes up, and whether testing keeps up with the code.',
+    goal: 'See whether each level is in good shape, which phase holds changes up, and whether testing keeps up.',
     stages: [
       ['Sync delivery', 'Turn on delivery sync so Lupin reads the pull requests.'],
+      [
+        'Read the shape',
+        'Follow the zoom bar from the portfolio to a repository to a pull request.',
+      ],
       ['Find the bottleneck', 'Open Repository 360 and read the phase band and what is stuck.'],
       ['Watch the debt', 'Read the pace rows, and upload coverage where lines are not measured.'],
     ],
     takeaway:
-      'A phase with no evidence is not measured, never done, and the untested-change debt never goes down.',
+      'Missing or stale evidence is never good shape, a phase with no evidence is not done, and the untested-change debt never goes down.',
   },
   'guide/briefing.md': {
     audience: 'QA leads · managers · anyone back from time off',

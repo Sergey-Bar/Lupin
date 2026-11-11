@@ -34,6 +34,11 @@
   **Word it for me** asks the configured model to reword the lines; a wording that cites a line
   that is not there, or uses a number its lines do not say, is thrown away with the reason.
   `GET /api/v1/projects/:id/briefing` and `GET /api/v1/portfolio/briefing`, viewer.
+- **Good shape or bad shape, at every level.** A zoom bar on Portfolio, Repository 360 and a
+  pull request's page shows each level above you with its verdict (Good, Caution, Bad, Not
+  measured) and the reason and age of the one you are on. A signal not measured, or evidence
+  older than seven days, is never Good. `GET /api/v1/projects/:id/shape`,
+  `GET …/pull-requests/:number/shape`, `GET /api/v1/portfolio/shape`, viewer.
 - **The scheduled report says which tests** turned flaky, started failing, got fixed or slowed.
 - **The copilot.** "Explain this run" (or `e`) on a failed run answers from the run's own
   results, groups the failures by cause and links every test it names. Its proposed actions

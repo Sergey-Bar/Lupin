@@ -749,6 +749,14 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/portfolio/shape": {
+      "get": {
+        "operationId": "getApiV1PortfolioShape",
+        "tags": ["portfolio"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects": {
       "get": {
         "operationId": "getApiV1Projects",
@@ -1374,6 +1382,18 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/pull-requests/{number}/shape": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdPullRequestsNumberShape",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "number", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/qa/flaky": {
       "get": {
         "operationId": "getApiV1ProjectsIdQaFlaky",
@@ -1498,6 +1518,17 @@
         "operationId": "getApiV1ProjectsIdScan",
         "tags": ["projects"],
         "x-source": "apps/api/src/routes/projects.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/projects/{id}/shape": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdShape",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -17007,6 +17038,7 @@
         ],
         "additionalProperties": false
       },
+      "FreshnessSchema": { "type": "string", "enum": ["fresh", "stale", "never"] },
       "GapSchema": {
         "type": "object",
         "properties": {
@@ -23444,6 +23476,131 @@
         "required": ["projects"],
         "additionalProperties": false
       },
+      "PortfolioShapeSchema": {
+        "type": "object",
+        "properties": {
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "overall": {
+            "type": "object",
+            "properties": {
+              "version": { "type": "string", "minLength": 1 },
+              "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+              "freshness": { "type": "string", "enum": ["fresh", "stale", "never"] },
+              "measuredAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  { "type": "null" }
+                ]
+              },
+              "reason": { "type": "string", "minLength": 1, "maxLength": 400 },
+              "signals": {
+                "maxItems": 10,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+                    "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                    "at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+                  },
+                  "required": ["id", "shape", "at", "reason"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["version", "shape", "freshness", "measuredAt", "reason", "signals"],
+            "additionalProperties": false
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "version": { "type": "string", "minLength": 1 },
+                "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                "freshness": { "type": "string", "enum": ["fresh", "stale", "never"] },
+                "measuredAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 400 },
+                "signals": {
+                  "maxItems": 10,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+                      "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                      "at": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          { "type": "null" }
+                        ]
+                      },
+                      "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+                    },
+                    "required": ["id", "shape", "at", "reason"],
+                    "additionalProperties": false
+                  }
+                },
+                "projectId": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "pullRequest": {
+                  "anyOf": [
+                    { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": [
+                "version",
+                "shape",
+                "freshness",
+                "measuredAt",
+                "reason",
+                "signals",
+                "projectId",
+                "name",
+                "pullRequest"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "truncated": { "type": "boolean" }
+        },
+        "required": ["evaluatedAt", "overall", "projects", "total", "truncated"],
+        "additionalProperties": false
+      },
       "ProjectEvalsSchema": {
         "type": "object",
         "properties": {
@@ -28201,6 +28358,69 @@
         "required": ["id", "automationId", "cron", "timezone", "enabled", "misfirePolicy"],
         "additionalProperties": false
       },
+      "ScopedShapeSchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "freshness": { "type": "string", "enum": ["fresh", "stale", "never"] },
+          "measuredAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              { "type": "null" }
+            ]
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "signals": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+                "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                "at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+              },
+              "required": ["id", "shape", "at", "reason"],
+              "additionalProperties": false
+            }
+          },
+          "projectId": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "pullRequest": {
+            "anyOf": [
+              { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": [
+          "version",
+          "shape",
+          "freshness",
+          "measuredAt",
+          "reason",
+          "signals",
+          "projectId",
+          "name",
+          "pullRequest"
+        ],
+        "additionalProperties": false
+      },
       "ScoreCellKeySchema": {
         "type": "string",
         "pattern": "^(unit|integration|e2e|performance|security):(backend|frontend|platform)$"
@@ -28700,7 +28920,73 @@
         "required": ["settings"],
         "additionalProperties": false
       },
+      "ShapeReadingSchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "freshness": { "type": "string", "enum": ["fresh", "stale", "never"] },
+          "measuredAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              { "type": "null" }
+            ]
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "signals": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+                "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                "at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+              },
+              "required": ["id", "shape", "at", "reason"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["version", "shape", "freshness", "measuredAt", "reason", "signals"],
+        "additionalProperties": false
+      },
       "ShapeSchema": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+      "ShapeSignalIdSchema": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+      "ShapeSignalSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              { "type": "null" }
+            ]
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+        },
+        "required": ["id", "shape", "at", "reason"],
+        "additionalProperties": false
+      },
       "ShardPlanBodySchema": {
         "type": "object",
         "properties": {
