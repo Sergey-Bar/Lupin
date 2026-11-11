@@ -652,6 +652,54 @@ async function upsertComment(
 }
 
 /**
+ * What {@link reportToGitHub} would have written, for a CI job to post with its own token when
+ * this install holds none (a LAN install, or one nobody gave a GitHub token).
+ *
+ * The bodies are the same functions' output, so a job-posted status, check run and comment are
+ * the ones the server would have posted, word for word. The repository is not in it: the job
+ * knows its own (`GITHUB_REPOSITORY`), and a token is never in it, in either direction.
+ */
+export interface GitHubPayload {
+  sha: string;
+  status: {
+    state: 'success' | 'failure';
+    context: string;
+    description: string;
+    target_url?: string;
+  };
+  /** `null` without an assessment. */
+  checkRun: ({ name: string } & ReturnType<typeof checkRunBody>) | null;
+  /** `null` without a pull request. The job updates the comment whose body starts with `marker`. */
+  comment: { marker: string; body: string } | null;
+}
+
+function statusInput(report: GateReport): GitHubPayload['status'] {
+  return {
+    state: report.verdict.verdict === 'passed' ? 'success' : 'failure',
+    context: STATUS_CONTEXT,
+    description: statusDescription(report),
+    ...(report.detailsUrl === null ? {} : { target_url: report.detailsUrl }),
+  };
+}
+
+export function githubPayload(
+  target: { sha: string; pullRequest?: number | undefined },
+  report: GateReport,
+): GitHubPayload {
+  const risk = report.risk ?? null;
+  return {
+    sha: target.sha,
+    status: statusInput(report),
+    checkRun:
+      risk === null ? null : { name: CHECK_RUN_NAME, ...checkRunBody(report, risk, target.sha) },
+    comment:
+      target.pullRequest === undefined
+        ? null
+        : { marker: COMMENT_MARKER, body: renderGateComment(report) },
+  };
+}
+
+/**
  * Posts the commit status, the change-risk check run when the report carries an assessment,
  * and creates or updates the one gate comment.
  *
@@ -670,14 +718,7 @@ export async function reportToGitHub(
   const status = await github.execute(
     {
       operation: 'createCommitStatus',
-      input: {
-        ...base,
-        sha: target.sha,
-        state: report.verdict.verdict === 'passed' ? 'success' : 'failure',
-        context: STATUS_CONTEXT,
-        description: statusDescription(report),
-        ...(report.detailsUrl === null ? {} : { target_url: report.detailsUrl }),
-      },
+      input: { ...base, sha: target.sha, ...statusInput(report) },
     },
     token,
   );

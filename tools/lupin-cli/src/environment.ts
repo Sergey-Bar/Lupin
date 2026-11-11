@@ -19,5 +19,9 @@ export function readEnvironment(): Readonly<Record<string, string | undefined>> 
     GITHUB_WORKSPACE: process.env['GITHUB_WORKSPACE'],
     GITHUB_RUN_ID: process.env['GITHUB_RUN_ID'],
     GITHUB_RUN_ATTEMPT: process.env['GITHUB_RUN_ATTEMPT'],
+    // `lupin gate --post` only: the job's own token, and where to send it. Never sent to Lupin.
+    GITHUB_TOKEN: process.env['GITHUB_TOKEN'],
+    GITHUB_REPOSITORY: process.env['GITHUB_REPOSITORY'],
+    GITHUB_API_URL: process.env['GITHUB_API_URL'],
   };
 }

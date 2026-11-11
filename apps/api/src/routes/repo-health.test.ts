@@ -281,6 +281,13 @@ describe('the pull-request gate', () => {
       sha: 'abc1234',
       target_url: `https://lupin.test/dashboard/repo/${projectId}`,
     });
+    expect(
+      (
+        (await (
+          await json(app, 'POST', path, body, { authorization: `Bearer ${SECRET}` })
+        ).json()) as { githubPayload: unknown }
+      ).githubPayload,
+    ).toBeNull();
   });
 
   it('returns the verdict with no GitHub report for a repository that is not on github.com', async () => {
@@ -304,8 +311,24 @@ describe('the pull-request gate', () => {
       { branch: 'main', commit: 'abc1234', pullRequest: 5 },
       { authorization: `Bearer ${SECRET}` },
     );
-    const body = (await response.json()) as { verdict: string; risk: unknown };
+    const body = (await response.json()) as {
+      verdict: string;
+      risk: unknown;
+      githubPayload: {
+        sha: string;
+        status: { context: string };
+        checkRun: unknown;
+        comment: unknown;
+      };
+    };
     expect(body.verdict).toBe('passed');
+    // Nothing posted: no GitHub repository here, so the job is handed what to post itself.
+    expect(body.githubPayload).toMatchObject({
+      sha: 'abc1234',
+      status: { context: 'lupin/health', state: 'success' },
+      checkRun: { name: 'lupin/change-risk', conclusion: 'neutral' },
+      comment: { marker: '<!-- lupin-health -->' },
+    });
     // Nothing measured for this commit: unknown, and saying what was missing.
     expect(PullRequestRiskSchema.parse(body.risk).risk).toMatchObject({
       level: 'unknown',

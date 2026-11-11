@@ -10,7 +10,7 @@ Usage:
   lupin upload --format <format> --file <path> [--branch <b>] [--commit <sha>] [--digest sha256:<hex>]
   lupin test --format junit|playwright-json --report <path> [--branch <b>] [--commit <sha>] -- <command…>
   lupin shard --total <n> --index <i> [--as-of <time>] (-- <files…> | --files-from <path>)
-  lupin gate --branch <b> --commit <sha> [--pr <number>]
+  lupin gate --branch <b> --commit <sha> [--pr <number>] [--post]
   lupin diff-guard [--base <ref>] [--commit <sha>] [--pr <number>] [--dry-run] [--fail-on-findings]
   lupin deploy --environment <name> --status success|failure [--sha <sha>] [--id <id>] [--url <url>]
   lupin agent-config [--branch <b>] [--commit <sha>] [--dir <path>]
@@ -25,6 +25,10 @@ runs. It never drops a file: if the plan cannot be had, it prints them all.
 
 \`report\` saves the cockpit as one HTML file that fetches nothing, to attach to a message or
 publish as a CI artifact. It writes the file only if the server answered with a page.
+
+\`gate --post\` posts the gate's status, check run and comment to the pull request with the
+job's own GITHUB_TOKEN, when the install holds no token of its own. GITHUB_TOKEN goes only to
+GITHUB_API_URL, never to Lupin, and a GitHub refusal never changes the exit code.
 
 \`diff-guard\` reads git diff <base>...HEAD here and reports changes that weaken the tests:
 deleted tests, added skips, removed or loosened assertions, lowered thresholds, CI steps that

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { collectAgentConfig } from './agent-config.js';
 import { optional, parseOptions, required } from './args.js';
 import { CliError, EXIT, usage, type ExitCode } from './errors.js';
+import { githubTarget, payloadOf, postToGitHub, type GitHubTarget } from './github-post.js';
 import { send } from './http.js';
 import { projectUrl, resolveTarget, type Target } from './target.js';
 
@@ -87,6 +88,8 @@ interface GateAnswer {
   reasons?: unknown;
   grade?: { letter?: string | null };
   risk?: { risk?: { level?: unknown; score?: unknown; missing?: unknown } } | null;
+  /** What the server posted itself; `null` when it posted nothing. */
+  github?: unknown;
 }
 
 /** "Change risk: high (50 points)." — read defensively, and left out when the answer has none. */
@@ -98,14 +101,38 @@ function riskLine(answer: GateAnswer | null): string | null {
   return `Change risk: ${risk.level} (${String(risk.score)} points)${gap}.`;
 }
 
-/** `lupin gate --branch <b> --commit <sha> [--pr <n>]` — exits 1 when the gate fails. */
+/** `--post`: the server's rendering, posted with the job's own token. Never changes the exit. */
+async function post(
+  io: Io,
+  github: GitHubTarget,
+  answer: GateAnswer,
+  pullRequest: number | undefined,
+): Promise<void> {
+  if (answer.github !== null && answer.github !== undefined) {
+    io.out('The server posted to GitHub itself; nothing to post from here.');
+    return;
+  }
+  const payload = payloadOf(answer);
+  if (payload === null) {
+    io.out('The server sent nothing to post; this install may predate --post.');
+    return;
+  }
+  for (const line of await postToGitHub(io.fetch, github, payload, pullRequest)) io.out(line);
+}
+
+/** `lupin gate --branch <b> --commit <sha> [--pr <n>] [--post]` — exits 1 when the gate fails. */
 export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
-  const parsed = parseOptions(argv, { values: ['project', 'branch', 'commit', 'pr'] });
+  const parsed = parseOptions(argv, {
+    values: ['project', 'branch', 'commit', 'pr'],
+    switches: ['post'],
+  });
   const branch = branchOf(io, optional(parsed, 'branch'));
   const commit = commitOf(io, optional(parsed, 'commit'));
   if (branch === undefined || branch === '') throw usage('--branch is required');
   if (commit === undefined) throw usage('--commit is required');
   const pullRequest = pullRequestOf(optional(parsed, 'pr'));
+  // Checked before the gate is asked, so a job missing GITHUB_TOKEN says so at once.
+  const github = parsed.switches.has('post') ? githubTarget(io.env) : null;
   const destination = target(io, parsed);
   const answer = (await send(
     io.fetch,
@@ -129,6 +156,7 @@ export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
   const risk = riskLine(answer);
   if (risk !== null) io.out(risk);
   for (const reason of reasons) io.out(`- ${reason}`);
+  if (github !== null) await post(io, github, answer, pullRequest);
   return answer.verdict === 'passed' ? EXIT.ok : EXIT.gateFailed;
 }
 

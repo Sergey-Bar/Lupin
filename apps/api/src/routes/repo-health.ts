@@ -15,9 +15,11 @@ import { MAX_HEALTH_REPORT_BYTES } from '@lupin/reporter';
 import type { ConnectorAdapter } from '@lupin/connectors-sdk';
 import {
   AlertSettingsSchema,
+  githubPayload as githubPayloadFor,
   githubRepository,
   isAllowedWebhook,
   reportToGitHub,
+  type GateReport,
 } from '../services/health-integrations.js';
 import { domainErrorResponse } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
@@ -313,28 +315,34 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     const repository = githubRepository(source.repositoryUrl);
     const token =
       repository === null ? null : ((await options.github?.tokenFor(projectId)) ?? null);
+    const report: GateReport = {
+      verdict,
+      grade: result.grade,
+      added: result.added,
+      branch: result.branch,
+      detailsUrl,
+      diffCoverage: result.diffCoverage,
+      delivery: result.delivery,
+      aiGovernance: result.aiGovernance,
+      evals: result.evals,
+      tests,
+      risk,
+      tamperFindings: await tamperFindingsFor(projectId, commit, risk),
+    };
+    const poster = repository !== null && token !== null ? (options.github ?? null) : null;
     const github =
-      repository === null || token === null || options.github === undefined
+      poster === null || repository === null || token === null
         ? null
         : await reportToGitHub(
-            options.github.adapter,
+            poster.adapter,
             token,
             { ...repository, sha: commit, pullRequest },
-            {
-              verdict,
-              grade: result.grade,
-              added: result.added,
-              branch: result.branch,
-              detailsUrl,
-              diffCoverage: result.diffCoverage,
-              delivery: result.delivery,
-              aiGovernance: result.aiGovernance,
-              evals: result.evals,
-              tests,
-              risk,
-              tamperFindings: await tamperFindingsFor(projectId, commit, risk),
-            },
+            report,
           );
+    // Nothing posted here: the job posts the same status, check run and comment itself, with
+    // its own token (`lupin gate --post`), so a LAN install still reaches the pull request.
+    const githubPayload =
+      github === null ? githubPayloadFor({ sha: commit, pullRequest }, report) : null;
     await audit(options, {
       actor: await uploaderActor(context, access),
       action: 'health.gate.report',
@@ -362,6 +370,7 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
       tests,
       risk,
       github,
+      githubPayload,
     });
   });
 

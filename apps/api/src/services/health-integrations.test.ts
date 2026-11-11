@@ -18,6 +18,7 @@ import {
   deliverAlerts,
   doraLine,
   githubHostOf,
+  githubPayload,
   githubRepository,
   useGitHubApi,
   isAllowedWebhook,
@@ -912,6 +913,34 @@ describe('the change-risk check run', () => {
       })),
     });
     expect(many).toHaveLength(MAX_ANNOTATIONS);
+  });
+
+  it('hands a job the same status, check run and comment the server would have posted', async () => {
+    const github = fakeAdapter({ listCheckRuns: { items: [] }, listIssueComments: [] });
+    await reportToGitHub(github.adapter, 't', target, report);
+    const payload = githubPayload(target, report);
+    const posted = (operation: string) =>
+      github.requests.find((request) => request.operation === operation)?.input as Record<
+        string,
+        unknown
+      >;
+    expect({ owner: 'o', repo: 'r', sha: 'abc1234', ...payload.status }).toEqual(
+      posted('createCommitStatus'),
+    );
+    expect({ owner: 'o', repo: 'r', head_sha: 'abc1234', ...payload.checkRun }).toEqual(
+      posted('createCheckRun'),
+    );
+    expect(payload.comment).toEqual({
+      marker: COMMENT_MARKER,
+      body: posted('createIssueComment')['body'],
+    });
+    expect(payload.sha).toBe('abc1234');
+  });
+
+  it('leaves out the check run without an assessment and the comment without a pull request', () => {
+    const payload = githubPayload({ sha: 'abc1234' }, { ...report, risk: null });
+    expect(payload).toMatchObject({ checkRun: null, comment: null });
+    expect(JSON.stringify(payload)).not.toMatch(/token/iu);
   });
 });
 
