@@ -407,6 +407,13 @@
       "when": 1790400000052,
       "tag": "0057_settings_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1790400000053,
+      "tag": "0058_change_risk",
+      "breakpoints": true
     }
   ]
 }

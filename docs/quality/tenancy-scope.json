@@ -24,10 +24,10 @@
   ],
   "whatDoesNotBlock": "Workspace-scoped tables without a hard boundary. That is real debt, counted and reported by `pnpm tenancy:check`, because failing on it would make the gate permanently red — and a permanently red gate stops catching the regressions above.",
   "tally": {
-    "total": 90,
+    "total": 92,
     "global": 13,
-    "workspaceScoped": 77,
-    "workspaceScopedWithHardBoundary": 77,
+    "workspaceScoped": 79,
+    "workspaceScopedWithHardBoundary": 79,
     "workspaceScopedNullable": 0,
     "workspaceScopedAbsent": 0,
     "note": "**Derived, not asserted.** An earlier version of this file carried a hand-written tally of 19 / 37 / 18, which was wrong in every field — the numbers had been written from memory rather than measured. `scripts/lib/tenancy-scope.test.mjs` now recomputes all six from the schema and this register and fails if any disagree, so they cannot drift again. That is the `no-second-authority` failure this repository records as `P-6` and `P-5`, committed by the author of the skill that describes it.",
@@ -423,6 +423,16 @@
       "scope": "workspace",
       "column": "not-null",
       "reason": "The high and critical findings the pull-request gate found new on each of a tenant's pull requests, upserted per pull request and bounded to 5000 per project; read by the AI-code outcomes. Hard-scoped from its first migration (`0039_ai_code_governance.sql`). Isolation: `apps/api/src/services/ai-code-service.test.ts`."
+    },
+    "test_tamper_reports": {
+      "scope": "workspace",
+      "column": "not-null",
+      "reason": "What `lupin diff-guard` found on each of a tenant's commits: kinds, paths and line numbers of the changes that weaken the tests, never a line of source. Upserted per commit and bounded to 5000 per project. Hard-scoped from its first migration (`0058_change_risk.sql`). Isolation: `apps/api/src/services/diff-guard-service.test.ts`."
+    },
+    "pull_request_risk_assessments": {
+      "scope": "workspace",
+      "column": "not-null",
+      "reason": "A tenant's pull request's change risk at each head commit: level, score, the factors and their sentences, and the blast radius with teams named and people only counted. Bounded to 5000 per project. Hard-scoped from its first migration (`0058_change_risk.sql`). Isolation: `apps/api/src/services/change-risk-service.test.ts`."
     },
     "github_issues": {
       "scope": "workspace",

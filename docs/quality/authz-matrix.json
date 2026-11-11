@@ -9,11 +9,11 @@
   ],
   "summary": {
     "admin": 40,
-    "viewer": 90,
+    "viewer": 91,
     "operator": 35,
     "open": 16,
     "runner-credential": 9,
-    "reporter-secret": 13,
+    "reporter-secret": 14,
     "enrollment-token": 1,
     "runner-registration-secret": 1,
     "scim-token": 10
@@ -951,6 +951,22 @@
       "method": "GET",
       "path": "/api/v1/projects/:id/health/diff-coverage",
       "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:id/health/diff-guard",
+      "access": "viewer",
+      "workspaceScoped": false,
+      "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/projects/:id/health/diff-guard",
+      "access": "reporter-secret",
       "workspaceScoped": false,
       "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
       "composition": "database"

@@ -82,6 +82,24 @@ export const DiffGuardUploadSchema = z.strictObject({
 });
 export type DiffGuardUpload = z.infer<typeof DiffGuardUploadSchema>;
 
+/**
+ * What the install holds for one commit. `none` says no job sent a report — test changes were
+ * not checked — which is never the same as a report with no findings.
+ */
+export const DiffGuardStatusSchema = z.discriminatedUnion('state', [
+  z.strictObject({ state: z.literal('none'), commit: z.string().min(1) }),
+  z.strictObject({
+    state: z.literal('reported'),
+    commit: z.string().min(1),
+    base: z.string().min(1),
+    branch: z.string().nullable(),
+    pullRequest: z.number().int().min(1).nullable(),
+    report: DiffGuardReportSchema,
+    reportedAt: z.iso.datetime({ offset: true }),
+  }),
+]);
+export type DiffGuardStatus = z.infer<typeof DiffGuardStatusSchema>;
+
 /** The evidence an assessment can read. A policy names which of them are required. */
 export const CHANGE_RISK_EVIDENCE = [
   'attribution',

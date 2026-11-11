@@ -2,6 +2,7 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod/v4';
 import {
+  DiffGuardUploadSchema,
   FINDING_SEVERITIES,
   FINDING_STATES,
   HEALTH_DIMENSIONS,
@@ -47,6 +48,7 @@ import {
   supplyChainPolicyRecord,
 } from '../services/supply-chain-service.js';
 import { diffCoverageStatus } from '../services/diff-coverage-service.js';
+import { diffGuardStatus, recordDiffGuard } from '../services/diff-guard-service.js';
 import type { CommitTests } from '../services/commit-tests.js';
 
 /**
@@ -117,6 +119,9 @@ const PortfolioComponentsQuerySchema = z.object({
 });
 
 const DiffCoverageQuerySchema = z.object({ commit: Commit });
+
+/** 200 findings of a 500-character path each is ~120 kB; twice that is room, not a mirror. */
+const DIFF_GUARD_MAX_BYTES = 256_000;
 
 const GateReportBodySchema = z.object({
   branch: z.string().trim().min(1).max(255),
@@ -383,6 +388,58 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     if (!parsed.success) return invalidRequest(context, 'Name the commit', parsed.error.issues);
     return context.json(
       await diffCoverageStatus(options, context.req.param('id'), parsed.data.commit.toLowerCase()),
+    );
+  });
+
+  /**
+   * `lupin diff-guard`'s findings for a commit: kinds, paths and line numbers of the changes
+   * that weaken the tests. Accepts the same credentials as an upload. The schema is strict, so
+   * a finding that carries the text of a line is refused rather than stored.
+   */
+  app.post(
+    '/api/v1/projects/:id/health/diff-guard',
+    uploader,
+    bodyLimit({
+      maxSize: DIFF_GUARD_MAX_BYTES,
+      onError: (context) =>
+        domainErrorResponse(
+          context,
+          new DomainError(ErrorCode.PAYLOAD_TOO_LARGE, 'diff-guard report larger than 256 kB'),
+        ),
+    }),
+    async (context) => {
+      const parsed = DiffGuardUploadSchema.safeParse(await context.req.json().catch(() => null));
+      if (!parsed.success) {
+        return invalidRequest(context, 'Invalid diff-guard report', parsed.error.issues);
+      }
+      const projectId = context.req.param('id');
+      await recordDiffGuard(options, projectId, parsed.data);
+      const counts = parsed.data.report.counts;
+      await audit(options, {
+        actor: await uploaderActor(context, access),
+        action: 'health.diff-guard.report',
+        resourceType: 'project',
+        resourceId: projectId,
+        // Counts by kind, never a path or a line: the audit trail is not a copy of the report.
+        details: {
+          commit: parsed.data.commit.toLowerCase(),
+          pullRequest: parsed.data.pullRequest ?? null,
+          findings: Object.values(counts).reduce((sum, value) => sum + value, 0),
+          counts,
+          truncated: parsed.data.report.truncated,
+        },
+      });
+      return context.json(
+        await diffGuardStatus(options, projectId, parsed.data.commit.toLowerCase()),
+      );
+    },
+  );
+
+  app.get('/api/v1/projects/:id/health/diff-guard', viewer, async (context) => {
+    const parsed = DiffCoverageQuerySchema.safeParse(context.req.query());
+    if (!parsed.success) return invalidRequest(context, 'Name the commit', parsed.error.issues);
+    return context.json(
+      await diffGuardStatus(options, context.req.param('id'), parsed.data.commit.toLowerCase()),
     );
   });
 

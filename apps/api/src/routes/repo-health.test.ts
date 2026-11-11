@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as schema from '@lupin/db';
 import {
   DiffCoverageStatusSchema,
+  DiffGuardStatusSchema,
   HealthFindingsPageSchema,
   HealthHistorySchema,
   HealthUploadResultSchema,
@@ -674,5 +675,71 @@ describe('diff coverage through the routes', () => {
     expect(String((comment?.input as { body: string }).body)).toContain(
       '**Diff coverage:** 33.3% — 1 of 3 changed executable lines ran. Uncovered: `src/a.ts:3-4`.',
     );
+  });
+});
+
+describe('POST /api/v1/projects/:id/health/diff-guard', () => {
+  const report = {
+    commit: 'abc1234',
+    base: 'origin/main',
+    pullRequest: 7,
+    report: {
+      version: 'diff-guard/1',
+      findings: [{ kind: 'skip-added', path: 'src/cart.test.ts', line: 11, side: 'head' }],
+      counts: { 'skip-added': 1 },
+      filesChecked: 2,
+      truncated: false,
+    },
+  };
+  const path = (projectId: string) => `/api/v1/projects/${projectId}/health/diff-guard`;
+
+  it('accepts an uploader’s report, refusing no credential and a wrong one', async () => {
+    const { app, projectId } = await harness();
+    expect((await json(app, 'POST', path(projectId), report)).status).toBe(401);
+    expect(
+      (await json(app, 'POST', path(projectId), report, { authorization: 'Bearer wrong' })).status,
+    ).toBe(403);
+    const accepted = await json(app, 'POST', path(projectId), report, {
+      authorization: `Bearer ${SECRET}`,
+    });
+    expect(accepted.status).toBe(200);
+    expect(DiffGuardStatusSchema.parse(await accepted.json())).toMatchObject({
+      state: 'reported',
+      commit: 'abc1234',
+      report: { counts: { 'skip-added': 1 } },
+    });
+  });
+
+  it('refuses a finding that carries a line of source, and an unknown kind', async () => {
+    const { app, projectId } = await harness();
+    const auth = { authorization: `Bearer ${SECRET}` };
+    const withText = {
+      ...report,
+      report: { ...report.report, findings: [{ ...report.report.findings[0], text: 'it.skip(' }] },
+    };
+    expect((await json(app, 'POST', path(projectId), withText, auth)).status).toBe(400);
+    const unknown = {
+      ...report,
+      report: { ...report.report, findings: [{ ...report.report.findings[0], kind: 'vibes' }] },
+    };
+    expect((await json(app, 'POST', path(projectId), unknown, auth)).status).toBe(400);
+  });
+
+  it('audits the counts and never a path', async () => {
+    const { app, db, projectId } = await harness();
+    await json(app, 'POST', path(projectId), report, { authorization: `Bearer ${SECRET}` });
+    const [event] = await db
+      .select()
+      .from(schema.auditEvents)
+      .where(eq(schema.auditEvents.action, 'health.diff-guard.report'));
+    expect(event?.details).toMatchObject({ commit: 'abc1234', findings: 1, pullRequest: 7 });
+    expect(JSON.stringify(event?.details)).not.toContain('cart.test.ts');
+  });
+
+  it('says a commit nobody checked was not checked, and wants a commit to read', async () => {
+    const { app, projectId } = await harness();
+    const read = await app.request(`${path(projectId)}?commit=def5678`);
+    expect(await read.json()).toEqual({ state: 'none', commit: 'def5678' });
+    expect((await app.request(path(projectId))).status).toBe(400);
   });
 });

@@ -1078,6 +1078,26 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/health/diff-guard": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdHealthDiffGuard",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "post": {
+        "operationId": "postApiV1ProjectsIdHealthDiffGuard",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/health/findings": {
       "get": {
         "operationId": "getApiV1ProjectsIdHealthFindings",
@@ -14292,6 +14312,114 @@
         },
         "required": ["version", "findings", "counts", "filesChecked", "truncated"],
         "additionalProperties": false
+      },
+      "DiffGuardStatusSchema": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "state": { "type": "string", "const": "none" },
+              "commit": { "type": "string", "minLength": 1 }
+            },
+            "required": ["state", "commit"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": { "type": "string", "const": "reported" },
+              "commit": { "type": "string", "minLength": 1 },
+              "base": { "type": "string", "minLength": 1 },
+              "branch": { "type": ["string", "null"] },
+              "pullRequest": {
+                "anyOf": [
+                  { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                  { "type": "null" }
+                ]
+              },
+              "report": {
+                "type": "object",
+                "properties": {
+                  "version": { "type": "string", "minLength": 1, "maxLength": 50 },
+                  "findings": {
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "test-deleted",
+                            "skip-added",
+                            "assertion-removed",
+                            "assertion-loosened",
+                            "empty-catch",
+                            "snapshot-bulk-update",
+                            "threshold-lowered",
+                            "ci-made-non-failing",
+                            "retry-added"
+                          ]
+                        },
+                        "path": { "type": "string", "minLength": 1, "maxLength": 500 },
+                        "line": {
+                          "anyOf": [
+                            { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                            { "type": "null" }
+                          ]
+                        },
+                        "side": { "type": "string", "enum": ["base", "head"] }
+                      },
+                      "required": ["kind", "path", "line", "side"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "counts": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "enum": [
+                        "test-deleted",
+                        "skip-added",
+                        "assertion-removed",
+                        "assertion-loosened",
+                        "empty-catch",
+                        "snapshot-bulk-update",
+                        "threshold-lowered",
+                        "ci-made-non-failing",
+                        "retry-added"
+                      ]
+                    },
+                    "additionalProperties": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "filesChecked": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                  "truncated": { "type": "boolean" }
+                },
+                "required": ["version", "findings", "counts", "filesChecked", "truncated"],
+                "additionalProperties": false
+              },
+              "reportedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": [
+              "state",
+              "commit",
+              "base",
+              "branch",
+              "pullRequest",
+              "report",
+              "reportedAt"
+            ],
+            "additionalProperties": false
+          }
+        ]
       },
       "DiffGuardUploadSchema": {
         "type": "object",

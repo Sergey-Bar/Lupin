@@ -8,6 +8,7 @@ export * from './health.js';
 export * from './notifications.js';
 export * from './supply-chain.js';
 export * from './delivery.js';
+export * from './change-risk.js';
 export * from './github.js';
 export * from './agents.js';
 export * from './integrations.js';
