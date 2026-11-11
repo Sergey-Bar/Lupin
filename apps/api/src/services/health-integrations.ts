@@ -5,9 +5,11 @@ import type { GateVerdict } from '@lupin/projects';
 import {
   HEALTH_DIMENSION_LABELS,
   type CanonicalFinding,
+  type ChangeRiskLevel,
   type DiffCoverageRecord,
   type HealthGrade,
   type HealthLetter,
+  type PullRequestRisk,
   type Scorecard,
 } from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
@@ -83,6 +85,66 @@ export interface GateReport {
   evals?: EvalGateReading | null;
   /** The commit's test run and the quarantine verdict on it; a "Tests" section when present. */
   tests?: CommitTests | null;
+  /** The pull request's change risk at this head; the comment leads with it when present. */
+  risk?: PullRequestRisk | null;
+}
+
+const RISK_LABEL: Readonly<Record<ChangeRiskLevel, string>> = {
+  low: 'Low',
+  medium: 'Medium',
+  unknown: 'Unknown',
+  high: 'High',
+  critical: 'Critical',
+};
+const COMMENT_RISK_FACTORS = 3;
+
+const EVIDENCE_LABEL: Readonly<Record<string, string>> = {
+  tests: 'test results',
+  'diff-coverage': 'diff coverage',
+  attribution: 'who wrote it',
+  findings: 'a security scan',
+  tampering: 'a diff-guard check',
+  evals: 'eval results',
+};
+
+/**
+ * The "Change risk" section: the level and its score, the factors worth the most points, what
+ * was not measured, and how far the change reaches. Every factor is one of the model's own
+ * sentences, so the comment says nothing the assessment did not.
+ */
+export function riskSection(assessed: PullRequestRisk): string[] {
+  const { risk, blastRadius } = assessed;
+  const factors = risk.factors.filter((factor) => factor.kind === 'risk');
+  const lines = [
+    `**Change risk: ${RISK_LABEL[risk.level]}** · ${String(risk.score)} points (\`${risk.version}\`)`,
+    '',
+  ];
+  if (factors.length > 0) {
+    lines.push('| Points | Why |', '| ---: | --- |');
+    for (const factor of factors.slice(0, COMMENT_RISK_FACTORS)) {
+      lines.push(`| ${String(factor.points)} | ${inline(factor.detail)} |`);
+    }
+    if (factors.length > COMMENT_RISK_FACTORS) {
+      lines.push(
+        '',
+        `…and ${String(factors.length - COMMENT_RISK_FACTORS)} more on the dashboard.`,
+      );
+    }
+  }
+  if (risk.missing.length > 0) {
+    const missing = risk.missing.map((kind) => EVIDENCE_LABEL[kind] ?? kind).join(', ');
+    lines.push('', `Not measured, so this cannot be low risk: ${missing}.`);
+  }
+  if (blastRadius !== null && blastRadius.sensitiveAreas.length > 0) {
+    const areas = blastRadius.sensitiveAreas.map((touch) => touch.area).join(', ');
+    const teams =
+      blastRadius.teams.length === 0
+        ? ''
+        : ` · owned by ${blastRadius.teams.map(inline).join(', ')}`;
+    const cut = blastRadius.truncated ? ' (changed files were truncated)' : '';
+    lines.push('', `Reaches: ${inline(areas)}${teams}${cut}.`);
+  }
+  return lines;
 }
 
 const COMMENT_TESTS = 10;
@@ -342,6 +404,10 @@ export function renderGateComment(report: GateReport): string {
     grade.limiter ?? grade.incompleteReason ?? '',
     '',
   ];
+  // The change's own risk leads: the grade is the repository's, the risk is this pull request's.
+  if (report.risk !== null && report.risk !== undefined) {
+    lines.push(...riskSection(report.risk), '');
+  }
   if (verdict.reasons.length > 0) {
     lines.push(
       '**Why the gate failed**',
@@ -376,7 +442,9 @@ export type GitHubReport = {
 function statusDescription(report: GateReport): string {
   const fallback =
     report.grade.letter === null ? 'Grade incomplete' : `Graded ${report.grade.letter}`;
-  return (report.verdict.reasons[0] ?? fallback).slice(0, 140);
+  const reason = report.verdict.reasons[0] ?? fallback;
+  const risk = report.risk?.risk.level;
+  return (risk === undefined ? reason : `Risk ${risk} · ${reason}`).slice(0, 140);
 }
 
 const CommentListSchema = z.array(

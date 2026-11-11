@@ -37,6 +37,16 @@ export function target(io: Io, parsed: { values: Map<string, string> }): Target 
   return resolveTarget(io.env, parsed.values.get('project'));
 }
 
+/** `--pr`, as a pull request number; refused unless it is a positive integer. */
+export function pullRequestOf(flag: string | undefined): number | undefined {
+  if (flag === undefined) return undefined;
+  const number = Number(flag);
+  if (!(Number.isInteger(number) && number > 0)) {
+    throw usage(`--pr is a pull request number: ${flag}`);
+  }
+  return number;
+}
+
 /** `lupin upload --format <f> --file <path> [--branch --commit --digest --source-root]` */
 export async function upload(argv: readonly string[], io: Io): Promise<ExitCode> {
   const parsed = parseOptions(argv, {
@@ -76,6 +86,16 @@ interface GateAnswer {
   verdict?: unknown;
   reasons?: unknown;
   grade?: { letter?: string | null };
+  risk?: { risk?: { level?: unknown; score?: unknown; missing?: unknown } } | null;
+}
+
+/** "Change risk: high (50 points)." — read defensively, and left out when the answer has none. */
+function riskLine(answer: GateAnswer | null): string | null {
+  const risk = answer?.risk?.risk;
+  if (typeof risk?.level !== 'string' || typeof risk.score !== 'number') return null;
+  const missing = Array.isArray(risk.missing) ? risk.missing.map(String) : [];
+  const gap = missing.length === 0 ? '' : `; not measured: ${missing.join(', ')}`;
+  return `Change risk: ${risk.level} (${String(risk.score)} points)${gap}.`;
 }
 
 /** `lupin gate --branch <b> --commit <sha> [--pr <n>]` — exits 1 when the gate fails. */
@@ -85,11 +105,7 @@ export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
   const commit = commitOf(io, optional(parsed, 'commit'));
   if (branch === undefined || branch === '') throw usage('--branch is required');
   if (commit === undefined) throw usage('--commit is required');
-  const pr = optional(parsed, 'pr');
-  const pullRequest = pr === undefined ? undefined : Number(pr);
-  if (pullRequest !== undefined && !(Number.isInteger(pullRequest) && pullRequest > 0)) {
-    throw usage(`--pr is a pull request number: ${String(pr)}`);
-  }
+  const pullRequest = pullRequestOf(optional(parsed, 'pr'));
   const destination = target(io, parsed);
   const answer = (await send(
     io.fetch,
@@ -110,6 +126,8 @@ export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
     throw new CliError('The server answered without a gate verdict.', EXIT.refused);
   }
   io.out(`Gate ${answer.verdict} on ${branch} — grade ${answer.grade?.letter ?? 'incomplete'}.`);
+  const risk = riskLine(answer);
+  if (risk !== null) io.out(risk);
   for (const reason of reasons) io.out(`- ${reason}`);
   return answer.verdict === 'passed' ? EXIT.ok : EXIT.gateFailed;
 }

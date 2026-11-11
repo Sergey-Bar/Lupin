@@ -1,12 +1,18 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import * as schema from '@lupin/db';
 import { AGENT_SIGNATURES } from '@lupin/reporting';
-import { PullRequestRiskHistorySchema, PullRequestRiskSchema } from '@lupin/shared-contracts';
+import {
+  PullRequestRiskHistorySchema,
+  PullRequestRiskSchema,
+  type PullRequestRisk,
+} from '@lupin/shared-contracts';
 import { migratedDatabase, type MigratedDb } from '../test-support/migrated-database.js';
 import {
   assessPullRequestRisk,
   pullRequestRisk,
   riskFactsOf,
+  riskGateReason,
+  riskPolicyFor,
   type ChangeRiskOptions,
   type RiskFacts,
 } from './change-risk-service.js';
@@ -271,6 +277,46 @@ describe('riskFactsOf', () => {
     expect(
       riskFactsOf(gate({ diffCoverage: null, evals: null, aiGovernance: null }), tests, HEAD, 12),
     ).toMatchObject({ diffCoverage: null, evalRegressions: null, attribution: null });
+  });
+});
+
+describe('riskGateReason', () => {
+  const at = (level: PullRequestRisk['risk']['level'], missing: string[] = []): PullRequestRisk =>
+    ({
+      pullRequest: 1,
+      headSha: HEAD,
+      assessedAt: NOW.toISOString(),
+      blastRadius: null,
+      risk: { level, score: 55, version: 'change-risk/1', factors: [], missing },
+    }) as PullRequestRisk;
+
+  it('reports and never blocks without a blockAt', () => {
+    expect(riskGateReason(at('critical'), {})).toBeNull();
+    expect(riskGateReason(null, { blockAt: 'high' })).toBeNull();
+  });
+
+  it('names the level, the points and the policy when it blocks', () => {
+    expect(riskGateReason(at('high'), { blockAt: 'high' })).toBe(
+      'Change risk is high (55 points); the policy blocks at high.',
+    );
+    expect(riskGateReason(at('high'), { blockAt: 'critical' })).toBeNull();
+  });
+
+  it('blocks an unknown risk only when the policy says so, and says what was missing', () => {
+    expect(riskGateReason(at('unknown', ['tests']), { blockAt: 'high' })).toBeNull();
+    expect(
+      riskGateReason(at('unknown', ['tests', 'diff-coverage']), {
+        blockAt: 'high',
+        blockOnUnknown: true,
+      }),
+    ).toBe(
+      'Change risk is unknown (tests, diff-coverage not measured), and the policy blocks an unknown risk.',
+    );
+  });
+
+  it('reads the policy from the project', async () => {
+    const { options, projectId } = await setup({ health: { risk: { blockAt: 'critical' } } });
+    expect(await riskPolicyFor(options, projectId)).toEqual({ blockAt: 'critical' });
   });
 });
 

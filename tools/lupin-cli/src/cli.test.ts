@@ -186,6 +186,34 @@ describe('lupin gate', () => {
     );
   });
 
+  it('prints the pull request’s change risk and what it could not measure', async () => {
+    reply = () => ({
+      status: 200,
+      body: {
+        verdict: 'passed',
+        reasons: [],
+        grade: { letter: 'B' },
+        risk: { risk: { level: 'unknown', score: 15, missing: ['tests', 'diff-coverage'] } },
+      },
+    });
+    const answered = await invoke(['gate', '--branch', 'f', '--commit', SHA, '--pr', '3']);
+    expect(answered.out).toBe(
+      'Gate passed on f — grade B.\nChange risk: unknown (15 points); not measured: tests, diff-coverage.',
+    );
+    reply = () => ({
+      status: 200,
+      body: {
+        verdict: 'passed',
+        reasons: [],
+        grade: { letter: 'B' },
+        risk: { risk: { level: 'high', score: 50, missing: [] } },
+      },
+    });
+    expect((await invoke(['gate', '--branch', 'f', '--commit', SHA, '--pr', '3'])).out).toBe(
+      'Gate passed on f — grade B.\nChange risk: high (50 points).',
+    );
+  });
+
   it('refuses to guess a branch, a commit or a pull request, and an answer with no verdict', async () => {
     expect((await invoke(['gate', '--commit', SHA])).code).toBe(EXIT.usage);
     expect((await invoke(['gate', '--branch', 'main'])).code).toBe(EXIT.usage);

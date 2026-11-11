@@ -49,6 +49,12 @@ import {
 } from '../services/supply-chain-service.js';
 import { diffCoverageStatus } from '../services/diff-coverage-service.js';
 import { diffGuardStatus, recordDiffGuard } from '../services/diff-guard-service.js';
+import {
+  assessPullRequestRisk,
+  riskFactsOf,
+  riskGateReason,
+  riskPolicyFor,
+} from '../services/change-risk-service.js';
 import type { CommitTests } from '../services/commit-tests.js';
 
 /**
@@ -268,6 +274,25 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     const { branch, commit, pullRequest } = parsed.data;
     const result = await healthGate(options, projectId, branch, commit, pullRequest);
     const tests = (await options.commitTests?.(projectId, commit)) ?? null;
+    // A pull request's own risk at this head: assessed and stored on every report, and a
+    // reason to fail only when the project's policy blocks at its level.
+    const risk =
+      pullRequest === undefined
+        ? null
+        : await assessPullRequestRisk(
+            options,
+            projectId,
+            riskFactsOf(result, tests, commit, pullRequest),
+          );
+    const riskReason = riskGateReason(risk, await riskPolicyFor(options, projectId));
+    const verdict =
+      riskReason === null
+        ? result.verdict
+        : {
+            ...result.verdict,
+            verdict: 'failed' as const,
+            reasons: [...result.verdict.reasons, riskReason],
+          };
     if (pullRequest !== undefined) {
       await options.onGateReport?.(projectId, {
         pullRequest,
@@ -289,7 +314,7 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
             token,
             { ...repository, sha: commit, pullRequest },
             {
-              verdict: result.verdict,
+              verdict,
               grade: result.grade,
               added: result.added,
               branch: result.branch,
@@ -299,6 +324,7 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
               aiGovernance: result.aiGovernance,
               evals: result.evals,
               tests,
+              risk,
             },
           );
     await audit(options, {
@@ -310,21 +336,23 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
         branch: result.branch,
         commit,
         pullRequest: pullRequest ?? null,
-        verdict: result.verdict.verdict,
+        verdict: verdict.verdict,
         aiGovernance: result.aiGovernance?.verdict.verdict ?? null,
         evals: result.evals?.suites.length ?? 0,
+        risk: risk?.risk.level ?? null,
         github,
       },
     });
     return context.json({
       branch: result.branch,
-      ...result.verdict,
+      ...verdict,
       grade: result.grade,
       diffCoverage: result.diffCoverage,
       aiGovernance: result.aiGovernance,
       evals: result.evals,
       agentRuntime: result.agentRuntime,
       tests,
+      risk,
       github,
     });
   });

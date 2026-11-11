@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, notInArray } from 'drizzle-orm';
 import { pullRequestRiskAssessments, pullRequests, testFailureCorrelations } from '@lupin/db';
-import { assessChangeRisk, blastRadius, type ChangeRiskInput } from '@lupin/reporting';
+import { assessChangeRisk, blastRadius, riskBlocks, type ChangeRiskInput } from '@lupin/reporting';
 import {
   BlastRadiusSummarySchema,
   ChangeRiskSchema,
@@ -155,6 +155,31 @@ async function radiusOf(
 
 function policyOf(project: ProjectRow): ChangeRiskPolicyBlock {
   return healthPolicyOf(project)?.risk ?? {};
+}
+
+/**
+ * The reason the gate fails on this risk, or `null` when the policy does not block it. Unset
+ * `blockAt` is report-only: the risk is in the comment and the response, and the verdict is
+ * the gate's own.
+ */
+export function riskGateReason(
+  assessed: PullRequestRisk | null,
+  policy: ChangeRiskPolicyBlock,
+): string | null {
+  if (assessed === null) return null;
+  const { level, score } = assessed.risk;
+  if (!riskBlocks(level, policy)) return null;
+  return level === 'unknown'
+    ? `Change risk is unknown (${assessed.risk.missing.join(', ')} not measured), and the policy blocks an unknown risk.`
+    : `Change risk is ${level} (${String(score)} points); the policy blocks at ${String(policy.blockAt)}.`;
+}
+
+/** The project's change-risk policy block, `{}` when it sets none. */
+export async function riskPolicyFor(
+  options: ChangeRiskOptions,
+  projectId: string,
+): Promise<ChangeRiskPolicyBlock> {
+  return policyOf(await projectRow(options, projectId));
 }
 
 /** Assess the pull request at `facts.commit`, store it, and return it. */

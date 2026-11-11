@@ -15,6 +15,7 @@ import {
   PortfolioComponentsPageSchema,
   PortfolioSchema,
   ProjectHealthSchema,
+  PullRequestRiskSchema,
   SbomComponentsPageSchema,
   SupplyChainPolicyRecordSchema,
 } from '@lupin/shared-contracts';
@@ -289,7 +290,52 @@ describe('the pull-request gate', () => {
       { branch: 'main', commit: 'abc1234' },
       { authorization: `Bearer ${SECRET}` },
     );
-    expect(await response.json()).toMatchObject({ verdict: 'passed', github: null });
+    expect(await response.json()).toMatchObject({ verdict: 'passed', github: null, risk: null });
+  });
+
+  it('assesses a named pull request’s change risk and reports it without blocking by default', async () => {
+    const { app, db, projectId } = await harness();
+    const response = await json(
+      app,
+      'POST',
+      `/api/v1/projects/${projectId}/health/gate/report`,
+      { branch: 'main', commit: 'abc1234', pullRequest: 5 },
+      { authorization: `Bearer ${SECRET}` },
+    );
+    const body = (await response.json()) as { verdict: string; risk: unknown };
+    expect(body.verdict).toBe('passed');
+    // Nothing measured for this commit: unknown, and saying what was missing.
+    expect(PullRequestRiskSchema.parse(body.risk).risk).toMatchObject({
+      level: 'unknown',
+      missing: ['tests', 'diff-coverage'],
+    });
+    expect(await db.select().from(schema.pullRequestRiskAssessments)).toHaveLength(1);
+    const [event] = await db
+      .select()
+      .from(schema.auditEvents)
+      .where(eq(schema.auditEvents.action, 'health.gate.report'));
+    expect(event?.details).toMatchObject({ risk: 'unknown', verdict: 'passed' });
+  });
+
+  it('fails the gate on a risk the policy blocks, and says why', async () => {
+    const { app, db, projectId } = await harness();
+    await db
+      .update(schema.projects)
+      .set({ profile: { health: { risk: { blockAt: 'high', blockOnUnknown: true } } } })
+      .where(eq(schema.projects.id, projectId));
+    const response = await json(
+      app,
+      'POST',
+      `/api/v1/projects/${projectId}/health/gate/report`,
+      { branch: 'main', commit: 'abc1234', pullRequest: 5 },
+      { authorization: `Bearer ${SECRET}` },
+    );
+    expect(await response.json()).toMatchObject({
+      verdict: 'failed',
+      reasons: [
+        'Change risk is unknown (tests, diff-coverage not measured), and the policy blocks an unknown risk.',
+      ],
+    });
   });
 });
 

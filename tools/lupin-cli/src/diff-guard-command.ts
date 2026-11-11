@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { optional, parseOptions } from './args.js';
-import { branchOf, commitOf, target, type Io } from './commands.js';
+import { branchOf, commitOf, pullRequestOf, target, type Io } from './commands.js';
 import { analyzeDiff, type GuardReport, type TamperKind } from './diff-guard.js';
 import { EXIT, usage, type ExitCode } from './errors.js';
 import { send } from './http.js';
@@ -149,11 +149,7 @@ function readGuardOptions(argv: readonly string[], io: Io): GuardOptions {
   });
   const base = baseOf(io, optional(parsed, 'base'));
   const dryRun = parsed.switches.has('dry-run');
-  const pr = optional(parsed, 'pr');
-  const pullRequest = pr === undefined ? undefined : Number(pr);
-  if (pullRequest !== undefined && !(Number.isInteger(pullRequest) && pullRequest > 0)) {
-    throw usage(`--pr is a pull request number: ${String(pr)}`);
-  }
+  const pullRequest = pullRequestOf(optional(parsed, 'pr'));
   const commit = commitOf(io, optional(parsed, 'commit'));
   if (!dryRun && commit === undefined) throw usage('--commit is required, or set LUPIN_COMMIT.');
   const branch = branchOf(io, optional(parsed, 'branch'));

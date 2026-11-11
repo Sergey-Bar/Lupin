@@ -5,6 +5,7 @@ import {
   HEALTH_DIMENSIONS,
   type CanonicalFinding,
   type HealthGrade,
+  type PullRequestRisk,
   type Scorecard,
 } from '@lupin/shared-contracts';
 import {
@@ -20,6 +21,7 @@ import {
   isAllowedWebhook,
   renderGateComment,
   reportToGitHub,
+  riskSection,
   signWebhook,
   testsSection,
   diffCoverageLine,
@@ -161,6 +163,99 @@ describe('the pull-request comment', () => {
       .split('\n')
       .find((line) => line.startsWith('| critical'));
     expect(row?.split('|')).toHaveLength(5);
+  });
+
+  const assessed = (overrides: Partial<PullRequestRisk['risk']> = {}): PullRequestRisk => ({
+    pullRequest: 12,
+    headSha: 'b'.repeat(40),
+    assessedAt: '2026-11-11T09:00:00.000Z',
+    blastRadius: {
+      version: 'blast-radius/1',
+      sensitiveAreas: [
+        { area: 'migrations', count: 1, paths: ['db/migrations/1.sql'] },
+        { area: 'auth', count: 2, paths: ['src/auth/a.ts', 'src/auth/b.ts'] },
+      ],
+      teams: ['@acme/data'],
+      individualOwners: 1,
+      unownedPaths: 0,
+      linkedTests: [],
+      linkedTestsTotal: 0,
+      truncated: true,
+    },
+    risk: {
+      level: 'critical',
+      score: 95,
+      version: 'change-risk/1',
+      factors: [
+        {
+          id: 'test-tampering',
+          kind: 'risk',
+          points: 40,
+          detail: '1 change weakens the tests: an added skip or focus.',
+          evidence: null,
+        },
+        {
+          id: 'ai-authorship',
+          kind: 'risk',
+          points: 15,
+          detail: 'Written by an agent (evil|bot`).',
+          evidence: null,
+        },
+        {
+          id: 'no-human-approval',
+          kind: 'risk',
+          points: 15,
+          detail: 'AI-written and no person has approved it.',
+          evidence: null,
+        },
+        {
+          id: 'blast-radius',
+          kind: 'risk',
+          points: 20,
+          detail: 'Touches 2 sensitive areas.',
+          evidence: null,
+        },
+        { id: 'size', kind: 'risk', points: 5, detail: '400 lines changed.', evidence: null },
+        {
+          id: 'diff-coverage',
+          kind: 'missing',
+          points: 0,
+          detail: 'Diff coverage was not measured.',
+          evidence: null,
+        },
+      ],
+      missing: ['diff-coverage'],
+      ...overrides,
+    },
+  });
+
+  it('leads with the change risk: the level, the top three factors, what was missing, and the reach', () => {
+    const body = renderGateComment({ ...report, risk: assessed() });
+    const lines = body.split('\n');
+    const heading = lines.indexOf('**Change risk: Critical** · 95 points (`change-risk/1`)');
+    expect(heading).toBeGreaterThan(0);
+    expect(heading).toBeLessThan(lines.indexOf('**Why the gate failed**'));
+    expect(lines.slice(heading + 2, heading + 7)).toEqual([
+      '| Points | Why |',
+      '| ---: | --- |',
+      '| 40 | 1 change weakens the tests: an added skip or focus. |',
+      '| 15 | Written by an agent (evil bot ). |',
+      '| 15 | AI-written and no person has approved it. |',
+    ]);
+    expect(body).toContain('…and 2 more on the dashboard.');
+    expect(body).toContain('Not measured, so this cannot be low risk: diff coverage.');
+    expect(body).toContain(
+      'Reaches: migrations, auth · owned by @acme/data (changed files were truncated).',
+    );
+  });
+
+  it('leaves the section out with no assessment, and lists no factors when there are none', () => {
+    expect(renderGateComment(report)).not.toContain('Change risk');
+    const calm = riskSection({
+      ...assessed({ level: 'low', score: 0, factors: [], missing: [] }),
+      blastRadius: null,
+    });
+    expect(calm).toEqual(['**Change risk: Low** · 0 points (`change-risk/1`)', '']);
   });
 
   const delivery = (status: Scorecard['status'], score: number | null): Scorecard => ({
