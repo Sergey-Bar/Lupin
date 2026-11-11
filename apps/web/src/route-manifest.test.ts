@@ -10,6 +10,7 @@ import {
   roleMeets,
   groupOf,
   isOverflowTab,
+  navTree,
   tabGroups,
   routeManifest,
   runDetailPath,
@@ -101,8 +102,16 @@ describe('route manifest', () => {
     expect(visibleRoutes.every((route) => isApplicationPath(route.path))).toBe(true);
   });
 
-  it('reaches every area page in one click from the tab row, Agents included', () => {
-    expect(tabsOf('health').map((tab) => tab.path)).toContain('/dashboard/agents');
+  it('reaches every area page from the sidebar, Agents and the old More pages included', () => {
+    const health = navTree('admin').find((group) => group.id === 'health');
+    const paths = health?.pages.map((page) => page.path) ?? [];
+    expect(paths).toContain('/dashboard/agents');
+    expect(paths).toContain('/dashboard/prs');
+    // Every tab of every place is one entry in the sidebar, for the role that may open it.
+    const listed = new Set(navTree('admin').flatMap((group) => group.pages.map((p) => p.path)));
+    for (const section of SECTIONS) {
+      for (const tab of tabsOf(section.id)) expect(listed.has(tab.path), tab.path).toBe(true);
+    }
   });
 
   it('has no login route: the install is open (ADR-006)', () => {

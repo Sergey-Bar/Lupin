@@ -9,8 +9,8 @@ import { SetupChecklist, type SetupChecklistSource } from './SetupChecklist.js';
  * Settings — the one place a reader changes how the product behaves.
  *
  * A destination, not a floating modal, so it reuses the no-scroll shell, the manifest,
- * the command palette and the section tab row that every other section uses. The tabs
- * are drawn by `SectionTabs` from the manifest; each tab is its own page under
+ * the command palette and the sidebar that every other section uses. Its pages are listed by
+ * the sidebar's Settings mode from the manifest; each is its own page under
  * `/dashboard/settings/*`. Appearance is the landing, because it is the one surface every
  * reader may change regardless of role.
  */

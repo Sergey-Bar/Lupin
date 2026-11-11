@@ -1,44 +1,29 @@
 import React from 'react';
-import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
 import {
-  INDICATOR_ACTIVE_ATTRIBUTE,
-  LayoutGrid,
-  ListChecks,
   FlaskConical,
   House,
-  MenuButton,
-  ShieldCheck,
+  LayoutGrid,
+  ListChecks,
+  Menu,
   Settings,
-  cn,
-  useSlidingIndicator,
+  ShieldCheck,
   Wordmark,
+  X,
+  cn,
 } from '@lupin/ui';
-import {
-  SECTIONS,
-  routeFor,
-  sectionOf,
-  groupOf,
-  isOverflowTab,
-  tabGroups,
-  tabsOf,
-  visibleTabsOf,
-  type SectionId,
-} from '../route-manifest.js';
-import { useViewerRole } from '../hooks/useViewerRole.js';
-import { useWheelStep } from '../hooks/useWheelStep.js';
+import { SECTIONS, sectionOf, type SectionId } from '../route-manifest.js';
+import { SidebarList } from './SideNav.js';
 
 /**
- * The chrome: four sections, three surfaces.
+ * The phone chrome, below `lg`. The desktop sidebar is the chrome above it.
  *
- * - `NavBar` — the top bar. The wordmark and where you are. The theme is set in Settings.
- * - `SectionTabs` — the tab row under it, for a section with more than one page.
- * - `BottomTabBar` — the four sections as a thumb-reach tab bar below `lg`.
+ * - `NavBar` — the top bar: the wordmark, where you are, and the button that opens the
+ *   sidebar's own list as a drawer. Every page is in that list, so no tab row is needed.
+ * - `BottomTabBar` — the five places within thumb reach.
  *
- * All three read `SECTIONS` and `sectionOf` from the manifest, so there is one answer to
- * "where am I". The current section is marked with `aria-current="page"` **and** with
- * weight and a rule, never with colour alone.
- *
- * **No Logout button.** The install is open, so there is no session to end.
+ * Both read `SECTIONS` and `sectionOf` from the manifest, so there is one answer to "where am
+ * I", marked with `aria-current="page"` **and** weight, never with colour alone.
  */
 
 const SECTION_ICONS: Record<SectionId, typeof LayoutGrid> = {
@@ -58,193 +43,108 @@ function useCurrentPath(): string {
 
 export function NavBar(): React.ReactElement {
   const current = sectionOf(useCurrentPath());
-  const listRef = useSlidingIndicator<HTMLUListElement>(current);
+  const [open, setOpen] = React.useState(false);
+  const opener = React.useRef<HTMLButtonElement>(null);
+  const close = React.useCallback(() => {
+    setOpen(false);
+    opener.current?.focus();
+  }, []);
   return (
     <nav
       data-testid="nav-bar"
       aria-label="Primary navigation"
-      className="relative flex h-14 shrink-0 items-center gap-x-6 border-b border-border surface-translucent px-4 sm:px-6 lg:hidden"
+      className="relative flex h-14 shrink-0 items-center gap-x-3 border-b border-border surface-translucent px-4 sm:px-6 lg:hidden"
     >
-      {/*
-        The product's name, and the only place it appears in the chrome: "Lupin." with the
-        dot in the accent, the same mark as the site's footer. `aria-hidden` because the
-        page's `h1` already names the screen.
-      */}
-      <Wordmark data-testid="nav-wordmark" decorative />
-      {/* The accent mark slides between sections (`indicator`, motion.css) rather than jumping. */}
-      <ul
-        ref={listRef}
-        className="relative hidden min-w-0 flex-1 items-center justify-center gap-x-1 lg:flex"
+      <button
+        ref={opener}
+        type="button"
+        aria-label="Open navigation"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-md text-fg-muted hover:bg-surface-raised hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
       >
-        {SECTIONS.map((section) => {
-          const active = section.id === current;
-          return (
-            <li key={section.id}>
-              <Link
-                to={section.path}
-                activeOptions={{ exact: true }}
-                aria-current={active ? 'page' : undefined}
-                {...(active ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
-                className={cn(
-                  'inline-flex min-h-11 items-center rounded-md px-4 text-sm transition-colors duration-100 motion-reduce:transition-none',
-                  FOCUS,
-                  active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
-                )}
-              >
-                {section.label}
-              </Link>
-            </li>
-          );
-        })}
-        <span aria-hidden="true" className="indicator" />
-      </ul>
-      {/* Below `lg` the sections are in the bottom bar; the top bar names where you are. */}
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg-muted lg:hidden">
+        <Menu size={20} aria-hidden="true" />
+      </button>
+      {/* `aria-hidden`: the page's own (visually hidden) `h1` names the screen. */}
+      <Wordmark data-testid="nav-wordmark" decorative />
+      <span
+        data-testid="nav-place"
+        className="min-w-0 flex-1 truncate text-sm font-medium text-fg-muted"
+      >
         {SECTIONS.find((section) => section.id === current)?.label}
       </span>
+      {open ? <Drawer onClose={close} /> : null}
     </nav>
   );
 }
 
 /**
- * The section's pages, as an underline row, at every width: the sidebar lists the six areas
- * and nothing under them, so this row is the only way to the other pages of an area. Shown
- * only when the current page is one of the section's tabs — a run detail or a score
- * deep-dive is reached by a link, and a tab row above it would mark nothing as current.
+ * The sidebar's list as a sheet from the leading edge: modal while open, so Tab stays inside
+ * it and Escape, the close button, the scrim or following a link put it away and return focus
+ * to the button that opened it.
  */
-export function SectionTabs(): React.ReactElement | null {
-  const path = useCurrentPath();
-  const section = sectionOf(path);
-  const page = routeFor(path);
-  // Called before the early returns below: hooks cannot follow a conditional exit. The role
-  // decides only which Settings tabs to draw; the API still enforces who may open each.
-  const tabsRef = useSlidingIndicator<HTMLUListElement>(page?.id);
-  const role = useViewerRole();
-  // A row wider than the screen (Settings, for an admin) must not hide the page you are on.
+function Drawer({ onClose }: { onClose: () => void }): React.ReactElement {
+  const sheet = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    document
-      .querySelector<HTMLElement>('[data-testid="section-tabs"] [aria-current="page"]')
-      ?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
-  }, [page?.id, role]);
-  if (section === null || page === undefined || !('tab' in page)) return null;
-  const unordered = section === 'settings' ? visibleTabsOf(section, role) : tabsOf(section);
-  // The order on screen: the named groups gathered, so the wheel steps the way the row reads.
-  const tabs = tabGroups(unordered).flat();
-  if (tabs.length === 0) return null;
-  const label = SECTIONS.find((entry) => entry.id === section)?.label ?? '';
-  return <WheelTabs tabs={tabs} pageId={page.id} label={label} tabsRef={tabsRef} />;
-}
-
-/** The row itself, split out so the wheel hook is called after the early returns above. */
-function WheelTabs({
-  tabs,
-  pageId,
-  label,
-  tabsRef,
-}: {
-  tabs: ReturnType<typeof tabsOf>;
-  pageId: string;
-  label: string;
-  tabsRef: React.Ref<HTMLUListElement>;
-}): React.ReactElement {
-  const navigate = useNavigate();
-  const inView = tabs.filter((tab) => !isOverflowTab(tab));
-  const overflow = tabs.filter(isOverflowTab);
-  const onWheel = useWheelStep(
-    inView.map((tab) => tab.path),
-    inView.findIndex((tab) => tab.id === pageId),
-    (to) => void navigate({ to }),
-  );
-  const page = { id: pageId };
+    sheet.current?.querySelector<HTMLElement>('a[href], button')?.focus();
+    const root = sheet.current;
+    if (root === null) return undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const items = [...root.querySelectorAll<HTMLElement>('a[href], button')];
+      const first = items[0];
+      const last = items.at(-1);
+      if (first === undefined || last === undefined) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    root.addEventListener('keydown', onKey);
+    return () => root.removeEventListener('keydown', onKey);
+  }, [onClose]);
   return (
-    <nav
-      data-testid="section-tabs"
-      data-chrome="secondary"
-      aria-label={`${label} pages`}
-      onWheel={onWheel}
-      className="-mx-4 mb-4 shrink-0 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:mb-6 sm:px-6"
-    >
-      <ul ref={tabsRef} className="relative flex gap-1">
-        {tabGroups(inView).flatMap((group, groupIndex) => [
-          ...(groupIndex === 0
-            ? []
-            : [
-                <li
-                  key={`divider-${String(groupIndex)}`}
-                  aria-hidden="true"
-                  data-tab-divider=""
-                  className="mx-1 my-3 w-px shrink-0 bg-border"
-                />,
-              ]),
-          ...(() => {
-            const links = group.map((tab) => {
-              const active = tab.id === page.id;
-              return (
-                <li key={tab.id} className="shrink-0">
-                  <Link
-                    to={tab.path}
-                    activeOptions={{ exact: true }}
-                    aria-current={active ? 'page' : undefined}
-                    {...(active ? { [INDICATOR_ACTIVE_ATTRIBUTE]: 'true' } : {})}
-                    className={cn(
-                      'inline-flex min-h-11 items-center px-3 text-sm transition-colors duration-100 motion-reduce:transition-none',
-                      FOCUS,
-                      active ? 'font-semibold text-fg' : 'font-medium text-fg-muted hover:text-fg',
-                    )}
-                  >
-                    {tab.tab}
-                  </Link>
-                </li>
-              );
-            });
-            const name = group[0] === undefined ? undefined : groupOf(group[0]);
-            // A group of one tab with the group's own name has nothing to label.
-            if (name === undefined || (group.length === 1 && group[0]?.tab === name)) return links;
-            // A named group (Settings): a quiet label, then its tabs, as one named list so a
-            // screen reader hears "Workspace" before the tabs in it.
-            return [
-              <li key={`group-${name}`} className="flex shrink-0 items-center">
-                <span
-                  data-tab-group=""
-                  aria-hidden="true"
-                  className="pe-1 ps-2 text-[0.6875rem] font-medium uppercase tracking-wider text-fg-muted"
-                >
-                  {name}
-                </span>
-                <div role="group" aria-label={name}>
-                  <ul className="flex gap-1">{links}</ul>
-                </div>
-              </li>,
-            ];
-          })(),
-        ])}
-        {overflow.length === 0 ? null : (
-          <li className="flex shrink-0 items-center ps-1">
-            {/* A place shows at most four tabs; its other pages are one menu away (Apple's
-                "More"), still links in the manifest and still reached by their old URLs. */}
-            <MenuButton
-              label={`More ${label} pages`}
-              items={overflow.map((tab) => ({ value: tab.path, label: tab.tab }))}
-              onSelect={(to) => void navigate({ to })}
-              className={cn(
-                'h-9 border-0',
-                overflow.some((tab) => tab.id === page.id)
-                  ? 'font-semibold text-fg'
-                  : 'text-fg-muted',
-              )}
-            >
-              {overflow.find((tab) => tab.id === page.id)?.tab ?? 'More'}
-            </MenuButton>
-          </li>
-        )}
-        <span aria-hidden="true" className="indicator" />
-      </ul>
-    </nav>
+    <div className="fixed inset-0 z-modal lg:hidden">
+      {/* The scrim: a pointer target only; the keyboard closes with Escape. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-black/40 animate-fade-in"
+        onClick={onClose}
+      />
+      <div
+        ref={sheet}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation"
+        className="absolute inset-y-0 start-0 flex w-72 max-w-[85vw] flex-col border-e border-border surface-translucent shadow-elevation-3 animate-fade-in"
+      >
+        <div className="flex h-14 shrink-0 items-center justify-between ps-5 pe-2">
+          <Wordmark decorative />
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={onClose}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-fg-muted hover:bg-surface-raised hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+        <SidebarList className="px-3" onNavigate={onClose} />
+      </div>
+    </div>
   );
 }
 
 /**
- * The four sections within thumb reach, below `lg`. A flex child of the shell rather than
+ * The five places within thumb reach, below `lg`. A flex child of the shell rather than
  * `position: fixed`, so it never covers the last row of a page, with the safe-area inset
  * added beneath it for a phone with a home indicator.
  */
@@ -257,7 +157,7 @@ export function BottomTabBar(): React.ReactElement {
       aria-label="Sections"
       className="shrink-0 border-t border-border surface-translucent pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="grid grid-cols-6">
+      <ul className="grid grid-cols-5">
         {SECTIONS.map((section) => {
           const Icon = SECTION_ICONS[section.id];
           const active = section.id === current;

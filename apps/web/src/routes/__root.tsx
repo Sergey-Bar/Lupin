@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, createRootRoute, redirect, useRouterState } from '@tanstack/react-router';
-import { BottomTabBar, NavBar, SectionTabs } from '../components/NavBar.js';
+import { BottomTabBar, NavBar } from '../components/NavBar.js';
 import { SideNav } from '../components/SideNav.js';
 import { SkipLink } from '../components/SkipLink.js';
 import { ThemeProvider } from '../theme/ThemeProvider.js';
@@ -71,12 +71,6 @@ function RootComponent() {
                   tabIndex={-1}
                   className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 outline-none sm:px-6 sm:py-6"
                 >
-                  {/*
-                   * Secondary chrome: focus mode hides it (index.css). The attribute is on the
-                   * navs themselves, not on a wrapper here — a wrapper rendered on a page with
-                   * no tab row was an empty first child of <main>.
-                   */}
-                  <SectionTabs />
                   <PageContent health={health} pathname={pathname}>
                     <Outlet />
                   </PageContent>

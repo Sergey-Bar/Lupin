@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import {
   createMemoryHistory,
   createRootRoute,
@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectNoBlockingAxeViolations } from './test-axe.js';
 import { RunExplorer } from './components/dashboard/RunExplorer.js';
 import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@lupin/ui';
-import { NavBar } from './components/NavBar.js';
+import { BottomTabBar, NavBar } from './components/NavBar.js';
 import { ThemeProvider } from './theme/ThemeProvider.js';
 import { makeApi, makeCanonicalRunResult, makeRun } from './test-utils.js';
 import { RunDetailPage } from './routes/dashboard/run-detail.js';
@@ -108,11 +108,16 @@ describe('NavBar keyboard operation', () => {
     renderRouted(
       <ThemeProvider>
         <NavBar />
+        <BottomTabBar />
       </ThemeProvider>,
       '/dashboard',
     );
     await waitFor(() => expect(screen.getByTestId('nav-bar')).toBeInTheDocument());
-    expect(screen.getByRole('link', { name: 'Health' })).toHaveAttribute('aria-current', 'page');
+    const bottom = screen.getByTestId('bottom-tab-bar');
+    const health = within(bottom).getByRole('link', { name: 'Health' });
+    expect(health).toHaveAttribute('aria-current', 'page');
+    expect(health).toHaveClass('font-semibold');
+    expect(screen.getByTestId('nav-place')).toHaveTextContent('Health');
   });
 
   it('draws no theme control in the chrome; the theme is a setting, not a button', async () => {

@@ -39,8 +39,8 @@ const DeploymentPage = lazyPage(() => import('../../components/Deployment.js'), 
  *
  * Appearance is the landing (`/dashboard/settings`); the other tabs reuse the admin and
  * report surfaces under `settings/*`, so the old `/dashboard/access` etc. paths keep
- * working and a reader also finds them in one place. The tab row itself is drawn by
- * `SectionTabs` from the manifest — these routes only supply the pages.
+ * working and a reader also finds them in one place. The sidebar's Settings mode lists them
+ * from the manifest — these routes only supply the pages.
  */
 export const SettingsAppearanceRoute = createRoute({
   getParentRoute: () => dashboardRoute,

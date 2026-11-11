@@ -1,8 +1,6 @@
-/// <reference types="vitest/globals" />
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { NavBar, BottomTabBar, SectionTabs } from './NavBar';
+import { NavBar, BottomTabBar } from './NavBar';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { expectNoBlockingAxeViolations } from '../test-axe';
 import { resetViewerRoleCache } from '../hooks/useViewerRole';
@@ -18,7 +16,6 @@ function makeRouter(initialPath = '/') {
     component: () => (
       <ThemeProvider>
         <NavBar />
-        <SectionTabs />
         <BottomTabBar />
       </ThemeProvider>
     ),
@@ -31,7 +28,12 @@ function makeRouter(initialPath = '/') {
 
 const SECTION_LABELS = ['Home', 'Runs', 'Tests', 'Health', 'Settings'];
 
-describe('NavBar', () => {
+async function openDrawer() {
+  fireEvent.click(await screen.findByRole('button', { name: 'Open navigation' }));
+  return screen.findByRole('dialog', { name: 'Navigation' });
+}
+
+describe('NavBar, the phone top bar', () => {
   beforeEach(() => {
     localStorage.clear();
     resetViewerRoleCache();
@@ -46,13 +48,6 @@ describe('NavBar', () => {
     render(<RouterProvider router={makeRouter()} />);
     await screen.findByTestId('nav-bar');
     expect(screen.queryByTestId('theme-toggle')).toBeNull();
-  });
-
-  it('draws the five places, and nothing else, in the top bar', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const bar = await screen.findByTestId('nav-bar');
-    const links = within(bar).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual(SECTION_LABELS);
   });
 
   it('renders the product wordmark once, in the corner', async () => {
@@ -73,149 +68,71 @@ describe('NavBar', () => {
     expect(dot?.className).toMatch(/\btext-accent\b/);
   });
 
-  it.each([
-    ['/dashboard', 'Health'],
-    ['/dashboard/runs/run-1', 'Runs'],
-    ['/dashboard/runner', 'Runs'],
-    ['/dashboard/analytics', 'Tests'],
-    ['/dashboard/flaky/project-1', 'Tests'],
-    ['/dashboard/health', 'Health'],
-  ])('marks %s as inside the %s section, in both bars', async (path, label) => {
-    render(<RouterProvider router={makeRouter(path)} />);
-    const bar = await screen.findByTestId('nav-bar');
-    const bottom = screen.getByTestId('bottom-tab-bar');
-    for (const nav of [bar, bottom]) {
-      const current = within(nav)
-        .getAllByRole('link')
-        .filter((link) => link.getAttribute('aria-current') === 'page');
-      expect(current.map((link) => link.textContent)).toEqual([label]);
+  it('draws no tab row on any page: every page is in the sidebar and the drawer', async () => {
+    for (const path of ['/dashboard', '/dashboard/insights', '/dashboard/settings']) {
+      const { unmount } = render(<RouterProvider router={makeRouter(path)} />);
+      await screen.findByTestId('nav-bar');
+      expect(screen.queryByTestId('section-tabs')).toBeNull();
+      expect(screen.queryByRole('button', { name: /^More .* pages$/u })).toBeNull();
+      unmount();
     }
   });
 
-  it('gives the bottom bar five labelled, finger-sized targets', async () => {
+  it('opens a drawer holding every page of the place you are in, the old More pages included', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const bottom = await screen.findByTestId('bottom-tab-bar');
-    expect(bottom).toHaveAttribute('aria-label', 'Sections');
-    const links = within(bottom).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual(SECTION_LABELS);
-    for (const link of links) expect(link).toHaveClass('min-h-14');
-    // Hidden from `lg` up, where the top bar carries the sections.
-    expect(bottom).toHaveClass('lg:hidden');
-  });
-
-  it('navigates from the bottom bar', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const bottom = await screen.findByTestId('bottom-tab-bar');
-    fireEvent.click(within(bottom).getByRole('link', { name: 'Runs' }));
-    await waitFor(() =>
-      expect(within(bottom).getByRole('link', { name: 'Runs' })).toHaveAttribute(
-        'aria-current',
-        'page',
-      ),
-    );
-  });
-
-  it('shows the tab row on a desktop too, since the sidebar lists only the areas', async () => {
-    // The sidebar used to list every tab, so the row hid from `lg` up. The pyramid sidebar
-    // lists the six areas only, and with the row hidden 25 of 48 pages had no link at all.
-    render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const tabs = await screen.findByTestId('section-tabs');
-    expect(tabs.className).not.toMatch(/(^|\s)lg:hidden(\s|$)/u);
-    expect(within(tabs).getByRole('link', { name: 'Portfolio' })).toHaveAttribute(
+    const drawer = await openDrawer();
+    const health = within(drawer).getByRole('list', { name: 'Health pages' });
+    expect(within(health).getByRole('link', { name: 'Pull requests' })).toHaveAttribute(
       'href',
-      '/dashboard/portfolio',
+      '/dashboard/prs',
     );
-  });
-
-  it('keeps the current tab in view when the row is wider than the screen', async () => {
-    const scrolled = vi.fn();
-    Element.prototype.scrollIntoView = scrolled;
-    render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
-    const tabs = await screen.findByTestId('section-tabs');
-    await waitFor(() => expect(scrolled).toHaveBeenCalled());
-    expect(scrolled.mock.contexts[0]).toBe(within(tabs).getByRole('link', { name: 'Appearance' }));
-  });
-
-  it('moves to the next tab when the wheel turns over the tab row, one step per turn', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const tabs = await screen.findByTestId('section-tabs');
-    fireEvent.wheel(tabs, { deltaY: 120 });
-    fireEvent.wheel(tabs, { deltaY: 120 });
-    await waitFor(() =>
-      expect(
-        within(screen.getByTestId('section-tabs')).getByRole('link', { name: 'Capabilities' }),
-      ).toHaveAttribute('aria-current', 'page'),
-    );
-  });
-
-  it('shows the section tabs for a section with more than one page', async () => {
-    render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
-    const tabs = await screen.findByTestId('section-tabs');
-    expect(tabs).toHaveAttribute('aria-label', 'Tests pages');
-    const links = within(tabs).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual(['Tests', 'Quarantine']);
-    expect(within(tabs).getByRole('link', { name: 'Tests' })).toHaveAttribute(
+    expect(within(health).getByRole('link', { name: 'Overview' })).toHaveAttribute(
       'aria-current',
       'page',
     );
   });
 
-  it('shows no tab row on a page that left the tab row, and keeps its section current', async () => {
-    // Trends is reached from the run pass rate now, so it is a detail page: a bookmark still
-    // opens it, in Insights, with no tab row above it that would mark nothing as current.
-    render(<RouterProvider router={makeRouter('/dashboard/analytics')} />);
-    await screen.findByTestId('nav-bar');
-    expect(screen.queryByTestId('section-tabs')).toBeNull();
-    expect(
-      within(screen.getByTestId('nav-bar')).getByRole('link', { name: 'Tests' }),
-    ).toHaveAttribute('aria-current', 'page');
-  });
-
-  it('keeps Health to four tabs and puts the rest in a More menu that still reaches every page', async () => {
-    const user = userEvent.setup();
+  it('keeps focus inside the drawer, and closes it on Escape, on the close button and on a link', async () => {
     render(<RouterProvider router={makeRouter('/dashboard')} />);
-    const tabs = await screen.findByTestId('section-tabs');
-    expect(
-      within(tabs)
-        .getAllByRole('link')
-        .map((link) => link.textContent),
-    ).toEqual(['Portfolio', 'Overview', 'Capabilities', 'Supply chain']);
-    await user.click(within(tabs).getByRole('button', { name: 'More Health pages' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Pull requests' }));
-    await waitFor(() =>
-      expect(screen.getByTestId('section-tabs')).toHaveAttribute('aria-label', 'Health pages'),
-    );
+    let drawer = await openDrawer();
+    expect(drawer.contains(document.activeElement)).toBe(true);
+    fireEvent.keyDown(drawer, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Navigation' })).toBeNull());
+    expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveFocus();
+    drawer = await openDrawer();
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Close navigation' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Navigation' })).toBeNull());
+    drawer = await openDrawer();
+    fireEvent.click(within(drawer).getByRole('link', { name: 'Supply chain' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Navigation' })).toBeNull());
   });
 
-  it('shows the settings tabs a signed-out reader may use, Appearance first', async () => {
+  it('wraps Tab from the last control in the drawer back to the first', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
+    const drawer = await openDrawer();
+    const focusable = [...drawer.querySelectorAll<HTMLElement>('a[href], button')];
+    const last = focusable.at(-1) as HTMLElement;
+    last.focus();
+    fireEvent.keyDown(drawer, { key: 'Tab' });
+    expect(document.activeElement).toBe(focusable[0]);
+    (focusable[0] as HTMLElement).focus();
+    fireEvent.keyDown(drawer, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
+
+  it('shows Settings mode in the drawer on a settings page, with only what the role may open', async () => {
     render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
-    const tabs = await screen.findByTestId('section-tabs');
-    expect(tabs).toHaveAttribute('aria-label', 'Settings pages');
-    // Each group is a named list, so a screen reader hears "Workspace, list" before its tabs.
-    await waitFor(() =>
-      expect(
-        within(tabs)
-          .getAllByRole('group')
-          .map((group) => group.getAttribute('aria-label')),
-      ).toEqual(['Personal', 'Workspace', 'Tools']),
-    );
-    expect(within(tabs).getByText('Workspace', { selector: '[data-tab-group]' })).toBeVisible();
-    // fetch is mocked to 401, so `whoami` yields no role: a signed-out reader sees only the
-    // two tabs everyone may use, never the admin ones.
-    await waitFor(() =>
-      expect(
-        within(tabs)
-          .getAllByRole('link')
-          .map((link) => link.textContent),
-      ).toEqual(['Appearance', 'Projects', 'Reports', 'Quality gates', 'Map', 'Toolbox']),
-    );
-    expect(within(tabs).getByRole('link', { name: 'Appearance' })).toHaveAttribute(
+    const drawer = await openDrawer();
+    const nav = within(drawer).getByRole('navigation', { name: 'Settings' });
+    expect(within(nav).getByRole('link', { name: 'Appearance' })).toHaveAttribute(
       'aria-current',
       'page',
     );
+    // fetch is 401, so whoami yields no role: the admin pages are never listed.
+    await waitFor(() => expect(within(nav).queryByRole('link', { name: 'Members' })).toBeNull());
   });
 
-  it('shows an admin every settings tab, including the admin surfaces', async () => {
+  it('shows an admin every settings page in the drawer, including the admin surfaces', async () => {
     resetViewerRoleCache();
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -223,12 +140,14 @@ describe('NavBar', () => {
       json: async () => ({ actor: 'you', role: 'admin', mode: 'enforced' }),
     });
     render(<RouterProvider router={makeRouter('/dashboard/settings')} />);
-    const tabs = await screen.findByTestId('section-tabs');
+    const drawer = await openDrawer();
+    const nav = within(drawer).getByRole('navigation', { name: 'Settings' });
     await waitFor(() =>
       expect(
-        within(tabs)
+        within(nav)
           .getAllByRole('link')
-          .map((link) => link.textContent),
+          .map((link) => link.textContent)
+          .filter((text) => text !== 'Back to Lupin'),
       ).toEqual([
         'Appearance',
         'Projects',
@@ -248,9 +167,62 @@ describe('NavBar', () => {
     );
   });
 
-  it('has no serious or critical axe violations', async () => {
+  it('names where you are in the top bar', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard/insights')} />);
+    expect(await screen.findByTestId('nav-place')).toHaveTextContent('Tests');
+  });
+
+  it('has no serious or critical axe violations, closed or open', async () => {
     const { container } = render(<RouterProvider router={makeRouter('/dashboard/runner')} />);
-    await screen.findByTestId('section-tabs');
+    await screen.findByTestId('nav-bar');
     await expectNoBlockingAxeViolations(container);
+    await openDrawer();
+    await expectNoBlockingAxeViolations(document.body);
+  });
+});
+
+describe('BottomTabBar', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    resetViewerRoleCache();
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 401 });
+  });
+
+  it.each([
+    ['/dashboard', 'Health'],
+    ['/dashboard/runs/run-1', 'Runs'],
+    ['/dashboard/runner', 'Runs'],
+    ['/dashboard/analytics', 'Tests'],
+    ['/dashboard/flaky/project-1', 'Tests'],
+    ['/dashboard/health', 'Health'],
+  ])('marks %s as inside the %s section', async (path, label) => {
+    render(<RouterProvider router={makeRouter(path)} />);
+    const bottom = await screen.findByTestId('bottom-tab-bar');
+    const current = within(bottom)
+      .getAllByRole('link')
+      .filter((link) => link.getAttribute('aria-current') === 'page');
+    expect(current.map((link) => link.textContent)).toEqual([label]);
+  });
+
+  it('gives the bottom bar five labelled, finger-sized targets', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
+    const bottom = await screen.findByTestId('bottom-tab-bar');
+    expect(bottom).toHaveAttribute('aria-label', 'Sections');
+    const links = within(bottom).getAllByRole('link');
+    expect(links.map((link) => link.textContent)).toEqual(SECTION_LABELS);
+    for (const link of links) expect(link).toHaveClass('min-h-14');
+    expect(bottom).toHaveClass('lg:hidden');
+  });
+
+  it('navigates from the bottom bar', async () => {
+    render(<RouterProvider router={makeRouter('/dashboard')} />);
+    const bottom = await screen.findByTestId('bottom-tab-bar');
+    fireEvent.click(within(bottom).getByRole('link', { name: 'Runs' }));
+    await waitFor(() =>
+      expect(within(bottom).getByRole('link', { name: 'Runs' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      ),
+    );
   });
 });
