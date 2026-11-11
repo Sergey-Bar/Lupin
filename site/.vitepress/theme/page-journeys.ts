@@ -184,9 +184,8 @@ export const pageJourneys: Record<string, Journey> = {
       ['Sync delivery', 'Turn on delivery sync so Lupin reads the pull requests.'],
       [
         'Read the shape',
-        'Follow the zoom bar from the portfolio to a repository to a pull request.',
+        'Follow the zoom bar to a repository, then read its phase band and what is stuck.',
       ],
-      ['Find the bottleneck', 'Open Repository 360 and read the phase band and what is stuck.'],
       ['Watch the debt', 'Read the pace rows, and upload coverage where lines are not measured.'],
     ],
     takeaway:
