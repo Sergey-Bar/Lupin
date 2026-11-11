@@ -298,6 +298,10 @@ function subscriptionSummary(
     // the report it always sent.
     audience: audienceOf(row.audience),
     format: formatOf(row.format),
+    quietHours:
+      row.quietStart === null || row.quietEnd === null
+        ? null
+        : { start: row.quietStart, end: row.quietEnd },
   };
 }
 
@@ -350,6 +354,8 @@ export async function createSubscription(
       // distinguishes "unset" from a deliberate choice.
       audience: body.audience ?? null,
       format: body.format ?? null,
+      quietStart: body.quietHours?.start ?? null,
+      quietEnd: body.quietHours?.end ?? null,
       createdAt: at,
       updatedAt: at,
     })
@@ -367,6 +373,8 @@ export async function createSubscription(
         timezone: body.timezone,
         misfirePolicy: 'run_once',
         nextRunAt: next.toISOString(),
+        // The worker's copy, read where it reads the timezone.
+        ...(body.quietHours === undefined ? {} : { quietHours: body.quietHours }),
       },
       enabled: true,
       workspaceId: options.workspaceId,

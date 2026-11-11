@@ -118,3 +118,15 @@ Recorded here as tasks land, so the next session starts from the tree rather tha
 - **Left from Wave 2:** the per-workspace opt-in to send diff hunks to the model (narration sees
   the briefing's sentences only); `gatePassedAtMerge` is always not measured, because an
   assessment does not store the gate's verdict; no run against a real model is recorded.
+- **Wave 3, tasks 17–19: landed** on `feat/qa-control-ai-age`. One project scope
+  (`apps/web/src/lib/scope.ts`, `useScope`): chosen in the sidebar, kept in `?project=`, carried
+  by every sidebar link to a page that reads it; Home's own picker removed and the two
+  remembered choices merged into `lupin-project`. Shape and freshness at every level
+  (SHAPE-1..3, `shape-service.ts`, three reads) with a zoom bar on Portfolio, Repository 360
+  and the pull request's page. Quiet hours for scheduled reports (`0059_report_quiet_hours.sql`,
+  `apps/worker/src/quiet-hours.ts`) and one waiting report per subscription. Capability rows
+  `quality.shape`, `reporting.quiet-hours`.
+- **Left from Wave 3:** the subscription timezone already existed, so Task 19 added quiet hours
+  only; a subscription still cannot be edited; a retry after a failed send is not held by
+  quiet hours; pages with the project in their path (a pull request, Repository 360) ignore
+  the scope by design.

@@ -39,6 +39,9 @@
   measured) and the reason and age of the one you are on. A signal not measured, or evidence
   older than seven days, is never Good. `GET /api/v1/projects/:id/shape`,
   `GET …/pull-requests/:number/shape`, `GET /api/v1/portfolio/shape`, viewer.
+- **Quiet hours for scheduled reports.** A schedule can name hours, in its own timezone, when
+  nothing is delivered; a report due inside them is queued and sent when they end, and while
+  one waits a later one is folded into it rather than piling up behind it.
 - **The scheduled report says which tests** turned flaky, started failing, got fixed or slowed.
 - **The copilot.** "Explain this run" (or `e`) on a failed run answers from the run's own
   results, groups the failures by cause and links every test it names. Its proposed actions

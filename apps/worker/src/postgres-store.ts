@@ -82,6 +82,16 @@ function requiredString(value: unknown, field: string): string {
   return value;
 }
 
+/** A schedule's quiet hours, as the API wrote them; anything else is none. */
+function quietHoursOf(value: unknown): { start: number; end: number } | null {
+  const hours = record(value);
+  const valid = (hour: unknown): hour is number =>
+    typeof hour === 'number' && Number.isInteger(hour) && hour >= 0 && hour <= 23;
+  return valid(hours['start']) && valid(hours['end']) && hours['start'] !== hours['end']
+    ? { start: hours['start'], end: hours['end'] }
+    : null;
+}
+
 /**
  * The `execution_jobs.state` a finished job lands in.
  *
@@ -528,6 +538,7 @@ export class PostgresExecutionStore implements ExecutionStore {
         cronExpr: row.cron_expr,
         timezone: typeof options['timezone'] === 'string' ? options['timezone'] : 'UTC',
         nextRunAt: row.next_run_at.toISOString(),
+        quietHours: quietHoursOf(options['quietHours']),
       };
     });
   }
@@ -543,16 +554,23 @@ export class PostgresExecutionStore implements ExecutionStore {
       if (!advanced) return false;
       // The workspace and the subscription come from the schedule row the API wrote. The
       // channel is resolved by the dispatcher when it sends, so a channel edited between
-      // now and then is the channel the report reaches.
+      // now and then is the channel the report reaches. `next_attempt_at` is when it may go:
+      // now, or the end of quiet hours. A subscription with a report still unsent gets no
+      // second one: the later occurrence is folded into the one already waiting.
       const inserted = await client.query(
-        `INSERT INTO report_deliveries (workspace_id, subscription_id, idempotency_key, scheduled_for)
-         VALUES ($1, $2::uuid, $3, $4::timestamptz)
+        `INSERT INTO report_deliveries (workspace_id, subscription_id, idempotency_key, scheduled_for, next_attempt_at)
+         SELECT $1, $2::uuid, $3, $4::timestamptz, $5::timestamptz
+         WHERE NOT EXISTS (
+           SELECT 1 FROM report_deliveries
+           WHERE workspace_id = $1 AND subscription_id = $2::uuid AND status = 'pending'
+         )
          ON CONFLICT (idempotency_key) DO NOTHING`,
         [
           input.schedule.workspaceId,
           input.schedule.subscriptionId,
           input.idempotencyKey,
           input.scheduledFor,
+          input.notBefore,
         ],
       );
       return inserted.rowCount === 1;

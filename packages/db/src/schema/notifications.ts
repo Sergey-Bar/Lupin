@@ -5,6 +5,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -77,6 +78,13 @@ export const reportSubscriptions = pgTable(
      * as `chat`.
      */
     format: text('format'),
+    /**
+     * Quiet hours, `0059_report_quiet_hours.sql`: hours 0–23 in `timezone`, `[start, end)`,
+     * wrapping midnight when start is after end. Both null is none. A report due inside them
+     * waits until they end. The worker reads its copy from the schedule's `run_options`.
+     */
+    quietStart: smallint('quiet_start'),
+    quietEnd: smallint('quiet_end'),
     enabled: boolean('enabled').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -94,6 +102,10 @@ export const reportSubscriptions = pgTable(
     check(
       'report_subscriptions_format_check',
       sql`${table.format} IS NULL OR ${table.format} IN ('chat', 'full')`,
+    ),
+    check(
+      'report_subscriptions_quiet_hours_check',
+      sql`(${table.quietStart} IS NULL AND ${table.quietEnd} IS NULL) OR (${table.quietStart} IS NOT NULL AND ${table.quietEnd} IS NOT NULL AND ${table.quietStart} BETWEEN 0 AND 23 AND ${table.quietEnd} BETWEEN 0 AND 23 AND ${table.quietStart} <> ${table.quietEnd})`,
     ),
   ],
 );

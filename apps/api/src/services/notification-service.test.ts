@@ -220,6 +220,28 @@ describe('subscriptions', () => {
       misfirePolicy: 'run_once',
     });
     expect((await listSubscriptions(options))[0]?.nextRunAt).toBe('2026-10-26T08:30:00.000Z');
+    expect(subscription.quietHours).toBeNull();
+  });
+
+  it('keeps quiet hours on the subscription and hands the worker its copy', async () => {
+    const { db, options } = await setup();
+    const channel = await createChannel(options, { kind: 'inbox', name: 'Inbox', settings: {} });
+    const subscription = await createSubscription(options, {
+      channelId: channel.id,
+      name: 'Nightly',
+      cadence: 'daily',
+      time: '23:00',
+      weekday: 1,
+      timezone: 'Europe/Berlin',
+      quietHours: { start: 22, end: 7 },
+    });
+    expect(subscription.quietHours).toEqual({ start: 22, end: 7 });
+    expect((await listSubscriptions(options))[0]?.quietHours).toEqual({ start: 22, end: 7 });
+    const [row] = await db
+      .select()
+      .from(schema.schedules)
+      .where(eq(schema.schedules.id, `report:${subscription.id}`));
+    expect(row?.runOptions).toMatchObject({ quietHours: { start: 22, end: 7 } });
   });
 
   it('defaults a subscription to the general audience and the chat format, and keeps a chosen pair', async () => {

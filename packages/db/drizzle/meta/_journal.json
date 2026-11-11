@@ -414,6 +414,13 @@
       "when": 1790400000053,
       "tag": "0058_change_risk",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1790400000054,
+      "tag": "0059_report_quiet_hours",
+      "breakpoints": true
     }
   ]
 }

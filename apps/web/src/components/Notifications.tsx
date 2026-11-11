@@ -18,6 +18,7 @@ import type {
   ChannelSummary,
   CreateChannelBody,
   DeliverySummary,
+  QuietHours,
 } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { NotificationsClient, SubscriptionDraft } from '../lib/notifications-client.js';
@@ -312,6 +313,59 @@ function ProjectMenu({
   );
 }
 
+const HOURS = Array.from({ length: 24 }, (_unused, hour) => ({
+  value: String(hour),
+  label: `${String(hour).padStart(2, '0')}:00`,
+}));
+
+const hourText = (hour: number) => `${String(hour).padStart(2, '0')}:00`;
+
+/** "Quiet 22:00–07:00", for a subscription's line; nothing with no quiet hours. */
+export function quietText(quiet: QuietHours | null): string {
+  return quiet === null ? '' : ` · quiet ${hourText(quiet.start)}–${hourText(quiet.end)}`;
+}
+
+/**
+ * Quiet hours: none, or a start and an end hour in the report's timezone. A report due inside
+ * them waits until they end. The end cannot be the start; a start after the end is overnight.
+ */
+function QuietHoursMenu({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: QuietHours | null;
+  onChange: (next: QuietHours | null) => void;
+}): React.ReactElement {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      <Select
+        id={`${id}-quiet-start`}
+        label="Quiet hours from"
+        value={value === null ? '' : String(value.start)}
+        onChange={(event) =>
+          onChange(
+            event.target.value === ''
+              ? null
+              : { start: Number(event.target.value), end: value?.end ?? 7 },
+          )
+        }
+        options={[{ value: '', label: 'No quiet hours' }, ...HOURS]}
+      />
+      {value === null ? null : (
+        <Select
+          id={`${id}-quiet-end`}
+          label="Quiet hours until"
+          value={String(value.end)}
+          onChange={(event) => onChange({ start: value.start, end: Number(event.target.value) })}
+          options={HOURS.filter((hour) => hour.value !== String(value.start))}
+        />
+      )}
+    </div>
+  );
+}
+
 function Schedules({
   client,
   projects,
@@ -337,6 +391,7 @@ function Schedules({
   const [timezone, setTimezone] = React.useState(browserTimezone);
   const [audience, setAudience] = React.useState<SubscriptionDraft['audience']>('general');
   const [format, setFormat] = React.useState<SubscriptionDraft['format']>('chat');
+  const [quietHours, setQuietHours] = React.useState<QuietHours | null>(null);
   const id = React.useId();
   const chosen = PRESETS.find((entry) => entry.id === preset) ?? PRESETS[0];
   const target = channelId === '' ? (channels[0]?.id ?? '') : channelId;
@@ -353,6 +408,7 @@ function Schedules({
         format,
         ...(chosen?.cadence === 'custom' ? { cronExpr } : {}),
         ...(projectId === '' ? {} : { projectId }),
+        ...(quietHours === null || quietHours.start === quietHours.end ? {} : { quietHours }),
       })
       .then((created) => {
         toast({ tone: 'success', title: 'Report scheduled', description: created.describe });
@@ -445,6 +501,7 @@ function Schedules({
               onChange={(event) => setTimezone(event.target.value)}
             />
           </div>
+          <QuietHoursMenu id={id} value={quietHours} onChange={setQuietHours} />
           <div className="grid gap-2 sm:grid-cols-2">
             <Select
               id={`${id}-audience`}
@@ -495,6 +552,7 @@ function Schedules({
                 <span className="text-xs text-fg-muted">
                   to {nameOf(subscription.channelId)} · {subscription.timezone}
                   {projectSuffix(subscription.projectId)}
+                  {quietText(subscription.quietHours)}
                 </span>
               </span>
               <Button size="sm" variant="ghost" onClick={() => remove(subscription.id)}>

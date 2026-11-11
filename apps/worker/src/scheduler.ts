@@ -1,4 +1,5 @@
 import { Cron } from 'croner';
+import { quietUntil } from './quiet-hours.js';
 import type { ExecutionStore, ScheduledEnqueueResult } from './types.js';
 
 export class UnsupportedScheduleError extends Error {
@@ -140,11 +141,14 @@ export async function pollReportSchedules(
     assertTimezone(schedule.timezone);
     const cron = new Cron(schedule.cronExpr, { timezone: schedule.timezone });
     const following = requireNext(cron, now);
+    // Due inside quiet hours: queued now, sent when they end.
+    const notBefore = quietUntil(now, schedule.timezone, schedule.quietHours) ?? now;
     const enqueued = await store.enqueueScheduledReport({
       schedule,
       scheduledFor: schedule.nextRunAt,
       nextRunAt: following.toISOString(),
       idempotencyKey: `schedule:${schedule.id}:${schedule.nextRunAt}`,
+      notBefore: notBefore.toISOString(),
     });
     if (enqueued) queued += 1;
   }

@@ -52,6 +52,7 @@ function client(overrides: Partial<NotificationsClient> = {}): NotificationsClie
         projectId: null,
         audience: 'general' as const,
         format: 'chat' as const,
+        quietHours: null,
       },
     ]),
     createSubscription: vi.fn(async () => ({
@@ -67,6 +68,7 @@ function client(overrides: Partial<NotificationsClient> = {}): NotificationsClie
       projectId: null,
       audience: 'general' as const,
       format: 'chat' as const,
+      quietHours: null,
     })),
     deleteSubscription: vi.fn(async () => undefined),
     listDeliveries: vi.fn(async () => [SENT]),
@@ -182,6 +184,51 @@ describe('NotificationsPage', () => {
     await user.click(screen.getByRole('button', { name: 'Schedule' }));
     expect(api.createSubscription).toHaveBeenLastCalledWith(
       expect.objectContaining({ cadence: 'custom', cronExpr: '0 8 * * 1-5' }),
+    );
+  });
+
+  it('schedules a report with quiet hours, and shows them beside it', async () => {
+    const user = userEvent.setup();
+    const api = client({
+      listSubscriptions: vi.fn(async () => [
+        {
+          id: 's1',
+          channelId: 'c1',
+          name: 'Nightly',
+          cadence: 'daily' as const,
+          cronExpr: '0 23 * * *',
+          timezone: 'UTC',
+          enabled: true,
+          describe: 'Every day at 23:00',
+          nextRunAt: null,
+          projectId: null,
+          audience: 'general' as const,
+          format: 'chat' as const,
+          quietHours: { start: 22, end: 7 },
+        },
+      ]),
+    });
+    page(api);
+    const list = await screen.findByRole('list', { name: 'Scheduled reports' });
+    expect(list).toHaveTextContent('quiet 22:00–07:00');
+    // None by default: the end is offered only once a start is chosen.
+    expect(screen.queryByLabelText('Quiet hours until')).toBeNull();
+    await user.selectOptions(screen.getByLabelText('Quiet hours from'), '22');
+    await user.selectOptions(screen.getByLabelText('Quiet hours until'), '6');
+    // The end can never be the start.
+    expect(
+      within(screen.getByLabelText('Quiet hours until'))
+        .queryAllByRole('option')
+        .map((option) => option.textContent),
+    ).not.toContain('22:00');
+    await user.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(api.createSubscription).toHaveBeenLastCalledWith(
+      expect.objectContaining({ quietHours: { start: 22, end: 6 } }),
+    );
+    await user.selectOptions(screen.getByLabelText('Quiet hours from'), '');
+    await user.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(api.createSubscription).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ quietHours: expect.anything() }),
     );
   });
 
@@ -310,6 +357,7 @@ describe('choosing the project a report is about', () => {
           projectId: 'p-2',
           audience: 'general' as const,
           format: 'chat' as const,
+          quietHours: null,
         },
       ]),
     });

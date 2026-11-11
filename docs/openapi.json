@@ -13298,7 +13298,16 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "audience": { "type": "string", "enum": ["general", "manager", "sdet", "quality"] },
-          "format": { "type": "string", "enum": ["chat", "full"] }
+          "format": { "type": "string", "enum": ["chat", "full"] },
+          "quietHours": {
+            "type": "object",
+            "properties": {
+              "start": { "type": "integer", "minimum": 0, "maximum": 23 },
+              "end": { "type": "integer", "minimum": 0, "maximum": 23 }
+            },
+            "required": ["start", "end"],
+            "additionalProperties": false
+          }
         },
         "required": ["channelId", "name", "cadence", "time", "weekday", "timezone"],
         "additionalProperties": false
@@ -26095,6 +26104,15 @@
         ],
         "additionalProperties": false
       },
+      "QuietHoursSchema": {
+        "type": "object",
+        "properties": {
+          "start": { "type": "integer", "minimum": 0, "maximum": 23 },
+          "end": { "type": "integer", "minimum": 0, "maximum": 23 }
+        },
+        "required": ["start", "end"],
+        "additionalProperties": false
+      },
       "ReadinessReasonSchema": {
         "type": "object",
         "properties": {
@@ -29107,7 +29125,21 @@
           "nextRunAt": { "type": ["string", "null"] },
           "projectId": { "type": ["string", "null"] },
           "audience": { "type": "string", "enum": ["general", "manager", "sdet", "quality"] },
-          "format": { "type": "string", "enum": ["chat", "full"] }
+          "format": { "type": "string", "enum": ["chat", "full"] },
+          "quietHours": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "start": { "type": "integer", "minimum": 0, "maximum": 23 },
+                  "end": { "type": "integer", "minimum": 0, "maximum": 23 }
+                },
+                "required": ["start", "end"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          }
         },
         "required": [
           "id",
@@ -29121,7 +29153,8 @@
           "nextRunAt",
           "projectId",
           "audience",
-          "format"
+          "format",
+          "quietHours"
         ],
         "additionalProperties": false
       },

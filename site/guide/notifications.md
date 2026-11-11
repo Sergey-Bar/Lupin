@@ -70,7 +70,9 @@ beside each, not a score. It reads pull requests the GitHub sync has stored.
    reports appear in the history on the same page.
 2. **When.** Pick **Daily 09:00**, **Weekly, Monday 09:00**, or **Custom** (a cron
    expression such as `0 8 * * 1-5` for weekdays at 08:00). The timezone defaults to your
-   browser's.
+   browser's. **Quiet hours** (say 22:00 to 07:00, in that timezone) hold a report that comes
+   due inside them until they end; while one is waiting, a later one is folded into it, so
+   an hourly report wakes nobody and the morning brings one message, not nine.
 3. **Did it arrive.** **Send a test** on any channel; the result appears in the history
    and as a toast. A failed delivery shows the platform's error code, for example
    `telegram_rejected_401` for a wrong bot token.
