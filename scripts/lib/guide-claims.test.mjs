@@ -10,6 +10,7 @@ import test from 'node:test';
  * channel added to the code without a line in its guide fails.
  */
 const root = path.resolve(import.meta.dirname, '..', '..');
+/** @param {string} file */
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
 
 /** The first spelling of every upload format but the legacy wire shape. */
@@ -39,6 +40,7 @@ test('the upload guide names every format the upload door reads', () => {
 
 test('the reports guide names every channel the dispatcher sends to', () => {
   const guide = read('site/guide/notifications.md').toLowerCase();
+  /** @type {Record<string, string>} */
   const names = { teams: 'microsoft teams', inbox: 'inbox' };
   for (const kind of channelKinds()) {
     const name = names[kind] ?? kind;
