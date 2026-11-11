@@ -682,6 +682,25 @@ describe('the two Home views', () => {
     );
     expect(screen.getByRole('button', { name: 'Release' })).toHaveAttribute('aria-pressed', 'true');
   });
+
+  it('shows the failure trend on Release, compared with the half before, for the lead', async () => {
+    const user = userEvent.setup();
+    localStorage.removeItem(HOME_VIEW_KEY);
+    const trend = vi.fn(async () =>
+      [1, 1, 1, 1, 3, 3, 3, 3].map((failed, index) => ({
+        date: `2026-10-${String(19 + index)}`,
+        failed,
+      })),
+    );
+    render(<CockpitPage sources={{ ...sources(), trend }} navigate={vi.fn()} now={() => NOW} />);
+    expect(screen.queryByTestId('release-trend')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Release' }));
+    const panel = await screen.findByTestId('release-trend');
+    expect(within(panel).getByTestId('daily-compare')).toHaveTextContent(
+      '12 in the last 4 days, vs 4 in the 4 before',
+    );
+    expect(trend).toHaveBeenCalledWith(undefined);
+  });
 });
 
 describe('the hero verdict', () => {

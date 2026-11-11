@@ -25,6 +25,7 @@ import { greetingFor } from '../lib/focus.js';
 import { isNothingYet } from '../lib/nothing-yet.js';
 import { FailureClustersPanel } from './InsightsCauses.js';
 import { ReadFailed } from './ReadFailed.js';
+import { DailyBars } from './DailyBars.js';
 
 /**
  * The cockpit: is the product better or worse than it was, and why.
@@ -47,6 +48,10 @@ export interface CockpitSources {
   readiness?: (projectId: string | undefined) => Promise<ReleaseReadinessCard>;
   /** Failures grouped by root cause, for the Triage view; absent, Triage lists what needs you only. */
   clusters?: (projectId: string | undefined) => Promise<QaInsights['failureClusters']>;
+  /** Failed results per day, for the Release view's trend; absent, Release shows the reasons only. */
+  trend?: (
+    projectId: string | undefined,
+  ) => Promise<ReadonlyArray<{ date: string; failed: number }>>;
 }
 
 /** Which Home a reader opens on: Triage for the engineer, Release for the lead. Kept per browser. */
@@ -155,8 +160,40 @@ export function CockpitPage({
         {view === 'release' && sources.readiness !== undefined ? (
           <ReleaseReasons key={projectId ?? ''} load={sources.readiness} projectId={projectId} />
         ) : null}
+        {view === 'release' && sources.trend !== undefined ? (
+          <ReleaseTrend
+            key={`trend-${projectId ?? ''}`}
+            load={sources.trend}
+            projectId={projectId}
+          />
+        ) : null}
       </PageBody>
     </PageFrame>
+  );
+}
+
+/**
+ * Release: is the risk rising or falling? Failed results per day over the window, with the
+ * recent half against the half before it, so a lead sees the direction and not only today.
+ */
+function ReleaseTrend({
+  load,
+  projectId,
+}: {
+  load: NonNullable<CockpitSources['trend']>;
+  projectId: string | undefined;
+}): React.ReactElement {
+  const days = useResource(() => load(projectId), [load, projectId]);
+  if (days.status === 'loading') return <Skeleton className="h-32 w-full" />;
+  if (days.status === 'error') return <ReadFailed failure={days} />;
+  return (
+    <Panel title="Failed results per day, every project" data-testid="release-trend">
+      <DailyBars
+        days={days.value.map((day) => ({ date: day.date, value: day.failed }))}
+        label="Failed results per day"
+        tone="text-chart-fail"
+      />
+    </Panel>
   );
 }
 

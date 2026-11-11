@@ -34,6 +34,12 @@ export const Route = createRoute({
         },
         // Triage: the failures of the last 14 days grouped by root cause, server-side.
         clusters: async (projectId) => (await qa.getInsights(14, projectId)).failureClusters,
+        // Release: failed results per day. The trend is the workspace's, so it takes no project.
+        trend: async () =>
+          (await qa.getTrend(14)).buckets.map((bucket) => ({
+            date: bucket.date,
+            failed: bucket.failed,
+          })),
         attention: {
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),
