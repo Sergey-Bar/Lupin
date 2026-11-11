@@ -1141,7 +1141,14 @@ function buildWorkspace(workspaceId: string) {
       }),
     );
     target.route('/', createChatRoutes({ gateway: gateways.chat }));
-    target.route('/', createCopilotRoutes({ store: executionStore, workspaceId: workspaceId }));
+    target.route(
+      '/',
+      createCopilotRoutes({
+        store: executionStore,
+        workspaceId: workspaceId,
+        gateway: gateways.chat,
+      }),
+    );
     // Settings → AI, Integrations, Identity, Sessions & retention. Installation-wide, so every
     // workspace's composition serves the one service; writes need an installation admin (or,
     // while single sign-on is enforced, an admin of the home workspace).

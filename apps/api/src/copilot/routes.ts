@@ -4,6 +4,8 @@ import { DomainError } from '../errors/domain-error.js';
 import type { ExecutionStore } from '../execution/types.js';
 import { explainRun } from './explain.js';
 import { answerQuestion } from './ask.js';
+import { narrate } from './narrate.js';
+import type { AiGateway } from '@lupin/automation';
 
 const ExplainBodySchema = z.object({ runId: z.string().min(1).max(200) });
 const AskBodySchema = z.object({ question: z.string().trim().min(1).max(500) });
@@ -16,14 +18,27 @@ const ASK_RUNS = 50;
  * workspace is the same 404 as a missing one: the store is asked with the caller's
  * workspace and never without it.
  */
-export function createCopilotRoutes(options: { store: ExecutionStore; workspaceId: string }): Hono {
+export function createCopilotRoutes(options: {
+  store: ExecutionStore;
+  workspaceId: string;
+  /** The model configured in Settings; absent or unconfigured, the rules answer alone. */
+  gateway?: AiGateway;
+}): Hono {
   const app = new Hono();
   app.post('/api/v1/copilot/explain', async (context) => {
     const parsed = ExplainBodySchema.safeParse(await context.req.json().catch(() => null));
     if (!parsed.success) throw new DomainError('VALIDATION_FAILED', 'Body needs a runId');
     const run = await options.store.getRun(parsed.data.runId, options.workspaceId);
     if (!run) throw new DomainError('RUN_NOT_FOUND', 'Run not found');
-    return context.json({ runId: run.id, ...explainRun(run) });
+    const explained = explainRun(run);
+    const narration = await narrate(
+      {
+        summary: explained.summary,
+        facts: [explained.summary, ...explained.causes.map((cause) => ` tests: ${cause.message}`)],
+      },
+      options.gateway,
+    );
+    return context.json({ runId: run.id, ...explained, narration });
   });
   app.post('/api/v1/copilot/ask', async (context) => {
     const parsed = AskBodySchema.safeParse(await context.req.json().catch(() => null));

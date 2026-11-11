@@ -35,6 +35,13 @@ export const RunExplanationSchema = z.object({
   causes: z.array(z.object({ message: z.string(), count: z.number(), tests: z.array(z.string()) })),
   citations: z.array(CitationSchema),
   actions: z.array(ProposedActionSchema),
+  /** Optional so an older server's answer still parses. */
+  narration: z
+    .discriminatedUnion('source', [
+      z.object({ source: z.literal('model'), model: z.string(), text: z.string() }),
+      z.object({ source: z.literal('rules'), text: z.string() }),
+    ])
+    .optional(),
 });
 
 export type RunExplanation = z.infer<typeof RunExplanationSchema>;

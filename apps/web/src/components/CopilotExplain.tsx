@@ -101,7 +101,9 @@ function Answer({
           ))}
         </div>
       )}
-      <p className="max-w-measure text-pretty text-fg">{answer.summary}</p>
+      <p className="max-w-measure text-pretty text-fg">
+        {answer.narration?.source === 'model' ? answer.narration.text : answer.summary}
+      </p>
       {answer.causes.length === 0 ? null : (
         <ul className="space-y-2">
           {answer.causes.map((cause) => (
@@ -126,7 +128,9 @@ function Answer({
         </ul>
       )}
       <p className="text-xs text-fg-muted">
-        From the run's own results, without a model. Every test named is linked.
+        {answer.narration?.source === 'model'
+          ? `Written by ${answer.narration.model} from this run's results, and checked against them. Every test named is linked.`
+          : "From the run's own results, without a model. Every test named is linked."}
       </p>
     </div>
   );

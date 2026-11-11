@@ -72,6 +72,18 @@ describe('CopilotExplain', () => {
     expect(act).toHaveBeenCalledWith(withAction.actions[0]);
   });
 
+  it('says when a configured model wrote the answer, and names the model', async () => {
+    const withModel: RunExplanation = {
+      ...ANSWER,
+      narration: { source: 'model', model: 'gpt-x', text: 'On main, 2 of 3 tests failed.' },
+    };
+    render(<CopilotExplain runId="run-1" client={client(async () => withModel)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Explain this run' }));
+    const answer = await screen.findByTestId('copilot-answer');
+    expect(answer).toHaveTextContent('On main, 2 of 3 tests failed.');
+    expect(answer).toHaveTextContent('Written by gpt-x from this run');
+  });
+
   it('explains on e, but not while the reader is typing in a field', async () => {
     const explainRun = vi.fn(async () => ANSWER);
     render(
