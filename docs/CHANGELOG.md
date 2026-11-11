@@ -25,6 +25,11 @@
   Unstable. The Runs group counts the runs that need you.
 - **First run** is a full-screen setup at `/setup`: repository and first run first, then the
   optional steps, with Do this later. Unfinished setup is a Finish setup chip in the sidebar.
+- **One focal point per page.** The status band leads with the first thing to do and the page's
+  one primary button; the list starts at the second. Runs read by status and branch, the daily
+  bars show every day, and a disabled button is a quiet outline.
+- **Premium pass.** Deeper, more saturated glass on the chrome; numbers and verdict words in
+  Inter Display; one flat card for every page surface.
 - **Five places.** The navigation is Home, Runs, Tests, Health and Settings; Health keeps four
   tabs and puts the rest under More. Every older address still opens the page it always did.
 - **Type and colour.** Inter and JetBrains Mono replace Geist; the accent is blue, not violet.

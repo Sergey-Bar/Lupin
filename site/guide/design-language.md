@@ -269,12 +269,14 @@ files, and the rendering budget holds every primary route to a glass depth of 1.
 
 The one primary button per screen is the brand blue running into its cyan partner
 (`bg-primary-gradient`), flat under forced colours and more contrast. Cyan is never text and
-never a status. Each verdict band carries its verdict as a 2px top edge, the same colour as
-its mark, so the state reads from across the room while the panel stays neutral.
+never a status. A verdict band is the same flat card as every page surface: the verdict is on
+its mark and its word, never on a coloured edge or a tinted panel.
 
-- **Opaque first.** The first declaration is the raised plane step; the 90% tint and the
-  16px blur are inside `@supports (backdrop-filter: …)`, so no browser shows a see-through
-  panel with nothing blurring what is behind it.
+- **Opaque first.** The first declaration is the raised plane step; the 88% tint and the
+  28px blur at 180% saturation are inside `@supports (backdrop-filter: …)`, so no browser shows
+  a see-through panel with nothing blurring what is behind it. 88% is one step above 87%, the
+  lowest tint the legibility rule below allows, so the colour of the shell light comes through
+  as far as it can while every word stays readable.
 - **Legible whatever is behind it.** Every text token clears 4.5:1 on the tint composited
   over pure black _and_ pure white — the extremes any real backdrop lies between.
 - **Never behind evidence.** Tables, charts and figures are never inside a translucent layer.
@@ -338,7 +340,7 @@ system setting.
 
 The redesign keeps every rule above and adds these, each with its gate:
 
-- **A display face.** Inter Display SemiBold is committed once with its sha256 and upstream in `fonts-lock.json` (`fonts.test.ts`) and exposed as `font-display`. The full-width hero it was drawn for was replaced by the status band below, so no component sets it today; titles and everything read are in Geist.
+- **A display face for numbers and verdicts.** Inter Display SemiBold is committed once with its sha256 and upstream in `fonts-lock.json` (`fonts.test.ts`) and exposed as `font-display`. Every `Metric` value and every verdict word draws in it, tight and tabular, so a number reads like an instrument and a column of them lines up; running text stays in Inter. Chart bars use `bg-chart-bar`, lit from the foot to the top in their own chart token.
 - **Depth.** Three elevations, `elevation-1` to `elevation-3`, each an existing plane step, so no new surface can fail contrast (`theme.test.ts`).
 - **The status band.** Every area page opens on one compact band (`Hero` in `@lupin/ui`): a status mark, the verdict word in its colour, one reason, the numbers behind it, and one action, on the neutral plane. It replaced the full-width poster hero, whose one-word verdict on a tinted panel said little and read as a placeholder. The `glow-*` tokens and the expressive `animate-reveal` tier are still defined and tested (`theme.test.ts`, `motion.test.ts`), and no component uses them now.
 - **One button system.** At most one solid primary per screen, outlined for secondary, text for tertiary. A link drawn as a button is `ButtonLink`, which shares `buttonVariants` with `Button`; `apps/web/src/button-rule.test.ts` fails on a hand-written solid button, and the page tests assert one primary with `expectOnePrimary`.
