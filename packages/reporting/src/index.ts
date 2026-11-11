@@ -25,4 +25,5 @@ export * from './cockpit.js';
 export * from './cockpit-digest.js';
 export * from './cockpit-risk.js';
 export * from './change-risk.js';
+export * from './blast-radius.js';
 export * from './cockpit-html.js';

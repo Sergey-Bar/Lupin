@@ -158,6 +158,13 @@ describe('assessChangeRisk', () => {
     const risk = assessChangeRisk(clean(), { require: ['tests', 'diff-coverage', 'tampering'] });
     expect(risk.missing).toEqual(['tampering']);
     expect(risk.level).toBe('unknown');
+    const evals = assessChangeRisk(clean(), { require: ['tests', 'evals'] });
+    expect(evals.missing).toEqual(['evals']);
+    expect(evals.factors).toContainEqual(
+      expect.objectContaining({ id: 'evals', kind: 'missing', points: 0 }),
+    );
+    // Not required, an absent eval run is not even listed: most projects run none.
+    expect(assessChangeRisk(clean()).factors.some((factor) => factor.id === 'evals')).toBe(false);
     expect(() => assessChangeRisk(clean(), { require: ['nonsense' as never] })).toThrow(RangeError);
   });
 
