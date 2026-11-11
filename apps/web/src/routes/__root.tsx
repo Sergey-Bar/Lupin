@@ -31,9 +31,15 @@ export const Route = createRootRoute({
    */
   beforeLoad: ({ location }) => {
     if (location.pathname === '/') throw redirect({ to: '/dashboard/now' });
+    if (location.pathname === '/setup') throw redirect({ to: '/dashboard/setup' });
   },
   component: RootComponent,
 });
+
+/** Paths drawn without the app frame. */
+export function isFullScreen(pathname: string): boolean {
+  return pathname === '/dashboard/setup';
+}
 
 function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -60,24 +66,39 @@ function RootComponent() {
       <PreferencesProvider>
         <ToastProvider>
           <CopilotProvider>
-            <div className="relative flex h-dvh overflow-hidden bg-surface-sunken bg-shell text-fg">
-              <SkipLink />
-              {/* From `lg` up the sidebar is the chrome: every section and tab, fixed beside the page. */}
-              <SideNav />
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                <NavBar />
+            {isFullScreen(pathname) ? (
+              // First-run setup stands alone: no sidebar, no bars, one step on the shell.
+              <div className="relative flex min-h-dvh flex-col bg-surface-sunken bg-shell text-fg">
+                <SkipLink />
                 <main
                   id="main"
                   tabIndex={-1}
-                  className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 outline-none sm:px-6 sm:py-6"
+                  data-frame="full-screen"
+                  className="flex min-w-0 flex-1 flex-col p-4 outline-none sm:px-6"
                 >
-                  <PageContent health={health} pathname={pathname}>
-                    <Outlet />
-                  </PageContent>
+                  <Outlet />
                 </main>
-                <BottomTabBar />
               </div>
-            </div>
+            ) : (
+              <div className="relative flex h-dvh overflow-hidden bg-surface-sunken bg-shell text-fg">
+                <SkipLink />
+                {/* From `lg` up the sidebar is the chrome: every section and tab, fixed beside the page. */}
+                <SideNav />
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                  <NavBar />
+                  <main
+                    id="main"
+                    tabIndex={-1}
+                    className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 outline-none sm:px-6 sm:py-6"
+                  >
+                    <PageContent health={health} pathname={pathname}>
+                      <Outlet />
+                    </PageContent>
+                  </main>
+                  <BottomTabBar />
+                </div>
+              </div>
+            )}
             <GlobalCommandPalette />
             <Shortcuts />
           </CopilotProvider>

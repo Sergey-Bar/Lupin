@@ -8,6 +8,32 @@ import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
 import { createGithubClient } from '../../lib/github-client.js';
 import { homeProject, rememberHomeProject } from '../../lib/home-project.js';
+import { putOffSetup, setupPutOff, shouldOpenSetup } from '../../lib/first-run.js';
+import { createSettingsClient } from '../../lib/settings-client.js';
+
+/**
+ * A fresh install has nothing for Home to judge, so Home hands the reader to setup, once per
+ * load. A failed read keeps Home: setup is an offer, never a wall.
+ */
+function useFirstRunRedirect(open: () => void): void {
+  const opened = React.useRef(open);
+  React.useEffect(() => {
+    if (setupPutOff()) return undefined;
+    let live = true;
+    createSettingsClient()
+      .getOnboarding()
+      .then((onboarding) => {
+        if (!live || !shouldOpenSetup(onboarding, setupPutOff())) return;
+        // Once only: coming back from setup by any route is not a reason to send them again.
+        putOffSetup();
+        opened.current();
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+}
 
 /** The landing page: is the product better or worse than before, and what needs you. `/` lands here. */
 export const Route = createRoute({
@@ -20,6 +46,7 @@ export const Route = createRoute({
   component: function NowRoute() {
     const navigate = useNavigate();
     const { project } = Route.useSearch();
+    useFirstRunRedirect(() => void navigate({ to: '/dashboard/setup', replace: true }));
     const sources = React.useMemo<CockpitSources>(() => {
       const health = createHealthClient();
       const notifications = createNotificationsClient();

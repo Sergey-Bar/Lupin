@@ -46,6 +46,37 @@ afterEach(() => {
 });
 
 describe('the Now route', () => {
+  it('hands a fresh install to full-screen setup, once', async () => {
+    localStorage.clear();
+    const fresh = {
+      steps: [
+        { id: 'workspace', title: 'W', who: 'admin', href: '/', state: 'done' },
+        { id: 'repository', title: 'R', who: 'operator', href: '/', state: 'todo' },
+      ],
+      done: 1,
+      total: 6,
+      dismissed: false,
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        const body = url.endsWith('/api/v1/onboarding')
+          ? JSON.stringify(fresh)
+          : url.endsWith('/api/v1/projects')
+            ? JSON.stringify({ projects: [] })
+            : '[]';
+        return new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }),
+    );
+    window.scrollTo = () => undefined;
+    render(<MemoryRouter initialEntries={['/dashboard/now']} />);
+    await waitFor(() => expect(screen.getByTestId('setup-page')).toBeInTheDocument(), {
+      timeout: RENDER_TIMEOUT_MS,
+    });
+    expect(localStorage.getItem('lupin-setup-later')).toBe('1');
+  });
+
   it('is mounted at /dashboard/now', () => {
     expect(Route.fullPath).toBe('/dashboard/now');
   });

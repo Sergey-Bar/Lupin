@@ -128,6 +128,16 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
     );
   });
 
+  it('draws setup full-screen, without the sidebar, and sends /setup there', async () => {
+    mockAuthenticatedApi();
+    const { container } = render(<MemoryRouter initialEntries={['/setup']} />);
+    await waitFor(() => expect(screen.getByTestId('setup-page')).toBeInTheDocument(), {
+      timeout: RENDER_TIMEOUT_MS,
+    });
+    expect(container.querySelector('[data-frame="full-screen"]')).not.toBeNull();
+    expect(screen.queryByTestId('side-nav')).toBeNull();
+  });
+
   it('names the browser tab after the page, then the product', async () => {
     mockAuthenticatedApi();
     render(<MemoryRouter initialEntries={['/dashboard/now']} />);

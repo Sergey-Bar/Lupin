@@ -8,7 +8,7 @@ import type { QaClient } from '../lib/qa-client.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { health, settingsClient } from '../test-utils.js';
 import { SetupChecklist } from './SetupChecklist.js';
-import { SetupPage, type SetupClients } from './SetupWizard.js';
+import { SETUP_LATER_KEY, SetupPage, type SetupClients } from './SetupWizard.js';
 import { ToastProvider } from './Toasts.js';
 
 const META: Record<OnboardingStep['id'], Pick<OnboardingStep, 'title' | 'who' | 'href'>> = {
@@ -102,6 +102,38 @@ describe('the setup wizard', () => {
     await expectNoBlockingAxeViolations(container);
   });
 
+  it('orders the steps toward a first result: repository, first run, then the optional ones', async () => {
+    wizard(clients());
+    await screen.findByRole('heading', { level: 2, name: 'Connect a repository' });
+    const order = within(screen.getByRole('list', { name: 'Setup steps' }))
+      .getAllByRole('button')
+      .map((button) => button.getAttribute('data-step'));
+    expect(order).toEqual([
+      'workspace',
+      'repository',
+      'first-run',
+      'ai',
+      'notifications',
+      'teammates',
+    ]);
+  });
+
+  it('opens full-screen, outside the app frame, with a way out that is remembered', async () => {
+    localStorage.removeItem(SETUP_LATER_KEY);
+    const user = userEvent.setup();
+    wizard(clients());
+    await screen.findByRole('heading', { level: 2, name: 'Connect a repository' });
+    expect(screen.getByRole('heading', { level: 1, name: 'Set up Lupin' })).toBeVisible();
+    expect(screen.getByRole('progressbar', { name: 'Setup progress' })).toHaveAttribute(
+      'aria-valuenow',
+      '1',
+    );
+    const later = screen.getByRole('link', { name: 'Do this later' });
+    expect(later).toHaveAttribute('href', '/dashboard/now');
+    await user.click(later);
+    expect(localStorage.getItem(SETUP_LATER_KEY)).toBe('1');
+  });
+
   it('connects a repository, then continues, moving focus to the next step', async () => {
     const user = userEvent.setup();
     wizard(clients());
@@ -111,7 +143,7 @@ describe('the setup wizard', () => {
     await user.click(await screen.findByRole('button', { name: 'Continue' }));
     const heading = await screen.findByRole('heading', {
       level: 2,
-      name: 'Connect an AI provider',
+      name: 'Run your first check',
     });
     await waitFor(() => expect(heading).toHaveFocus());
   });
@@ -123,13 +155,19 @@ describe('the setup wizard', () => {
     await user.click(await screen.findByRole('button', { name: 'Skip for now' }));
     await waitFor(() => expect(setup.settings.dismissStep).toHaveBeenCalledWith('repository'));
     expect(
-      await screen.findByRole('heading', { level: 2, name: 'Connect an AI provider' }),
+      await screen.findByRole('heading', { level: 2, name: 'Run your first check' }),
     ).toBeInTheDocument();
-    expect(await screen.findByText('Skipped')).toBeInTheDocument();
+    // The step strip says which steps were skipped.
+    expect(
+      await within(screen.getByRole('list', { name: 'Setup steps' })).findByRole('button', {
+        name: 'Connect a repository, skipped',
+      }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Back' }));
     expect(
       await screen.findByRole('heading', { level: 2, name: 'Connect a repository' }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Skipped')).toBeInTheDocument();
   });
 
   it('adds the Lupin inbox in one press on the reports step', async () => {
@@ -164,6 +202,17 @@ describe('the setup wizard', () => {
     expect(await screen.findByRole('link', { name: 'Open the runner' })).toHaveAttribute(
       'href',
       '/dashboard/runner',
+    );
+    // The first run comes straight after the repository, so AI and reports wait until a result
+    // has landed: what a reader came for, first.
+    await user.click(screen.getByRole('button', { name: 'Skip for now' }));
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Connect an AI provider' }),
+    ).toBeInTheDocument();
+    await user.click(
+      within(screen.getByRole('list', { name: 'Setup steps' })).getByRole('button', {
+        name: /Invite your teammates/u,
+      }),
     );
     await user.click(screen.getByRole('button', { name: 'Skip for now' }));
     const finished = await screen.findByTestId('setup-finished');
@@ -310,7 +359,10 @@ describe('the first-run step', () => {
       await screen.findByText('Ask an operator or admin to start the first run.'),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Skip for now' }));
-    expect(await screen.findByTestId('setup-finished')).toBeInTheDocument();
+    // It moves on to the next step, the first optional one.
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Connect an AI provider' }),
+    ).toBeInTheDocument();
     expect(setup.settings.dismissStep).not.toHaveBeenCalled();
   });
 

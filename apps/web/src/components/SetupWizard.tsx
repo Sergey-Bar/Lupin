@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ButtonLink, Check, CircleCheck } from '@lupin/ui';
+import { Button, ButtonLink, CircleCheck, Wordmark } from '@lupin/ui';
 import type { Onboarding, OnboardingStepId } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { HealthClient, WhoAmI } from '../lib/health-client.js';
@@ -10,9 +10,12 @@ import { explain, type SettingsClient } from '../lib/settings-client.js';
 import { AccessGate } from './Access.js';
 import { UserText } from './Bidi.js';
 import { ConnectRepository } from './ConnectRepository.js';
-import { PageBody, PageFrame, PageHeader, Panel } from './kit.js';
+import { Panel } from './kit.js';
 import { SettingsForm } from './SettingsForm.js';
 import { useToast } from './Toasts.js';
+import { SETUP_LATER_KEY, putOffSetup as putOff } from '../lib/first-run.js';
+
+export { SETUP_LATER_KEY };
 
 /**
  * First-run setup: six steps from an empty install to a first run, without a terminal.
@@ -59,49 +62,67 @@ const STEP_COPY: Record<OnboardingStepId, { title: string; why: string }> = {
   },
 };
 
+/**
+ * The order a first-time reader meets the steps: a repository, then its first run, so a real
+ * result arrives before anything optional is asked. The server's list is the progress, this
+ * is only the order it is walked in.
+ */
+const STEP_ORDER: readonly OnboardingStepId[] = [
+  'workspace',
+  'repository',
+  'first-run',
+  'ai',
+  'notifications',
+  'teammates',
+];
+
+function inOrder(steps: Onboarding['steps']): Onboarding['steps'] {
+  const rank = (id: OnboardingStepId) => STEP_ORDER.indexOf(id);
+  return [...steps].sort((a, b) => rank(a.id) - rank(b.id));
+}
+
+/**
+ * One segment per step, together the progress bar. Each segment is a button that jumps to its
+ * step; its title is read out, the bar is what is seen.
+ */
 function Stepper({
-  onboarding,
+  steps,
   current,
   onSelect,
 }: {
-  onboarding: Onboarding;
+  steps: Onboarding['steps'];
   current: number;
   onSelect: (index: number) => void;
 }): React.ReactElement {
   return (
-    <ol aria-label="Setup steps" className="grid gap-1">
-      {onboarding.steps.map((step, index) => {
+    <ol aria-label="Setup steps" className="grid grid-cols-6 gap-1.5">
+      {steps.map((step, index) => {
         const done = step.state === 'done';
         const here = index === current;
         return (
           <li key={step.id}>
             <button
               type="button"
+              data-step={step.id}
               aria-current={here ? 'step' : undefined}
+              title={STEP_COPY[step.id].title}
               onClick={() => onSelect(index)}
-              className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-start text-sm ${
-                here
-                  ? 'bg-surface-muted font-medium text-fg'
-                  : 'text-fg-muted hover:bg-surface-muted'
-              }`}
+              className="group block w-full rounded-sm py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
             >
               <span
                 aria-hidden
-                className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${
-                  done ? 'border-success bg-success text-on-fill' : 'border-border'
+                className={`block h-1.5 rounded-full transition-colors duration-100 motion-reduce:transition-none ${
+                  here
+                    ? 'bg-primary'
+                    : done
+                      ? 'bg-success'
+                      : 'bg-surface-muted group-hover:bg-border-strong'
                 }`}
-              >
-                {done ? <Check className="size-3.5" /> : index + 1}
-              </span>
-              <span className="min-w-0 flex-1">{STEP_COPY[step.id].title}</span>
+              />
               <span className="sr-only">
+                {STEP_COPY[step.id].title}
                 {done ? ', done' : step.state === 'skipped' ? ', skipped' : ', to do'}
               </span>
-              {step.state === 'skipped' ? (
-                <span aria-hidden className="text-xs text-fg-muted">
-                  Skipped
-                </span>
-              ) : null}
             </button>
           </li>
         );
@@ -314,7 +335,7 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
   // Resume at the first step not done, once, when progress first arrives.
   React.useEffect(() => {
     if (onboarding.status !== 'ready' || current !== null) return;
-    const next = onboarding.value.steps.findIndex((step) => step.state === 'todo');
+    const next = inOrder(onboarding.value.steps).findIndex((step) => step.state === 'todo');
     setCurrent(next === -1 ? onboarding.value.steps.length : next);
   }, [onboarding, current]);
 
@@ -336,7 +357,8 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
       </p>
     );
   }
-  const { steps, done, total } = onboarding.value;
+  const { done, total } = onboarding.value;
+  const steps = inOrder(onboarding.value.steps);
   const go = (index: number) => {
     moved.current = true;
     setCurrent(Math.max(0, Math.min(index, steps.length)));
@@ -371,22 +393,32 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
-      <nav aria-label="Setup progress" className="grid content-start gap-3">
-        <p className="text-sm text-fg-muted" data-testid="setup-progress">
-          {done} of {total} done
-        </p>
-        <Stepper onboarding={onboarding.value} current={current} onSelect={go} />
-      </nav>
+    <div className="grid gap-5">
+      <div className="grid gap-1">
+        <div className="flex items-baseline justify-between gap-3 text-xs text-fg-muted">
+          <span>
+            Step {current + 1} of {steps.length}
+          </span>
+          <span data-testid="setup-progress">
+            {done} of {total} done
+          </span>
+        </div>
+        <div
+          role="progressbar"
+          aria-label="Setup progress"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={done}
+          className="sr-only"
+        />
+        <Stepper steps={steps} current={current} onSelect={go} />
+      </div>
       <section
         aria-labelledby="setup-step-title"
-        className="grid content-start gap-4 rounded-lg border border-border bg-surface p-5 animate-fade-in"
+        className="grid content-start gap-4 rounded-lg border border-border bg-surface p-5 sm:p-6 animate-fade-in"
         key={step.id}
       >
         <div className="grid gap-1">
-          <p className="text-xs text-fg-muted">
-            Step {current + 1} of {steps.length}
-          </p>
           <h2
             id="setup-step-title"
             ref={heading}
@@ -400,6 +432,8 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
             <p className="flex items-center gap-1.5 text-sm text-success" role="status">
               <CircleCheck aria-hidden className="size-4" /> Done
             </p>
+          ) : step.state === 'skipped' ? (
+            <p className="text-sm text-fg-muted">Skipped</p>
           ) : null}
         </div>
         <StepBody step={step.id} clients={clients} who={who} onProgress={refresh} />
@@ -431,17 +465,31 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
 }
 
 export function SetupPage({ clients }: { clients: SetupClients }): React.ReactElement {
+  // Full-screen, outside the app frame: the root draws no sidebar or bars on this path.
   return (
-    <PageFrame data-testid="setup-page">
-      <PageHeader
-        title="Set up Lupin"
-        subtitle="From an empty install to your first run. Skip anything and come back later."
-      />
-      <PageBody>
-        <AccessGate health={clients.health}>
-          {(who) => <Wizard clients={clients} who={who} />}
-        </AccessGate>
-      </PageBody>
-    </PageFrame>
+    <div
+      data-testid="setup-page"
+      className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 py-2 sm:py-8"
+    >
+      <header className="flex items-center justify-between gap-3">
+        <Wordmark decorative />
+        <a
+          href="/dashboard/now"
+          onClick={putOff}
+          className="inline-flex min-h-10 items-center rounded-md px-2 text-sm text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+        >
+          Do this later
+        </a>
+      </header>
+      <div className="grid gap-1">
+        <h1 className="text-2xl font-semibold text-fg">Set up Lupin</h1>
+        <p className="text-sm text-fg-muted">
+          From an empty install to your first run. Skip anything and come back later.
+        </p>
+      </div>
+      <AccessGate health={clients.health}>
+        {(who) => <Wizard clients={clients} who={who} />}
+      </AccessGate>
+    </div>
   );
 }
