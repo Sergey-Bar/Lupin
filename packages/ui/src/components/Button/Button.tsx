@@ -69,6 +69,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const isDisabled = disabled || loading;
+    // A disabled fill is not a dimmer fill: it reads as broken. It steps down to a quiet
+    // outline instead. A busy button keeps its fill, so its progress reads as the same button.
+    const filled = variant === 'primary' || variant === 'default' || variant === 'destructive';
+    const quiet = disabled === true && filled;
 
     return (
       <button
@@ -78,8 +82,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         aria-busy={loading ? true : undefined}
         data-testid={testId}
         className={cn(
-          buttonVariants({ variant, size }),
-          isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+          quiet
+            ? cn(
+                buttonVariants({ variant: 'outline', size }),
+                'border-border text-fg-muted hover:bg-transparent active:scale-100 cursor-not-allowed',
+              )
+            : buttonVariants({ variant, size }),
+          !quiet && (isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'),
           className,
         )}
         style={style}

@@ -15,6 +15,19 @@ describe('Button Component', () => {
     expect(button).toHaveClass('bg-error');
   });
 
+  it('draws a disabled primary as a quiet outline, not a washed-out fill that looks broken', () => {
+    render(<Button disabled>No changes</Button>);
+    const button = screen.getByRole('button', { name: 'No changes' });
+    expect(button).not.toHaveClass('bg-primary-gradient');
+    expect(button).not.toHaveClass('opacity-50');
+    expect(button).toHaveClass('border', 'border-border', 'text-fg-muted', 'cursor-not-allowed');
+  });
+
+  it('keeps the fill on a primary that is only busy, so progress reads as the same button', () => {
+    render(<Button loading>Saving</Button>);
+    expect(screen.getByRole('button', { name: 'Saving' })).toHaveClass('bg-primary-gradient');
+  });
+
   it('disabled prevents click', () => {
     const handleClick = vi.fn();
     render(

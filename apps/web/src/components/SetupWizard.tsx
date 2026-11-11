@@ -437,7 +437,10 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
           ) : null}
         </div>
         <StepBody step={step.id} clients={clients} who={who} onProgress={refresh} />
-        <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+        <div
+          data-testid="setup-actions"
+          className="sticky bottom-0 -mx-5 -mb-5 flex flex-wrap items-center gap-3 rounded-b-lg border-t border-border bg-surface px-5 py-4 sm:-mx-6 sm:-mb-6 sm:px-6"
+        >
           {current > 0 ? (
             <Button
               type="button"
@@ -454,7 +457,7 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
               Continue
             </Button>
           ) : (
-            <Button type="button" variant="outline" className="min-h-10" onClick={skip}>
+            <Button type="button" variant="ghost" className="min-h-10" onClick={skip}>
               Skip for now
             </Button>
           )}

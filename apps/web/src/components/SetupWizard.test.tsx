@@ -134,6 +134,16 @@ describe('the setup wizard', () => {
     expect(localStorage.getItem(SETUP_LATER_KEY)).toBe('1');
   });
 
+  it('keeps Back and Skip in a footer that stays on screen, with Skip as a quiet text button', async () => {
+    wizard(clients());
+    await screen.findByRole('heading', { level: 2, name: 'Connect a repository' });
+    const actions = screen.getByTestId('setup-actions');
+    expect(actions).toHaveClass('sticky', 'bottom-0', 'bg-surface');
+    const skip = within(actions).getByRole('button', { name: 'Skip for now' });
+    expect(skip).toHaveClass('bg-transparent', 'text-fg-muted');
+    expect(skip).not.toHaveClass('border');
+  });
+
   it('connects a repository, then continues, moving focus to the next step', async () => {
     const user = userEvent.setup();
     wizard(clients());
