@@ -6,6 +6,7 @@ import type { QaInsights } from '../lib/qa.js';
 import { failureText } from '../lib/roles.js';
 import { Panel, Quiet } from './kit.js';
 import { useToast } from './Toasts.js';
+import { useCopilot } from './CopilotPanel.js';
 
 /**
  * Two answers the run history gives once failures are grouped: how many root causes there
@@ -135,7 +136,10 @@ function ClusterList({
               <p className="text-xs text-fg-muted">
                 {`${String(cluster.tests.length)} test${cluster.tests.length === 1 ? '' : 's'} · ${String(cluster.runs)} run${cluster.runs === 1 ? '' : 's'} · ${cluster.branches.join(', ')} · last ${shortDate(cluster.lastSeen.slice(0, 10))}`}
               </p>
-              <CauseLabel cluster={cluster} api={api} />
+              <span className="flex items-center gap-2">
+                <AskAboutCause message={cluster.sampleMessage} />
+                <CauseLabel cluster={cluster} api={api} />
+              </span>
             </div>
           </li>
         ))}
@@ -232,5 +236,25 @@ function SuggestionRow({
         {state === 'done' ? 'Quarantined' : 'Quarantine'}
       </Button>
     </li>
+  );
+}
+
+/**
+ * "Ask" on one cause: sends its message to the copilot panel, which counts that failure across
+ * the recent runs and cites each one. Drawn only where the panel exists, so a page rendered
+ * without the shell offers nothing that would do nothing.
+ */
+function AskAboutCause({ message }: { message: string }) {
+  const copilot = useCopilot();
+  if (copilot === null) return null;
+  const quoted = message.replace(/["“”]/gu, "'").slice(0, 200);
+  return (
+    <button
+      type="button"
+      onClick={() => copilot.ask(`Why does "${quoted}" fail?`)}
+      className="inline-flex min-h-6 items-center rounded-sm text-xs text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+    >
+      Ask Lupin
+    </button>
   );
 }

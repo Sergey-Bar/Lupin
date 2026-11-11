@@ -62,6 +62,36 @@ describe('answerQuestion, the copilot ask rule engine', () => {
     expect(answer.citations).toContainEqual({ kind: 'run', id: 'r3' });
   });
 
+  it('explains one cause across runs when the question quotes its message', () => {
+    const runs = [
+      run('r3', 'failed', 3, [
+        { ...t('pay', 'failed'), error: { code: 'E', message: 'boom 500' } },
+      ]),
+      run(
+        'r2',
+        'failed',
+        2,
+        [{ ...t('pay', 'failed'), error: { code: 'E', message: 'boom 500' } }],
+        'feat/x',
+      ),
+      run('r1', 'passed', 1, [t('pay', 'passed')]),
+    ];
+    const answer = answerQuestion('Why does "boom 500" fail?', runs);
+    expect(answer.answer).toBe(
+      '"boom 500" failed 2 times in 2 of the last 3 runs, in 1 test, on main and feat/x.',
+    );
+    expect(answer.citations).toEqual([
+      { kind: 'run', id: 'r3' },
+      { kind: 'run', id: 'r2' },
+      { kind: 'test', id: 'pay', runId: 'r3' },
+    ]);
+    expect(answer.links[0]).toEqual({ label: 'Open the newest run', to: '/dashboard/runs/r3' });
+  });
+
+  it('says nothing matched rather than guessing, for a quoted message no run holds', () => {
+    expect(answerQuestion('why "nope" ?', RUNS).answer).toMatch(/No test in the last 3 runs/u);
+  });
+
   it('claims nothing it cannot ground, and says what it can answer', () => {
     const answer = answerQuestion('what is the weather', RUNS);
     expect(answer.citations).toEqual([]);

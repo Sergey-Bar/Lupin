@@ -98,7 +98,48 @@ const ANSWERS: Record<Intent, (newest: readonly ExecutionRun[]) => QuestionAnswe
   failing: failingAnswer,
 };
 
+/** A quoted message: `"boom 500"` or a typographic pair. */
+const QUOTED = /["“]([^"”]{3,300})["”]/u;
+
+/** Every failure across the runs whose message contains the quoted text, newest run first. */
+function causeAnswer(newest: readonly ExecutionRun[], quoted: string): QuestionAnswer {
+  const needle = quoted.toLowerCase();
+  const hits = newest.flatMap((run) =>
+    run.tests
+      .filter((test) => test.error?.message?.toLowerCase().includes(needle) === true)
+      .map((test) => ({ run, test })),
+  );
+  const total = String(newest.length);
+  if (hits.length === 0) {
+    return rules(`No test in the last ${total} runs failed with "${quoted}".`);
+  }
+  const runIds = [...new Set(hits.map((hit) => hit.run.id))];
+  // The newest run each test failed in: the first hit wins, since hits are newest first.
+  const tests = new Map<string, string>();
+  for (const hit of hits) if (!tests.has(hit.test.id)) tests.set(hit.test.id, hit.run.id);
+  const branches = [...new Set(hits.map((hit) => hit.run.branch ?? 'no branch'))];
+  const times = hits.length === 1 ? '1 time' : `${String(hits.length)} times`;
+  const testWord = tests.size === 1 ? '1 test' : `${String(tests.size)} tests`;
+  return rules(
+    `"${quoted}" failed ${times} in ${String(runIds.length)} of the last ${total} runs, in ${testWord}, on ${branches.join(' and ')}.`,
+    {
+      citations: [
+        ...runIds.map((id) => ({ kind: 'run' as const, id })),
+        ...[...tests].map(([id, runId]) => ({ kind: 'test' as const, id, runId })),
+      ],
+      links: [{ label: 'Open the newest run', to: runPath(runIds[0] ?? '') }],
+    },
+  );
+}
+
 export function answerQuestion(question: string, runs: readonly ExecutionRun[]): QuestionAnswer {
+  const quoted = QUOTED.exec(question)?.[1]?.trim();
+  if (quoted !== undefined && quoted !== '' && runs.length > 0) {
+    return causeAnswer(
+      [...runs].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      quoted,
+    );
+  }
   const intent = intentOf(question.toLowerCase());
   if (intent === null) return rules(CAN_ANSWER);
   if (runs.length === 0) {
