@@ -18,16 +18,16 @@ export function PageGuide({ pathname }: { pathname: string }): React.ReactElemen
   const guide = pageGuidance[route.id];
   return (
     <div className="relative z-popover h-0 shrink-0" data-chrome="secondary">
-      {/* In the gap under the tab row: 16px on a phone, 24px from `sm` up, so it never touches it. */}
-      <details key={route.id} className="absolute end-0 -top-4 sm:-top-6">
+      {/* On the page's first row, at its end: the toolbar reserves the space (`PageHeader`). */}
+      <details key={route.id} className="absolute end-0 top-0">
         <summary
           title={`How to use ${route.label}`}
-          className="relative flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-md text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus after:absolute after:-inset-2 after:content-[''] [&::-webkit-details-marker]:hidden"
+          className="relative flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-md text-fg-muted transition-colors duration-100 hover:bg-surface-raised hover:text-fg motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus [&::-webkit-details-marker]:hidden"
         >
           <BookOpen size={16} aria-hidden="true" />
           <strong className="sr-only">How to use {route.label}</strong>
         </summary>
-        <div className="absolute end-0 top-8 w-[min(52rem,calc(100vw-3rem))] rounded-lg border border-border-strong bg-surface p-4">
+        <div className="absolute end-0 top-12 w-[min(52rem,calc(100vw-3rem))] rounded-lg border border-border-strong bg-surface p-4 shadow-elevation-3 animate-fade-in">
           <p className="max-w-measure text-sm leading-relaxed text-fg-muted">{guide.purpose}</p>
           <ol className="mt-4 grid gap-3 md:grid-cols-3">
             {guide.steps.map((step, index) => (

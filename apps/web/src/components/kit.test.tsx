@@ -68,4 +68,19 @@ describe('PageHeader, headerless', () => {
     const title = screen.getByRole('heading', { level: 1, name: 'Good evening' });
     expect(title).not.toHaveClass('sr-only');
   });
+
+  it('puts a shown title and the page controls on one row, the guide’s space kept at its end', () => {
+    const { container } = render(
+      <PageHeader title="Good evening" visibleTitle actions={<button>Triage</button>} />,
+    );
+    const row = container.querySelector('[data-page-toolbar]') as HTMLElement;
+    expect(row).toContainElement(screen.getByRole('heading', { level: 1, name: 'Good evening' }));
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Triage' }));
+    expect(row).toHaveClass('pe-12', 'min-h-10');
+  });
+
+  it('keeps the toolbar clear of the page guide at the end of the row', () => {
+    const { container } = render(<PageHeader title="Runs" subtitle="86 runs" />);
+    expect(container.querySelector('[data-page-toolbar]')).toHaveClass('pe-12', 'min-h-10');
+  });
 });

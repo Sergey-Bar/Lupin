@@ -131,18 +131,31 @@ export function PageHeader({
   /** Shown, not hidden: for a title that is content (Home's greeting), not a tab's name. */
   visibleTitle?: boolean;
 }): React.ReactElement {
+  // One row: the context or the shown title at the start, the page's controls at the end, and
+  // `pe-12` kept clear for the page guide's icon, which `PageContent` draws on this row.
+  const row = 'flex min-h-10 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 pe-12';
+  const controls =
+    actions === undefined ? null : (
+      <div className="flex max-w-full flex-wrap items-center gap-2">{actions}</div>
+    );
+  if (visibleTitle) {
+    return (
+      <header className="contents">
+        <div data-page-toolbar="" className={row}>
+          <h1 className="text-2xl font-semibold tracking-tight text-balance">{title}</h1>
+          {controls}
+        </div>
+        {subtitle === undefined ? null : (
+          <div className="-mt-2 max-w-measure text-sm text-fg-muted">{subtitle}</div>
+        )}
+      </header>
+    );
+  }
   return (
     <header className="contents">
-      {visibleTitle ? (
-        <h1 className="text-2xl font-semibold tracking-tight text-balance">{title}</h1>
-      ) : (
-        <h1 className="sr-only">{title}</h1>
-      )}
+      <h1 className="sr-only">{title}</h1>
       {subtitle === undefined && actions === undefined ? null : (
-        <div
-          data-page-toolbar=""
-          className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2"
-        >
+        <div data-page-toolbar="" className={row}>
           {subtitle === undefined ? (
             <span />
           ) : (
@@ -153,9 +166,7 @@ export function PageHeader({
               {subtitle}
             </div>
           )}
-          {actions === undefined ? null : (
-            <div className="flex max-w-full flex-wrap items-center gap-2">{actions}</div>
-          )}
+          {controls}
         </div>
       )}
     </header>
