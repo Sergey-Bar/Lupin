@@ -224,4 +224,29 @@ describe('phaseBand', () => {
     });
     expect(phaseBand([]).every((entry) => entry.shape === 'unknown')).toBe(true);
   });
+
+  it('names a phase with a problem, and one where changes are stuck, in words', () => {
+    const band = phaseBand([
+      phaseStrip(done({ testsOnHead: { ran: true, tampered: true } })),
+      phaseStrip(
+        done({
+          pullRequest: 8,
+          state: 'open',
+          mergedAt: null,
+          humanApprovals: 0,
+          approvedAt: null,
+          firstReviewAt: null,
+          openedAt: hoursAgo(PHASE_THRESHOLD_HOURS.review + 10),
+        }),
+      ),
+    ]);
+    expect(band.find((entry) => entry.phase === 'test')?.reason).toBe(
+      '1 of 2 changes had a problem in test.',
+    );
+    expect(band.find((entry) => entry.phase === 'review')).toMatchObject({
+      stuck: 1,
+      shape: 'caution',
+      reason: '1 of 2 changes stuck in review.',
+    });
+  });
 });

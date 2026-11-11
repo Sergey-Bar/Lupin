@@ -99,6 +99,20 @@ describe('renderFullReport', () => {
     expect(renderFullReport(model(), OPTIONS)).not.toContain('While you were away');
   });
 
+  it('draws no empty list when nothing moved, or when the briefing has no line to add', () => {
+    const html = renderFullReport(
+      model({
+        cockpit: { headline: 'Held steady since last week', tone: 'good', changes: [] },
+        briefing: { headline: 'Nothing happened in the last 7 days.', lines: [] },
+      }),
+      OPTIONS,
+    );
+    expect(html).toContain('Held steady since last week');
+    expect(html).toContain('Nothing happened in the last 7 days.');
+    expect(html).not.toContain('What moved');
+    expect(html).not.toContain('<ul class="lines"></ul>');
+  });
+
   it('omits empty sections and says so when nothing needs a person', () => {
     // No attention, no digest, no areas, no fixes, no cockpit, no scope: the empty sections
     // render nothing and the items section states the all-clear.
