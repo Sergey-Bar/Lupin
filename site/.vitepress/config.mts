@@ -136,6 +136,7 @@ export default defineConfig({
           { text: 'Delivery performance', link: '/guide/delivery-performance' },
           { text: 'Scheduled reports', link: '/guide/notifications' },
           { text: 'AI-written code', link: '/guide/ai-code' },
+          { text: 'Change risk', link: '/guide/change-risk' },
           { text: 'Agent quality', link: '/guide/agents' },
           { text: 'Issues and test proposals', link: '/guide/issues-and-test-proposals' },
           { text: 'How Lupin compares', link: '/guide/compare' },

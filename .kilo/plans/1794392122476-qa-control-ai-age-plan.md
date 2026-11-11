@@ -97,3 +97,14 @@ abstraction), ML clustering (explainable signature clusters are the point).
 ## Progress
 
 Recorded here as tasks land, so the next session starts from the tree rather than from memory.
+
+- **Wave 1, tasks 0–9: landed** on `feat/qa-control-ai-age`. Change risk (RISK-1..3), blast
+  radius, `lupin diff-guard`, persisted assessments (`0058_change_risk.sql`), risk in the gate
+  and the comment, the `lupin/change-risk` check run, `lupin gate --post`, and the web (risk
+  column and filter, the pull request's risk page, Home). Capability rows
+  `change-risk.assessment`, `change-risk.tamper-guard`, `change-risk.github-check`,
+  `change-risk.ci-post`; guide `site/guide/change-risk.md`.
+- **Left from Wave 1:** the end-to-end spec (needs PostgreSQL and Playwright, not run here);
+  `diff-guard` and `--post` inputs on the composite action (it shells out with curl and jq, and
+  a second implementation of the CLI in bash would be a second authority); a run of
+  `pnpm test:render` on the reference host for the new page.

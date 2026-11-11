@@ -6,6 +6,19 @@
 
 ### Added
 
+- **Change risk.** Every pull request the gate sees gets a level and a score that is the sum of
+  stated factors, each with its own sentence: authorship, size, tests touched, diff coverage,
+  new findings, failed and flaky tests, human approval, evals, how far the change reaches, and
+  tampering. Missing test results or diff coverage make a change `unknown`, never low. Reported
+  in the sticky comment, a `lupin/change-risk` check run with line annotations, a risk column and
+  filter on Pull requests, the pull request's own page and Home; blocking only when
+  `health.risk.blockAt` is set. `GET /api/v1/projects/:id/pull-requests/:number/risk`, viewer.
+- **`lupin diff-guard`** reports changes that weaken the tests (deleted tests, added skips,
+  removed or loosened assertions, lowered thresholds, CI steps that cannot fail, added retries)
+  from the job's own diff, sending kinds, paths and line numbers and never a line of source.
+  `POST /api/v1/projects/:id/health/diff-guard`, uploader.
+- **`lupin gate --post`** posts the gate's status, check run and comment with the job's own
+  `GITHUB_TOKEN`, for an install that holds no GitHub token (a LAN install).
 - **The copilot.** "Explain this run" (or `e`) on a failed run answers from the run's own
   results, groups the failures by cause and links every test it names. Its proposed actions
   (retry the failed tests, quarantine a flaky one) run only after one confirmation, through the
