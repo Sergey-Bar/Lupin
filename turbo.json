@@ -31,6 +31,16 @@
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
+    "@lupin/api#test": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/ui/src/tokens/theme.css"],
+      "outputs": ["coverage/**"]
+    },
+    "@lupin/reporting#test": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/ui/src/tokens/theme.css"],
+      "outputs": ["coverage/**"]
+    },
     "typecheck": {
       "dependsOn": ["^build"],
       "outputs": []

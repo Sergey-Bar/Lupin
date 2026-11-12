@@ -33,7 +33,7 @@ export const CHART_PALETTE = {
   bar: [0, 95, 176],
   agent: [163, 104, 0],
   line: [0, 95, 176],
-  formulaBreak: [126, 84, 21],
+  formulaBreak: [146, 91, 0],
 } as const satisfies Record<string, Rgb>;
 
 /** Where the two plots sit, in image pixels. Exported so a test can find a bar or a point. */
