@@ -401,3 +401,9 @@ its progress entry rather than claiming it.
   no screen; custom trend ranges have an API and no picker; `test_failure_correlations` keeps a
   reader and no writer, so C-6 stays debt with two tables; there is no `quarantine` artifact
   class to honour, only `legal_hold`.
+- 2026-11-12: Wave 4 done; `verify:local` green at `f083be27`. Not verified: no image was built
+  (Docker was not running), no real ZAP scan or axe report, so `runner.oci` and `tool.playwright`
+  stay `mock` and BK-2's security half has an adapter and no recorded run. Security findings are
+  read from the report the commit uploaded last, through `health_findings.last_report_id`, so a
+  later report on another commit can move a finding off it. Job containers do not yet join a
+  network limited to the target; the boundary is still `RUNNER_ALLOWED_TARGET_URLS`.

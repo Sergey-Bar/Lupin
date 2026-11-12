@@ -46,6 +46,18 @@
 - **14 dormant tables dropped (task 15).** `0066_drop_dormant_tables.sql` refuses to drop a table
   that holds rows unless `lupin.allow_drop_nonempty` is `on`; the legacy importer reports them as
   skipped.
+- **Evidence-backed gate domains (task 16).** Security, accessibility and performance are decided
+  from the run's own commit: the latest SARIF and axe reports' open findings against a policy
+  rule's `maxSeverity` (default `high`), ZAP scans and k6 thresholds uploaded for the commit. A
+  domain with no evidence stays `not_configured` (invariants GATE-1, GATE-2).
+- **ZAP baseline scans (task 17).** `POST /api/v1/agents/security/scan` queues a baseline scan of an
+  allowlisted target on a runner with the `zap` capability; the report is read by the ZAP adapter.
+- **axe runs (task 18).** A Playwright job with `configuration.axe: true` uploads the axe report its
+  fixture wrote (`LUPIN_AXE_RESULTS_PATH`) to the health door; no report fails the run.
+- **Runner images (task 19).** The k6, Playwright and ZAP images install their tool and run as a
+  numeric non-root user; the compose runner drops every capability.
+- **Maturity from the upload door (task 20).** Every producer the reporter door reads is listed with
+  import evidence, so ZAP no longer reads as absent.
 
 - **Change risk.** Every pull request the gate sees gets a level and a score that is the sum of
   stated factors, each with its own sentence: authorship, size, tests touched, diff coverage,
