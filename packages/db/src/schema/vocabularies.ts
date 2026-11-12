@@ -80,5 +80,6 @@ export type QualityPolicyRule = {
   domain: QualityDomain;
   required: boolean;
   minimumPassRate?: number;
+  maxSeverity?: 'critical' | 'high' | 'medium' | 'low';
   requiredArtifactKinds: ArtifactKind[];
 };

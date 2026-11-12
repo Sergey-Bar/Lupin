@@ -41,7 +41,10 @@ export const Table = forwardRef<HTMLTableElement, TableProps>(({ className, ...p
       {...(scrolls
         ? { tabIndex: 0, role: 'region', 'aria-label': props['aria-label'] ?? 'Table' }
         : {})}
-      className="w-full overflow-auto rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+      // `relative`, so a `sr-only` caption (absolutely positioned) is contained by the region
+      // that scrolls; without it the caption sits at the table's far edge in `<main>`'s
+      // coordinates and makes the page scroll sideways on a phone.
+      className="relative w-full overflow-auto rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
     >
       <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
     </div>
@@ -201,7 +204,7 @@ export const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(
          * `tabular-nums` because a digit is proportional by default and a column of scores
          * shifts sideways every time one updates; `text-end` because a right edge is the
          * only alignment that puts the last digit in the same place on every row; and
-         * `font-mono` because the design language sets Geist Mono for anything a
+         * `font-mono` because the design language sets the mono for anything a
          * person compares character by character, which a column of scores is.
          */
         numeric && 'tabular-nums text-end font-mono',

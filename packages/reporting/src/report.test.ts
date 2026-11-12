@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { composeBriefing } from './briefing.js';
 import {
   composeReport,
+  MAX_BRIEFING_LINES,
   renderPlain,
   renderSlack,
   renderTeams,
   renderTelegram,
+  reportBriefingOf,
   type ReportInput,
 } from './report.js';
 
@@ -259,5 +262,47 @@ describe('the digest areas and the top actions', () => {
     expect(telegram).toContain('&lt;b&gt;&amp;evil 3');
     expect(telegram).toContain('&lt;b&gt;&amp;evil: x &lt; y');
     expect(renderSlack(model)).toContain('&lt;b&gt;&amp;evil');
+  });
+});
+
+describe('the briefing in the digest', () => {
+  const briefing = composeBriefing({
+    scope: { kind: 'portfolio', projects: 2 },
+    now: new Date('2026-11-11T12:00:00.000Z'),
+    windowDays: 7,
+    merged: { total: 9, ai: 6, highRisk: 2, unreviewedAi: 1, tampered: 1 },
+    deployments: 2,
+    pace: null,
+    bottlenecks: [
+      { projectId: 'p-1', projectName: 'Shop', sentence: 'Review is the bottleneck: 3 waiting.' },
+    ],
+    quality: null,
+    decisions: [],
+  });
+
+  it('keeps the headline and the lines that need someone, worst first, never the plain notes', () => {
+    const block = reportBriefingOf(briefing);
+    expect(block.headline).toBe(briefing.headline);
+    expect(block.lines).toEqual([
+      { tone: 'bad', text: '2 merged at high risk or above.' },
+      { tone: 'bad', text: '1 AI-written merged with no person approving.' },
+      { tone: 'bad', text: '1 merged with changes that weakened its tests.' },
+    ]);
+    expect(block.lines).toHaveLength(MAX_BRIEFING_LINES);
+  });
+
+  it('is said after the cockpit and before the run sentence, and turns a report yellow, not red', () => {
+    const model = composeReport({ ...BASE, briefing: reportBriefingOf(briefing) });
+    expect(model.status).toBe('caution');
+    const text = renderPlain(model, 4_000);
+    expect(text).toContain(`While you were away: ${briefing.headline}`);
+    expect(text).toContain('🔴 1 merged with changes that weakened its tests.');
+    expect(text.indexOf('While you were away')).toBeLessThan(text.indexOf(model.sentence));
+  });
+
+  it('leaves a report without a briefing exactly as it was', () => {
+    const model = composeReport(BASE);
+    expect(model.briefing).toBeNull();
+    expect(renderPlain(model, 4_000)).not.toContain('While you were away');
   });
 });

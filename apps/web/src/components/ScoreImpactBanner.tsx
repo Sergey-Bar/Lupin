@@ -43,7 +43,7 @@ export function ScoreImpactBanner({
       data-testid="score-impact"
       className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 text-sm"
     >
-      <p className="font-medium text-fg">The cockpit names this run.</p>
+      <p className="font-medium text-fg">The dashboard names this run.</p>
       <ul className="flex flex-col gap-1 text-fg-muted" aria-label="What it is named for">
         {impact.overall ? <li>The overall score changed on this run’s commit.</li> : null}
         {impact.metrics.map((metric) => {
@@ -70,7 +70,7 @@ export function ScoreImpactBanner({
           href="/dashboard/now"
           className="rounded-sm text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
         >
-          Back to the cockpit
+          Back to the dashboard
         </a>
         {commit === null ? null : commitHref === null ? (
           <span className="font-mono text-xs text-fg-muted">Commit {commit.slice(0, 7)}</span>

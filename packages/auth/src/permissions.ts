@@ -56,3 +56,25 @@ export function checkPermission(
 export function isAdmin(userPermissions: readonly string[]): boolean {
   return userPermissions.some(isAdminPermission);
 }
+
+/** The roles an access token can be issued, in increasing order of authority. */
+export type ScopedRole = 'viewer' | 'operator' | 'admin';
+
+/**
+ * What each role may do, in the permission vocabulary. A token's scopes are a subset of its
+ * role's set (plan task 7); a token with no scopes has the whole set.
+ */
+export const ROLE_PERMISSIONS: Readonly<Record<ScopedRole, readonly ContractPermission[]>> = {
+  viewer: ['runs:read', 'tests:read', 'settings:read'],
+  operator: ['runs:read', 'runs:write', 'tests:read', 'tests:write', 'settings:read', 'ai:use'],
+  admin: PERMISSIONS.filter((permission) => !isAdminPermission(permission)),
+};
+
+/** The scopes in `requested` that `role` does not hold; empty when the request is valid. */
+export function scopesBeyondRole(
+  role: ScopedRole,
+  requested: readonly ContractPermission[],
+): ContractPermission[] {
+  const allowed = ROLE_PERMISSIONS[role];
+  return requested.filter((permission) => !allowed.includes(permission));
+}

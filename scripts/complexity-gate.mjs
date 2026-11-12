@@ -69,9 +69,10 @@ const ceiling = baseline.ceiling;
 const run = spawnSync(
   process.execPath,
   [
-    // The whole tree exhausts Node's default 4 GB heap; the root `lint` script carries
-    // the same flag for the same reason.
-    '--max-old-space-size=6144',
+    // The whole tree exhausts Node's default 4 GB heap. 6 GB stopped being enough when the
+    // Wave 1 insights split landed (the run dies at the cap, at every commit after it), and
+    // this run lints `tests` and `scripts` as well as what `pnpm lint` does, so it has more.
+    '--max-old-space-size=8192',
     eslintBin,
     'apps',
     'packages',

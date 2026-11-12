@@ -75,6 +75,20 @@ describe('a producer test status becomes a canonical one', () => {
     ]);
   });
 
+  it('reads a declared-but-not-run test as skipped and a word with no outcome as unknown, for the JSON test reporters', () => {
+    expect(canonicalTestStatusFrom('ctrf', 'pending')).toBe('skipped');
+    expect(canonicalTestStatusFrom('ctrf', 'other')).toBe('unknown');
+    expect(canonicalTestStatusFrom('jest', 'todo')).toBe('skipped');
+    expect(canonicalTestStatusFrom('jest', 'focused')).toBe('unknown');
+    expect(canonicalTestStatusFrom('vitest', 'todo')).toBe('skipped');
+    expect(canonicalTestStatusFrom('pytest', 'xfailed')).toBe('skipped');
+    expect(canonicalTestStatusFrom('pytest', 'error')).toBe('failed');
+    expect(canonicalTestStatusFrom('cypress', 'pending')).toBe('skipped');
+    for (const producer of ['ctrf', 'jest', 'vitest', 'pytest', 'cypress'] as const) {
+      expect(canonicalTestStatusFrom(producer, 'unknown')).toBe('unknown');
+    }
+  });
+
   it('counts an interrupted test as cancelled, not as a product failure', () => {
     // The bug this table was written for. Playwright emits `interrupted` when the harness
     // stopped the run, and the upload door mapped it to `failed` — so the harness's own
@@ -102,11 +116,14 @@ describe('a producer test status becomes a canonical one', () => {
   });
 
   it('reads the same word the same way for every producer that emits it', () => {
-    const shared = ['passed', 'failed', 'skipped', 'timedOut', 'timed_out'] as const;
+    const shared = ['passed', 'failed', 'skipped', 'pending', 'timedOut', 'timed_out'] as const;
     for (const word of shared) {
-      const readings = INGESTED_PRODUCERS.map((producer) =>
-        canonicalTestStatusFrom(producer, word),
-      );
+      // Only the producers whose vocabulary holds the word: a producer that never writes
+      // `timedOut` (CTRF, Jest, pytest) reads it as unknown, which is a different question.
+      const readings = INGESTED_PRODUCERS.filter(
+        (producer) => word in PRODUCER_TEST_VOCABULARY[producer],
+      ).map((producer) => canonicalTestStatusFrom(producer, word));
+      expect(readings.length, word).toBeGreaterThan(1);
       expect(new Set(readings).size, `producers disagree about "${word}"`).toBe(1);
     }
   });

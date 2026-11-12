@@ -2,6 +2,8 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod/v4';
 import {
+  BriefingResponseSchema,
+  DiffGuardUploadSchema,
   FINDING_SEVERITIES,
   FINDING_STATES,
   HEALTH_DIMENSIONS,
@@ -9,17 +11,21 @@ import {
   isUploadReportFormat,
   SupplyChainPolicySchema,
   TriageFindingBodySchema,
+  type Briefing,
 } from '@lupin/shared-contracts';
 import { MAX_HEALTH_REPORT_BYTES } from '@lupin/reporter';
 import type { ConnectorAdapter } from '@lupin/connectors-sdk';
 import {
   AlertSettingsSchema,
+  githubPayload as githubPayloadFor,
   githubRepository,
   isAllowedWebhook,
   reportToGitHub,
+  type GateReport,
 } from '../services/health-integrations.js';
 import { domainErrorResponse } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
+import { assertOutboundUrl } from '../http/outbound-guard.js';
 import { invalidRequest } from '../http/invalid-request.js';
 import { callerOf, requireRole, type CallerResolver } from '../http/roles.js';
 import { uploaderActor, uploaderGuard } from '../http/uploader.js';
@@ -47,6 +53,23 @@ import {
   supplyChainPolicyRecord,
 } from '../services/supply-chain-service.js';
 import { diffCoverageStatus } from '../services/diff-coverage-service.js';
+import { diffGuardStatus, recordDiffGuard } from '../services/diff-guard-service.js';
+import { projectPace } from '../services/pace-service.js';
+import { portfolioPhases, pullRequestPhases, repositoryPhases } from '../services/phase-service.js';
+import {
+  BRIEFING_DEFAULT_DAYS,
+  portfolioBriefing,
+  repositoryBriefing,
+} from '../services/briefing-service.js';
+import type { Narrator } from '../services/narration-service.js';
+import { portfolioShape, pullRequestShape, repositoryShape } from '../services/shape-service.js';
+import {
+  assessPullRequestRisk,
+  pullRequestRisk,
+  riskFactsOf,
+  riskGateReason,
+  riskPolicyFor,
+} from '../services/change-risk-service.js';
 import type { CommitTests } from '../services/commit-tests.js';
 
 /**
@@ -72,6 +95,11 @@ export interface RepoHealthRouteOptions extends HealthScanOptions {
    * section. Absent, or no run for the commit: the section is left out.
    */
   commitTests?: (projectId: string, commit: string) => Promise<CommitTests | null>;
+  /**
+   * Rewords a briefing as prose, held to its items. Absent: a narration asked for is answered
+   * `unavailable`, and the briefing stands as written.
+   */
+  narrator?: Narrator;
 }
 
 const UploadQuerySchema = z.object({
@@ -117,6 +145,20 @@ const PortfolioComponentsQuerySchema = z.object({
 });
 
 const DiffCoverageQuerySchema = z.object({ commit: Commit });
+
+/** 200 findings of a 500-character path each is ~120 kB; twice that is room, not a mirror. */
+const DIFF_GUARD_MAX_BYTES = 256_000;
+
+const PullRequestNumberSchema = z.coerce.number().int().min(1).max(2_147_483_647);
+
+const PaceQuerySchema = z.object({ weeks: z.coerce.number().int().min(1).max(52).default(8) });
+
+const PhaseQuerySchema = z.object({ days: z.coerce.number().int().min(1).max(366).default(30) });
+
+const BriefingQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(366).default(BRIEFING_DEFAULT_DAYS),
+  narrate: z.enum(['true', 'false']).default('false'),
+});
 
 const GateReportBodySchema = z.object({
   branch: z.string().trim().min(1).max(255),
@@ -164,6 +206,13 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     reporterSecret: options.reporterSecret,
     requireReporterSecret: options.requireReporterSecret,
   });
+
+  /** The head's diff-guard findings, for the check run's annotations; none without a risk. */
+  const tamperFindingsFor = async (projectId: string, commit: string, risk: unknown) => {
+    if (risk === null) return null;
+    const status = await diffGuardStatus(options, projectId, commit);
+    return status.state === 'reported' ? status.report.findings : null;
+  };
 
   app.get('/api/v1/portfolio', viewer, async (context) => context.json(await portfolio(options)));
 
@@ -263,6 +312,25 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     const { branch, commit, pullRequest } = parsed.data;
     const result = await healthGate(options, projectId, branch, commit, pullRequest);
     const tests = (await options.commitTests?.(projectId, commit)) ?? null;
+    // A pull request's own risk at this head: assessed and stored on every report, and a
+    // reason to fail only when the project's policy blocks at its level.
+    const risk =
+      pullRequest === undefined
+        ? null
+        : await assessPullRequestRisk(
+            options,
+            projectId,
+            riskFactsOf(result, tests, commit, pullRequest),
+          );
+    const riskReason = riskGateReason(risk, await riskPolicyFor(options, projectId));
+    const verdict =
+      riskReason === null
+        ? result.verdict
+        : {
+            ...result.verdict,
+            verdict: 'failed' as const,
+            reasons: [...result.verdict.reasons, riskReason],
+          };
     if (pullRequest !== undefined) {
       await options.onGateReport?.(projectId, {
         pullRequest,
@@ -276,26 +344,34 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     const repository = githubRepository(source.repositoryUrl);
     const token =
       repository === null ? null : ((await options.github?.tokenFor(projectId)) ?? null);
+    const report: GateReport = {
+      verdict,
+      grade: result.grade,
+      added: result.added,
+      branch: result.branch,
+      detailsUrl,
+      diffCoverage: result.diffCoverage,
+      delivery: result.delivery,
+      aiGovernance: result.aiGovernance,
+      evals: result.evals,
+      tests,
+      risk,
+      tamperFindings: await tamperFindingsFor(projectId, commit, risk),
+    };
+    const poster = repository !== null && token !== null ? (options.github ?? null) : null;
     const github =
-      repository === null || token === null || options.github === undefined
+      poster === null || repository === null || token === null
         ? null
         : await reportToGitHub(
-            options.github.adapter,
+            poster.adapter,
             token,
             { ...repository, sha: commit, pullRequest },
-            {
-              verdict: result.verdict,
-              grade: result.grade,
-              added: result.added,
-              branch: result.branch,
-              detailsUrl,
-              diffCoverage: result.diffCoverage,
-              delivery: result.delivery,
-              aiGovernance: result.aiGovernance,
-              evals: result.evals,
-              tests,
-            },
+            report,
           );
+    // Nothing posted here: the job posts the same status, check run and comment itself, with
+    // its own token (`lupin gate --post`), so a LAN install still reaches the pull request.
+    const githubPayload =
+      github === null ? githubPayloadFor({ sha: commit, pullRequest }, report) : null;
     await audit(options, {
       actor: await uploaderActor(context, access),
       action: 'health.gate.report',
@@ -305,22 +381,25 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
         branch: result.branch,
         commit,
         pullRequest: pullRequest ?? null,
-        verdict: result.verdict.verdict,
+        verdict: verdict.verdict,
         aiGovernance: result.aiGovernance?.verdict.verdict ?? null,
         evals: result.evals?.suites.length ?? 0,
+        risk: risk?.risk.level ?? null,
         github,
       },
     });
     return context.json({
       branch: result.branch,
-      ...result.verdict,
+      ...verdict,
       grade: result.grade,
       diffCoverage: result.diffCoverage,
       aiGovernance: result.aiGovernance,
       evals: result.evals,
       agentRuntime: result.agentRuntime,
       tests,
+      risk,
       github,
+      githubPayload,
     });
   });
 
@@ -386,6 +465,163 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     );
   });
 
+  /**
+   * `lupin diff-guard`'s findings for a commit: kinds, paths and line numbers of the changes
+   * that weaken the tests. Accepts the same credentials as an upload. The schema is strict, so
+   * a finding that carries the text of a line is refused rather than stored.
+   */
+  app.post(
+    '/api/v1/projects/:id/health/diff-guard',
+    uploader,
+    bodyLimit({
+      maxSize: DIFF_GUARD_MAX_BYTES,
+      onError: (context) =>
+        domainErrorResponse(
+          context,
+          new DomainError(ErrorCode.PAYLOAD_TOO_LARGE, 'diff-guard report larger than 256 kB'),
+        ),
+    }),
+    async (context) => {
+      const parsed = DiffGuardUploadSchema.safeParse(await context.req.json().catch(() => null));
+      if (!parsed.success) {
+        return invalidRequest(context, 'Invalid diff-guard report', parsed.error.issues);
+      }
+      const projectId = context.req.param('id');
+      await recordDiffGuard(options, projectId, parsed.data);
+      const counts = parsed.data.report.counts;
+      await audit(options, {
+        actor: await uploaderActor(context, access),
+        action: 'health.diff-guard.report',
+        resourceType: 'project',
+        resourceId: projectId,
+        // Counts by kind, never a path or a line: the audit trail is not a copy of the report.
+        details: {
+          commit: parsed.data.commit.toLowerCase(),
+          pullRequest: parsed.data.pullRequest ?? null,
+          findings: Object.values(counts).reduce((sum, value) => sum + value, 0),
+          counts,
+          truncated: parsed.data.report.truncated,
+        },
+      });
+      return context.json(
+        await diffGuardStatus(options, projectId, parsed.data.commit.toLowerCase()),
+      );
+    },
+  );
+
+  app.get('/api/v1/projects/:id/health/diff-guard', viewer, async (context) => {
+    const parsed = DiffCoverageQuerySchema.safeParse(context.req.query());
+    if (!parsed.success) return invalidRequest(context, 'Name the commit', parsed.error.issues);
+    return context.json(
+      await diffGuardStatus(options, context.req.param('id'), parsed.data.commit.toLowerCase()),
+    );
+  });
+
+  /** Each SDLC phase across the repository's changes, the bottleneck, and what is stuck. */
+  app.get('/api/v1/projects/:id/phases', viewer, async (context) => {
+    const parsed = PhaseQuerySchema.safeParse(context.req.query());
+    if (!parsed.success)
+      return invalidRequest(context, 'Invalid phases query', parsed.error.issues);
+    return context.json(await repositoryPhases(options, context.req.param('id'), parsed.data.days));
+  });
+
+  /** One pull request's SDLC phases; 404 when the delivery sync has not read it. */
+  app.get('/api/v1/projects/:id/pull-requests/:number/phases', viewer, async (context) => {
+    const parsed = PullRequestNumberSchema.safeParse(context.req.param('number'));
+    if (!parsed.success) {
+      return invalidRequest(context, 'A pull request number', parsed.error.issues);
+    }
+    const strip = await pullRequestPhases(options, context.req.param('id'), parsed.data);
+    if (strip === null) {
+      throw new DomainError(
+        ErrorCode.NOT_FOUND,
+        `The delivery sync has not read pull request #${String(parsed.data)}`,
+      );
+    }
+    return context.json(strip);
+  });
+
+  /** Every repository's shape per SDLC phase, worst first. */
+  app.get('/api/v1/portfolio/phases', viewer, async (context) => {
+    const parsed = PhaseQuerySchema.safeParse(context.req.query());
+    if (!parsed.success)
+      return invalidRequest(context, 'Invalid phases query', parsed.error.issues);
+    return context.json(await portfolioPhases(options, parsed.data.days));
+  });
+
+  /** Good or bad shape, and how fresh: one repository. */
+  app.get('/api/v1/projects/:id/shape', viewer, async (context) =>
+    context.json(await repositoryShape(options, context.req.param('id'))),
+  );
+
+  /** One pull request's shape; 404 when the delivery sync has not read it. */
+  app.get('/api/v1/projects/:id/pull-requests/:number/shape', viewer, async (context) => {
+    const parsed = PullRequestNumberSchema.safeParse(context.req.param('number'));
+    if (!parsed.success) {
+      return invalidRequest(context, 'A pull request number', parsed.error.issues);
+    }
+    const shape = await pullRequestShape(options, context.req.param('id'), parsed.data);
+    if (shape === null) {
+      throw new DomainError(
+        ErrorCode.NOT_FOUND,
+        `The delivery sync has not read pull request #${String(parsed.data)}`,
+      );
+    }
+    return context.json(shape);
+  });
+
+  /** The workspace's shape, and every repository's, worst first. */
+  app.get('/api/v1/portfolio/shape', viewer, async (context) =>
+    context.json(await portfolioShape(options)),
+  );
+
+  /** The briefing and, when asked for, its narration; a narration is never asked for by default. */
+  const briefingResponse = async (briefing: Briefing, narrate: boolean) => {
+    if (!narrate) return { briefing, narration: null };
+    const narration =
+      options.narrator === undefined
+        ? {
+            status: 'unavailable' as const,
+            reason: 'No model provider is configured; the briefing stands as written.',
+          }
+        : await options.narrator.narrate(briefing);
+    return BriefingResponseSchema.parse({ briefing, narration });
+  };
+
+  /** What happened in one repository over the window: deterministic, every line cited. */
+  app.get('/api/v1/projects/:id/briefing', viewer, async (context) => {
+    const parsed = BriefingQuerySchema.safeParse(context.req.query());
+    if (!parsed.success)
+      return invalidRequest(context, 'Invalid briefing query', parsed.error.issues);
+    const briefing = await repositoryBriefing(options, context.req.param('id'), parsed.data.days);
+    return context.json(await briefingResponse(briefing, parsed.data.narrate === 'true'));
+  });
+
+  /** What happened across the workspace's repositories over the window. */
+  app.get('/api/v1/portfolio/briefing', viewer, async (context) => {
+    const parsed = BriefingQuerySchema.safeParse(context.req.query());
+    if (!parsed.success)
+      return invalidRequest(context, 'Invalid briefing query', parsed.error.issues);
+    const briefing = await portfolioBriefing(options, parsed.data.days);
+    return context.json(await briefingResponse(briefing, parsed.data.narrate === 'true'));
+  });
+
+  /** Whether testing keeps up: weekly code and test pace, and the untested-change debt. */
+  app.get('/api/v1/projects/:id/pace', viewer, async (context) => {
+    const parsed = PaceQuerySchema.safeParse(context.req.query());
+    if (!parsed.success) return invalidRequest(context, 'Invalid pace query', parsed.error.issues);
+    return context.json(await projectPace(options, context.req.param('id'), parsed.data.weeks));
+  });
+
+  /** A pull request's change risk: the latest assessment, and the history across its heads. */
+  app.get('/api/v1/projects/:id/pull-requests/:number/risk', viewer, async (context) => {
+    const parsed = PullRequestNumberSchema.safeParse(context.req.param('number'));
+    if (!parsed.success) {
+      return invalidRequest(context, 'A pull request number', parsed.error.issues);
+    }
+    return context.json(await pullRequestRisk(options, context.req.param('id'), parsed.data));
+  });
+
   /** CODEOWNERS for a project with no checkout here, sent by its CI as plain text. */
   app.put(
     '/api/v1/projects/:id/health/codeowners',
@@ -418,6 +654,9 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
         'A webhook must be an https URL that is not a loopback or private address',
         [{ path: ['webhookUrl'], message: 'not allowed' }],
       );
+    }
+    if (parsed.data.webhookUrl != null) {
+      await assertOutboundUrl(parsed.data.webhookUrl, 'The webhook');
     }
     const alerts = await setAlertSettings(options, context.req.param('id'), parsed.data);
     await audit(options, {

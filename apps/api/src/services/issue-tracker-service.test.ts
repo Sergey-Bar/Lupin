@@ -17,6 +17,7 @@ import type { Caller } from './access-service.js';
 import { storeGitToken } from './git-credential-service.js';
 import {
   STALE_CLAIM_MS,
+  clusterIssues,
   clusterKey,
   createClusterIssue,
   createFindingIssue,
@@ -603,6 +604,11 @@ describe('an issue from a failure cluster', () => {
     expect(text).toContain('- checkout › refunds');
     expect((await createClusterIssue(options, ADAPTERS, body, 'b')).created).toBe(false);
     expect(sent).toHaveLength(1);
+    // Every later occurrence shows the issue, read by the signature the page has (Wave 1
+    // task 3); an unfiled signature has none.
+    const found = await clusterIssues(options, projectId, [CLUSTER.signature, 'never filed']);
+    expect(Object.keys(found)).toEqual([CLUSTER.signature]);
+    expect(found[CLUSTER.signature]?.key).toBe('ACME-11');
     const rows = await db
       .select()
       .from(schema.issueLinks)
@@ -682,6 +688,16 @@ describe('the issue tracking routes', () => {
       .from(schema.auditEvents)
       .where(eq(schema.auditEvents.resourceType, 'failure_cluster'));
     expect(audited).toMatchObject({ action: 'issue.create', actorId: 'token:operator' });
+    // Every later occurrence reads it back by signature, for a viewer and no one less.
+    const lookup = `/api/v1/projects/${projectId}/cluster-issues?signature=${encodeURIComponent(CLUSTER.signature)}`;
+    expect((await call('GET', lookup)).status).toBe(401);
+    const found = await call('GET', lookup, 'lup_viewer');
+    expect(found.status).toBe(200);
+    expect(
+      ((await found.json()) as { issues: Record<string, { key: string }> }).issues[
+        CLUSTER.signature
+      ]?.key,
+    ).toBe('ACME-9');
   });
 
   it('lets only an admin configure a tracker, audits it without the token, and never returns it', async () => {

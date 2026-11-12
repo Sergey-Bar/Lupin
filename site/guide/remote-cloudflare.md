@@ -89,7 +89,7 @@ On the `startup` profile the role map is the whole story: an identity's role is 
 says, every request. From `team` up, a person Access lets in becomes an Lupin account the
 first time they arrive, just as an OIDC sign-in makes one. That gives you three things:
 
-- **They appear on _Map → Members_**, where an admin changes their role, disables them or
+- **They appear on _Settings → Members_**, where an admin changes their role, disables them or
   adds them to another workspace. Their role in each workspace is their membership there.
   Removing them from a workspace ends that membership and revokes the access tokens they made
   there, and nothing else. Disabling them is

@@ -106,6 +106,15 @@ export type ChannelSummary = z.infer<typeof ChannelSummarySchema>;
 
 const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/u;
 
+const Hour = z.number().int().min(0).max(23);
+export const QuietHoursSchema = z
+  .object({ start: Hour, end: Hour })
+  .refine((hours) => hours.start !== hours.end, {
+    message: 'quiet hours must start and end at different hours',
+    path: ['end'],
+  });
+export type QuietHours = z.infer<typeof QuietHoursSchema>;
+
 export const CreateSubscriptionBodySchema = z
   .object({
     channelId: z.string().uuid(),
@@ -131,6 +140,11 @@ export const CreateSubscriptionBodySchema = z
      * artifact, for a channel that can carry it. Omitted is read as `chat`.
      */
     format: z.enum(['chat', 'full']).optional(),
+    /**
+     * Hours 0–23 in `timezone` when nothing is delivered, `[start, end)`; a start after the end
+     * wraps midnight. A report that comes due inside them waits until they end.
+     */
+    quietHours: QuietHoursSchema.optional(),
   })
   .refine((body) => body.cadence !== 'custom' || (body.cronExpr ?? '') !== '', {
     message: 'a custom cadence needs a cron expression',
@@ -156,6 +170,8 @@ ull follows the one that reported last. */
   audience: z.enum(['general', 'manager', 'sdet', 'quality']),
   /** How much the report carries; `chat` is the tiny digest, `full` the HTML artifact. */
   format: z.enum(['chat', 'full']),
+  /** `null` is none. */
+  quietHours: QuietHoursSchema.nullable(),
 });
 export type SubscriptionSummary = z.infer<typeof SubscriptionSummarySchema>;
 

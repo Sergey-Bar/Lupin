@@ -238,3 +238,30 @@ describe('device pairing', () => {
     ]);
   });
 });
+
+describe('token rotation (plan task 6)', () => {
+  it('posts to the rotate route and reads the successor once', async () => {
+    const summary = {
+      id: 't 2',
+      name: 'CI',
+      role: 'operator',
+      projectId: null,
+      displayPrefix: 'lup_new',
+      createdBy: 'session',
+      createdAt: '2026-11-01T00:00:00.000Z',
+      lastUsedAt: null,
+      revokedAt: null,
+      expiresAt: null,
+      scopes: ['runs:read'],
+    };
+    const { calls, client } = server({
+      'POST /api/v1/access-tokens/t%201/rotate': { token: 'lup_new-secret', summary },
+    });
+    const rotated = await client.rotateToken?.('t 1');
+    expect(rotated).toMatchObject({ token: 'lup_new-secret', summary: { scopes: ['runs:read'] } });
+    expect(calls[0]).toMatchObject({
+      url: 'https://api.test/api/v1/access-tokens/t%201/rotate',
+      method: 'POST',
+    });
+  });
+});

@@ -1,11 +1,15 @@
 import React from 'react';
 import { Button, Select } from '@lupin/ui';
+import type { IssueLink, IssueTarget } from '@lupin/shared-contracts';
 import type { ApiClient } from '../lib/api.js';
+import type { QaClient } from '../lib/qa-client.js';
 import { formatDuration, shortDate } from '../lib/insights.js';
 import type { QaInsights } from '../lib/qa.js';
 import { failureText } from '../lib/roles.js';
 import { Panel, Quiet } from './kit.js';
 import { useToast } from './Toasts.js';
+import { useCopilot } from './CopilotPanel.js';
+import { KnownReason, KnownReasonForm } from './KnownCause.js';
 
 /**
  * Two answers the run history gives once failures are grouped: how many root causes there
@@ -31,19 +35,134 @@ const CATEGORY_LABEL: Record<Category, string> = {
 export function FailureClustersPanel({
   clusters,
   api,
+  issueTracking,
+  className = 'flex-1',
 }: {
   clusters: QaInsights['failureClusters'];
   /** Absent: labels are shown and cannot be changed here. */
   api?: Pick<ApiClient, 'setTriageLabel'>;
+  /** The project's issue calls. Absent: no issue control is drawn. */
+  issueTracking?: { projectId: string; qa: Pick<QaClient, 'clusterIssues' | 'openClusterIssue'> };
+  /** Fills its column on Tests; on Home it is as tall as its rows. */
+  className?: string;
 }): React.ReactElement {
+  const issues = useClusterIssues(clusters, issueTracking);
   return (
-    <Panel title="Failures by root cause" data-testid="failure-clusters" className="flex-1">
+    <Panel title="Failures by root cause" data-testid="failure-clusters" className={className}>
       {clusters === undefined ? (
         <Quiet data-testid="clusters-unreported">This API does not group failures by cause.</Quiet>
       ) : (
-        <ClusterList clusters={clusters} api={api} />
+        <ClusterList clusters={clusters} api={api} issues={issues} />
       )}
     </Panel>
+  );
+}
+
+interface ClusterIssues {
+  found: Record<string, IssueLink>;
+  open: (cluster: Cluster, target: IssueTarget) => Promise<IssueLink>;
+}
+
+/** The issues the shown clusters already have, read once per list (plan Wave 1 task 3). */
+function useClusterIssues(
+  clusters: QaInsights['failureClusters'],
+  tracking:
+    { projectId: string; qa: Pick<QaClient, 'clusterIssues' | 'openClusterIssue'> } | undefined,
+): ClusterIssues | undefined {
+  const [found, setFound] = React.useState<Record<string, IssueLink>>({});
+  const signatures = (clusters?.clusters ?? []).map((cluster) => cluster.signature);
+  const key = signatures.join('\n');
+  const projectId = tracking?.projectId;
+  const qa = tracking?.qa;
+  React.useEffect(() => {
+    if (projectId === undefined || qa?.clusterIssues === undefined || key === '') return undefined;
+    let live = true;
+    // A failed read leaves each cluster offering a new issue; the create answers with an
+    // existing one, so nothing is filed twice.
+    qa.clusterIssues(projectId, key.split('\n')).then(
+      (issues) => {
+        if (live) setFound(issues);
+      },
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [projectId, qa, key]);
+  if (projectId === undefined || qa?.openClusterIssue === undefined) return undefined;
+  const create = qa.openClusterIssue;
+  return {
+    found,
+    open: async (cluster, target) => {
+      const link = await create({
+        projectId,
+        target,
+        signature: cluster.signature,
+        errorType: cluster.errorType,
+        sampleMessage: cluster.sampleMessage.slice(0, 4000),
+        tests: cluster.tests.slice(0, 50),
+        count: cluster.count,
+        runs: cluster.runs,
+        branches: cluster.branches.slice(0, 20),
+      });
+      setFound((current) => ({ ...current, [cluster.signature]: link }));
+      return link;
+    },
+  };
+}
+
+/** The cause's issue, or a way to open one in Jira or GitHub. */
+function ClusterIssue({
+  cluster,
+  issues,
+}: {
+  cluster: Cluster;
+  issues: ClusterIssues;
+}): React.ReactElement {
+  const toast = useToast();
+  const [busy, setBusy] = React.useState(false);
+  const existing = issues.found[cluster.signature];
+  if (existing !== undefined) {
+    return (
+      <a
+        href={existing.url}
+        target="_blank"
+        rel="noreferrer"
+        data-testid="cluster-issue"
+        className="rounded-sm text-xs text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+      >
+        {existing.key}
+      </a>
+    );
+  }
+  const open = (target: IssueTarget) => {
+    setBusy(true);
+    issues
+      .open(cluster, target)
+      .then((link) =>
+        toast({
+          tone: 'success',
+          title: link.created ? `Opened ${link.key}` : `Already ${link.key}`,
+        }),
+      )
+      .catch((error: unknown) =>
+        toast({
+          tone: 'danger',
+          title: 'No issue was opened',
+          description: failureText(error, 'The tracker refused the issue'),
+        }),
+      )
+      .finally(() => setBusy(false));
+  };
+  return (
+    <span className="flex items-center gap-1" aria-label="Open an issue">
+      <Button size="sm" variant="ghost" disabled={busy} onClick={() => open('jira')}>
+        Jira issue
+      </Button>
+      <Button size="sm" variant="ghost" disabled={busy} onClick={() => open('github')}>
+        GitHub issue
+      </Button>
+    </span>
   );
 }
 
@@ -60,16 +179,27 @@ function CauseLabel({
 }): React.ReactElement | null {
   const toast = useToast();
   const [category, setCategory] = React.useState<Category | ''>(cluster.label?.category ?? '');
+  /** Known needs a reason when no issue is linked, so the choice waits for one. */
+  const [askingReason, setAskingReason] = React.useState(false);
   if (api === undefined) {
     return category === '' ? null : (
       <span className="text-xs text-fg-muted">{CATEGORY_LABEL[category]}</span>
     );
   }
-  const choose = (next: Category) => {
+  const choose = (next: Category, reason?: string) => {
+    if (next === 'known-issue' && reason === undefined && !cluster.label?.issueUrl) {
+      setAskingReason(true);
+      return;
+    }
+    setAskingReason(false);
     const previous = category;
     setCategory(next);
     api
-      .setTriageLabel({ signature: cluster.signature, category: next })
+      .setTriageLabel({
+        signature: cluster.signature,
+        category: next,
+        ...(reason === undefined ? {} : { reason }),
+      })
       .then(() => toast({ tone: 'success', title: `Labelled ${CATEGORY_LABEL[next]}` }))
       .catch((error: unknown) => {
         setCategory(previous);
@@ -80,6 +210,14 @@ function CauseLabel({
         });
       });
   };
+  if (askingReason) {
+    return (
+      <KnownReasonForm
+        onSave={(reason) => choose('known-issue', reason)}
+        onCancel={() => setAskingReason(false)}
+      />
+    );
+  }
   return (
     <Select
       aria-label="Label this cause"
@@ -100,9 +238,11 @@ function CauseLabel({
 function ClusterList({
   clusters,
   api,
+  issues,
 }: {
   clusters: Clusters;
   api: Pick<ApiClient, 'setTriageLabel'> | undefined;
+  issues: ClusterIssues | undefined;
 }): React.ReactElement {
   if (clusters.totals.failures === 0) {
     return <Quiet>No test failed in this window.</Quiet>;
@@ -117,7 +257,7 @@ function ClusterList({
       </p>
       <ol className="min-h-0 flex-1 space-y-2 overflow-y-auto text-sm">
         {clusters.clusters.map((cluster) => (
-          <li key={cluster.signature} data-testid="failure-cluster">
+          <li key={cluster.signature} data-testid="failure-cluster" className="group">
             <p className="flex items-baseline justify-between gap-2">
               <span className="min-w-0 truncate font-mono text-xs" title={cluster.sampleMessage}>
                 {cluster.errorType === null
@@ -130,10 +270,15 @@ function ClusterList({
             </p>
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs text-fg-muted">
-                {`${String(cluster.tests.length)} test${cluster.tests.length === 1 ? '' : 's'} · ${String(cluster.runs)} run${cluster.runs === 1 ? '' : 's'} · ${cluster.branches.join(', ')} · last ${shortDate(cluster.lastSeen.slice(0, 10))}`}
+                {`${String(cluster.tests.length)} test${cluster.tests.length === 1 ? '' : 's'} · ${String(cluster.runs)} run${cluster.runs === 1 ? '' : 's'} · ${cluster.branches.join(', ')} · first ${shortDate(cluster.firstSeen.slice(0, 10))} · last ${shortDate(cluster.lastSeen.slice(0, 10))}`}
               </p>
-              <CauseLabel cluster={cluster} api={api} />
+              <span className="flex items-center gap-2">
+                <AskAboutCause message={cluster.sampleMessage} />
+                {issues === undefined ? null : <ClusterIssue cluster={cluster} issues={issues} />}
+                <CauseLabel cluster={cluster} api={api} />
+              </span>
             </div>
+            <KnownReason reason={cluster.label?.reason} />
           </li>
         ))}
       </ol>
@@ -229,5 +374,25 @@ function SuggestionRow({
         {state === 'done' ? 'Quarantined' : 'Quarantine'}
       </Button>
     </li>
+  );
+}
+
+/**
+ * "Ask" on one cause: sends its message to the copilot panel, which counts that failure across
+ * the recent runs and cites each one. Drawn only where the panel exists, so a page rendered
+ * without the shell offers nothing that would do nothing.
+ */
+function AskAboutCause({ message }: { message: string }) {
+  const copilot = useCopilot();
+  if (copilot === null) return null;
+  const quoted = message.replace(/["“”]/gu, "'").slice(0, 200);
+  return (
+    <button
+      type="button"
+      onClick={() => copilot.ask(`Why does "${quoted}" fail?`)}
+      className="inline-flex min-h-6 items-center rounded-sm text-xs text-accent underline-offset-2 opacity-0 transition-opacity duration-100 hover:underline group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 motion-reduce:transition-none [@media(hover:none)]:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+    >
+      Ask Lupin
+    </button>
   );
 }

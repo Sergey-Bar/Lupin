@@ -1,11 +1,11 @@
 # Scheduled reports
 
 A short report — daily, weekly, or on your own schedule — to Slack, Microsoft Teams,
-Telegram, WhatsApp, Signal, or Lupin's own inbox. Open **Map → Reports**.
+Telegram, WhatsApp, Signal, email, or Lupin's own inbox. Open **Settings → Reports**.
 
 ## What a report looks like
 
-The same five-second shape on every platform, and the same shape as the **Cockpit** page:
+The same five-second shape on every platform, and the same shape as the **Dashboard** page:
 
 ```
 🔴 Weekly quality report
@@ -21,9 +21,9 @@ A status you can see before you read, one sentence, at most three items worst fi
 how many more there are, and one link. A missed schedule — the server was off for a
 week — sends one catch-up report, never a backlog.
 
-### The cockpit at the head, and a chart
+### The dashboard at the head, and a chart
 
-When the workspace has a project, the report leads with the cockpit's own sentence, so a
+When the workspace has a project, the report leads with the dashboard's own sentence, so a
 channel message and the screen cannot disagree about whether the week was good, and up to
 three of the things that moved most:
 
@@ -44,19 +44,22 @@ text. A failure that may have delivered the message is not followed by a second 
 
 ### The link in a report
 
-The cockpit page has a **Project** menu when the workspace has more than one project. The
-choice is kept in the address (`?project=`), so a shared link opens the same project, and its
-metric pages and the run banner stay on that project. _Latest report_ is the default: the
-project that reported most recently. A schedule can name its own project (the _Project_ menu on\nthe Reports page, shown when there is more than one), and its cockpit section is then about\nthat project; without one it follows that default.
+The **Project scope** menu at the top of the sidebar, shown when the workspace has more than
+one project, chooses which project the pages are about. The choice is kept in the address
+(`?project=`), so a shared link opens the same project, and every sidebar link to a page that
+reads it keeps it. _All projects_ is the default: Home's verdict is then the project that
+reported most recently. A schedule can name its own project (the _Project_ menu on the Reports
+page, shown when there is more than one), and its dashboard section is then about that project;
+without one it follows that default.
 
-The one link at the foot of a report opens the cockpit. It uses the address in
+The one link at the foot of a report opens the dashboard. It uses the address in
 `LUPIN_PUBLIC_URL` (`PUBLIC_APP_URL` outside the compose stack). While that address is a
 loopback one, such as the default `http://localhost:8080`, the report goes **without a
 link**, because the link would open the reader's own machine and not yours. Set it to the
 address people actually use, such as your [Cloudflare hostname](/guide/remote-cloudflare)
 or LAN name, and the link appears from the next report.
 
-The cockpit page lists, under _Worth a look_, the pull requests that match one of
+The dashboard lists, under _Worth a look_, the pull requests that match one of
 three stated facts: a large change with no test file, a merge with no approval from a
 person, and an open AI-attributed change nobody has approved. It is a list with the reason
 beside each, not a score. It reads pull requests the GitHub sync has stored.
@@ -67,7 +70,9 @@ beside each, not a score. It reads pull requests the GitHub sync has stored.
    reports appear in the history on the same page.
 2. **When.** Pick **Daily 09:00**, **Weekly, Monday 09:00**, or **Custom** (a cron
    expression such as `0 8 * * 1-5` for weekdays at 08:00). The timezone defaults to your
-   browser's.
+   browser's. **Quiet hours** (say 22:00 to 07:00, in that timezone) hold a report that comes
+   due inside them until they end; while one is waiting, a later one is folded into it, so
+   an hourly report wakes nobody and the morning brings one message, not nine.
 3. **Did it arrive.** **Send a test** on any channel; the result appears in the history
    and as a toast. A failed delivery shows the platform's error code, for example
    `telegram_rejected_401` for a wrong bot token.
@@ -136,6 +141,23 @@ as an optional service in the compose file.
    (comma-separated numbers or group ids), and bridge URL `http://signal:8080`.
 
 The bridge is reached only from inside the compose network; it is never published.
+
+### Email
+
+Lupin has no SMTP client of its own. It sends email through a small HTTP bridge you run: your
+mail provider's send API, or a container that speaks SMTP on one side and answers
+`POST /send` on the other.
+
+1. Run a bridge that accepts `POST /send` with JSON `{ from, to: [..], subject, text, html? }`
+   and answers 2xx when the message is sent, and a 4xx `{ "error": "..." }` when it refuses.
+   `GET /about` is used to test the connection.
+2. In Lupin: Email, the sender, the recipients (comma-separated) and a subject, and the
+   bridge's base URL as the credential.
+3. Choose the report format on the schedule: _full_ sends the rich HTML report with a text
+   alternative, _chat_ sends the digest as text.
+
+A bridge error after a send (a 5xx) is not retried, because the message may have arrived.
+This has been tested against a stand-in bridge, not a real mail provider.
 
 ## How it works
 

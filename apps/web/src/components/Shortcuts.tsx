@@ -11,12 +11,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lupin/ui';
  * is in a field, so typing a pairing code or a cron expression never navigates.
  */
 export const GO_TO: Readonly<Record<string, { label: string; to: string }>> = {
-  n: { label: 'Cockpit', to: '/dashboard/now' },
-  p: { label: 'Portfolio', to: '/dashboard/portfolio' },
+  n: { label: 'Home', to: '/dashboard/now' },
   r: { label: 'Runs', to: '/dashboard/runs' },
-  i: { label: 'Insights', to: '/dashboard/insights' },
-  s: { label: 'Reports', to: '/dashboard/reports' },
-  a: { label: 'Access', to: '/dashboard/access' },
+  t: { label: 'Tests', to: '/dashboard/insights' },
+  h: { label: 'Health', to: '/dashboard' },
+  // Delivery is its own page; `/dashboard/prs` is Pull requests (ledger MNT-184).
+  d: { label: 'Delivery', to: '/dashboard/delivery' },
+  s: { label: 'Reports', to: '/dashboard/settings/reports' },
+  a: { label: 'Access', to: '/dashboard/settings/access' },
   ',': { label: 'Settings', to: '/dashboard/settings' },
 };
 
@@ -52,23 +54,33 @@ export function Shortcuts(): React.ReactElement {
   const [open, setOpen] = React.useState(false);
   const chord = React.useRef<number | null>(null);
   React.useEffect(() => {
+    /** The second key of a `g` chord: go there if it names a place. Returns true if consumed. */
+    const finishChord = (event: KeyboardEvent, key: string): boolean => {
+      if (chord.current === null || Date.now() - chord.current >= CHORD_MS) return false;
+      chord.current = null;
+      const target = GO_TO[key];
+      if (target !== undefined) {
+        event.preventDefault();
+        void navigate({ to: target.to });
+      }
+      return true;
+    };
     const onKey = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return;
       const key = event.key.toLowerCase();
-      if (chord.current !== null && Date.now() - chord.current < CHORD_MS) {
-        chord.current = null;
-        const target = GO_TO[key];
-        if (target !== undefined) {
-          event.preventDefault();
-          void navigate({ to: target.to });
-        }
-        return;
-      }
+      if (finishChord(event, key)) return;
       if (key === 'g') {
         chord.current = Date.now();
       } else if (event.key === '?') {
         event.preventDefault();
         setOpen(true);
+      } else if (key === 'a') {
+        // The page's one main action, which wears the A hint (AreaPage, the Now card).
+        const primary = document.querySelector<HTMLElement>('[data-primary="true"]');
+        if (primary !== null) {
+          event.preventDefault();
+          primary.click();
+        }
       } else if (key === 'j') {
         moveRow(1);
       } else if (key === 'k') {
@@ -93,6 +105,10 @@ export function Shortcuts(): React.ReactElement {
               <dd>Go to {target.label}</dd>
             </React.Fragment>
           ))}
+          <dt className="font-mono">a</dt>
+          <dd>Take the page’s main action</dd>
+          <dt className="font-mono">e</dt>
+          <dd>Explain this run (on a run)</dd>
           <dt className="font-mono">j / k</dt>
           <dd>Next / previous row</dd>
           <dt className="font-mono">Enter</dt>

@@ -70,6 +70,13 @@ describe('canonical execution projections', () => {
     expect(result.finishedAt).toBe(base.completedAt);
   });
 
+  it('reads a test stored with an empty file as having no file', () => {
+    // The store keeps an absent file as '', and the contract refuses '' — so one test
+    // without a file made its whole run a 500 on every read.
+    const result = toCanonicalRun({ ...base, tests: [{ ...base.tests[0], file: '' }] } as never);
+    expect(result.tests[0]?.file).toBeNull();
+  });
+
   it('projects runner, error, artifact, and gate fields', () => {
     const result = toCanonicalRun({
       ...base,

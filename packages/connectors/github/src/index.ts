@@ -318,7 +318,34 @@ const OPERATIONS: Record<string, GitHubOperation> = {
     method: 'GET',
     fields: ['ref'],
     bodyFields: [],
-    list: { itemsKey: 'check_runs' },
+    list: {
+      itemsKey: 'check_runs',
+      params: [{ field: 'checkName', query: 'check_name', kind: 'text' }],
+    },
+  },
+  // The change-risk check run: created once per head, then updated in place. Only a GitHub App
+  // installation token may write one (Actions' `GITHUB_TOKEN` is one); a personal token is
+  // refused, and the caller falls back to the commit status it always posts.
+  createCheckRun: {
+    path: (owner, repo) => `${repoPath(owner, repo)}/check-runs`,
+    method: 'POST',
+    fields: ['name', 'head_sha'],
+    bodyFields: [
+      'name',
+      'head_sha',
+      'status',
+      'conclusion',
+      'details_url',
+      'external_id',
+      'output',
+    ],
+  },
+  updateCheckRun: {
+    path: (owner, repo, input) =>
+      `${repoPath(owner, repo)}/check-runs/${segment(input, 'checkRunId')}`,
+    method: 'PATCH',
+    fields: ['checkRunId'],
+    bodyFields: ['name', 'status', 'conclusion', 'details_url', 'external_id', 'output'],
   },
   listDependabotAlerts: {
     path: (owner, repo) => `${repoPath(owner, repo)}/dependabot/alerts`,
@@ -436,6 +463,9 @@ const MANIFEST: ConnectorAdapter['manifest'] = {
     listBranches: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
     getBranchProtection: { sideEffecting: false, idempotent: true, timeoutMs: 10_000 },
     listCheckRuns: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
+    // Creating a check run makes a new one each time; updating one sets the same state again.
+    createCheckRun: { sideEffecting: true, idempotent: false, timeoutMs: 10_000 },
+    updateCheckRun: { sideEffecting: true, idempotent: true, timeoutMs: 10_000 },
     listDependabotAlerts: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
     listCodeScanningAlerts: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },
     listSecretScanningAlerts: { sideEffecting: false, idempotent: true, timeoutMs: 15_000 },

@@ -20,6 +20,8 @@
  * store built by a helper.
  */
 import { auditEvents } from '@lupin/db';
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
 import { requestAuditFields } from '../../observability/request-context.js';
 
 /**
@@ -67,6 +69,27 @@ export class InMemoryAuditSink implements AuditSink {
     this.entries.push(entry);
   }
 }
+
+/**
+ * Writes `audit_events` rows for one workspace, for a write that has no transaction of its
+ * own to join (the run status change, ledger MNT-171). A failed insert is thrown, never
+ * swallowed: a change the trail cannot record is reported as a failure, not as done.
+ */
+export class DrizzleAuditSink implements AuditSink {
+  constructor(
+    private readonly db: AuditDb,
+    private readonly workspaceId: string,
+    private readonly now: () => Date = () => new Date(),
+  ) {}
+
+  async record(entry: AuditEntry): Promise<void> {
+    await this.db.insert(auditEvents).values(auditRow(entry, this.workspaceId, this.now()));
+  }
+}
+
+type AuditDb =
+  | PgDatabase<PgQueryResultHKT, Record<string, unknown>>
+  | PgDatabase<PgliteQueryResultHKT, Record<string, unknown>>;
 
 /**
  * The row `audit_events` wants, from an entry.

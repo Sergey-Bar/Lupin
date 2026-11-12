@@ -46,23 +46,25 @@ export function SetupChecklist({
     <section
       aria-labelledby="setup-checklist-title"
       data-testid="setup-checklist"
-      className="grid gap-3 rounded-lg border border-border bg-surface p-4 sm:p-5"
+      data-chrome="secondary"
+      className="grid gap-2 rounded-lg bg-surface px-4 py-3"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="grid gap-0.5">
-          <h2 id="setup-checklist-title" className="text-base font-semibold text-fg">
-            Get set up
-          </h2>
-          <p className="text-sm text-fg-muted" data-testid="setup-checklist-progress">
-            {onboarding.done} of {onboarding.total} done
-            {next === undefined ? '' : `. Next: ${next.title.toLowerCase()}.`}
-          </p>
-        </div>
+        <h2 id="setup-checklist-title" className="min-w-0 text-sm text-fg">
+          <span data-testid="setup-checklist-progress">
+            <span className="font-medium">
+              Setup {onboarding.done} of {onboarding.total}
+            </span>
+            {next === undefined ? null : (
+              <span className="text-fg-muted"> · Next: {next.title.toLowerCase()}</span>
+            )}
+          </span>
+        </h2>
         <div className="flex items-center gap-2">
           {next !== undefined && roleMeets(next.who === 'viewer' ? undefined : next.who, role) ? (
             <a
               href="/dashboard/setup"
-              className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-on-fill hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+              className="inline-flex min-h-9 items-center rounded-md border border-border-strong px-3 text-sm font-medium text-fg hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
             >
               Continue setup
             </a>
@@ -83,7 +85,7 @@ export function SetupChecklist({
         </div>
       </div>
       <div
-        className="h-1.5 w-full overflow-hidden rounded-full bg-surface-muted"
+        className="h-1 w-full overflow-hidden rounded-full bg-surface-muted"
         role="progressbar"
         aria-label="Setup progress"
         aria-valuemin={0}
@@ -95,46 +97,51 @@ export function SetupChecklist({
           style={{ width: `${String((onboarding.done / onboarding.total) * 100)}%` }}
         />
       </div>
-      <ul className="grid gap-1.5 sm:grid-cols-2" aria-label="Setup steps">
-        {onboarding.steps.map((step) => {
-          const done = step.state === 'done';
-          const allowed = roleMeets(step.who === 'viewer' ? undefined : step.who, role);
-          return (
-            <li
-              key={step.id}
-              className="flex items-center gap-2 text-sm"
-              data-testid={`checklist-${step.id}`}
-            >
-              <span
-                aria-hidden
-                className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${done ? 'border-success bg-success text-on-fill' : 'border-border'}`}
+      <details data-testid="setup-checklist-steps" className="text-sm">
+        <summary className="cursor-pointer select-none rounded-md text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
+          All steps
+        </summary>
+        <ul className="mt-2 grid gap-1.5 sm:grid-cols-2" aria-label="Setup steps">
+          {onboarding.steps.map((step) => {
+            const done = step.state === 'done';
+            const allowed = roleMeets(step.who === 'viewer' ? undefined : step.who, role);
+            return (
+              <li
+                key={step.id}
+                className="flex items-center gap-2 text-sm"
+                data-testid={`checklist-${step.id}`}
               >
-                {done ? <Check className="size-3" /> : null}
-              </span>
-              {done ? (
-                <span className="text-fg-muted line-through">
-                  {step.title}
-                  <span className="sr-only">, done</span>
-                </span>
-              ) : allowed ? (
-                <a
-                  className="text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-                  href={step.href}
+                <span
+                  aria-hidden
+                  className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${done ? 'border-success bg-success text-on-fill' : 'border-border'}`}
                 >
-                  {step.title}
-                  {step.state === 'skipped' ? (
-                    <span className="text-fg-muted"> (skipped)</span>
-                  ) : null}
-                </a>
-              ) : (
-                <span className="text-fg-muted">
-                  {step.title} — ask {ROLE_NAMES[step.who]}
+                  {done ? <Check className="size-3" /> : null}
                 </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+                {done ? (
+                  <span className="text-fg-muted line-through">
+                    {step.title}
+                    <span className="sr-only">, done</span>
+                  </span>
+                ) : allowed ? (
+                  <a
+                    className="inline-flex min-h-6 items-center text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+                    href={step.href}
+                  >
+                    {step.title}
+                    {step.state === 'skipped' ? (
+                      <span className="text-fg-muted"> (skipped)</span>
+                    ) : null}
+                  </a>
+                ) : (
+                  <span className="text-fg-muted">
+                    {step.title} — ask {ROLE_NAMES[step.who]}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </details>
     </section>
   );
 }

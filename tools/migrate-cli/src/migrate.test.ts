@@ -165,16 +165,19 @@ describe('migrateToPostgres', () => {
     expect(report.dryRun).toBe(false);
     expect(report.tables).toEqual([
       { table: 'runs', rowCount: 1, inserted: 1, failed: 0 },
-      { table: 'suites', rowCount: 1, inserted: 1, failed: 0 },
       { table: 'tests', rowCount: 1, inserted: 1, failed: 0 },
     ]);
-    expect(mocks.query).toHaveBeenCalledTimes(3);
+    // `suites` was dropped by 0066 (ledger C-6): its row is reported, never written.
+    expect(report.skipped).toEqual([
+      { table: 'suites', rowCount: 1, reason: expect.stringMatching(/0066/) },
+    ]);
+    expect(mocks.query).toHaveBeenCalledTimes(2);
     expect(
       mocks.query.mock.calls.map((call) => String(call[0]).match(/INSERT INTO "([^"]+)"/)?.[1]),
-    ).toEqual(['runs', 'suites', 'tests']);
+    ).toEqual(['runs', 'tests']);
     expect(mocks.query.mock.calls[0]?.[1]).toContain('11111111-1111-4111-8111-111111111111');
     expect(mocks.query.mock.calls[0]?.[1]).toContainEqual({ retries: 0 });
-    expect(mocks.query.mock.calls[2]?.[1]).toContainEqual(['smoke']);
+    expect(mocks.query.mock.calls[1]?.[1]).toContainEqual(['smoke']);
     expect(mocks.end).toHaveBeenCalledOnce();
   });
 
@@ -192,7 +195,6 @@ describe('migrateToPostgres', () => {
     expect(report.dryRun).toBe(true);
     expect(report.tables.map((table) => [table.table, table.rowCount])).toEqual([
       ['runs', 1],
-      ['suites', 1],
       ['tests', 1],
     ]);
     expect(mocks.query).not.toHaveBeenCalled();
@@ -220,20 +222,20 @@ describe('migrateToPostgres', () => {
     const from = join(tempDir, 'batch.sqlite');
     const db = new Database(from);
     db.exec(`
-      CREATE TABLE known_failures (
+      CREATE TABLE quarantine (
         id TEXT PRIMARY KEY,
         test_title TEXT NOT NULL,
         test_file TEXT NOT NULL,
-        comment TEXT,
-        created_at TEXT NOT NULL,
-        created_by TEXT
+        reason TEXT,
+        quarantined_at TEXT NOT NULL,
+        quarantined_by TEXT
       );
     `);
-    const insert = db.prepare('INSERT INTO known_failures VALUES (?, ?, ?, ?, ?, ?)');
+    const insert = db.prepare('INSERT INTO quarantine VALUES (?, ?, ?, ?, ?, ?)');
     const transaction = db.transaction(() => {
       for (let index = 1; index <= 101; index += 1) {
         insert.run(
-          `known-${index}`,
+          `quarantine-${index}`,
           `test ${index}`,
           'checkout.spec.ts',
           null,
@@ -411,9 +413,29 @@ describe('migrateToPostgres refusals and row-level failures', () => {
     expect(mocks.query).not.toHaveBeenCalled();
   });
 
+  it('reports a populated table dropped by 0066 as skipped', async () => {
+    const from = sqlite(
+      'dormant.sqlite',
+      `CREATE TABLE known_failures (id TEXT PRIMARY KEY, test_title TEXT, test_file TEXT);
+       INSERT INTO known_failures VALUES ('k1', 't', 'f');
+       CREATE TABLE agent_sessions (id TEXT PRIMARY KEY);`,
+    );
+    const log = vi.fn();
+    const report = await migrateToPostgres({ from, to: TARGET, dryRun: true, log });
+    expect(report.tables).toEqual([]);
+    expect(report.skipped).toEqual([
+      { table: 'known_failures', rowCount: 1, reason: expect.stringMatching(/0066.*C-6/) },
+      { table: 'agent_sessions', rowCount: 0, reason: expect.stringMatching(/0066.*C-6/) },
+    ]);
+    expect(log).toHaveBeenCalledWith(expect.stringMatching(/^Skipped known_failures: 1 row /));
+  });
+
   it('adds no skipped entry when the source has none of the superseded tables', async () => {
     const report = await migrateToPostgres({
-      from: createFixtureDatabase(),
+      from: sqlite(
+        'none-superseded.sqlite',
+        'CREATE TABLE defect_categories (id TEXT PRIMARY KEY, name TEXT, color TEXT, created_at TEXT);',
+      ),
       to: TARGET,
       dryRun: true,
       log: vi.fn(),
@@ -427,9 +449,9 @@ describe('migrateToPostgres refusals and row-level failures', () => {
     try {
       await migrateToPostgres({ from, to: TARGET, dryRun: true });
       expect(info.mock.calls.map((call) => call[0])).toEqual([
+        'Skipped suites: 1 row (Dropped by 0066 (ledger C-6): no reader or writer)',
         'Dry run migration plan:',
         'runs: 1 row',
-        'suites: 1 row',
         'tests: 1 row',
       ]);
     } finally {
@@ -573,7 +595,7 @@ describe('migrateToPostgres refusals and row-level failures', () => {
       workspaceId: 'workspace-1',
       log: vi.fn(),
     });
-    expect(report.tables.map((entry) => entry.inserted)).toEqual([0, 0, 0]);
+    expect(report.tables.map((entry) => entry.inserted)).toEqual([0, 0]);
     expect(report.errors).toEqual([]);
   });
 
@@ -606,7 +628,7 @@ describe('migrateToPostgres refusals and row-level failures', () => {
       workspaceId: 'workspace-1',
       log: vi.fn(),
     });
-    expect(report.errors.map((error) => error.table)).toEqual(['runs', 'suites', 'tests']);
+    expect(report.errors.map((error) => error.table)).toEqual(['runs', 'tests']);
     expect(mocks.end).toHaveBeenCalledOnce();
   });
 });
@@ -622,19 +644,19 @@ describe('migrateToPostgres and the workspace boundary (ledger MNT-17)', () => {
     return filePath;
   }
 
-  const KNOWN_FAILURE = `
-    CREATE TABLE known_failures (
+  const QUARANTINED = `
+    CREATE TABLE quarantine (
       id TEXT PRIMARY KEY, test_title TEXT NOT NULL, test_file TEXT NOT NULL,
-      comment TEXT, created_at TEXT NOT NULL, created_by TEXT
+      reason TEXT, quarantined_at TEXT NOT NULL, quarantined_by TEXT
     );
-    INSERT INTO known_failures VALUES ('k1', 't', 'f', NULL, '2026-01-01T00:00:00.000Z', 'qa');
+    INSERT INTO quarantine VALUES ('q1', 't', 'f', NULL, '2026-01-01T00:00:00.000Z', 'qa');
   `;
 
   it('stamps a workspace-scoped row the source never scoped with the target workspace', async () => {
     // The legacy SQLite schema has no `workspace_id` on most tables, and since 0028 every
     // one of them is NOT NULL with a key onto `workspaces`. Copying the source columns
     // alone would have failed every row of every such table on a real apply.
-    const from = sqlite('scoped.sqlite', KNOWN_FAILURE);
+    const from = sqlite('scoped.sqlite', QUARANTINED);
     const report = await migrateToPostgres({
       from,
       to: TARGET,
@@ -645,7 +667,7 @@ describe('migrateToPostgres and the workspace boundary (ledger MNT-17)', () => {
     expect(report.errors).toEqual([]);
     expect(String(mocks.query.mock.calls[0]?.[0])).toContain('"workspace_id"');
     expect(mocks.query.mock.calls[0]?.[1]).toEqual([
-      'k1',
+      'q1',
       't',
       'f',
       null,
@@ -680,7 +702,7 @@ describe('migrateToPostgres and the workspace boundary (ledger MNT-17)', () => {
   });
 
   it('refuses to write a workspace-scoped table with no target workspace', async () => {
-    const from = sqlite('unscoped.sqlite', KNOWN_FAILURE);
+    const from = sqlite('unscoped.sqlite', QUARANTINED);
     await expect(
       migrateToPostgres({ from, to: TARGET, dryRun: false, log: vi.fn() }),
     ).rejects.toThrow(/workspace/);

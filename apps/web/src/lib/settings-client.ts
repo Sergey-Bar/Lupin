@@ -55,6 +55,8 @@ export const QualityGateSchema = z.object({
   name: z.string(),
   passRateThreshold: z.number(),
   createdAt: z.string(),
+  /** Absent from an older API, and then read as shared: nothing is offered that may be refused. */
+  scope: z.enum(['installation', 'workspace']).optional(),
 });
 export type QualityGate = z.infer<typeof QualityGateSchema>;
 
@@ -78,6 +80,10 @@ export interface SettingsClient {
   gitTokenState(id: string): Promise<boolean>;
   putGitToken(id: string, token: string): Promise<void>;
   deleteGitToken(id: string): Promise<void>;
+  /** Whether the workspace has a GitHub App; its key is never returned. */
+  githubAppState(): Promise<boolean>;
+  putGitHubApp(body: { appId: string; privateKey: string }): Promise<void>;
+  deleteGitHubApp(): Promise<void>;
   listGates(): Promise<QualityGate[]>;
   createGate(body: { name: string; passRateThreshold: number }): Promise<QualityGate>;
   updateGate(id: string, body: { name?: string; passRateThreshold?: number }): Promise<QualityGate>;
@@ -198,6 +204,14 @@ export function createSettingsClient(
     },
     deleteGitToken: async (id) => {
       await call('DELETE', `${project(id)}/git-token`, TokenStateSchema);
+    },
+    githubAppState: async () =>
+      (await call('GET', '/api/v1/settings/github-app', TokenStateSchema)).set,
+    putGitHubApp: async (body) => {
+      await call('PUT', '/api/v1/settings/github-app', TokenStateSchema, body);
+    },
+    deleteGitHubApp: async () => {
+      await call('DELETE', '/api/v1/settings/github-app', TokenStateSchema);
     },
     listGates: () => call('GET', '/api/v1/dashboard/quality-gates', z.array(QualityGateSchema)),
     createGate: (body) => call('POST', '/api/v1/dashboard/quality-gates', QualityGateSchema, body),

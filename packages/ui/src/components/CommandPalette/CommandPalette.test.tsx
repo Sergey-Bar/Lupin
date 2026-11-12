@@ -162,3 +162,46 @@ describe('CommandPalette as a combobox', () => {
     expect(await screen.findByRole('dialog', { name: 'Command palette' })).toBeInTheDocument();
   });
 });
+
+test('answers a question by its words, best match first, using each action’s keywords', async () => {
+  const user = userEvent.setup();
+  render(
+    <CommandPalette
+      open
+      actions={[
+        {
+          id: 'flaky',
+          label: 'Which tests are flaky?',
+          keywords: ['flake', 'unstable'],
+          onSelect: vi.fn(),
+        },
+        { id: 'ship', label: 'Can we ship?', keywords: ['release', 'ready'], onSelect: vi.fn() },
+        { id: 'theme', label: 'Toggle Theme', onSelect: vi.fn() },
+      ]}
+    />,
+  );
+  await user.type(
+    screen.getByPlaceholderText('Type a command or search...'),
+    'is the release ready',
+  );
+  const options = screen.getAllByRole('option');
+  expect(options.map((option) => option.textContent)).toEqual(['Can we ship?']);
+});
+
+test('offers to ask the typed question, last, and hands the words to onAsk', () => {
+  const onAsk = vi.fn();
+  render(
+    <CommandPalette
+      actions={[{ id: 'go', label: 'Go to Runs', onSelect: () => undefined }]}
+      onAsk={onAsk}
+    />,
+  );
+  fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
+  const input = screen.getByRole('combobox');
+  expect(screen.queryByText(/^Ask Lupin/u)).toBeNull();
+  fireEvent.change(input, { target: { value: 'why did checkout fail' } });
+  const options = screen.getAllByRole('option');
+  expect(options.at(-1)).toHaveTextContent('Ask Lupin: “why did checkout fail”');
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(onAsk).toHaveBeenCalledWith('why did checkout fail');
+});

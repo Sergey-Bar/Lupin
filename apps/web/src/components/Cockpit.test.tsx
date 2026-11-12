@@ -5,17 +5,23 @@ import type { Cockpit } from '@lupin/shared-contracts';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { cockpitFixture, cockpitMetric } from '../test-utils.js';
 import { QaApiError } from '../lib/qa-client.js';
-import { CockpitPage, safeHref, type CockpitSources } from './Cockpit.js';
+import { greetingFor } from '../lib/focus.js';
+import {
+  CockpitNumbers,
+  CockpitPage,
+  HOME_VIEW_KEY,
+  safeHref,
+  type CockpitSources,
+} from './Cockpit.js';
+import type { CockpitClient } from '../lib/cockpit-client.js';
+import { expectOnePrimary } from '../test-utils.js';
 
 const NOW = new Date('2026-10-26T12:00:00.000Z');
 
-function sources(
-  cockpit: CockpitSources['cockpit'] = vi.fn(async () => cockpitFixture()),
-  projects: CockpitSources['projects'] = async () => [],
-): CockpitSources {
+type Getter = CockpitClient['getCockpit'];
+
+function sources(): CockpitSources {
   return {
-    cockpit,
-    projects,
     attention: {
       runs: vi.fn(async () => []),
       portfolio: vi.fn(async () => ({ projects: [] })),
@@ -24,16 +30,25 @@ function sources(
   };
 }
 
-const show = (
-  cockpit?: CockpitSources['cockpit'],
-  navigate: (to: string) => void = () => undefined,
-) => render(<CockpitPage sources={sources(cockpit)} navigate={navigate} now={() => NOW} />);
+/** The product's numbers, as Health draws them. */
+const show = (cockpit: Getter = vi.fn(async () => cockpitFixture()), projectId?: string) =>
+  render(<CockpitNumbers cockpit={cockpit} projectId={projectId} />);
+
+/** Home: the verdict and what needs you. */
+const showHome = (navigate: (to: string) => void = () => undefined) =>
+  render(<CockpitPage sources={sources()} navigate={navigate} now={() => NOW} />);
 
 afterEach(() => {
   localStorage.clear();
 });
 
 describe('the headline', () => {
+  it('draws at most one solid primary button on the screen', async () => {
+    showHome();
+    await screen.findByTestId('now-page');
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   it('opens on the one answer: the score, and the sentence that says why', async () => {
     show();
     const status = await screen.findByTestId('cockpit-status');
@@ -284,35 +299,50 @@ describe('loading and failing', () => {
   it('shows a loading state that keeps the page\u2019s shape', async () => {
     show(vi.fn(() => new Promise<Cockpit>(() => undefined)));
     expect(screen.getByTestId('cockpit-loading')).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByRole('heading', { level: 1, name: 'Cockpit' })).toBeTruthy();
-    // The section under it settles on its own, so wait for it rather than leave it mid-update.
-    await screen.findByTestId('now-clear');
+  });
+
+  it('turns a bare "not found" into what is missing and one next step', async () => {
+    const cockpit = vi.fn<Getter>().mockRejectedValue(new QaApiError(404, 'not found'));
+    show(cockpit);
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('No project has sent results yet');
+    expect(alert).not.toHaveTextContent(/\bnot found\b/u);
+    expect(within(alert).getByRole('link', { name: 'Set up Lupin' })).toHaveAttribute(
+      'href',
+      '/dashboard/setup',
+    );
   });
 
   it('says the server\u2019s own sentence on a failure, and reads again on request', async () => {
     const user = userEvent.setup();
     const cockpit = vi
-      .fn<CockpitSources['cockpit']>()
+      .fn<Getter>()
       .mockRejectedValueOnce(new QaApiError(404, 'This workspace has no project to show'))
       .mockResolvedValue(cockpitFixture());
     show(cockpit);
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('The cockpit could not be read.');
+    expect(alert).toHaveTextContent('The dashboard could not be read.');
     expect(alert).toHaveTextContent('This workspace has no project to show');
     await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByTestId('cockpit-status')).toHaveTextContent('74');
     expect(cockpit).toHaveBeenCalledTimes(2);
   });
-
-  it('keeps showing what needs you when the cockpit itself cannot be read', async () => {
-    const failing = sources(vi.fn(() => Promise.reject(new Error('offline'))));
-    failing.attention.runs = vi.fn(async () => []);
-    render(<CockpitPage sources={failing} navigate={vi.fn()} now={() => NOW} />);
-    await screen.findByRole('alert');
-    expect(await screen.findByTestId('now-clear')).toBeTruthy();
-  });
 });
 
+describe('the home page, as one focus', () => {
+  it('greets the reader, then the verdict and what needs you, and nothing after them', async () => {
+    showHome();
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading.textContent).toBe(greetingFor(NOW));
+    const focus = await screen.findByTestId('now-page');
+    // No setup checklist, no folded numbers, no window switch: those live in Settings and Health.
+    expect(screen.queryByTestId('setup-checklist')).toBeNull();
+    expect(screen.queryByTestId('cockpit-everything')).toBeNull();
+    expect(screen.queryByTestId('cockpit-numbers')).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Compare with' })).toBeNull();
+    expect(focus.closest('[data-testid="cockpit-page"]')).not.toBeNull();
+  });
+});
 describe('pace against quality', () => {
   it('loads after the headline and carries every number in a table', async () => {
     show();
@@ -341,19 +371,10 @@ describe('pace against quality', () => {
   });
 });
 
-describe('what needs you', () => {
-  it('sits under the cockpit, so the answer and the work are on one screen', async () => {
-    show();
-    await screen.findByTestId('cockpit-status');
-    expect(await screen.findByTestId('now-clear')).toHaveTextContent('All clear');
-  });
-});
-
 describe('accessibility', () => {
   it('has no blocking violations once the page has settled', async () => {
     const { container } = show();
     await screen.findByTestId('cockpit-pace');
-    await screen.findByTestId('now-clear');
     await expectNoBlockingAxeViolations(container);
   });
 });
@@ -419,12 +440,10 @@ describe('the report', () => {
   it('is not offered while the cockpit is loading or when it could not be read', async () => {
     const { unmount } = show(vi.fn(() => new Promise<Cockpit>(() => undefined)));
     expect(screen.queryByTestId('cockpit-report')).toBeNull();
-    await screen.findByTestId('now-clear');
     unmount();
     show(vi.fn(() => Promise.reject(new Error('offline'))));
     await screen.findByRole('alert');
     expect(screen.queryByTestId('cockpit-report')).toBeNull();
-    await screen.findByTestId('now-clear');
   });
 });
 
@@ -470,109 +489,265 @@ describe('the pull requests worth a look', () => {
   });
 });
 
-describe('choosing the project', () => {
-  const PROJECTS = [
-    { id: 'p-1', name: 'Service' },
-    { id: 'p-2', name: 'Website' },
-  ];
+describe('the project Home is about', () => {
+  it('has no picker of its own: the sidebar chooses the scope', async () => {
+    showHome();
+    await screen.findByTestId('now-page');
+    expect(screen.queryByLabelText('Project')).toBeNull();
+    expect(screen.queryByTestId('cockpit-project')).toBeNull();
+  });
 
-  it('offers the projects, with the latest report as the default', async () => {
+  it('reads the verdict and the causes for the project it is given', async () => {
+    const readiness = vi.fn(async () => ({ verdict: 'go', reasons: [] }) as never);
+    const clusters = vi.fn(async () => undefined);
     render(
       <CockpitPage
-        sources={sources(undefined, async () => PROJECTS)}
+        sources={{ ...sources(), readiness, clusters }}
+        navigate={() => undefined}
+        now={() => NOW}
+        projectId="p-2"
+      />,
+    );
+    await waitFor(() => expect(readiness).toHaveBeenLastCalledWith('p-2'));
+    expect(clusters).toHaveBeenLastCalledWith('p-2');
+  });
+
+  it('follows the scope when it changes, without a reload', async () => {
+    const readiness = vi.fn(async () => ({ verdict: 'go', reasons: [] }) as never);
+    const view = render(
+      <CockpitPage
+        sources={{ ...sources(), readiness }}
+        navigate={() => undefined}
+        now={() => NOW}
+        projectId="p-1"
+      />,
+    );
+    await waitFor(() => expect(readiness).toHaveBeenLastCalledWith('p-1'));
+    view.rerender(
+      <CockpitPage
+        sources={{ ...sources(), readiness }}
         navigate={() => undefined}
         now={() => NOW}
       />,
     );
-    const select = await screen.findByLabelText('Project');
-    expect(
-      within(select)
-        .getAllByRole('option')
-        .map((option) => option.textContent),
-    ).toEqual(['Latest report', 'Service', 'Website']);
-    expect(select).toHaveValue('');
+    // Every project: the verdict is the latest report's, so the source is asked with none.
+    await waitFor(() => expect(readiness).toHaveBeenLastCalledWith(undefined));
   });
 
-  it('reads the chosen project, tells the address, and links its metrics to the same project', async () => {
-    const user = userEvent.setup();
+  it('reads the numbers for the project it is given, and links its metrics to it', async () => {
     const getCockpit = vi.fn(async () =>
       cockpitFixture({ projectId: 'p-2', projectName: 'Website' }),
     );
-    const onProjectChange = vi.fn();
-    render(
-      <CockpitPage
-        sources={sources(getCockpit, async () => PROJECTS)}
-        navigate={() => undefined}
-        now={() => NOW}
-        onProjectChange={onProjectChange}
-      />,
-    );
-    await user.selectOptions(await screen.findByLabelText('Project'), 'p-2');
-    expect(onProjectChange).toHaveBeenCalledWith('p-2');
-    await waitFor(() =>
-      expect(getCockpit).toHaveBeenLastCalledWith(
-        { window: '7d', projectId: 'p-2' },
-        expect.anything(),
-      ),
-    );
+    show(getCockpit, 'p-2');
+    expect(getCockpit).toHaveBeenCalledWith({ window: '7d', projectId: 'p-2' }, expect.anything());
     const card = await screen.findByTestId('cockpit-metric-coverage');
     expect(within(card).getByRole('link', { name: /Coverage/u })).toHaveAttribute(
       'href',
       '/dashboard/metric/coverage?window=7d&project=p-2',
     );
   });
+});
 
-  it('opens on the project the address names, and goes back to the default on request', async () => {
-    const user = userEvent.setup();
-    const getCockpit = vi.fn(async () => cockpitFixture());
-    const onProjectChange = vi.fn();
+describe('the two Home views', () => {
+  const clusters = {
+    clusters: [
+      {
+        signature: 'timeout:locator.click',
+        message: 'TimeoutError: locator.click',
+        count: 4,
+        runs: 2,
+        tests: ['checkout › pays'],
+        firstSeen: '2026-10-24T10:00:00.000Z',
+        lastSeen: '2026-10-26T10:00:00.000Z',
+        branches: ['main'],
+      },
+    ],
+    totals: { failures: 4, causes: 1 },
+    summary: '4 failures, 1 cause',
+  } as never;
+
+  it('opens on Triage for an engineer: what needs you, then failures grouped by cause', async () => {
+    localStorage.removeItem(HOME_VIEW_KEY);
     render(
       <CockpitPage
-        sources={sources(getCockpit, async () => PROJECTS)}
-        navigate={() => undefined}
+        sources={{ ...sources(), clusters: vi.fn(async () => clusters) }}
+        navigate={vi.fn()}
         now={() => NOW}
-        initialProjectId="p-1"
-        onProjectChange={onProjectChange}
       />,
     );
-    const select = await screen.findByLabelText('Project');
-    expect(select).toHaveValue('p-1');
-    expect(getCockpit).toHaveBeenCalledWith({ window: '7d', projectId: 'p-1' }, expect.anything());
-    await user.selectOptions(select, '');
-    expect(onProjectChange).toHaveBeenLastCalledWith(undefined);
+    const views = screen.getByRole('group', { name: 'Home view' });
+    expect(within(views).getByRole('button', { name: 'Triage' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(await screen.findByTestId('clusters-summary')).toHaveTextContent('4 failures, 1 cause');
   });
 
-  it('shows no picker for one project, or when the list cannot be read', async () => {
+  it('switches to Release for a lead, and remembers the choice', async () => {
+    const user = userEvent.setup();
+    localStorage.removeItem(HOME_VIEW_KEY);
+    const readiness = vi.fn(
+      async () =>
+        ({
+          verdict: 'caution',
+          reasons: [
+            {
+              code: 'q',
+              level: 'caution',
+              message: '2 quarantined tests await a decision',
+              evidence: '',
+            },
+            { code: 'ok', level: 'go', message: 'Coverage holds', evidence: '' },
+            {
+              code: 'p',
+              level: 'no-go',
+              message: 'Pass rate 78% is below the 80% floor',
+              evidence: '',
+            },
+          ],
+        }) as never,
+    );
     const { unmount } = render(
       <CockpitPage
-        sources={sources(undefined, async () => [PROJECTS[0] as (typeof PROJECTS)[number]])}
-        navigate={() => undefined}
+        sources={{ ...sources(), clusters: vi.fn(async () => clusters), readiness }}
+        navigate={vi.fn()}
         now={() => NOW}
       />,
     );
-    await screen.findByTestId('cockpit-status');
-    expect(screen.queryByLabelText('Project')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Release' }));
+    expect(await screen.findByRole('region', { name: 'Caution' })).toBeInTheDocument();
+    const why = await screen.findByRole('list', { name: 'Why this decision' });
+    expect(
+      within(why)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Pass rate 78% is below the 80% floor', '2 quarantined tests await a decision']);
+    expect(screen.queryByTestId('clusters-summary')).toBeNull();
+    expect(localStorage.getItem(HOME_VIEW_KEY)).toBe('release');
     unmount();
     render(
       <CockpitPage
-        sources={sources(undefined, () => Promise.reject(new Error('offline')))}
-        navigate={() => undefined}
+        sources={{ ...sources(), clusters: vi.fn(async () => clusters), readiness }}
+        navigate={vi.fn()}
         now={() => NOW}
       />,
     );
-    await screen.findByTestId('cockpit-status');
-    expect(screen.queryByLabelText('Project')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Release' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('falls back to the default for a project that is not in the list', async () => {
+  it('shows the failure trend on Release, compared with the half before, for the lead', async () => {
+    const user = userEvent.setup();
+    localStorage.removeItem(HOME_VIEW_KEY);
+    const trend = vi.fn(async () =>
+      [1, 1, 1, 1, 3, 3, 3, 3].map((failed, index) => ({
+        date: `2026-10-${String(19 + index)}`,
+        failed,
+      })),
+    );
+    render(<CockpitPage sources={{ ...sources(), trend }} navigate={vi.fn()} now={() => NOW} />);
+    expect(screen.queryByTestId('release-trend')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Release' }));
+    const panel = await screen.findByTestId('release-trend');
+    expect(within(panel).getByTestId('daily-compare')).toHaveTextContent(
+      '12 in the last 4 days, vs 4 in the 4 before',
+    );
+    expect(trend).toHaveBeenCalledWith(undefined);
+  });
+
+  it('carries the week’s briefing on Release only, for the project chosen', async () => {
+    const user = userEvent.setup();
+    localStorage.removeItem(HOME_VIEW_KEY);
+    const briefing = vi.fn(async () => ({
+      briefing: {
+        version: 'briefing/1',
+        scope: { kind: 'portfolio' as const, projects: 2 },
+        windowDays: 7,
+        generatedAt: NOW.toISOString(),
+        shape: 'bad' as const,
+        headline: '4 pull requests merged, 3 AI-written.',
+        items: [
+          {
+            id: 'riskier.tampered',
+            section: 'riskier' as const,
+            tone: 'bad' as const,
+            text: '1 merged with changes that weakened its tests.',
+            evidence: ['diff-guard:portfolio:7d'],
+            link: '/dashboard/prs',
+          },
+        ],
+      },
+      narration: null,
+    }));
+    render(<CockpitPage sources={{ ...sources(), briefing }} navigate={vi.fn()} now={() => NOW} />);
+    expect(screen.queryByTestId('briefing-card')).toBeNull();
+    expect(briefing).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Release' }));
+    const card = await screen.findByTestId('briefing-card');
+    expect(await within(card).findByText('4 pull requests merged, 3 AI-written.')).toBeVisible();
+    expect(within(card).getByText('1 merged with changes that weakened its tests.')).toBeVisible();
+    expect(briefing).toHaveBeenCalledWith(undefined);
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('the hero verdict', () => {
+  const readiness = (verdict: 'go' | 'caution' | 'no-go') =>
+    vi.fn(
+      async () =>
+        ({
+          verdict,
+          reasons: [
+            {
+              code: 'pass-rate',
+              level: 'no-go',
+              message: 'Pass rate 73.5% is below the 80% floor',
+              evidence: '',
+            },
+          ],
+        }) as never,
+    );
+
+  it('leads the page with the release verdict, one reason and one action', async () => {
+    const navigate = vi.fn();
     render(
       <CockpitPage
-        sources={sources(undefined, async () => PROJECTS)}
-        navigate={() => undefined}
+        sources={{ ...sources(), readiness: readiness('no-go') }}
+        navigate={navigate}
         now={() => NOW}
-        initialProjectId="gone"
       />,
     );
-    expect(await screen.findByLabelText('Project')).toHaveValue('');
+    const hero = await screen.findByRole('region', { name: 'No-go' });
+    expect(hero).toHaveTextContent('Pass rate 73.5% is below the 80% floor');
+    const action = within(hero).getByRole('button', { name: 'See what is blocking' });
+    action.click();
+    expect(navigate).toHaveBeenCalledWith('/dashboard');
+    // The focus card below owns the one primary fill; the hero's way in is an edge.
+    expect(action).toHaveClass('border-border-strong');
+    expect(action).not.toHaveClass('bg-primary-gradient');
+    // With nothing to act on, the focus list says nothing under the verdict: no "All clear"
+    // beside a No-go.
+    await waitFor(() => expect(screen.queryByTestId('now-loading')).toBeNull());
+    expect(screen.queryByTestId('now-clear')).toBeNull();
+  });
+
+  it('says an unreadable verdict in a sentence, never as the server’s bare word', async () => {
+    render(
+      <CockpitPage
+        sources={{
+          ...sources(),
+          readiness: vi.fn(() => Promise.reject(new QaApiError(404, 'not found'))),
+        }}
+        navigate={vi.fn()}
+        now={() => NOW}
+      />,
+    );
+    const hero = await screen.findByRole('region', { name: 'Not measured' });
+    expect(hero).toHaveTextContent('Lupin could not read the release gates (not found).');
+  });
+
+  it('draws no hero when the page has no readiness to read', async () => {
+    showHome();
+    await screen.findByTestId('now-page');
+    expect(screen.queryByRole('region', { name: /No-go|Ready|Caution/u })).toBeNull();
   });
 });

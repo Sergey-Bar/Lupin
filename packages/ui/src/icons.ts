@@ -87,6 +87,8 @@ export {
   Bug,
   Handshake,
   Eye,
+  /** Focus mode: puts everything but the one thing to do away. */
+  Focus,
   Workflow,
   /** The menu button's chevron: it opens a list of actions below it. */
   ChevronDown,
@@ -106,6 +108,8 @@ export {
   /** The four capabilities the expanded toolbox added: mobile, API, DAST, test management. */
   Smartphone,
   Webhook,
+  // Home, the first of the three places.
+  House,
   Radar,
   ClipboardList,
   /** The insights page: activity, duration, branches, the flaky leaderboard and the digest. */

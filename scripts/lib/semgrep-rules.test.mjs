@@ -77,6 +77,8 @@ const SAFE_TWINS = [
     id: 'no-server-timing-side-channel',
     line: "return presented.token === 'literal-value';",
   },
+  { id: 'no-server-timing-side-channel', line: 'return presented.token === undefined;' },
+  { id: 'no-server-timing-side-channel', line: 'return found[signature] === undefined;' },
   { id: 'no-shell-true', line: "return spawnSync('git', ['rev-parse', 'HEAD']);" },
   { id: 'no-hardcoded-secret-literal', line: "const code = 'REPORTER_SECRET_NOT_CONFIGURED';" },
   { id: 'no-hardcoded-secret-literal', line: "const SESSION_COOKIE = 'lupin_session';" },

@@ -16,7 +16,6 @@ import {
   timestamp,
   jsonb,
   uuid,
-  serial,
   real,
   primaryKey,
   uniqueIndex,
@@ -85,6 +84,11 @@ export const workspaces = pgTable('workspaces', {
   configPath: text('config_path').notNull(),
   testResultsDir: text('test_results_dir'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  /**
+   * How many days a run, its test results and its artifacts are kept; `null` keeps them
+   * (plan task 14, `0065`). A run with an artifact under legal hold is never removed.
+   */
+  runRetentionDays: integer('run_retention_days'),
 });
 
 export const runners = pgTable(
@@ -388,34 +392,12 @@ export const canonicalRunResults = pgTable(
   ],
 );
 
-// ─── suites ────────────────────────────────────────────────────────────────
-// Source: suites table — test suite hierarchy
+// ─── tests ─────────────────────────────────────────────────────────────────
+// Source: tests table — individual test instances per run (composite PK)
 //
 // Every table from here down that holds a run's evidence carries the run's workspace
 // (0028, ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces`, and an index that
 // leads with it. The migration fills it from the parent row, never from a caller.
-export const suites = pgTable(
-  'suites',
-  {
-    // SQLite: text('id').primaryKey()
-    id: text('id').primaryKey(),
-    // SQLite: text('run_id').notNull().references(() => runs.id, { onDelete: 'cascade' })
-    runId: uuid('run_id')
-      .notNull()
-      .references(() => runs.id, { onDelete: 'cascade' }),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    parentId: text('parent_id'),
-    title: text('title').notNull(),
-    file: text('file'),
-    project: text('project'),
-  },
-  (t) => [index('suites_workspace_run_idx').on(t.workspaceId, t.runId)],
-);
-
-// ─── tests ─────────────────────────────────────────────────────────────────
-// Source: tests table — individual test instances per run (composite PK)
 export const tests = pgTable(
   'tests',
   {
@@ -428,7 +410,8 @@ export const tests = pgTable(
     workspaceId: text('workspace_id')
       .notNull()
       .references(() => workspaces.id, { onDelete: 'restrict' }),
-    suiteId: text('suite_id').references(() => suites.id),
+    // No key since 0066: the `suites` table it named was dropped (ledger C-6). The value stays.
+    suiteId: text('suite_id'),
     title: text('title').notNull(),
     file: text('file').notNull(),
     line: integer('line'),
@@ -503,29 +486,6 @@ export const tests = pgTable(
   ],
 );
 
-// ─── attachments ───────────────────────────────────────────────────────────
-// Source: attachments table — binary artifacts on disk
-export const attachments = pgTable(
-  'attachments',
-  {
-    id: text('id').primaryKey(),
-    // The legacy result this attachment came from. The key onto `results` went with that table
-    // in 0030; the value is kept as a record of provenance.
-    resultId: text('result_id').notNull(),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    name: text('name').notNull(),
-    contentType: text('content_type').notNull(),
-    path: text('path').notNull(),
-    sizeBytes: integer('size_bytes'),
-    thumbnailPath: text('thumbnail_path'),
-    // SQLite: integer('is_screenshot_diff', { mode: 'boolean' })
-    isScreenshotDiff: boolean('is_screenshot_diff').default(false),
-  },
-  (t) => [index('attachments_workspace_result_idx').on(t.workspaceId, t.resultId)],
-);
-
 // ─── trends ────────────────────────────────────────────────────────────────
 // Source: trends table — daily aggregates for analytics charts (composite PK)
 //
@@ -547,6 +507,17 @@ export const trends = pgTable(
     // SQLite: real('avg_duration_ms')
     avgDurationMs: real('avg_duration_ms'),
     p95DurationMs: real('p95_duration_ms'),
+    /**
+     * Written by the daily rollup since `0064` (plan task 13), one row per day and project
+     * (`''` for every project) with branch `''` for every branch: what a trend bucket holds.
+     */
+    other: integer('other').notNull().default(0),
+    tests: integer('tests').notNull().default(0),
+    testsFailed: integer('tests_failed').notNull().default(0),
+    flakyTests: integer('flaky_tests').notNull().default(0),
+    /** Runs with a duration, so a window's mean duration can be weighted correctly. */
+    timedRuns: integer('timed_runs').notNull().default(0),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [primaryKey({ columns: [t.workspaceId, t.date, t.project, t.branch] })],
 );
@@ -618,25 +589,6 @@ export const quarantine = pgTable(
     index('quarantine_workspace_stable_id_idx').on(table.workspaceId, table.stableId),
     index('quarantine_workspace_project_idx').on(table.workspaceId, table.projectId),
   ],
-);
-
-// ─── known failures ────────────────────────────────────────────────────────
-// Source: known_failures table — known-failure registry
-export const knownFailures = pgTable(
-  'known_failures',
-  {
-    id: text('id').primaryKey(),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    testTitle: text('test_title').notNull(),
-    testFile: text('test_file').notNull(),
-    comment: text('comment'),
-    // SQLite: text('created_at').notNull()
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-    createdBy: text('created_by').default('manual'),
-  },
-  (t) => [index('known_failures_workspace_idx').on(t.workspaceId)],
 );
 
 // ─── schedules ─────────────────────────────────────────────────────────────
@@ -755,83 +707,11 @@ export const fingerprintCategories = pgTable(
     // SQLite: text('assigned_at').notNull()
     assignedAt: timestamp('assigned_at', { withTimezone: true }).notNull(),
     issueUrl: text('issue_url'),
+    /** Why a cause is known, when there is no issue to link (plan task 12, `0063`). */
+    reason: text('reason'),
     labelledBy: text('labelled_by').notNull().default('manual'),
   },
   (t) => [primaryKey({ columns: [t.workspaceId, t.fingerprint] })],
-);
-
-// ─── NL query history ────────────────────────────────────────────────────
-// Source: nl_query_history table — NL→SQL query history
-export const nlQueryHistory = pgTable(
-  'nl_query_history',
-  {
-    // SQLite: integer('id').primaryKey({ autoIncrement: true })
-    id: serial('id').primaryKey(),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    userQuery: text('user_query').notNull(),
-    generatedSql: text('generated_sql').notNull(),
-    resultCount: integer('result_count'),
-    userId: text('user_id'),
-    // SQLite: text('created_at').notNull()
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-  },
-  (t) => [index('nl_query_history_workspace_created_idx').on(t.workspaceId, t.createdAt)],
-);
-
-// ─── failure taxonomy rules ────────────────────────────────────────────────
-// Source: failure_taxonomy_rules table — rule-based failure classifier config
-export const failureTaxonomyRules = pgTable('failure_taxonomy_rules', {
-  id: text('id').primaryKey(),
-  priority: integer('priority').notNull(),
-  category: text('category', {
-    enum: ['infra_issue', 'env_issue', 'test_debt', 'flaky', 'app_bug', 'unknown'],
-  }).notNull(),
-  pattern: text('pattern').notNull(),
-  patternTarget: text('pattern_target', {
-    enum: ['error_message', 'error_stack', 'test_title', 'file_path'],
-  }).notNull(),
-  description: text('description').notNull(),
-  // SQLite: integer('is_built_in', { mode: 'boolean' })
-  isBuiltIn: boolean('is_built_in').notNull().default(false),
-  // SQLite: integer('enabled', { mode: 'boolean' })
-  enabled: boolean('enabled').notNull().default(true),
-  // SQLite: text('created_at').notNull()
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
-});
-
-// ─── failure classifications ───────────────────────────────────────────────
-// Source: failure_classifications table — per-run failure classifications
-export const failureClassifications = pgTable(
-  'failure_classifications',
-  {
-    id: text('id').primaryKey(),
-    fingerprint: text('fingerprint').notNull(),
-    runId: uuid('run_id')
-      .notNull()
-      .references(() => runs.id, { onDelete: 'cascade' }),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    category: text('category', {
-      enum: ['infra_issue', 'env_issue', 'test_debt', 'flaky', 'app_bug', 'unknown'],
-    }).notNull(),
-    // SQLite: real('confidence').notNull()
-    confidence: real('confidence').notNull(),
-    matchedRuleId: text('matched_rule_id').references(() => failureTaxonomyRules.id, {
-      onDelete: 'cascade',
-    }),
-    rationale: text('rationale').notNull(),
-    // SQLite: integer('is_manual_override', { mode: 'boolean' })
-    isManualOverride: boolean('is_manual_override').notNull().default(false),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-  },
-  (t) => [
-    uniqueIndex('failure_classifications_fingerprint_run_unique').on(t.fingerprint, t.runId),
-    index('failure_classifications_workspace_run_idx').on(t.workspaceId, t.runId),
-  ],
 );
 
 // ─── test failure correlations ─────────────────────────────────────────────
@@ -866,36 +746,6 @@ export const testFailureCorrelations = pgTable(
   ],
 );
 
-// ─── locator suggestions ───────────────────────────────────────────────────
-// Source: locator_suggestions table — self-healing locator suggestions
-export const locatorSuggestions = pgTable(
-  'locator_suggestions',
-  {
-    id: text('id').primaryKey(),
-    testId: text('test_id').notNull(),
-    runId: uuid('run_id')
-      .notNull()
-      .references(() => runs.id, { onDelete: 'cascade' }),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    originalSelector: text('original_selector').notNull(),
-    suggestedSelector: text('suggested_selector').notNull(),
-    // SQLite: real('confidence').notNull()
-    confidence: real('confidence').notNull(),
-    rationale: text('rationale').notNull(),
-    status: text('status', {
-      enum: ['pending', 'accepted', 'rejected', 'expired'],
-    })
-      .notNull()
-      .default('pending'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-    // Added in 0026. `status` moves and nothing recorded when (ledger C-6).
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [index('locator_suggestions_workspace_run_idx').on(t.workspaceId, t.runId)],
-);
-
 // ─── failure_clusters ─────────────────────────────────────────────────────────
 // Source: failure_clusters table — cross-run error cluster groups
 export const failureClusters = pgTable(
@@ -917,11 +767,24 @@ export const failureClusters = pgTable(
       .default('active'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+    /**
+     * Written by the cluster job since `0063` (plan task 11): the project the clusters were
+     * computed for, `''` for every project, and what the Tests page shows of each cause.
+     * `fingerprint` is the cause's `failureSignature`, as `fingerprint_categories` keys it.
+     */
+    projectKey: text('project_key').notNull().default(''),
+    errorType: text('error_type'),
+    firstSeenAt: timestamp('first_seen_at', { withTimezone: true }),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
+    runCount: integer('run_count').notNull().default(0),
+    tests: jsonb('tests').$type<string[]>().notNull().default([]),
+    branches: jsonb('branches').$type<string[]>().notNull().default([]),
   },
   (t) => [
     index('failure_clusters_fingerprint_idx').on(t.fingerprint),
     index('failure_clusters_status_idx').on(t.status),
     index('failure_clusters_workspace_fingerprint_idx').on(t.workspaceId, t.fingerprint),
+    uniqueIndex('failure_clusters_scope_idx').on(t.workspaceId, t.projectKey, t.fingerprint),
   ],
 );
 
@@ -958,216 +821,6 @@ export const users = pgTable(
     uniqueIndex('users_email_unique').on(t.email),
     uniqueIndex('users_issuer_subject_idx').on(t.issuer, t.subject),
     index('users_external_id_idx').on(t.externalId),
-  ],
-);
-
-// ─── roles ────────────────────────────────────────────────────────────────────
-// Source: roles table — RBAC roles
-export const roles = pgTable(
-  'roles',
-  {
-    id: text('id').primaryKey(),
-    name: text('name', { enum: ['admin', 'editor', 'viewer'] }).notNull(),
-    description: text('description').notNull(),
-    // SQLite: text('permissions').notNull() // JSON array of allowed actions
-    permissions: jsonb('permissions').notNull(),
-    tenantId: text('tenant_id'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
-  },
-  (t) => [uniqueIndex('roles_name_unique').on(t.name)],
-);
-
-// ─── agent_sessions ───────────────────────────────────────────────────────────
-// Source: agent_sessions table — AI agent code-review sessions
-export const agentSessions = pgTable(
-  'agent_sessions',
-  {
-    id: text('id').primaryKey(),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    provider: text('provider').notNull(),
-    repository: text('repository').notNull(),
-    prNumber: integer('pr_number').notNull(),
-    prBranch: text('pr_branch').notNull(),
-    baseBranch: text('base_branch'),
-    prTitle: text('pr_title'),
-    prAuthor: text('pr_author'),
-    agentName: text('agent_name').notNull(),
-    matchedRule: text('matched_rule'),
-    status: text('status', { enum: ['active', 'closed', 'error'] })
-      .notNull()
-      .default('active'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
-    closedAt: timestamp('closed_at', { withTimezone: true }),
-    filesLastSyncedAt: timestamp('files_last_synced_at', { withTimezone: true }),
-    fileSyncStatus: text('file_sync_status', { enum: ['pending', 'synced', 'failed'] }),
-  },
-  (t) => [
-    index('agent_sessions_pr_number_repository_idx').on(t.prNumber, t.repository),
-    index('agent_sessions_status_idx').on(t.status),
-    index('agent_sessions_pr_branch_idx').on(t.prBranch),
-    index('agent_sessions_workspace_status_idx').on(t.workspaceId, t.status),
-  ],
-);
-
-// ─── agent_session_runs ───────────────────────────────────────────────────────
-// Source: agent_session_runs table — links agent sessions to test runs (composite PK)
-export const agentSessionRuns = pgTable(
-  'agent_session_runs',
-  {
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => agentSessions.id, { onDelete: 'cascade' }),
-    runId: uuid('run_id')
-      .notNull()
-      .references(() => runs.id, { onDelete: 'cascade' }),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    linkedAt: timestamp('linked_at', { withTimezone: true }).notNull(),
-  },
-  (t) => [
-    primaryKey({ columns: [t.sessionId, t.runId] }),
-    index('agent_session_runs_session_id_idx').on(t.sessionId),
-    index('agent_session_runs_run_id_idx').on(t.runId),
-    index('agent_session_runs_workspace_session_idx').on(t.workspaceId, t.sessionId),
-  ],
-);
-
-// ─── agent_session_files ──────────────────────────────────────────────────────
-// Source: agent_session_files table — files modified in agent session
-export const agentSessionFiles = pgTable(
-  'agent_session_files',
-  {
-    id: text('id').primaryKey(),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => agentSessions.id, { onDelete: 'cascade' }),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    filePath: text('file_path').notNull(),
-    changeType: text('change_type', {
-      enum: ['added', 'modified', 'removed', 'renamed'],
-    }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-  },
-  (t) => [
-    uniqueIndex('agent_session_files_session_id_file_path_unique').on(t.sessionId, t.filePath),
-    index('agent_session_files_session_id_idx').on(t.sessionId),
-    index('agent_session_files_workspace_session_idx').on(t.workspaceId, t.sessionId),
-  ],
-);
-
-// ─── generated_test_suggestions ───────────────────────────────────────────────
-// Source: generated_test_suggestions table — AI-generated test code drafts
-export const generatedTestSuggestions = pgTable(
-  'generated_test_suggestions',
-  {
-    id: text('id').primaryKey(),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    sessionId: text('session_id').references(() => agentSessions.id, { onDelete: 'set null' }),
-    runId: uuid('run_id').references(() => runs.id, { onDelete: 'set null' }),
-    sourceType: text('source_type', { enum: ['pr_diff', 'requirement', 'source'] }).notNull(),
-    status: text('status', { enum: ['draft', 'accepted', 'rejected', 'edited'] })
-      .notNull()
-      .default('draft'),
-    originalContent: text('original_content').notNull(),
-    editedContent: text('edited_content'),
-    language: text('language'),
-    framework: text('framework'),
-    modelProvider: text('model_provider'),
-    modelName: text('model_name'),
-    // SQLite: text('warnings')
-    warnings: jsonb('warnings'),
-    // SQLite: text('source_metadata')
-    sourceMetadata: jsonb('source_metadata'),
-    reviewedBy: text('reviewed_by'),
-    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-    // `defaultNow()`, not an epoch-0 literal cast through `unknown`. A row that
-    // defaulted to 1970 looked 56 years stale to every "last updated" query,
-    // which is indistinguishable from a suggestion nobody ever touched.
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    index('generated_test_suggestions_session_id_idx').on(t.sessionId),
-    index('generated_test_suggestions_status_idx').on(t.status),
-    index('generated_test_suggestions_workspace_status_idx').on(t.workspaceId, t.status),
-  ],
-);
-
-// ─── repair_attempts ──────────────────────────────────────────────────────────
-// Source: repair_attempts table — auto-repair attempt records
-export const repairAttempts = pgTable(
-  'repair_attempts',
-  {
-    id: text('id').primaryKey(),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => agentSessions.id, { onDelete: 'cascade' }),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    runId: uuid('run_id').references(() => runs.id, { onDelete: 'set null' }),
-    attemptNumber: integer('attempt_number').notNull(),
-    status: text('status', {
-      enum: ['payload_built', 'comment_posted', 'comment_failed', 'rerun_requested', 'escalated'],
-    }).notNull(),
-    // SQLite: text('payload')
-    payload: jsonb('payload'),
-    commentUrl: text('comment_url'),
-    commentId: text('comment_id'),
-    rerunRunId: text('rerun_run_id'),
-    lastProcessedSha: text('last_processed_sha'),
-    errorMessage: text('error_message'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
-  },
-  (t) => [
-    index('repair_attempts_session_id_idx').on(t.sessionId),
-    uniqueIndex('repair_attempts_session_id_attempt_number_unique').on(
-      t.sessionId,
-      t.attemptNumber,
-    ),
-    index('repair_attempts_workspace_session_idx').on(t.workspaceId, t.sessionId),
-  ],
-);
-
-// ─── agent_conflicts ──────────────────────────────────────────────────────────
-// Source: agent_conflicts table — concurrent agent conflict detection
-export const agentConflicts = pgTable(
-  'agent_conflicts',
-  {
-    id: text('id').primaryKey(),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .references(() => workspaces.id, { onDelete: 'restrict' }),
-    repository: text('repository').notNull(),
-    // SQLite: text('session_ids').notNull()
-    sessionIds: jsonb('session_ids').notNull(),
-    // SQLite: text('overlapping_files').notNull()
-    overlappingFiles: jsonb('overlapping_files').notNull(),
-    severity: text('severity', { enum: ['info', 'warning', 'critical'] })
-      .notNull()
-      .default('warning'),
-    status: text('status', { enum: ['active', 'resolved'] })
-      .notNull()
-      .default('active'),
-    firstDetectedAt: timestamp('first_detected_at', { withTimezone: true }).notNull(),
-    lastDetectedAt: timestamp('last_detected_at', { withTimezone: true }).notNull(),
-    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
-    notifiedAt: timestamp('notified_at', { withTimezone: true }),
-  },
-  (t) => [
-    index('agent_conflicts_repository_idx').on(t.repository),
-    index('agent_conflicts_status_idx').on(t.status),
-    index('agent_conflicts_workspace_status_idx').on(t.workspaceId, t.status),
   ],
 );
 
@@ -1274,18 +927,12 @@ export const auditEvents = pgTable(
 // ─── Inferred types ───────────────────────────────────────────────────────────
 export type Run = typeof runs.$inferSelect;
 export type InsertRun = typeof runs.$inferInsert;
-export type Suite = typeof suites.$inferSelect;
-export type InsertSuite = typeof suites.$inferInsert;
 export type Test = typeof tests.$inferSelect;
 export type InsertTest = typeof tests.$inferInsert;
-export type Attachment = typeof attachments.$inferSelect;
-export type InsertAttachment = typeof attachments.$inferInsert;
 export type Trend = typeof trends.$inferSelect;
 export type InsertTrend = typeof trends.$inferInsert;
 export type Quarantine = typeof quarantine.$inferSelect;
 export type InsertQuarantine = typeof quarantine.$inferInsert;
-export type KnownFailure = typeof knownFailures.$inferSelect;
-export type InsertKnownFailure = typeof knownFailures.$inferInsert;
 export type Schedule = typeof schedules.$inferSelect;
 export type InsertSchedule = typeof schedules.$inferInsert;
 export type Workspace = typeof workspaces.$inferSelect;
@@ -1298,34 +945,12 @@ export type DefectCategory = typeof defectCategories.$inferSelect;
 export type InsertDefectCategory = typeof defectCategories.$inferInsert;
 export type FingerprintCategory = typeof fingerprintCategories.$inferSelect;
 export type InsertFingerprintCategory = typeof fingerprintCategories.$inferInsert;
-export type NlQueryHistory = typeof nlQueryHistory.$inferSelect;
-export type InsertNlQueryHistory = typeof nlQueryHistory.$inferInsert;
-export type FailureTaxonomyRule = typeof failureTaxonomyRules.$inferSelect;
-export type InsertFailureTaxonomyRule = typeof failureTaxonomyRules.$inferInsert;
-export type FailureClassification = typeof failureClassifications.$inferSelect;
-export type InsertFailureClassification = typeof failureClassifications.$inferInsert;
 export type TestFailureCorrelation = typeof testFailureCorrelations.$inferSelect;
 export type InsertTestFailureCorrelation = typeof testFailureCorrelations.$inferInsert;
-export type LocatorSuggestion = typeof locatorSuggestions.$inferSelect;
-export type InsertLocatorSuggestion = typeof locatorSuggestions.$inferInsert;
 export type FailureCluster = typeof failureClusters.$inferSelect;
 export type InsertFailureCluster = typeof failureClusters.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-export type Role = typeof roles.$inferSelect;
-export type InsertRole = typeof roles.$inferInsert;
-export type AgentSession = typeof agentSessions.$inferSelect;
-export type InsertAgentSession = typeof agentSessions.$inferInsert;
-export type AgentSessionRun = typeof agentSessionRuns.$inferSelect;
-export type InsertAgentSessionRun = typeof agentSessionRuns.$inferInsert;
-export type AgentSessionFile = typeof agentSessionFiles.$inferSelect;
-export type InsertAgentSessionFile = typeof agentSessionFiles.$inferInsert;
-export type GeneratedTestSuggestion = typeof generatedTestSuggestions.$inferSelect;
-export type InsertGeneratedTestSuggestion = typeof generatedTestSuggestions.$inferInsert;
-export type RepairAttempt = typeof repairAttempts.$inferSelect;
-export type InsertRepairAttempt = typeof repairAttempts.$inferInsert;
-export type AgentConflict = typeof agentConflicts.$inferSelect;
-export type InsertAgentConflict = typeof agentConflicts.$inferInsert;
 export type SamlConfig = typeof samlConfig.$inferSelect;
 export type InsertSamlConfig = typeof samlConfig.$inferInsert;
 export type AuditEvent = typeof auditEvents.$inferSelect;

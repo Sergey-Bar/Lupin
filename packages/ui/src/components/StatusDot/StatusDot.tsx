@@ -3,13 +3,18 @@ import { cn } from '../../lib/utils.js';
 
 export type DotStatus = 'good' | 'warn' | 'bad' | 'info' | 'unknown';
 
+/*
+ * Each verdict is a solid core in a soft halo of its own tone (a ring, so it takes no
+ * layout space), and each has its own shape: round for passing, a diamond for a warning,
+ * a square for a failure. Colour is never the only carrier, even without the label.
+ */
 const TONE: Record<DotStatus, string> = {
-  good: 'bg-success',
-  warn: 'bg-warning',
-  bad: 'bg-danger',
-  info: 'bg-info',
+  good: 'rounded-full bg-success ring-3 ring-success/20',
+  warn: 'h-1.5 w-1.5 rotate-45 rounded-xs bg-warning ring-3 ring-warning/20',
+  bad: 'rounded-xs bg-danger ring-3 ring-danger/20',
+  info: 'rounded-full bg-info ring-3 ring-info/20',
   // Hollow, so "we do not know" never reads as a fourth verdict colour.
-  unknown: 'ring-1 ring-fg-muted',
+  unknown: 'rounded-full ring-1 ring-fg-muted',
 };
 
 export interface StatusDotProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'children'> {
@@ -36,7 +41,7 @@ export const StatusDot = forwardRef<HTMLSpanElement, StatusDotProps>(
       ref={ref}
       {...(label === undefined ? { 'aria-hidden': true } : { role: 'img', 'aria-label': label })}
       className={cn(
-        'inline-block h-2 w-2 shrink-0 rounded-full',
+        'inline-block h-2 w-2 shrink-0',
         TONE[status],
         live && 'animate-lupin-pulse motion-reduce:animate-none',
         className,

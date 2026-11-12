@@ -3,13 +3,42 @@ import { createRoute, useNavigate } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { CockpitPage, type CockpitSources } from '../../components/Cockpit.js';
 import { defaultApiClient } from '../../lib/api.js';
-import { createCockpitClient } from '../../lib/cockpit-client.js';
 import { createHealthClient } from '../../lib/health-client.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
+import { createGithubClient } from '../../lib/github-client.js';
+import { putOffSetup, setupPutOff, shouldOpenSetup } from '../../lib/first-run.js';
 import { createSettingsClient } from '../../lib/settings-client.js';
+import { useScope } from '../../hooks/useScope.js';
 
-/** The landing page: is the product better or worse than before, and what needs you. `/` lands here. */
+/**
+ * A fresh install has nothing for Home to judge, so Home hands the reader to setup, once per
+ * load. A failed read keeps Home: setup is an offer, never a wall.
+ */
+function useFirstRunRedirect(open: () => void): void {
+  const opened = React.useRef(open);
+  React.useEffect(() => {
+    if (setupPutOff()) return undefined;
+    let live = true;
+    createSettingsClient()
+      .getOnboarding()
+      .then((onboarding) => {
+        if (!live || !shouldOpenSetup(onboarding, setupPutOff())) return;
+        // Once only: coming back from setup by any route is not a reason to send them again.
+        putOffSetup();
+        opened.current();
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+}
+
+/**
+ * The landing page: is the product better or worse than before, and what needs you. `/` lands
+ * here. Which project it is about is the scope chosen in the sidebar; `?project=` names it.
+ */
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/now',
@@ -19,25 +48,38 @@ export const Route = createRoute({
       : {},
   component: function NowRoute() {
     const navigate = useNavigate();
-    const { project } = Route.useSearch();
+    const { projectId } = useScope();
+    useFirstRunRedirect(() => void navigate({ to: '/dashboard/setup', replace: true }));
     const sources = React.useMemo<CockpitSources>(() => {
-      const cockpit = createCockpitClient();
       const health = createHealthClient();
       const notifications = createNotificationsClient();
       const qa = createQaClient();
-      const settings = createSettingsClient();
+      const github = createGithubClient();
       return {
-        cockpit: (query, signal) => cockpit.getCockpit(query, signal),
-        projects: async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name })),
+        // The hero's verdict: the chosen project, else the first registered one.
+        readiness: async (projectId) => {
+          const id = projectId ?? (await qa.listProjects())[0]?.id;
+          if (id === undefined) throw new Error('not found');
+          return qa.getReadiness(id, 7);
+        },
+        // Triage: the failures of the last 14 days grouped by root cause, server-side.
+        clusters: async (projectId) => (await qa.getInsights(14, projectId)).failureClusters,
+        // Release: failed results per day. The trend is the workspace's, so it takes no project.
+        trend: async () =>
+          (await qa.getTrend(14)).buckets.map((bucket) => ({
+            date: bucket.date,
+            failed: bucket.failed,
+          })),
+        // The week's briefing: the chosen repository's, or the portfolio's with none chosen.
+        briefing: (projectId) => health.getBriefing(projectId ?? null, { days: 7 }),
+        // Release sign-off for the chosen project (plan Wave 1 task 5).
+        signoff: { list: (id) => qa.listSignoffs(id), record: (id, body) => qa.signOff(id, body) },
         attention: {
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),
           deliveries: () => notifications.listDeliveries(),
-        },
-        setup: {
-          load: () => settings.getOnboarding(),
-          dismiss: () => settings.dismissStep('checklist'),
-          role: async () => (await health.whoami()).role,
+          retryRun: (runId, scope) => defaultApiClient.retryRun(runId, undefined, { scope }),
+          pulls: async () => (await github.listPulls({ state: 'open', limit: 50 })).items,
         },
       };
     }, []);
@@ -45,14 +87,7 @@ export const Route = createRoute({
       <CockpitPage
         sources={sources}
         navigate={(to) => void navigate({ to })}
-        initialProjectId={project}
-        onProjectChange={(next) =>
-          void navigate({
-            to: '/dashboard/now',
-            search: next === undefined ? {} : { project: next },
-            replace: true,
-          })
-        }
+        projectId={projectId}
       />
     );
   },

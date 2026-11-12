@@ -3,6 +3,7 @@ import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { SEGMENTS, TrendChart, areaPoints, lineSegments, tickIndices } from './TrendChart';
 import type { TrendBucket } from '../lib/qa';
+import { makeTrend } from '../test-utils';
 
 function bucket(date: string, runs: number, passRate: number | null): TrendBucket {
   return {
@@ -170,5 +171,31 @@ describe('the trend chart palette', () => {
     expect(gradient?.id).toMatch(/^trend-area-[a-zA-Z0-9]+$/u);
     expect(area).toHaveAttribute('fill', `url(#${gradient?.id ?? ''})`);
     expect(areaPoints('25.00,0.00 75.00,20.00')).toBe('25.00,40 25.00,0.00 75.00,20.00 75.00,40');
+  });
+});
+
+describe('the pass-rate floor', () => {
+  it('draws the floor as a labelled line, so a reader sees how far below it the week sits', () => {
+    render(<TrendChart buckets={makeTrend().buckets} floor={80} />);
+    const line = screen.getByTestId('trend-floor');
+    expect(line).toHaveAttribute('y1', String(40 - 0.8 * 40));
+    expect(screen.getByText('80% floor')).toBeInTheDocument();
+  });
+
+  it('draws no floor when none was given', () => {
+    render(<TrendChart buckets={makeTrend().buckets} />);
+    expect(screen.queryByTestId('trend-floor')).toBeNull();
+  });
+
+  it('colours the readout rows with the same chart colours as the bars', () => {
+    render(<TrendChart buckets={makeTrend().buckets} />);
+    const hit = screen.getByTestId('trend-hit');
+    hit.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 400, height: 100, right: 400, bottom: 100 }) as DOMRect;
+    point(hit, 'pointermove', 50);
+    const tooltip = screen.getByTestId('trend-tooltip');
+    expect(within(tooltip).getByText('Passed')).toHaveClass('text-chart-pass');
+    expect(within(tooltip).getByText('Failed')).toHaveClass('text-chart-fail');
+    expect(within(tooltip).getByText('Flaky')).toHaveClass('text-chart-flaky');
   });
 });

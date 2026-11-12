@@ -6,6 +6,7 @@ import type { NotificationsClient } from '../lib/notifications-client.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { KIND_GUIDES, NotificationsPage, type ProjectChoices } from './Notifications.js';
 import { TOAST_MS, ToastProvider, useToast } from './Toasts.js';
+import { confirmAction } from '../test-confirm.js';
 
 const INBOX = {
   id: 'c1',
@@ -52,6 +53,7 @@ function client(overrides: Partial<NotificationsClient> = {}): NotificationsClie
         projectId: null,
         audience: 'general' as const,
         format: 'chat' as const,
+        quietHours: null,
       },
     ]),
     createSubscription: vi.fn(async () => ({
@@ -67,6 +69,7 @@ function client(overrides: Partial<NotificationsClient> = {}): NotificationsClie
       projectId: null,
       audience: 'general' as const,
       format: 'chat' as const,
+      quietHours: null,
     })),
     deleteSubscription: vi.fn(async () => undefined),
     listDeliveries: vi.fn(async () => [SENT]),
@@ -88,6 +91,48 @@ afterEach(() => {
 });
 
 describe('NotificationsPage', () => {
+  it('edits a scheduled report in the same form, and saves it in place (Wave 1 task 4)', async () => {
+    const user = userEvent.setup();
+    const updateSubscription = vi.fn(async (id: string) => ({
+      id,
+      channelId: 'c1',
+      name: 'Daily',
+      cadence: 'daily' as const,
+      cronExpr: '30 7 * * *',
+      timezone: 'Europe/Berlin',
+      enabled: true,
+      describe: 'Every day at 07:30',
+      nextRunAt: null,
+      projectId: null,
+      audience: 'general' as const,
+      format: 'chat' as const,
+      quietHours: null,
+    }));
+    const api = client({ updateSubscription });
+    page(api);
+    const list = await screen.findByRole('list', { name: 'Scheduled reports' });
+    await user.click(within(list).getByRole('button', { name: 'Edit' }));
+    const form = screen.getByRole('form', { name: 'Schedule a report' });
+    expect(within(form).getByLabelText('At')).toHaveValue('09:00');
+    const timezone = within(form).getByLabelText('Timezone');
+    await user.clear(timezone);
+    await user.type(timezone, 'Europe/Berlin');
+    await user.click(within(form).getByRole('button', { name: 'Save changes' }));
+    await waitFor(() =>
+      expect(updateSubscription).toHaveBeenCalledWith(
+        's1',
+        expect.objectContaining({ cadence: 'daily', time: '09:00', timezone: 'Europe/Berlin' }),
+      ),
+    );
+    expect(api.createSubscription).not.toHaveBeenCalled();
+    expect(await screen.findByText('Report updated')).toBeInTheDocument();
+    expect(within(form).getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
+    // Cancelling an edit puts the form back to a new report and saves nothing.
+    await user.click(within(list).getByRole('button', { name: 'Edit' }));
+    await user.click(within(form).getByRole('button', { name: 'Cancel edit' }));
+    expect(within(form).getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
+    expect(updateSubscription).toHaveBeenCalledTimes(1);
+  });
   it('shows where, when, the preview and the history, without blocking axe findings', async () => {
     const { container } = page(client());
     expect(await screen.findByText('Every day at 09:00')).toBeTruthy();
@@ -185,6 +230,51 @@ describe('NotificationsPage', () => {
     );
   });
 
+  it('schedules a report with quiet hours, and shows them beside it', async () => {
+    const user = userEvent.setup();
+    const api = client({
+      listSubscriptions: vi.fn(async () => [
+        {
+          id: 's1',
+          channelId: 'c1',
+          name: 'Nightly',
+          cadence: 'daily' as const,
+          cronExpr: '0 23 * * *',
+          timezone: 'UTC',
+          enabled: true,
+          describe: 'Every day at 23:00',
+          nextRunAt: null,
+          projectId: null,
+          audience: 'general' as const,
+          format: 'chat' as const,
+          quietHours: { start: 22, end: 7 },
+        },
+      ]),
+    });
+    page(api);
+    const list = await screen.findByRole('list', { name: 'Scheduled reports' });
+    expect(list).toHaveTextContent('quiet 22:00–07:00');
+    // None by default: the end is offered only once a start is chosen.
+    expect(screen.queryByLabelText('Quiet hours until')).toBeNull();
+    await user.selectOptions(screen.getByLabelText('Quiet hours from'), '22');
+    await user.selectOptions(screen.getByLabelText('Quiet hours until'), '6');
+    // The end can never be the start.
+    expect(
+      within(screen.getByLabelText('Quiet hours until'))
+        .queryAllByRole('option')
+        .map((option) => option.textContent),
+    ).not.toContain('22:00');
+    await user.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(api.createSubscription).toHaveBeenLastCalledWith(
+      expect.objectContaining({ quietHours: { start: 22, end: 6 } }),
+    );
+    await user.selectOptions(screen.getByLabelText('Quiet hours from'), '');
+    await user.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(api.createSubscription).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ quietHours: expect.anything() }),
+    );
+  });
+
   it('schedules a report tuned for an audience and in the full format', async () => {
     const user = userEvent.setup();
     const api = client();
@@ -222,14 +312,12 @@ describe('NotificationsPage', () => {
     });
     page(api);
     const row = await screen.findByTestId('channel-c1');
-    await user.click(within(row).getByRole('button', { name: 'Remove' }));
+    await confirmAction(user, row, 'Remove');
     expect(await screen.findByText('Lupin inbox removed')).toBeTruthy();
-    await user.click(
-      within(await screen.findByTestId('channel-c1')).getByRole('button', { name: 'Remove' }),
-    );
+    await confirmAction(user, await screen.findByTestId('channel-c1'), 'Remove');
     expect((await screen.findAllByText('Could not remove it')).length).toBeGreaterThan(0);
     const schedules = screen.getByRole('list', { name: 'Scheduled reports' });
-    await user.click(within(schedules).getByRole('button', { name: 'Remove' }));
+    await confirmAction(user, schedules, 'Remove');
     await user.click(screen.getByRole('button', { name: 'Schedule' }));
     expect(await screen.findByText('Could not schedule it')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Add Lupin inbox' }));
@@ -310,6 +398,7 @@ describe('choosing the project a report is about', () => {
           projectId: 'p-2',
           audience: 'general' as const,
           format: 'chat' as const,
+          quietHours: null,
         },
       ]),
     });

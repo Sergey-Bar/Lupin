@@ -1,9 +1,11 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { AuditPage, MembersPage } from './People.js';
 import { makeHealthDouble } from '../test-utils.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
+import { confirmAction } from '../test-confirm.js';
 import type { AdminClient } from '../lib/admin-client.js';
 
 const MEMBERS = [
@@ -90,7 +92,11 @@ describe('the members page', () => {
     await waitFor(() =>
       expect(client.updateMember).toHaveBeenCalledWith(MEMBERS[1]?.userId, { disabled: false }),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Remove bo@example.com' }));
+    const bo = within(screen.getByRole('table', { name: 'Members' }))
+      .getAllByRole('row')
+      .find((row) => row.textContent?.includes('bo@example.com')) as HTMLElement;
+    // Removing someone asks for their email first (ledger MNT-185).
+    await confirmAction(userEvent.setup(), bo, 'Remove', 'bo@example.com');
     await waitFor(() => expect(client.removeMember).toHaveBeenCalledWith(MEMBERS[1]?.userId));
     expect(vi.mocked(client.listMembers).mock.calls.length).toBeGreaterThan(1);
   });
@@ -102,7 +108,11 @@ describe('the members page', () => {
       }),
     });
     render(<MembersPage health={makeHealthDouble('admin')} admin={client} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Disable ana@example.com' }));
+    const ana = (await screen.findAllByRole('row')).find((row) =>
+      row.textContent?.includes('ana@example.com'),
+    ) as HTMLElement;
+    // Disabling someone asks first (ledger MNT-185).
+    await confirmAction(userEvent.setup(), ana, 'Disable');
     expect(await screen.findByRole('alert')).toHaveTextContent('This is the last admin here');
   });
 

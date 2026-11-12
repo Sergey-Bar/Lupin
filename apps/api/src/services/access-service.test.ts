@@ -18,6 +18,7 @@ import {
   createAccessToken,
   listAccessTokens,
   revokeAccessToken,
+  rotateAccessToken,
   satisfies,
 } from './access-service.js';
 
@@ -128,6 +129,22 @@ describe('access tokens', () => {
     });
   });
 
+  it('a scoped token authenticates with its scopes, and rotation keeps them', async () => {
+    const { options } = await setup();
+    const { token, summary } = await createAccessToken(
+      options,
+      { name: 'ci', role: 'operator', scopes: ['runs:read', 'runs:write'] },
+      'session',
+    );
+    expect(summary.scopes).toEqual(['runs:read', 'runs:write']);
+    expect(await authenticateToken(options, token)).toMatchObject({
+      role: 'operator',
+      scopes: ['runs:read', 'runs:write'],
+    });
+    const successor = await rotateAccessToken(options, summary.id, 'session');
+    expect(successor.summary.scopes).toEqual(['runs:read', 'runs:write']);
+  });
+
   it('a token authenticates only in the workspace that issued it', async () => {
     const { options } = await setup();
     const { token } = await createAccessToken(options, { name: 'x', role: 'admin' }, 'session');
@@ -213,6 +230,22 @@ describe('the role guards, enforced', () => {
     expect((await app.request('/api/v1/access-tokens', { headers: bearer(token) })).status).toBe(
       403,
     );
+  });
+
+  it('rotates a token for an admin only, through the route (plan task 6)', async () => {
+    const { app, options } = await setup();
+    const { summary } = await createAccessToken(options, { name: 'ci', role: 'viewer' }, 'x');
+    const { token: viewer } = await createAccessToken(options, { name: 'v', role: 'viewer' }, 'x');
+    const refused = await app.request(`/api/v1/access-tokens/${summary.id}/rotate`, {
+      method: 'POST',
+      headers: bearer(viewer),
+    });
+    expect(refused.status).toBe(403);
+    const rotated = await app.request(`/api/v1/access-tokens/${summary.id}/rotate`, {
+      method: 'POST',
+      headers: { cookie: 'lupin_session=valid' },
+    });
+    expect(rotated.status).toBe(201);
   });
 
   it('treats the installation session as admin: it issues and revokes tokens', async () => {

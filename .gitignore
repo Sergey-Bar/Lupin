@@ -120,3 +120,20 @@ certs/
 
 # Local before/after screenshots and axe reports for design sign-off.
 .shots/
+
+# Local agent scratch (task scripts, screenshots, logs) and the skills CLI's default
+# output folder. AGENTS.md: vendored skills move to .kilo/skills/, so nothing here is source.
+.agents/
+
+# Local working state, ignored for every clone rather than one machine's .git/info/exclude
+# (ledger MNT-199). `.worktrees/` is another checkout of this repository, as `.kilo/worktrees/`
+# is. `semantic-review/` is the review documents the reviewer agent writes per pull request.
+# The five root scripts start a developer's own local stack. `.kiro/` is deliberately not
+# here: its steering files and hooks are project configuration meant to be committed.
+.worktrees/
+semantic-review/
+/api.ps1
+/dev.ps1
+/dev-run.cmd
+/pg-local.tmp.ps1
+/run-local.ps1

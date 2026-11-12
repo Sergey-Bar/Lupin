@@ -126,7 +126,14 @@ export class InMemoryExecutionStore implements ExecutionStore {
   private readonly reportSchedules = new Map<string, ReportSchedule>();
   private readonly reportDeliveries = new Map<
     string,
-    { workspaceId: string; subscriptionId: string; scheduledFor: string; idempotencyKey: string }
+    {
+      workspaceId: string;
+      subscriptionId: string;
+      scheduledFor: string;
+      idempotencyKey: string;
+      notBefore: string;
+      status: 'pending' | 'sent';
+    }
   >();
 
   addReportSchedule(schedule: ReportSchedule): void {
@@ -136,6 +143,12 @@ export class InMemoryExecutionStore implements ExecutionStore {
   /** The deliveries the scheduler queued, in order. For tests. */
   listReportDeliveries() {
     return [...this.reportDeliveries.values()].map((delivery) => clone(delivery));
+  }
+
+  /** Marks a queued delivery sent, as the API's dispatcher would. For tests. */
+  markReportSent(idempotencyKey: string): void {
+    const delivery = this.reportDeliveries.get(idempotencyKey);
+    if (delivery !== undefined) delivery.status = 'sent';
   }
 
   async listDueReportSchedules(now: Date, limit: number): Promise<ReportSchedule[]> {
@@ -152,11 +165,20 @@ export class InMemoryExecutionStore implements ExecutionStore {
     // The key carries the occurrence, and the occurrence moves on below, so a second call
     // for the same key fails the compare above: no separate duplicate check is needed.
     schedule.nextRunAt = input.nextRunAt;
+    // One report waiting per subscription: a later occurrence while one is still unsent (held
+    // by quiet hours, say) is folded into it, so the end of the night is one report, not nine.
+    const waiting = [...this.reportDeliveries.values()].some(
+      (delivery) =>
+        delivery.subscriptionId === schedule.subscriptionId && delivery.status === 'pending',
+    );
+    if (waiting) return false;
     this.reportDeliveries.set(input.idempotencyKey, {
       workspaceId: schedule.workspaceId,
       subscriptionId: schedule.subscriptionId,
       scheduledFor: input.scheduledFor,
       idempotencyKey: input.idempotencyKey,
+      notBefore: input.notBefore,
+      status: 'pending',
     });
     return true;
   }

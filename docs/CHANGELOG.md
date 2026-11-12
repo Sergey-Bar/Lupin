@@ -2,6 +2,235 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
+## Unreleased - the console, simplified
+
+### Added
+
+- **Quarantine decisions from the list (plan task 1).** Approve, reject and release on each row,
+  with a required reason, audited; a viewer sees the controls disabled with who decides. A
+  failing test in run detail opens the quarantine form filled in.
+- **Rerun failed tests (task 2).** Beside Retry run, a rerun of the failed tests only, for
+  Playwright and generic-command jobs; the new run links to the one it reran. Flaky tests are
+  not included.
+- **An issue from a failure cause (task 3).** Each cause on Tests opens a Jira or GitHub issue,
+  or links the one it already has. `GET /api/v1/projects/:id/cluster-issues`, viewer.
+- **Edit a scheduled report (task 4).** `PUT /api/v1/report-subscriptions/:id`, admin. A delivery
+  already queued sends with the edited settings.
+- **Release sign-off on Home (task 5).** Ship or hold per project and commit, with a reason and the
+  verdict the server computed; shipping against no-go needs an admin and is labelled an override.
+  Not yet in the cockpit report or `lupin gate --post`.
+- **Token expiry, rotation and scopes (tasks 6, 7).** A token can expire (90 days by default in
+  the UI), rotate with a day's grace, and carry a subset of its role's permissions; the role
+  guard refuses a request whose area needs a permission the token lacks. Per-project roles are
+  deferred.
+- **A request budget (task 8).** 600 requests a minute per access token, and per client sending
+  none (`LUPIN_API_RATE_LIMIT`, 0 turns it off), answered with 429 and `retry-after`. Probes and
+  the reporter ingestion routes are not counted.
+- **An outbound address guard (task 9).** Webhooks, notification bridges, the Jira base URL and
+  URL settings are refused when their host resolves to a private, loopback, link-local or
+  metadata address, on save and before each send. `LUPIN_OUTBOUND_ALLOW` names what a LAN
+  install needs. **A Signal or email bridge on the LAN now needs an entry there.** URLs set in
+  the environment are not checked.
+- **Vault keys at 600,000 PBKDF2 iterations (task 10).** Older entries open at their recorded
+  count and are re-sealed on their next write.
+- **Stored failure causes (task 11).** A job clusters each workspace's last 90 days every five
+  minutes (`LUPIN_CLUSTER_JOB_INTERVAL_MS`) and the Tests page reads the stored causes, with
+  first seen, last seen, occurrences and runs.
+- **Known failures (task 12).** A known-issue label takes a reason when there is no issue to link,
+  and the cause shows it on every later occurrence; it is still counted as a failure.
+- **Trend rollups (task 13).** Daily rollups per project serve any trend window at the same cost,
+  and `GET /api/v1/dashboard/analytics/trend?from=&to=` serves a custom range of up to 366 days.
+- **Run retention (task 14).** `GET`/`PUT /api/v1/retention` (viewer / admin) sets how many days a
+  workspace keeps runs; an hourly sweep removes older runs with their results and artifact bytes,
+  keeps any run with an artifact under legal hold, and audits what it removed. No screen yet.
+- **14 dormant tables dropped (task 15).** `0066_drop_dormant_tables.sql` refuses to drop a table
+  that holds rows unless `lupin.allow_drop_nonempty` is `on`; the legacy importer reports them as
+  skipped.
+- **Evidence-backed gate domains (task 16).** Security, accessibility and performance are decided
+  from the run's own commit: the latest SARIF and axe reports' open findings against a policy
+  rule's `maxSeverity` (default `high`), ZAP scans and k6 thresholds uploaded for the commit. A
+  domain with no evidence stays `not_configured` (invariants GATE-1, GATE-2).
+- **ZAP baseline scans (task 17).** `POST /api/v1/agents/security/scan` queues a baseline scan of an
+  allowlisted target on a runner with the `zap` capability; the report is read by the ZAP adapter.
+- **axe runs (task 18).** A Playwright job with `configuration.axe: true` uploads the axe report its
+  fixture wrote (`LUPIN_AXE_RESULTS_PATH`) to the health door; no report fails the run.
+- **Runner images (task 19).** The k6, Playwright and ZAP images install their tool and run as a
+  numeric non-root user; the compose runner drops every capability.
+- **Maturity from the upload door (task 20).** Every producer the reporter door reads is listed with
+  import evidence, so ZAP no longer reads as absent.
+- **Five more result formats (task 21).** CTRF, Jest, Vitest, pytest-json-report and Mochawesome
+  (Cypress) reports are read natively by the reporter door and `lupin test`, keeping retries.
+- **MCP QA read tools (task 24).** `list_runs`, `get_test_history`, `list_quarantine`,
+  `list_failure_causes`, `get_change_risk` and `list_signoffs`.
+- **A monthly model budget (task 36).** `LUPIN_AI_MONTHLY_TOKEN_BUDGET` stops this install's own
+  model calls once the month's tokens are spent, with `BUDGET_EXHAUSTED`; the copilot falls back
+  to its rules.
+- **Test output is untrusted (task 37).** Failure messages sent to a model are fenced as data, and
+  a narration that links, adds code, or copies them verbatim is discarded for the rules' text.
+
+- **Change risk.** Every pull request the gate sees gets a level and a score that is the sum of
+  stated factors, each with its own sentence: authorship, size, tests touched, diff coverage,
+  new findings, failed and flaky tests, human approval, evals, how far the change reaches, and
+  tampering. Missing test results or diff coverage make a change `unknown`, never low. Reported
+  in the sticky comment, a `lupin/change-risk` check run with line annotations, a risk column and
+  filter on Pull requests, the pull request's own page and Home; blocking only when
+  `health.risk.blockAt` is set. `GET /api/v1/projects/:id/pull-requests/:number/risk`, viewer.
+- **`lupin diff-guard`** reports changes that weaken the tests (deleted tests, added skips,
+  removed or loosened assertions, lowered thresholds, CI steps that cannot fail, added retries)
+  from the job's own diff, sending kinds, paths and line numbers and never a line of source.
+  `POST /api/v1/projects/:id/health/diff-guard`, uploader.
+- **`lupin gate --post`** posts the gate's status, check run and comment with the job's own
+  `GITHUB_TOKEN`, for an install that holds no GitHub token (a LAN install).
+- **SDLC phases.** Every synced pull request is placed in plan, code, test, review and release,
+  each done, in progress, not yet, skipped or not measured with its reason and hours. A pull
+  request's page shows its strip, Repository 360 the bottleneck and what is stuck, and Portfolio
+  every repository's shape per phase. A phase with no evidence is never done, and a skipped one
+  adds to the change risk. `GET …/pull-requests/:number/phases`, `GET …/phases`,
+  `GET /api/v1/portfolio/phases`, viewer.
+- **Pace.** Repository 360 shows, per week, changed lines and their AI share, new tests per
+  1,000 lines, and the untested-change debt, which never goes down. Unmeasured coverage is counted
+  apart, never as covered. `GET /api/v1/projects/:id/pace?weeks=`, viewer.
+- **The briefing.** What happened over a window, for one repository or all of them, in five
+  sections, every line naming its evidence: a card on Home's Release view, `/dashboard/briefing`,
+  a "While you were away" block in every scheduled report, and the MCP tool `get_briefing`.
+  **Word it for me** asks the configured model to reword the lines; a wording that cites a line
+  that is not there, or uses a number its lines do not say, is thrown away with the reason.
+  `GET /api/v1/projects/:id/briefing` and `GET /api/v1/portfolio/briefing`, viewer.
+- **Good shape or bad shape, at every level.** A zoom bar on Portfolio, Repository 360 and a
+  pull request's page shows each level above you with its verdict (Good, Caution, Bad, Not
+  measured) and the reason and age of the one you are on. A signal not measured, or evidence
+  older than seven days, is never Good. `GET /api/v1/projects/:id/shape`,
+  `GET …/pull-requests/:number/shape`, `GET /api/v1/portfolio/shape`, viewer.
+- **GitHub App.** An admin pastes an app's ID and private key under Settings → Integrations, and
+  the server posts statuses, check runs and comments as the app, with an hour-long token per
+  repository it is installed on. A project's own token still wins.
+- **GitLab CI.** Every `lupin` command reads GitLab's own variables, and `lupin gate --post`
+  in a GitLab job posts the verdict as a commit status and the gate's comment as one merge
+  request note, with a project access token that never reaches Lupin.
+- **`lupin impact`** prints the tests a change needs first: the test files it touched and the
+  tests named after the source files it touched, with the changed sources no test is named after.
+  It runs in the job and sends nothing; `--format paths` feeds a test runner directly.
+- **Quiet hours for scheduled reports.** A schedule can name hours, in its own timezone, when
+  nothing is delivered; a report due inside them is queued and sent when they end, and while
+  one waits a later one is folded into it rather than piling up behind it.
+- **The scheduled report says which tests** turned flaky, started failing, got fixed or slowed.
+- **The copilot.** "Explain this run" (or `e`) on a failed run answers from the run's own
+  results, groups the failures by cause and links every test it names. Its proposed actions
+  (retry the failed tests, quarantine a flaky one) run only after one confirmation, through the
+  same guarded routes as the page's buttons. Type a question in the command palette and choose
+  "Ask Lupin" to open a side panel that keeps the thread. Without a configured model the answers
+  are rule-based: `POST /api/v1/copilot/explain` and `POST /api/v1/copilot/ask`, both viewer.
+- **Run detail** groups its failures by cause, folds the passes, and links the branch's last
+  green run and the run it first failed in.
+- **Home** has two views, Triage and Release, on the same verdict.
+
+### Changed
+
+- **A gate every workspace shares is changed only by an installation admin.** Creating,
+  editing or removing a quality gate with no workspace (the default gate and every gate the
+  dashboard creates) needs the same permission as an installation-wide setting, and answers
+  `403 INSTALLATION_ADMIN_REQUIRED` otherwise. A workspace never sees, edits or removes another
+  workspace's gate. Each gate now carries `scope` (`installation` or `workspace`), Settings →
+  Quality gates offers Save only where it would be accepted and says who can change the rest,
+  and the audit row names the caller instead of `anonymous` (ledger MNT-170).
+- **Every dashboard decision names who made it.** A run status change is now audited (the
+  production install recorded none), under the authenticated caller rather than an
+  `x-actor-id` header anyone can send, and is refused with `409 RUN_STATUS_TERMINAL` when the
+  run finished in the meantime instead of being revived. Quarantine creations, approvals,
+  rejections, releases and removals are recorded under the caller, not `anonymous`
+  (ledger MNT-171).
+- **A fault no longer reads as "not configured".** A GitHub App that GitHub refuses or cannot
+  reach, a corrupt stored app, a failed read of a project's token, a delivery sync that fails
+  after its `202`, and a CODEOWNERS read that fails are each logged with their cause; the
+  fallback behaviour is unchanged (ledger MNT-172).
+- **A break-glass sign-in that cannot be audited is refused** with `503
+DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reported on stderr
+  instead of being dropped (ledger MNT-173).
+- **One API process per database is checked.** A second production API against the same
+  database is refused at boot, and warned about elsewhere (ledger MNT-175).
+- **Smaller fixes.** The OIDC discovery cache is bounded and no longer keys on client secrets,
+  and the sign-in flow cookie is parsed against a schema (MNT-174). `GET /api/v1/schedules`
+  lists what `POST` stored (MNT-176). A dead second scheduler is gone from
+  `@lupin/orchestration` (MNT-177). The flaky leaderboard is held to the flake-cost model by a
+  test (MNT-178). The authz matrix no longer carries a `workspaceScoped` column it could not
+  measure (MNT-179).
+- **The docs say what the product does.** The composition root no longer says the API has no
+  authentication (MNT-180). The guides name Allure, email, `diff-guard` and `impact`, point at
+  Settings rather than Map, and a test holds them to the contracts; the capability register
+  splits ZAP import (real) from a ZAP producer (missing) (MNT-181). The integration maturity
+  table names the k6 and Bruno adapters (MNT-182), and `AGENTS.md` describes this tree
+  (MNT-183).
+- **One address per page.** Access, Members, Audit trail, Deployment and Reports live under
+  Settings; their old addresses redirect there. The command palette offers only pages the
+  signed-in role can open, "Can we ship?" opens Home, and every `g` shortcut opens the page its
+  name says (ledger MNT-184).
+- **Destructive actions ask first.** Revoking a token, disabling or removing a member, and
+  removing the GitHub App, a project token, a quality gate, a channel or a scheduled report
+  each open a confirmation; revoking, removing a member and removing the app also ask for the
+  name to be typed (ledger MNT-185).
+- **Links stay in the app.** Following a link to another page no longer reloads the whole app
+  (ledger MNT-186).
+- **Failures are said.** When your role cannot be read, the sidebar says so and offers a
+  retry instead of quietly hiding the admin pages; the sign-in screen says when it could not
+  check for single sign-on (ledger MNT-187). The run list stops polling a hidden tab and backs
+  off to a minute while the API fails (MNT-188).
+- **One set of form controls.** The launch and quarantine forms, the runner and toolbox
+  filters, the copilot follow-up, the GitHub App key and two checkboxes use the library
+  controls, so every field has the same height and focus ring (MNT-189). Quarantine copy is
+  in sentences, and artifact sizes read as `1.5 KB` (MNT-190).
+- **Every table has a name**, so a screen reader can tell them apart; a long artifact list on
+  a run is paged; run detail is split into its panels (MNT-191).
+- **An unused run explorer is gone**, and the capability register cites the screens people
+  use (MNT-192).
+- **The database tooling describes the database.** The Drizzle snapshot is current, so
+  `pnpm db:generate` no longer would rewrite 55 migrations and `pnpm db:check` checks today's
+  schema (MNT-193). Every query the worker sends is checked against the migrated schema, so a
+  renamed column fails a test instead of a production run (MNT-194).
+- **Release readiness follows the default quality gate.** Changing it on Settings → Quality
+  gates now moves the readiness bar, and the page says what a gate does (MNT-203).
+- **Housekeeping.** Shared dependencies come from the catalog (MNT-198), local working files
+  are ignored (MNT-199), three tests no longer wait on the clock (MNT-200), a nightly with no
+  quality report fails (MNT-201), and CI builds once per commit (MNT-202).
+- **The install survives a reboot.** Every long-running service restarts on its own and has
+  a memory and CPU limit, so a runaway runner cannot starve the database; the web and edge
+  images report their health (MNT-197). Third-party images are pinned by digest, and
+  Dependabot now watches the compose files (MNT-196).
+- **One project scope.** A **Project scope** menu at the top of the sidebar chooses which project
+  the pages are about, kept in the address (`?project=`) and remembered in the browser; every
+  sidebar link to a page that reads it keeps it, and on the icon rail it is a button naming the
+  scope. Home's own project menu is gone, and Home and the project screens no longer remember two
+  different choices.
+- **One sidebar.** Every place is a group in one collapsible sidebar, and the tab rows are
+  gone; Settings swaps the sidebar to its own list with Back to Lupin. On a phone the same list
+  opens as a drawer. Pages open on their content; the title is kept for screen readers.
+- **Status** is one pill everywhere, a shape and a word as well as a colour; Flaky reads
+  Unstable. The Runs group counts the runs that need you.
+- **First run** is a full-screen setup at `/setup`: repository and first run first, then the
+  optional steps, with Do this later. Unfinished setup is a Finish setup chip in the sidebar.
+- **One focal point per page.** The status band leads with the first thing to do and the page's
+  one primary button; the list starts at the second. Runs read by status and branch, the daily
+  bars show every day, and a disabled button is a quiet outline.
+- **Premium pass.** Deeper, more saturated glass on the chrome; numbers and verdict words in
+  Inter Display; one flat card for every page surface.
+- **Five places.** The navigation is Home, Runs, Tests, Health and Settings; Health keeps four
+  tabs and puts the rest under More. Every older address still opens the page it always did.
+- **Type and colour.** Inter and JetBrains Mono replace Geist; the accent is blue, not violet.
+- **Home** is the release verdict and what needs you, nothing else. The setup checklist moved
+  to Settings, and the product's numbers (score, metrics, pace, the report) to Health, under
+  Details.
+- **The status band.** Runs, Tests, Health and Delivery open on one compact band: a mark, the
+  verdict, one reason, the numbers and one action. The Runs page shows its run table open, full
+  width, with no tile row or second run list beside it.
+- **One button system.** At most one solid button per screen; a link drawn as a button is the
+  new `ButtonLink`.
+- **Lupin's palette is the default**; the OpenCode palettes stay in Settings.
+- **Status marks** have a shape per state as well as a colour.
+
+### Removed
+
+- **Focus mode**, the **QA roles** and the sidebar's recent-runs list. A setting stored by an
+  older build is ignored.
+
 ## 4.0.0 - 2026-10-30 - the product is Lupin, with a redesigned console
 
 The product is renamed to **Lupin** everywhere, and the console takes the Lupin site's look.

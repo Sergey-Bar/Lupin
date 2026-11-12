@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_ACTIONS,
   MAX_AREAS,
+  MAX_BRIEFING_LINES,
   MAX_CHANGES,
   composeReport,
   escapeTelegramHtml,
@@ -89,10 +90,17 @@ const cockpitHead = fc.record({
   changes: fc.array(line, { maxLength: 6 }),
 });
 
-/** Most digests have no cockpit and some do; every property below holds for both. */
+/** The briefing's block, as hostile: its headline and lines, more than the digest keeps. */
+const briefingBlock = fc.record({ headline: hostile, lines: fc.array(line, { maxLength: 6 }) });
+
+/** Most digests have no cockpit and some do, likewise a briefing; every property holds for all. */
 const input: fc.Arbitrary<ReportInput> = fc
-  .tuple(baseInput, fc.option(cockpitHead, { nil: null }))
-  .map(([base, cockpit]) => (cockpit === null ? base : { ...base, cockpit }));
+  .tuple(baseInput, fc.option(cockpitHead, { nil: null }), fc.option(briefingBlock, { nil: null }))
+  .map(([base, cockpit, briefing]) => ({
+    ...base,
+    ...(cockpit === null ? {} : { cockpit }),
+    ...(briefing === null ? {} : { briefing }),
+  }));
 
 const limit = fc.integer({ min: 80, max: 5_000 });
 
@@ -150,6 +158,8 @@ describe('DIGEST-1: every rendering fits its platform limit', () => {
       fc.property(input, (raw) => {
         const model = composeReport(raw);
         expect(model.cockpit?.changes.length ?? 0).toBeLessThanOrEqual(MAX_CHANGES);
+        expect(model.briefing?.lines.length ?? 0).toBeLessThanOrEqual(MAX_BRIEFING_LINES);
+        expect(model.briefing === null).toBe(raw.briefing === undefined);
         expect(model.cockpit === null).toBe(raw.cockpit === undefined);
         // The plain rendering at a roomy limit carries the headline, whole, right after the title:
         // it is the line a platform's limit cuts last.

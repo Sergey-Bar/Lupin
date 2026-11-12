@@ -1,11 +1,17 @@
 /// <reference types="vitest/globals" />
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { PRICING, ToolboxPage, sortToolbox } from './toolbox';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { GOALS, PRICING, ToolboxPage, sortToolbox } from './toolbox';
+import { CAPABILITY_LABELS } from './health';
 import { makeQa, makeScan } from '../../test-utils';
 import type { ToolboxEntry } from '../../lib/qa';
 
 describe('the toolbox', () => {
+  it('draws every tool with its own mark, not a category icon', async () => {
+    render(<ToolboxPage qa={makeQa()} />);
+    const tile = await screen.findByTestId('toolbox-vitest');
+    expect(tile.querySelector('[data-tool-logo]')).toHaveAttribute('data-tool-logo', 'vitest');
+  });
   it('opens on every tool, the recommended ones first and highest priority first', async () => {
     render(<ToolboxPage qa={makeQa()} />);
     await waitFor(() => expect(screen.getByTestId('toolbox-gitleaks')).toBeInTheDocument());
@@ -32,6 +38,29 @@ describe('the toolbox', () => {
       'toolbox-gitleaks',
       'toolbox-stryker',
     ]);
+  });
+
+  it('asks what you want to check, and narrows the kit to that goal', async () => {
+    render(<ToolboxPage qa={makeQa()} />);
+    await waitFor(() => expect(screen.getByTestId('toolbox-gitleaks')).toBeInTheDocument());
+    const goals = screen.getByRole('group', { name: 'What do you want to check?' });
+    fireEvent.click(within(goals).getByRole('button', { name: 'Security' }));
+    expect(screen.getAllByRole('listitem').map((item) => item.dataset['testid'])).toEqual([
+      'toolbox-gitleaks',
+    ]);
+    fireEvent.click(within(goals).getByRole('button', { name: 'Tests' }));
+    expect(screen.getAllByRole('listitem').map((item) => item.dataset['testid'])).toEqual([
+      'toolbox-stryker',
+      'toolbox-vitest',
+      'toolbox-jest',
+    ]);
+  });
+
+  it('puts every capability under exactly one goal', () => {
+    for (const capability of Object.keys(CAPABILITY_LABELS)) {
+      const goals = GOALS.filter((goal) => goal.capabilities.includes(capability as never));
+      expect(goals, capability).toHaveLength(1);
+    }
   });
 
   it('opens a tile into its detail: why, the setup line to copy, and the documentation', async () => {

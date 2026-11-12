@@ -87,6 +87,41 @@ function renderPage(value: Repo360Clients = clients()) {
 }
 
 describe('Repository 360', () => {
+  it('opens on the zoom bar: the portfolio, then this repository, each with its shape', async () => {
+    const value = clients();
+    const reading = (shape: 'good' | 'bad', reason: string) => ({
+      version: 'shape/1',
+      shape,
+      freshness: 'fresh' as const,
+      measuredAt: '2026-11-11T10:00:00.000Z',
+      reason,
+      signals: [],
+    });
+    value.health.getPortfolioShape = vi.fn(async () => ({
+      evaluatedAt: '2026-11-11T12:00:00.000Z',
+      overall: reading('bad', 'Quiet is F.'),
+      projects: [],
+      total: 0,
+      truncated: false,
+    }));
+    value.health.getShape = vi.fn(async () => ({
+      ...reading('good', 'Every signal was measured in the last 7 days and is fine.'),
+      projectId: TEST_PROJECT.id,
+      name: TEST_PROJECT.name,
+      pullRequest: null,
+    }));
+    renderPage(value);
+    const zoom = await screen.findByRole('navigation', { name: 'Zoom' });
+    await waitFor(() =>
+      expect(
+        within(zoom)
+          .getAllByRole('listitem')
+          .map((level) => level.textContent),
+      ).toEqual(['PortfolioBad', `/${TEST_PROJECT.name}Good`]),
+    );
+    expect(value.health.getShape).toHaveBeenCalledWith(TEST_PROJECT.id);
+  });
+
   it('shows the grade and links to it', async () => {
     const value = clients();
     renderPage(value);

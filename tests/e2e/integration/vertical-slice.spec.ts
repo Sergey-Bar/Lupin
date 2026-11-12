@@ -6,7 +6,7 @@
  * 1. POST reporter event to /api/v1/reporter/events (ingest)
  * 2. GET /api/v1/runs (API evidence — asserts the run appears)
  * 3. GET /api/v1/runs with invalid event (negative case)
- * 4. Browser: navigate to /dashboard/runs, assert [data-testid="run-item-e2e-prod-ready-run-001"] is visible
+ * 4. Browser: navigate to /dashboard/runs, assert [data-testid="run-row-e2e-prod-ready-run-001"] is visible
  *    — NEVER allows empty/loading/error states to pass
  * 5. SSE live update: seed run as running → POST run:end → assert status changes to "passed" without reload
  *
@@ -265,10 +265,10 @@ test('vertical slice — browser shows exact seeded run-item (T29)', async ({ pa
 
   // Wait for the exact run item — this MUST appear.
   // If runs-empty, runs-loading, or runs-error appear instead, this test FAILS (as intended).
-  await page.waitForSelector(`[data-testid="run-item-${RUN_ID}"]`, { timeout: 15000 });
+  await page.waitForSelector(`[data-testid="run-row-${RUN_ID}"]`, { timeout: 15000 });
 
   // Hard assertion: the exact run item element must be visible
-  await expect(page.locator(`[data-testid="run-item-${RUN_ID}"]`)).toBeVisible();
+  await expect(page.locator(`[data-testid="run-row-${RUN_ID}"]`)).toBeVisible();
 
   // Take screenshot as evidence
   fs.mkdirSync(EVIDENCE_DIR_T29, { recursive: true });
@@ -305,12 +305,12 @@ test('vertical slice — SSE live update: run:end changes status to passed witho
   // Step 2: Navigate to dashboard and wait for the run item to appear
   await openDashboard(page);
   await page.goto(`${WEB_BASE}/dashboard/runs`);
-  await page.waitForSelector(`[data-testid="run-item-${RUN_ID}"]`, { timeout: 15000 });
+  await page.waitForSelector(`[data-testid="run-row-${RUN_ID}"]`, { timeout: 15000 });
 
-  // Verify initial status is "running"
+  // Verify initial status is "running" (the pill reads it in sentence case, "Running")
   const statusLocator = page.locator(`[data-testid="run-status-${RUN_ID}"]`);
   await expect(statusLocator).toBeVisible();
-  await expect(statusLocator).toContainText('running');
+  await expect(statusLocator).toContainText('running', { ignoreCase: true });
 
   // Step 3: POST run:end via Node.js fetch (not via the browser — simulates reporter finishing)
   const endRes = await fetch(`${API_BASE}/api/v1/reporter/events`, {
@@ -352,7 +352,7 @@ test('vertical slice — SSE live update: run:end changes status to passed witho
   ).toBeLessThan(POLL_INTERVAL_MS - 1_000);
 
   // Hard assertion: status element now shows "passed"
-  await expect(statusLocator).toContainText('passed');
+  await expect(statusLocator).toContainText('passed', { ignoreCase: true });
 
   await page.evaluate(() => {
     delete (window as unknown as { __pollDisabled?: boolean }).__pollDisabled;
@@ -360,7 +360,7 @@ test('vertical slice — SSE live update: run:end changes status to passed witho
 
   // Evidence derived from observed state, not from a hard-coded "PASSED" line.
   const observedStatus = (await statusLocator.textContent())?.trim() ?? '';
-  const observedRunTitle = (await page.locator(`[data-testid="run-item-${RUN_ID}"]`).textContent())
+  const observedRunTitle = (await page.locator(`[data-testid="run-row-${RUN_ID}"]`).textContent())
     ?.trim()
     .replace(/\s+/g, ' ');
   const summary = [

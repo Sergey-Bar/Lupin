@@ -198,11 +198,12 @@ let sessionExpiryHandled = false;
 /**
  * The default action on expiry: stay put.
  *
- * The install is open (ADR-006) and there is no login route. This used to be a full
- * navigation to `/login`, which rendered an empty page and stranded the reader; a 401
- * now surfaces as the failing screen's own error state, and subscribers still hear
- * about it once. A deployment that puts a login in front of the product registers its
- * own responder with `setSessionExpiredResponder`.
+ * There is no login route in this app: a session starts on the Access page (a key or a
+ * token) or at the identity provider, never on a page of its own. A navigation to `/login`
+ * used to render an empty page and strand the reader; a 401 now surfaces as the failing
+ * screen's own error state, and subscribers still hear about it once. A deployment that puts
+ * a login in front of the product registers its own responder with
+ * `setSessionExpiredResponder`.
  */
 function defaultSessionExpiredResponder(_returnPath: string): void {
   // Intentionally empty.
@@ -264,7 +265,12 @@ export interface ApiClient {
   getRun(id: string, options?: RequestOptions): Promise<Run>;
   createRun(request: CreateRunRequest, options?: RequestOptions): Promise<Run>;
   cancelRun(id: string, options?: RequestOptions): Promise<Run>;
-  retryRun(id: string, idempotencyKey?: string, options?: RequestOptions): Promise<Run>;
+  retryRun(
+    id: string,
+    idempotencyKey?: string,
+    /** `failed` runs only the tests that failed or timed out; the default repeats them all. */
+    options?: RequestOptions & { scope?: 'all' | 'failed' },
+  ): Promise<Run>;
   getRunArtifacts(id: string, options?: RequestOptions): Promise<ArtifactDescriptor[]>;
   getRunGate(id: string, options?: RequestOptions): Promise<GateEvaluation | null>;
   getReleaseReadiness(
@@ -273,6 +279,12 @@ export interface ApiClient {
   ): Promise<ReleaseReadiness | null>;
   getAnalyticsSummary(options?: RequestOptions): Promise<AnalyticsSummary>;
   getQuarantine(options?: RequestOptions): Promise<QuarantineEntry[]>;
+  /** Approve, reject or release an entry; the reason is required and audited. */
+  resolveQuarantine(
+    id: string,
+    body: { status: 'approved' | 'rejected' | 'released'; resolution: string },
+    options?: RequestOptions,
+  ): Promise<QuarantineEntry>;
   addQuarantine(
     entry: { testTitle: string; testFile: string; stableId?: string; reason?: string },
     options?: RequestOptions,
@@ -632,6 +644,8 @@ export const defaultApiClient: ApiClient = {
   retryRun: async (id, idempotencyKey, options) => {
     const key = idempotencyKey ?? crypto.randomUUID();
     const path = `/api/v1/runs/${encodeURIComponent(id)}/retry`;
+    // No body for a full retry, so the request is byte-for-byte what it always was.
+    const failedOnly = options?.scope === 'failed';
     return parse(
       await request(
         await fetch(
@@ -643,7 +657,9 @@ export const defaultApiClient: ApiClient = {
               headers: {
                 Accept: 'application/json',
                 'Idempotency-Key': key,
+                ...(failedOnly ? { 'Content-Type': 'application/json' } : {}),
               },
+              ...(failedOnly ? { body: JSON.stringify({ scope: 'failed' }) } : {}),
             },
             options?.signal,
           ),
@@ -704,6 +720,27 @@ export const defaultApiClient: ApiClient = {
               credentials: 'include',
               headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
               body: JSON.stringify(entry),
+            },
+            options?.signal,
+          ),
+        ),
+      ),
+      QuarantineEntrySchema,
+      path,
+    );
+  },
+  resolveQuarantine: async (id, body, options) => {
+    const path = `/api/v1/dashboard/quarantine/${encodeURIComponent(id)}`;
+    return parse(
+      await request(
+        await fetch(
+          path,
+          withSignal(
+            {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
             },
             options?.signal,
           ),

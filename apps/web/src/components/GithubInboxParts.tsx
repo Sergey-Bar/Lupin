@@ -1,4 +1,5 @@
 import React from 'react';
+import { isNothingYet } from '../lib/nothing-yet.js';
 import { Button, Checkbox } from '@lupin/ui';
 import type { PagedList } from '../hooks/usePagedList.js';
 import type { Resource } from '../hooks/useResource.js';
@@ -173,7 +174,11 @@ export function inboxNotice({
   if (list.status === 'error') {
     return (
       <Panel title={noun} className="flex-1">
-        <Quiet role="alert">Could not load this: {list.message}</Quiet>
+        <Quiet role={isNothingYet(list.message) ? undefined : 'alert'}>
+          {isNothingYet(list.message)
+            ? 'GitHub is not connected yet. Connect it in Settings to see pull requests and issues here.'
+            : `Could not load this: ${list.message}`}
+        </Quiet>
       </Panel>
     );
   }

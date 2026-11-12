@@ -36,7 +36,7 @@ export function createCockpitRoutes(options: CockpitRouteOptions): Hono {
   app.get('/api/v1/cockpit', viewer, async (context) => {
     const parsed = CockpitQuerySchema.safeParse(context.req.query());
     if (!parsed.success)
-      return invalidRequest(context, 'Invalid cockpit query', parsed.error.issues);
+      return invalidRequest(context, 'Invalid dashboard query', parsed.error.issues);
     return context.json(await cockpit(options, parsed.data));
   });
 
@@ -44,7 +44,7 @@ export function createCockpitRoutes(options: CockpitRouteOptions): Hono {
   app.get('/api/v1/projects/:id/cockpit/report.html', viewer, async (context) => {
     const parsed = ReportQuerySchema.safeParse(context.req.query());
     if (!parsed.success) {
-      return invalidRequest(context, 'Invalid cockpit report query', parsed.error.issues);
+      return invalidRequest(context, 'Invalid dashboard report query', parsed.error.issues);
     }
     const reading = await cockpit(options, {
       projectId: context.req.param('id'),

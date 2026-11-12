@@ -1,6 +1,8 @@
+import { useUrlChoice } from '../../hooks/useUrlChoice.js';
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
-import { Button, Flame, GitBranch, Sparkline, Timer, cn } from '@lupin/ui';
+import { Button, Flame, Hero, Sparkline, Timer, cn } from '@lupin/ui';
+import { areaHero } from '../../lib/hero.js';
 import { Route as dashboardRoute } from '../dashboard.js';
 import {
   Kpi,
@@ -18,6 +20,9 @@ import {
   QuarantineSuggestionsPanel,
 } from '../../components/InsightsCauses.js';
 import { ProjectGate } from '../../components/ProjectGate.js';
+import { RecoveryPanel } from '../../components/InsightsRecovery.js';
+import { AreaPage, type AreaItem } from '../../components/AreaPage.js';
+import { DailyBars } from '../../components/DailyBars.js';
 import { headline } from '../../components/Readiness.js';
 import { Responsive } from '../../components/responsive.js';
 import { useResource } from '../../hooks/useResource.js';
@@ -26,6 +31,7 @@ import { formatDuration, orDash, shortDate } from '../../lib/insights.js';
 import { createQaClient, type QaClient } from '../../lib/qa-client.js';
 import { testHistoryPath } from '../../route-manifest.js';
 import type {
+  AnalyticsTrend,
   FlakyTest,
   ProjectHistory,
   QaInsights,
@@ -56,11 +62,19 @@ const WINDOWS = [
 ] as const;
 type WindowValue = (typeof WINDOWS)[number]['value'];
 
-export function InsightsPage({ qa, api }: { qa: QaClient; api: ApiClient }): React.ReactElement {
+export function InsightsPage({
+  qa,
+  api,
+  navigate = (to) => window.location.assign(to),
+}: {
+  qa: QaClient;
+  api: ApiClient;
+  navigate?: (to: string) => void;
+}): React.ReactElement {
   return (
-    <ProjectGate qa={qa} title="Insights">
+    <ProjectGate qa={qa} title="Tests">
       {(project, switcher) => (
-        <InsightsBody qa={qa} api={api} project={project} switcher={switcher} />
+        <InsightsBody qa={qa} api={api} project={project} switcher={switcher} navigate={navigate} />
       )}
     </ProjectGate>
   );
@@ -78,13 +92,16 @@ function InsightsBody({
   api,
   project,
   switcher,
+  navigate,
 }: {
   qa: QaClient;
   api: ApiClient;
   project: RegisteredProject;
   switcher: React.ReactNode;
+  navigate: (to: string) => void;
 }): React.ReactElement {
-  const [days, setDays] = React.useState<WindowValue>('14');
+  // In the URL, so a shared or reloaded link opens on the same window.
+  const [days, setDays] = useUrlChoice<WindowValue>('days', ['7', '14', '30', '90'], '14');
   const insights = useResource<QaInsights>(
     () => qa.getInsights(Number(days), project.id),
     [qa, days, project.id],
@@ -97,15 +114,86 @@ function InsightsBody({
     () => qa.getReadiness(project.id, 7),
     [qa, project.id],
   );
+  const trend = useResource<AnalyticsTrend>(() => qa.getTrend(Number(days)), [qa, days]);
+  if (insights.status === 'ready') {
+    const items = testItems(insights.value, api);
+    const testsHero = areaHero(
+      {
+        bad: items.filter((item) => item.tone === 'bad').length,
+        warn: items.filter((item) => item.tone === 'warn').length,
+      },
+      testVerdict(insights.value, items.length),
+      'Unstable',
+    );
+    return (
+      <AreaPage
+        title="Tests"
+        subtitle={`${String(insights.value.runs)} runs in ${project.name} over the last ${days} days`}
+        verdict={testVerdict(insights.value, items.length)}
+        hero={
+          <Hero
+            headingLevel={2}
+            verdict={testsHero.verdict}
+            word={testsHero.word}
+            reason={testsHero.reason}
+            facts={[
+              // Each number counts what the list below holds, so the band and the list agree.
+              {
+                label: 'Flaky',
+                value: String(items.filter((item) => item.tone === 'bad').length),
+              },
+              {
+                label: 'Slow',
+                value: String(items.filter((item) => item.tone === 'warn').length),
+              },
+              { label: 'Runs', value: String(insights.value.runs) },
+            ]}
+            eyebrow={`Tests · last ${days} days`}
+          />
+        }
+        items={items}
+        navigate={navigate}
+        clear={`Every test in ${project.name} is steady.`}
+        actions={
+          <>
+            {switcher}
+            <Segmented label="Window" options={WINDOWS} value={days} onChange={setDays} />
+          </>
+        }
+        detailsOpen
+        detailsTitle="Everything else"
+        details={
+          <div data-testid="insights-page" className="flex flex-col gap-4">
+            {trend.status === 'ready' ? (
+              <Panel title={`Failed results per day · last ${days} days`} data-testid="flaky-trend">
+                <DailyBars
+                  days={trend.value.buckets.map((bucket) => ({
+                    date: bucket.date,
+                    value: bucket.failed,
+                  }))}
+                  label="Failed results per day"
+                  tone="text-chart-fail"
+                />
+              </Panel>
+            ) : null}
+            <InsightsGrid
+              api={api}
+              insights={insights.value}
+              history={history.status === 'ready' ? history.value : null}
+              historyFailure={history.status === 'error' ? history.message : null}
+              readiness={readiness.status === 'ready' ? readiness.value : null}
+              issueTracking={{ projectId: project.id, qa }}
+            />
+          </div>
+        }
+      />
+    );
+  }
   return (
     <PageFrame data-testid="insights-page">
       <PageHeader
-        title="Insights"
-        subtitle={
-          insights.status === 'ready'
-            ? `${String(insights.value.runs)} runs in ${project.name} over the last ${days} days`
-            : project.name
-        }
+        title="Tests"
+        subtitle={project.name}
         actions={
           <>
             {switcher}
@@ -113,15 +201,7 @@ function InsightsBody({
           </>
         }
       />
-      {insights.status === 'ready' ? (
-        <InsightsGrid
-          api={api}
-          insights={insights.value}
-          history={history.status === 'ready' ? history.value : null}
-          historyFailure={history.status === 'error' ? history.message : null}
-          readiness={readiness.status === 'ready' ? readiness.value : null}
-        />
-      ) : insights.status === 'error' ? (
+      {insights.status === 'error' ? (
         <Quiet role="alert" data-testid="insights-error">
           Could not read the insights: {insights.message}
         </Quiet>
@@ -138,12 +218,14 @@ function InsightsGrid({
   history,
   historyFailure,
   readiness,
+  issueTracking,
 }: {
   api: ApiClient;
   insights: QaInsights;
   history: ProjectHistory | null;
   historyFailure: string | null;
   readiness: ReleaseReadinessCard | null;
+  issueTracking: { projectId: string; qa: QaClient };
 }): React.ReactElement {
   const flaky = <FlakyPanel tests={insights.flakyLeaderboard} api={api} />;
   const heatmap = (
@@ -172,7 +254,13 @@ function InsightsGrid({
       <HistoryBody history={history} failure={historyFailure} />
     </Panel>
   );
-  const causes = <FailureClustersPanel clusters={insights.failureClusters} api={api} />;
+  const causes = (
+    <FailureClustersPanel
+      clusters={insights.failureClusters}
+      api={api}
+      issueTracking={issueTracking}
+    />
+  );
   const suggestions = (
     <QuarantineSuggestionsPanel suggestions={insights.quarantineSuggestions} api={api} />
   );
@@ -278,7 +366,7 @@ function FlakyPanel({
                 <div className="min-w-0 flex-1">
                   <a
                     href={testHistoryPath(test.key)}
-                    className="block truncate text-sm text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+                    className="block min-h-6 truncate py-0.5 text-sm text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
                     title={test.key}
                   >
                     {test.title}
@@ -375,93 +463,6 @@ function SlowPanel({ tests }: { tests: readonly SlowTest[] }): React.ReactElemen
   );
 }
 
-function RecoveryPanel({ insights }: { insights: QaInsights }): React.ReactElement {
-  const { overall, suites } = insights.mttr;
-  return (
-    <Panel
-      title="Recovery and branches"
-      scrollLabel="Recovery and branches"
-      data-testid="insights-recovery"
-      className="flex-1"
-      action={<GitBranch size={14} aria-hidden="true" className="text-chart-1" />}
-    >
-      <div className="flex flex-col gap-3">
-        <dl className="m-0 grid shrink-0 grid-cols-3 gap-2 text-xs">
-          <div>
-            <dt className="text-fg-muted">Median</dt>
-            <dd className="m-0 tabular-nums text-lg font-semibold">
-              {orDash(overall.medianMs, formatDuration)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-fg-muted">p90</dt>
-            <dd className="m-0 tabular-nums text-lg font-semibold">
-              {orDash(overall.p90Ms, formatDuration)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-fg-muted">Open</dt>
-            <dd className="m-0 tabular-nums text-lg font-semibold">
-              {String(suites.filter((suite) => suite.openSince !== null).length)}
-            </dd>
-          </div>
-        </dl>
-        <ul className="shrink-0 space-y-1 text-xs" aria-label="Suites still failing">
-          {suites
-            .filter((suite) => suite.openSince !== null)
-            .slice(0, 2)
-            .map((suite) => (
-              <li key={suite.suite} className="flex items-center gap-2 text-danger">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-danger" aria-hidden="true" />
-                <span className="truncate font-mono" title={suite.suite}>
-                  {suite.suite}
-                </span>
-                <span className="ms-auto shrink-0">
-                  red since {shortDate((suite.openSince ?? '').slice(0, 10))}
-                </span>
-              </li>
-            ))}
-        </ul>
-        <ul className="space-y-1.5" aria-label="Pass rate by branch">
-          {insights.passRateByBranch.length === 0 ? (
-            <li>
-              <Quiet>No runs in this window.</Quiet>
-            </li>
-          ) : (
-            insights.passRateByBranch.slice(0, 12).map((branch) => (
-              <li key={branch.branch} data-testid="branch-row" className="text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="min-w-0 flex-1 truncate font-mono" title={branch.branch}>
-                    {branch.branch}
-                  </span>
-                  <span className="shrink-0 tabular-nums">
-                    {orDash(branch.passRate, (value) => `${value.toFixed(1)}%`)} · {branch.runs}{' '}
-                    runs
-                  </span>
-                </div>
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'mt-1 block h-1.5 overflow-hidden rounded-full',
-                    branch.passRate === null ? 'bg-surface-muted' : 'bg-chart-fail/30',
-                  )}
-                >
-                  {branch.passRate === null ? null : (
-                    <span
-                      className="block h-full rounded-full bg-chart-pass"
-                      style={{ width: `${String(branch.passRate)}%` }}
-                    />
-                  )}
-                </span>
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
-    </Panel>
-  );
-}
-
 function InsightKpis({
   insights,
   readiness,
@@ -532,4 +533,43 @@ function HistoryBody({
         : `Collecting since ${shortDate(history.collectingSince.slice(0, 10))}: a line needs two readings.`}
     </Quiet>
   );
+}
+
+/**
+ * What the Tests area asks of a reader, worst first: each flaky test with one click to
+ * quarantine it (with the evidence as the reason), then the slowest test to look at.
+ */
+export function testItems(insights: QaInsights, api: Pick<ApiClient, 'addQuarantine'>): AreaItem[] {
+  const flaky: AreaItem[] = insights.flakyLeaderboard.map((test) => ({
+    id: `flaky-${test.key}`,
+    title: `${test.title} is flaky`,
+    detail: `${String(Math.round(test.score * 100))}% unstable · ${String(test.flips)} flips in ${String(test.runs)} runs`,
+    tone: 'bad' as const,
+    at: test.lastSeen,
+    action: {
+      label: 'Quarantine',
+      run: async () => {
+        await api.addQuarantine({
+          testTitle: test.title,
+          testFile: test.file ?? '',
+          reason: `Flaky: ${String(test.flips)} flips in ${String(test.runs)} runs (Lupin)`,
+        });
+      },
+    },
+  }));
+  const slow: AreaItem[] = insights.slowestTests.slice(0, 1).map((test) => ({
+    id: `slow-${test.key}`,
+    title: `${test.title} is the slowest test`,
+    detail: `p95 ${formatDuration(test.p95Ms)}`,
+    tone: 'warn' as const,
+    action: { label: 'See its history', to: testHistoryPath(test.key) },
+  }));
+  return [...flaky, ...slow];
+}
+
+export function testVerdict(insights: QaInsights, count: number): string {
+  const flaky = insights.flakyLeaderboard.length;
+  if (count === 0) return `${String(insights.runs)} runs, and nothing needs you.`;
+  if (flaky === 0) return 'No flaky tests. One slow test is worth a look.';
+  return `${String(flaky)} flaky ${flaky === 1 ? 'test needs' : 'tests need'} a decision.`;
 }

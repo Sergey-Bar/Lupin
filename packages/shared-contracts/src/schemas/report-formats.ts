@@ -36,8 +36,9 @@ import { z } from 'zod/v4';
  *
  * A **producer** is who wrote the document; a **format** is the shape they wrote it in.
  * They are different questions and the table below maps one onto the other. `robot`,
- * `sarif` and `otel` are producers with no ingestible format here — SARIF export is not
- * built (capability register, `tool.zap`) and OTLP is not a test report at all — and
+ * `sarif` and `otel` are producers with no ingestible format **on this door** — SARIF is read
+ * by the repository health door (`packages/reporter/src/adapters/sarif.ts`, `lupin upload
+ * --format sarif`), not as a test run, and OTLP is not a test report at all — and
  * `generic` exists for a result whose writer could not be named. Naming them here rather
  * than omitting them is what makes their absence a decision rather than a gap.
  */
@@ -48,6 +49,11 @@ export const REPORT_PRODUCERS = [
   'k6',
   'zap',
   'allure',
+  'ctrf',
+  'jest',
+  'vitest',
+  'pytest',
+  'cypress',
   'sarif',
   'otel',
   'generic',
@@ -110,6 +116,42 @@ export const REPORT_FORMATS = [
     producer: 'allure',
     encoding: 'json',
     spellings: ['allure', 'allure-results'],
+    detectable: false,
+  },
+  {
+    id: 'ctrf-json',
+    producer: 'ctrf',
+    encoding: 'json',
+    spellings: ['ctrf', 'ctrf-json'],
+    detectable: false,
+  },
+  {
+    id: 'jest-json',
+    producer: 'jest',
+    encoding: 'json',
+    spellings: ['jest', 'jest-json'],
+    detectable: false,
+  },
+  {
+    id: 'vitest-json',
+    producer: 'vitest',
+    encoding: 'json',
+    spellings: ['vitest', 'vitest-json'],
+    detectable: false,
+  },
+  {
+    id: 'pytest-json',
+    producer: 'pytest',
+    encoding: 'json',
+    spellings: ['pytest', 'pytest-json', 'pytest-json-report'],
+    detectable: false,
+  },
+  // Cypress has no JSON reporter of its own; Mochawesome is the one its projects use.
+  {
+    id: 'mochawesome-json',
+    producer: 'cypress',
+    encoding: 'json',
+    spellings: ['mochawesome', 'mochawesome-json', 'cypress'],
     detectable: false,
   },
 ] as const;

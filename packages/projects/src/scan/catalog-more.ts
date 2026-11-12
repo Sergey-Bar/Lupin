@@ -29,11 +29,70 @@ const PYTHON = ['python'] as const;
 const JAVA = ['java'] as const;
 const DOTNET = ['dotnet'] as const;
 const GO = ['go'] as const;
+const C_CPP = ['c-cpp'] as const;
 const RUBY = ['ruby'] as const;
 const PHP = ['php'] as const;
 const SWIFT = ['swift'] as const;
 
 export const MORE_TOOLS: readonly CatalogTool[] = [
+  // ── Embedded C and C++: firmware and device code ──────────────────────────
+  {
+    id: 'googletest',
+    name: 'GoogleTest',
+    pricing: 'free',
+    capability: 'unit',
+    ecosystems: C_CPP,
+    description: 'The standard C++ unit test framework, run on the host with ctest.',
+    setup: 'FetchContent googletest in CMakeLists.txt, then ctest --output-junit',
+    docsUrl: 'https://google.github.io/googletest/',
+    files: [/(^|\/)[^/]*_(test|unittest)\.(cc|cpp)$/u],
+    preferred: true,
+  },
+  {
+    id: 'unity',
+    name: 'Unity',
+    pricing: 'free',
+    capability: 'unit',
+    ecosystems: C_CPP,
+    description: 'A small C unit test framework built for microcontrollers.',
+    setup: 'Add ThrowTheSwitch/Unity, or test_framework = unity in platformio.ini',
+    docsUrl: 'https://www.throwtheswitch.org/unity',
+    files: [/(^|\/)test_[^/]*\.c$/u, /(^|\/)unity\.h$/u],
+  },
+  {
+    id: 'platformio',
+    name: 'PlatformIO',
+    pricing: 'free',
+    capability: 'integration',
+    ecosystems: C_CPP,
+    description:
+      'Builds and tests firmware on the host or on a connected board, with JUnit output.',
+    setup: 'pio test --junit-output-path pio-junit.xml',
+    docsUrl: 'https://docs.platformio.org/en/latest/advanced/unit-testing/index.html',
+    files: [/^platformio\.ini$/u],
+  },
+  {
+    id: 'ceedling',
+    name: 'Ceedling',
+    pricing: 'free',
+    capability: 'unit',
+    ecosystems: C_CPP,
+    description: 'A C build and test system around Unity and CMock, with mocks for hardware.',
+    setup: 'gem install ceedling, then ceedling test:all',
+    docsUrl: 'https://www.throwtheswitch.org/ceedling',
+    files: [/^project\.yml$/u],
+  },
+  {
+    id: 'zephyr-twister',
+    name: 'Zephyr Twister',
+    pricing: 'free',
+    capability: 'integration',
+    ecosystems: C_CPP,
+    description: 'Runs Zephyr test suites on native_sim, emulators or real boards.',
+    setup: 'west twister -T tests --platform native_sim',
+    docsUrl: 'https://docs.zephyrproject.org/latest/develop/test/twister.html',
+    files: [/^west\.yml$/u],
+  },
   // ── Unit, across the other ecosystems ─────────────────────────────────────
   {
     id: 'junit5',

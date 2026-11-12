@@ -24,3 +24,6 @@ COPY infra/nginx/lupin-lan-cert.sh /usr/local/bin/lupin-lan-cert
 RUN chmod 0755 /docker-entrypoint.d/40-lupin-tls.sh /usr/local/bin/lupin-lan-cert
 EXPOSE 8080 8443
 USER nginx
+# `/edge-health` rather than `/`: with TLS on, every other plain-HTTP path redirects
+# (ledger MNT-197). The compose file states the same check with a start period.
+HEALTHCHECK --interval=10s --timeout=5s --retries=20 CMD wget -q -O /dev/null http://127.0.0.1:8080/edge-health || exit 1

@@ -5,6 +5,7 @@ import { GlobalCommandPalette } from './GlobalCommandPalette.js';
 import { commandStore } from '../hooks/useCommandActions.js';
 import { ThemeProvider } from '../theme/ThemeProvider.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
+import { matchActions } from '@lupin/ui';
 
 const mockNavigate = vi.fn();
 
@@ -21,6 +22,30 @@ describe('GlobalCommandPalette', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it('answers the questions a QA person asks, each with the page that answers it', () => {
+    render(
+      <ThemeProvider>
+        <GlobalCommandPalette />
+      </ThemeProvider>,
+    );
+    const ask = (question: string) => matchActions(commandStore.getActions(), question)[0];
+    for (const [question, to] of [
+      // Home holds the release verdict (ledger MNT-184).
+      ['can we ship', '/dashboard/now'],
+      ['is the release ready', '/dashboard/now'],
+      ['which tests are flaky', '/dashboard/insights'],
+      ['why did main fail', '/dashboard/now'],
+      ['slowest tests', '/dashboard/insights'],
+      ['where are the coverage gaps', '/dashboard'],
+    ] as const) {
+      const action = ask(question);
+      expect(action, question).toBeDefined();
+      mockNavigate.mockClear();
+      act(() => action?.onSelect());
+      expect(mockNavigate, question).toHaveBeenCalledWith({ to });
+    }
   });
 
   it('opens on Ctrl+K', () => {
@@ -116,8 +141,8 @@ describe('GlobalCommandPalette keyboard and accessibility', () => {
 
     const labels = screen.getAllByRole('option').map((option) => option.textContent);
     expect(labels).toEqual(
-      // No 'Sign Out': the install is open and there is no session to end.
-      expect.arrayContaining(['Go to Overview', 'Go to Runs', 'Go to Map', 'Toggle Theme']),
+      // No 'Sign Out': signing out is on the Access page, beside the sign-in it ends.
+      expect.arrayContaining(['Go to Overview', 'Go to Runs', 'Go to Map', 'Toggle theme']),
     );
     expect(labels).not.toContain('Sign Out');
   });

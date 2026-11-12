@@ -105,7 +105,12 @@ async function interact(target: Page, route: PrimaryRoute): Promise<void> {
 
 /** What the page-side observers accumulate. Mirrors `METRICS` in the policy module. */
 interface RenderMetrics {
-  lcpMs: number;
+  /**
+   * `null` until the browser reports an LCP entry. Starting it at `0` made a route that
+   * emitted none read as a perfect 0 ms, a finite number `measurementProblems` accepts,
+   * so the gate passed on run detail without having watched it paint.
+   */
+  lcpMs: number | null;
   inpMs: number;
   cls: number;
   longTasks: number;
@@ -145,7 +150,7 @@ function isLayoutShift(
  */
 async function installObservers(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    const totals: RenderMetrics = { lcpMs: 0, inpMs: 0, cls: 0, longTasks: 0 };
+    const totals: RenderMetrics = { lcpMs: null, inpMs: 0, cls: 0, longTasks: 0 };
     window.__lupinRenderBudget = totals;
 
     // A route that paints no large element emits no LCP entry at all. The reading
@@ -155,7 +160,7 @@ async function installObservers(page: Page): Promise<void> {
     new PerformanceObserver((list) => {
       for (let index = 0; index < list.getEntries().length; index += 1) {
         const entry = list.getEntries()[index];
-        if (entry) totals.lcpMs = Math.max(totals.lcpMs, entry.startTime);
+        if (entry) totals.lcpMs = Math.max(totals.lcpMs ?? 0, entry.startTime);
       }
     }).observe({ type: 'largest-contentful-paint', buffered: true });
 
@@ -246,7 +251,7 @@ function reportMeasurements(
   const rows = Object.entries(routes)
     .map(
       ([route, m]) =>
-        `| \`${route}\` | ${String(Math.round(m.lcpMs))} ms | ${String(Math.round(m.inpMs))} ms | ${m.cls.toFixed(3)} | ${String(m.longTasks)} | ${String(glass[route]?.surfaces ?? 0)} | ${String(glass[route]?.depth ?? 0)} |`,
+        `| \`${route}\` | ${m.lcpMs === null ? 'not reported' : `${String(Math.round(m.lcpMs))} ms`} | ${String(Math.round(m.inpMs))} ms | ${m.cls.toFixed(3)} | ${String(m.longTasks)} | ${String(glass[route]?.surfaces ?? 0)} | ${String(glass[route]?.depth ?? 0)} |`,
     )
     .join('\n');
   const body = [
@@ -384,9 +389,12 @@ test.describe('rendering budget', () => {
 
         await authenticate(context, request);
         await signInAndVisit(target, routePathFor(route, runId));
-        await interact(target, route);
-
+        // Settle **before** the interaction. The browser stops reporting LCP at the first
+        // input, so a click while a route still shows its skeleton (which has no text or
+        // image to be a candidate) left LCP unreported on /dashboard and run detail.
         await target.waitForLoadState('networkidle');
+        await target.waitForTimeout(SETTLE_MS);
+        await interact(target, route);
         await target.waitForTimeout(SETTLE_MS);
         routes[route.key] = await readMetrics(target);
         glass[route.key] = await measureGlass(target);
@@ -418,19 +426,20 @@ test.describe('rendering budget', () => {
                   ((baseline['routes'] as Record<string, Record<string, unknown>> | undefined) ??
                     {})[route.key] ?? {};
                 const observed = routes[route.key];
-                if (observed === undefined) {
+                if (observed === undefined || observed.lcpMs === null) {
                   throw new Error(`${route.key} was not measured, so no ceiling can be recorded.`);
                 }
+                const measured = { ...observed, lcpMs: observed.lcpMs };
                 // The ceiling is derived from the reading by `ceilingFor`, never copied from
                 // it — see `CEILING_RULES` for why. The reading is kept beside it, so the
                 // diff a reviewer reads shows both the measurement and the headroom.
                 const ceilings = Object.fromEntries(
                   METRICS.map((metric) => [
                     metric.key,
-                    ceilingFor(metric.key, observed[metric.key]),
+                    ceilingFor(metric.key, measured[metric.key]),
                   ]),
                 );
-                return [route.key, { ...previous, ...ceilings, observed }];
+                return [route.key, { ...previous, ...ceilings, observed: measured }];
               }),
             ),
           },

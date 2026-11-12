@@ -65,7 +65,7 @@ describe('the metric route', () => {
           ),
         { timeout: RENDER_TIMEOUT_MS },
       );
-      expect(await screen.findByRole('link', { name: 'Back to the cockpit' })).toHaveAttribute(
+      expect(await screen.findByRole('link', { name: 'Back to the dashboard' })).toHaveAttribute(
         'href',
         '/dashboard/now?project=p-9',
       );
@@ -88,7 +88,7 @@ describe('the metric route', () => {
           ),
         { timeout: RENDER_TIMEOUT_MS },
       );
-      expect(await screen.findByRole('link', { name: 'Back to the cockpit' })).toHaveAttribute(
+      expect(await screen.findByRole('link', { name: 'Back to the dashboard' })).toHaveAttribute(
         'href',
         '/dashboard/now?project=p-9',
       );

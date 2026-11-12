@@ -1,11 +1,14 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider, useTheme } from './ThemeProvider.js';
 import React from 'react';
 
 describe('ThemeProvider', () => {
   beforeEach(() => {
     localStorage.clear();
+    // These cases are the Lupin theme's light/dark mechanics, so the Lupin palette is chosen.
+    localStorage.setItem('lupin-palette', 'lupin');
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('data-palette');
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -242,5 +245,77 @@ describe('ThemeProvider', () => {
     expect(() => renderHook(() => useTheme())).toThrow(
       'useTheme must be used within a ThemeProvider',
     );
+  });
+});
+
+describe('the OpenCode palettes', () => {
+  function Picker(): React.ReactElement {
+    const { palette, setPalette } = useTheme();
+    return (
+      <button type="button" data-palette-now={palette} onClick={() => setPalette('tokyonight')}>
+        pick
+      </button>
+    );
+  }
+
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-palette');
+    document.documentElement.removeAttribute('data-theme');
+  });
+
+  it('starts on Lupin’s own violet palette, following the chosen theme', () => {
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    expect(document.documentElement.hasAttribute('data-palette')).toBe(false);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+  });
+
+  it('keeps an OpenCode palette one choice away, on the dark plane', () => {
+    localStorage.setItem('lupin-palette', 'opencode');
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    expect(document.documentElement.getAttribute('data-palette')).toBe('opencode');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('returns to the Lupin theme, light or dark, when Lupin is chosen', () => {
+    localStorage.setItem('lupin-palette', 'lupin');
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    expect(document.documentElement.hasAttribute('data-palette')).toBe(false);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+  });
+
+  it('applies a chosen palette on the dark plane and remembers it', () => {
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'pick' }));
+    expect(document.documentElement.getAttribute('data-palette')).toBe('tokyonight');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(localStorage.getItem('lupin-palette')).toBe('tokyonight');
+  });
+
+  it('ignores a stored palette it does not know', () => {
+    localStorage.setItem('lupin-palette', 'not-a-theme');
+    render(
+      <ThemeProvider defaultTheme="light">
+        <Picker />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-palette-now', 'lupin');
+    expect(document.documentElement.hasAttribute('data-palette')).toBe(false);
   });
 });

@@ -1,4 +1,10 @@
-export { Permission, checkPermission } from './permissions.js';
+export {
+  Permission,
+  ROLE_PERMISSIONS,
+  checkPermission,
+  scopesBeyondRole,
+  type ScopedRole,
+} from './permissions.js';
 export type { Permission as PermissionValue } from './permissions.js';
 export { checkProductionPolicy } from './startup-policy.js';
 export type { ProductionSecrets } from './startup-policy.js';

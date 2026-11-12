@@ -219,6 +219,14 @@ export function makeApi(overrides: Partial<ApiClient> = {}): ApiClient {
       avgDurationMs: null,
     })),
     getQuarantine: vi.fn(async () => []),
+    resolveQuarantine: vi.fn(async (id, body): Promise<QuarantineEntry> => ({
+      id,
+      testTitle: 'a test',
+      testFile: 'a.spec.ts',
+      reason: null,
+      quarantinedAt: TEST_TIMESTAMP,
+      status: body.status,
+    })),
     // Annotated rather than inferred: without it `status` widens to `string` and the
     // mock stops satisfying `ApiClient`, so the compile error surfaces here rather
     // than as a `vi.fn()` that returns the wrong shape at runtime.
@@ -473,6 +481,8 @@ export function makeQa(overrides: Partial<QaClient> = {}): QaClient {
     getInsights: vi.fn(async () => makeInsights()),
     getHistory: vi.fn(async () => makeHistory()),
     getReadiness: vi.fn(async () => makeReadiness()),
+    listSignoffs: vi.fn(async () => []),
+    signOff: vi.fn(never),
     ...overrides,
   };
 }
@@ -1296,6 +1306,13 @@ export function makeHealthDouble(
     getPortfolio: vi.fn(never),
     getHeatmap: vi.fn(never),
     getTestEffectiveness: vi.fn(never),
+    getPace: vi.fn(never),
+    getPhases: vi.fn(never),
+    getPortfolioPhases: vi.fn(never),
+    getBriefing: vi.fn(never),
+    getShape: vi.fn(never),
+    getPullRequestShape: vi.fn(never),
+    getPortfolioShape: vi.fn(never),
     getHealth: vi.fn(never),
     getFindings: vi.fn(never),
     getHistory: vi.fn(never),
@@ -1326,41 +1343,6 @@ export function pending<T>(): Promise<T> {
 /** A client error the way `parse` raises one: a status and the server's own sentence. */
 export function serverRefusal(detail: string, status = 500): Error & { detail: string } {
   return Object.assign(new Error(`API answered ${String(status)}`), { status, detail });
-}
-
-/** A canonical run result as `GET /api/v1/reporting/runs/:id` answers it, contract version 2. */
-export function makeCanonicalRunResult() {
-  return {
-    contractVersion: '2',
-    identity: { runId: 'run-1', workspaceId: 'workspace-1' },
-    status: 'passed',
-    startedAt: '2026-09-25T00:00:00.000Z',
-    attempts: [
-      {
-        index: 1,
-        testId: 'test-1',
-        specPath: 'tests/example.spec.ts',
-        title: 'Example',
-        status: 'passed',
-        rawStatus: 'passed',
-        startedAt: '2026-09-25T00:00:00.000Z',
-        evidence: [],
-        flakiness: 'unknown',
-      },
-    ],
-    evidence: [],
-    provenance: {
-      producer: 'playwright',
-      producerVersion: '1',
-      adapterVersion: '1',
-      sourceDigest: 'a'.repeat(64),
-      sourceUri: 'artifact://run/report.json',
-    },
-    retention: { class: 'standard' },
-    proof: { state: 'verified', digest: 'a'.repeat(64), verifier: 'test' },
-    completeness: { state: 'complete', missingShards: [], duplicateShards: [] },
-    raw: {},
-  };
 }
 
 /** One dimension of a grade, unmeasured unless told otherwise. */
@@ -1692,6 +1674,9 @@ export function settingsClient(overrides: Partial<SettingsClient> = {}): Setting
     gitTokenState: vi.fn(async () => false),
     putGitToken: unused,
     deleteGitToken: unused,
+    githubAppState: vi.fn(async () => false),
+    putGitHubApp: unused,
+    deleteGitHubApp: unused,
     listGates: unused,
     createGate: unused,
     updateGate: unused,
@@ -1714,4 +1699,28 @@ export function health(who: Partial<WhoAmI> = {}): HealthClient {
       ...who,
     })),
   } as unknown as HealthClient;
+}
+
+/**
+ * The one-primary rule: a screen draws at most one solid fill (`Button`/`ButtonLink`, variant
+ * `primary`). Two solid buttons on one screen leave the reader to choose which is the next
+ * step, which is the decision the page is for. Returns the solid controls' names.
+ */
+export function expectOnePrimary(container: HTMLElement): string[] {
+  const solid = [...container.querySelectorAll<HTMLElement>('a, button')].filter(
+    (element) =>
+      element.classList.contains('bg-primary-gradient') &&
+      element.classList.contains('text-on-primary') &&
+      // Not on screen: inside a closed native dialog, or hidden from everyone.
+      element.closest('dialog:not([open]), [hidden], [aria-hidden="true"]') === null,
+  );
+  const names = solid.map(
+    (element) => element.getAttribute('aria-label') ?? element.textContent?.trim() ?? '',
+  );
+  if (names.length > 1) {
+    throw new Error(
+      `expected at most one solid primary on the screen, found: ${names.join(' | ')}`,
+    );
+  }
+  return names;
 }

@@ -1,4 +1,6 @@
 import { agentConfig, deploy, gate, report, upload, type Io } from './commands.js';
+import { diffGuard } from './diff-guard-command.js';
+import { impact } from './impact-command.js';
 import { CliError, EXIT } from './errors.js';
 import { shard } from './shard-command.js';
 import { test } from './test-command.js';
@@ -7,9 +9,11 @@ export const HELP = `lupin — send CI evidence to a Lupin install.
 
 Usage:
   lupin upload --format <format> --file <path> [--branch <b>] [--commit <sha>] [--digest sha256:<hex>]
-  lupin test --format junit|playwright-json --report <path> [--branch <b>] [--commit <sha>] -- <command…>
+  lupin test --format <junit|playwright-json|ctrf|jest|vitest|pytest|mochawesome> --report <path> [--branch <b>] [--commit <sha>] -- <command…>
   lupin shard --total <n> --index <i> [--as-of <time>] (-- <files…> | --files-from <path>)
-  lupin gate --branch <b> --commit <sha> [--pr <number>]
+  lupin gate --branch <b> --commit <sha> [--pr <number>] [--post]
+  lupin diff-guard [--base <ref>] [--commit <sha>] [--pr <number>] [--dry-run] [--fail-on-findings]
+  lupin impact [--base <ref>] [--format text|paths|json]
   lupin deploy --environment <name> --status success|failure [--sha <sha>] [--id <id>] [--url <url>]
   lupin agent-config [--branch <b>] [--commit <sha>] [--dir <path>]
   lupin report --out <path> [--window 7d|release] [--branch <b>]
@@ -23,6 +27,21 @@ runs. It never drops a file: if the plan cannot be had, it prints them all.
 
 \`report\` saves the cockpit as one HTML file that fetches nothing, to attach to a message or
 publish as a CI artifact. It writes the file only if the server answered with a page.
+
+\`gate --post\` posts the gate's status, check run and comment to the pull request with the
+job's own GITHUB_TOKEN, when the install holds no token of its own. GITHUB_TOKEN goes only to
+GITHUB_API_URL, never to Lupin, and a GitHub refusal never changes the exit code.
+
+\`diff-guard\` reads git diff <base>...HEAD here and reports changes that weaken the tests:
+deleted tests, added skips, removed or loosened assertions, lowered thresholds, CI steps that
+cannot fail, added retries. It sends kinds, paths and line numbers, never a line of source;
+--dry-run sends nothing. The base defaults to LUPIN_BASE, then origin/$GITHUB_BASE_REF.
+
+\`impact\` prints the tests to run first for this branch's change: the test files it touched and
+the tests named after the source files it touched, with the changed sources no test is named
+after. It reads git here and sends nothing, so it needs no token. --format paths prints one test
+file per line for a test runner, or every test file when a manifest, lockfile or test config
+changed.
 
 Every command takes --project <id>, or reads LUPIN_PROJECT.
 Environment: LUPIN_URL (https://, or http:// to loopback only), LUPIN_TOKEN (lup_…).
@@ -41,6 +60,8 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   gate,
   deploy,
   report,
+  'diff-guard': diffGuard,
+  impact,
   'agent-config': agentConfig,
 };
 

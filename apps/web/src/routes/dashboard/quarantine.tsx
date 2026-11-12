@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   EmptyState,
+  Input,
   Table,
   TableBody,
   TableCell,
@@ -19,13 +20,26 @@ import {
   type BadgeProps,
 } from '@lupin/ui';
 import type { ApiClient, QuarantineEntry } from '../../lib/api.js';
+import { QuarantineDecision } from '../../components/QuarantineDecision.js';
+import { useViewerRole } from '../../hooks/useViewerRole.js';
 import { formatDate } from '../../lib/format.js';
 import { Kpi, PageFrame, PageHeader, Paged, Panel, Quiet } from '../../components/kit.js';
 
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/quarantine',
-  component: () => <QuarantinePage />,
+  validateSearch: (search: Record<string, unknown>): { title?: string; file?: string } => ({
+    ...(typeof search['title'] === 'string' ? { title: search['title'].slice(0, 500) } : {}),
+    ...(typeof search['file'] === 'string' ? { file: search['file'].slice(0, 500) } : {}),
+  }),
+  component: function QuarantineRoute() {
+    const { title, file } = Route.useSearch();
+    return (
+      <QuarantinePage
+        {...(title !== undefined && file !== undefined ? { prefill: { title, file } } : {})}
+      />
+    );
+  },
 });
 
 /**
@@ -51,14 +65,19 @@ const QUARANTINE_STATUS_TONE: Partial<Record<QuarantineEntry['status'], BadgePro
 
 const UNKNOWN_STATUS_TONE = 'default';
 
-const INPUT =
-  'mt-1 min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 text-sm text-fg outline-none hover:border-fg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus';
-
-export function QuarantinePage({ api }: { api?: ApiClient }) {
-  const { data, isLoading, error, addQuarantine, isUnsaved } = useQuarantine(api);
-  const [isAdding, setIsAdding] = useState(false);
-  const [testTitle, setTestTitle] = useState('');
-  const [testFile, setTestFile] = useState('');
+export function QuarantinePage({
+  api,
+  prefill,
+}: {
+  api?: ApiClient;
+  /** A failing test sent from run detail: the form opens with it filled in. */
+  prefill?: { title: string; file: string };
+}) {
+  const { data, isLoading, error, addQuarantine, decide, isUnsaved } = useQuarantine(api);
+  const role = useViewerRole();
+  const [isAdding, setIsAdding] = useState(prefill !== undefined);
+  const [testTitle, setTestTitle] = useState(prefill?.title ?? '');
+  const [testFile, setTestFile] = useState(prefill?.file ?? '');
   const [reason, setReason] = useState('');
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -66,7 +85,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
     return (
       <PageFrame data-testid="quarantine-loading">
         <PageHeader title="Quarantine" />
-        <Quiet>Loading quarantine list...</Quiet>
+        <Quiet>Reading the quarantine list…</Quiet>
       </PageFrame>
     );
   }
@@ -78,7 +97,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
         <EmptyState
           headingLevel={2}
           data-testid="quarantine-error"
-          title="Error Loading Quarantine List"
+          title="The quarantine list could not be read"
           description={error.message}
         />
       </PageFrame>
@@ -125,7 +144,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
         subtitle="Tests held out of the pass rate while someone decides what to do about them"
         actions={
           <Button data-testid="add-quarantine-btn" onClick={toggle} className="min-h-11">
-            {isAdding ? 'Cancel' : 'Add to Quarantine'}
+            {isAdding ? 'Cancel' : 'Add to quarantine'}
           </Button>
         }
       />
@@ -158,14 +177,14 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
         <EmptyState
           headingLevel={2}
           data-testid="quarantine-empty"
-          title="No Quarantined Tests"
-          description="There are currently no tests in quarantine."
+          title="No tests in quarantine"
+          description="A test added here keeps counting in the pass rate until someone approves it."
         />
       ) : (
         <Panel title="Quarantined tests" data-testid="quarantine-list" className="flex-1">
           <Paged items={data} reservedPx={460} label="quarantine">
             {(page) => (
-              <Table>
+              <Table aria-label="Quarantined tests">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Test</TableHead>
@@ -173,6 +192,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
                     <TableHead>Reason</TableHead>
                     <TableHead>Quarantined</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Decision</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -206,6 +226,17 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
                           {entry.status}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        {isUnsaved(entry.id) ? null : (
+                          <QuarantineDecision
+                            entry={entry}
+                            viewerRole={role}
+                            onDecide={(status, resolution) =>
+                              decide(entry.id, { status, resolution })
+                            }
+                          />
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -226,44 +257,39 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
               <DialogHeader>
                 <DialogTitle>Quarantine a test</DialogTitle>
               </DialogHeader>
-              <label htmlFor="quarantine-test-title" className="block text-sm text-fg-muted">
-                Test Title
-                <input
-                  id="quarantine-test-title"
-                  data-testid="input-test-title"
-                  data-autofocus
-                  type="text"
-                  required
-                  className={INPUT}
-                  value={testTitle}
-                  onChange={(e) => setTestTitle(e.target.value)}
-                />
-              </label>
-              <label htmlFor="quarantine-test-file" className="block text-sm text-fg-muted">
-                Test File
-                <input
-                  id="quarantine-test-file"
-                  data-testid="input-test-file"
-                  type="text"
-                  required
-                  className={INPUT}
-                  value={testFile}
-                  onChange={(e) => setTestFile(e.target.value)}
-                />
-              </label>
-              <label htmlFor="quarantine-reason" className="block text-sm text-fg-muted">
-                Reason (optional)
-                <input
-                  id="quarantine-reason"
-                  data-testid="input-reason"
-                  type="text"
-                  className={INPUT}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                />
-              </label>
+              <Input
+                id="quarantine-test-title"
+                label="Test title"
+                data-testid="input-test-title"
+                data-autofocus
+                type="text"
+                required
+                value={testTitle}
+                onChange={(e) => setTestTitle(e.target.value)}
+              />
+              <Input
+                id="quarantine-test-file"
+                label="Test file"
+                data-testid="input-test-file"
+                type="text"
+                required
+                value={testFile}
+                onChange={(e) => setTestFile(e.target.value)}
+              />
+              <Input
+                id="quarantine-reason"
+                label="Reason (optional)"
+                data-testid="input-reason"
+                type="text"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
               {addError && (
-                <div role="alert" data-testid="quarantine-add-error" className="text-sm text-error">
+                <div
+                  role="alert"
+                  data-testid="quarantine-add-error"
+                  className="text-sm text-danger"
+                >
                   {addError}
                 </div>
               )}
@@ -272,7 +298,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
                   Cancel
                 </Button>
                 <Button data-testid="submit-quarantine-btn" type="submit" className="min-h-11">
-                  Submit
+                  Quarantine
                 </Button>
               </div>
             </form>

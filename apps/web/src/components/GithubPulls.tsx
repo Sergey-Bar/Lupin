@@ -4,6 +4,7 @@ import type { GithubPullItem } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import { usePagedList } from '../hooks/usePagedList.js';
 import { subjectOfPull } from '../lib/github-actions.js';
+import { RISK_BADGE, RISK_WORD, isHighRisk, pullRequestRiskPath } from '../lib/change-risk.js';
 import type { GithubClient } from '../lib/github-client.js';
 import type { HealthClient } from '../lib/health-client.js';
 import {
@@ -61,6 +62,20 @@ const BUCKET_LABELS = [
 
 const STATUS_ICON = { ready: CircleCheck, blocked: CircleAlert, waiting: Timer } as const;
 
+type RiskFilter = 'all' | 'high';
+
+/** The "Risk" filter: every pull request, or those assessed high or critical at their head. */
+function riskOptions(high: number) {
+  return [
+    { value: 'all', label: 'Any risk' },
+    { value: 'high', label: `High and above ${String(high)}` },
+  ] as const;
+}
+
+/** A high risk at the head the row shows; one assessed at an older head does not count. */
+const isRiskyRow = (item: GithubPullItem) =>
+  item.risk !== null && item.risk !== undefined && item.risk.current && isHighRisk(item.risk.level);
+
 /** The "Show" filter, with how many pull requests each bucket holds. */
 function bucketOptions(counts: ReturnType<typeof countBuckets>) {
   return BUCKET_LABELS.map((option) => ({
@@ -86,6 +101,7 @@ export function PullRequestsPage({
   const [state, setState] = React.useState<StateFilter>('open');
   const [projectId, setProjectId] = React.useState(initialProjectId ?? '');
   const [bucket, setBucket] = React.useState<BucketFilter>('all');
+  const [riskFilter, setRiskFilter] = React.useState<RiskFilter>('all');
   const [query, setQuery] = React.useState('');
   const [version, setVersion] = React.useState(0);
   const [pending, setPending] = React.useState<PendingAction>(null);
@@ -110,6 +126,7 @@ export function PullRequestsPage({
   const shown = sortByAttention(items).filter(
     (item) =>
       (activeBucket === 'all' || bucketOf(item) === activeBucket) &&
+      (riskFilter === 'all' || isRiskyRow(item)) &&
       matchesQuery(needle, [item.title, item.author, item.repository]),
   );
   const shownKeys = shown.map(subjectKey);
@@ -134,6 +151,12 @@ export function PullRequestsPage({
           />
         ) : null}
         <Segmented label="State" options={STATES} value={state} onChange={setState} />
+        <Segmented
+          label="Risk"
+          options={riskOptions(items.filter(isRiskyRow).length)}
+          value={riskFilter}
+          onChange={setRiskFilter}
+        />
         <div className="flex flex-wrap items-center gap-3 sm:ms-auto">
           <RepositoryFilter
             id="pulls-repository"
@@ -230,6 +253,33 @@ function PullRowSummary({ item, now }: { item: GithubPullItem; now: Date }): Rea
         {Icon === null ? null : <Icon size={12} aria-hidden="true" />}
         {status.headline}
       </Badge>
+      <RiskLink item={item} />
     </span>
+  );
+}
+
+/**
+ * The row's change risk, linking to why. A risk assessed at an older head says so: the commits
+ * since have not been assessed, and their risk is not known.
+ */
+function RiskLink({ item }: { item: GithubPullItem }): React.ReactElement | null {
+  const risk = item.risk;
+  if (risk === null || risk === undefined) return null;
+  const word = RISK_WORD[risk.level];
+  const label = risk.current ? word : `${word} (older head)`;
+  return (
+    <a
+      href={pullRequestRiskPath(item.projectId, item.number)}
+      onClick={(event) => event.stopPropagation()}
+      aria-label={`${label}, ${String(risk.score)} points: see why`}
+      className="shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+    >
+      <Badge
+        variant={risk.current ? RISK_BADGE[risk.level] : 'outline'}
+        className="whitespace-nowrap"
+      >
+        {label}
+      </Badge>
+    </a>
   );
 }

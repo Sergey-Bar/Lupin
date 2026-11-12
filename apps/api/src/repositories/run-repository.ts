@@ -215,6 +215,11 @@ export interface TestRecord {
  * increments without a read-modify-write race.
  */
 export interface RunPatch {
+  /**
+   * Write only if the run is still in this status: a compare-and-set, so a check made on a
+   * read cannot be undone by a writer that moved the run in between (ledger MNT-171).
+   */
+  ifStatus?: PersistedRunStatus;
   /** The persisted subset: this becomes a `runs.status` write. */
   status?: PersistedRunStatus;
   /**
@@ -309,8 +314,11 @@ export interface RunRepository {
    * Apply a patch to an existing run row.
    * Delta counter fields accumulate (add to current value).
    * No-op if run does not exist.
+   *
+   * @returns whether a row was written: `false` for a missing run, and for one no longer in
+   *   `patch.ifStatus`.
    */
-  patchRun(id: string, patch: RunPatch): Promise<void>;
+  patchRun(id: string, patch: RunPatch): Promise<boolean>;
 
   /** Retrieve a run by id.  Returns null when not found. */
   getRun(id: string): Promise<RunRecord | null>;

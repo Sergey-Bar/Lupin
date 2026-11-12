@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { SettingsApiError, type SettingsClient } from '../lib/settings-client.js';
 import { health, read, settingsClient } from '../test-utils.js';
+import { confirmAction } from '../test-confirm.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 import { SettingsForm, isEnvLocked } from './SettingsForm.js';
 import { AiSettingsPage, IntegrationsSettingsPage, SessionsSettingsPage } from './SettingsPages.js';
@@ -272,5 +273,82 @@ describe('SettingsForm controls by kind', () => {
     expect(
       await screen.findByText('You would lose admin access. Add a rule that keeps you an admin.'),
     ).toBeInTheDocument();
+  });
+});
+
+describe('the GitHub App panel', () => {
+  // Assembled at runtime: a PEM-shaped literal is what the secret scanners look for.
+  const PEM = ['-----BEGIN PRIVATE ', 'KEY-----\nabc\n-----END PRIVATE ', 'KEY-----'].join('');
+
+  it('lets an admin paste the App ID and key, sends them once, and never shows the key again', async () => {
+    const user = userEvent.setup();
+    let set = false;
+    const client = settingsClient({
+      githubAppState: vi.fn(async () => set),
+      putGitHubApp: vi.fn(async () => {
+        set = true;
+      }),
+    });
+    render(
+      <ToastProvider>
+        <IntegrationsSettingsPage health={health()} client={client} />
+      </ToastProvider>,
+    );
+    const panel = await screen.findByTestId('github-app');
+    expect(await within(panel).findByText('Not set')).toBeInTheDocument();
+    await user.type(within(panel).getByLabelText('App ID'), '42');
+    await user.type(within(panel).getByLabelText('Private key (.pem)'), PEM);
+    await user.click(within(panel).getByRole('button', { name: 'Save the app' }));
+    expect(client.putGitHubApp).toHaveBeenCalledWith({ appId: '42', privateKey: PEM });
+    expect(await within(panel).findByText('Connected')).toBeInTheDocument();
+    expect(within(panel).getByLabelText('Private key (.pem)')).toHaveValue('');
+    expect(within(panel).getByRole('button', { name: 'Replace the app' })).toBeInTheDocument();
+  });
+
+  it('removes a connected app, and says why when the server refuses', async () => {
+    const user = userEvent.setup();
+    let set = true;
+    const client = settingsClient({
+      githubAppState: vi.fn(async () => set),
+      deleteGitHubApp: vi.fn(async () => {
+        set = false;
+      }),
+      putGitHubApp: vi.fn(async () => {
+        throw new SettingsApiError(400, 'That is not a private key.', 'VALIDATION', null);
+      }),
+    });
+    render(
+      <ToastProvider>
+        <IntegrationsSettingsPage health={health()} client={client} />
+      </ToastProvider>,
+    );
+    const panel = await screen.findByTestId('github-app');
+    expect(await within(panel).findByText('Connected')).toBeInTheDocument();
+    await user.type(within(panel).getByLabelText('App ID'), '42');
+    await user.type(within(panel).getByLabelText('Private key (.pem)'), 'nope');
+    await user.click(within(panel).getByRole('button', { name: 'Replace the app' }));
+    expect(await screen.findByText('That is not a private key.')).toBeInTheDocument();
+    expect(within(panel).getByLabelText('App ID')).toHaveValue('42');
+    await confirmAction(
+      user,
+      within(panel).getByRole('form', { name: 'GitHub App' }),
+      'Remove',
+      'GitHub App',
+    );
+    expect(client.deleteGitHubApp).toHaveBeenCalledTimes(1);
+    expect(await within(panel).findByText('Not set')).toBeInTheDocument();
+  });
+
+  it('is not drawn for an operator, who is asked to find an admin', async () => {
+    render(
+      <ToastProvider>
+        <IntegrationsSettingsPage
+          health={health({ role: 'operator', actor: 'token:o', source: 'token' })}
+          client={settingsClient()}
+        />
+      </ToastProvider>,
+    );
+    expect(await screen.findByTestId('ask-an-admin')).toBeInTheDocument();
+    expect(screen.queryByTestId('github-app')).toBeNull();
   });
 });

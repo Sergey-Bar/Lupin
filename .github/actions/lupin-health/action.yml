@@ -249,6 +249,7 @@ runs:
         echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
         {
           echo "### Repository health: $(printf '%s' "$result" | jq -r '.grade.letter // "incomplete"')"
+          printf '%s' "$result" | jq -r 'if .risk then "Change risk: \(.risk.risk.level) (\(.risk.risk.score) points)" else empty end'
           printf '%s' "$result" | jq -r '.reasons[] | "- " + .'
         } >> "$GITHUB_STEP_SUMMARY"
         if [ "$verdict" != "passed" ]; then

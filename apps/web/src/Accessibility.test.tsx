@@ -1,8 +1,7 @@
 import path from 'node:path';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import {
   createMemoryHistory,
   createRootRoute,
@@ -11,12 +10,10 @@ import {
 } from '@tanstack/react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectNoBlockingAxeViolations } from './test-axe.js';
-import { RunExplorer } from './components/dashboard/RunExplorer.js';
 import { EmptyState, Alert, AlertDescription, AlertTitle, Skeleton } from '@lupin/ui';
-import { ThemeToggle } from './components/ThemeToggle.js';
-import { NavBar } from './components/NavBar.js';
+import { BottomTabBar, NavBar } from './components/NavBar.js';
 import { ThemeProvider } from './theme/ThemeProvider.js';
-import { makeApi, makeCanonicalRunResult, makeRun } from './test-utils.js';
+import { makeApi, makeRun } from './test-utils.js';
 import { RunDetailPage } from './routes/dashboard/run-detail.js';
 import { QuarantinePage } from './routes/dashboard/quarantine.js';
 
@@ -60,15 +57,6 @@ describe('axe sweep over the client components', () => {
     await expectNoBlockingAxeViolations(container);
   });
 
-  it('reports no violations for the theme toggle', async () => {
-    const { container } = render(
-      <ThemeProvider>
-        <ThemeToggle />
-      </ThemeProvider>,
-    );
-    await expectNoBlockingAxeViolations(container);
-  });
-
   /**
    * The three states a screen can be in, from `packages/ui`.
    *
@@ -98,20 +86,6 @@ describe('axe sweep over the client components', () => {
     );
     await expectNoBlockingAxeViolations(container);
   });
-
-  it('reports no violations for the run evidence explorer', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(JSON.stringify({ result: makeCanonicalRunResult() }), { status: 200 }),
-        ),
-    );
-    const { container } = render(<RunExplorer runId="run-1" />);
-    await waitFor(() => expect(screen.getByTestId('run-explorer')).toBeInTheDocument());
-    await expectNoBlockingAxeViolations(container);
-  });
 });
 
 describe('NavBar keyboard operation', () => {
@@ -119,78 +93,26 @@ describe('NavBar keyboard operation', () => {
     renderRouted(
       <ThemeProvider>
         <NavBar />
+        <BottomTabBar />
       </ThemeProvider>,
       '/dashboard',
     );
     await waitFor(() => expect(screen.getByTestId('nav-bar')).toBeInTheDocument());
-    expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page');
+    const bottom = screen.getByTestId('bottom-tab-bar');
+    const health = within(bottom).getByRole('link', { name: 'Health' });
+    expect(health).toHaveAttribute('aria-current', 'page');
+    expect(health).toHaveClass('font-semibold');
+    expect(screen.getByTestId('nav-place')).toHaveTextContent('Health');
   });
 
-  /**
-   * The cycle order is `dark â†’ light â†’ system â†’ dark`, which is `THEMES` in
-   * `ThemeProvider.tsx` and the order a reader meets from the provider's default of
-   * `system`.
-   *
-   * **The expectation changed, and the old one was wrong.** This asserted
-   * `light â†’ dark`, which was the order of the *inline* copy `NavBar` used to
-   * render â€” a second control with its own idea of what "toggle" meant, which no
-   * other test disagreed with because `ThemeToggle.test.tsx` mocked the hook and
-   * never saw the other component. `NavBar` now renders `ThemeToggle`, so the two
-   * cycles are one cycle. The assertion is kept here rather than left to
-   * `ThemeToggle.test.tsx` because this is the one that renders the real provider
-   * and the real storage, and a mocked cycle proves the arithmetic rather than the
-   * wiring.
-   */
-  it('cycles the theme on Enter, from the theme the provider read out of storage', async () => {
-    const user = userEvent.setup();
-    localStorage.setItem('lupin-theme', 'light');
+  it('draws no theme control in the chrome; the theme is a setting, not a button', async () => {
     renderRouted(
       <ThemeProvider>
         <NavBar />
       </ThemeProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId('theme-toggle')).toBeInTheDocument());
-
-    screen.getByTestId('theme-toggle').focus();
-    await user.keyboard('{Enter}');
-
-    // `light` advances to `system`, which is `THEMES[2]`.
-    expect(localStorage.getItem('lupin-theme')).toBe('system');
-  });
-
-  /**
-   * One control for one setting.
-   *
-   * `NavBar` carried an inline button with the same `data-testid="theme-toggle"` as
-   * `ThemeToggle.tsx`, and `getByTestId` returns the first match rather than
-   * complaining â€” so a suite asserting on the toggle could have been asserting on
-   * either one, and neither test would have said so. `getAllByTestId` plus a length
-   * of one is the assertion that would have caught it, because it fails on a
-   * duplicate instead of choosing.
-   */
-  it('renders exactly one theme control', async () => {
-    renderRouted(
-      <ThemeProvider>
-        <NavBar />
-      </ThemeProvider>,
-    );
-    // `waitFor` rather than a bare `getAllByTestId`: `renderRouted` mounts through a
-    // memory router, so the outlet is not in the document on the first tick. A
-    // synchronous query here would fail for a reason unrelated to what it asserts.
-    await waitFor(() => expect(screen.getAllByTestId('theme-toggle')).toHaveLength(1));
-  });
-
-  it('gives the theme control a name that says where pressing it lands', async () => {
-    // Not "Toggle theme": a name that does not say which theme is active and which
-    // one comes next makes the control's effect something the reader has to discover
-    // by pressing it.
-    renderRouted(
-      <ThemeProvider>
-        <NavBar />
-      </ThemeProvider>,
-    );
-    const toggle = await screen.findByTestId('theme-toggle');
-    expect(toggle).toHaveAccessibleName(/Theme: .*\. Switch to .*\./);
+    await waitFor(() => expect(screen.getByTestId('nav-bar')).toBeInTheDocument());
+    expect(screen.queryAllByTestId('theme-toggle')).toHaveLength(0);
   });
 });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { PageBody, ScrollRegion } from './kit.js';
+import { PageBody, PageHeader, ScrollRegion } from './kit.js';
 
 describe('ScrollRegion', () => {
   it('is a labelled region a keyboard can reach', () => {
@@ -41,5 +41,46 @@ describe('PageBody', () => {
   it('takes a more specific label', () => {
     render(<PageBody label="Delivery sections">body</PageBody>);
     expect(screen.getByRole('region', { name: 'Delivery sections' })).toBeInTheDocument();
+  });
+});
+
+describe('PageHeader, headerless', () => {
+  it('names the screen in an h1 that only a screen reader reads, and shows no large title', () => {
+    render(<PageHeader title="Runs" subtitle="86 runs in shop" actions={<button>New</button>} />);
+    const title = screen.getByRole('heading', { level: 1, name: 'Runs' });
+    expect(title).toHaveClass('sr-only');
+    expect(title.className).not.toMatch(/\btext-(2xl|3xl)\b/u);
+  });
+
+  it('keeps the context and the page actions, on one quiet row', () => {
+    render(<PageHeader title="Runs" subtitle="86 runs in shop" actions={<button>New</button>} />);
+    expect(screen.getByText('86 runs in shop')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'New' })).toBeVisible();
+  });
+
+  it('draws nothing visible for a page with no context and no actions', () => {
+    const { container } = render(<PageHeader title="Runs" />);
+    expect(container.querySelector('[data-page-toolbar]')).toBeNull();
+  });
+
+  it('shows the title only when the page asks, for a greeting rather than a tab name', () => {
+    render(<PageHeader title="Good evening" visibleTitle />);
+    const title = screen.getByRole('heading', { level: 1, name: 'Good evening' });
+    expect(title).not.toHaveClass('sr-only');
+  });
+
+  it('puts a shown title and the page controls on one row, the guide’s space kept at its end', () => {
+    const { container } = render(
+      <PageHeader title="Good evening" visibleTitle actions={<button>Triage</button>} />,
+    );
+    const row = container.querySelector('[data-page-toolbar]') as HTMLElement;
+    expect(row).toContainElement(screen.getByRole('heading', { level: 1, name: 'Good evening' }));
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Triage' }));
+    expect(row).toHaveClass('pe-12', 'min-h-10');
+  });
+
+  it('keeps the toolbar clear of the page guide at the end of the row', () => {
+    const { container } = render(<PageHeader title="Runs" subtitle="86 runs" />);
+    expect(container.querySelector('[data-page-toolbar]')).toHaveClass('pe-12', 'min-h-10');
   });
 });

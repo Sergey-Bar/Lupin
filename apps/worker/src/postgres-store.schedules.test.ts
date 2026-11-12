@@ -435,6 +435,7 @@ describe('report schedules against the real graph', () => {
         cronExpr: '*/5 * * * *',
         timezone: 'UTC',
         nextRunAt: '2026-01-01T00:00:00.000Z',
+        quietHours: null,
       },
     ]);
   });
@@ -449,6 +450,7 @@ describe('report schedules against the real graph', () => {
       scheduledFor: '2026-01-01T00:00:00.000Z',
       nextRunAt: '2026-03-01T12:05:00.000Z',
       idempotencyKey: `schedule:${id}:2026-01-01T00:00:00.000Z`,
+      notBefore: '2026-03-01T12:00:00.000Z',
     };
     // Two workers racing one occurrence: the compare-and-set lets one through.
     const outcomes = await Promise.all([
@@ -469,6 +471,37 @@ describe('report schedules against the real graph', () => {
       },
     ]);
     expect(await store().listDueReportSchedules(NOW, 10)).toEqual([]);
+  });
+
+  it('holds a delivery until it may be sent, and queues none while one is still waiting', async () => {
+    const subscriptionId = await subscription();
+    const id = `report:${subscriptionId}`;
+    await schedule(id, {
+      runOptions: { kind: 'report', subscriptionId, quietHours: { start: 22, end: 7 } },
+    });
+    const [due] = await store().listDueReportSchedules(NOW, 10);
+    expect(due?.quietHours).toEqual({ start: 22, end: 7 });
+    const enqueue = (scheduledFor: string, nextRunAt: string) =>
+      store().enqueueScheduledReport({
+        schedule: due as NonNullable<typeof due>,
+        scheduledFor,
+        nextRunAt,
+        idempotencyKey: `schedule:${id}:${scheduledFor}`,
+        notBefore: '2026-03-02T07:00:00.000Z',
+      });
+    expect(await enqueue('2026-01-01T00:00:00.000Z', '2026-03-01T11:00:00.000Z')).toBe(true);
+    // The next occurrence, with the first still pending: the schedule moves on, no second row.
+    expect(await enqueue('2026-03-01T11:00:00.000Z', '2026-03-01T12:00:00.000Z')).toBe(false);
+    const rows = await database.query<{ next_attempt_at: Date }>(
+      'SELECT next_attempt_at FROM report_deliveries WHERE subscription_id = $1::uuid',
+      [subscriptionId],
+    );
+    expect(rows.rows.map((row) => new Date(row.next_attempt_at).toISOString())).toEqual([
+      '2026-03-02T07:00:00.000Z',
+    ]);
+    expect((await scheduleRow(id))['run_options']).toMatchObject({
+      nextRunAt: '2026-03-01T12:00:00.000Z',
+    });
   });
 
   it('refuses a report schedule that names no subscription', async () => {

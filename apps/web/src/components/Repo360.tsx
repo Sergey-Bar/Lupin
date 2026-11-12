@@ -5,7 +5,9 @@ import type {
   AiCodeReport,
   DeliveryReport,
   ProjectEvals,
+  PaceReport,
   ProjectHealth,
+  RepositoryPhases,
   Scorecard,
 } from '@lupin/shared-contracts';
 import { useResource, type Resource } from '../hooks/useResource.js';
@@ -20,7 +22,10 @@ import type { SupplyChainClient } from '../lib/supply-chain-client.js';
 import { repoHealthPath } from '../route-manifest.js';
 import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import { Loaded, ProjectPage, projectLink } from './ProjectPage.js';
+import { PacePanel } from './PacePanel.js';
+import { PhaseBandPanel } from './Phases.js';
 import { ScorecardCard } from './ScorecardCard.js';
+import { ZoomBar } from './ZoomBar.js';
 
 /**
  * Repository 360: the grade, every scorecard beside it, and one list of what to fix next.
@@ -69,6 +74,8 @@ interface Reads {
   evals: Resource<ProjectEvals>;
   supplyChain: Resource<Scorecard>;
   testEffectiveness: Resource<Scorecard>;
+  pace: Resource<PaceReport>;
+  phases: Resource<RepositoryPhases>;
 }
 
 function useReads(clients: Repo360Clients, projectId: string): Reads {
@@ -92,11 +99,35 @@ function useReads(clients: Repo360Clients, projectId: string): Reads {
       () => clients.health.getTestEffectiveness(projectId),
       [clients.health, projectId],
     ),
+    pace: useResource(() => clients.health.getPace(projectId, 8), [clients.health, projectId]),
+    phases: useResource(() => clients.health.getPhases(projectId, 30), [clients.health, projectId]),
   };
 }
 
 function ready<T>(resource: Resource<T>): T | null {
   return resource.status === 'ready' ? resource.value : null;
+}
+
+/** The portfolio, then this repository, each with its shape. */
+function RepoZoom({
+  health,
+  projectId,
+  name,
+}: {
+  health: HealthClient;
+  projectId: string;
+  name: string;
+}): React.ReactElement {
+  const portfolio = useResource(async () => (await health.getPortfolioShape()).overall, [health]);
+  const repository = useResource(() => health.getShape(projectId), [health, projectId]);
+  return (
+    <ZoomBar
+      levels={[
+        { label: 'Portfolio', href: '/dashboard/portfolio', reading: portfolio },
+        { label: name, href: null, reading: repository },
+      ]}
+    />
+  );
 }
 
 /** Every scorecard that has arrived, with the page it links to. */
@@ -153,6 +184,7 @@ function Repo360Body({
         subtitle={`${name}: the grade, every scorecard, and what to fix next`}
       />
       <PageBody>
+        <RepoZoom health={clients.health} projectId={projectId} name={name} />
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
           <Panel title="Grade" data-testid="repo-360-grade">
             <Loaded resource={reads.health} label="the grade" testId="repo-360-grade">
@@ -160,6 +192,10 @@ function Repo360Body({
             </Loaded>
           </Panel>
           <FixNextPanel items={fixNext} settled={settled(reads)} />
+        </div>
+        <div className="grid gap-3 xl:grid-cols-2">
+          <PacePanel pace={reads.pace} />
+          <PhaseBandPanel phases={reads.phases} />
         </div>
         <section aria-label="Scorecards" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <ReadCards

@@ -135,6 +135,17 @@ export const pageJourneys: Record<string, Journey> = {
     takeaway:
       'A test proposal is a patch for a person to review. Lupin does not apply it to the repository.',
   },
+  'guide/embedded.md': {
+    audience: 'Firmware and device QA engineers',
+    goal: 'Put firmware and hardware-in-the-loop results in the same quality record.',
+    stages: [
+      ['Connect', 'Connect the repository; Lupin proposes the test command from its build files.'],
+      ['Send', 'Run that command through lupin test, which uploads its JUnit report.'],
+      ['Read', 'See the run, its board, its failures by cause and their owners.'],
+    ],
+    takeaway:
+      'A firmware failure is read the same way as any other, with the board it ran on beside it.',
+  },
   'guide/cli.md': {
     audience: 'Developers · CI owners',
     goal: 'Make your CI reports part of the same quality record.',
@@ -151,6 +162,45 @@ export const pageJourneys: Record<string, Journey> = {
     ],
     takeaway:
       'An upload and a gate answer different questions: stored evidence does not automatically mean a passing policy.',
+  },
+  'guide/change-risk.md': {
+    audience: 'QA engineers · reviewers · leads',
+    goal: 'Know which pull requests to read first, and exactly why.',
+    stages: [
+      ['Guard the tests', 'Run lupin diff-guard in CI to report changes that weaken the tests.'],
+      ['Gate the change', 'Run lupin gate on the pull request; add --post on a LAN install.'],
+      [
+        'Read the risk',
+        'Open the factors on the pull request or its page, and act on the top one.',
+      ],
+    ],
+    takeaway:
+      'The score is a sum of stated factors. Missing test results or coverage make a change unknown, never low.',
+  },
+  'guide/phases-and-pace.md': {
+    audience: 'QA leads · managers',
+    goal: 'See whether each level is in good shape, which phase holds changes up, and whether testing keeps up.',
+    stages: [
+      ['Sync delivery', 'Turn on delivery sync so Lupin reads the pull requests.'],
+      [
+        'Read the shape',
+        'Follow the zoom bar to a repository, then read its phase band and what is stuck.',
+      ],
+      ['Watch the debt', 'Read the pace rows, and upload coverage where lines are not measured.'],
+    ],
+    takeaway:
+      'Missing or stale evidence is never good shape, a phase with no evidence is not done, and the untested-change debt never goes down.',
+  },
+  'guide/briefing.md': {
+    audience: 'QA leads · managers · anyone back from time off',
+    goal: 'Catch up on what happened in one screen, and check any line.',
+    stages: [
+      ['Read the card', 'Open Home, switch to Release, and read the briefing card.'],
+      ['Open the briefing', 'Go through each section, and open a line to act on it.'],
+      ['Check a line', 'Open Read from to see the evidence behind its number.'],
+    ],
+    takeaway:
+      'Every line is a count with its source. A model may reword them, and is thrown out if it adds a number.',
   },
   'guide/mcp.md': {
     audience: 'Developers using an AI editor',

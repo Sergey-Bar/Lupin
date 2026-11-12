@@ -11,6 +11,7 @@ import {
   StatusDot,
   cn,
   type DotStatus,
+  buttonVariants,
 } from '@lupin/ui';
 import { LAYOUT, layoutMap } from '../../lib/map-layout.js';
 import {
@@ -435,10 +436,7 @@ function Detail({ node }: { node: MapNode }): React.ReactElement {
       {node.link === undefined ? null : (
         <Link
           to={node.link.to}
-          className={cn(
-            'mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-on-fill no-underline hover:opacity-90',
-            FOCUS,
-          )}
+          className={cn(buttonVariants({ variant: 'primary' }), 'mt-4 no-underline')}
         >
           {node.link.label}
           <ArrowRight size={16} aria-hidden="true" />

@@ -400,6 +400,63 @@ describe('the reported failure names the status', () => {
 });
 
 describe('the pull-request gate operations', () => {
+  it('creates a check run with its name, head and output, and updates it by id', async () => {
+    const calls = stubFetchSequence([{ ok: true, status: 201, body: { id: 5 } }]);
+    const output = { title: 'Change risk: high', summary: 'S', annotations: [] };
+    await githubAdapter.execute(
+      {
+        operation: 'createCheckRun',
+        input: {
+          owner: 'o',
+          repo: 'r',
+          name: 'lupin/health',
+          head_sha: 'abc123',
+          status: 'completed',
+          conclusion: 'failure',
+          output,
+        },
+      },
+      'ghs_token',
+    );
+    await githubAdapter.execute(
+      {
+        operation: 'updateCheckRun',
+        input: { owner: 'o', repo: 'r', checkRunId: '5', conclusion: 'success', output },
+      },
+      'ghs_token',
+    );
+    expect(calls.map((call) => [call.init?.method, call.url])).toEqual([
+      ['POST', 'https://api.github.com/repos/o/r/check-runs'],
+      ['PATCH', 'https://api.github.com/repos/o/r/check-runs/5'],
+    ]);
+    expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
+      name: 'lupin/health',
+      head_sha: 'abc123',
+      status: 'completed',
+      conclusion: 'failure',
+      output,
+    });
+    expect(JSON.parse(String(calls[1]?.init?.body))).toEqual({ conclusion: 'success', output });
+  });
+
+  it('refuses a check run with no head, and reads runs by name', async () => {
+    const calls = stubFetchSequence([{ ok: true, status: 200, body: { check_runs: [] } }]);
+    const refused = await githubAdapter.execute(
+      { operation: 'createCheckRun', input: { owner: 'o', repo: 'r', name: 'lupin/health' } },
+      'ghs_token',
+    );
+    expect(refused.status).toBe('error');
+    await githubAdapter.execute(
+      {
+        operation: 'listCheckRuns',
+        input: { owner: 'o', repo: 'r', ref: 'abc123', checkName: 'lupin/health' },
+      },
+      'ghs_token',
+    );
+    expect(calls[0]?.url).toContain('/commits/abc123/check-runs?');
+    expect(calls[0]?.url).toContain('check_name=lupin%2Fhealth');
+  });
+
   it('posts a commit status to the commit, with only the declared body fields', async () => {
     const calls = stubFetchSequence([{ ok: true, status: 201, body: { id: 1 } }]);
     const result = await githubAdapter.execute(

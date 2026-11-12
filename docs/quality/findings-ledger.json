@@ -2727,8 +2727,8 @@
       "confirmedOn": "2026-09-28",
       "confirmedBy": "kilo:fail-before-verification",
       "owner": "the repository owner, through the product roadmap: each table is built when the feature its justification names is scheduled (`docs/quality/capability-justification.md` names the feature per table)",
-      "removalCondition": "Each of the 19 tables named in `docs/quality/capability-justification.md` gains a production reader or is deleted in a migration. When the last row of that file is gone the file is deleted with it. The condition names what could happen: a reader being written.",
-      "resolution": "**Taken as debt, with the justification written down.** The row requires each dormant table to gain a reader, a writer, a route, a UI and a test — or a written justification. `docs/quality/capability-justification.md` is that justification: it names all 21 tables, states why each exists and why it is still here, and separates them from the 8 that have production access and the 4 with test-only access.\n\n**The count correction in the summary is the load-bearing part of this disposition.** The plan sized the wave at `~35` tables; the real figure is 21, because `schema/dashboard.ts` defines 33 in total. Two tables the row's own analysis corrects are the ones a grep gets wrong: `schedules` has a reader and two writers in `apps/worker/src/postgres-store.ts` written as **raw SQL** rather than through Drizzle, and `audit_events` is write-only with four production writers. Both are listed in the justification as read-or-written, and neither is a candidate.\n\n**These are debt, not defects, and the distinction is the whole point.** Nothing writes the 21, so nothing can read a wrong value out of them. The cost of leaving them is migration surface and reader confusion, not a wrong number on a screen — which is why this is not a Major open finding against v1.0.0. `locator_suggestions` is called out separately because it has no `updatedAt` column at all: a table with no freshness column has no defined staleness, so any row in it is permanently current by construction. It should be dropped before it is built, and the justification says so.\n\n**Deliberately not closed.** The row is `debt` rather than `fixed` because building twenty-one product surfaces is real work that has not been done. Closing it would record the documentation as the feature.\n\n**Revisited 2026-10-21, in the maintenance pass.** The owner decision was to keep all 21 tables as roadmap surface and drop none, so the row stays `debt`, now with a named owner rather than `unassigned`. The one concrete defect in it is closed: `locator_suggestions` had a mutable `status` and no `updatedAt`, and `0026_locator_suggestions_updated_at.sql` adds the column, pinned by `packages/db/src/schema/schema.test.ts` (which failed on the missing column first) and by the applied-migration list in `tests/integration/src/migrations.test.ts`.\n\n**Revisited 2026-10-22: three of the 21 are gone (ledger MNT-60).** The 2026-10-21 owner decision kept all 21 tables as roadmap surface; for the three the justification file itself called *superseded*, there is no roadmap feature to wait for, so `0030_drop_superseded_tables.sql` drops `results` (replaced by `canonical_run_results`), `blob_shards` (replaced by `runs.read_at`) and `api_keys` (replaced by the installation key). A search of `apps/`, `packages/`, `tools/`, `tests/` and `scripts/` found no reader or writer of them; the dependants (two foreign keys onto `results`, the `migrate-cli` mappings, the tenancy register, schema tests) were removed or redirected in the same change. `capability-justification.md` now counts 30 tables, 19 dormant with no access, and 3 with test-only access.\n\n**What remains: 19 dormant tables, still debt,** all untouched: `suites`, `attachments`, `trends`, `known_failures`, `defect_categories`, `fingerprint_categories`, `nl_query_history`, `failure_taxonomy_rules`, `failure_classifications`, `test_failure_correlations`, `locator_suggestions`, `failure_clusters`, `users`, `roles`, `agent_sessions`, `agent_session_runs`, `agent_session_files`, `repair_attempts` and `agent_conflicts`, plus the test-only `workspaces`, `generated_test_suggestions` and `saml_config`. `attachments` is the next candidate: it has no reader, writer or replacement named, and 0030 left its `result_id` pointing at nothing.\n\n**Re-read on 2026-10-23.** Three superseded tables were dropped by migration 0030 (see the progress note above). The remaining dormant tables stay, as decided: BK-1 shipped browser, api and load runs through the existing run pipeline, which reads and writes the existing run tables, and it did not create a reader for any dormant table, so none of them gained a production reader by that work. Building readers for tables no feature needs, only to avoid dropping them, was considered and rejected as work done to close a row rather than for a user; each remaining table is still listed in `docs/quality/capability-justification.md` with the feature that would build its reader.",
+      "removalCondition": "Each of the 2 tables named in `docs/quality/capability-justification.md` (`test_failure_correlations`, `saml_config`) gains a production writer or is deleted in a migration. When the last row of that file is gone the file is deleted with it. The condition names what could happen: a writer being written.",
+      "resolution": "**Taken as debt, with the justification written down.** The row requires each dormant table to gain a reader, a writer, a route, a UI and a test — or a written justification. `docs/quality/capability-justification.md` is that justification: it names all 21 tables, states why each exists and why it is still here, and separates them from the 8 that have production access and the 4 with test-only access.\n\n**The count correction in the summary is the load-bearing part of this disposition.** The plan sized the wave at `~35` tables; the real figure is 21, because `schema/dashboard.ts` defines 33 in total. Two tables the row's own analysis corrects are the ones a grep gets wrong: `schedules` has a reader and two writers in `apps/worker/src/postgres-store.ts` written as **raw SQL** rather than through Drizzle, and `audit_events` is write-only with four production writers. Both are listed in the justification as read-or-written, and neither is a candidate.\n\n**These are debt, not defects, and the distinction is the whole point.** Nothing writes the 21, so nothing can read a wrong value out of them. The cost of leaving them is migration surface and reader confusion, not a wrong number on a screen — which is why this is not a Major open finding against v1.0.0. `locator_suggestions` is called out separately because it has no `updatedAt` column at all: a table with no freshness column has no defined staleness, so any row in it is permanently current by construction. It should be dropped before it is built, and the justification says so.\n\n**Deliberately not closed.** The row is `debt` rather than `fixed` because building twenty-one product surfaces is real work that has not been done. Closing it would record the documentation as the feature.\n\n**Revisited 2026-10-21, in the maintenance pass.** The owner decision was to keep all 21 tables as roadmap surface and drop none, so the row stays `debt`, now with a named owner rather than `unassigned`. The one concrete defect in it is closed: `locator_suggestions` had a mutable `status` and no `updatedAt`, and `0026_locator_suggestions_updated_at.sql` adds the column, pinned by `packages/db/src/schema/schema.test.ts` (which failed on the missing column first) and by the applied-migration list in `tests/integration/src/migrations.test.ts`.\n\n**Revisited 2026-10-22: three of the 21 are gone (ledger MNT-60).** The 2026-10-21 owner decision kept all 21 tables as roadmap surface; for the three the justification file itself called *superseded*, there is no roadmap feature to wait for, so `0030_drop_superseded_tables.sql` drops `results` (replaced by `canonical_run_results`), `blob_shards` (replaced by `runs.read_at`) and `api_keys` (replaced by the installation key). A search of `apps/`, `packages/`, `tools/`, `tests/` and `scripts/` found no reader or writer of them; the dependants (two foreign keys onto `results`, the `migrate-cli` mappings, the tenancy register, schema tests) were removed or redirected in the same change. `capability-justification.md` now counts 30 tables, 19 dormant with no access, and 3 with test-only access.\n\n**What remains: 19 dormant tables, still debt,** all untouched: `suites`, `attachments`, `trends`, `known_failures`, `defect_categories`, `fingerprint_categories`, `nl_query_history`, `failure_taxonomy_rules`, `failure_classifications`, `test_failure_correlations`, `locator_suggestions`, `failure_clusters`, `users`, `roles`, `agent_sessions`, `agent_session_runs`, `agent_session_files`, `repair_attempts` and `agent_conflicts`, plus the test-only `workspaces`, `generated_test_suggestions` and `saml_config`. `attachments` is the next candidate: it has no reader, writer or replacement named, and 0030 left its `result_id` pointing at nothing.\n\n**Re-read on 2026-10-23.** Three superseded tables were dropped by migration 0030 (see the progress note above). The remaining dormant tables stay, as decided: BK-1 shipped browser, api and load runs through the existing run pipeline, which reads and writes the existing run tables, and it did not create a reader for any dormant table, so none of them gained a production reader by that work. Building readers for tables no feature needs, only to avoid dropping them, was considered and rejected as work done to close a row rather than for a user; each remaining table is still listed in `docs/quality/capability-justification.md` with the feature that would build its reader.\n\n**Revisited for plan task 15: fourteen more are gone.** `0066_drop_dormant_tables.sql` drops `suites`, `attachments`, `known_failures`, `nl_query_history`, `failure_taxonomy_rules`, `failure_classifications`, `locator_suggestions`, `roles`, `agent_sessions`, `agent_session_runs`, `agent_session_files`, `generated_test_suggestions`, `repair_attempts` and `agent_conflicts`, which no production code read or wrote. It follows 0030: it refuses to drop a table holding rows unless `lupin.allow_drop_nonempty` is `on`, drops the one key a kept table held (`tests_suite_id_suites_id_fk`) and keeps `tests.suite_id` as an unkeyed pointer, and drops children before parents without `CASCADE`, proved by `tests/integration/src/drop-dormant-tables.test.ts`. `migrate-cli` reports a populated legacy copy of any of them as skipped (`SUPERSEDED_SOURCE_TABLES`). Meanwhile `trends`, `failure_clusters`, `fingerprint_categories`, `defect_categories`, `users` and `workspaces` gained production readers or writers. `schema/dashboard.ts` now defines 18 tables; 16 are read or written. **What remains, still debt:** `test_failure_correlations` (read by `apps/api/src/services/change-risk-service.ts`, no writer yet) and `saml_config` (test-only access).",
       "evidence": [
         {
           "path": "docs/quality/capability-justification.md",
@@ -5484,7 +5484,7 @@
       "status": "fixed",
       "wave": "MAINT-2026-10",
       "summary": "Coverage was above 90% in every one of the five packages and the first honest mutation scores were 88.88 (`shared-contracts`), 83.05 (`reporting`), 88.46 (`auth`), 72.27 (`orchestration`) and 68.90 (`runner-sdk`). The survivors were not noise. The ones worth naming:\n\n- `packages/auth`: a session is accepted at the instant of its expiry (`<=` survived as `<`), and `deleteExpired` kept a session one tick past it (`>` survived as `>=`); the length guard in `verifyCredential` could be replaced by `true`, so a truncated stored hash would throw a `RangeError` out of `timingSafeEqual` instead of failing the login; `isAdmin` (`some`) survived as `every`; and the two 'burn a constant-time comparison' calls in `verifySharedSecret` could be deleted unnoticed, because the observable is a side effect and no test observed it.\n- `packages/shared-contracts`: `isAdminPermission`, which decides who is an administrator, had **no test inside the package** (ten NoCoverage mutants); it was exercised only from `packages/auth`. The repo-relative path rule for drafted files accepted an unanchored drive-letter match and a `||` for `&&`. The SSE frame builder renamed any event whose payload carried a `type`.\n- `packages/orchestration`: five of the nine states' transitions, every terminal row, the minute and hour bounds of `nextOccurrence`, the strictly-after rule, and the `status`/`terminal` fields of `deriveRunState` were each pinned by at most one example.\n- `packages/runner-sdk`: the error classes' names and messages, option validation at `open`, the private-directory diagnosis (`process.getuid?.() ?? null` survived as `&&`, which would turn root's uid 0 into 'no uid' and skip the ownership check), and every state-file validation branch were untested.\n\nNo real defect in shipped behaviour was found: each survivor was a missing assertion, not a wrong result. The remaining survivors are listed honestly in the resolution rather than disabled.",
-      "resolution": "Fixed with behavioural tests only. **No mutant was excluded and no `// Stryker disable` was added.** Scores before and after (`pnpm mutation`, Windows, 2026-10-22): `shared-contracts` 88.88 to 91.43, `reporting` 83.05 (unchanged; no tests added), `auth` 88.46 to 94.23, `orchestration` 72.27 to 96.53, `runner-sdk` 68.90 to 79.11. Recorded in `docs/quality/mutation-baseline.json` and ratcheted by `pnpm mutation:ratchet`.\n\n**What still survives, and why it was left.** Six in `auth` are equivalent mutants: `Buffer.from(x, '')` and `update(x, '')` fall back to UTF-8, and the empty-input guard in `verifySharedSecret` is redundant with the length check that follows it, in result and in the number of comparisons. The seven in `orchestration` are equivalent in the same way (`Set.has` of `null`, `undefined` or a non-string is false whatever the guard in front of it says, and a non-number hour is rejected by the integer check behind its own guard). In `runner-sdk` the survivors are mostly error-message string literals on I/O failure paths and the compaction thresholds; the 75 target is met, so these are the next place to look, not an exclusion.",
+      "resolution": "Fixed with behavioural tests only. **No mutant was excluded and no `// Stryker disable` was added.** Scores before and after (`pnpm mutation`, Windows, 2026-10-22): `shared-contracts` 88.88 to 91.43, `reporting` 83.05 (unchanged; no tests added), `auth` 88.46 to 94.23, `orchestration` 72.27 to 96.53, `runner-sdk` 68.90 to 79.11. Recorded in `docs/quality/mutation-baseline.json` and ratcheted by `pnpm mutation:ratchet`.\n\n**What still survives, and why it was left.** Six in `auth` are equivalent mutants: `Buffer.from(x, '')` and `update(x, '')` fall back to UTF-8, and the empty-input guard in `verifySharedSecret` is redundant with the length check that follows it, in result and in the number of comparisons. The seven in `orchestration` are equivalent in the same way (`Set.has` of `null`, `undefined` or a non-string is false whatever the guard in front of it says, and a non-number hour is rejected by the integer check behind its own guard). In `runner-sdk` the survivors are mostly error-message string literals on I/O failure paths and the compaction thresholds; the 75 target is met, so these are the next place to look, not an exclusion.\n\n**2026-11-11:** the `nextOccurrence` boundary suite was deleted with the function it covered, which nothing outside its tests imported (MNT-177); its evidence entry went with it.",
       "confirmed": true,
       "confirmedOn": "2026-10-22",
       "confirmedBy": "Each new test was written against the surviving mutant it names, and the package was re-mutated: `auth` went from 12 survivors to 6, `orchestration` from 56 to 7.",
@@ -5504,10 +5504,6 @@
         {
           "path": "packages/orchestration/src/state-machine.table.test.ts",
           "asserts": "All 81 `canTransition` pairs and the terminal flag of every state, against a second written-out copy of the table."
-        },
-        {
-          "path": "packages/orchestration/src/schedule.boundaries.test.ts",
-          "asserts": "Minutes 0 and 59 and hours 0 and 23 are accepted, one outside each is refused with its own message, and a clock standing on the occurrence moves to the next day."
         },
         {
           "path": "packages/runner-sdk/src/spool-contract.test.ts",
@@ -5689,6 +5685,7 @@
       "confirmedBy": "`agents.test.ts` pins security and mobile at 501 and `/api/v1/features` derives availability from the tool registry, where neither is registered.",
       "owner": "The repository owner, through the product roadmap. Each domain is a product decision (which tool, on what hardware), not a defect.",
       "removalCondition": "For security: `POST /api/v1/agents/security/run` queues a ZAP run through `apps/api/src/agents/execution-bridge.ts`, the runner image carries a pinned ZAP and advertises the capability, and a test runs it against a local target and asserts the ZAP report becomes canonical results. For mobile: a named tool and a place it can run (a runner host with emulators, or a decision to drop the domain from the contract, which would be a breaking API change). Both are events, not intentions: a route answering 202 and a test.",
+      "resolution": "2026-11-12, security half (plan task 17): the security half now has an adapter but no recorded run. `POST /api/v1/agents/security/scan` queues a ZAP baseline job through the execution bridge (`apps/api/src/agents/security-adapter.ts`, operation `security.zap-baseline`, framework `zap`, capability `zap`, `targetUrl` required, http(s) and no credentials); the runner runs `zap-baseline.py` only, against `RUNNER_ALLOWED_TARGET_URLS`, bounded by the job deadline, and reads the report through the zap-xml adapter (`apps/runner/src/zap-execution.ts`, tested against a fake process); `infra/runners/zap/Dockerfile` can run only the baseline. No runner advertises `zap` by default and no scan against a real target has been recorded, so the row stays debt. Mobile is unchanged.",
       "evidence": [
         {
           "path": "apps/api/src/routes/agents.ts",
@@ -7451,6 +7448,819 @@
         {
           "path": "eslint.config.js",
           "asserts": "Enables the jsx-a11y rules whose `label-has-associated-control` check crashes without the patch, so `pnpm lint` fails if the patch is dropped while the override stays."
+        }
+      ]
+    },
+    {
+      "id": "Q-57",
+      "title": "GET /api/v1/runs served legacy rows oldest first, ahead of the newest runs",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "BRAND-2026-11",
+      "summary": "With a legacy repository mounted, the first page of GET /api/v1/runs prepended RunRepository.listRuns rows in that repository's oldest-first order (asc(runs.startedAt), and insertion order in memory) to the store's newest-first page. On a reporter-fed install the Runs page opened on the oldest run, beneath a header that says newest first. Found 2026-11-09 by reading the local stack's response: eleven runs, ascending by createdAt.",
+      "confirmed": true,
+      "confirmedOn": "2026-11-09",
+      "confirmedBy": "kilo:fail-before-verification",
+      "resolution": "The route sorts the merged first page by createdAt descending, with the store's id tie-break, so both sources read in one order. Later pages are unchanged: they carry only store rows, which the store already orders.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/execution/runs.routes.ts",
+          "asserts": "The merged first page is sorted newest first with the store comparator."
+        },
+        {
+          "path": "apps/api/src/routes/execution/runs-pagination.test.ts",
+          "asserts": "Legacy rows from before and after a store row interleave by time: legacy-new, db-mid, legacy-old."
+        }
+      ]
+    },
+    {
+      "id": "Q-58",
+      "title": "A completed test with no file made its whole run unreadable",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "BRAND-2026-11",
+      "summary": "A runner may complete a job with tests that carry no file. The store keeps the absent file as '', and toCanonicalRun passed it through with `??`, so CanonicalTestResultSchema (file: min(1)) refused it: every read of that run, and every listing containing it, answered 500 RUN_SERIALIZATION_FAILED. Found 2026-11-09 while writing the retry-failed-tests route test.",
+      "confirmed": true,
+      "confirmedOn": "2026-11-09",
+      "confirmedBy": "kilo:fail-before-verification",
+      "resolution": "canonicalTest maps an empty file to null (`||`), which is what the contract means by a test with no file.",
+      "evidence": [
+        {
+          "path": "apps/api/src/execution/canonical.ts",
+          "asserts": "An empty stored file is projected as null."
+        },
+        {
+          "path": "apps/api/src/execution/canonical.test.ts",
+          "asserts": "A test stored with file '' reads back with file null instead of failing the contract."
+        }
+      ]
+    },
+    {
+      "id": "Q-59",
+      "title": "The rendering budget passed two routes it never measured",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "BRAND-2026-11",
+      "confirmed": true,
+      "confirmedOn": "2026-11-10",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "test:render is pr-blocking. Its page observer started LCP at 0, and measurementProblems only refuses a reading that is not a finite number, so a route that emitted no largest-contentful-paint entry read as a perfect 0 ms and passed. The spec also clicked before the page settled, and the browser stops reporting LCP at the first input, so /dashboard and /dashboard/runs/:runId were never measured.",
+      "resolution": "LCP starts as null, so an unreported reading is refused as unmeasured (seen failing on the two routes before the fix). The spec settles before the interaction. All four routes now read 164-216 ms against the 460 ms ceiling.",
+      "evidence": [
+        {
+          "path": "tests/e2e/performance/rendering-budget.spec.ts",
+          "asserts": "An LCP the browser never reported stays null and fails measurementProblems; the interaction happens after the page settles."
+        }
+      ]
+    },
+    {
+      "id": "Q-60",
+      "title": "A test reported as a runner event lost why it failed",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "BRAND-2026-11",
+      "confirmed": true,
+      "confirmedOn": "2026-11-10",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "The PostgreSQL store wrote a test.completed event into the tests row without its error, although normaliseFailure was already imported into that file, so every failure reported through the runner event stream read \"Failed with no message\".",
+      "resolution": "upsertTestRow stores failureOf(payload.error), bounded by normaliseFailure, on completion only.",
+      "evidence": [
+        {
+          "path": "apps/api/src/execution/runner-lifecycle.drizzle.test.ts",
+          "asserts": "A test.completed event carrying error { code, message } reads back with that error."
+        }
+      ]
+    },
+    {
+      "id": "Q-61",
+      "title": "A reporter failure sent in the contract shape lost its message",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "BRAND-2026-11",
+      "confirmed": true,
+      "confirmedOn": "2026-11-10",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "TestCompletedSchema in shared-contracts declares a flat errorMessage, while persistTestEnd read only a nested error { code, message }. A producer written against the published contract had every failure reason dropped.",
+      "resolution": "TestEndPayloadSchema reads errorCode and errorMessage too; the nested error wins when both are sent.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/reporter-failure-shape.test.ts",
+          "asserts": "A failure reason is kept from the nested shape and from the flat contract shape, and the nested one wins."
+        }
+      ]
+    },
+    {
+      "id": "MNT-170",
+      "title": "Any workspace admin could change, rename or remove a quality gate every workspace shares",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "DrizzleQualityGateStore filtered list, get, update and remove by id only, and the gate routes checked the plain admin role. So an admin of any workspace could list every workspace's gates, edit or remove another workspace's scoped gate, and change or remove the installation-wide ones (workspace_id NULL: the default gate and every gate the dashboard creates), with the audit row written to the actor's workspace as anonymous. The measured harm is bounded: the run gate reads quality policies, not these rows, and the readiness threshold (passRateThreshold in scan-history-service.ts) reads only a workspace's own rows, so no verdict changed through this. What was exposed was the gates themselves and their audit trail.",
+      "resolution": "Every store statement is limited to installation rows and the store's own workspace, so another workspace's gate is not found. Creating a gate, and editing or removing an installation gate, needs mayChangeInstallation (the rule install-scoped settings use) and otherwise answers 403 INSTALLATION_ADMIN_REQUIRED. Each gate carries its scope, and Settings offers Save only where it would be accepted. The audit actor is the authenticated caller. Not covered by a test: the composition root's wiring of the two callbacks, which is typechecked but not exercised end to end.",
+      "evidence": [
+        {
+          "path": "apps/api/src/modules/dashboard/dashboard-stores.test.ts",
+          "asserts": "A store bound to one workspace cannot list, read, edit or remove another workspace's gate, on PGlite with every migration, and writes no audit row for the attempt."
+        },
+        {
+          "path": "apps/api/src/modules/dashboard/quality-gates.test.ts",
+          "asserts": "A caller who may not change the installation is refused creating a gate and editing or removing an installation gate, may edit and remove the workspace's own, sees each gate's scope, and is recorded as the authenticated caller."
+        },
+        {
+          "path": "apps/web/src/components/SettingsPages.test.tsx",
+          "asserts": "A workspace admin is offered controls only on the workspace's own gate, is told who changes a shared one, and is not offered the add form."
+        }
+      ]
+    },
+    {
+      "id": "MNT-171",
+      "title": "Run status changes went unaudited in production, could revive a finished run, and dashboard decisions were recorded as anonymous",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "Three defects on the dashboard's write routes. (1) PATCH /api/v1/dashboard/runs/:id/status took its audit sink as an option, and the production composition passed none, so no status change there was ever recorded; when a sink was passed, the actor was the x-actor-id header, which any caller can set. (2) The handler read the run, checked that its status was not terminal, then wrote unconditionally, so a run that finished between the read and the write was moved out of its terminal status, which is what the check exists to prevent. (3) The quarantine routes, and the gate routes before MNT-170, were composed without a caller, so every quarantine creation, approval, rejection, release and removal was recorded as anonymous, although an approval removes a test from the pass rate. Row X-2 recorded (1) as fixed on the strength of a test that passed the sink in by hand.",
+      "resolution": "The audit sink and the caller are required options of the run routes, and the composition passes a DrizzleAuditSink bound to the workspace, which throws rather than swallowing a failed insert. The actor is the authenticated caller (a token is recorded as a service), never a header. patchRun takes ifStatus and is one conditional UPDATE in the Drizzle repository, returning whether a row was written; the route turns a lost race into the same 409 RUN_STATUS_TERMINAL with the status the run is actually in. The quarantine routes take the same caller. Not done: the status write and its audit row are two statements, not one transaction, so a failed audit insert after a successful write answers 500 with the status changed.",
+      "evidence": [
+        {
+          "path": "apps/api/src/modules/dashboard/runs-status.test.ts",
+          "asserts": "The audit row names the authenticated caller and not a forged x-actor-id, records from and to, and a run that finishes between the read and the write is refused with 409 and no audit row."
+        },
+        {
+          "path": "apps/api/src/repositories/drizzle-run-repository.test.ts",
+          "asserts": "On PGlite, patchRun with ifStatus writes nothing when the run has moved on, writes when it has not, and answers false for a missing run."
+        },
+        {
+          "path": "apps/api/src/repositories/in-memory-run-repository.test.ts",
+          "asserts": "The in-memory repository honours ifStatus and reports whether it wrote."
+        },
+        {
+          "path": "apps/api/src/modules/dashboard/dashboard-stores.test.ts",
+          "asserts": "DrizzleAuditSink writes the row under its workspace with the given actor, and throws when the row cannot be written."
+        },
+        {
+          "path": "apps/api/src/modules/dashboard/quarantine.test.ts",
+          "asserts": "Creating, approving, releasing and removing a quarantine entry are each recorded under the authenticated caller."
+        }
+      ]
+    },
+    {
+      "id": "MNT-172",
+      "title": "Outages and corrupt credentials read as \"not configured\", with nothing logged",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "Four places turned a fault into the answer for an absent setting and logged nothing. createGitHubAppTokens collapsed every GitHub refusal (a 401 for a key GitHub no longer accepts, a 403) and every network error into \"no token\", and parsed the stored app outside a try, so a corrupt vault entry threw out of tokenFor instead of answering. The composition root's tokenFor turned a vault or database fault reading a project's token or source into \"no token\". POST /api/v1/projects/:id/delivery/sync answered 202 and dropped a failure of the sync it started. The copilot's explain hid a failed CODEOWNERS read. Each looked healthy to an operator while it was failing.",
+      "resolution": "Each keeps its fallback (the gate verdict is still returned without a post, the explanation without owners) and now reports the cause: the GitHub App names the step and the HTTP status or the error class, never a token or key, and treats a 404 on the installation as the answer it is; a stored app that does not parse is answered as unreadable without throwing; the delivery sync and the copilot log the project and the error; the composition root logs a failed token or source read with the project id. Not covered by a test: the composition root wiring of these logs, which is typechecked only.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/github-app-service.test.ts",
+          "asserts": "A refusal and an unreachable GitHub are each logged with the step and the status or error class, and a stored app that is not JSON answers null and is logged as unreadable instead of throwing."
+        },
+        {
+          "path": "apps/api/src/routes/delivery.test.ts",
+          "asserts": "A sync that fails after its 202 is logged with the project and the error."
+        },
+        {
+          "path": "apps/api/src/copilot/routes.test.ts",
+          "asserts": "An explanation still answers 200 when CODEOWNERS cannot be read, and the failure is logged with the project."
+        }
+      ]
+    },
+    {
+      "id": "MNT-173",
+      "title": "A break-glass sign-in could go unaudited, and every failed audit write was dropped silently",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "The break-glass hook called audit() with void, so the sign-in did not wait for the row, and audit() caught every insert failure with an empty block whose comment said the caller's boundary logged it; no boundary saw it. The one event the operations guide documents as always audited (every use of break-glass) could therefore leave no row, and so could any other audited decision, with nothing on any log.",
+      "resolution": "recordAudit writes the row or throws. The break-glass hook awaits it, and the sign-in route issues a session only once the hook resolves, answering 503 DEPENDENCY_UNAVAILABLE with a fix otherwise. audit() keeps its contract (the decision has been made and stands) but reports a lost row on stderr with the action, resource and workspace.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/auth-sso.test.ts",
+          "asserts": "Under break-glass, a hook that cannot record the use makes the sign-in answer 503 with no session cookie."
+        },
+        {
+          "path": "apps/api/src/services/audit-write.test.ts",
+          "asserts": "recordAudit writes a row and throws when the row is refused; audit never throws and reports the lost row with its action."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-174",
+      "band": "Minor",
+      "title": "The OIDC discovery cache grew without bound, keyed by plaintext client secrets, and the flow cookie was cast",
+      "summary": "createOidcRoutes cached discovery per issuer, client and client secret in a Map that was never evicted, with the plaintext secret as part of the key, so every identity draft an admin tested stayed in memory with its secret for the life of the process. openFlow checked the HMAC and then cast the decoded JSON to Flow, checking only expiresAt.",
+      "resolution": "The key is a SHA-256 digest of the three values, and the cache keeps at most eight configurations, dropping the oldest. The flow cookie is parsed against a schema after its signature checks out, so a signed value missing a part is refused rather than used.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/oidc-cache.test.ts",
+          "asserts": "The cache key holds no secret and differs per secret, the cache never exceeds its bound, and a signed flow missing a part or with a non-numeric expiry is refused."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-175",
+      "band": "Major",
+      "title": "Nothing enforced the one-API-process-per-database assumption that several in-process states rely on",
+      "summary": "The rate limiters, the one-admin-change-at-a-time queue in routes/members.ts (which guards the last-admin rule), the GitHub App token cache and the OIDC discovery cache are correct only with one API process per database, as ADR-006 states. A second process started against the same database was accepted silently, doubling every rate budget and letting two admin changes race the last-admin check.",
+      "resolution": "At boot, with a database, the API takes a session advisory lock with its own key and holds it until shutdown. A second production API is refused with a message naming ADR-006; outside production it warns and starts, because the E2E profile matrix boots an API beside the suite one by design. Not distributed: the state stays in the process, and the lock makes that a checked fact.",
+      "evidence": [
+        {
+          "path": "apps/api/src/infrastructure/single-process.test.ts",
+          "asserts": "The first process holds the lock until release, a second production process is refused, and a second development process is warned and started."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-176",
+      "band": "Minor",
+      "title": "GET /api/v1/schedules answered a literal empty list whatever POST had stored",
+      "summary": "The legacy process-local orchestration routes stored a schedule on POST and answered GET with `{ schedules: [] }`, so a schedule could never be read back. Its test was named \"creates and lists schedules\" and checked only the 200. The family answers 503 in production.",
+      "resolution": "GET answers what the service stored, and the test asserts the listed schedule.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/orchestration.test.ts",
+          "asserts": "A schedule created through POST is listed by GET."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-177",
+      "band": "Minor",
+      "title": "A second, dead scheduler in @lupin/orchestration that threw for a rule its own type allows",
+      "summary": "packages/orchestration/src/schedule.ts exported nextOccurrence, imported by nothing but its own tests, beside the real nextOccurrence in apps/api/src/services/notification-service.ts (croner, with timezones). Its ScheduleRule type allowed hour '*', for which a numeric minute threw 'Invalid hour', and 'step' ignored both fields.",
+      "resolution": "Deleted with its tests, and the package no longer exports it; a test fails if it returns.",
+      "evidence": [
+        {
+          "path": "packages/orchestration/src/orchestration.test.ts",
+          "asserts": "The package exports no nextOccurrence."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-178",
+      "band": "Minor",
+      "title": "Nothing held the flaky leaderboard to the flake-cost model, and the model said they disagreed",
+      "summary": "The insights leaderboard already read flakeCost, but the model's own header still said the leaderboard divided by every appearance and that nothing asserted the two agreed, which a reader of either file would believe. No test held the leaderboard's score, observations, flips and flaky count to the model's, so a later edit to either could split them unseen.",
+      "resolution": "flake-cost.ts names itself the one place the score is computed and lists its readers. insights.test.ts asserts, over runs that include running, unknown and blocked results, that every leaderboard entry carries the model's numbers; a seeded change to the leaderboard's denominator failed it.",
+      "evidence": [
+        {
+          "path": "apps/api/src/execution/insights.test.ts",
+          "asserts": "Every leaderboard entry's score, runs, flips and flaky count equal flakeCost's for that test, including runs with results the model does not observe."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-179",
+      "band": "Minor",
+      "title": "The authz matrix claimed a workspace scope it could not measure",
+      "summary": "docs/quality/authz-matrix.json carried workspaceScoped per route, computed by searching the handler's source for a workspace identifier. Handlers that use a store bound to their workspace at construction (the dashboard runs and quarantine routes) read false, and so did the quality gate routes that really were unscoped (MNT-170), so the column could not tell a leak from a scoped route. 177 of 230 rows read false.",
+      "resolution": "The column is gone from the generator, the committed matrix and the API test, and the matrix says where scope is proved instead: the cross-workspace isolation tests and tenancy-scope.json. The generator test fails if a row carries the claim again.",
+      "evidence": [
+        {
+          "path": "scripts/lib/authz-matrix.test.mjs",
+          "asserts": "A generated row and every committed row carry no workspaceScoped claim."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-180",
+      "band": "Major",
+      "title": "The composition root said the API has no authentication, beside the guards that authenticate it",
+      "summary": "apps/api/src/index.ts said twice that there was no authentication middleware and that the install was open, that anything able to reach the API could read every run and cancel runs, and that the session and key routes minted nothing anybody needed. The same file wires SSO enforcement and break-glass, every route carries a guard (http/access.ts, http/route-access.ts), and LAN mode and the startup, team and enterprise profiles enforce sign-in. apps/web/src/lib/api.ts, apps/web/src/router.ts, a route-manifest test name and the command palette repeated 'the install is open'. A security reviewer reading the composition root first would have been told the wrong posture.",
+      "resolution": "Each statement now gives the real posture: no global middleware, a guard on every route, open only for the solo profile with ACCESS_CONTROL=open on a loopback bind (which the startup policy refuses anywhere else), enforced under LAN mode and every larger profile. No behaviour changed.",
+      "evidence": [
+        {
+          "path": "apps/api/src/startup-policy.ts",
+          "asserts": "checkExposurePolicy refuses ACCESS_CONTROL=open on a non-loopback bind, the condition the rewritten note states."
+        },
+        {
+          "path": "packages/config/src/profiles.test.ts",
+          "asserts": "solo is open and startup, team and enterprise are enforced, as the note says."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-181",
+      "band": "Minor",
+      "title": "The guides and the register under-stated what the product reads and sends",
+      "summary": "site/guide/sending-results.md and README.md listed four upload formats while the door read Allure too; the notifications guide and README left out email, which the dispatcher sends; site/guide/cli.md showed diff-guard only inside a GitLab example and impact not at all in its command list; a comment in report-formats.ts said SARIF had no ingestible format; the register row reporting.lifecycle counted five adapters where there are six; tool.zap read missing while its own text said the parser was wired; and six guides sent readers to Map → Access, Reports, Audit, Members and Deployment, which are under Settings.",
+      "resolution": "Each statement corrected. tool.zap is split into tool.zap (the producer, missing) and tool.zap-import (real). guide-claims.test.mjs reads the upload formats, the channel kinds and the CLI commands from their contracts and fails when a guide omits one; against the guides before this change it failed on Allure, email and diff-guard.",
+      "evidence": [
+        {
+          "path": "scripts/lib/guide-claims.test.mjs",
+          "asserts": "The upload guide names every upload format, the reports guide every channel kind, and the CLI guide every command."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-182",
+      "band": "Minor",
+      "title": "The integration maturity table listed k6 and Bruno as absent and JUnit as the legacy upload",
+      "summary": "apps/api/src/execution/maturity.ts, served at GET /api/v1/integrations/maturity, gave k6 and Bruno level L0, no capability and adapter 'none', although the load and api agents queue jobs for both and the runner executes them; JUnit was described as the legacy reporter upload rather than the junit-xml adapter.",
+      "resolution": "k6 and Bruno name their runner adapters and capabilities at L2, `implemented` rather than `verified` because no run against a real service and no built runner image is recorded. JUnit names junit-xml and the upload door. A test reads the framework each agent queues and fails when its row names no adapter.",
+      "evidence": [
+        {
+          "path": "apps/api/src/execution/maturity.test.ts",
+          "asserts": "Every framework an agent adapter queues has a row with an adapter and capabilities, and JUnit is described by junit-xml."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-183",
+      "band": "Minor",
+      "title": "AGENTS.md and two code comments described a tree that is not this one",
+      "summary": "AGENTS.md named /setup as the first run (it is /dashboard/setup), described a .kilo/command directory with three commands that exists only in an older local history, said Vitest 4 (the catalog is on 5), and left apps/tui out of the overview and the tree. apps/web/src/routes/dashboard/settings.tsx said the admin tabs would be wired in a future task and rendered Appearance meanwhile; they are wired. The header of route-manifest.ts named Delivery as one of five areas; it sits under Health.",
+      "resolution": "Each corrected; the .kilo/command row now says the commands are not in this tree. The coverage-floor table is left as it is: docs-drift holds it to the baseline.",
+      "evidence": [
+        {
+          "path": "apps/web/src/routes/__root.tsx",
+          "asserts": "isFullScreen is /dashboard/setup, the path AGENTS.md now names."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-184",
+      "band": "Major",
+      "title": "Five admin pages had two addresses, and the palette and shortcuts disagreed with the sidebar",
+      "summary": "Access, Members, Audit trail, Deployment and Reports were routed at /dashboard/<page> and at /dashboard/settings/<page>. The command palette offered the old copies to every role, including pages a viewer cannot open; the g d shortcut was labelled Delivery and opened Pull requests; g s and g a opened the old addresses; and \"Can we ship?\" opened Health rather than Home, where the release verdict is.",
+      "resolution": "The old addresses redirect to the Settings page (legacySettingsPath in __root.tsx beforeLoad) and are no longer visible in the manifest. The palette filters routes by the caller role. Every shortcut goes to an address the sidebar uses, and \"Can we ship?\" opens /dashboard/now. The flaky and slow questions stay on Tests, which holds both leaderboards.",
+      "evidence": [
+        {
+          "path": "apps/web/src/navigation-consistency.test.ts",
+          "asserts": "Each old admin address maps to its Settings page; a viewer is offered no admin page and nobody is offered a page twice; every shortcut targets a sidebar address; \"ship\" opens Home."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-185",
+      "band": "Major",
+      "title": "Destructive settings actions took effect on one click",
+      "summary": "Revoking an API token, disabling or removing a member, removing the GitHub App, a project token, a quality gate, a notification channel or a scheduled report all happened on a single click with no confirmation. Deleting a project was the only destructive action that asked.",
+      "resolution": "A ConfirmAction dialog guards each one; revoking a token, removing a member and removing the GitHub App also require the name to be typed. Changing a member role through its select is not confirmed: it is reversible from the same control.",
+      "evidence": [
+        {
+          "path": "apps/web/src/components/ConfirmAction.test.tsx",
+          "asserts": "The action runs only after confirmation, and only once the typed name matches."
+        },
+        {
+          "path": "apps/web/src/components/People.test.tsx",
+          "asserts": "Disable and Remove call the client only after the dialog is confirmed."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-186",
+      "band": "Minor",
+      "title": "About forty internal links reloaded the whole app",
+      "summary": "Links between pages, ButtonLinks among them, were plain anchors. Following one did a full page load: it dropped client state and re-ran every request.",
+      "resolution": "One click handler at the root (useInAppLinks) routes plain clicks on same-origin, non-API links through the router. Modified clicks, target, download, fragments, other origins and /api are left to the browser.",
+      "evidence": [
+        {
+          "path": "apps/web/src/components/InAppLinks.test.tsx",
+          "asserts": "A plain click on an internal link is prevented and navigates in place; new-tab, download, API, external and fragment links are not intercepted."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-187",
+      "band": "Major",
+      "title": "A failed role read and a failed sign-in-methods read were silent",
+      "summary": "useViewerRole turned any failed whoami read into no role, so the admin pages left the sidebar and the palette with no message, as if the caller were a viewer. The sign-in screen turned a failed /api/v1/features read into \"no single sign-on\", so an install with SSO showed only the token field.",
+      "resolution": "useViewerRoleRead reports failed separately from signed out (401 and 403 are an answer); the sidebar says the role could not be read, on the full column and the icon rail, and its retry re-reads for every holder. The sign-in screen says single sign-on could not be checked, with Check again. The Home first-run check stays silent by design: its fallback is staying on Home, which reports its own failed reads.",
+      "evidence": [
+        {
+          "path": "apps/web/src/hooks/useViewerRole.test.ts",
+          "asserts": "A 500 is failed and a retry recovers the role; a 401 is not a failure."
+        },
+        {
+          "path": "apps/web/src/components/SideNav.test.tsx",
+          "asserts": "The sidebar names the failed role read on both widths and clears it on retry."
+        },
+        {
+          "path": "apps/web/src/components/SignIn.test.tsx",
+          "asserts": "A failed sign-in-methods read is said, and checking again offers single sign-on."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-188",
+      "band": "Minor",
+      "title": "The run poll had no backoff and ran in hidden tabs",
+      "summary": "While the run event stream was down, useRuns fetched the run list every five seconds forever: against an API that kept failing, and in a tab nobody was looking at.",
+      "resolution": "The poll is a chain of timeouts: five seconds, doubled for each failure in a row up to a minute. A hidden tab is not polled, and is read once when shown again.",
+      "evidence": [
+        {
+          "path": "apps/web/src/hooks/useRuns.test.tsx",
+          "asserts": "After two failures the next attempt waits ten seconds; a hidden tab makes no request for twenty seconds and one on becoming visible."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-189",
+      "band": "Minor",
+      "title": "Seventeen form controls were hand-styled instead of the library ones",
+      "summary": "The launch form, the quarantine form, the runner and toolbox filters, the runner group menu, the copilot follow-up, the GitHub App key and two checkboxes were raw input, textarea and select elements with local class strings. Each drew its own height and border, and the launch form set outline-none with no focus ring in its place.",
+      "resolution": "Each is Input, Textarea, Select or Checkbox from @lupin/ui, and a test refuses a raw control in application code. Server errors stay one alert per form: the API does not name a field.",
+      "evidence": [
+        {
+          "path": "apps/web/src/form-control-rule.test.ts",
+          "asserts": "No .tsx file under apps/web/src draws a raw input, textarea or select."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-190",
+      "band": "Minor",
+      "title": "Quarantine copy and the artifact list read like placeholders",
+      "summary": "The quarantine page said \"Error Loading Quarantine List\", \"Test Title\", \"Test File\", \"Loading quarantine list...\" and \"Submit\", its empty state repeated its title, and its add error used text-error beside text-danger. The run-detail artifact list showed raw byte counts and three dots after the checksum.",
+      "resolution": "Sentence-case labels, a Quarantine button, an ellipsis, an empty state that says what quarantine does, and text-danger. Artifact sizes go through formatBytes (1.5 KB, 50 MB), and the whole checksum is on hover.",
+      "evidence": [
+        {
+          "path": "apps/web/src/routes/dashboard/quarantine.test.tsx",
+          "asserts": "The loading, error, empty and form copy is in sentences and names its action."
+        },
+        {
+          "path": "apps/web/src/lib/format.test.ts",
+          "asserts": "formatBytes reads byte counts in binary steps with at most one decimal."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-191",
+      "band": "Minor",
+      "title": "Nine tables had no name, the artifact list scrolled, and run detail was 1,135 lines",
+      "summary": "Nine data tables had neither an aria-label nor a caption, so a screen reader listed them unnamed: the quarantine list, the project quarantine table, the score matrix, four gap tables, the analytics days and the metric readings. The run-detail artifact list was one scrolling region against the no-scroll rule every other list follows. routes/dashboard/run-detail.tsx was 1,135 lines, and ten more components were over 600.",
+      "resolution": "Each table is named, and a rule test refuses an unnamed one. The artifact list is paged with its range stated. run-detail.tsx is split along its panels into components/run-detail/evidence.tsx and panels.tsx (336, 415 and 407 lines). The other ten are held by a size ratchet rather than split in this change: none may grow, no new file may pass 600, and a ceiling leaves the list once its file is under the limit.",
+      "evidence": [
+        {
+          "path": "apps/web/src/table-name-rule.test.ts",
+          "asserts": "Every Table under apps/web/src has an aria-label or a caption."
+        },
+        {
+          "path": "apps/web/src/component-size.test.ts",
+          "asserts": "No component is over 600 lines or its recorded ceiling, and a ceiling is dropped once its file fits."
+        },
+        {
+          "path": "apps/web/src/routes/dashboard/run-detail.test.tsx",
+          "asserts": "Forty artifacts are paged, the range is stated, and Next moves the page."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-192",
+      "band": "Minor",
+      "title": "The register cited a component nothing mounted as evidence for a real capability",
+      "summary": "reporting.explorer was real on the strength of apps/web/src/components/dashboard/RunExplorer.tsx, which only its own test and the axe sweep rendered. The gate that knew it was dead checked documents calling things unused, not register rows citing them; and it did not count a lazy import() as a use, so five routed pages would have read as dead too.",
+      "resolution": "RunExplorer, its test, its axe case and its fixture are deleted. The row now cites the runs list, run detail and quarantine screens and their tests, and says the canonical result route has no screen. docs-paths refuses a real row citing a web component only its own test mounts, and counts a lazy import() as a use.",
+      "evidence": [
+        {
+          "path": "scripts/lib/docs-paths.test.mjs",
+          "asserts": "No real register row cites an apps/web component that only its own test imports; a lazy import() is a use."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-193",
+      "band": "Major",
+      "title": "The drizzle snapshots stopped 55 migrations ago",
+      "summary": "packages/db/drizzle/meta held snapshots up to 0004 while the journal reached 0059; every later migration was written by hand. pnpm db:generate would have diffed the schema module against the 0004 snapshot and written every one of those migrations again, and pnpm db:check, which reads only the snapshots, was checking a schema from September.",
+      "resolution": "drizzle/meta/0059_snapshot.json is generated from the schema module, chained to the 0004 snapshot, and drizzle-kit generate now reports no changes. A test holds the newest snapshot to the newest journal entry and to the schema module, and proves it can see a difference. The schema module itself is held to the migration graph by the existing constraints and integration suites.",
+      "evidence": [
+        {
+          "path": "packages/db/src/schema/snapshot.test.ts",
+          "asserts": "The newest snapshot belongs to the newest journal entry, and generateMigration between it and the schema module is empty."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-194",
+      "band": "Major",
+      "title": "The worker sent 26 hand-written queries nothing checked against the schema",
+      "summary": "apps/worker/src/postgres-store.ts talks to PostgreSQL through pg with hand-typed rows, and its tests stub the pool. A column renamed in a migration still typechecked there and would have failed only when the worker ran the query in production.",
+      "resolution": "An integration test reads every query literal from the store and PREPAREs it against the real migration graph in PGlite, which resolves every table, column, function and parameter type without executing anything. It also refuses a query built at run time, which it could not check. Moving the store onto Drizzle was not done: the check gives the same protection without rewriting the lease and recovery queries.",
+      "evidence": [
+        {
+          "path": "tests/integration/src/worker-sql.test.ts",
+          "asserts": "Every statement in postgres-store.ts prepares against the migrated schema; a renamed column is refused."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-195",
+      "band": "Minor",
+      "title": "Dependabot was told to skip the typescript-eslint version the catalog installs",
+      "summary": "pnpm-workspace.yaml pinned typescript-eslint to 8.72.1 under a comment saying 8.72.1 runs lint out of memory and 8.72.0 lints clean, and .github/dependabot.yml ignored 8.72.1 for the same reason. 5b8a912e had moved the pin to 8.72.1 and given the root lint and the complexity gate a 6 GB heap, because the tree had outgrown 4 GB on 8.72.0 as well, and left both comments and the ignore describing the reversed decision.",
+      "resolution": "The catalog comment says what happened and why 8.72.1 stays (it lints within the 6 GB heap; return to a caret range when typescript-eslint#13109 is fixed), and the ignore is removed. A test refuses a Dependabot version ignore that names the version the catalog pins exactly.",
+      "evidence": [
+        {
+          "path": "scripts/lib/dependabot-ignores.test.mjs",
+          "asserts": "No Dependabot ignore names the exact version the catalog installs."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-196",
+      "band": "Major",
+      "title": "Compose and CI images were pinned by tag only, and nothing watched the compose files",
+      "summary": "postgres, seaweedfs, signal-cli-rest-api and cloudflared in infra/compose, and the postgres service image in five CI jobs, were pinned by tag, which the publisher can move. Dependabot watched the Dockerfiles but not /infra/compose.",
+      "resolution": "Each is pinned by tag and the registry index digest read on 2026-11-11. Dependabot watches /infra/compose with the docker-compose ecosystem. Tests refuse an unpinned third-party compose image, hold the CI postgres to the compose pin (Dependabot cannot update a workflow service image), and require the Dependabot entry.",
+      "evidence": [
+        {
+          "path": "scripts/lib/compose-contract.test.mjs",
+          "asserts": "Every third-party compose image is pinned by digest, the CI postgres matches the compose pin, and Dependabot watches /infra/compose."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "id": "MNT-197",
+      "band": "Major",
+      "title": "A reboot left the install down, and no service had a resource limit",
+      "summary": "In infra/compose/docker-compose.unified.yml only signal and cloudflared had a restart policy, so a host reboot or a crash left PostgreSQL, the API, the worker, the runner, the web and the edge stopped. No service had a memory or CPU limit, so a runaway runner could starve PostgreSQL. The web and edge images declared no HEALTHCHECK, and the edge started once web had merely started.",
+      "resolution": "Every long-running service has restart: unless-stopped, a mem_limit and a cpus limit sized for the single-node reference install and overridable in an override file; the one-shot migrate keeps restart: no. The web and edge images declare a HEALTHCHECK and the edge waits for a healthy web. Tests hold all three. The images were not rebuilt here: the Docker engine was not running.",
+      "evidence": [
+        {
+          "path": "scripts/lib/compose-contract.test.mjs",
+          "asserts": "Every service but migrate has restart, mem_limit and cpus; the api, worker, runner, web and edge images declare a HEALTHCHECK."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-198",
+      "title": "Six dependencies shared by several packages were declared outside the catalog",
+      "summary": "pglite, tsx, axe-core, vitest-axe and two testing-library packages each carried their own range in two to four package.json files.",
+      "resolution": "Each is declared once in the catalog and referenced as catalog:; no resolved version changed.",
+      "evidence": [
+        {
+          "path": "pnpm-workspace.yaml",
+          "asserts": "The six entries are in the catalog block."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-199",
+      "title": "Local working state was neither tracked nor ignored",
+      "summary": "semantic-review/ and .worktrees/ could be committed by git add, and the root helper scripts were ignored only through one clone's .git/info/exclude.",
+      "resolution": ".gitignore ignores them for every clone; .kiro/ stays trackable as project configuration.",
+      "evidence": [
+        {
+          "path": ".gitignore",
+          "asserts": "The block for local working state."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-200",
+      "title": "Three tests waited on the real clock",
+      "summary": "The audit export test slept 250 ms, and two score-banner tests slept 20 ms, to wait for work they could await directly.",
+      "resolution": "Each waits on the read or the database round trip instead; seeded defects still fail them.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/audit.test.ts",
+          "asserts": "A stream that reads ahead is caught without a timed wait."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-201",
+      "title": "A nightly that produced no quality report was green",
+      "summary": "quality:baseline printed its table only to the log, and the upload used if-no-files-found: ignore.",
+      "resolution": "The table is written to var/quality-baseline.json and the upload fails when it is missing.",
+      "evidence": [
+        {
+          "path": ".github/workflows/nightly.yml",
+          "asserts": "The quality-report upload uses if-no-files-found: error."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-202",
+      "title": "CI built the workspace twice per commit",
+      "summary": "unit-and-coverage rebuilt from nothing what quality had already built for pnpm typecheck.",
+      "resolution": "Both jobs share turbo's cache keyed on the commit alone, with no fallback key, so no other commit's test results can be replayed.",
+      "evidence": [
+        {
+          "path": "scripts/lib/ci-turbo-cache.test.mjs",
+          "asserts": "Both jobs restore the cache by commit, with no restore-keys."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Major",
+      "id": "MNT-203",
+      "title": "The default quality gate did not reach release readiness, and its page said it failed runs",
+      "summary": "Readiness read only gate rows owned by the workspace, but the default gate is installation-wide, so editing it changed nothing. The page said a run that misses its gate is marked failed; nothing does that.",
+      "resolution": "Readiness falls back to the installation default gate after the project and workspace ones. The page says the gate is the readiness bar and that a run's verdict comes from its quality policy.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/pass-rate-threshold.test.ts",
+          "asserts": "The installation default applies, a workspace's own wins, another workspace's never counts."
         }
       ]
     }

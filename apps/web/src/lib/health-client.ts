@@ -10,6 +10,15 @@ import {
   ProjectQuarantineSchema,
   QuarantinePolicySchema,
   ScorecardSchema,
+  PaceReportSchema,
+  PortfolioPhasesSchema,
+  RepositoryPhasesSchema,
+  BriefingResponseSchema,
+  type BriefingResponse,
+  PortfolioShapeSchema,
+  ScopedShapeSchema,
+  type PortfolioShape,
+  type ScopedShape,
   type FindingSeverity,
   type FindingState,
   type HealthDimension,
@@ -24,6 +33,9 @@ import {
   type TriageFindingBody,
   type PortfolioHeatmap,
   type Scorecard,
+  type PaceReport,
+  type PortfolioPhases,
+  type RepositoryPhases,
 } from '@lupin/shared-contracts';
 import { parse } from './qa-client.js';
 
@@ -49,6 +61,26 @@ export interface HealthClient {
   getHeatmap(): Promise<PortfolioHeatmap>;
   /** The test-effectiveness scorecard: mutation score, diff coverage, flakes and causes. */
   getTestEffectiveness(projectId: string): Promise<Scorecard>;
+  /** Whether testing keeps up with the code: weekly pace and the untested-change debt. */
+  getPace(projectId: string, weeks?: number): Promise<PaceReport>;
+  /** Each SDLC phase across the repository's changes, the bottleneck, and what is stuck. */
+  getPhases(projectId: string, days?: number): Promise<RepositoryPhases>;
+  /** Every repository's shape per SDLC phase, worst first. */
+  getPortfolioPhases(days?: number): Promise<PortfolioPhases>;
+  /**
+   * What happened over the window, every line cited: one repository, or the portfolio when
+   * `projectId` is null. `narrate` asks the configured model to reword it, held to its lines.
+   */
+  getBriefing(
+    projectId: string | null,
+    options?: { days?: number; narrate?: boolean },
+  ): Promise<BriefingResponse>;
+  /** Good or bad shape, and how fresh the evidence is: one repository. */
+  getShape(projectId: string): Promise<ScopedShape>;
+  /** One pull request's shape. Refused when the delivery sync has not read it. */
+  getPullRequestShape(projectId: string, number: number): Promise<ScopedShape>;
+  /** The workspace's shape, and every repository's, worst first. */
+  getPortfolioShape(): Promise<PortfolioShape>;
   getHealth(projectId: string): Promise<ProjectHealth>;
   getFindings(projectId: string, query?: FindingQuery): Promise<HealthFindingsPage>;
   getHistory(projectId: string, days: number): Promise<HealthHistory>;
@@ -66,8 +98,14 @@ export interface HealthClient {
     name: string;
     role: TokenRole;
     projectId?: string;
+    /** Days until it stops working; omitted, never. */
+    expiresInDays?: number;
+    /** A subset of the role's permissions (plan task 7); omitted, the whole role. */
+    scopes?: string[];
   }): Promise<{ token: string; summary: AccessTokenSummary }>;
   revokeToken(id: string): Promise<AccessTokenSummary>;
+  /** Issues a successor and ends the old token after a day's grace (plan task 6). */
+  rotateToken?(id: string): Promise<{ token: string; summary: AccessTokenSummary }>;
   /** Issues a six-digit code that pairs one device. Admin only. */
   issuePairingCode(body: { deviceName: string; role: 'viewer' | 'operator' }): Promise<PairingCode>;
   /** Spends a pairing code: this browser is signed in as the code's role. */
@@ -130,8 +168,33 @@ export const AccessTokenSummarySchema = z.object({
   createdAt: z.string(),
   lastUsedAt: z.string().nullable(),
   revokedAt: z.string().nullable(),
+  /** Absent from an older API, and then read as never. */
+  expiresAt: z.string().nullable().optional(),
+  /** Absent from an older API, and then read as the whole role. */
+  scopes: z.array(z.string()).nullable().optional(),
 });
 export type AccessTokenSummary = z.infer<typeof AccessTokenSummarySchema>;
+
+/**
+ * The permissions each role may be scoped down to. The API's `ROLE_PERMISSIONS` decides; this
+ * copy only chooses which boxes to offer, and a box the API refuses is reported as an error.
+ */
+export const ROLE_SCOPES: Readonly<Record<Exclude<TokenRole, 'uploader'>, readonly string[]>> = {
+  viewer: ['runs:read', 'tests:read', 'settings:read'],
+  operator: ['runs:read', 'runs:write', 'tests:read', 'tests:write', 'settings:read', 'ai:use'],
+  admin: [
+    'runs:read',
+    'runs:write',
+    'tests:read',
+    'tests:write',
+    'settings:read',
+    'settings:write',
+    'vault:read',
+    'vault:write',
+    'ai:use',
+    'connectors:manage',
+  ],
+};
 
 export const PairingCodeSchema = z.object({
   id: z.string(),
@@ -188,6 +251,21 @@ export function createHealthClient(baseUrl = '', fetchImpl: typeof fetch = fetch
     getHeatmap: () => get('/api/v1/portfolio/heatmap', PortfolioHeatmapSchema),
     getTestEffectiveness: (projectId) =>
       get(`${project(projectId)}/test-effectiveness/scorecard`, ScorecardSchema),
+    getPhases: (projectId, days = 30) =>
+      get(`${project(projectId)}/phases?days=${String(days)}`, RepositoryPhasesSchema),
+    getPortfolioPhases: (days = 30) =>
+      get(`/api/v1/portfolio/phases?days=${String(days)}`, PortfolioPhasesSchema),
+    getBriefing: (projectId, { days = 7, narrate = false } = {}) =>
+      get(
+        `${projectId === null ? '/api/v1/portfolio' : project(projectId)}/briefing?days=${String(days)}&narrate=${String(narrate)}`,
+        BriefingResponseSchema,
+      ),
+    getShape: (projectId) => get(`${project(projectId)}/shape`, ScopedShapeSchema),
+    getPullRequestShape: (projectId, number) =>
+      get(`${project(projectId)}/pull-requests/${String(number)}/shape`, ScopedShapeSchema),
+    getPortfolioShape: () => get('/api/v1/portfolio/shape', PortfolioShapeSchema),
+    getPace: (projectId, weeks = 8) =>
+      get(`${project(projectId)}/pace?weeks=${String(weeks)}`, PaceReportSchema),
     getHealth: (projectId) => get(`${project(projectId)}/health`, ProjectHealthSchema),
     getFindings: (projectId, query = {}) =>
       get(`${project(projectId)}/health/findings${search(query)}`, HealthFindingsPageSchema),
@@ -228,6 +306,12 @@ export function createHealthClient(baseUrl = '', fetchImpl: typeof fetch = fetch
       post(
         '/api/v1/access-tokens',
         body,
+        z.object({ token: z.string(), summary: AccessTokenSummarySchema }),
+      ),
+    rotateToken: (id) =>
+      post(
+        `/api/v1/access-tokens/${encodeURIComponent(id)}/rotate`,
+        {},
         z.object({ token: z.string(), summary: AccessTokenSummarySchema }),
       ),
     getSettings: (projectId) => get(`${project(projectId)}/health/settings`, HealthSettingsSchema),

@@ -1,13 +1,18 @@
 import React from 'react';
 import { Outlet, createRootRoute, redirect, useRouterState } from '@tanstack/react-router';
-import { BottomTabBar, NavBar, SectionTabs } from '../components/NavBar.js';
+import { BottomTabBar, NavBar } from '../components/NavBar.js';
+import { SideNav } from '../components/SideNav.js';
+import { SkipLink } from '../components/SkipLink.js';
 import { ThemeProvider } from '../theme/ThemeProvider.js';
 import { GlobalCommandPalette } from '../components/GlobalCommandPalette.js';
+import { CopilotProvider } from '../components/CopilotPanel.js';
 import { ToastProvider } from '../components/Toasts.js';
 import { Shortcuts } from '../components/Shortcuts.js';
 import { PreferencesProvider } from '../theme/preferences.js';
 import { createHealthClient } from '../lib/health-client.js';
 import { PageContent } from '../components/PageContent.js';
+import { documentTitleFor } from '../lib/document-title.js';
+import { useInAppLinks } from '../components/InAppLinks.js';
 
 export const Route = createRootRoute({
   /**
@@ -27,13 +32,38 @@ export const Route = createRootRoute({
    */
   beforeLoad: ({ location }) => {
     if (location.pathname === '/') throw redirect({ to: '/dashboard/now' });
+    if (location.pathname === '/setup') throw redirect({ to: '/dashboard/setup' });
+    // One address per page (ledger MNT-184): a bookmark to an old admin path keeps working.
+    const settings = legacySettingsPath(location.pathname);
+    if (settings !== null) throw redirect({ to: settings, search: location.search as never });
   },
   component: RootComponent,
 });
 
+/** The five admin pages that moved under Settings, from their old top-level paths. */
+const MOVED_TO_SETTINGS = ['access', 'members', 'audit', 'deployment', 'reports'] as const;
+
+/** The Settings address for an old top-level admin path, or `null` for any other path. */
+export function legacySettingsPath(pathname: string): string | null {
+  const page = /^\/dashboard\/([a-z]+)\/?$/u.exec(pathname)?.[1];
+  return page !== undefined && (MOVED_TO_SETTINGS as readonly string[]).includes(page)
+    ? `/dashboard/settings/${page}`
+    : null;
+}
+
+/** Paths drawn without the app frame. */
+export function isFullScreen(pathname: string): boolean {
+  return pathname === '/dashboard/setup';
+}
+
 function RootComponent() {
+  // Every link to a page of this app navigates in place (ledger MNT-186).
+  useInAppLinks();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const health = React.useMemo(() => createHealthClient(), []);
+  React.useEffect(() => {
+    document.title = documentTitleFor(pathname);
+  }, [pathname]);
   /*
    * **The viewport is the page.** `h-dvh` and `overflow-hidden` on the frame, and each
    * screen is laid out into what is left — `PageFrame` fills it and panels page their
@@ -52,23 +82,45 @@ function RootComponent() {
     <ThemeProvider>
       <PreferencesProvider>
         <ToastProvider>
-          <div className="relative flex h-dvh flex-col overflow-hidden bg-surface-sunken text-fg">
-            <NavBar />
-            <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 sm:px-6 sm:py-6">
-              {/*
-               * Secondary chrome: focus mode hides it (index.css). The attribute is on the
-               * navs themselves, not on a wrapper here — a wrapper rendered on a page with
-               * no tab row was an empty first child of <main>.
-               */}
-              <SectionTabs />
-              <PageContent health={health} pathname={pathname}>
-                <Outlet />
-              </PageContent>
-            </main>
-            <BottomTabBar />
-          </div>
-          <GlobalCommandPalette />
-          <Shortcuts />
+          <CopilotProvider>
+            {isFullScreen(pathname) ? (
+              // First-run setup stands alone: no sidebar, no bars, one step on the shell. Held to
+              // the viewport like the app frame, with `main` the region that scrolls, so a long
+              // step never makes the document scroll (the no-scroll contract).
+              <div className="relative flex h-dvh overflow-hidden bg-surface-sunken bg-shell text-fg">
+                <SkipLink />
+                <main
+                  id="main"
+                  tabIndex={-1}
+                  data-frame="full-screen"
+                  className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 outline-none sm:px-6"
+                >
+                  <Outlet />
+                </main>
+              </div>
+            ) : (
+              <div className="relative flex h-dvh overflow-hidden bg-surface-sunken bg-shell text-fg">
+                <SkipLink />
+                {/* From `lg` up the sidebar is the chrome: every section and tab, fixed beside the page. */}
+                <SideNav />
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                  <NavBar />
+                  <main
+                    id="main"
+                    tabIndex={-1}
+                    className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 outline-none sm:px-6 sm:py-6"
+                  >
+                    <PageContent health={health} pathname={pathname}>
+                      <Outlet />
+                    </PageContent>
+                  </main>
+                  <BottomTabBar />
+                </div>
+              </div>
+            )}
+            <GlobalCommandPalette />
+            <Shortcuts />
+          </CopilotProvider>
         </ToastProvider>
       </PreferencesProvider>
     </ThemeProvider>

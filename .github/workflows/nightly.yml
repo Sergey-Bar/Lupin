@@ -77,7 +77,7 @@ jobs:
     continue-on-error: true
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16-alpine@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
         env:
           POSTGRES_USER: lupin
           POSTGRES_DB: lupin
@@ -214,8 +214,13 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: quality-report
-          path: var/quality-*
-          if-no-files-found: ignore
+          # `error`, not `ignore` (ledger MNT-201): with no report the job fails and the run
+          # shows it, instead of uploading nothing. The job is continue-on-error, so it is
+          # reported, not blocking.
+          path: |
+            var/quality-baseline.json
+            var/quality-*
+          if-no-files-found: error
           retention-days: 30
 
   mutation:
@@ -280,7 +285,7 @@ jobs:
     # are trustworthy enough to block a pull request.
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16-alpine@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
         env:
           POSTGRES_USER: lupin
           POSTGRES_DB: lupin

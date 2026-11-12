@@ -112,31 +112,62 @@ export function PageBody({
   );
 }
 
-/** A page's title row: the `h1`, one line of context, and the page's actions on the right. */
+/**
+ * A page's head, Codex-style: no visible title. The sidebar already marks where you are, so a
+ * large heading repeating the tab you just clicked is noise. The screen's name stays as an `h1`
+ * a screen reader announces (and the outline and the skip link rely on); what remains visible
+ * is one quiet row with the page's context and its actions, and nothing at all when it has
+ * neither, so the status band is the first thing on the page.
+ */
 export function PageHeader({
   title,
   subtitle,
   actions,
+  visibleTitle = false,
 }: {
   title: string;
   subtitle?: React.ReactNode;
   actions?: React.ReactNode;
+  /** Shown, not hidden: for a title that is content (Home's greeting), not a tab's name. */
+  visibleTitle?: boolean;
 }): React.ReactElement {
-  return (
-    <header className="flex shrink-0 flex-wrap items-end justify-between gap-x-3 gap-y-2">
-      <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{title}</h1>
+  // One row: the context or the shown title at the start, the page's controls at the end, and
+  // `pe-12` kept clear for the page guide's icon, which `PageContent` draws on this row.
+  const row = 'flex min-h-10 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 pe-12';
+  const controls =
+    actions === undefined ? null : (
+      <div className="flex max-w-full flex-wrap items-center gap-2">{actions}</div>
+    );
+  if (visibleTitle) {
+    return (
+      <header className="contents">
+        <div data-page-toolbar="" className={row}>
+          <h1 className="text-2xl font-semibold tracking-tight text-balance">{title}</h1>
+          {controls}
+        </div>
         {subtitle === undefined ? null : (
-          <div
-            className="mt-0.5 max-w-measure text-sm leading-relaxed text-fg-muted"
-            title={typeof subtitle === 'string' ? subtitle : undefined}
-          >
-            {subtitle}
-          </div>
+          <div className="-mt-2 max-w-measure text-sm text-fg-muted">{subtitle}</div>
         )}
-      </div>
-      {actions === undefined ? null : (
-        <div className="flex max-w-full flex-wrap items-center gap-2">{actions}</div>
+      </header>
+    );
+  }
+  return (
+    <header className="contents">
+      <h1 className="sr-only">{title}</h1>
+      {subtitle === undefined && actions === undefined ? null : (
+        <div data-page-toolbar="" className={row}>
+          {subtitle === undefined ? (
+            <span />
+          ) : (
+            <div
+              className="min-w-0 max-w-measure truncate text-sm text-fg-muted"
+              title={typeof subtitle === 'string' ? subtitle : undefined}
+            >
+              {subtitle}
+            </div>
+          )}
+          {controls}
+        </div>
       )}
     </header>
   );

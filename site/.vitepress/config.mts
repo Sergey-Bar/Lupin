@@ -1,6 +1,18 @@
 import { defineConfig } from 'vitepress';
 import { translations, githubUrl } from './locales';
 
+/*
+ * Share metadata. A crawler does not resolve a relative URL, so the preview image is absolute
+ * when `SITE_URL` (the Pages origin, e.g. https://owner.github.io) is set, which the deploy
+ * workflow does. Locally it falls back to a path under the base.
+ */
+const SITE_BASE = process.env.SITE_BASE ?? '/';
+const SITE_URL = process.env.SITE_URL ?? '';
+const SITE_TITLE = 'Lupin: test evidence and release decisions, self-hosted';
+const SITE_DESCRIPTION =
+  'A self-hosted QA control plane for test evidence, quality gates and flaky-test quarantine';
+const OG_IMAGE = `${SITE_URL}${SITE_BASE}og-image.png`;
+
 export default defineConfig({
   title: 'Lupin',
   appearance: false,
@@ -13,10 +25,21 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#FAFAF9', media: '(prefers-color-scheme: light)' }],
     ['meta', { name: 'theme-color', content: '#101114', media: '(prefers-color-scheme: dark)' }],
     ['meta', { property: 'og:site_name', content: 'Lupin' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:title', content: SITE_TITLE }],
+    ['meta', { property: 'og:description', content: SITE_DESCRIPTION }],
+    ['meta', { property: 'og:image', content: OG_IMAGE }],
+    ['meta', { property: 'og:image:width', content: '1200' }],
+    ['meta', { property: 'og:image:height', content: '630' }],
     [
-      'link',
-      { rel: 'icon', type: 'image/svg+xml', href: `${process.env.SITE_BASE ?? '/'}favicon.svg` },
+      'meta',
+      {
+        property: 'og:image:alt',
+        content: 'The Lupin wordmark and the line "Know what broke. Know whether to ship."',
+      },
     ],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${SITE_BASE}favicon.svg` }],
   ],
   locales: Object.fromEntries(
     translations.map((copy) => [
@@ -41,18 +64,16 @@ export default defineConfig({
       },
     ]),
   ),
-  description:
-    'A self-hosted QA control plane for test evidence, quality gates and flaky-test quarantine',
+  description: SITE_DESCRIPTION,
   // Mermaid diagrams on the guide pages are rendered as code blocks; the source is the
   // diagram, and GitHub renders the same block natively.
   // A GitHub project page is served from `/<repo>/`, so the base has to be set or
   // every asset URL resolves one level too high and the site renders unstyled.
   //
-  // Left unset by default because **no deployment exists yet** — no workflow
-  // builds or publishes this package. `SITE_BASE` is the input a deploy workflow
-  // will pass, and a build that renders unstyled is the visible failure if it
-  // ever forgets to.
-  base: process.env.SITE_BASE ?? '/',
+  // Defaults to `/` for local work. `.github/workflows/docs.yml` publishes this site to
+  // GitHub Pages and passes `SITE_BASE=/<repo>/` (and `SITE_URL`, for the share image);
+  // a build that renders unstyled is the visible failure if it ever forgets to.
+  base: SITE_BASE,
   // `dist`, not VitePress's default `.vitepress/dist`.
   //
   // Two existing rules then cover the output without being extended: turbo's
@@ -96,44 +117,43 @@ export default defineConfig({
      */
     sidebar: [
       {
-        text: 'Guide',
-        collapsed: true,
+        text: 'Get started',
         items: [
           { text: 'Start here · choose your goal', link: '/guide/' },
-          { text: 'Words explained', link: '/guide/glossary' },
           { text: 'Install', link: '/guide/install' },
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'Sending results', link: '/guide/sending-results' },
+          { text: 'Choose a profile', link: '/guide/profiles' },
+        ],
+      },
+      {
+        text: 'Use Lupin',
+        collapsed: false,
+        items: [
           { text: 'Core concepts', link: '/guide/concepts' },
           { text: 'Quality gates and quarantine', link: '/guide/quality-gates' },
-          {
-            text: 'More product topics',
-            collapsed: true,
-            items: [
-              { text: 'Choose a profile', link: '/guide/profiles' },
-              { text: 'Repository health', link: '/guide/repository-health' },
-              { text: 'Delivery performance', link: '/guide/delivery-performance' },
-              { text: 'GitHub command center', link: '/guide/github-command-center' },
-              { text: 'AI-written code', link: '/guide/ai-code' },
-              { text: 'Agent quality', link: '/guide/agents' },
-              { text: 'Issues and test proposals', link: '/guide/issues-and-test-proposals' },
-              { text: 'Send results from any CI (CLI)', link: '/guide/cli' },
-              { text: 'How Lupin compares', link: '/guide/compare' },
-              { text: 'Ask your editor (MCP)', link: '/guide/mcp' },
-              { text: 'Serve your network (LAN mode)', link: '/guide/lan-mode' },
-              { text: 'Reach it from anywhere (Cloudflare)', link: '/guide/remote-cloudflare' },
-              { text: 'Scheduled reports', link: '/guide/notifications' },
-            ],
-          },
-          {
-            text: 'Behind the product',
-            collapsed: true,
-            items: [
-              { text: 'How this repository tests itself', link: '/guide/testing-strategy' },
-              { text: 'How this project is maintained', link: '/guide/maintenance' },
-              { text: 'The design language', link: '/guide/design-language' },
-            ],
-          },
+          { text: 'Repository health', link: '/guide/repository-health' },
+          { text: 'Delivery performance', link: '/guide/delivery-performance' },
+          { text: 'Scheduled reports', link: '/guide/notifications' },
+          { text: 'AI-written code', link: '/guide/ai-code' },
+          { text: 'Change risk', link: '/guide/change-risk' },
+          { text: 'Phases, pace and shape', link: '/guide/phases-and-pace' },
+          { text: 'The briefing', link: '/guide/briefing' },
+          { text: 'Agent quality', link: '/guide/agents' },
+          { text: 'Issues and test proposals', link: '/guide/issues-and-test-proposals' },
+          { text: 'How Lupin compares', link: '/guide/compare' },
+        ],
+      },
+      {
+        text: 'Integrations',
+        collapsed: true,
+        items: [
+          { text: 'Send results from any CI (CLI)', link: '/guide/cli' },
+          { text: 'Embedded and firmware QA', link: '/guide/embedded' },
+          { text: 'GitHub command center', link: '/guide/github-command-center' },
+          { text: 'Ask your editor (MCP)', link: '/guide/mcp' },
+          { text: 'Serve your network (LAN mode)', link: '/guide/lan-mode' },
+          { text: 'Reach it from anywhere (Cloudflare)', link: '/guide/remote-cloudflare' },
         ],
       },
       {
@@ -141,14 +161,18 @@ export default defineConfig({
         collapsed: true,
         items: [
           { text: 'Reference', link: '/pages/' },
+          { text: 'Words explained', link: '/guide/glossary' },
           { text: 'Architecture', link: '/architecture' },
           { text: 'Operations', link: '/operations' },
         ],
       },
       {
-        text: 'Status',
+        text: 'Project',
         collapsed: true,
         items: [
+          { text: 'How this repository tests itself', link: '/guide/testing-strategy' },
+          { text: 'How this project is maintained', link: '/guide/maintenance' },
+          { text: 'The design language', link: '/guide/design-language' },
           { text: 'Quality', link: '/pages/quality/' },
           { text: 'Capabilities', link: '/pages/capabilities' },
           { text: 'Findings', link: '/pages/quality/findings' },

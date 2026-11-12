@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { QaClient } from '../lib/qa-client.js';
@@ -10,6 +10,7 @@ import { ConnectRepository } from './ConnectRepository.js';
 import { ProjectsSettingsPage, QualityGatesSettingsPage, describeGate } from './SettingsPages.js';
 import { health, settingsClient } from '../test-utils.js';
 import { ToastProvider } from './Toasts.js';
+import { confirmAction } from '../test-confirm.js';
 
 const SHOP: RegisteredProject = {
   id: 'p1',
@@ -158,7 +159,7 @@ describe('Settings → Projects', () => {
     await user.click(within(row).getByRole('button', { name: 'Save token' }));
     await waitFor(() => expect(client.putGitToken).toHaveBeenCalledWith('p1', 'new-token'));
     await user.click(within(row).getByRole('button', { name: 'Access token' }));
-    await user.click(within(row).getByRole('button', { name: 'Remove token' }));
+    await confirmAction(user, row, 'Remove token');
     await waitFor(() => expect(client.deleteGitToken).toHaveBeenCalledWith('p1'));
   });
 
@@ -250,13 +251,16 @@ describe('Settings → Quality gates', () => {
     const { container } = gatesPage();
     const global = await screen.findByTestId('gate-global');
     expect(within(global).getByText('Default gate')).toBeInTheDocument();
-    expect(
-      within(global).getByText('A run passes when at least 90% of its tests pass.'),
-    ).toBeInTheDocument();
+    expect(within(global).getByText('Asks for at least 90% of tests to pass.')).toBeInTheDocument();
     expect(within(global).queryByRole('button', { name: 'Remove' })).toBeNull();
     expect(
-      within(screen.getByTestId('gate-g2')).getByText('A run passes only when every test passes.'),
+      within(screen.getByTestId('gate-g2')).getByText('Asks for every test to pass.'),
     ).toBeInTheDocument();
+    // Nothing evaluates a run against these rows, so the page must not say it does
+    // (ledger MNT-203): a run's verdict is its quality policy's.
+    const page = screen.getByTestId('settings-quality-gates');
+    expect(page).not.toHaveTextContent(/marked failed|a run passes/iu);
+    expect(page).toHaveTextContent(/quality policy/iu);
     await expectNoBlockingAxeViolations(container);
   });
 
@@ -275,14 +279,32 @@ describe('Settings → Quality gates', () => {
     await waitFor(() =>
       expect(client.updateGate).toHaveBeenCalledWith('global', { passRateThreshold: 95 }),
     );
-    await user.click(within(screen.getByTestId('gate-g2')).getByRole('button', { name: 'Remove' }));
+    await confirmAction(user, screen.getByTestId('gate-g2'), 'Remove');
     await waitFor(() => expect(client.deleteGate).toHaveBeenCalledWith('g2'));
     const add = screen.getByRole('form', { name: 'Add a gate' });
     await user.type(within(add).getByLabelText('Name'), 'Nightly');
+    // The threshold typed is the one sent.
+    fireEvent.change(within(add).getByLabelText('Minimum pass rate (%)'), {
+      target: { value: '95' },
+    });
     await user.click(within(add).getByRole('button', { name: 'Add gate' }));
     await waitFor(() =>
-      expect(client.createGate).toHaveBeenCalledWith({ name: 'Nightly', passRateThreshold: 90 }),
+      expect(client.createGate).toHaveBeenCalledWith({ name: 'Nightly', passRateThreshold: 95 }),
     );
+  });
+
+  it('says why a gate was not added, and keeps the name typed', async () => {
+    const user = userEvent.setup();
+    const { client } = gatesPage();
+    vi.mocked(client.createGate).mockRejectedValueOnce(
+      Object.assign(new Error('API answered 409'), { detail: 'A gate named Nightly exists.' }),
+    );
+    await screen.findByTestId('gate-global');
+    const add = screen.getByRole('form', { name: 'Add a gate' });
+    await user.type(within(add).getByLabelText('Name'), 'Nightly');
+    await user.click(within(add).getByRole('button', { name: 'Add gate' }));
+    expect(await screen.findByText('Could not add the gate')).toBeInTheDocument();
+    expect(within(add).getByLabelText('Name')).toHaveValue('Nightly');
   });
 
   it('shows a viewer the rules but no controls', async () => {
@@ -292,7 +314,40 @@ describe('Settings → Quality gates', () => {
     expect(screen.queryByLabelText('Minimum pass rate (%)')).toBeNull();
   });
 
+  it('offers a workspace admin only the gates the workspace owns, and says who changes the rest', async () => {
+    render(
+      <ToastProvider>
+        <QualityGatesSettingsPage
+          health={health({ role: 'admin', source: 'user', installationAdmin: false })}
+          client={settingsClient({
+            listGates: vi.fn(async () => [
+              { ...GATES[0]!, scope: 'installation' as const },
+              { ...GATES[1]!, id: 'own', scope: 'workspace' as const },
+              // An older API sends no scope: treated as shared, so nothing is offered.
+              { ...GATES[1]!, id: 'old' },
+            ]),
+          })}
+        />
+      </ToastProvider>,
+    );
+    const shared = await screen.findByTestId('gate-global');
+    expect(within(shared).queryByLabelText('Minimum pass rate (%)')).toBeNull();
+    expect(
+      within(shared).getByText(
+        'Every workspace shares this gate. An installation admin can change it.',
+      ),
+    ).toBeInTheDocument();
+    expect(within(screen.getByTestId('gate-old')).queryByRole('button')).toBeNull();
+    expect(
+      within(screen.getByTestId('gate-own')).getByLabelText('Minimum pass rate (%)'),
+    ).toBeInTheDocument();
+    // Every gate the dashboard creates is shared, so the form is an installation admin's.
+    expect(screen.queryByRole('form', { name: 'Add a gate' })).toBeNull();
+  });
+
   it('describes the edge thresholds in words', () => {
-    expect(describeGate({ passRateThreshold: 0 })).toBe('Every run passes, whatever its tests do.');
+    expect(describeGate({ passRateThreshold: 0 })).toBe(
+      'Asks for nothing: any pass rate meets it.',
+    );
   });
 });

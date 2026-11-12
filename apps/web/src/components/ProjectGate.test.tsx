@@ -70,3 +70,39 @@ describe('the empty-registry screen', () => {
     expect(screen.queryByTestId('onboarding-connect')).toBeNull();
   });
 });
+
+describe('a registry that is not there yet', () => {
+  function gateWith(listProjects: QaClient['listProjects']) {
+    return render(
+      <ProjectGate qa={{ listProjects } as unknown as QaClient} title="Overview">
+        {() => <p>never</p>}
+      </ProjectGate>,
+    );
+  }
+
+  it('reads a bare "not found" as an empty install and shows onboarding', async () => {
+    signedInAs('admin');
+    gateWith(vi.fn(async () => Promise.reject(new Error('not found'))));
+    expect(await screen.findByTestId('onboarding')).toBeInTheDocument();
+    expect(screen.queryByText('not found')).toBeNull();
+  });
+
+  it('says a server that is down in plain words, keeps the code under details, and retries', async () => {
+    signedInAs('admin');
+    const listProjects = vi.fn().mockRejectedValueOnce(new Error('HTTP 502')).mockResolvedValue([]);
+    gateWith(listProjects);
+    const error = await screen.findByTestId('project-gate-error');
+    expect(error).toHaveTextContent("Lupin's server isn't answering right now.");
+    expect(error.querySelector('details')).toHaveTextContent('HTTP 502');
+    screen.getByRole('button', { name: 'Try again' }).click();
+    expect(await screen.findByTestId('onboarding')).toBeInTheDocument();
+  });
+
+  it('still reports a real failure in the server’s words', async () => {
+    signedInAs('admin');
+    gateWith(vi.fn(async () => Promise.reject(new Error('Database unavailable'))));
+    expect(await screen.findByTestId('project-gate-error')).toHaveTextContent(
+      'Database unavailable',
+    );
+  });
+});

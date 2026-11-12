@@ -12,7 +12,6 @@ import {
   evidenceCandidates,
   handlerChain,
   isEndpoint,
-  namesWorkspace,
   patternMatches,
   summarise,
   tagOf,
@@ -111,11 +110,14 @@ test('two different guards on one route are both named', () => {
   );
 });
 
-test('workspaceScoped is read from the endpoint code, and not from a guard', () => {
-  const scoped = (/** @type {string} */ ws) => ws;
-  assert.equal(namesWorkspace([scoped]), true);
-  assert.equal(namesWorkspace([() => 'nothing here']), false);
-  assert.equal(namesWorkspace(['not a function']), false);
+test('a row makes no claim about workspace scope, which only the isolation tests can prove (MNT-179)', () => {
+  // `workspaceScoped` read the handler's source for a workspace identifier, so a handler using
+  // a store bound to its workspace read `false` beside one that really filtered nothing.
+  const [row] = describeRoutes({
+    routes: [{ method: 'GET', path: '/a', handler: (/** @type {string} */ ws) => ws }],
+    tests: [],
+  });
+  assert.equal(row !== undefined && 'workspaceScoped' in row, false);
 });
 
 test('evidence is the test that names the route most, preferring the API package', () => {
@@ -137,7 +139,6 @@ const ROW = {
   method: 'GET',
   path: '/a',
   access: 'open',
-  workspaceScoped: false,
   evidenceTest: 'apps/api/src/a.test.ts',
   composition: 'always',
 };
@@ -174,11 +175,7 @@ test('a row whose access disagrees with the application is a finding, in both di
   );
 });
 
-test('workspaceScoped and composition disagreements are findings', () => {
-  assert.match(
-    compareMatrix([ROW], [{ ...ROW, workspaceScoped: true }], TESTS).join('\n'),
-    /workspaceScoped/,
-  );
+test('composition disagreements are findings', () => {
   assert.match(
     compareMatrix([ROW], [{ ...ROW, composition: 'database' }], TESTS).join('\n'),
     /composition/,
@@ -244,7 +241,7 @@ test('the committed matrix is well formed, and its classes are the ones the API 
     assert.ok(row.method && row.path.startsWith('/'), `${row.method} ${row.path}`);
     for (const part of String(row.access).split('+'))
       assert.ok(known.has(part), `${row.path}: unknown class ${part}`);
-    assert.equal(typeof row.workspaceScoped, 'boolean');
+    assert.equal('workspaceScoped' in row, false, `${row.path}: a scope claim nothing proves`);
     assert.ok(row.composition === 'always' || row.composition === 'database');
     const key = `${row.method} ${row.path}`;
     assert.ok(!keys.has(key), `${key} listed twice`);

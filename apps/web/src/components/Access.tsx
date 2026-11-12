@@ -1,7 +1,9 @@
 import React from 'react';
+import { isNothingYet } from '../lib/nothing-yet.js';
 import {
   Badge,
   Button,
+  Checkbox,
   EmptyState,
   Input,
   Select,
@@ -12,9 +14,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  ButtonLink,
 } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
+import { ConfirmAction } from './ConfirmAction.js';
 import {
+  ROLE_SCOPES,
   TOKEN_ROLES,
   type AccessTokenSummary,
   type HealthClient,
@@ -53,7 +58,15 @@ export function AccessGate({
   }
   if (who.status === 'error') {
     return (
-      <EmptyState headingLevel={2} title="Could not reach the API" description={who.message} />
+      <EmptyState
+        headingLevel={2}
+        title={isNothingYet(who.message) ? 'Nothing set up yet' : 'Could not reach the API'}
+        description={
+          isNothingYet(who.message)
+            ? 'This install has not been configured. Start with setup, then come back here.'
+            : who.message
+        }
+      />
     );
   }
   if (who.value.role === null) {
@@ -92,20 +105,24 @@ export function SignIn({
   const [credential, setCredential] = React.useState('');
   const [error, setError] = React.useState<string | null>(refusalFromLocation);
   const [busy, setBusy] = React.useState(false);
-  const [sso, setSso] = React.useState(false);
+  const [sso, setSso] = React.useState<'yes' | 'no' | 'unknown'>('no');
+  const [check, setCheck] = React.useState(0);
   const id = React.useId();
   React.useEffect(() => {
     let live = true;
+    // A failed read is said, with a retry, rather than read as "no single sign-on" (MNT-187).
     health
       .signInMethods?.()
       .then((methods) => {
-        if (live) setSso(methods.oidc);
+        if (live) setSso(methods.oidc ? 'yes' : 'no');
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (live) setSso('unknown');
+      });
     return () => {
       live = false;
     };
-  }, [health]);
+  }, [health, check]);
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true);
@@ -126,16 +143,27 @@ export function SignIn({
     <PageFrame data-testid="sign-in" className="h-auto items-center justify-center py-16">
       <form onSubmit={submit} className="w-full max-w-sm space-y-4" aria-label="Sign in">
         <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
-        {sso ? (
-          <a
-            href="/api/v1/auth/oidc/start"
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-on-fill hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-          >
+        {sso === 'yes' ? (
+          <ButtonLink href="/api/v1/auth/oidc/start" className="w-full">
             Sign in with single sign-on
-          </a>
+          </ButtonLink>
+        ) : null}
+        {sso === 'unknown' ? (
+          <p className="text-sm text-warning">
+            Single sign-on could not be checked.{' '}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setCheck((count) => count + 1)}
+            >
+              Check again
+            </Button>
+          </p>
         ) : null}
         <p className="text-sm text-fg-muted">
-          {sso ? 'Or paste' : 'Paste'} the access token an admin gave you, or the installation key.
+          {sso === 'yes' ? 'Or paste' : 'Paste'} the access token an admin gave you, or the
+          installation key.
         </p>
         <Input
           id={`${id}-credential`}
@@ -163,6 +191,14 @@ export function SignIn({
   );
 }
 
+/** When a token stops working, in words: "Never", "Expired", or the date. */
+export function expiryText(expiresAt: string | null, now = new Date()): string {
+  if (expiresAt === null) return 'Never';
+  const at = new Date(expiresAt);
+  if (at.getTime() <= now.getTime()) return 'Expired';
+  return at.toISOString().slice(0, 10);
+}
+
 /** Issue and revoke access tokens. An admin's page; the API refuses anyone else. */
 export function AccessPage({ health }: { health: HealthClient }): React.ReactElement {
   return (
@@ -176,6 +212,10 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
   const [name, setName] = React.useState('');
   const [role, setRole] = React.useState<TokenRole>('viewer');
   const [projectId, setProjectId] = React.useState('');
+  /** Days until a new token expires; '' is never. 90 by default: a token that never ends is a choice. */
+  const [expiresIn, setExpiresIn] = React.useState('90');
+  /** Empty is the whole role; otherwise the token is limited to these permissions. */
+  const [scopes, setScopes] = React.useState<string[]>([]);
   const [issued, setIssued] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const id = React.useId();
@@ -191,11 +231,14 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
         name: name.trim(),
         role,
         ...(projectId.trim() === '' ? {} : { projectId: projectId.trim() }),
+        ...(expiresIn === '' ? {} : { expiresInDays: Number(expiresIn) }),
+        ...(role === 'uploader' || scopes.length === 0 ? {} : { scopes }),
       })
       .then((created) => {
         setIssued(created.token);
         setName('');
         setProjectId('');
+        setScopes([]);
         setVersion((value) => value + 1);
       })
       .catch(describe);
@@ -230,7 +273,7 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
         <Panel title="Issue a token">
           <form
             onSubmit={create}
-            className="grid gap-2 sm:grid-cols-[2fr_1fr_2fr_auto] sm:items-end"
+            className="grid gap-2 sm:grid-cols-[2fr_1fr_2fr_1fr_auto] sm:items-end"
             aria-label="Issue a token"
           >
             <Input
@@ -244,7 +287,10 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
               id={`${id}-role`}
               label="Role"
               value={role}
-              onChange={(event) => setRole(event.target.value as TokenRole)}
+              onChange={(event) => {
+                setRole(event.target.value as TokenRole);
+                setScopes([]);
+              }}
               options={TOKEN_ROLES.map((entry) => ({ value: entry, label: entry }))}
             />
             <Input
@@ -255,9 +301,45 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
               disabled={role !== 'uploader'}
               onChange={(event) => setProjectId(event.target.value)}
             />
+            <Select
+              id={`${id}-expires`}
+              label="Expires"
+              value={expiresIn}
+              onChange={(event) => setExpiresIn(event.target.value)}
+              options={[
+                { value: '30', label: 'In 30 days' },
+                { value: '90', label: 'In 90 days' },
+                { value: '365', label: 'In a year' },
+                { value: '', label: 'Never' },
+              ]}
+            />
             <Button type="submit" className="min-h-10">
               Issue
             </Button>
+            {role === 'uploader' ? null : (
+              <fieldset className="sm:col-span-5" data-testid="token-scopes">
+                <legend className="text-xs text-fg-muted">
+                  Limit to (leave all unticked for the whole {role} role)
+                </legend>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                  {ROLE_SCOPES[role].map((scope) => (
+                    <label key={scope} className="flex items-center gap-1 text-sm">
+                      <Checkbox
+                        checked={scopes.includes(scope)}
+                        onChange={(event) =>
+                          setScopes((current) =>
+                            event.target.checked
+                              ? [...current, scope]
+                              : current.filter((entry) => entry !== scope),
+                          )
+                        }
+                      />
+                      <span className="font-mono text-xs">{scope}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
           </form>
           {issued === null ? null : (
             <div
@@ -290,6 +372,7 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
                   <TableHead>Role</TableHead>
                   <TableHead className="hidden md:table-cell">Token</TableHead>
                   <TableHead className="hidden sm:table-cell">Last used</TableHead>
+                  <TableHead>Expires</TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -303,6 +386,14 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
                       <Badge variant={token.revokedAt === null ? 'outline' : 'secondary'}>
                         {token.revokedAt === null ? token.role : `${token.role} · revoked`}
                       </Badge>
+                      {token.scopes === null || token.scopes === undefined ? null : (
+                        <span
+                          className="ms-2 font-mono text-xs text-fg-muted"
+                          data-testid="token-scope-list"
+                        >
+                          {token.scopes.join(', ')}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="hidden font-mono text-xs md:table-cell">
                       {token.displayPrefix}…
@@ -310,20 +401,40 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
                     <TableCell className="hidden text-xs text-fg-muted sm:table-cell">
                       {ago(token.lastUsedAt)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs text-fg-muted" data-testid="token-expires">
+                      {expiryText(token.expiresAt ?? null)}
+                    </TableCell>
+                    <TableCell className="flex gap-1">
+                      {token.revokedAt === null && health.rotateToken !== undefined ? (
+                        <ConfirmAction
+                          label="Rotate"
+                          variant="outline"
+                          title={`Rotate ${token.name}?`}
+                          consequence="A new token is issued now. The old one keeps working for one more day, so a pipeline can switch to the new one, then stops."
+                          onConfirm={() => {
+                            health
+                              .rotateToken?.(token.id)
+                              .then((rotated) => {
+                                setIssued(rotated.token);
+                                setVersion((value) => value + 1);
+                              })
+                              .catch(describe);
+                          }}
+                        />
+                      ) : null}
                       {token.revokedAt === null ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
+                        <ConfirmAction
+                          label="Revoke"
+                          title={`Revoke ${token.name}?`}
+                          consequence="Every job and device using this token is refused from now on. A revoked token cannot be turned back on; issue a new one instead."
+                          typed={token.name}
+                          onConfirm={() => {
                             health
                               .revokeToken(token.id)
                               .then(() => setVersion((value) => value + 1))
                               .catch(describe);
                           }}
-                        >
-                          Revoke
-                        </Button>
+                        />
                       ) : null}
                     </TableCell>
                   </TableRow>

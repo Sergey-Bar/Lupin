@@ -4,8 +4,10 @@ import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { TEST_REPORT_FORMATS } from '@lupin/shared-contracts';
 import { HELP, run } from './cli.js';
 import { EXIT } from './errors.js';
+import { TEST_FORMATS } from './test-command.js';
 
 /** A stub Lupin: records each request and answers from `reply`. */
 interface Seen {
@@ -183,6 +185,34 @@ describe('lupin gate', () => {
     expect(failed.code).toBe(EXIT.gateFailed);
     expect(failed.out).toBe(
       'Gate failed on pr-branch — grade incomplete.\n- 1 new critical finding',
+    );
+  });
+
+  it('prints the pull request’s change risk and what it could not measure', async () => {
+    reply = () => ({
+      status: 200,
+      body: {
+        verdict: 'passed',
+        reasons: [],
+        grade: { letter: 'B' },
+        risk: { risk: { level: 'unknown', score: 15, missing: ['tests', 'diff-coverage'] } },
+      },
+    });
+    const answered = await invoke(['gate', '--branch', 'f', '--commit', SHA, '--pr', '3']);
+    expect(answered.out).toBe(
+      'Gate passed on f — grade B.\nChange risk: unknown (15 points); not measured: tests, diff-coverage.',
+    );
+    reply = () => ({
+      status: 200,
+      body: {
+        verdict: 'passed',
+        reasons: [],
+        grade: { letter: 'B' },
+        risk: { risk: { level: 'high', score: 50, missing: [] } },
+      },
+    });
+    expect((await invoke(['gate', '--branch', 'f', '--commit', SHA, '--pr', '3'])).out).toBe(
+      'Gate passed on f — grade B.\nChange risk: high (50 points).',
     );
   });
 
@@ -451,8 +481,26 @@ describe('lupin test', () => {
   it('refuses a format it does not read, before running anything', async () => {
     const result = await invoke(['test', '--format', 'tap', '--report', 'r.xml', ...exiting(0)]);
     expect(result.code).toBe(EXIT.usage);
-    expect(result.err).toMatch(/--format is junit or playwright-json/u);
+    expect(result.err).toMatch(/--format is one of junit, playwright-json, ctrf/u);
     expect(seen).toEqual([]);
+  });
+
+  it('sends a Jest report under the spelling it was given', async () => {
+    const dir = await tempDir();
+    await writeFile(path.join(dir, 'jest.json'), '{"testResults":[]}');
+    reply = () => verdict(false);
+    const result = await invoke(
+      ['test', '--format', 'jest', '--report', 'jest.json', '--commit', SHA, ...exiting(0)],
+      {},
+      dir,
+    );
+    expect(result.code).toBe(EXIT.ok);
+    const url = new URL(seen[0]?.url ?? '', origin);
+    expect(url.searchParams.get('format')).toBe('jest');
+  });
+
+  it("accepts exactly the server's test-report spellings", () => {
+    expect([...TEST_FORMATS]).toEqual([...TEST_REPORT_FORMATS]);
   });
 
   it('never excuses a report with errors outside its tests, and says so', async () => {

@@ -131,6 +131,36 @@ describe('a job is routed by the shape of its own configuration', () => {
     );
   });
 
+  it('sends a job declaring a ZAP scan to the ZAP adapter only, and refuses it combined', async () => {
+    const playwright = stubProvider();
+    const zap = stubProvider();
+    const router = new RoutingExecutionAdapter(
+      stubProvider(),
+      playwright,
+      stubProvider(),
+      stubProvider(),
+      zap,
+    );
+    const job = { scan: 'baseline', spiderMinutes: 1 };
+    await router.execute(context({ zap: job, targetUrl: 'https://a.test' }));
+    expect(zap.execute).toHaveBeenCalledOnce();
+    expect(playwright.execute).not.toHaveBeenCalled();
+
+    for (const other of [{ playwrightProject: 'chromium' }, { k6: {} }, { apiCollection: 'x' }]) {
+      await expect(router.execute(context({ zap: job, ...other }))).rejects.toBeInstanceOf(
+        RunnerConfigurationError,
+      );
+    }
+    expect(zap.execute).toHaveBeenCalledOnce();
+  });
+
+  it('refuses a ZAP scan on a runner that has no ZAP adapter', async () => {
+    const router = new RoutingExecutionAdapter(stubProvider(), stubProvider(), stubProvider());
+    await expect(router.execute(context({ zap: { scan: 'baseline' } }))).rejects.toThrow(
+      /does not run ZAP scans/u,
+    );
+  });
+
   it('cleans up through the generic adapter', async () => {
     const generic = stubProvider();
     const router = new RoutingExecutionAdapter(generic, stubProvider(), stubProvider());

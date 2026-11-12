@@ -10,12 +10,18 @@ export function readEnvironment(): Readonly<Record<string, string | undefined>> 
     LUPIN_PROJECT: process.env['LUPIN_PROJECT'],
     LUPIN_BRANCH: process.env['LUPIN_BRANCH'],
     LUPIN_COMMIT: process.env['LUPIN_COMMIT'],
+    LUPIN_BASE: process.env['LUPIN_BASE'],
     // GitHub Actions' own, so a step on Actions needs no flags for the branch and commit.
     GITHUB_HEAD_REF: process.env['GITHUB_HEAD_REF'],
+    GITHUB_BASE_REF: process.env['GITHUB_BASE_REF'],
     GITHUB_REF_NAME: process.env['GITHUB_REF_NAME'],
     GITHUB_SHA: process.env['GITHUB_SHA'],
     GITHUB_WORKSPACE: process.env['GITHUB_WORKSPACE'],
     GITHUB_RUN_ID: process.env['GITHUB_RUN_ID'],
     GITHUB_RUN_ATTEMPT: process.env['GITHUB_RUN_ATTEMPT'],
+    // `lupin gate --post` only: the job's own token, and where to send it. Never sent to Lupin.
+    GITHUB_TOKEN: process.env['GITHUB_TOKEN'],
+    GITHUB_REPOSITORY: process.env['GITHUB_REPOSITORY'],
+    GITHUB_API_URL: process.env['GITHUB_API_URL'],
   };
 }

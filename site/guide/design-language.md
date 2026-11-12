@@ -1,6 +1,6 @@
 ---
 title: The design language
-description: A flat plane, the Lupin violet, Geist, calm motion and one translucent material for what floats — and the numbers every token has to clear.
+description: A flat plane, the Lupin blue, Inter, calm motion and one translucent material for what floats — and the numbers every token has to clear.
 ---
 
 # The design language
@@ -26,10 +26,45 @@ drifted from the product.
 
 **A quiet plane, one brand colour, and colour elsewhere is meaning.** The product is an
 instrument: a QA engineer opens it to learn what is wrong and what is good. So the plane is
-near-neutral in four opaque steps, the brand is a single violet used for focus, links, the
+near-neutral in four opaque steps, the brand is a single blue used for focus, links, the
 active state and the one primary action, and every other colour on screen is a verdict —
 pass, warn, fail, flaky — or a chart series. Things that float above the plane may be
 translucent; nothing a reader is meant to read sits behind glass.
+
+## The brand
+
+Lupin has **no logo mark**. The brand is the name, set as type, plus the one blue.
+
+**The wordmark** is "Lupin." in Inter, semibold, at tight tracking (`-0.02em`), with the full
+stop in the accent. It is the `Wordmark` component in `packages/ui`, and the console's top
+bar, this site's nav and its footer all draw that one shape. Sizes come from the type scale:
+`sm` (base), `md` (lg, the chrome size) and `lg` (3xl, a setup or sign-in screen).
+
+- **Clear space.** Leave at least the height of the capital L empty around the wordmark. Never
+  place it inside a filled shape, except for the favicon.
+- **Colour.** Set the name in `fg` and the full stop in `accent`, and nothing else. On the dark
+  plane both tokens change, so the wordmark needs no dark variant.
+- **The favicon** is the only place the brand is a glyph: a white L on a blue square. The app
+  and the site commit the same file, and `apps/web/src/brand.test.ts` holds the two copies
+  byte-identical.
+- **The name in prose** is "Lupin", in sentence case. Do not write it in capitals, add a
+  trademark sign, or put the full stop in running text.
+
+**The blue's role.** It marks focus, links, the active place and the single primary action on
+a screen. It is never used as a decoration, a gradient or a background wash. A second
+accent-filled button on a screen means one of the two is not primary.
+
+### Tone of voice
+
+Lupin's copy reads like an engineer who has checked the facts:
+
+- **Plain.** "checkout.spec failed on main" beats "Quality signals need your attention".
+- **Specific.** Give the count, the name or the time. A sentence without one is usually filler.
+- **No hype.** Avoid words like "seamless", "powerful", "revolutionary" and "AI-powered" when
+  they replace a fact.
+- **Honest about missing data.** "No coverage report yet" is a state, not an error. Say what is
+  missing and the one thing that would fill it.
+- **One next step.** An empty state or a status line ends with one action, not a menu.
 
 ## Colour is declared in OKLCH
 
@@ -51,7 +86,7 @@ Four steps, and the names do not change between themes — the plane is what inv
 | `--lupin-surface-raised` | `oklch(23.6% .010 277)` | `oklch(99.1% .001 106)` | A control sitting on the base, and every overlay                  |
 | `--lupin-surface-muted`  | `oklch(25.7% .010 277)` | `oklch(96.7% .003 106)` | The recessed fill inside a control                                |
 
-The near is a decision. The dark plane carries the violet's undertone (hue about 276) so
+The near is a decision. The dark plane carries a cool undertone (hue about 276) so
 the brand reads as part of the room; the light plane is warm paper (hue about 106). Every
 plane step, both foregrounds and the decorative border stay under 0.012 chroma — a
 temperature, never a colour.
@@ -96,15 +131,15 @@ the first button, so no action is armed before the dialog has been read.
 
 ## The accent
 
-`--lupin-accent` is the Lupin violet: `oklch(50.9% .138 290)` on the light plane and a
-lifted `oklch(79.3% .089 293)` on the dark one — the colour of the dot in the wordmark.
-`theme.test.ts` holds it in the violet hue band (280–300), above 0.08 chroma, at 4.5:1 and
+`--lupin-accent` is the Lupin blue: `oklch(48% .15 242)` on the light plane and a
+lifted `oklch(77% .12 242)` on the dark one — the colour of the dot in the wordmark.
+`theme.test.ts` holds it in the blue hue band (230–250), above 0.08 chroma, at 4.5:1 and
 APCA Lc 60 as text on every plane step, and at least 20 degrees of hue from `info`, so the
 brand is never read as a note.
 
 It is allowed in four places: the focus ring, the active state (the current section, a
-selected tab), a link, and the one solid primary fill per screen — a violet button with a
-white label in light, a lavender button with a near-black label in dark. It is never a
+selected tab), a link, and the one solid primary fill per screen — a blue button with a
+white label in light, a pale blue button with a near-black label in dark. It is never a
 large plane and never a verdict.
 
 ## Run state, and why `info` is quieter
@@ -114,7 +149,7 @@ large plane and never a verdict.
 | `--lupin-success` | 148       | Passed                            |
 | `--lupin-warning` | 72        | Needs a decision                  |
 | `--lupin-danger`  | 25        | Failed                            |
-| `--lupin-info`    | 258       | A note — steel, quieter than both |
+| `--lupin-info`    | 210       | A note — slate, quieter than both |
 
 Every run state is at least half as saturated again as info, the three run states keep 20
 degrees or more of hue between them, and each lands within 3 degrees of its decided hue.
@@ -135,8 +170,8 @@ in the decorative border.
 
 Two families, and the rule is which of them a string is.
 
-- **Geist** for everything that is read.
-- **Geist Mono** for everything that is a reading: run ids, digests, stack traces, JUnit
+- **Inter** for everything that is read.
+- **JetBrains Mono** for everything that is a reading: run ids, digests, stack traces, JUnit
   output, and every column of numbers, in `tabular-nums`.
 
 The two faces share one vertical design, so a run id beside a sentence sits on the same
@@ -144,8 +179,8 @@ baseline and x-height. Both are variable (`wght` 100–900), woff2, committed on
 `packages/ui/src/assets/fonts/` with the upstream repository, the commit, the OFL licence
 file and a sha256 in `fonts-lock.json`; `fonts.test.ts` checks the lock in both directions.
 
-**Optical size, without an optical axis.** Geist has no `opsz`, so the correction a display
-cut would make is made in the type ladder: every step carries its own letter-spacing,
+**Optical size.** Inter carries an `opsz` axis, and the type ladder still carries the correction a display
+cut would make, so it holds in a fallback face: every step carries its own letter-spacing,
 closing up as the size grows (+0.01em at 12px to −0.035em at the display step), and the
 steps from 24px up carry a heading weight between 550 and 650. `theme.test.ts` asserts both
 relations rather than a list of values.
@@ -222,15 +257,26 @@ as it appears in the file.
 
 ## One translucent material, for what floats
 
-The plane is flat. What is admitted is one material, `surface-translucent`, for the layers
-that float over it: the command palette, dialogs, popovers, menus and toasts. It is the only place
-a `backdrop-filter` is written — `theme.test.ts` fails on one anywhere else in the
-stylesheet, ESLint refuses a `backdrop-*` utility class, and `theme-resolution.test.ts`
-limits the material to those five components.
+The plane is solid. What is admitted is one material, `surface-translucent`, for the layers
+that float over it or frame it: the command palette, dialogs, popovers, menus and toasts, and
+since the 2026-11 premium pass the chrome (the sidebar, the phone top bar and tab bar, and
+the copilot panel). The chrome frosts the shell's glow (`bg-shell`, the brand blue from the top
+start and its cyan partner, `--lupin-accent-2`, from the bottom end), so the room has light in
+it while the evidence stays on solid panels. It is the only place a `backdrop-filter` is
+written — `theme.test.ts` fails on one anywhere else in the stylesheet, ESLint refuses a
+`backdrop-*` utility class, `theme-resolution.test.ts` limits the material to those eight
+files, and the rendering budget holds every primary route to a glass depth of 1.
 
-- **Opaque first.** The first declaration is the raised plane step; the 90% tint and the
-  16px blur are inside `@supports (backdrop-filter: …)`, so no browser shows a see-through
-  panel with nothing blurring what is behind it.
+The one primary button per screen is the brand blue running into its cyan partner
+(`bg-primary-gradient`), flat under forced colours and more contrast. Cyan is never text and
+never a status. A verdict band is the same flat card as every page surface: the verdict is on
+its mark and its word, never on a coloured edge or a tinted panel.
+
+- **Opaque first.** The first declaration is the raised plane step; the 88% tint and the
+  28px blur at 180% saturation are inside `@supports (backdrop-filter: …)`, so no browser shows
+  a see-through panel with nothing blurring what is behind it. 88% is one step above 87%, the
+  lowest tint the legibility rule below allows, so the colour of the shell light comes through
+  as far as it can while every word stays readable.
 - **Legible whatever is behind it.** Every text token clears 4.5:1 on the tint composited
   over pure black _and_ pure white — the extremes any real backdrop lies between.
 - **Never behind evidence.** Tables, charts and figures are never inside a translucent layer.
@@ -240,15 +286,24 @@ limits the material to those five components.
 - **Off when asked.** Reduced transparency, more contrast and forced colours each return the
   opaque step with no filter.
 
-There is also one gradient: `--lupin-gradient-ambient`, a faint violet light from the top of
+There is also one gradient: `--lupin-gradient-ambient`, a faint accent-blue light from the top of
 the page drawn from the accent, used on entry screens only — today, the first-run screen.
 
 ## The Overview and the Map
 
-**Four sections, and every old page is a tab.** Overview, Runs, Insights and Map are the
-only top-level destinations (`apps/web/src/route-manifest.ts`, `SECTIONS`). From `lg` up the
-sections sit in the top bar beside the **Lupin.** wordmark; below it they are a bottom tab
-bar with 56px targets.
+**One sidebar, and every page is in it.** Home, Runs, Tests and Health are groups in a single
+collapsible sidebar (`apps/web/src/route-manifest.ts`, `navTree`); the place you are on opens
+by itself and lists its pages, and there is no tab row. Collapsed, the sidebar is an icon rail
+and a group opens as a flyout. Settings swaps the list for its own, with **Back to Lupin**.
+Below `lg` the same list is a drawer from the top bar, beside a bottom tab bar with 56px
+targets. Pages carry no visible title: the sidebar already says where you are, and the title
+stays for screen readers. A group counts what needs you there ("Runs, 2 need you"), and
+unfinished setup is one **Finish setup · n of 6** chip above Settings.
+
+**First run is full-screen.** `/setup` (also `/dashboard/setup`) draws without the app frame:
+one step per screen under a step strip, repository and first run before the optional AI,
+reports and teammates, with Back, Skip and **Do this later**. A fresh install is sent there
+from Home once.
 
 **The Overview answers in order and stops.** The verdict first — Go, Caution or No-go, in
 words and an icon as well as a colour — then _What's wrong_ beside _What's good_, each
@@ -280,3 +335,13 @@ site:doctor` check 8 reads **every** stylesheet in the site theme and fails on a
 colour in any of them, hex or colour function, so the site and the console cannot drift
 into two palettes. The site defaults to light on a first visit; the console follows the
 system setting.
+
+## Design language v2
+
+The redesign keeps every rule above and adds these, each with its gate:
+
+- **A display face for numbers and verdicts.** Inter Display SemiBold is committed once with its sha256 and upstream in `fonts-lock.json` (`fonts.test.ts`) and exposed as `font-display`. Every `Metric` value and every verdict word draws in it, tight and tabular, so a number reads like an instrument and a column of them lines up; running text stays in Inter. Chart bars use `bg-chart-bar`, lit from the foot to the top in their own chart token.
+- **Depth.** Three elevations, `elevation-1` to `elevation-3`, each an existing plane step, so no new surface can fail contrast (`theme.test.ts`).
+- **The status band.** Every area page opens on one compact band (`Hero` in `@lupin/ui`): a status mark, the verdict word in its colour, one reason, the numbers behind it, and one action, on the neutral plane. It replaced the full-width poster hero, whose one-word verdict on a tinted panel said little and read as a placeholder. The `glow-*` tokens and the expressive `animate-reveal` tier are still defined and tested (`theme.test.ts`, `motion.test.ts`), and no component uses them now.
+- **One button system.** At most one solid primary per screen, outlined for secondary, text for tertiary. A link drawn as a button is `ButtonLink`, which shares `buttonVariants` with `Button`; `apps/web/src/button-rule.test.ts` fails on a hand-written solid button, and the page tests assert one primary with `expectOnePrimary`.
+- **Lupin's blue by default.** The OpenCode palettes are a choice in Settings, not the default (`ThemeProvider.test.tsx`, `theme-boot.test.ts`).

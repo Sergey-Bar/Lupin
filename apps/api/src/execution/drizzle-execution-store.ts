@@ -49,11 +49,13 @@ import {
   runStatusFor,
 } from './execution-derivations.js';
 import { resolveSummary } from './summary.js';
+import { evidenceDomainsFor } from '../services/gate-evidence.js';
 import { decodeRunCursor, normalizeEventLimit, normalizeRunLimit } from './run-paging.js';
 import type {
   ArtifactDescriptor,
   CreateRunInput,
   CreateRunResult,
+  RetryOverrides,
   DomainName,
   DomainStatus,
   ExecutionEvent,
@@ -172,6 +174,20 @@ function uuidFor(value: string): string {
 
 function stringValue(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
+}
+
+/**
+ * A `test.completed` event's `error`, as the two `tests` columns. A string is a message; an
+ * object is `{ code, message }`; anything else, or nothing, is no reason at all.
+ */
+function failureOf(raw: unknown): { errorCode: string | null; errorMessage: string | null } | null {
+  if (typeof raw === 'string') return normaliseFailure({ message: raw });
+  if (typeof raw !== 'object' || raw === null) return null;
+  const error = raw as Record<string, unknown>;
+  return normaliseFailure({
+    code: stringValue(error['code']),
+    message: stringValue(error['message']),
+  });
 }
 
 function nullableString(value: unknown): string | null {
@@ -565,6 +581,13 @@ export class DrizzleExecutionStore implements ExecutionStore {
     this.options = options;
   }
 
+  async evidenceDomains(
+    run: ExecutionRun,
+    policy: Pick<QualityPolicy, 'rules'>,
+  ): Promise<Partial<Record<DomainName, DomainStatus>>> {
+    return evidenceDomainsFor(this.db as never, run, policy);
+  }
+
   private async appendOutbox(tx: unknown, event: OutboxAppend): Promise<void> {
     await this.appendOutboxBatch(tx, [event]);
   }
@@ -884,6 +907,7 @@ export class DrizzleExecutionStore implements ExecutionStore {
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides: RetryOverrides = {},
   ): Promise<CreateRunResult | null> {
     const previous = await this.getRun(runId, workspaceId);
     if (!previous || !isTerminalPhase(previous.phase)) return null;
@@ -900,7 +924,7 @@ export class DrizzleExecutionStore implements ExecutionStore {
         branch: previous.branch ?? undefined,
         commit: previous.commit ?? undefined,
         suite: previous.suite ?? undefined,
-        selection: previous.selection,
+        selection: overrides.selection ?? previous.selection,
         timeoutMs: previous.timeoutMs,
         priority: previous.priority,
         requiredCapabilities: previous.requiredCapabilities,
@@ -910,7 +934,8 @@ export class DrizzleExecutionStore implements ExecutionStore {
         policyId: previous.policyId ?? undefined,
         retryOfRunId: previous.id,
       },
-      idempotencyKey ?? `retry:${previous.id}:${previous.attempt + 1}`,
+      idempotencyKey ??
+        `retry${overrides.selection ? '-failed' : ''}:${previous.id}:${previous.attempt + 1}`,
       previous.workspaceId,
     );
   }
@@ -1381,6 +1406,9 @@ export class DrizzleExecutionStore implements ExecutionStore {
     const testDuration = numberValue(payload['durationMs'], 0) || null;
     const testTitle = stringValue(payload['title'], testId);
     const testFile = stringValue(payload['file'], '');
+    // Why it failed, bounded the same way the reporter path bounds it. Only a completion
+    // carries a reason; a `test.started` must not clear one an earlier attempt recorded.
+    const failure = input.type === 'test.completed' ? failureOf(payload['error']) : null;
     const stableId = testIdentity({
       file: testFile,
       describePath: Array.isArray(payload['describePath'])
@@ -1401,6 +1429,7 @@ export class DrizzleExecutionStore implements ExecutionStore {
         status: testStatus,
         durationMs: testDuration,
         retryCount: 0,
+        ...(failure ?? {}),
       })
       .onConflictDoUpdate({
         target: [tests.id, tests.runId],
@@ -1411,6 +1440,7 @@ export class DrizzleExecutionStore implements ExecutionStore {
           ...(typeof payload['title'] === 'string' ? { stableId } : {}),
           status: testStatus,
           durationMs: testDuration,
+          ...(failure ?? {}),
         },
       });
   }
@@ -1653,7 +1683,10 @@ export class DrizzleExecutionStore implements ExecutionStore {
         createGateEvaluation({
           run,
           policy,
-          domainStatuses: { browser: browserGateStatus(run.outcome) },
+          domainStatuses: {
+            ...(await this.evidenceDomains(run, policy)),
+            browser: browserGateStatus(run.outcome),
+          },
           quarantined: await this.quarantined(run.workspaceId),
         }),
       );
@@ -1986,7 +2019,10 @@ export class DrizzleExecutionStore implements ExecutionStore {
         createGateEvaluation({
           run: mapped,
           policy,
-          domainStatuses: { browser: browserGateStatus(mapped.outcome) },
+          domainStatuses: {
+            ...(await this.evidenceDomains(mapped, policy)),
+            browser: browserGateStatus(mapped.outcome),
+          },
           quarantined: await this.quarantined(workspaceId),
         }),
       );
@@ -2001,9 +2037,9 @@ export class DrizzleExecutionStore implements ExecutionStore {
         browser,
         api: 'not_configured',
         mobile: 'not_configured',
-        performance: 'not_configured',
-        security: 'not_configured',
-        accessibility: 'not_configured',
+        performance: gate?.domainStatuses.performance ?? 'not_configured',
+        security: gate?.domainStatuses.security ?? 'not_configured',
+        accessibility: gate?.domainStatuses.accessibility ?? 'not_configured',
         other: 'not_configured',
       },
       latestRunId: mapped?.id ?? null,
@@ -2285,8 +2321,9 @@ export class DrizzleExecutionStore implements ExecutionStore {
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides: RetryOverrides = {},
   ): Promise<CreateRunResult | null> {
-    return this.retryRun(runId, workspaceId, idempotencyKey);
+    return this.retryRun(runId, workspaceId, idempotencyKey, overrides);
   }
 }
 

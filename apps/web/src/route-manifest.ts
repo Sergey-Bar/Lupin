@@ -1,13 +1,13 @@
 /**
  * Every navigable page, and the section it belongs to.
  *
- * ## Four sections, and every old URL is still a page
+ * ## Four areas, then Settings
  *
- * The product used to have eight top-level destinations. It has four now — Overview,
- * Runs, Insights, Map — and the eight became **tabs** of those sections rather than
- * being merged or redirected, so a bookmark to `/dashboard/analytics` opens the same
- * page it always did, now inside Insights. `section` is the one place that decision is
- * written; `NavBar`, `BottomTabBar`, `SectionTabs` and the command palette all read it.
+ * Home (the release verdict and what needs you), Runs, Tests and Health are the areas a
+ * reader works in; Delivery, AI code and Agents sit under Health. Everything an admin
+ * configures, or opens rarely, is under Settings. Every old URL
+ * is still a page: `section` only decides where it sits, and `route-manifest.test.ts` pins
+ * every path.
  *
  * `label` is the page's own name (the palette says "Go to Trends"); `tab` is the short
  * label on its section's tab row. A page with no `tab` is a detail page — reachable from
@@ -24,11 +24,10 @@
  * working; `route-manifest.test.ts` pins every old path.
  */
 export const SECTIONS = [
-  { id: 'overview', label: 'Overview', path: '/dashboard/now' },
+  { id: 'now', label: 'Home', path: '/dashboard/now' },
   { id: 'runs', label: 'Runs', path: '/dashboard/runs' },
-  { id: 'insights', label: 'Insights', path: '/dashboard/insights' },
-  { id: 'map', label: 'Map', path: '/dashboard/map' },
-  { id: 'github', label: 'GitHub', path: '/dashboard/prs' },
+  { id: 'tests', label: 'Tests', path: '/dashboard/insights' },
+  { id: 'health', label: 'Health', path: '/dashboard' },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ] as const;
 
@@ -44,6 +43,10 @@ interface ManifestEntry {
   readonly visible: boolean;
   readonly section: SectionId;
   readonly tab?: string;
+  /** The named group a tab sits in on a long tab row (Settings): Personal, Workspace, … */
+  readonly group?: string;
+  /** Drawn in the tab row's "More" menu rather than as a tab: a place shows at most four. */
+  readonly overflow?: boolean;
   readonly access?: TabAccess;
 }
 
@@ -51,10 +54,10 @@ export const routeManifest = [
   {
     id: 'now',
     path: '/dashboard/now',
-    label: 'Cockpit',
+    label: 'Home',
     visible: true,
-    section: 'overview',
-    tab: 'Cockpit',
+    section: 'now',
+    tab: 'Now',
   },
   // First-run setup: a guided flow, reached from the cockpit and the checklist, never a tab.
   {
@@ -62,21 +65,29 @@ export const routeManifest = [
     path: '/dashboard/setup',
     label: 'Set up Lupin',
     visible: false,
-    section: 'overview',
+    section: 'now',
   },
   {
     id: 'metric',
     path: '/dashboard/metric/:metricId',
     label: 'Metric',
     visible: false,
-    section: 'overview',
+    section: 'now',
+  },
+  // The briefing in full, reached from Home's card; `?project=` narrows it to one repository.
+  {
+    id: 'briefing',
+    path: '/dashboard/briefing',
+    label: 'Briefing',
+    visible: false,
+    section: 'now',
   },
   {
     id: 'portfolio',
     path: '/dashboard/portfolio',
     label: 'Portfolio',
     visible: true,
-    section: 'overview',
+    section: 'health',
     tab: 'Portfolio',
   },
   {
@@ -84,22 +95,22 @@ export const routeManifest = [
     path: '/dashboard',
     label: 'Overview',
     visible: true,
-    section: 'overview',
-    tab: 'Project',
+    section: 'health',
+    tab: 'Overview',
   },
   {
     id: 'repo-health',
     path: '/dashboard/repo/:projectId',
     label: 'Repository Health',
     visible: false,
-    section: 'overview',
+    section: 'health',
   },
   {
     id: 'repo-360',
     path: '/dashboard/repo/:projectId/overview',
     label: 'Repository 360',
     visible: false,
-    section: 'overview',
+    section: 'health',
   },
   {
     id: 'runs',
@@ -112,7 +123,7 @@ export const routeManifest = [
   {
     id: 'run-detail',
     path: '/dashboard/runs/:runId',
-    label: 'Run Detail',
+    label: 'Run detail',
     visible: false,
     section: 'runs',
   },
@@ -127,9 +138,9 @@ export const routeManifest = [
   {
     id: 'insights',
     path: '/dashboard/insights',
-    label: 'Insights',
+    label: 'Tests',
     visible: true,
-    section: 'insights',
+    section: 'tests',
     tab: 'Tests',
   },
   {
@@ -137,87 +148,93 @@ export const routeManifest = [
     path: '/dashboard/analytics',
     label: 'Trends',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'quarantine',
     path: '/dashboard/quarantine',
     label: 'Quarantine',
     visible: false,
-    section: 'insights',
+    section: 'tests',
+    tab: 'Quarantine',
   },
   {
     id: 'test-history',
     path: '/dashboard/test',
     label: 'Test History',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'delivery',
     path: '/dashboard/delivery',
     label: 'Delivery',
     visible: true,
-    section: 'insights',
+    section: 'health',
     tab: 'Delivery',
+    overflow: true,
   },
   {
     id: 'ai-code',
     path: '/dashboard/ai-code',
     label: 'AI code',
     visible: true,
-    section: 'insights',
+    section: 'health',
     tab: 'AI code',
+    overflow: true,
   },
   {
     id: 'agents',
     path: '/dashboard/agents',
     label: 'Agents',
-    visible: false,
-    section: 'insights',
+    // A tab again: with the tab row gone from desktop and no tab here, nothing linked to it
+    // but a card deep in Repository 360.
+    visible: true,
+    section: 'health',
+    tab: 'Agents',
+    overflow: true,
   },
   {
     id: 'score',
     path: '/dashboard/score/:projectId',
     label: 'Health Score',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'gaps',
     path: '/dashboard/gaps/:projectId',
     label: 'Automation Gaps',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'hollow',
     path: '/dashboard/hollow/:projectId',
     label: 'Hollow Tests',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'flaky',
     path: '/dashboard/flaky/:projectId',
     label: 'Flaky Tests',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
   {
     id: 'structure',
     path: '/dashboard/structure/:projectId',
     label: 'Structural Findings',
     visible: false,
-    section: 'insights',
+    section: 'tests',
   },
-  { id: 'map', path: '/dashboard/map', label: 'Map', visible: true, section: 'map', tab: 'Map' },
   {
     id: 'health',
     path: '/dashboard/health',
     label: 'Capabilities',
     visible: true,
-    section: 'map',
+    section: 'health',
     tab: 'Capabilities',
   },
   {
@@ -225,99 +242,97 @@ export const routeManifest = [
     path: '/dashboard/supply-chain',
     label: 'Supply chain',
     visible: true,
-    section: 'map',
+    section: 'health',
     tab: 'Supply chain',
-  },
-  {
-    id: 'toolbox',
-    path: '/dashboard/toolbox',
-    label: 'Toolbox',
-    visible: true,
-    section: 'map',
-    tab: 'Toolbox',
   },
   {
     id: 'access',
     path: '/dashboard/access',
     label: 'Access',
-    visible: true,
-    section: 'map',
-    tab: 'Access',
+    visible: false,
+    section: 'settings',
   },
   {
     id: 'members',
     path: '/dashboard/members',
     label: 'Members',
-    visible: true,
-    section: 'map',
-    tab: 'Members',
+    visible: false,
+    section: 'settings',
   },
   {
     id: 'audit',
     path: '/dashboard/audit',
     label: 'Audit trail',
-    visible: true,
-    section: 'map',
-    tab: 'Audit',
+    visible: false,
+    section: 'settings',
   },
   {
     id: 'deployment',
     path: '/dashboard/deployment',
     label: 'Deployment',
-    visible: true,
-    section: 'map',
-    tab: 'Deployment',
+    visible: false,
+    section: 'settings',
   },
   {
     id: 'reports',
     path: '/dashboard/reports',
     label: 'Reports',
-    visible: true,
-    section: 'map',
-    tab: 'Reports',
+    visible: false,
+    section: 'settings',
   },
   {
     id: 'prs',
     path: '/dashboard/prs',
     label: 'Pull requests',
     visible: true,
-    section: 'github',
+    section: 'health',
     tab: 'Pull requests',
+    overflow: true,
+  },
+  // One pull request's change risk, reached from its row, Home and the check run's link.
+  {
+    id: 'pr-risk',
+    path: '/dashboard/prs/:projectId/:number',
+    label: 'Pull request risk',
+    visible: false,
+    section: 'health',
   },
   {
     id: 'issues',
     path: '/dashboard/issues',
     label: 'Issues',
     visible: true,
-    section: 'github',
+    section: 'health',
     tab: 'Issues',
+    overflow: true,
   },
   {
     id: 'repos',
     path: '/dashboard/repos',
     label: 'Repositories',
     visible: true,
-    section: 'github',
+    section: 'health',
     tab: 'Repositories',
+    overflow: true,
   },
   {
     id: 'repo-detail',
     path: '/dashboard/repos/:projectId',
     label: 'Repository',
     visible: false,
-    section: 'github',
+    section: 'health',
   },
   {
     id: 'pair',
     path: '/dashboard/pair',
     label: 'Pair this device',
     visible: false,
-    section: 'map',
+    section: 'settings',
   },
   // Settings — the one place a reader changes how the product behaves. The landing is
-  // Appearance (the one visible entry, so the section appears once in the nav and the
-  // palette); the other tabs reuse the admin and report surfaces under `settings/*` and
-  // stay out of the palette (`visible: false`) while still drawing the section's tab row.
+  // Appearance. Reports, Members, Access, Audit and Deployment are visible here, with their
+  // role floors, because this is now their one address: the old top-level paths redirect
+  // (`routes/__root.tsx`, ledger MNT-184). The other settings tabs stay out of the palette.
   //
   // The tab row reads workspace first (what this team owns), then installation (what the
   // whole install shares). Appearance leads because it is the landing, and the one tab every
@@ -329,6 +344,7 @@ export const routeManifest = [
     visible: true,
     section: 'settings',
     tab: 'Appearance',
+    group: 'Personal',
   },
   {
     id: 'settings-projects',
@@ -337,14 +353,16 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Projects',
+    group: 'Workspace',
   },
   {
     id: 'settings-reports',
     path: '/dashboard/settings/reports',
-    label: 'Report settings',
-    visible: false,
+    label: 'Reports',
+    visible: true,
     section: 'settings',
     tab: 'Reports',
+    group: 'Workspace',
   },
   {
     id: 'settings-quality-gates',
@@ -353,14 +371,16 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Quality gates',
+    group: 'Workspace',
   },
   {
     id: 'settings-members',
     path: '/dashboard/settings/members',
-    label: 'Member settings',
-    visible: false,
+    label: 'Members',
+    visible: true,
     section: 'settings',
     tab: 'Members',
+    group: 'Workspace',
     access: 'admin',
   },
   {
@@ -370,6 +390,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'AI provider',
+    group: 'Workspace',
     access: 'admin',
   },
   {
@@ -379,6 +400,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Integrations',
+    group: 'Workspace',
     access: 'admin',
   },
   {
@@ -388,6 +410,7 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Identity',
+    group: 'Install',
     access: 'admin',
   },
   {
@@ -397,34 +420,56 @@ export const routeManifest = [
     visible: false,
     section: 'settings',
     tab: 'Sessions & retention',
+    group: 'Install',
     access: 'admin',
   },
   {
     id: 'settings-access',
     path: '/dashboard/settings/access',
-    label: 'Access settings',
-    visible: false,
+    label: 'Access',
+    visible: true,
     section: 'settings',
     tab: 'Access',
+    group: 'Install',
     access: 'admin',
   },
   {
     id: 'settings-audit',
     path: '/dashboard/settings/audit',
-    label: 'Audit settings',
-    visible: false,
+    label: 'Audit trail',
+    visible: true,
     section: 'settings',
     tab: 'Audit',
+    group: 'Install',
     access: 'admin',
   },
   {
     id: 'settings-deployment',
     path: '/dashboard/settings/deployment',
-    label: 'Deployment settings',
-    visible: false,
+    label: 'Deployment',
+    visible: true,
     section: 'settings',
     tab: 'Deployment',
+    group: 'Install',
     access: 'admin',
+  },
+  {
+    id: 'map',
+    path: '/dashboard/map',
+    label: 'Map',
+    visible: true,
+    section: 'settings',
+    tab: 'Map',
+    group: 'Tools',
+  },
+  {
+    id: 'toolbox',
+    path: '/dashboard/toolbox',
+    label: 'Toolbox',
+    visible: true,
+    section: 'settings',
+    tab: 'Toolbox',
+    group: 'Tools',
   },
 ] as const satisfies readonly ManifestEntry[];
 
@@ -506,6 +551,49 @@ export function visibleTabsOf(section: SectionId, role: ViewerRole | null): TabR
   return tabs.length > 1 ? tabs : [];
 }
 
+/** Whether a tab lives in its row's "More" menu, because the place already shows four. */
+export function isOverflowTab(tab: TabRoute): boolean {
+  return (tab as { overflow?: boolean }).overflow === true;
+}
+
+/** The named group a tab sits in on its row, or `undefined` for a row with none. */
+export function groupOf(tab: TabRoute): string | undefined {
+  return (tab as { group?: string }).group;
+}
+
+/**
+ * A tab row split into its named groups (Settings: Personal, Workspace, Install, Tools), so it
+ * reads as four short groups rather than fourteen tabs in a line. A row with no named groups
+ * splits where the access floor changes instead.
+ */
+export function tabGroups(tabs: readonly TabRoute[]): TabRoute[][] {
+  const groups: TabRoute[][] = [];
+  const named = new Map<string, TabRoute[]>();
+  let floor: string | undefined | null = null;
+  for (const tab of tabs) {
+    const name = groupOf(tab);
+    if (name !== undefined) {
+      // A named group gathers its tabs wherever they sit in the manifest, so "Health" is
+      // one run of tabs even when a Delivery route was declared between two of them.
+      const existing = named.get(name);
+      if (existing !== undefined) {
+        existing.push(tab);
+      } else {
+        const group = [tab];
+        named.set(name, group);
+        groups.push(group);
+      }
+      floor = null;
+      continue;
+    }
+    const key = (tab as { access?: TabAccess }).access;
+    if (groups.length === 0 || key !== floor) groups.push([]);
+    groups[groups.length - 1]?.push(tab);
+    floor = key;
+  }
+  return groups;
+}
+
 /**
  * A metric's detail page, for the window the cockpit was showing. The metric ids are the
  * cockpit contract's; the window is carried so the page compares what the person was looking at.
@@ -560,4 +648,62 @@ export function repo360Path(projectId: string): string {
  */
 export function testHistoryPath(key: string): string {
   return `/dashboard/test?key=${encodeURIComponent(key)}`;
+}
+
+/** One page in the sidebar: its address, its name there, and the named group it sits in. */
+export interface NavPage {
+  id: string;
+  path: string;
+  label: string;
+  group?: string;
+}
+
+/** One place in the sidebar and every page under it, in the order the sidebar draws them. */
+export interface NavGroup {
+  id: SectionId;
+  label: string;
+  path: string;
+  pages: NavPage[];
+}
+
+/**
+ * The sidebar, built from the manifest: the five places, each with every page the role may
+ * open. A page is listed when it is visible or has a tab; a page reached only by a link (a run,
+ * a metric, a repository) is not, and still marks its place current. Named groups are gathered
+ * the way `tabGroups` gathers them, so Settings reads Personal, Workspace, Install, Tools.
+ */
+export function navTree(role: ViewerRole | null): NavGroup[] {
+  return SECTIONS.map((section) => {
+    const inSection = routeManifest.filter(
+      (route) =>
+        route.section === section.id && roleMeets((route as { access?: TabAccess }).access, role),
+    );
+    const withTabs = inSection.filter((route): route is TabRoute => 'tab' in route);
+    // Every place has tabs; its older untabbed aliases still resolve by address and are not
+    // listed, so one page never appears twice.
+    const ordered = tabGroups(withTabs).flat();
+    return {
+      id: section.id,
+      label: section.label,
+      path: section.path,
+      pages: ordered.map((route) => {
+        const group = (route as { group?: string }).group;
+        return {
+          id: route.id,
+          path: route.path,
+          label: sidebarLabel(section.id, section.label, route.tab),
+          ...(group === undefined ? {} : { group }),
+        };
+      }),
+    };
+  });
+}
+
+/**
+ * A page named after its own place reads twice in the sidebar ("Runs > Runs"). The sidebar
+ * calls it what it is: the overview of the place, or for Runs the list of every run.
+ */
+function sidebarLabel(section: SectionId, place: string, tab: string): string {
+  if (tab !== place) return tab;
+  return section === 'runs' ? 'All runs' : 'Overview';
 }

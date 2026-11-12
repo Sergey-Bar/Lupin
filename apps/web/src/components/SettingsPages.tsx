@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, Input } from '@lupin/ui';
+import { Badge, Button, Input, Textarea } from '@lupin/ui';
 import type { SettingGroup } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { HealthClient, WhoAmI } from '../lib/health-client.js';
@@ -8,6 +8,7 @@ import type { QaClient } from '../lib/qa-client.js';
 import { canAdminister, canAdministerInstallation, canOperate } from '../lib/roles.js';
 import { explain, type QualityGate, type SettingsClient } from '../lib/settings-client.js';
 import { AccessGate } from './Access.js';
+import { ConfirmAction } from './ConfirmAction.js';
 import { Bdi, UserText } from './Bidi.js';
 import { ConnectRepository } from './ConnectRepository.js';
 import { PageBody, PageFrame, PageHeader, Panel } from './kit.js';
@@ -56,10 +57,13 @@ function InstallationGroupPage({
   page,
   health,
   client,
+  children,
 }: {
   page: GroupPage;
   health: HealthClient;
   client: SettingsClient;
+  /** More of the page, under the form, for a reader who may administer it. */
+  children?: (who: WhoAmI) => React.ReactNode;
 }): React.ReactElement {
   return (
     <PageFrame data-testid={`settings-${page.group}`}>
@@ -68,15 +72,18 @@ function InstallationGroupPage({
         <AccessGate health={health}>
           {(who) =>
             canAdminister(who) ? (
-              <Panel title={page.sections[0]?.title ?? page.title}>
-                <SettingsForm
-                  client={client}
-                  group={page.group}
-                  title={page.title}
-                  canEdit={canAdministerInstallation(who)}
-                  {...(page.testKey === undefined ? {} : { testKey: page.testKey })}
-                />
-              </Panel>
+              <>
+                <Panel title={page.sections[0]?.title ?? page.title}>
+                  <SettingsForm
+                    client={client}
+                    group={page.group}
+                    title={page.title}
+                    canEdit={canAdministerInstallation(who)}
+                    {...(page.testKey === undefined ? {} : { testKey: page.testKey })}
+                  />
+                </Panel>
+                {children?.(who)}
+              </>
             ) : (
               <AskAnAdmin who={who} />
             )
@@ -107,7 +114,114 @@ export function IntegrationsSettingsPage(props: {
   health: HealthClient;
   client: SettingsClient;
 }): React.ReactElement {
-  return <InstallationGroupPage page={GROUP_PAGES.integrations} {...props} />;
+  return (
+    <InstallationGroupPage page={GROUP_PAGES.integrations} {...props}>
+      {(who) => <GitHubAppPanel client={props.client} canEdit={canAdminister(who)} />}
+    </InstallationGroupPage>
+  );
+}
+
+/**
+ * The workspace's GitHub App: whether one is set, and an admin's paste of its App ID and
+ * private key. The server then posts as the app, with a token per repository it is installed
+ * on; a project's own token still wins. The key is never shown again.
+ */
+function GitHubAppPanel({
+  client,
+  canEdit,
+}: {
+  client: SettingsClient;
+  canEdit: boolean;
+}): React.ReactElement {
+  const toast = useToast();
+  const [version, setVersion] = React.useState(0);
+  const state = useResource(() => client.githubAppState(), [client, version]);
+  const [appId, setAppId] = React.useState('');
+  const [privateKey, setPrivateKey] = React.useState('');
+  const id = React.useId();
+  const act = (action: () => Promise<void>, success: string) =>
+    action().then(
+      () => {
+        toast({ tone: 'success', title: success });
+        setAppId('');
+        setPrivateKey('');
+        setVersion((count) => count + 1);
+      },
+      (error: unknown) =>
+        toast({
+          tone: 'danger',
+          title: 'GitHub App',
+          description: explain(error, 'The request failed.'),
+        }),
+    );
+  const set = state.status === 'ready' && state.value;
+  return (
+    <Panel
+      title="GitHub App"
+      data-testid="github-app"
+      action={
+        state.status === 'ready' ? (
+          <Badge variant={set ? 'success' : 'outline'}>{set ? 'Connected' : 'Not set'}</Badge>
+        ) : null
+      }
+    >
+      <div className="grid gap-3">
+        <p className="max-w-measure text-sm text-fg-muted">
+          Post statuses, check runs and comments as your GitHub App instead of a person’s token.
+          Install the app on the repositories, then paste its App ID and a private key it generated.
+          A project with its own token keeps using it.
+        </p>
+        {canEdit ? (
+          <form
+            className="grid gap-3"
+            aria-label="GitHub App"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void act(() => client.putGitHubApp({ appId, privateKey }), 'GitHub App saved');
+            }}
+          >
+            <Input
+              id={`${id}-app-id`}
+              label="App ID"
+              value={appId}
+              inputMode="numeric"
+              required
+              onChange={(event) => setAppId(event.target.value)}
+            />
+            <Textarea
+              id={`${id}-key`}
+              label="Private key (.pem)"
+              value={privateKey}
+              required
+              rows={4}
+              spellCheck={false}
+              autoComplete="off"
+              onChange={(event) => setPrivateKey(event.target.value)}
+              className="font-mono text-xs"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" variant="outline">
+                {set ? 'Replace the app' : 'Save the app'}
+              </Button>
+              {set ? (
+                <ConfirmAction
+                  label="Remove"
+                  title="Remove the GitHub App?"
+                  consequence="Statuses, check runs and comments stop posting as the app at once. A project with its own token keeps posting with it."
+                  typed="GitHub App"
+                  onConfirm={() => act(() => client.deleteGitHubApp(), 'GitHub App removed')}
+                />
+              ) : null}
+            </div>
+          </form>
+        ) : (
+          <p className="max-w-measure text-sm text-fg-muted">
+            Ask an admin to connect a GitHub App.
+          </p>
+        )}
+      </div>
+    </Panel>
+  );
 }
 
 export function SessionsSettingsPage(props: {
@@ -213,20 +327,19 @@ function TokenForm({
           Save token
         </Button>
         {hasToken ? (
-          <Button
-            type="button"
-            size="sm"
+          <ConfirmAction
+            label="Remove token"
             variant="outline"
-            onClick={() =>
-              void run(
+            title="Remove this project's access token?"
+            consequence="Lupin stops reading the repository with it; the workspace's GitHub App, if one is set, is used instead."
+            onConfirm={() =>
+              run(
                 () => client.deleteGitToken(project.id),
                 'Token removed',
                 'Could not remove the token',
               )
             }
-          >
-            Remove token
-          </Button>
+          />
         ) : null}
       </div>
     </form>
@@ -484,20 +597,23 @@ export function ProjectsSettingsPage({
 /** The rule in words, so a threshold is never just a number. */
 export function describeGate(gate: Pick<QualityGate, 'passRateThreshold'>): string {
   const rate = gate.passRateThreshold;
-  if (rate >= 100) return 'A run passes only when every test passes.';
-  if (rate <= 0) return 'Every run passes, whatever its tests do.';
-  return `A run passes when at least ${String(rate)}% of its tests pass.`;
+  if (rate >= 100) return 'Asks for every test to pass.';
+  if (rate <= 0) return 'Asks for nothing: any pass rate meets it.';
+  return `Asks for at least ${String(rate)}% of tests to pass.`;
 }
 
 function GateRow({
   gate,
   client,
   canEdit,
+  sharedNote,
   onChanged,
 }: {
   gate: QualityGate;
   client: SettingsClient;
   canEdit: boolean;
+  /** Say who can change a shared gate: shown to an admin who cannot, never to a viewer. */
+  sharedNote: boolean;
   onChanged: () => void;
 }): React.ReactElement {
   const toast = useToast();
@@ -563,16 +679,18 @@ function GateRow({
             Save
           </Button>
           {gate.id === 'global' ? null : (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => void act(() => client.deleteGate(gate.id), 'Gate removed')}
-            >
-              Remove
-            </Button>
+            <ConfirmAction
+              label="Remove"
+              title={`Remove the gate ${gate.name}?`}
+              consequence="Its threshold no longer applies; the default gate's does."
+              onConfirm={() => act(() => client.deleteGate(gate.id), 'Gate removed')}
+            />
           )}
         </form>
+      ) : gate.scope !== 'workspace' && sharedNote ? (
+        <p className="text-sm text-fg-muted">
+          Every workspace shares this gate. An installation admin can change it.
+        </p>
       ) : null}
     </li>
   );
@@ -596,7 +714,7 @@ export function QualityGatesSettingsPage({
     <PageFrame data-testid="settings-quality-gates">
       <PageHeader
         title="Quality gates"
-        subtitle="What counts as a passing run. A run that misses its gate is marked failed."
+        subtitle="The pass rate release readiness asks for. Whether a single run passes is decided by its quality policy."
       />
       <PageBody>
         <AccessGate health={health}>
@@ -618,14 +736,20 @@ export function QualityGatesSettingsPage({
                         key={`${gate.id}:${String(gate.passRateThreshold)}`}
                         gate={gate}
                         client={client}
-                        canEdit={canAdminister(who)}
+                        // A shared gate is installation configuration (ledger MNT-170).
+                        canEdit={
+                          gate.scope === 'workspace'
+                            ? canAdminister(who)
+                            : canAdministerInstallation(who)
+                        }
+                        sharedNote={canAdminister(who)}
                         onChanged={refresh}
                       />
                     ))}
                   </ul>
                 )}
               </Panel>
-              {canAdminister(who) ? (
+              {canAdministerInstallation(who) ? (
                 <Panel title="Add a gate">
                   <form
                     aria-label="Add a gate"

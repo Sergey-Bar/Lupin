@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { RunDetailPage } from './run-detail.js';
+import { Route, RunDetailPage } from './run-detail.js';
 import {
   cockpitFixture,
   cockpitMetric,
@@ -122,10 +122,28 @@ function detailApi(run: Run | null, overrides: Partial<ApiClient> = {}): ApiClie
 }
 
 describe('RunDetailPage', () => {
+  // Only `?from=cockpit` makes this page ask the cockpit anything, so the address is the rule.
+  it('reads a cockpit referral from the address, and nothing else', () => {
+    const validate = Route.options.validateSearch as (search: Record<string, unknown>) => unknown;
+    expect(validate({ from: 'cockpit', window: 'release' })).toEqual({
+      from: 'cockpit',
+      window: 'release',
+    });
+    expect(validate({ from: 'cockpit', window: 'forever' })).toEqual({
+      from: 'cockpit',
+      window: '7d',
+    });
+    expect(validate({ from: 'runs', window: 'release' })).toEqual({});
+  });
   it('leads a failed run with what failed: the tests, their errors and the gate', async () => {
     render(<RunDetailPage id="run-123" api={detailApi(passedRun)} />);
     const failed = await screen.findByTestId('run-what-failed');
     expect(failed).toHaveTextContent('1 of 1 tests failed');
+    // One step from a failure to quarantining it (plan Wave 1 task 1).
+    expect(within(failed).getByRole('link', { name: 'Quarantine this test' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/dashboard\/quarantine\?title=.+&file=e2e%2Fsmoke\.spec\.ts$/u),
+    );
     expect(failed).toHaveTextContent('loads the command center');
     expect(failed).toHaveTextContent('Expected command center');
     expect(failed).toHaveTextContent('e2e/smoke.spec.ts');
@@ -264,6 +282,47 @@ describe('RunDetailPage', () => {
     },
   );
 
+  it('names the run by its short id and branch, and keeps the full id as secondary text', async () => {
+    render(
+      <RunDetailPage
+        id="069c2b03-7a1a-4310-a407-f24b37123002"
+        api={detailApi(
+          makeRun({
+            id: '069c2b03-7a1a-4310-a407-f24b37123002',
+            branch: 'feat/express-checkout',
+            commit: '7d02b5f',
+          }),
+        )}
+      />,
+    );
+    // Awaited by name: the loading state has its own level-one heading.
+    const heading = await screen.findByRole('heading', { level: 1, name: 'Run 069c2b03' });
+    expect(heading).toBeInTheDocument();
+    expect(screen.getByTestId('run-id')).toHaveTextContent('069c2b03-7a1a-4310-a407-f24b37123002');
+    expect(screen.getByTestId('run-ref')).toHaveTextContent('feat/express-checkout · 7d02b5f');
+  });
+
+  it('shrinks an empty evidence panel to its sentence, and lets a full one fill its column', async () => {
+    render(
+      <RunDetailPage
+        id="empty-evidence"
+        api={detailApi(makeRun({ id: 'empty-evidence', tests: [], artifacts: [] }))}
+      />,
+    );
+    await screen.findByTestId('run-detail-page');
+    for (const name of ['Test attempts', 'Artifacts', 'Live event timeline']) {
+      const panel = screen.getByRole('region', { name });
+      expect(panel, name).toHaveClass('flex-none');
+      expect(panel, name).not.toHaveClass('flex-1');
+    }
+  });
+
+  it('keeps a panel with evidence filling its column', async () => {
+    render(<RunDetailPage id="run-123" api={detailApi(passedRun)} />);
+    await screen.findByTestId('run-detail-page');
+    expect(screen.getByRole('region', { name: 'Test attempts' })).toHaveClass('flex-1');
+  });
+
   it('renders loading state initially', () => {
     const api = detailApi(passedRun, { getRun: vi.fn(() => new Promise<Run>(() => undefined)) });
     render(<RunDetailPage id="run-123" api={api} />);
@@ -352,7 +411,7 @@ describe('RunDetailPage', () => {
 
     await waitFor(() => expect(screen.getByTestId('run-detail-page')).toBeInTheDocument());
     expect(screen.getByTestId('run-phase')).toHaveTextContent('complete');
-    expect(screen.getByTestId('run-status')).toHaveTextContent('FAILED');
+    expect(screen.getByTestId('run-status')).toHaveTextContent('Failed');
     expect(screen.getByTestId('run-project')).toHaveTextContent('lupin');
     expect(screen.getByTestId('run-total')).toHaveTextContent('1');
     expect(screen.getByTestId('test-test-result-1')).toHaveTextContent('loads the command center');
@@ -363,8 +422,12 @@ describe('RunDetailPage', () => {
       'href',
       '/api/v1/artifacts/artifact-1',
     );
+    // A size a person reads, and an ellipsis with the whole checksum on hover (ledger MNT-190).
+    const meta = screen.getByTitle(`SHA-256 ${'a'.repeat(64)}`);
+    expect(meta).toHaveTextContent(`SHA-256 ${'a'.repeat(12)}…`);
+    expect(meta.parentElement).toHaveTextContent('trace · 1 KB ·');
     expect(screen.getByTestId('run-gate')).toHaveTextContent('Browser tests failed');
-    expect(screen.getByTestId('run-readiness')).toHaveTextContent('NOT_CONFIGURED');
+    expect(screen.getByTestId('run-readiness')).toHaveTextContent('Not configured');
   });
 
   it('says what is unknown about a run, and leaves out context nobody reported', async () => {
@@ -385,7 +448,7 @@ describe('RunDetailPage', () => {
     expect(context).not.toHaveTextContent('Release');
     expect(context).toHaveTextContent('Branch / Commit');
     expect(screen.getByTestId('run-duration')).toHaveTextContent('—');
-    expect(screen.getByTestId('run-gate')).toHaveTextContent('UNKNOWN');
+    expect(screen.getByTestId('run-gate')).toHaveTextContent('Unknown');
     expect(screen.getByText(/No events have been observed/iu)).toBeInTheDocument();
   });
 
@@ -435,8 +498,26 @@ describe('RunDetailPage', () => {
     );
   });
 
+  // Forty artifacts were one scrolling list, against the page's no-scroll rule (ledger MNT-191).
+  it('pages a long artifact list, and says which page it is on', async () => {
+    const many = Array.from({ length: 40 }, (_, index) => ({
+      ...artifact,
+      id: `artifact-${String(index)}`,
+      name: `file-${String(index)}.zip`,
+    }));
+    render(
+      <RunDetailPage id="run-123" api={detailApi(makeRun({ ...passedRun, artifacts: many }))} />,
+    );
+    expect(await screen.findByRole('link', { name: 'file-0.zip' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'file-39.zip' })).toBeNull();
+    const pages = screen.getByRole('navigation', { name: 'artifacts pages' });
+    expect(pages).toHaveTextContent(/^1–\d+ of 40/u);
+    fireEvent.click(screen.getByRole('button', { name: 'Next artifacts page' }));
+    expect(screen.queryByRole('link', { name: 'file-0.zip' })).toBeNull();
+  });
+
   /**
-   * A finished run says RECONNECTING, and nothing on the page says LIVE.
+   * A finished run says Reconnecting, and nothing on the page says Live.
    *
    * The badge distinguishes "the event stream is attached" from "the page has
    * loaded a run and is no longer watching it", which is the difference between
@@ -444,11 +525,11 @@ describe('RunDetailPage', () => {
    * `LIVE` half was asserted and the other half was not, so a page that rendered
    * `LIVE` unconditionally would have passed every test here.
    */
-  it('marks a completed run as not live rather than as LIVE', async () => {
+  it('marks a completed run as not live rather than as live', async () => {
     render(<RunDetailPage id="run-123" api={detailApi(passedRun)} />);
     await waitFor(() => expect(screen.getByTestId('run-detail-page')).toBeInTheDocument());
-    expect(screen.queryByText('LIVE')).toBeNull();
-    expect(screen.getByText('RECONNECTING')).toBeInTheDocument();
+    expect(screen.queryByText('Live')).toBeNull();
+    expect(screen.getByText('Reconnecting')).toBeInTheDocument();
   });
 
   it('records live canonical events in the timeline', async () => {
@@ -504,6 +585,15 @@ describe('RunDetailPage', () => {
     expect(api.retryRun).toHaveBeenCalledWith('failed');
   });
 
+  it('links a rerun to the run it reran (plan Wave 1 task 2)', async () => {
+    const rerun = makeRun({ id: 'retry-run', attempt: 2, retryOfRunId: 'failed-run-1' });
+    render(<RunDetailPage id="retry-run" api={detailApi(rerun)} />);
+    expect(await screen.findByTestId('rerun-of')).toHaveAttribute(
+      'href',
+      '/dashboard/runs/failed-run-1',
+    );
+  });
+
   it('renders terminal infrastructure phases and tests without attempts', async () => {
     const run = makeRun({
       id: 'infra-run',
@@ -529,9 +619,9 @@ describe('RunDetailPage', () => {
     });
     render(<RunDetailPage id={run.id} api={detailApi(run)} />);
     await waitFor(() => expect(screen.getByTestId('run-phase')).toHaveTextContent('infra_failed'));
-    expect(screen.getByTestId('run-status')).toHaveTextContent('INFRA_FAILED');
+    expect(screen.getByTestId('run-status')).toHaveTextContent('Infra failed');
     expect(screen.getByTestId('phase-infra_failed')).toBeInTheDocument();
-    expect(screen.getByTestId('test-test-no-attempt')).toHaveTextContent('UNKNOWN');
+    expect(screen.getByTestId('test-test-no-attempt')).toHaveTextContent('Unknown');
     expect(screen.getByText('No retry attempts were reported.')).toBeInTheDocument();
   });
 
@@ -548,6 +638,24 @@ describe('RunDetailPage', () => {
     );
     fireEvent.click(screen.getByTestId('cancel-run'));
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('cancel rejected'));
+  });
+
+  it('names the board or rig an embedded run needed, and nothing for one that needed none', async () => {
+    const firmware = makeRun({
+      ...passedRun,
+      id: 'run-fw',
+      requiredCapabilities: ['hil', 'board:esp32-s3'],
+      labels: ['nightly'],
+    });
+    const { unmount } = render(<RunDetailPage id={firmware.id} api={detailApi(firmware)} />);
+    expect(await screen.findByTestId('run-target')).toHaveTextContent(
+      'hil · board:esp32-s3 · nightly',
+    );
+    unmount();
+    const plain = makeRun({ ...passedRun, requiredCapabilities: [], labels: [] });
+    render(<RunDetailPage id={plain.id} api={detailApi(plain)} />);
+    await screen.findByTestId('run-phase');
+    expect(screen.queryByTestId('run-target')).toBeNull();
   });
 });
 
@@ -568,7 +676,7 @@ describe('RunDetailPage from the cockpit', () => {
       }),
     );
 
-  it('says the cockpit names this run, when the person came from the cockpit and it does', async () => {
+  it('says the dashboard names this run, when the person came from the cockpit and it does', async () => {
     const getCockpit = named();
     render(
       <RunDetailPage
@@ -607,7 +715,82 @@ describe('RunDetailPage from the cockpit', () => {
     );
     await screen.findByTestId('run-what-failed');
     await waitFor(() => expect(getCockpit).toHaveBeenCalled());
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    // Wait on the read, not the clock (ledger MNT-200).
+    await act(async () => {
+      await getCockpit.mock.results[0]?.value;
+    });
     expect(screen.queryByTestId('score-impact')).toBeNull();
+  });
+});
+
+describe('the live run hero', () => {
+  it('leads with the verdict and retries only the failed tests in one click', async () => {
+    const failed = makeRun({
+      id: 'red',
+      phase: 'complete',
+      outcome: 'failed',
+      summary: { ...makeRun().summary, total: 3, passed: 1, failed: 2 },
+      tests: [
+        { id: 't1', title: 'pays', status: 'failed', attempts: [], artifactIds: [], metadata: {} },
+        { id: 't2', title: 'ships', status: 'failed', attempts: [], artifactIds: [], metadata: {} },
+      ],
+    });
+    const retryRun = vi.fn().mockResolvedValue(makeRun({ id: 'again' }));
+    render(<RunDetailPage id="red" api={detailApi(failed, { retryRun })} />);
+    const hero = await screen.findByRole('region', { name: 'Failed' });
+    expect(hero).toHaveTextContent('2 of 3 tests failed.');
+    fireEvent.click(within(hero).getByRole('button', { name: 'Retry 2 failed tests' }));
+    await waitFor(() =>
+      expect(retryRun).toHaveBeenCalledWith('red', undefined, { scope: 'failed' }),
+    );
+  });
+
+  it('counts a running run live, with no verdict yet', async () => {
+    const running = makeRun({
+      id: 'live',
+      phase: 'running',
+      outcome: null,
+      summary: { ...makeRun().summary, total: 10, passed: 3, failed: 1 },
+    });
+    render(<RunDetailPage id="live" api={detailApi(running)} />);
+    const hero = await screen.findByRole('region', { name: 'Running' });
+    expect(hero).toHaveTextContent('4 of 10 tests reported · 1 failing so far');
+  });
+});
+
+describe('the failures, grouped by what broke them', () => {
+  const test = (id: string, status: 'passed' | 'failed', message?: string) => ({
+    id,
+    title: `checkout › ${id}`,
+    file: 'e2e/checkout.spec.ts',
+    status,
+    durationMs: 1200,
+    attempts: [],
+    artifactIds: [],
+    metadata: {},
+    ...(message === undefined ? {} : { error: { code: 'ASSERTION_FAILED', message } }),
+  });
+
+  it('puts one group per error first, biggest first, and folds the passes', async () => {
+    const run = makeRun({
+      ...passedRun,
+      outcome: 'failed',
+      tests: [
+        test('pass-1', 'passed'),
+        test('a', 'failed', 'expected the cart to settle within 5000ms'),
+        test('b', 'failed', 'expected the cart to settle within 5000ms'),
+        test('c', 'failed', 'card was declined'),
+        test('pass-2', 'passed'),
+      ] as never,
+    });
+    render(<RunDetailPage id="run-123" api={detailApi(run)} />);
+    const groups = await screen.findAllByTestId('failure-group');
+    expect(
+      groups.map((group) => within(group).getByTestId('failure-group-head').textContent),
+    ).toEqual(['2 testsexpected the cart to settle within 5000ms', '1 testcard was declined']);
+    const passed = screen.getByTestId('passed-tests');
+    expect(passed.tagName).toBe('DETAILS');
+    expect(passed).not.toHaveAttribute('open');
+    expect(passed.querySelector('summary')).toHaveTextContent('2 passed');
   });
 });

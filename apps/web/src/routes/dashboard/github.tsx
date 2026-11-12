@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { lazyPage } from '../../components/lazy-page.js';
+import { DeliveryArea } from '../../components/DeliveryArea.js';
 import { projectSearch } from '../../components/ProjectPage.js';
 import { createDeliveryClient } from '../../lib/delivery-client.js';
 import { createGithubClient } from '../../lib/github-client.js';
@@ -15,6 +16,10 @@ const PullRequestsPage = lazyPage(
 );
 const ReposPage = lazyPage(() => import('../../components/GithubRepos.js'), 'ReposPage');
 const RepoDetailPage = lazyPage(() => import('../../components/GithubRepos.js'), 'RepoDetailPage');
+const PullRequestRiskPage = lazyPage(
+  () => import('../../components/PullRequestRisk.js'),
+  'PullRequestRiskPage',
+);
 
 /**
  * The GitHub section: pull requests and issues across every repository, the repositories with
@@ -29,7 +34,17 @@ export const PrsRoute = createRoute({
     const { project } = PrsRoute.useSearch();
     const github = React.useMemo(() => createGithubClient(), []);
     const health = React.useMemo(() => createHealthClient(), []);
-    return <PullRequestsPage github={github} health={health} initialProjectId={project} />;
+    const listPulls = React.useCallback(
+      () => github.listPulls({ state: 'open', limit: 50 }),
+      [github],
+    );
+    return (
+      <DeliveryArea
+        listPulls={listPulls}
+        navigate={(to) => window.location.assign(to)}
+        details={<PullRequestsPage github={github} health={health} initialProjectId={project} />}
+      />
+    );
   },
 });
 
@@ -64,5 +79,27 @@ export const RepoDetailRoute = createRoute({
     const github = React.useMemo(() => createGithubClient(), []);
     const health = React.useMemo(() => createHealthClient(), []);
     return <RepoDetailPage projectId={projectId} github={github} health={health} />;
+  },
+});
+
+/** One pull request's change risk. A number that is not one is "no such pull request". */
+export const PullRequestRiskRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '/prs/$projectId/$number',
+  component: () => {
+    const { projectId, number } = PullRequestRiskRoute.useParams();
+    const github = React.useMemo(() => createGithubClient(), []);
+    const health = React.useMemo(() => createHealthClient(), []);
+    const parsed = Number(number);
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return (
+        <p className="max-w-measure p-6 text-sm text-fg-muted">
+          That is not a pull request number. Open one from the Pull requests list.
+        </p>
+      );
+    }
+    return (
+      <PullRequestRiskPage projectId={projectId} number={parsed} github={github} shapes={health} />
+    );
   },
 });

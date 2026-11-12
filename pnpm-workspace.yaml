@@ -226,6 +226,14 @@ overrides:
 
 catalog:
   '@eslint/js': ^10.0.1
+  # Shared by two or more packages, so declared once (ledger MNT-198). pglite is exact: the
+  # worker pinned it so, and an in-process PostgreSQL is the thing every suite checks SQL on.
+  '@electric-sql/pglite': 0.5.15
+  '@testing-library/jest-dom': ^7.0.1
+  '@testing-library/user-event': ^14.6.8
+  axe-core: ^4.14.0
+  tsx: ^4.23.15
+  vitest-axe: ^0.1.0
   '@playwright/test': ^1.65.0
   '@sentry/node': ^11.11.0
   '@sentry/react': ^11.11.0
@@ -248,6 +256,7 @@ catalog:
   fast-check: ^4.10.2
   jsdom: ^31.0.0
   lucide-react: ^1.70.0
+  simple-icons: 16.36.0
   # The read-only MCP server (apps/api/src/mcp): Streamable HTTP and stdio transports.
   # Pinned exactly: it carries its own transitive tree (express, hono, ajv, jose), so a
   # minor bump is a reviewed change rather than one that arrives with an install.
@@ -262,12 +271,13 @@ catalog:
   react-dom: ^19.3.1
   tailwindcss: ^4.3.5
   typescript: ^6.0.3
-  # Pinned exactly: 8.72.1 runs `pnpm lint` out of a 4 GB heap (exit 134) on this tree,
-  # where 8.72.0 lints it clean; bisected with every other bump of that group held in
-  # place. Upstream: typescript-eslint#13109 (open on 2026-11-04), "Single-run Programs for
-  # the project service (8.72.1) duplicate memory when tsconfigs overlap", which is this
-  # workspace's shape (a root tsconfig over every package's). Return to a caret range on
-  # the first release that fixes it and lints without the OOM.
+  # Pinned exactly. 8.72.1 ran `pnpm lint` out of the default 4 GB heap (exit 134) where 8.72.0
+  # fit, which is typescript-eslint#13109 ("Single-run Programs for the project service
+  # duplicate memory when tsconfigs overlap"), this workspace's shape: a root tsconfig over
+  # every package's. The tree then outgrew 4 GB on 8.72.0 as well (5b8a912e), so the root
+  # `lint` and the complexity gate run with `--max-old-space-size=6144`, and 8.72.1 lints
+  # within that (ledger MNT-195). Return to a caret range on the first release that fixes
+  # #13109.
   typescript-eslint: 8.72.1
   # QR codes for device pairing (apps/web). Zero dependencies; pinned exactly.
   uqr: 0.1.3

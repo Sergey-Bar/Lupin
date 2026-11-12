@@ -1,4 +1,5 @@
 import {
+  boolean,
   check,
   index,
   integer,
@@ -140,3 +141,40 @@ export const testProposals = pgTable(
 export type IssueTrackerRow = InferSelectModel<typeof issueTrackers>;
 export type IssueLinkRow = InferSelectModel<typeof issueLinks>;
 export type TestProposalRow = InferSelectModel<typeof testProposals>;
+
+/**
+ * A release decision on one project's commit (plan Wave 1 task 5): ship or hold, the readiness
+ * verdict it was made against, the reason, and who made it. Append-only: a later decision on
+ * the same commit is a new row, so the history of a release stays readable. `override` marks a
+ * ship against a no-go verdict, which only an admin may record.
+ */
+export const releaseSignoffs = pgTable(
+  'release_signoffs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'restrict' }),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    commitSha: text('commit_sha').notNull(),
+    decision: text('decision').notNull(),
+    verdict: text('verdict').notNull(),
+    override: boolean('override').notNull().default(false),
+    reason: text('reason').notNull(),
+    actor: text('actor').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('release_signoffs_project_idx').on(table.workspaceId, table.projectId, table.createdAt),
+    check('release_signoffs_decision_check', sql`${table.decision} IN ('ship', 'hold')`),
+    check('release_signoffs_verdict_check', sql`${table.verdict} IN ('go', 'caution', 'no-go')`),
+    check(
+      'release_signoffs_override_check',
+      sql`${table.override} = (${table.decision} = 'ship' AND ${table.verdict} = 'no-go')`,
+    ),
+  ],
+);
+
+export type ReleaseSignoffRow = InferSelectModel<typeof releaseSignoffs>;

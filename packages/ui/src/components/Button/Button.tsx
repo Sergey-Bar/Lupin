@@ -1,4 +1,9 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import {
+  forwardRef,
+  type AnchorHTMLAttributes,
+  type ButtonHTMLAttributes,
+  type ReactNode,
+} from 'react';
 import { Loader2 } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils.js';
@@ -14,8 +19,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'text-on-fill bg-primary hover:opacity-90',
-        default: 'text-on-fill bg-primary hover:opacity-90',
+        primary: 'text-on-primary bg-primary-gradient shadow-elevation-1 hover:opacity-90',
+        default: 'text-on-primary bg-primary-gradient shadow-elevation-1 hover:opacity-90',
         secondary: 'border border-border-strong bg-transparent text-fg hover:bg-surface-muted',
         destructive: 'text-on-fill bg-error hover:opacity-90',
         outline: 'border border-border-strong bg-transparent text-fg hover:bg-surface-muted',
@@ -64,6 +69,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const isDisabled = disabled || loading;
+    // A disabled fill is not a dimmer fill: it reads as broken. It steps down to a quiet
+    // outline instead. A busy button keeps its fill, so its progress reads as the same button.
+    const filled = variant === 'primary' || variant === 'default' || variant === 'destructive';
+    const quiet = disabled === true && filled;
 
     return (
       <button
@@ -73,8 +82,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         aria-busy={loading ? true : undefined}
         data-testid={testId}
         className={cn(
-          buttonVariants({ variant, size }),
-          isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+          quiet
+            ? cn(
+                buttonVariants({ variant: 'outline', size }),
+                'border-border text-fg-muted hover:bg-transparent active:scale-100 cursor-not-allowed',
+              )
+            : buttonVariants({ variant, size }),
+          !quiet && (isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'),
           className,
         )}
         style={style}
@@ -93,3 +107,29 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
+
+export interface ButtonLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement>, ButtonVariants {
+  href: string;
+  icon?: ReactNode;
+}
+
+/**
+ * A link that is drawn as a button: the same variants, height, radius and hover, so a screen
+ * never mixes a real button with a hand-styled look-alike. It navigates, so it stays an `<a>`
+ * (a reader can open it in a new tab); `apps/web/src/button-rule.test.ts` refuses the
+ * hand-written `bg-primary … text-on-fill` string this replaces.
+ */
+export const ButtonLink = forwardRef<HTMLAnchorElement, ButtonLinkProps>(
+  ({ variant = 'primary', size = 'md', icon, children, className, ...rest }, ref) => (
+    <a
+      ref={ref}
+      className={cn(buttonVariants({ variant, size }), 'cursor-pointer', className)}
+      {...rest}
+    >
+      {icon && <span className="shrink-0">{icon}</span>}
+      {children}
+    </a>
+  ),
+);
+
+ButtonLink.displayName = 'ButtonLink';

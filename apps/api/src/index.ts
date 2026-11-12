@@ -7,11 +7,13 @@
 import './instrument.js';
 import {
   recordClientAddress,
+  currentRequestId,
   requestContext,
   requireRequestId,
 } from './observability/request-context.js';
 import { randomUUID } from 'node:crypto';
-import { sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
+import { projects } from '@lupin/db';
 import { Hono, type Context } from 'hono';
 import { createErrorBoundary } from './errors/boundary.js';
 import { withClassifiedErrors } from './errors/db-errors.js';
@@ -70,11 +72,13 @@ import { createToolRegistry } from '@lupin/tool-sdk';
 import { registerApiAgent } from './agents/api-adapter.js';
 import { registerBrowserAgent } from './agents/browser-adapter.js';
 import { registerLoadAgent } from './agents/load-adapter.js';
+import { registerSecurityAgent } from './agents/security-adapter.js';
 import { createChatRoutes } from './routes/chat.js';
+import { createCopilotRoutes } from './copilot/routes.js';
 import { createLiveAiGateway } from './observability/live-ai-gateway.js';
 import { createSettingsService } from './services/settings-service.js';
 import { createSettingTesters } from './services/settings-testers.js';
-import { createSettingsRoutes } from './routes/settings.js';
+import { createSettingsRoutes, mayChangeInstallation } from './routes/settings.js';
 import {
   createIdentitySettingsRoutes,
   currentIdentity,
@@ -104,8 +108,15 @@ import { ingestScanArtifact } from './services/repo-health-service.js';
 import { poolCapabilities } from './services/runner-pool.js';
 import { readGitToken } from './services/git-credential-service.js';
 import { rotateVaultSecrets } from './services/vault-secrets.js';
-import { audit, authenticateToken } from './services/access-service.js';
-import { alertsFor, deliverAlerts, useGitHubApi } from './services/health-integrations.js';
+import { authenticateToken, recordAudit } from './services/access-service.js';
+import {
+  alertsFor,
+  deliverAlerts,
+  githubRepository,
+  useGitHubApi,
+} from './services/health-integrations.js';
+import { createGitHubAppTokens } from './services/github-app-service.js';
+import { projectSource } from './services/repo-health-service.js';
 import type { ReportEvent } from './services/repo-health-service.js';
 import { createGitHubAdapter } from '@lupin/connectors-github';
 import { jiraAdapter } from '@lupin/connectors-jira';
@@ -118,7 +129,7 @@ import { whatsappAdapter } from '@lupin/connectors-whatsapp';
 import { createReportDispatcher } from './services/report-dispatcher.js';
 import { createDeliverySyncer } from './services/delivery-syncer.js';
 import { getCookie } from 'hono/cookie';
-import { DEFAULT_IGNORED, fileSystemView } from '@lupin/projects';
+import { DEFAULT_IGNORED, fileSystemView, ownerOf, parseCodeowners } from '@lupin/projects';
 import { createRepoScanner } from './services/repo-scan-service.js';
 import { createProjectsRoutes } from './routes/projects.js';
 import {
@@ -139,8 +150,19 @@ import {
   pruneExpiredSpansEverywhere,
   SELF_AGENT_NAME,
   selfInstrumented,
+  budgetedGateway,
+  monthlyTokenBudgetFrom,
   TEST_PROPOSAL_AGENT_NAME,
+  BRIEFING_AGENT_NAME,
 } from './services/genai-span-service.js';
+import { createNarrator } from './services/narration-service.js';
+import {
+  CLUSTER_HISTORY_DAYS,
+  readStoredClusters,
+  refreshAllClusters,
+} from './services/failure-cluster-store.js';
+import { readRollupTrend, refreshAllRollups } from './services/trend-rollup-store.js';
+import { sweepAllWorkspaces } from './services/retention-service.js';
 import { Lifecycle, closeHttpServer, installShutdownHandlers } from './bootstrap/lifecycle.js';
 // T18: dashboard module — runs detail, tests listing, analytics, quarantine, quality gates
 import { createDashboardModule } from './modules/dashboard/index.js';
@@ -155,10 +177,17 @@ import {
   DrizzleQuarantineStore,
   DrizzleQualityGateStore,
 } from './modules/dashboard/drizzle-stores.js';
-// No auth middleware: the install is open. See the note where it used to be mounted,
-// and ADR-006 for the posture. The session and key routes stay mounted — they mint
-// nothing anybody is required to hold.
+import {
+  DrizzleAuditSink,
+  InMemoryAuditSink,
+  type AuditSink,
+} from './modules/dashboard/audit-sink.js';
+// No global authentication middleware: every route carries its own guard (`http/access.ts`,
+// `http/route-access.ts`), and the posture is chosen by configuration. See the note where the
+// middleware used to be mounted.
 import { createRequestDeadline } from './middleware/request-deadline.js';
+import { apiRateLimitFrom, createApiRateLimit } from './middleware/api-rate-limit.js';
+import { outboundAllowlistFrom } from './http/outbound-guard.js';
 import { createSecurityHeaders } from './middleware/security-headers.js';
 import { getConfig } from './config.js';
 import { createSentryErrorReporter } from './observability/sentry.js';
@@ -182,6 +211,7 @@ import {
   LocalArtifactStore,
 } from './infrastructure/artifact-store.js';
 import { S3ArtifactBytesStore } from './infrastructure/s3-artifact-bytes.js';
+import { claimSingleProcess, type SingleProcessClaim } from './infrastructure/single-process.js';
 import type { ArtifactBytesStore } from './execution/drizzle-execution-store.js';
 
 const runtimeConfig = getConfig();
@@ -225,6 +255,8 @@ const databaseUrl = runtimeConfig.databaseUrl;
  * `DATABASE_URL` — and exhausting them was a matter of traffic, not scale.
  */
 const databaseResources = databaseUrl ? createDbResources(databaseUrl) : undefined;
+/** Set at boot once the process holds the one-API-per-database lock (ledger MNT-175). */
+let singleProcess: SingleProcessClaim | undefined;
 
 /**
  * The installation's settings: environment first, then what an admin saved from Settings,
@@ -343,12 +375,13 @@ function createRunRepository(workspaceId: string): RunRepository {
 function createDashboardStores(workspaceId: string): {
   quarantineStore: QuarantineStore;
   qualityGateStore?: DrizzleQualityGateStore;
+  audit: AuditSink;
 } {
   if (!databaseResources) {
     assertInMemoryAllowed(runtimeConfig, 'dashboard stores');
     // Created here rather than inside the dashboard module, so the gate and the dashboard
     // read one quarantine.
-    return { quarantineStore: new InMemoryQuarantineStore() };
+    return { quarantineStore: new InMemoryQuarantineStore(), audit: new InMemoryAuditSink() };
   }
   // Bound to the workspace being composed, as every other store is. Both used to be composed
   // with none: `quarantine` had no column to scope by, and every audit row they wrote
@@ -356,6 +389,8 @@ function createDashboardStores(workspaceId: string): {
   return {
     quarantineStore: new DrizzleQuarantineStore(databaseResources.db, workspaceId),
     qualityGateStore: new DrizzleQualityGateStore(databaseResources.db, workspaceId),
+    // The run status change had no sink here, so it was never audited (ledger MNT-171).
+    audit: new DrizzleAuditSink(databaseResources.db, workspaceId),
   };
 }
 
@@ -420,25 +455,39 @@ inBackground(
  * `chat` span — model, tokens, duration, outcome; never content — with no project
  * (`source = 'self'`, agent `lupin-chat`), read by `GET /api/v1/chat/runtime`. A test
  * proposal asks the same provider, instrumented the same way, under the agent name
- * `lupin-test-proposals` so the runtime page tells them from chat. Each resolved provider is
+ * `lupin-test-proposals` so the runtime page tells them from chat. A briefing narration is
+ * `lupin-briefing`. Each resolved provider is
  * decorated with its own name, so a span records the provider that actually answered.
  *
  * **Built per workspace** (ADR-014), so a workspace's spans are written in that workspace,
  * where its runtime page reads them. Unconfigured, both refuse each request with the reason.
  */
-function selfGateways(workspaceId: string): { chat: AiGateway; testProposals: AiGateway | null } {
-  if (databaseResources === undefined) return { chat: aiGateway, testProposals: aiGateway };
+/** Tokens a month this install's own model calls may use; unset is no limit (plan task 36). */
+const monthlyTokenBudget = monthlyTokenBudgetFrom(process.env['LUPIN_AI_MONTHLY_TOKEN_BUDGET']);
+
+function selfGateways(workspaceId: string): {
+  chat: AiGateway;
+  testProposals: AiGateway | null;
+  briefing: AiGateway | null;
+} {
+  if (databaseResources === undefined)
+    return { chat: aiGateway, testProposals: aiGateway, briefing: aiGateway };
   const spans = { db: databaseResources.db as never, workspaceId };
   const instrumented = (agent: string, what: string) =>
     createLiveAiGateway(settingsService, {
       decorate: (gateway, provider) =>
-        selfInstrumented(spans, gateway, provider, agent, (error) =>
-          logger.warn(`${what} span could not be recorded`, { error: String(error) }),
+        budgetedGateway(
+          spans,
+          selfInstrumented(spans, gateway, provider, agent, (error) =>
+            logger.warn(`${what} span could not be recorded`, { error: String(error) }),
+          ),
+          monthlyTokenBudget,
         ),
     }).gateway;
   return {
     chat: instrumented(SELF_AGENT_NAME, 'chat'),
     testProposals: instrumented(TEST_PROPOSAL_AGENT_NAME, 'test proposal'),
+    briefing: instrumented(BRIEFING_AGENT_NAME, 'briefing narration'),
   };
 }
 
@@ -684,11 +733,12 @@ const authRoutes = createAuthRoutes({
     },
     breakGlass: runtimeConfig.breakGlass === true,
     // Every break-glass sign-in is loud: a warning in the log and a row in the audit trail.
-    onBreakGlass: (context) => {
+    // Awaited, and not swallowed: a use the trail cannot record is refused (ledger MNT-173).
+    onBreakGlass: async (context) => {
       const client = defaultClientKey(context, runtimeConfig.trustProxy ?? false);
       logger.warn('break-glass sign-in with the installation key', { client });
       if (databaseResources !== undefined) {
-        void audit(
+        await recordAudit(
           {
             db: databaseResources.db as never,
             workspaceId: runtimeConfig.workspaceId ?? DEFAULT_WORKSPACE_ID,
@@ -824,6 +874,7 @@ const deliveryHooks = {
     return typeof secret === 'string' && secret !== '' ? secret : undefined;
   },
   ...(deliverySyncer === undefined ? {} : { syncNow: () => deliverySyncer.runOnce() }),
+  log: (message: string, fields: Record<string, unknown>) => logger.warn(message, fields),
 };
 
 /**
@@ -933,8 +984,8 @@ function buildWorkspace(workspaceId: string) {
    * The one tool registry the agent routes dispatch through, and the catalog that
    * `/api/v1/features` and `/api/v1/agents` both read availability from. Browser is the first
    * domain with a real adapter: `browser.run` queues a Playwright job through the same store
-   * `POST /api/v1/runs` uses, `api.run` queues a Bruno job and `load.run` a bounded k6 job the
-   * same way. The other two domains register nothing and answer `501`.
+   * `POST /api/v1/runs` uses, `api.run` queues a Bruno job, `load.run` a bounded k6 job and
+   * `security.scan` a ZAP baseline job the same way. Mobile registers nothing and answers `501`.
    */
   const agentRegistry = createToolRegistry();
   registerBrowserAgent({
@@ -951,6 +1002,12 @@ function buildWorkspace(workspaceId: string) {
     requireIdempotencyKey: runtimeConfig.nodeEnv === 'production',
   });
   registerLoadAgent({
+    registry: agentRegistry,
+    store: executionStore,
+    workspaceId,
+    requireIdempotencyKey: runtimeConfig.nodeEnv === 'production',
+  });
+  registerSecurityAgent({
     registry: agentRegistry,
     store: executionStore,
     workspaceId,
@@ -1120,6 +1177,12 @@ function buildWorkspace(workspaceId: string) {
       createAnalyticsTrendRoutes({
         store: executionStore,
         workspaceId: workspaceId,
+        ...(databaseResources === undefined
+          ? {}
+          : {
+              rollups: (projectKey: string, end: Date, days: number) =>
+                readRollupTrend(databaseResources.db, workspaceId, projectKey, end, days),
+            }),
       }),
     );
     target.route(
@@ -1136,10 +1199,41 @@ function buildWorkspace(workspaceId: string) {
                   db: databaseResources.db,
                   workspaceId: workspaceId,
                 }),
+              // Stored by the cluster job below (plan task 11).
+              storedClusters: {
+                days: CLUSTER_HISTORY_DAYS,
+                read: (projectKey: string) =>
+                  readStoredClusters(databaseResources.db, workspaceId, projectKey, 20),
+              },
             }),
       }),
     );
     target.route('/', createChatRoutes({ gateway: gateways.chat }));
+    target.route(
+      '/',
+      createCopilotRoutes({
+        store: executionStore,
+        workspaceId: workspaceId,
+        gateway: gateways.chat,
+        log: (message, fields) => logger.warn(message, { workspaceId, ...fields }),
+        // Owners from the project's own CODEOWNERS, read in this workspace only.
+        ...(databaseResources === undefined
+          ? {}
+          : {
+              ownersFor: async (projectId: string) => {
+                const rows = await databaseResources.db
+                  .select({ settings: projects.settings })
+                  .from(projects)
+                  .where(and(eq(projects.workspaceId, workspaceId), eq(projects.id, projectId)))
+                  .limit(1);
+                const health = rows[0]?.settings['health'] as { codeowners?: unknown } | undefined;
+                const rules =
+                  typeof health?.codeowners === 'string' ? parseCodeowners(health.codeowners) : [];
+                return (file: string | null) => ownerOf(rules, file);
+              },
+            }),
+      }),
+    );
     // Settings → AI, Integrations, Identity, Sessions & retention. Installation-wide, so every
     // workspace's composition serves the one service; writes need an installation admin (or,
     // while single sign-on is enforced, an admin of the home workspace).
@@ -1179,6 +1273,12 @@ function buildWorkspace(workspaceId: string) {
         workspaceId: workspaceId,
         viewFor: (repoPath) => fileSystemView(repoPath),
       };
+      // The workspace's GitHub App, when an admin stored one: installation tokens per repository.
+      const appTokens = createGitHubAppTokens({
+        vault: { ...registry, vaultSecret: runtimeConfig.vaultSecret },
+        apiBase: runtimeConfig.githubApiUrl,
+        log: (message, fields) => logger.warn(message, { workspaceId, ...fields }),
+      });
       /**
        * The configured workspace exists before anything is written under it.
        *
@@ -1249,6 +1349,9 @@ function buildWorkspace(workspaceId: string) {
           health: {
             ...healthHooks,
             detailsUrl: dashboardUrl,
+            // The briefing's optional prose: the configured provider, instrumented as
+            // `lupin-briefing`, sent the briefing's sentences and nothing else.
+            narrator: createNarrator({ gateway: gateways.briefing }),
             // The commit's test run, read with the same quarantine and the same rule the gate and
             // `lupin test` use.
             commitTests: (projectId, commit) =>
@@ -1266,11 +1369,27 @@ function buildWorkspace(workspaceId: string) {
               ),
             github: {
               adapter: githubAdapter,
-              tokenFor: (projectId) =>
-                readGitToken(
-                  { ...registry, vaultSecret: runtimeConfig.vaultSecret },
-                  projectId,
-                ).catch(() => null),
+              // The project's own token first (set for it on purpose), then the workspace's
+              // GitHub App, minted for the one repository and kept until it nears expiry.
+              tokenFor: async (projectId) => {
+                const vault = { ...registry, vaultSecret: runtimeConfig.vaultSecret };
+                // A failed read falls back as before, but says so: a vault or database fault
+                // is not the same as "this project has no token" (ledger MNT-172).
+                const own = await readGitToken(vault, projectId).catch((error: unknown) => {
+                  logger.warn('git token could not be read', { projectId, error: String(error) });
+                  return null;
+                });
+                if (own !== null) return own;
+                const source = await projectSource(registry, projectId).catch((error: unknown) => {
+                  logger.warn('project source could not be read', {
+                    projectId,
+                    error: String(error),
+                  });
+                  return null;
+                });
+                const repository = githubRepository(source?.repositoryUrl ?? null);
+                return repository === null ? null : appTokens.tokenFor(repository);
+              },
             },
             reporterSecret: runtimeConfig.reporterSecret,
             requireReporterSecret: runtimeConfig.nodeEnv === 'production',
@@ -1394,6 +1513,26 @@ function buildWorkspace(workspaceId: string) {
         repository: runRepository,
         quarantineStore: dashboardStores.quarantineStore,
         qualityGateStore: dashboardStores.qualityGateStore,
+        audit: dashboardStores.audit,
+        // A shared gate is installation configuration, decided by the rule install-scoped
+        // settings use (ledger MNT-170); the audit row names the caller who changed it.
+        caller: {
+          contextFor: async (context) => {
+            const actor = (await callerOf(context, access)).actor;
+            return {
+              actorId: actor,
+              // An access token is a machine's credential; everything else is a person.
+              actorType: actor.startsWith('token:') ? 'service' : 'user',
+              requestId: currentRequestId() ?? null,
+            };
+          },
+          mayChangeInstallation: async (context) =>
+            mayChangeInstallation(
+              await callerOf(context, access),
+              access,
+              workspaceId === defaultWorkspace,
+            ),
+        },
       }),
     );
     mountReportingRoutes(target);
@@ -1443,6 +1582,16 @@ app.use('*', async (context, next) => {
   recordClientAddress(defaultClientKey(context, runtimeConfig.trustProxy ?? false));
   await next();
 });
+// A per-token and per-client budget on every route but the probes (plan task 8).
+// The outbound allowlist is read per call; parsed once here so a typo stops the boot.
+outboundAllowlistFrom(process.env['LUPIN_OUTBOUND_ALLOW']);
+app.use(
+  '*',
+  createApiRateLimit({
+    limit: apiRateLimitFrom(process.env['LUPIN_API_RATE_LIMIT']),
+    clientKey: (context) => defaultClientKey(context, runtimeConfig.trustProxy ?? false),
+  }),
+);
 
 /**
  * A server-side deadline on every request that is not a long-lived stream.
@@ -1471,27 +1620,24 @@ app.use(
 );
 
 /**
- * **No authentication middleware.** The install is open.
+ * **No global authentication middleware; every route is guarded where it is declared.**
  *
- * Removed rather than bypassed, on 2026-09-30. A self-hosted, single-tenant install
- * has one operator and no second party to authenticate *to*: `WORKSPACE_ID` is the
- * only tenancy boundary the product has, and ADR-006 puts multi-tenant isolation
- * out of scope for v1.0.0. A credential in front of it would be an obstacle with
- * nothing behind it — and one that had already produced three defects of its own:
- * two files holding the key and disagreeing (E2E-1), a runner secret the lane never
- * had (E2E-1's sibling), and a "this route is not public" check that was itself
- * authenticated and proved nothing.
+ * The one middleware that once stood in front of everything was removed on 2026-09-30. Who may
+ * call a route is now read from the route: a guard from `http/access.ts`, or a role row in
+ * `http/route-access.ts`, and `docs/quality/authz-matrix.json` is generated from those guards
+ * (ledger MNT-180 replaced the note that said the install had no authentication at all).
  *
- * **What this means, stated plainly rather than left to be discovered.** Anything
- * that can reach the API can read every run, download every artifact, and cancel
- * runs. That is the correct posture for a box on an operator's own network, and it
- * is the wrong posture for the same box on a public interface. The boundary is the
- * network, so **bind the API to loopback** — `HOST=127.0.0.1`, which is already the
- * default — and put a reverse proxy in front of it if it must be reachable from
- * anywhere else.
+ * **What the guards admit depends on the configuration, stated plainly:**
  *
- * The session and key routes are still mounted: they mint nothing and are no longer
- * required, and a client that happens to send a credential is not refused for it.
+ * - `solo` with `ACCESS_CONTROL=open`, bound to loopback (the default): the guards admit the
+ *   single operator ADR-006 describes, so anything that can reach the API can read and act.
+ *   That is why the startup policy (`checkExposurePolicy`) refuses this mode on any
+ *   non-loopback bind.
+ * - LAN mode (`LUPIN_LAN_MODE=1`), and the `startup`, `team` and `enterprise` profiles:
+ *   enforced. A browser signs in with a session (the installation key, an access token, OIDC,
+ *   or Cloudflare Access), CI uses an access token, and each route refuses a caller below its
+ *   role. Under enforced single sign-on the installation key signs no browser in unless
+ *   break-glass is on, and every break-glass use is audited.
  */
 
 /**
@@ -1670,6 +1816,11 @@ if (databaseResources !== undefined) {
     viewFor: (repoPath) => fileSystemView(repoPath),
   };
   await ensureWorkspace(registry);
+  // One API process per database (ADR-006, ledger MNT-175): held until shutdown.
+  singleProcess = await claimSingleProcess(databaseResources.pool, {
+    production: runtimeConfig.nodeEnv === 'production',
+    warn: (message) => logger.warn(message),
+  });
   const previousVaultSecret = process.env['VAULT_SECRET_PREVIOUS']?.trim();
   if (
     previousVaultSecret !== undefined &&
@@ -1718,10 +1869,51 @@ if (runtimeConfig.nodeEnv !== 'test') {
     });
   });
   if (databaseResources) lifecycle.add('database pool', () => databaseResources.close());
+  // After the pool, so it is given back before the pool closes.
+  const claim = singleProcess;
+  if (claim) lifecycle.add('single-process lock', () => claim.release());
   if (settingsPoll) lifecycle.add('settings poll', () => clearInterval(settingsPoll));
   if (retentionSweep) lifecycle.add('outbox retention sweep', () => retentionSweep.stop());
   if (spanRetentionSweep) {
     lifecycle.add('genai span retention sweep', () => spanRetentionSweep.stop());
+  }
+  /**
+   * The failure-cluster job (plan task 11): every five minutes each workspace's last 90 days are
+   * clustered once and stored, and the Tests page reads the stored causes. `listRuns` takes the
+   * workspace, so the default composition's store reads every workspace.
+   */
+  if (databaseResources) {
+    const clusterJob = startOutboxRetentionSweep(
+      {
+        purgeExpired: async () => {
+          const report = (id: string, error: unknown) =>
+            logger.warn('stored insights job failed', { workspaceId: id, error: String(error) });
+          // Causes (task 11) and daily trend rollups (task 13), from the same run history.
+          await refreshAllClusters(databaseResources.db as never, executionStore, report);
+          return refreshAllRollups(databaseResources.db as never, executionStore, report);
+        },
+      },
+      Number(process.env['LUPIN_CLUSTER_JOB_INTERVAL_MS'] ?? 300_000),
+      (error) => logger.warn('failure cluster job failed', { error: String(error) }),
+    );
+    lifecycle.add('failure cluster job', () => clusterJob.stop());
+    /** Run retention (plan task 14): hourly, every workspace that set a policy. */
+    const retentionJob = startOutboxRetentionSweep(
+      {
+        purgeExpired: async () => {
+          const reports = await sweepAllWorkspaces(
+            databaseResources.db as never,
+            artifactBytesStore,
+            (id, error) =>
+              logger.warn('run retention failed', { workspaceId: id, error: String(error) }),
+          );
+          return reports.reduce((sum, report) => sum + report.runsRemoved, 0);
+        },
+      },
+      3_600_000,
+      (error) => logger.warn('run retention failed', { error: String(error) }),
+    );
+    lifecycle.add('run retention sweep', () => retentionJob.stop());
   }
   if (sessionRetentionSweep) {
     lifecycle.add('session retention sweep', () => sessionRetentionSweep.stop());

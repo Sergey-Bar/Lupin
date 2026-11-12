@@ -495,6 +495,55 @@ describe('RunnerService', () => {
     expect(seen).toEqual([{ k6, playwrightProject: undefined, targetUrl: 'https://allowed.test' }]);
   });
 
+  it("hands a security job's zap block, and a Playwright job's axe opt-in, to the executor", async () => {
+    const protocol = new FakeProtocol();
+    const zap = { scan: 'baseline', spiderMinutes: 1 };
+    protocol.enqueue({
+      ...claim('job-zap'),
+      spec: { configuration: { zap, targetUrl: 'https://allowed.test' } },
+    });
+    protocol.enqueue({
+      ...claim('job-axe'),
+      spec: { configuration: { playwrightProject: 'smoke-pass', axe: true } },
+    });
+    protocol.enqueue({
+      ...claim('job-axe-string'),
+      spec: { configuration: { playwrightProject: 'smoke-pass', axe: 'yes' } },
+    });
+    const seen: Array<Pick<ExecutionContext, 'zap' | 'axe' | 'playwrightProject'>> = [];
+    const executor = new FakeExecutor(async (context) => {
+      seen.push({
+        zap: context.zap,
+        axe: context.axe,
+        playwrightProject: context.playwrightProject,
+      });
+      return {
+        status: 'passed',
+        resultPath: '',
+        workspacePath: '',
+        artifacts: [],
+        stdout: '',
+        stderr: '',
+      };
+    });
+    const runner = service(protocol, executor);
+    // Stopped once the third job is seen, not after a fixed 30 ms: under `pnpm verify`'s load
+    // the timer fired before the last claim, which reported the machine rather than the code.
+    const stop = setInterval(() => {
+      if (seen.length >= 3) runner.stop();
+    }, 2);
+
+    await runner.run();
+    clearInterval(stop);
+
+    expect(seen).toEqual([
+      { zap, axe: undefined, playwrightProject: undefined },
+      { zap: undefined, axe: true, playwrightProject: 'smoke-pass' },
+      // Only the boolean opts in: a string is not a yes.
+      { zap: undefined, axe: undefined, playwrightProject: 'smoke-pass' },
+    ]);
+  });
+
   it('keeps cancellation and configuration failure distinct from product failure', async () => {
     const cancellationProtocol = new FakeProtocol();
     cancellationProtocol.enqueue(claim('job-cancel'));

@@ -39,7 +39,19 @@ export type CanonicalStatus = CanonicalRunResult['status'];
  * point: a new adapter that maps statuses in its own file is the defect this module exists
  * to prevent.
  */
-export const INGESTED_PRODUCERS = ['playwright', 'junit', 'legacy', 'k6', 'zap', 'allure'] as const;
+export const INGESTED_PRODUCERS = [
+  'playwright',
+  'junit',
+  'legacy',
+  'k6',
+  'zap',
+  'allure',
+  'ctrf',
+  'jest',
+  'vitest',
+  'pytest',
+  'cypress',
+] as const;
 export type IngestedProducer = (typeof INGESTED_PRODUCERS)[number];
 
 /**
@@ -153,6 +165,54 @@ export const TEST_STATUS_MAPPING = {
     unknown: 'unknown',
     timedOut: 'timedOut',
     timed_out: 'timedOut',
+  },
+  // CTRF's five statuses. `pending` is a test that was declared and not run, which is a skip;
+  // `other` is CTRF's own "none of the above", and none of the above is not a pass.
+  ctrf: {
+    passed: 'passed',
+    failed: 'failed',
+    skipped: 'skipped',
+    pending: 'skipped',
+    other: 'unknown',
+  },
+  // `jest --json` assertion statuses. `todo` and `disabled` are declared tests that did not run.
+  // `focused` is Jest's word for a test that ran under `.only` and carries no outcome by itself.
+  jest: {
+    passed: 'passed',
+    failed: 'failed',
+    skipped: 'skipped',
+    pending: 'skipped',
+    todo: 'skipped',
+    disabled: 'skipped',
+    focused: 'unknown',
+  },
+  // Vitest's JSON reporter writes the Jest-compatible shape with its own subset of words.
+  vitest: {
+    passed: 'passed',
+    failed: 'failed',
+    skipped: 'skipped',
+    pending: 'skipped',
+    todo: 'skipped',
+  },
+  // pytest-json-report outcomes. `error` is a setup or teardown that raised, which fails the
+  // test; `xfailed` is an expected failure, which pytest's own summary counts apart from a
+  // failure and JUnit reports as skipped; `rerun` is an attempt pytest-rerunfailures retried.
+  pytest: {
+    passed: 'passed',
+    failed: 'failed',
+    error: 'failed',
+    rerun: 'failed',
+    skipped: 'skipped',
+    xfailed: 'skipped',
+    xpassed: 'passed',
+  },
+  // Mochawesome's `state` for a Cypress test. A skipped test carries `skipped: true` and no
+  // state; the adapter reads it as `skipped` before it consults this table.
+  cypress: {
+    passed: 'passed',
+    failed: 'failed',
+    pending: 'skipped',
+    skipped: 'skipped',
   },
 } as const satisfies {
   [P in IngestedProducer]: Record<string, CanonicalStatus>;

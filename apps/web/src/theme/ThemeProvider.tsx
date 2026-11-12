@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { isPalette, type Palette } from '@lupin/ui';
 
 export type Theme = 'dark' | 'light' | 'system';
 
@@ -14,7 +15,15 @@ export interface ThemeProviderProps {
 export interface ThemeProviderState {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  /** An OpenCode palette, or `lupin` for the product's own theme. */
+  palette: Palette;
+  setPalette: (palette: Palette) => void;
 }
+
+export const PALETTE_STORAGE_KEY = 'lupin-palette';
+
+/** Lupin's own violet is the default look; the OpenCode palettes stay one choice away in Settings. */
+export const DEFAULT_PALETTE: Palette = 'lupin';
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
@@ -34,6 +43,13 @@ export function ThemeProvider({
     return stored && THEMES.includes(stored as Theme) ? (stored as Theme) : defaultTheme;
   });
 
+  const [palette, setPaletteState] = useState<Palette>(() => {
+    if (typeof window === 'undefined') return DEFAULT_PALETTE;
+    // Validated like the theme: an unknown stored name would match no stylesheet.
+    const stored = localStorage.getItem(PALETTE_STORAGE_KEY);
+    return isPalette(stored) ? stored : DEFAULT_PALETTE;
+  });
+
   useEffect(() => {
     // `window` is checked *here* rather than above, where the previous version had
     // it: the effect runs in the browser, and the initialiser above already handles
@@ -42,6 +58,13 @@ export function ThemeProvider({
     // exist.
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
+    // A palette is a dark theme, so it holds the dark plane whatever the light/dark choice is.
+    if (palette !== 'lupin') {
+      root.setAttribute('data-palette', palette);
+      root.setAttribute('data-theme', 'dark');
+      return;
+    }
+    root.removeAttribute('data-palette');
     if (theme !== 'system') {
       root.setAttribute('data-theme', theme);
       return;
@@ -73,7 +96,12 @@ export function ThemeProvider({
     return () => {
       query.removeEventListener('change', onChange);
     };
-  }, [theme]);
+  }, [theme, palette]);
+
+  const setPalette = (next: Palette) => {
+    if (typeof window !== 'undefined') localStorage.setItem(PALETTE_STORAGE_KEY, next);
+    setPaletteState(next);
+  };
 
   const setTheme = (newTheme: Theme) => {
     if (typeof window !== 'undefined') {
@@ -85,6 +113,8 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme,
+    palette,
+    setPalette,
   };
 
   return <ThemeProviderContext.Provider value={value}>{children}</ThemeProviderContext.Provider>;

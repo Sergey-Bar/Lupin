@@ -16,6 +16,7 @@
  */
 @import '../../../packages/ui/src/tokens/fonts.css';
 @import '../../../packages/ui/src/tokens/theme.css';
+@import '../../../packages/ui/src/tokens/palettes.css';
 @import '../../../packages/ui/src/tokens/motion.css';
 @source "../../../packages/ui/src";
 
@@ -39,7 +40,7 @@
      */
     font-family: var(--lupin-font-sans);
     /*
-     * `font-synthesis` off, because Geist is a variable face loaded from a
+     * `font-synthesis` off, because Inter is a variable face loaded from a
      * subset: with synthesis left on, a weight the subset did not ship is
      * synthesised by smearing the nearest outline, and `wght` 100–900 is a range
      * a browser may legitimately ask for mid-file. The range is declared on the
@@ -100,9 +101,5 @@
 @layer base {
   html[data-density='compact'] {
     font-size: 93.75%;
-  }
-
-  html[data-focus='on'] [data-chrome='secondary'] {
-    display: none;
   }
 }

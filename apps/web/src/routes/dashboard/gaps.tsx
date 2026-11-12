@@ -106,7 +106,10 @@ export function GapsPage({ api, projectId }: ScreenProps): React.ReactElement {
         <Panel title="Gaps" className="flex-1">
           <Paged items={response.gaps} reservedPx={DEEP_DIVE_RESERVED} label="gap">
             {(page) => (
-              <Table className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+              <Table
+                aria-label="Coverage gaps"
+                className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap"
+              >
                 <TableHeader>
                   <TableRow>
                     <TableHead>Cell</TableHead>
@@ -161,7 +164,10 @@ export function HollowPage({ api, projectId }: ScreenProps): React.ReactElement 
       <Panel title="Register" className="flex-1">
         <Paged items={response.cells} reservedPx={DEEP_DIVE_RESERVED} label="hollow cell">
           {(page) => (
-            <Table className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+            <Table
+              aria-label="Hollow tests"
+              className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap"
+            >
               <TableHeader>
                 <TableRow>
                   <TableHead>Cell</TableHead>
@@ -203,7 +209,10 @@ export function FlakyPage({ api, projectId }: ScreenProps): React.ReactElement {
       <Panel title="Register" className="flex-1">
         <Paged items={response.cells} reservedPx={DEEP_DIVE_RESERVED} label="flaky cell">
           {(page) => (
-            <Table className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+            <Table
+              aria-label="Flaky tests"
+              className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap"
+            >
               <TableHeader>
                 <TableRow>
                   <TableHead>Cell</TableHead>
@@ -268,7 +277,10 @@ export function StructurePage({ api, projectId }: ScreenProps): React.ReactEleme
           <Panel title="Findings" className="flex-1">
             <Paged items={response.findings} reservedPx={DEEP_DIVE_RESERVED} label="finding">
               {(page) => (
-                <Table className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+                <Table
+                  aria-label="Structural findings"
+                  className="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap"
+                >
                   <TableHeader>
                     <TableRow>
                       <TableHead>Finding</TableHead>

@@ -94,6 +94,7 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
       'agents/browser-adapter.ts',
       'agents/api-adapter.ts',
       'agents/load-adapter.ts',
+      'agents/security-adapter.ts',
     ],
   },
   { family: 'reporter results', files: ['routes/reporter-results.ts'] },
@@ -108,6 +109,9 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   // The reliability insights page through the same reader as the trend; `insights.test.ts`
   // proves a run in another workspace is not counted.
   { family: 'reliability insights', files: ['execution/insights.ts'] },
+  // The copilot explains a run read with the composition root's workspace; `routes.test.ts`
+  // proves a run in another workspace is the same 404 as a missing one.
+  { family: 'copilot', files: ['copilot/routes.ts'] },
   // Which quarantine entries a gate evaluation reads. `boundQuarantineSource` answers only
   // for the workspace its store is bound to, and `quarantine-gate.store.test.ts` proves one
   // workspace's approval does not excuse another workspace's failure, in both stores.
@@ -149,6 +153,25 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   // a job row, a membership), and `workspace-dispatch.test.ts` proves a token cannot be
   // pointed at another workspace and a person cannot enter one they are not a member of;
   // `workspace-lookups.test.ts` proves the rows behind it on the real migration graph.
+  // Release sign-offs: every read and write filters `release_signoffs` on `workspace_id`, and
+  // `release-signoff-service.test.ts` proves another workspace's sign-offs are never shown.
+  { family: 'release sign-offs', files: ['services/release-signoff-service.ts'] },
+  // Stored causes, trend rollups and run retention (plan tasks 11, 13, 14): every statement
+  // filters on `workspace_id`; `failure-cluster-store.test.ts`, `trend-rollup-store.test.ts`
+  // and `retention-service.test.ts` prove another workspace's rows are never read or removed.
+  {
+    family: 'stored insights and retention',
+    files: [
+      'services/failure-cluster-store.ts',
+      'services/trend-rollup-store.ts',
+      'services/retention-service.ts',
+      'services/gate-evidence.ts',
+      // The MCP QA read tools filter every read on `scope.health.workspaceId`;
+      // `routes/mcp.test.ts` proves another workspace's runs are not listed.
+      'mcp/qa-tools.ts',
+      'routes/retention.ts',
+    ],
+  },
   {
     family: 'workspace dispatch',
     files: ['http/workspace-dispatch.ts', 'http/workspace-lookups.ts'],
@@ -221,6 +244,35 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
       'routes/ai-code.ts',
     ],
   },
+  // Change risk: what `lupin diff-guard` sent per commit, and each pull request's assessed risk
+  // per head. `diff-guard-service.test.ts` and `change-risk-service.test.ts` prove another
+  // workspace can neither write nor read either for a project, and that a commit or pull request
+  // number both workspaces have, and a source file both failed with, never crosses.
+  {
+    family: 'change risk',
+    files: ['services/diff-guard-service.ts', 'services/change-risk-service.ts'],
+  },
+  // Pace: merged pull requests, their diff coverage, and tests first seen, of one project.
+  // `pace-service.test.ts` proves another workspace's project is a 404 and that its merges and
+  // tests never count toward a project's own.
+  { family: 'pace', files: ['services/pace-service.ts'] },
+  // SDLC phases: one project's pull requests, its runs on their heads, diff-guard and the risk
+  // assessments, and every project of the workspace for the portfolio. `phase-service.test.ts`
+  // proves another workspace's project is a 404 and its rows never join a project's own.
+  { family: 'sdlc phases', files: ['services/phase-service.ts'] },
+  // The briefing: one project's merged and open pull requests, their latest risk assessments,
+  // deployments and delivery source, summed across the workspace's projects for the portfolio.
+  // `briefing-service.test.ts` proves another workspace's project is a 404 and its rows stamped
+  // onto this project are never counted.
+  { family: 'briefing', files: ['services/briefing-service.ts'] },
+  // Shape: one project's latest health snapshot, last finished run, phases, open risk and
+  // delivery sync time, and each workspace project for the portfolio. `shape-service.test.ts`
+  // proves another workspace's project is a 404 and its rows stamped onto this one are unread.
+  { family: 'shape', files: ['services/shape-service.ts'] },
+  // The GitHub App: one vault entry per workspace, read and written through the vault with the
+  // caller's workspace. `github-app-service.test.ts` proves another workspace's app is neither
+  // seen as set nor used to mint a token.
+  { family: 'github app', files: ['routes/github-app.ts', 'services/github-app-service.ts'] },
   // The cockpit: health and scan snapshots, runs, pull requests, deployments and delivery
   // sources of one project. Every query filters on `workspace_id` before the project, and
   // `cockpit.test.ts` proves another workspace's project is a 404, that its newer readings do

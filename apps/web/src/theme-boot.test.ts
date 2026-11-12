@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { DEFAULT_PALETTE } from './theme/ThemeProvider.js';
 import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -40,6 +41,9 @@ describe('the theme boot script', () => {
   beforeEach(() => {
     document.documentElement.removeAttribute('data-theme');
     localStorage.clear();
+    // The light/dark cases below are the Lupin theme's; a palette would force dark.
+    localStorage.setItem('lupin-palette', 'lupin');
+    document.documentElement.removeAttribute('data-palette');
     vi.unstubAllGlobals();
     systemPrefers(false);
   });
@@ -49,6 +53,21 @@ describe('the theme boot script', () => {
     const entry = html.indexOf('<script type="module"');
     expect(script).toBeGreaterThan(-1);
     expect(entry).toBeGreaterThan(script);
+  });
+
+  it('paints Lupin’s own palette when nothing is stored, the same default as ThemeProvider', () => {
+    localStorage.clear();
+    run();
+    expect(document.documentElement.hasAttribute('data-palette')).toBe(false);
+    // One default, two places: the script before paint and the provider after it.
+    expect(DEFAULT_PALETTE).toBe('lupin');
+  });
+
+  it('applies a stored OpenCode palette on the dark plane before the first paint', () => {
+    localStorage.clear();
+    localStorage.setItem('lupin-palette', 'opencode');
+    expect(run()).toBe('dark');
+    expect(document.documentElement.getAttribute('data-palette')).toBe('opencode');
   });
 
   it('applies a stored light theme', () => {

@@ -13,7 +13,11 @@ const copy = computed(
 </script>
 <template>
   <main class="localized-home" :dir="['ar', 'he'].includes(copy.code) ? 'rtl' : 'ltr'">
-    <p class="localized-home__brand">Lupin</p>
+    <p class="localized-home__banner" role="note">
+      {{ copy.note }}
+      <a :href="withBase('/')" lang="en" hreflang="en">English</a>
+    </p>
+    <p class="localized-home__brand" lang="en" dir="ltr">Lupin<span aria-hidden="true">.</span></p>
     <h1>{{ copy.title }}</h1>
     <p class="localized-home__description">{{ copy.description }}</p>
     <div class="localized-home__actions">
@@ -21,7 +25,6 @@ const copy = computed(
         >{{ copy.start }} <span aria-hidden="true">↗</span></a
       >
     </div>
-    <p class="localized-home__note">{{ copy.note }}</p>
     <figure lang="en" dir="ltr">
       <img
         :src="preview"
@@ -42,10 +45,34 @@ const copy = computed(
   padding: clamp(3rem, 7vw, 7rem) 1.5rem 5rem;
   text-align: center;
 }
-.localized-home__brand {
-  font: 0.75rem var(--lupin-font-mono);
-  letter-spacing: 0.25em;
+.localized-home__banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 0 auto 2.5rem;
+  padding: 0.6rem 1rem;
+  max-width: 44rem;
+  border: 1px solid var(--lupin-border);
+  border-radius: 6px;
+  background: var(--lupin-surface);
   color: var(--lupin-fg-muted);
+  font-size: 0.9rem;
+}
+.localized-home__banner a {
+  color: var(--lupin-accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.localized-home__brand {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--lupin-fg);
+}
+.localized-home__brand span {
+  color: var(--lupin-accent);
 }
 h1 {
   max-width: 64rem;
@@ -83,7 +110,6 @@ a:focus-visible {
   outline: 2px solid var(--lupin-fg);
   outline-offset: 4px;
 }
-.localized-home__note,
 figcaption {
   color: var(--lupin-fg-muted);
   font-size: 0.85rem;

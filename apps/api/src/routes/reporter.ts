@@ -59,10 +59,15 @@ import {
 } from '@lupin/shared-contracts';
 import {
   allureResultsAdapter,
+  ctrfJsonAdapter,
+  jestJsonAdapter,
   junitXmlAdapter,
   K6_JSON_ADAPTER,
   legacyUploadAdapter,
+  mochawesomeJsonAdapter,
   playwrightJsonAdapter,
+  pytestJsonAdapter,
+  vitestJsonAdapter,
   ZAP_XML_ADAPTER,
   type ProducerAdapter,
   type ProducerContext,
@@ -262,6 +267,11 @@ function adapterForFormat(id: ReportFormatId): ProducerAdapter {
     'k6-json': K6_JSON_ADAPTER,
     'zap-xml': ZAP_XML_ADAPTER,
     'allure-results': allureResultsAdapter,
+    'ctrf-json': ctrfJsonAdapter,
+    'jest-json': jestJsonAdapter,
+    'vitest-json': vitestJsonAdapter,
+    'pytest-json': pytestJsonAdapter,
+    'mochawesome-json': mochawesomeJsonAdapter,
     'legacy-upload': legacyUploadAdapter,
   };
   return adapters[id];

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod/v4';
 import { ExecutionEventLineSchema } from '@lupin/shared-contracts';
 import { artifactKind } from './artifact-kind.js';
+import { AXE_ENVIRONMENT } from './axe-pass.js';
 
 const require = createRequire(import.meta.url);
 /**
@@ -53,6 +54,17 @@ export interface ExecutionContext {
   apiEnvironment?: string;
   /** The `configuration.k6` block, when the job is a load run. Parsed by the k6 adapter. */
   k6?: unknown;
+  /** The `configuration.zap` block, when the job is a security scan. Parsed by the ZAP adapter. */
+  zap?: unknown;
+  /**
+   * `configuration.axe === true` on a Playwright job: run the axe pass and upload what the
+   * project's fixture wrote (plan task 18). Absent or false, nothing changes.
+   */
+  axe?: boolean;
+  /** The job's project, commit and branch, from its spec: where the axe report is filed. */
+  projectId?: string;
+  commit?: string;
+  branch?: string;
   deadlineMs: number;
   signal: AbortSignal;
   onEvent?: (event: z.infer<typeof eventLineSchema>) => Promise<void>;
@@ -323,7 +335,7 @@ export class PlaywrightExecutionAdapter implements ExecutionProvider {
       const child = this.spawnProcess(
         process.execPath,
         this.playwrightArguments(request, layout),
-        this.spawnOptions(request.target, layout, redactions),
+        this.spawnOptions(request.target, layout, redactions, context.axe === true),
       );
       const pump = createEventPump(layout.eventPath, context.onEvent);
       const stdout = new CappedLog(this.options.logMaxBytes);
@@ -426,6 +438,7 @@ export class PlaywrightExecutionAdapter implements ExecutionProvider {
     target: string,
     layout: WorkspaceLayout,
     redactions: readonly string[],
+    axe: boolean,
   ): Parameters<ProcessSpawner>[2] {
     return {
       cwd: this.projectRoot,
@@ -436,6 +449,13 @@ export class PlaywrightExecutionAdapter implements ExecutionProvider {
         LUPIN_RUNNER_EVENTS_PATH: layout.eventPath,
         PLAYWRIGHT_JSON_OUTPUT_NAME: join(layout.reportDirectory, 'playwright-report.json'),
         PLAYWRIGHT_JUNIT_OUTPUT_NAME: join(layout.reportDirectory, 'junit.xml'),
+        // The opt-in axe pass (`axe-pass.ts`): the project's fixture writes here when set.
+        ...(axe
+          ? {
+              [AXE_ENVIRONMENT.flag]: '1',
+              [AXE_ENVIRONMENT.resultsPath]: join(layout.reportDirectory, 'axe-results.json'),
+            }
+          : {}),
         CI: '1',
         FORCE_COLOR: '0',
       },

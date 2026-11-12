@@ -130,15 +130,14 @@ test.describe('on a phone', () => {
     await page.goto(`${WEB_BASE}/dashboard`);
     const bottom = page.getByTestId('bottom-tab-bar');
     await expect(bottom).toBeVisible({ timeout: 20_000 });
-    // The top bar's section links are hidden at this width; the bottom bar carries them.
-    await expect(page.getByTestId('nav-bar').getByRole('link', { name: 'Map' })).toBeHidden();
 
+    // `SECTIONS` in `apps/web/src/route-manifest.ts`: the places the bottom bar carries.
     for (const [label, path] of [
       ['Runs', '/dashboard/runs'],
-      ['Insights', '/dashboard/insights'],
-      ['Map', '/dashboard/map'],
-      // Overview's section path is Now: what needs attention, worst first.
-      ['Overview', '/dashboard/now'],
+      ['Tests', '/dashboard/insights'],
+      ['Settings', '/dashboard/settings'],
+      ['Health', '/dashboard'],
+      ['Home', '/dashboard/now'],
     ] as const) {
       await bottom.getByRole('link', { name: label }).click();
       await expect(page).toHaveURL(`${WEB_BASE}${path}`);
@@ -148,7 +147,8 @@ test.describe('on a phone', () => {
       );
     }
 
-    await bottom.getByRole('link', { name: 'Map' }).click();
+    // The map is a Health page rather than a section, so it is reached by its address.
+    await page.goto(`${WEB_BASE}/dashboard/map`);
     await expect(page.getByTestId('map-list')).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId('map-canvas')).toHaveCount(0);
 

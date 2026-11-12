@@ -58,7 +58,10 @@ describe('orchestration routes', () => {
         })
       ).status,
     ).toBe(201);
-    expect((await app.request('/api/v1/schedules')).status).toBe(200);
+    const listed = await app.request('/api/v1/schedules');
+    expect(listed.status).toBe(200);
+    // It used to answer a literal empty list whatever POST had stored (ledger MNT-176).
+    expect(((await listed.json()) as { schedules: unknown[] }).schedules).toHaveLength(1);
     expect((await app.request('/api/v1/schedules', { method: 'POST', body: '{}' })).status).toBe(
       400,
     );

@@ -1,0 +1,62 @@
+<!doctype html>
+<!--
+  The source of site/public/og-image.png (1200x630), the preview a shared link shows.
+
+  Drawn from the product's own tokens and fonts rather than a design file, so the card cannot
+  drift from the palette: there is no colour in this file, only var(--lupin-*). Rebuild it with
+  `node site/.vitepress/og/render.mjs` after a change to the wordmark, the line or the tokens.
+-->
+<html lang="en" data-theme="dark" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../packages/ui/src/tokens/fonts.css" />
+    <link rel="stylesheet" href="../../../packages/ui/src/tokens/theme.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 1200px;
+        height: 630px;
+      }
+      body {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 80px 88px;
+        background: var(--lupin-surface-sunken);
+        color: var(--lupin-fg);
+        font-family: var(--lupin-font-sans);
+        border-block-start: 8px solid var(--lupin-accent);
+      }
+      .wordmark {
+        font-size: 44px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .dot {
+        color: var(--lupin-accent);
+      }
+      h1 {
+        margin: 0;
+        font-size: 76px;
+        line-height: 1.05;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+      }
+      h1 span {
+        color: var(--lupin-fg-muted);
+      }
+      p {
+        margin: 0;
+        font-size: 26px;
+        color: var(--lupin-fg-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wordmark">Lupin<span class="dot">.</span></div>
+    <h1>Know what broke.<br /><span>Know whether to ship.</span></h1>
+    <p>Self-hosted test evidence, quality gates and flaky-test quarantine.</p>
+  </body>
+</html>

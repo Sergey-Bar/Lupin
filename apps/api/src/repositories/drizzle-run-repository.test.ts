@@ -249,6 +249,27 @@ describe('DrizzleRunRepository — reporter lifecycle (task-18-postgres-lifecycl
     expect(found!.finishedAt).not.toBeNull();
   });
 
+  it('writes a status only when the run is still in the status the caller read (MNT-171)', async () => {
+    const run = makeRun();
+    await ctx.repo.upsertRun(run);
+    // Another writer finished the run after the caller read it as running.
+    await ctx.repo.patchRun(run.id, { status: 'passed' });
+
+    const applied = await ctx.repo.patchRun(run.id, {
+      status: 'interrupted',
+      ifStatus: 'running',
+    });
+
+    expect(applied).toBe(false);
+    expect((await ctx.repo.getRun(run.id))!.status).toBe('passed');
+    await expect(ctx.repo.patchRun(run.id, { status: 'failed', ifStatus: 'passed' })).resolves.toBe(
+      true,
+    );
+    await expect(
+      ctx.repo.patchRun('550e8400-e29b-41d4-a716-4466554400ff', { status: 'failed' }),
+    ).resolves.toBe(false);
+  });
+
   it('full lifecycle: run:start → test:begin → test:end → run:end', async () => {
     const { repo } = ctx;
     const runId = '550e8400-e29b-41d4-a716-446655440002';
@@ -413,10 +434,10 @@ describe('DrizzleRunRepository — delta counter safety', () => {
 
   it('patchRun on non-existent run is a no-op', async () => {
     const nonExistentId = '550e8400-e29b-41d4-a716-446655440099';
-    // Should not throw
+    // Should not throw; answers that nothing was written.
     await expect(
       ctx.repo.patchRun(nonExistentId, { status: 'passed', passedDelta: 5 }),
-    ).resolves.toBeUndefined();
+    ).resolves.toBe(false);
 
     const found = await ctx.repo.getRun(nonExistentId);
     expect(found).toBeNull();

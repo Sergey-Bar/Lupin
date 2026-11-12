@@ -9,7 +9,7 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                   |
 | ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 71    | implemented and exercised, with the stated qualification.                 |
+| **real**     | 85    | implemented and exercised, with the stated qualification.                 |
 | **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
 | **missing**  | 1     | no usable implementation exists in the target.                            |
 | **deferred** | 6     | intentionally outside the launch scope pending a separate decision.       |
@@ -48,12 +48,25 @@ its source, then run `pnpm site:generate`.
 | Accessibility quality domain: **ingestion** of axe-core results                                     | `real`     |
 | Security and SARIF quality domain                                                                   | `deferred` |
 | Repository health grade, findings, triage and pull-request gate                                     | `real`     |
-| Cockpit: whether the product is better or worse than it was, and why                                | `real`     |
-| Cockpit: pull requests worth a look                                                                 | `real`     |
-| The cockpit as one self-contained HTML file                                                         | `real`     |
+| Dashboard: whether the product is better or worse than it was, and why                              | `real`     |
+| Dashboard: pull requests worth a look                                                               | `real`     |
+| The dashboard as one self-contained HTML file                                                       | `real`     |
 | SBOM inventory, VEX, licence policy and build provenance                                            | `real`     |
 | Mutation-testing results as Test effectiveness                                                      | `real`     |
 | Diff coverage of a commit, and its pull-request gate                                                | `real`     |
+| A pull request's change risk, assessed per head                                                     | `real`     |
+| `lupin diff-guard`: changes that weaken the tests                                                   | `real`     |
+| The change-risk check run on a pull request                                                         | `real`     |
+| Whether testing keeps up with the code, per repository and week                                     | `real`     |
+| The SDLC phase of every change, repository and portfolio                                            | `real`     |
+| Good shape or bad shape, and how fresh, at every level                                              | `real`     |
+| Quiet hours, and one waiting report per schedule                                                    | `real`     |
+| `lupin impact`: the tests a change needs first                                                      | `real`     |
+| The CLI in GitLab CI, and the gate posted to a merge request                                        | `real`     |
+| A GitHub App as the server's GitHub identity                                                        | `real`     |
+| The briefing: what happened over a window, every line cited                                         | `real`     |
+| Optional prose for a briefing, held to its lines                                                    | `real`     |
+| The verdict posted from CI, for an install with no GitHub token                                     | `real`     |
 | Supply-chain and test-effectiveness scorecards per project                                          | `real`     |
 | Portfolio heatmap of every dimension and scorecard                                                  | `real`     |
 | Scheduled report: DORA, AI-code and agent-quality lines and the top three actions                   | `real`     |
@@ -81,7 +94,8 @@ its source, then run `pnpm site:generate`.
 | Duration-balanced CI sharding                                                                       | `real`     |
 | Allure results importer                                                                             | `real`     |
 | k6 load execution and threshold adapter                                                             | `real`     |
-| ZAP finding and SARIF adapter                                                                       | `missing`  |
+| ZAP scan producer: an image that runs a scan                                                        | `missing`  |
+| ZAP XML import                                                                                      | `real`     |
 | Provider-backed chat                                                                                | `mock`     |
 | AI test proposals from surviving mutants and uncovered diff lines                                   | `real`     |
 | Browser/API/load/security/mobile agents                                                             | `mock`     |
@@ -94,7 +108,7 @@ its source, then run `pnpm site:generate`.
 | Read-only MCP server over Streamable HTTP, and a stdio proxy for editors                            | `real`     |
 | Upload CLI and the GitHub composite action                                                          | `real`     |
 | Fingerprinted suppression policy                                                                    | `deferred` |
-| Product dashboard and KPI cockpit                                                                   | `real`     |
+| Product dashboard and KPIs                                                                          | `real`     |
 | Webwright, MCP, legacy automation, and admin surfaces                                               | `obsolete` |
 | Tauri desktop application                                                                           | `obsolete` |
 | Resumable source migration and reconciliation                                                       | `mock`     |

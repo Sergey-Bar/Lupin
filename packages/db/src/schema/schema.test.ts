@@ -9,36 +9,23 @@
  */
 
 import { getTableName, getTableColumns } from 'drizzle-orm';
+import { getTableConfig } from 'drizzle-orm/pg-core';
 import type { PgTable } from 'drizzle-orm/pg-core';
 
 import {
   // dashboard
   runs,
-  suites,
   tests,
-  attachments,
   trends,
   quarantine,
-  knownFailures,
   schedules,
   workspaces,
   qualityGateConfig,
   defectCategories,
   fingerprintCategories,
-  nlQueryHistory,
-  failureTaxonomyRules,
-  failureClassifications,
   testFailureCorrelations,
-  locatorSuggestions,
   failureClusters,
   users,
-  roles,
-  agentSessions,
-  agentSessionRuns,
-  agentSessionFiles,
-  generatedTestSuggestions,
-  repairAttempts,
-  agentConflicts,
   samlConfig,
   auditEvents,
   // lupin
@@ -53,6 +40,7 @@ import {
   // vault
   vaultEntries,
 } from './index.js';
+import * as schema from './index.js';
 import { GATE_STATUSES } from './vocabularies.js';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -98,16 +86,6 @@ describe('dashboard schema — runs', () => {
   });
 });
 
-describe('dashboard schema — suites', () => {
-  it('has table name "suites"', () => {
-    expect(tname(suites)).toBe('suites');
-  });
-
-  it('has runId foreign key column', () => {
-    expect(cols(suites)).toContain('runId');
-  });
-});
-
 describe('dashboard schema — tests', () => {
   it('has table name "tests"', () => {
     expect(tname(tests)).toBe('tests');
@@ -120,13 +98,32 @@ describe('dashboard schema — tests', () => {
   });
 });
 
-describe('dashboard schema — attachments', () => {
-  it('has table name "attachments"', () => {
-    expect(tname(attachments)).toBe('attachments');
+describe('dashboard schema — the tables 0066 dropped (ledger C-6)', () => {
+  const DROPPED = [
+    'suites',
+    'attachments',
+    'knownFailures',
+    'nlQueryHistory',
+    'failureTaxonomyRules',
+    'failureClassifications',
+    'locatorSuggestions',
+    'roles',
+    'agentSessions',
+    'agentSessionRuns',
+    'agentSessionFiles',
+    'generatedTestSuggestions',
+    'repairAttempts',
+    'agentConflicts',
+  ];
+
+  it.each(DROPPED)('no longer exports %s', (name) => {
+    expect(Object.keys(schema)).not.toContain(name);
   });
 
-  it('has isScreenshotDiff boolean column', () => {
-    expect(cols(attachments)).toContain('isScreenshotDiff');
+  it('keeps tests.suite_id as a plain column, with no key onto the dropped suites', () => {
+    expect(cols(tests)).toContain('suiteId');
+    const keys = getTableConfig(tests).foreignKeys.map((key) => key.getName());
+    expect(keys.some((name) => name.includes('suites'))).toBe(false);
   });
 });
 
@@ -147,12 +144,6 @@ describe('dashboard schema — quarantine', () => {
 
   it('has flakinessCategory column', () => {
     expect(cols(quarantine)).toContain('flakinessCategory');
-  });
-});
-
-describe('dashboard schema — knownFailures', () => {
-  it('has table name "known_failures"', () => {
-    expect(tname(knownFailures)).toBe('known_failures');
   });
 });
 
@@ -253,45 +244,9 @@ describe('dashboard schema — fingerprintCategories', () => {
   });
 });
 
-describe('dashboard schema — nlQueryHistory', () => {
-  it('has table name "nl_query_history"', () => {
-    expect(tname(nlQueryHistory)).toBe('nl_query_history');
-  });
-
-  it('has serial id column', () => {
-    expect(cols(nlQueryHistory)).toContain('id');
-  });
-});
-
-describe('dashboard schema — failureTaxonomyRules', () => {
-  it('has table name "failure_taxonomy_rules"', () => {
-    expect(tname(failureTaxonomyRules)).toBe('failure_taxonomy_rules');
-  });
-});
-
-describe('dashboard schema — failureClassifications', () => {
-  it('has table name "failure_classifications"', () => {
-    expect(tname(failureClassifications)).toBe('failure_classifications');
-  });
-});
-
 describe('dashboard schema — testFailureCorrelations', () => {
   it('has table name "test_failure_correlations"', () => {
     expect(tname(testFailureCorrelations)).toBe('test_failure_correlations');
-  });
-});
-
-describe('dashboard schema — locatorSuggestions', () => {
-  it('has table name "locator_suggestions"', () => {
-    expect(tname(locatorSuggestions)).toBe('locator_suggestions');
-  });
-
-  it('records when a suggestion last changed, because its status is mutable', () => {
-    // C-6: the one table whose `status` moves (pending → accepted | rejected | expired)
-    // and that had no `updatedAt` at all, so a decision on it could not be dated.
-    expect(cols(locatorSuggestions)).toContain('updatedAt');
-    expect(locatorSuggestions.updatedAt.notNull).toBe(true);
-    expect(locatorSuggestions.updatedAt.hasDefault).toBe(true);
   });
 });
 
@@ -308,48 +263,6 @@ describe('dashboard schema — users', () => {
 
   it('has role column with admin/editor/viewer enum', () => {
     expect(enumVals(users, 'role')).toEqual(['admin', 'editor', 'viewer']);
-  });
-});
-
-describe('dashboard schema — roles', () => {
-  it('has table name "roles"', () => {
-    expect(tname(roles)).toBe('roles');
-  });
-});
-
-describe('dashboard schema — agentSessions', () => {
-  it('has table name "agent_sessions"', () => {
-    expect(tname(agentSessions)).toBe('agent_sessions');
-  });
-});
-
-describe('dashboard schema — agentSessionRuns', () => {
-  it('has table name "agent_session_runs"', () => {
-    expect(tname(agentSessionRuns)).toBe('agent_session_runs');
-  });
-});
-
-describe('dashboard schema — agentSessionFiles', () => {
-  it('has table name "agent_session_files"', () => {
-    expect(tname(agentSessionFiles)).toBe('agent_session_files');
-  });
-});
-
-describe('dashboard schema — generatedTestSuggestions', () => {
-  it('has table name "generated_test_suggestions"', () => {
-    expect(tname(generatedTestSuggestions)).toBe('generated_test_suggestions');
-  });
-});
-
-describe('dashboard schema — repairAttempts', () => {
-  it('has table name "repair_attempts"', () => {
-    expect(tname(repairAttempts)).toBe('repair_attempts');
-  });
-});
-
-describe('dashboard schema — agentConflicts', () => {
-  it('has table name "agent_conflicts"', () => {
-    expect(tname(agentConflicts)).toBe('agent_conflicts');
   });
 });
 

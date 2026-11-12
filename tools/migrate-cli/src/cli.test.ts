@@ -53,16 +53,16 @@ function sqliteSource(name: string, sql: string): string {
   return file;
 }
 
-const KNOWN_FAILURES_SQL = `
-  CREATE TABLE known_failures (
-    id TEXT PRIMARY KEY, test_title TEXT, test_file TEXT, comment TEXT,
-    created_at TEXT, created_by TEXT
+const QUARANTINE_SQL = `
+  CREATE TABLE quarantine (
+    id TEXT PRIMARY KEY, test_title TEXT, test_file TEXT, reason TEXT,
+    quarantined_at TEXT, quarantined_by TEXT
   );
-  INSERT INTO known_failures VALUES ('k1', 't', 'f.spec.ts', NULL, '2026-01-01', 'qa');
+  INSERT INTO quarantine VALUES ('k1', 't', 'f.spec.ts', NULL, '2026-01-01', 'qa');
 `;
 
 function validPlanFile(): { source: string; plan: string } {
-  const source = sqliteSource('source.db', KNOWN_FAILURES_SQL);
+  const source = sqliteSource('source.db', QUARANTINE_SQL);
   const plan = path.join(directory, 'plan.json');
   writePlan(
     plan,
@@ -188,7 +188,7 @@ describe('run', () => {
     });
 
     it('writes a plan file describing the source catalog', async () => {
-      const source = sqliteSource('source.db', KNOWN_FAILURES_SQL);
+      const source = sqliteSource('source.db', QUARANTINE_SQL);
       const out = path.join(directory, 'written.json');
       await run([
         'plan',
@@ -210,7 +210,7 @@ describe('run', () => {
         sourceId: 'legacy-1',
         sourceCommit: 'abc',
         targetCommit: 'def',
-        tables: [{ name: 'known_failures', rowCount: 1, disposition: 'migrate' }],
+        tables: [{ name: 'quarantine', rowCount: 1, disposition: 'migrate' }],
       });
     });
   });
@@ -296,7 +296,7 @@ describe('run', () => {
       expect(outcome()).toEqual({ error: undefined, exitCode: undefined });
       expect(stdout.mock.calls.map((call) => call[0])).toEqual([
         'Dry run migration plan:',
-        'known_failures: 1 row',
+        'quarantine: 1 row',
       ]);
       expect(pgMock.Pool).not.toHaveBeenCalled();
     });
@@ -353,7 +353,7 @@ describe('run', () => {
     });
     it('passes when every source table count matches the target', async () => {
       const { source, plan } = validPlanFile();
-      targetCounts({ known_failures: 1 });
+      targetCounts({ quarantine: 1 });
       await run(['verify', '--from', source, '--to', TARGET, '--plan', plan]);
       expect(outcome()).toEqual({ error: undefined, exitCode: undefined });
       expect(stdout).toHaveBeenCalledWith('Migration reconciliation passed');
@@ -363,10 +363,10 @@ describe('run', () => {
 
     it('fails naming each table whose counts differ', async () => {
       const { source, plan } = validPlanFile();
-      targetCounts({ known_failures: 0, runs: 3 });
+      targetCounts({ quarantine: 0, runs: 3 });
       await run(['verify', '--from', source, '--to', TARGET, '--plan', plan]);
       expect(outcome()).toEqual({
-        error: 'Reconciliation failed: known_failures: source=1 target=0; runs: source=0 target=3',
+        error: 'Reconciliation failed: quarantine: source=1 target=0; runs: source=0 target=3',
         exitCode: 1,
       });
       expect(stdout).not.toHaveBeenCalledWith('Migration reconciliation passed');

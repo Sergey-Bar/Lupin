@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { ChangeRiskPolicySchema } from './change-risk.js';
 
 /**
  * Repository health, as the wire contract.
@@ -344,6 +345,8 @@ export const HealthPolicySchema = z.object({
   aiGovernance: AiGovernancePolicySchema.optional(),
   /** Agent quality: eval storage and gating, trace content and retention, prices, budgets. */
   agents: AgentsPolicySchema.optional(),
+  /** Change risk: which evidence is required, and whether a level fails the gate. */
+  risk: ChangeRiskPolicySchema.optional(),
 });
 export type HealthPolicy = z.infer<typeof HealthPolicySchema>;
 export type DeliveryPolicy = NonNullable<HealthPolicy['delivery']>;

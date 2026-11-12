@@ -18,9 +18,19 @@ export const pageGuidance = {
     remember:
       'A metric that was not measured, or has nothing earlier to compare with, is not a metric that held steady.',
   },
+  briefing: {
+    purpose: 'Catch up on what happened while you were away, every line cited.',
+    steps: [
+      'Read the shape and the one-sentence summary at the top.',
+      'Go through the sections: what shipped, what got riskier, how quality moved, and what needs a decision.',
+      'Open a line to act on it, or its Read from fold to see where the number came from.',
+    ],
+    remember:
+      'A window where nothing happened says so once. Word it for me asks the configured model; a wording that uses a number the lines do not state is thrown away.',
+  },
   metric: {
     purpose:
-      'See one metric of the cockpit in detail: its readings, what moved it, and where to act.',
+      'See one metric of the dashboard in detail: its readings, what moved it, and where to act.',
     steps: [
       'Read the value and how far it moved from the start of the window.',
       'Look at what was recorded while it moved. A run listed as possible is a candidate, not the cause.',
@@ -295,6 +305,16 @@ export const pageGuidance = {
     remember:
       'A pull request GitHub has not said it can merge is Waiting, never Ready. The list is as fresh as the last sync.',
   },
+  'pr-risk': {
+    purpose: 'See how risky one pull request is, and exactly why.',
+    steps: [
+      'Read the band: the level, and the factor worth the most points.',
+      'Check each factor beside its points; the score is their sum.',
+      'Look at what was not measured: it keeps a change from ever reading low.',
+    ],
+    remember:
+      'The risk is the one assessed at a head commit. A newer push is not assessed until the gate runs on it again.',
+  },
   issues: {
     purpose: 'See open issues across your repositories and find the ones nobody has triaged.',
     steps: [
@@ -336,7 +356,7 @@ export const pageGuidance = {
     purpose: 'Make the product quieter and easier to read, the way that suits you.',
     steps: [
       'Choose a theme: dark, light, or whatever the system uses.',
-      'Turn on focus mode to hide secondary navigation, or compact density to fit more.',
+      'Choose compact density to fit more on each screen.',
       'Reduce motion if movement is distracting.',
     ],
     remember: 'These settings are kept in this browser, so each device can read the way it needs.',
@@ -393,7 +413,7 @@ export const pageGuidance = {
       'Optionally connect an AI provider and choose where reports go.',
       'Invite your team, then run your first check.',
     ],
-    remember: 'Skip anything; the cockpit keeps a checklist of what is left.',
+    remember: 'Skip anything; the dashboard keeps a checklist of what is left.',
   },
   'settings-projects': {
     purpose: 'Connect, rename, re-scan and remove the repositories Lupin analyses.',

@@ -7,7 +7,6 @@ import {
   transition,
   unownedFence,
 } from './state-machine.js';
-import { nextOccurrence } from './schedule.js';
 
 describe('orchestration state machine', () => {
   it('allows lifecycle transitions and rejects terminal overwrites', () => {
@@ -17,19 +16,11 @@ describe('orchestration state machine', () => {
     expect(() => transition('succeeded', 'failed')).toThrow();
   });
 
-  it('calculates interval schedules deterministically', () => {
-    const from = new Date('2026-09-25T00:00:00.000Z');
-    expect(nextOccurrence({ minute: 'step', hour: '*' }, from, 15)?.toISOString()).toBe(
-      '2026-09-25T00:15:00.000Z',
-    );
-    expect(() => nextOccurrence({ minute: 99, hour: 0 }, from)).toThrow();
-    expect(nextOccurrence({ minute: 30, hour: 2 }, from)?.toISOString()).toBe(
-      '2026-09-25T02:30:00.000Z',
-    );
-    expect(
-      nextOccurrence({ minute: 30, hour: 2 }, new Date('2026-09-25T03:00:00.000Z'))?.toISOString(),
-    ).toBe('2026-09-26T02:30:00.000Z');
-    expect(() => nextOccurrence({ minute: 30, hour: 99 }, from)).toThrow();
+  it('is not the scheduler: the worker and the API use croner, and this package exports none', async () => {
+    // `nextOccurrence` lived here, imported by nothing but its tests, beside the real one in
+    // apps/api/src/services/notification-service.ts (ledger MNT-177).
+    const exported = Object.keys(await import('./index.js'));
+    expect(exported).not.toContain('nextOccurrence');
   });
 });
 

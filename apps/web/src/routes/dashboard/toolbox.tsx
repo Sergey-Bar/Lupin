@@ -8,8 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
   ExternalLink,
+  Input,
   Search,
   Select,
+  ToolLogo,
   cn,
 } from '@lupin/ui';
 import { Route as dashboardRoute } from '../dashboard.js';
@@ -22,12 +24,53 @@ import {
   Segmented,
   usePager,
 } from '../../components/kit.js';
-import { KindIcon } from '../../components/responsive.js';
 import { ProjectGate } from '../../components/ProjectGate.js';
 import { useResource } from '../../hooks/useResource.js';
 import { createQaClient, type QaClient } from '../../lib/qa-client.js';
 import type { RegisteredProject, RepoScan, ToolboxEntry } from '../../lib/qa.js';
 import { CAPABILITY_LABELS } from './health.js';
+
+/**
+ * The twenty capabilities as the five things a QA person sets out to check. Every capability
+ * sits under exactly one goal (`toolbox.test.tsx` holds that), so a goal never hides a tool.
+ */
+export const GOALS = [
+  {
+    id: 'tests',
+    label: 'Tests',
+    capabilities: [
+      'unit',
+      'integration',
+      'e2e',
+      'contract',
+      'api',
+      'mobile',
+      'mutation',
+      'visual',
+      'test-management',
+    ],
+  },
+  { id: 'security', label: 'Security', capabilities: ['sast', 'secrets', 'dependencies', 'dast'] },
+  { id: 'performance', label: 'Performance', capabilities: ['performance'] },
+  { id: 'accessibility', label: 'Accessibility', capabilities: ['accessibility'] },
+  {
+    id: 'code',
+    label: 'Code quality',
+    capabilities: ['coverage', 'static-analysis', 'types', 'formatting', 'ci'],
+  },
+] as const satisfies readonly {
+  id: string;
+  label: string;
+  capabilities: readonly (keyof typeof CAPABILITY_LABELS)[];
+}[];
+
+type GoalId = (typeof GOALS)[number]['id'] | 'all';
+
+function goalOf(capability: string): GoalId {
+  return (
+    GOALS.find((goal) => (goal.capabilities as readonly string[]).includes(capability))?.id ?? 'all'
+  );
+}
 
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
@@ -192,6 +235,7 @@ function ToolboxCatalogue({
   // grid reads as a full kit with the next pick at its head rather than one lonely tile.
   const [status, setStatus] = React.useState<StatusFilter>('all');
   const [capability, setCapability] = React.useState('all');
+  const [goal, setGoal] = React.useState<GoalId>('all');
   const [pricing, setPricing] = React.useState<PricingFilter>('all');
   const [query, setQuery] = React.useState('');
   const [selected, select] = React.useState<ToolboxEntry | null>(null);
@@ -200,6 +244,7 @@ function ToolboxCatalogue({
   const visible = sortToolbox(entries).filter(
     (entry) =>
       (status === 'all' || entry.status === status) &&
+      (goal === 'all' || goalOf(entry.capability) === goal) &&
       (capability === 'all' || entry.capability === capability) &&
       (pricing === 'all' || entry.pricing === pricing) &&
       (needle.length === 0 ||
@@ -220,23 +265,36 @@ function ToolboxCatalogue({
           </>
         }
       />
+      {/* Six goals are wider than a phone. They keep one row and scroll across in place, and
+          the page itself does not; the buttons are the region's focusable content. */}
+      <div className="max-w-full shrink-0 overflow-x-auto">
+        <Segmented<GoalId>
+          label="What do you want to check?"
+          options={[
+            { value: 'all', label: 'Everything' },
+            ...GOALS.map((entry) => ({ value: entry.id, label: entry.label })),
+          ]}
+          value={goal}
+          onChange={setGoal}
+        />
+      </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <label className="relative block min-w-0 basis-full sm:basis-auto sm:flex-1">
-          <span className="sr-only">Search the toolbox</span>
+        <div className="relative min-w-0 basis-full sm:basis-auto sm:flex-1">
           <Search
             size={14}
             aria-hidden="true"
             className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-fg-muted"
           />
-          <input
+          <Input
             type="search"
+            aria-label="Search the toolbox"
             data-testid="toolbox-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search tools"
-            className="min-h-11 w-full rounded-lg border border-border bg-surface-raised ps-9 pe-3 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            className="ps-9"
           />
-        </label>
+        </div>
         <label className="flex items-center gap-2 text-sm text-fg-muted">
           <span className="hidden sm:inline">Capability</span>
           <Select
@@ -339,11 +397,11 @@ function ToolTile({
       >
         <span
           className={cn(
-            'relative flex h-12 w-12 items-center justify-center rounded-lg border bg-surface-raised text-fg transition-transform group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0',
+            'relative flex rounded-lg border bg-surface-raised text-fg transition-transform group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0',
             entry.status === 'recommended' ? 'border-warning' : 'border-border',
           )}
         >
-          <KindIcon kind={entry.capability} size={22} />
+          <ToolLogo name={entry.name} command={entry.setup} size="lg" className="bg-transparent" />
           {dot === null ? null : (
             <span
               aria-hidden="true"
@@ -382,9 +440,12 @@ function ToolDialog({
         <DialogContent>
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-muted">
-                <KindIcon kind={entry.capability} size={22} />
-              </span>
+              <ToolLogo
+                name={entry.name}
+                command={entry.setup}
+                size="lg"
+                className="border border-border"
+              />
               <div className="min-w-0">
                 <DialogTitle>{entry.name}</DialogTitle>
                 <div className="text-xs font-medium text-fg-muted">

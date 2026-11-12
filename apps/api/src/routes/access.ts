@@ -24,6 +24,7 @@ import {
   hashToken,
   listAccessTokens,
   revokeAccessToken,
+  rotateAccessToken,
   type Caller,
 } from '../services/access-service.js';
 import type { ProjectRegistryServiceOptions } from '../services/project-registry-service.js';
@@ -156,9 +157,26 @@ export function createAccessRoutes(options: AccessRouteOptions): Hono {
       action: 'access-token.create',
       resourceType: 'access_token',
       resourceId: created.summary.id,
-      details: { role: created.summary.role, projectId: created.summary.projectId },
+      details: {
+        role: created.summary.role,
+        projectId: created.summary.projectId,
+        scopes: created.summary.scopes,
+      },
     });
     return context.json(created, 201);
+  });
+
+  app.post('/api/v1/access-tokens/:id/rotate', admin, async (context) => {
+    const actor = (await callerOf(context, options.access)).actor;
+    const rotated = await rotateAccessToken(options, context.req.param('id'), actor);
+    await audit(options, {
+      actor,
+      action: 'access-token.rotate',
+      resourceType: 'access_token',
+      resourceId: context.req.param('id'),
+      details: { successor: rotated.summary.id },
+    });
+    return context.json(rotated, 201);
   });
 
   app.delete('/api/v1/access-tokens/:id', admin, async (context) => {

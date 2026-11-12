@@ -136,6 +136,16 @@ describe('ApiClient', () => {
     expect((fetchMock.mock.calls[1]?.[1] as RequestInit).headers).toMatchObject({
       'Idempotency-Key': 'retry-1',
     });
+    expect((fetchMock.mock.calls[1]?.[1] as RequestInit).body).toBeUndefined();
+  });
+
+  it('asks for the failed tests only when the retry says so', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(makeRun())));
+    vi.stubGlobal('fetch', fetchMock);
+    await defaultApiClient.retryRun('run-1', 'retry-2', { scope: 'failed' });
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.body).toBe('{"scope":"failed"}');
+    expect(init.headers).toMatchObject({ 'Content-Type': 'application/json' });
   });
 
   it('returns null for unavailable optional gate and readiness evidence', async () => {
@@ -848,5 +858,34 @@ describe('default session expiry responder', () => {
     // Nothing is sent — a request that cannot be built is a client bug, and firing
     // a malformed one would turn it into a server error instead.
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('resolving a quarantine entry (plan Wave 1 task 1)', () => {
+  it('patches the entry with the decision and its reason, and reads the entry back', async () => {
+    const entry = {
+      id: 'q 1',
+      testTitle: 'refunds',
+      testFile: 'checkout.spec.ts',
+      reason: 'flaky for a week',
+      quarantinedAt: '2026-11-01T00:00:00.000Z',
+      status: 'approved',
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(entry), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const resolved = await defaultApiClient.resolveQuarantine('q 1', {
+      status: 'approved',
+      resolution: 'known race, fixing',
+    });
+    expect(resolved.status).toBe('approved');
+    const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(path).toBe('/api/v1/dashboard/quarantine/q%201');
+    expect(init.method).toBe('PATCH');
+    expect(JSON.parse(String(init.body))).toEqual({
+      status: 'approved',
+      resolution: 'known race, fixing',
+    });
   });
 });

@@ -507,3 +507,28 @@ describe('DELETE /api/v1/dashboard/quarantine/:id', () => {
     expect(store.foreign).toHaveLength(1);
   });
 });
+
+describe('who a quarantine decision is attributed to (ledger MNT-171)', () => {
+  it('records the authenticated caller on create, decision and removal', async () => {
+    const store = new InMemoryQuarantineStore();
+    const app = withErrorBoundary(
+      createDashboardQuarantineRoutes({
+        store,
+        contextFor: async () => ({ actorId: 'user:lead-1', actorType: 'user' }),
+      }),
+    );
+    const created = (await (
+      await post(app, { testTitle: 'login', testFile: 'e2e/login.spec.ts' })
+    ).json()) as QuarantineEntry;
+    await patch(app, created.id, { status: 'approved', resolution: 'tracked in #9' });
+    await patch(app, created.id, { status: 'released', resolution: 'fixed' });
+    await del(app, created.id);
+
+    expect(store.recorded.map((entry) => [entry.action, entry.actorId])).toEqual([
+      ['quarantine.created', 'user:lead-1'],
+      ['quarantine.approved', 'user:lead-1'],
+      ['quarantine.released', 'user:lead-1'],
+      ['quarantine.removed', 'user:lead-1'],
+    ]);
+  });
+});

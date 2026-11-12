@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { DETECTABLE_REPORT_FORMAT_IDS, type ReportFormatId } from '@lupin/shared-contracts';
 import { SCORE_CATEGORIES, SCORE_SURFACES } from '../vocabulary.js';
 
-/** The eight ecosystems the v1 detector reads. Narrowing this is a plan change, not a flag. */
+/**
+ * The ecosystems the detector reads. Narrowing this is a plan change, not a flag. c-cpp is
+ * embedded C and C++ (firmware and device code), so Lupin serves QA for embedded as well as SaaS.
+ */
 export const ECOSYSTEMS = [
   'node',
   'python',
@@ -13,6 +16,7 @@ export const ECOSYSTEMS = [
   'ruby',
   'rust',
   'php',
+  'c-cpp',
 ] as const;
 export const EcosystemSchema = z.enum(ECOSYSTEMS);
 export type Ecosystem = z.infer<typeof EcosystemSchema>;

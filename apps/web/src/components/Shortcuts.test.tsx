@@ -7,7 +7,7 @@ import {
   readPreferences,
   usePreferences,
 } from '../theme/preferences.js';
-import { isTypingTarget } from './Shortcuts.js';
+import { GO_TO, isTypingTarget } from './Shortcuts.js';
 import { MemoryRouter } from '../router.js';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
 
@@ -79,6 +79,25 @@ describe('keyboard shortcuts', () => {
     expect(screen.getByTestId('notifications-page')).toBeTruthy();
   });
 
+  it('A takes the page’s one main action, and a field swallows it', async () => {
+    stubApi();
+    render(<MemoryRouter initialEntries={['/dashboard/reports']} />);
+    await screen.findByTestId('notifications-page', {}, { timeout: 10_000 });
+    const button = document.createElement('button');
+    button.dataset['primary'] = 'true';
+    const clicked = vi.fn();
+    button.addEventListener('click', clicked);
+    document.body.appendChild(button);
+    const field = document.createElement('input');
+    document.body.appendChild(field);
+    press('a', field);
+    expect(clicked).not.toHaveBeenCalled();
+    press('a');
+    expect(clicked).toHaveBeenCalledOnce();
+    button.remove();
+    field.remove();
+  });
+
   it('j and k move through rows, and Enter opens the focused one', async () => {
     stubApi();
     render(<MemoryRouter initialEntries={['/dashboard/reports']} />);
@@ -105,6 +124,19 @@ describe('keyboard shortcuts', () => {
     press('j');
   });
 
+  it('reaches every area of the pyramid in two keys', () => {
+    expect(
+      Object.fromEntries(Object.entries(GO_TO).map(([key, target]) => [key, target.to])),
+    ).toMatchObject({
+      n: '/dashboard/now',
+      r: '/dashboard/runs',
+      t: '/dashboard/insights',
+      h: '/dashboard',
+      d: '/dashboard/delivery',
+      ',': '/dashboard/settings',
+    });
+  });
+
   it('knows a field from the page', () => {
     const input = document.createElement('input');
     const div = document.createElement('div');
@@ -128,17 +160,30 @@ describe('preferences', () => {
   }
 
   it('reads only valid stored values, and falls back to the system for motion', () => {
-    expect(readPreferences(null)).toEqual({ focus: false, density: 'comfortable', motion: 'full' });
-    expect(readPreferences('not json')).toMatchObject({ density: 'comfortable' });
-    expect(readPreferences('{"focus":true,"density":"compact","motion":"reduced"}')).toEqual({
-      focus: true,
-      density: 'compact',
-      motion: 'reduced',
-    });
-    expect(readPreferences('{"focus":"yes","density":"tiny","motion":"wild"}')).toEqual({
+    expect(readPreferences(null)).toEqual({
       focus: false,
       density: 'comfortable',
       motion: 'full',
+      persona: null,
+    });
+    expect(readPreferences('not json')).toMatchObject({ density: 'comfortable' });
+    expect(
+      readPreferences('{"focus":true,"density":"compact","motion":"reduced","persona":"lead"}'),
+    ).toEqual({
+      // Focus mode and the QA roles were removed: a value stored by an older build is
+      // ignored, so nobody is left in a mode there is no longer a control to leave.
+      focus: false,
+      density: 'compact',
+      motion: 'reduced',
+      persona: null,
+    });
+    expect(
+      readPreferences('{"focus":"yes","density":"tiny","motion":"wild","persona":"boss"}'),
+    ).toEqual({
+      focus: false,
+      density: 'comfortable',
+      motion: 'full',
+      persona: null,
     });
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     expect(readPreferences(null).motion).toBe('reduced');
@@ -169,8 +214,9 @@ describe('preferences', () => {
     act(() => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
     });
-    expect(await screen.findByText('Focus mode')).toBeTruthy();
-    expect(screen.getByText('Compact density')).toBeTruthy();
+    expect(await screen.findByText('Compact density')).toBeTruthy();
+    // Focus mode was removed; the palette no longer offers it.
+    expect(screen.queryByText('Focus mode')).toBeNull();
     expect(screen.getByText(/Reduce motion|Full motion/u)).toBeTruthy();
     // Each one flips its attribute. The palette is open now; selecting closes it.
     const choose = (label: RegExp, reopen: boolean) => {
@@ -185,9 +231,7 @@ describe('preferences', () => {
           .dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
       });
     };
-    choose(/^Focus mode$/u, false);
-    await waitFor(() => expect(document.documentElement.dataset['focus']).toBe('on'));
-    choose(/^Compact density$/u, true);
+    choose(/^Compact density$/u, false);
     await waitFor(() => expect(document.documentElement.dataset['density']).toBe('compact'));
     choose(/^(Reduce motion|Full motion)$/u, true);
     await waitFor(() => expect(localStorage.getItem(PREFERENCES_KEY)).toMatch(/"motion"/u));

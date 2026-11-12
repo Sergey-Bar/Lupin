@@ -34,28 +34,34 @@ describe('dashboard routes', () => {
    * the fix cost a line of coverage, which is a trade a red ratchet is right to
    * refuse — so the fix and its test land together.
    *
-   * Asserted on **`setInterval`**, not on the rendered output: two pollers and one
+   * Asserted on **the armed poll timer**, not on the rendered output: two pollers and one
    * list render the same page, and the leak is the poller.
    */
   it('arms one run poller on the runs route, not one per level', async () => {
-    // Counted as **live** intervals, not as calls. `clearInterval` has to be
-    // intercepted too, or an effect that re-runs looks like three mounted pollers
-    // when only one is still armed — and "how many are armed" is the claim.
-    let nextId = 1;
+    // Counted as **live** timers, not as calls. `clearTimeout` has to be intercepted too, or
+    // an effect that re-runs looks like three mounted pollers when only one is still armed —
+    // and "how many are armed" is the claim. The poll is a chain of five-second timeouts
+    // (ledger MNT-188); every other timer, `waitFor`'s among them, goes through untouched.
+    let nextId = -1;
     const live = new Map<number, () => void>();
-    const arm = vi.spyOn(window, 'setInterval').mockImplementation(((
+    const realSetTimeout = window.setTimeout.bind(window);
+    const realClearTimeout = window.clearTimeout.bind(window);
+    const arm = vi.spyOn(window, 'setTimeout').mockImplementation(((
       handler: TimerHandler,
       ms?: number,
+      ...rest: unknown[]
     ) => {
-      if (ms !== 5_000 || typeof handler !== 'function') return 0 as unknown as number;
+      if (ms !== 5_000 || typeof handler !== 'function')
+        return realSetTimeout(handler, ms, ...rest);
       const id = nextId;
-      nextId += 1;
+      nextId -= 1;
       live.set(id, handler as () => void);
       return id as unknown as number;
-    }) as typeof window.setInterval);
-    const disarm = vi.spyOn(window, 'clearInterval').mockImplementation(((id?: number) => {
-      live.delete(id as unknown as number);
-    }) as typeof window.clearInterval);
+    }) as typeof window.setTimeout);
+    const disarm = vi.spyOn(window, 'clearTimeout').mockImplementation(((id?: number) => {
+      if (id !== undefined && live.has(id)) live.delete(id);
+      else realClearTimeout(id);
+    }) as typeof window.clearTimeout);
     const runListFetches = () =>
       vi
         .mocked(globalThis.fetch)
@@ -80,7 +86,7 @@ describe('dashboard routes', () => {
 
     // One tick, one fetch. Two mounted copies would fetch twice per cycle.
     const before = runListFetches();
-    for (const tick of live.values()) tick();
+    for (const tick of [...live.values()]) tick();
     await waitFor(() => expect(runListFetches()).toBe(before + 1));
     arm.mockRestore();
     disarm.mockRestore();
@@ -105,7 +111,7 @@ describe('dashboard routes', () => {
     // what a bare install renders. The dashboard has a report state too, and
     // `Dashboard.test.tsx` is what covers it.
     await waitFor(() => expect(screen.getByTestId('onboarding')).toBeInTheDocument());
-    expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Health' })).toBeInTheDocument();
     expect(screen.queryByTestId('home-page')).not.toBeInTheDocument();
     // **A home page that asks you to fill in a form before it tells you anything is a
     // form.** The dashboard reports; the runs route asks for input. Both halves asserted,
@@ -128,15 +134,29 @@ describe('dashboard routes', () => {
     render(<MemoryRouter initialEntries={['/dashboard/runs']} />);
     await waitFor(() => expect(screen.getByTestId('runs-list-page')).toBeInTheDocument());
     expect(screen.getByTestId('launch-run-form')).toBeInTheDocument();
-    expect(screen.getByTestId('release-readiness')).toHaveTextContent('UNKNOWN');
-    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('UNKNOWN');
+    expect(screen.getByTestId('release-readiness')).toHaveTextContent('Unknown');
+    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('Unknown');
     // With no release there is no evaluation, so no per-domain status is drawn — not even
     // a confident "not configured" that no read returned.
     expect(screen.getByTestId('release-readiness-unread')).toHaveTextContent(
       'No readiness has been evaluated',
     );
-    expect(screen.getByTestId('release-readiness')).not.toHaveTextContent('NOT_CONFIGURED');
+    expect(screen.getByTestId('release-readiness')).not.toHaveTextContent('Not configured');
     expect(screen.queryByTestId('dashboard')).not.toBeInTheDocument();
+  });
+
+  it('opens a run at its address, and says so when there is no such run', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith('/api/v1/auth/session')) return new Response('{}', { status: 200 });
+        if (url.endsWith('/api/v1/runs')) return new Response('[]', { status: 200 });
+        return new Response(JSON.stringify({ error: { message: 'not found' } }), { status: 404 });
+      }),
+    );
+    render(<MemoryRouter initialEntries={['/dashboard/runs/missing-run']} />);
+    expect(await screen.findByTestId('run-not-found')).toHaveTextContent('missing-run');
   });
 
   it('creates a canonical browser run with registered execution context', async () => {
@@ -144,6 +164,8 @@ describe('dashboard routes', () => {
     const onCreated = vi.fn();
     render(<LaunchRunForm api={makeApi({ createRun })} onCreated={onCreated} />);
     fillLaunchForm();
+    // The timeout is typed in seconds and sent in milliseconds.
+    fireEvent.change(screen.getByTestId('launch-timeout'), { target: { value: '90' } });
     fireEvent.click(screen.getByTestId('launch-run-submit'));
 
     await waitFor(() => expect(createRun).toHaveBeenCalledOnce());
@@ -158,6 +180,7 @@ describe('dashboard routes', () => {
       framework: 'playwright',
       source: 'web',
       selection: { paths: ['e2e/smoke.spec.ts'] },
+      timeoutMs: 90_000,
     });
     expect(request.idempotencyKey).toBeTruthy();
     await waitFor(() =>
@@ -170,7 +193,7 @@ describe('dashboard routes', () => {
     expect(onCreated).toHaveBeenCalledOnce();
   });
 
-  it('renders persisted readiness and recent canonical runs', async () => {
+  it('renders persisted readiness under the run table, and no second run list', async () => {
     const run = makeRun({ id: 'recent-run', projectId: 'registered-project', phase: 'running' });
     const readiness = {
       releaseId: 'release-1',
@@ -203,14 +226,23 @@ describe('dashboard routes', () => {
       }),
     );
     render(<MemoryRouter initialEntries={['/dashboard/runs']} />);
-    await waitFor(() => expect(screen.getByTestId('release-readiness')).toHaveTextContent('READY'));
-    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('READY');
-    expect(screen.getByTestId('release-readiness')).toHaveTextContent('browserPASSED');
-    expect(screen.getByTestId('release-readiness')).toHaveTextContent('apiNOT_CONFIGURED');
-    expect(screen.getByTestId('run-item-recent-run')).toHaveAttribute(
-      'href',
-      '/dashboard/runs/recent-run',
-    );
+    await waitFor(() => expect(screen.getByTestId('release-readiness')).toHaveTextContent('Ready'));
+    expect(screen.getByTestId('release-readiness-decision')).toHaveTextContent('Ready');
+    expect(screen.getByTestId('release-readiness')).toHaveTextContent('browserPassed');
+    expect(screen.getByTestId('release-readiness')).toHaveTextContent('apiNot configured');
+    // After the list, not beside it, and no "recent executions" card repeating the table.
+    expect(
+      screen
+        .getByTestId('runs-list-page')
+        .compareDocumentPosition(screen.getByTestId('release-readiness')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.queryByTestId('run-item-recent-run')).toBeNull();
+    expect(
+      screen
+        .getByTestId('run-row-recent-run')
+        .querySelector('a[href="/dashboard/runs/recent-run"]'),
+    ).not.toBeNull();
   });
 
   it('shows the runs error state without placeholder success', async () => {
@@ -298,7 +330,7 @@ describe('dashboard routes', () => {
     const status = screen.getByTestId('run-status-live-run');
     expect(status).toHaveAttribute('role', 'status');
     expect(status).toHaveAttribute('aria-live', 'polite');
-    expect(status).toHaveTextContent('queued');
+    expect(status).toHaveTextContent('Queued');
   });
 
   it('names a run with no suite by its short id, the one the runs table uses', async () => {
@@ -315,8 +347,8 @@ describe('dashboard routes', () => {
       }),
     );
     render(<MemoryRouter initialEntries={['/dashboard/runs']} />);
-    await waitFor(() => expect(screen.getByTestId(`run-item-${id}`)).toBeInTheDocument());
-    const card = screen.getByTestId(`run-item-${id}`);
+    await waitFor(() => expect(screen.getByTestId(`run-row-${id}`)).toBeInTheDocument());
+    const card = screen.getByTestId(`run-row-${id}`);
     expect(card).toHaveTextContent('abcdef12');
     expect(card).not.toHaveTextContent(id);
   });
@@ -337,7 +369,7 @@ describe('dashboard routes', () => {
     await waitFor(() => expect(screen.getByTestId('run-status-live-run')).toBeInTheDocument());
 
     const status = screen.getByTestId('run-status-live-run');
-    const card = screen.getByTestId('run-item-live-run');
+    const card = screen.getByTestId('run-row-live-run');
     // A live region on the card would re-announce the run id, the project and the
     // timestamp along with the one thing that changed.
     expect(status.closest('[aria-live]')).toBe(status);

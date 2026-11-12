@@ -38,6 +38,9 @@ describe('the settings client', () => {
       'GET /api/v1/projects/p/git-token': { set: true },
       'PUT /api/v1/projects/p/git-token': { set: true },
       'DELETE /api/v1/projects/p/git-token': { set: false },
+      'GET /api/v1/settings/github-app': { set: false },
+      'PUT /api/v1/settings/github-app': { set: true },
+      'DELETE /api/v1/settings/github-app': { set: false },
       'GET /api/v1/dashboard/quality-gates': [],
       'POST /api/v1/dashboard/quality-gates': {
         id: 'g',
@@ -80,6 +83,9 @@ describe('the settings client', () => {
     expect(await client.gitTokenState('p')).toBe(true);
     await client.putGitToken('p', 't');
     await client.deleteGitToken('p');
+    expect(await client.githubAppState()).toBe(false);
+    await client.putGitHubApp({ appId: '42', privateKey: 'k' });
+    await client.deleteGitHubApp();
     await client.listGates();
     await client.createGate({ name: 'n', passRateThreshold: 1 });
     await client.updateGate('g', { passRateThreshold: 2 });
@@ -87,10 +93,18 @@ describe('the settings client', () => {
     await client.identityDraft({ 'identity.oidcRoleMap': 'admin:a@b.test' });
     await client.identityDraftStatus('d');
     await client.identityApply('d');
-    expect(calls).toHaveLength(21);
+    expect(calls).toHaveLength(24);
     expect(calls.every(([, init]) => init.credentials === 'include')).toBe(true);
     expect(calls[1]?.[1].body).toBe(JSON.stringify({ value: 'http://o:1' }));
     expect(calls[9]?.[1].body).toBe(JSON.stringify({ confirm: 'n' }));
+    expect(calls[15]).toEqual([
+      '/api/v1/settings/github-app',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ appId: '42', privateKey: 'k' }),
+      }),
+    ]);
+    expect(calls[16]?.[1].method).toBe('DELETE');
   });
 
   it('keeps the API’s code and fix, and explains a failure as reason then fix', async () => {

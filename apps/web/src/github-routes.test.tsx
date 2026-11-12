@@ -94,6 +94,9 @@ function mockApi(): string[] {
       if (url.includes('/api/v1/github/issues')) return json({ items: [ISSUE], nextCursor: null });
       if (url.endsWith('/api/v1/github/repos')) return json({ items: [REPO] });
       if (url.endsWith('/api/v1/github/repos/p1')) return json(REPO);
+      if (url.endsWith('/api/v1/projects/p1/pull-requests/12/risk')) {
+        return json({ pullRequest: 12, latest: null, history: [] });
+      }
       return new Response(JSON.stringify({ error: { message: 'not found' } }), { status: 404 });
     }),
   );
@@ -131,5 +134,21 @@ describe('the GitHub routes are reachable', () => {
     render(<MemoryRouter initialEntries={['/dashboard/repos/p1']} />);
     await waitFor(() => expect(screen.getByTestId('repo-score')).toHaveTextContent('Grade A'));
     expect(asked.some((url) => url.endsWith('/api/v1/github/repos/p1'))).toBe(true);
+  });
+
+  it('opens one pull request’s change risk by its project and number', async () => {
+    const asked = mockApi();
+    render(<MemoryRouter initialEntries={['/dashboard/prs/p1/12']} />);
+    expect(await screen.findByText('Not assessed yet')).toBeInTheDocument();
+    expect(asked.some((url) => url.endsWith('/api/v1/projects/p1/pull-requests/12/risk'))).toBe(
+      true,
+    );
+  });
+
+  it('says a path number that is not one is not a pull request, and asks for nothing', async () => {
+    const asked = mockApi();
+    render(<MemoryRouter initialEntries={['/dashboard/prs/p1/twelve']} />);
+    expect(await screen.findByText(/That is not a pull request number/u)).toBeInTheDocument();
+    expect(asked.some((url) => url.includes('/pull-requests/'))).toBe(false);
   });
 });

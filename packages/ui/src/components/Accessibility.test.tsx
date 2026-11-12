@@ -7,10 +7,11 @@ import type { ReactElement } from 'react';
 import { expectNoBlockingAxeViolations } from '../test/axe.js';
 import { Alert, AlertDescription, AlertTitle } from './Alert/Alert.js';
 import { AppShell } from './AppShell/AppShell.js';
+import { ActionCard, Hero, Row, Surface } from './Kit/Kit.js';
 import { Avatar, AvatarFallback, AvatarImage } from './Avatar/Avatar.js';
 import { Badge } from './Badge/Badge.js';
 import { Breadcrumbs } from './Breadcrumbs/Breadcrumbs.js';
-import { Button } from './Button/Button.js';
+import { Button, ButtonLink } from './Button/Button.js';
 import {
   Card,
   CardContent,
@@ -48,9 +49,13 @@ import { Splitter } from './Splitter/Splitter.js';
 import { Stack } from './Stack/Stack.js';
 import { StatCard } from './StatCard/StatCard.js';
 import { StatusDot } from './StatusDot/StatusDot.js';
+import { LiveDot, Status } from './Status/Status.js';
+import { Wordmark } from './Wordmark/Wordmark.js';
+import { ToolLogo } from './ToolLogo/ToolLogo.js';
 import { CountUp } from './CountUp/CountUp.js';
 import { Checkbox } from './Checkbox/Checkbox.js';
 import { MenuButton } from './MenuButton/MenuButton.js';
+import { Metric } from './Metric/Metric.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './Table/Table.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './Tabs/Tabs.js';
 import { Textarea } from './Textarea/Textarea.js';
@@ -132,7 +137,17 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
       />
     ),
   },
-  { name: 'Button', element: <Button variant="primary">Queue browser run</Button> },
+  {
+    name: 'Button',
+    element: (
+      <>
+        <Button variant="primary">Queue browser run</Button>
+        <ButtonLink href="/dashboard/setup" variant="secondary">
+          Continue setup
+        </ButtonLink>
+      </>
+    ),
+  },
   {
     name: 'Card',
     element: (
@@ -252,6 +267,26 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
     element: <Sparkline points={[0.1, 0.4, 0.35, 0.8]} label="Pass rate, last 4 runs" />,
   },
   {
+    name: 'Kit',
+    element: (
+      <Surface level={2}>
+        <Hero verdict="caution" word="Caution" reason="One gate warns" />
+        <Row title="Waiting on you">
+          {[
+            <ActionCard
+              key="a"
+              tone="warn"
+              title="Review quarantine"
+              fact="8 tests"
+              action="Open"
+              onAct={() => undefined}
+            />,
+          ]}
+        </Row>
+      </Surface>
+    ),
+  },
+  {
     name: 'DefinitionList',
     element: (
       <DefinitionList>
@@ -277,8 +312,24 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
     element: <StatCard title="Pass rate" value="98.4%" trend="up" description="Last 7 days" />,
   },
   { name: 'StatusDot', element: <StatusDot status="bad" label="Failing" /> },
+  {
+    name: 'Status',
+    element: (
+      <>
+        <Status state="failed" />
+        <Status state="running" size="lg" />
+        <LiveDot live />
+      </>
+    ),
+  },
   { name: 'CountUp', element: <CountUp value={128} /> },
   { name: 'Checkbox', element: <Checkbox aria-label="Select all" /> },
+  {
+    name: 'Metric',
+    element: (
+      <Metric label="Pass rate" value="94.2" unit="%" delta={-3.1} comparedWith="last week" />
+    ),
+  },
   {
     name: 'MenuButton',
     element: (
@@ -338,6 +389,8 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
   },
   { name: 'Toggle', element: <Toggle id="live-updates" label="Live updates" checked /> },
   { name: 'Tooltip', element: <Tooltip content="Retry the run">Retry</Tooltip> },
+  { name: 'ToolLogo', element: <ToolLogo name="Vitest" /> },
+  { name: 'Wordmark', element: <Wordmark /> },
 ];
 
 /** Every shipped component module, as `{ name, body }`, excluding tests and stories. */
@@ -394,7 +447,7 @@ describe('axe sweep over every shipped component', () => {
   it('covers every component directory that ships a component', () => {
     const shipped = shippedComponentNames();
     const covered = CASES.map((testCase) => testCase.name).sort();
-    expect(shipped.length).toBe(35);
+    expect(shipped.length).toBe(40);
     // Guards the case list below: a missing or extra entry fails here, with the
     // diff, rather than as a silently smaller sweep.
     expect(covered).toEqual(shipped);

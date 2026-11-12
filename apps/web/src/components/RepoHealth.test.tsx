@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { confirmAction } from '../test-confirm.js';
 import {
   HEALTH_DIMENSIONS,
   isOptInDimension,
@@ -15,7 +16,7 @@ import type { HealthClient } from '../lib/health-client.js';
 import { ago, letterTone, meterVariant, notMeasured, whatIsGood } from '../lib/health-view.js';
 import { Portfolio, needsAttention, worstFirst } from './Portfolio.js';
 import { RepoHealth } from './RepoHealth.js';
-import { AccessGate, AccessPage } from './Access.js';
+import { AccessGate, AccessPage, expiryText } from './Access.js';
 
 const PROJECT = '11111111-1111-4111-8111-111111111111';
 
@@ -148,6 +149,13 @@ function client(overrides: Partial<HealthClient> = {}): HealthClient {
     getPortfolio: vi.fn(async () => ({ projects: [] })),
     getHeatmap: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
     getTestEffectiveness: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
+    getPace: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
+    getPhases: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
+    getPortfolioPhases: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
+    getBriefing: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
+    getShape: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
+    getPullRequestShape: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
+    getPortfolioShape: vi.fn(async () => Promise.reject(new Error('not stubbed'))),
     getHealth: vi.fn(async () => health()),
     getFindings: vi.fn(async () => ({ findings: [FINDING], total: 1, offset: 0, limit: 25 })),
     getHistory: vi.fn(async () => ({ projectId: PROJECT, branch: 'main', points: [] })),
@@ -481,11 +489,76 @@ describe('AccessGate and AccessPage', () => {
     await user.type(screen.getByLabelText('Name'), 'Ana');
     await user.click(screen.getByRole('button', { name: 'Issue' }));
     expect(await screen.findByTestId('issued-token')).toHaveTextContent('lup_issued-once');
-    expect(api.createToken).toHaveBeenCalledWith({ name: 'Ana', role: 'viewer' });
-    await user.click(
-      within(await screen.findByTestId('token-t1')).getByRole('button', { name: 'Revoke' }),
-    );
+    expect(api.createToken).toHaveBeenCalledWith({
+      name: 'Ana',
+      role: 'viewer',
+      expiresInDays: 90,
+    });
+    await confirmAction(user, await screen.findByTestId('token-t1'), 'Revoke', 'Ana');
     expect(api.revokeToken).toHaveBeenCalledWith('t1');
+  });
+
+  it('issues a token limited to the ticked scopes, and lists them (plan task 7)', async () => {
+    const user = userEvent.setup();
+    const scoped = {
+      id: 't2',
+      name: 'Reader',
+      role: 'viewer' as const,
+      projectId: null,
+      displayPrefix: 'lup_read',
+      createdBy: 'session',
+      createdAt: '2026-10-23T00:00:00.000Z',
+      lastUsedAt: null,
+      revokedAt: null,
+      scopes: ['runs:read'],
+    };
+    const api = client({ listTokens: vi.fn(async () => [scoped]) });
+    render(<AccessPage health={api} />);
+    await screen.findByTestId('access-page');
+    expect(await screen.findByTestId('token-scope-list')).toHaveTextContent('runs:read');
+    await user.type(screen.getByLabelText('Name'), 'Reader');
+    const box = within(screen.getByTestId('token-scopes'));
+    await user.click(box.getByLabelText('tests:read'));
+    await user.click(box.getByLabelText('runs:read'));
+    // Unticked again: only what is still ticked is sent.
+    await user.click(box.getByLabelText('tests:read'));
+    fireEvent.change(screen.getByLabelText('Expires'), { target: { value: '30' } });
+    await user.click(screen.getByRole('button', { name: 'Issue' }));
+    await screen.findByTestId('issued-token');
+    expect(api.createToken).toHaveBeenCalledWith({
+      name: 'Reader',
+      role: 'viewer',
+      expiresInDays: 30,
+      scopes: ['runs:read'],
+    });
+  });
+
+  it('says when each token expires, and rotates one showing the successor once (plan task 6)', async () => {
+    const user = userEvent.setup();
+    const live = {
+      id: 't1',
+      name: 'CI',
+      role: 'operator' as const,
+      projectId: null,
+      displayPrefix: 'lup_ci',
+      createdBy: 'session',
+      createdAt: '2026-10-23T00:00:00.000Z',
+      lastUsedAt: null,
+      revokedAt: null,
+      expiresAt: '2099-01-01T00:00:00.000Z',
+    };
+    const rotateToken = vi.fn(async () => ({
+      token: 'lup_successor-once',
+      summary: { ...live, id: 't2' },
+    }));
+    render(<AccessPage health={client({ listTokens: vi.fn(async () => [live]), rotateToken })} />);
+    const row = await screen.findByTestId('token-t1');
+    expect(within(row).getByTestId('token-expires')).toHaveTextContent('2099-01-01');
+    await confirmAction(user, row, 'Rotate');
+    expect(rotateToken).toHaveBeenCalledWith('t1');
+    expect(await screen.findByTestId('issued-token')).toHaveTextContent('lup_successor-once');
+    expect(expiryText(null)).toBe('Never');
+    expect(expiryText('2000-01-01T00:00:00.000Z')).toBe('Expired');
   });
 });
 
@@ -829,6 +902,7 @@ describe('Portfolio and Access, the edges', () => {
       name: 'ci',
       role: 'uploader',
       projectId: PROJECT,
+      expiresInDays: 90,
     });
     unmount();
     render(

@@ -49,6 +49,7 @@ export function registerPolicyRoutes(app: Hono, context: ExecutionRouteContext):
         domain: DomainName;
         required: boolean;
         minimumPassRate?: number;
+        maxSeverity?: 'critical' | 'high' | 'medium' | 'low';
         requiredArtifactKinds: ArtifactKind[];
       }>,
     };

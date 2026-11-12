@@ -21,11 +21,11 @@
  */
 
 import { auditEvents, qualityGateConfig, quarantine } from '@lupin/db';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull, or } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
 import { randomUUID } from 'node:crypto';
-import type { QualityGate, QualityGateStore } from './quality-gates.js';
+import type { NewQualityGate, QualityGate, QualityGateStore } from './quality-gates.js';
 import type { NewQuarantineEntry, QuarantineEntry, QuarantineStore } from './quarantine.js';
 import {
   canTransitionQuarantine,
@@ -52,6 +52,7 @@ function mapGate(row: typeof qualityGateConfig.$inferSelect): QualityGate {
     name: row.name,
     passRateThreshold: row.passRateThreshold,
     createdAt: row.updatedAt.toISOString(),
+    scope: row.workspaceId === null ? 'installation' : 'workspace',
   };
 }
 
@@ -66,10 +67,26 @@ export class DrizzleQualityGateStore implements QualityGateStore {
     private readonly workspaceId: string,
   ) {}
 
+  /**
+   * The rows this workspace may see: the installation-wide ones and its own. Every read and
+   * write goes through it, so an id from another workspace is "no such gate" (ledger MNT-170).
+   */
+  private visible() {
+    return or(
+      isNull(qualityGateConfig.workspaceId),
+      eq(qualityGateConfig.workspaceId, this.workspaceId),
+    );
+  }
+
+  private one(id: string) {
+    return and(eq(qualityGateConfig.id, id), this.visible());
+  }
+
   async list(): Promise<QualityGate[]> {
     const rows = await this.db
       .select()
       .from(qualityGateConfig)
+      .where(this.visible())
       .orderBy(asc(qualityGateConfig.updatedAt));
     // Every row, including `global`. The previous `.where(ne(id, 'global'))` made a
     // fresh install — where that row is the only one — report an empty list, so an
@@ -77,10 +94,7 @@ export class DrizzleQualityGateStore implements QualityGateStore {
     return rows.map(mapGate);
   }
 
-  async add(
-    gate: Omit<QualityGate, 'id' | 'createdAt'>,
-    context: WriteContext = systemContext(),
-  ): Promise<QualityGate> {
+  async add(gate: NewQualityGate, context: WriteContext = systemContext()): Promise<QualityGate> {
     const id = randomUUID();
     const now = new Date();
     // The gate row and its audit row are written together. A gate nobody can account
@@ -116,15 +130,12 @@ export class DrizzleQualityGateStore implements QualityGateStore {
       name: gate.name,
       passRateThreshold: gate.passRateThreshold,
       createdAt: now.toISOString(),
+      scope: 'installation',
     };
   }
 
   async get(id: string): Promise<QualityGate | null> {
-    const rows = await this.db
-      .select()
-      .from(qualityGateConfig)
-      .where(eq(qualityGateConfig.id, id))
-      .limit(1);
+    const rows = await this.db.select().from(qualityGateConfig).where(this.one(id)).limit(1);
     const row = rows[0];
     if (row === undefined) return null;
     return mapGate(row);
@@ -132,7 +143,7 @@ export class DrizzleQualityGateStore implements QualityGateStore {
 
   async update(
     id: string,
-    patch: Partial<Omit<QualityGate, 'id' | 'createdAt'>>,
+    patch: Partial<NewQualityGate>,
     context: WriteContext = systemContext(),
   ): Promise<QualityGate | null> {
     const now = new Date();
@@ -140,7 +151,7 @@ export class DrizzleQualityGateStore implements QualityGateStore {
       const rows = await tx
         .update(qualityGateConfig)
         .set({ ...patch, updatedAt: now })
-        .where(eq(qualityGateConfig.id, id))
+        .where(this.one(id))
         .returning();
       if (rows.length === 0) return null;
       await tx.insert(auditEvents).values(
@@ -166,7 +177,7 @@ export class DrizzleQualityGateStore implements QualityGateStore {
     return this.db.transaction(async (tx) => {
       const rows = await tx
         .delete(qualityGateConfig)
-        .where(eq(qualityGateConfig.id, id))
+        .where(this.one(id))
         .returning({ id: qualityGateConfig.id });
       if (rows.length === 0) return false;
       await tx.insert(auditEvents).values(

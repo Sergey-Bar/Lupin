@@ -8,7 +8,7 @@ import { send } from './http.js';
 import { projectUrl } from './target.js';
 
 /**
- * `lupin test --format junit|playwright-json --report <path> [--branch --commit] -- <command…>`
+ * `lupin test --format <junit|playwright-json|ctrf|jest|vitest|pytest|mochawesome> --report <path> [--branch --commit] -- <command…>`
  *
  * Runs the test command, sends its report, and exits with the command's own code — except
  * when the server says every failure is an approved quarantined test, when it exits 0.
@@ -33,6 +33,28 @@ import { projectUrl } from './target.js';
 /** The exit code a shell reports for a command it could not find. */
 const NOT_STARTED = 127;
 const LISTED = 10;
+
+/**
+ * The `--format` spellings the server's test-report door reads. The CLI has no runtime
+ * dependencies, so this is a copy of `TEST_REPORT_FORMATS` in `@lupin/shared-contracts`;
+ * `test-command.test.ts` fails when the two disagree.
+ */
+export const TEST_FORMATS = [
+  'junit',
+  'playwright-json',
+  'ctrf',
+  'ctrf-json',
+  'jest',
+  'jest-json',
+  'vitest',
+  'vitest-json',
+  'pytest',
+  'pytest-json',
+  'pytest-json-report',
+  'mochawesome',
+  'mochawesome-json',
+  'cypress',
+] as const;
 
 interface Verdict {
   excused: boolean;
@@ -134,8 +156,8 @@ function readOptions(argv: readonly string[], io: Io): TestOptions {
     values: ['project', 'format', 'report', 'branch', 'commit'],
   });
   const format = required(parsed, 'format');
-  if (format !== 'junit' && format !== 'playwright-json') {
-    throw usage('--format is junit or playwright-json');
+  if (!(TEST_FORMATS as readonly string[]).includes(format)) {
+    throw usage(`--format is one of ${TEST_FORMATS.join(', ')}`);
   }
   const report = required(parsed, 'report');
   const destination = target(io, parsed);

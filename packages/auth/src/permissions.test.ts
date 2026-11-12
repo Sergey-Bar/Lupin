@@ -1,4 +1,10 @@
-import { checkPermission, isAdmin, Permission } from './permissions.js';
+import {
+  checkPermission,
+  isAdmin,
+  Permission,
+  ROLE_PERMISSIONS,
+  scopesBeyondRole,
+} from './permissions.js';
 
 describe('checkPermission', () => {
   it('returns true when user has the required permission', () => {
@@ -29,5 +35,27 @@ describe('checkPermission', () => {
     // Found by mutation testing: `some` survived as `every`.
     expect(isAdmin(['runs:read', 'admin'])).toBe(true);
     expect(isAdmin(['admin:all', 'runs:read'])).toBe(true);
+  });
+});
+
+describe('ROLE_PERMISSIONS and scopesBeyondRole (plan task 7)', () => {
+  it('nests each role inside the one above, and never grants the admin spellings', () => {
+    for (const permission of ROLE_PERMISSIONS.viewer) {
+      expect(ROLE_PERMISSIONS.operator).toContain(permission);
+    }
+    for (const permission of ROLE_PERMISSIONS.operator) {
+      expect(ROLE_PERMISSIONS.admin).toContain(permission);
+    }
+    expect(ROLE_PERMISSIONS.admin).not.toContain('admin');
+    expect(ROLE_PERMISSIONS.admin).not.toContain('admin:all');
+  });
+
+  it('names exactly the scopes a role does not hold', () => {
+    expect(scopesBeyondRole('viewer', ['runs:read'])).toEqual([]);
+    expect(scopesBeyondRole('viewer', ['runs:read', 'runs:write', 'vault:read'])).toEqual([
+      'runs:write',
+      'vault:read',
+    ]);
+    expect(scopesBeyondRole('admin', ['vault:write', 'connectors:manage'])).toEqual([]);
   });
 });

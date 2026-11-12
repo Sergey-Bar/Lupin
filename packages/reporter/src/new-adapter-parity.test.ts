@@ -5,6 +5,11 @@ import { ZAP_XML_ADAPTER } from './adapters/zap-xml.js';
 import { allureResultsAdapter } from './adapters/allure-results.js';
 import { junitXmlAdapter } from './adapters/junit-xml.js';
 import { playwrightJsonAdapter } from './adapters/playwright-json.js';
+import { ctrfJsonAdapter } from './adapters/ctrf-json.js';
+import { jestJsonAdapter } from './adapters/jest-json.js';
+import { vitestJsonAdapter } from './adapters/vitest-json.js';
+import { pytestJsonAdapter } from './adapters/pytest-json.js';
+import { mochawesomeJsonAdapter } from './adapters/mochawesome-json.js';
 import { COVERAGE_ADAPTERS } from './adapters/coverage.js';
 import { INGESTED_PRODUCERS } from './producer-status.js';
 import { CanonicalRunResultSchema } from '@lupin/shared-contracts';
@@ -23,6 +28,7 @@ const context: ProducerContext = {
 };
 
 /** Every adapter that produces a run result, and one document each. */
+const json = (value: unknown): Uint8Array => new TextEncoder().encode(JSON.stringify(value));
 const RESULT_ADAPTERS: ReadonlyArray<readonly [string, ProducerAdapter, Uint8Array]> = [
   [
     'junit',
@@ -68,6 +74,35 @@ const RESULT_ADAPTERS: ReadonlyArray<readonly [string, ProducerAdapter, Uint8Arr
         { name: 'a', status: 'passed', start: 1_790_000_000_000, stop: 1_790_000_000_100 },
       ]),
     ),
+  ],
+  [
+    'ctrf',
+    ctrfJsonAdapter,
+    json({ results: { tests: [{ name: 'a', status: 'passed', filePath: 'a.spec.ts' }] } }),
+  ],
+  [
+    'jest',
+    jestJsonAdapter,
+    json({
+      testResults: [{ name: 'a.test.ts', assertionResults: [{ title: 'a', status: 'passed' }] }],
+    }),
+  ],
+  [
+    'vitest',
+    vitestJsonAdapter,
+    json({
+      testResults: [{ name: 'a.test.ts', assertionResults: [{ title: 'a', status: 'passed' }] }],
+    }),
+  ],
+  [
+    'pytest',
+    pytestJsonAdapter,
+    json({ tests: [{ nodeid: 'test_a.py::test_a', outcome: 'passed' }] }),
+  ],
+  [
+    'cypress',
+    mochawesomeJsonAdapter,
+    json({ results: [{ file: 'a.cy.ts', tests: [{ title: 'a', state: 'passed' }], suites: [] }] }),
   ],
 ];
 

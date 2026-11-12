@@ -1,32 +1,21 @@
 import React, { useRef, useState } from 'react';
-import { createRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { Badge, Button } from '@lupin/ui';
+import { createRoute, Outlet, useRouterState } from '@tanstack/react-router';
+import { Badge, Button, Input, Textarea } from '@lupin/ui';
 import { Route as rootRoute } from './__root.js';
 import type { CreateRunRequest, DomainReadinessStatus } from '@lupin/shared-contracts';
 import { useReleaseReadiness } from '../hooks/useDashboard.js';
-import { isRunActive } from '../hooks/useRuns.js';
 import { Dashboard } from '../components/Dashboard.js';
 import { Panel, Quiet } from '../components/kit.js';
 import { createQaClient } from '../lib/qa-client.js';
+import { createCockpitClient } from '../lib/cockpit-client.js';
 import { defaultApiClient, type ApiClient, type Run } from '../lib/api.js';
-import { formatDate } from '../lib/format.js';
-import { runTransitionName } from '../lib/view-transition.js';
+import { statusWord } from '../lib/status-word.js';
 
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dashboard',
   component: DashboardLayout,
 });
-
-/**
- * `run.createdAt` is a required `string` here, so there is no empty state to
- * render and no fallback to invent — one would be a user-visible string chosen
- * by a refactor. The shared helper takes a fallback, so this stays a thin
- * non-fallback wrapper over the same `toLocaleString()`.
- */
-function formatRequiredDate(value: string): string {
-  return formatDate(value, '');
-}
 
 function readinessTone(
   status: DomainReadinessStatus,
@@ -104,8 +93,7 @@ export function LaunchRunForm({ api, onCreated }: { api: ApiClient; onCreated: (
     }
   };
 
-  const inputClass =
-    'mt-1 min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-sm outline-none hover:border-fg-muted focus:border-accent';
+  const id = React.useId();
 
   return (
     <div>
@@ -121,82 +109,68 @@ export function LaunchRunForm({ api, onCreated }: { api: ApiClient; onCreated: (
         onSubmit={(event) => void submitAsync(event)}
         className="mt-5 grid gap-4 md:grid-cols-2"
       >
-        <label className="text-sm font-medium">
-          Project ID
-          <input
-            data-testid="launch-project-id"
-            required
-            value={projectId}
-            onChange={(event) => setProjectId(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Environment ID
-          <input
-            data-testid="launch-environment-id"
-            required
-            value={environmentId}
-            onChange={(event) => setEnvironmentId(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Release ID
-          <input
-            data-testid="launch-release-id"
-            required
-            value={releaseId}
-            onChange={(event) => setReleaseId(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Branch
-          <input
-            data-testid="launch-branch"
-            required
-            value={branch}
-            onChange={(event) => setBranch(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Commit
-          <input
-            data-testid="launch-commit"
-            required
-            value={commit}
-            onChange={(event) => setCommit(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium">
-          Timeout (seconds)
-          <input
-            data-testid="launch-timeout"
-            required
-            type="number"
-            min="1"
-            value={timeoutSeconds}
-            onChange={(event) => setTimeoutSeconds(event.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="text-sm font-medium md:col-span-2">
-          Test path selection
-          <textarea
+        <Input
+          id={`${id}-project`}
+          label="Project ID"
+          data-testid="launch-project-id"
+          required
+          value={projectId}
+          onChange={(event) => setProjectId(event.target.value)}
+        />
+        <Input
+          id={`${id}-environment`}
+          label="Environment ID"
+          data-testid="launch-environment-id"
+          required
+          value={environmentId}
+          onChange={(event) => setEnvironmentId(event.target.value)}
+        />
+        <Input
+          id={`${id}-release`}
+          label="Release ID"
+          data-testid="launch-release-id"
+          required
+          value={releaseId}
+          onChange={(event) => setReleaseId(event.target.value)}
+        />
+        <Input
+          id={`${id}-branch`}
+          label="Branch"
+          data-testid="launch-branch"
+          required
+          value={branch}
+          onChange={(event) => setBranch(event.target.value)}
+        />
+        <Input
+          id={`${id}-commit`}
+          label="Commit"
+          data-testid="launch-commit"
+          required
+          value={commit}
+          onChange={(event) => setCommit(event.target.value)}
+        />
+        <Input
+          id={`${id}-timeout`}
+          label="Timeout (seconds)"
+          data-testid="launch-timeout"
+          required
+          type="number"
+          min="1"
+          value={timeoutSeconds}
+          onChange={(event) => setTimeoutSeconds(event.target.value)}
+        />
+        <div className="md:col-span-2">
+          <Textarea
+            id={`${id}-selection`}
+            label="Test path selection"
             data-testid="launch-selection"
             rows={3}
             value={selection}
             onChange={(event) => setSelection(event.target.value)}
             placeholder="e2e/fixtures/playwright-smoke/pass.spec.ts"
-            className={inputClass}
+            helperText="Comma or newline separated. Leave empty for the registered project default."
           />
-          <span className="mt-1 block text-xs font-normal text-fg-muted">
-            Comma or newline separated. Leave empty for the registered project default.
-          </span>
-        </label>
+        </div>
         <div className="md:col-span-2">
           <Button data-testid="launch-run-submit" type="submit" loading={isSubmitting}>
             Queue browser run
@@ -261,7 +235,7 @@ export function ReleaseReadinessCard({
                 : 'warning'
           }
         >
-          {(data?.decision ?? 'unknown').toUpperCase()}
+          {statusWord(data?.decision ?? 'unknown')}
         </Badge>
       }
     >
@@ -279,7 +253,7 @@ export function ReleaseReadinessCard({
             <li key={domain} className="flex min-w-0 flex-col">
               <span className="text-xs capitalize text-fg-muted">{domain}</span>
               <Badge variant={readinessTone(status)} className="self-start">
-                {status.toUpperCase()}
+                {statusWord(status)}
               </Badge>
             </li>
           ))}
@@ -291,65 +265,6 @@ export function ReleaseReadinessCard({
           No readiness has been evaluated. A run that names a release brings its evidence here.
         </Quiet>
       )}
-    </Panel>
-  );
-}
-
-export function RecentRuns({ runs, isLive }: { runs: Run[]; isLive: boolean }) {
-  // **Nothing, not an empty state.** This panel sits beside the full run table, which
-  // renders its own empty state. Two "there is nothing here" panels on one screen is noise
-  // that reads as two separate failures.
-  if (runs.length === 0) return null;
-
-  return (
-    <Panel
-      title="Recent executions"
-      action={<span className="text-xs text-fg-muted">{isLive ? 'LIVE' : 'RECONNECTING'}</span>}
-    >
-      <div className="divide-y divide-border-default">
-        {runs.slice(0, 3).map((run) => (
-          <Link
-            key={run.id}
-            to="/dashboard/runs/$runId"
-            params={{ runId: run.id }}
-            data-testid={`run-item-${run.id}`}
-            className="flex items-center justify-between gap-3 rounded-md py-2 no-underline hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-          >
-            <div className="min-w-0">
-              <div
-                className="truncate font-mono text-xs"
-                title={run.suite ?? run.id}
-                style={{ viewTransitionName: runTransitionName(run.id) }}
-              >
-                {run.suite ?? run.id.slice(0, 8)}
-              </div>
-              <div className="text-xs text-fg-muted">{formatRequiredDate(run.createdAt)}</div>
-            </div>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <Badge variant={isRunActive(run) ? 'default' : 'outline'}>{run.phase}</Badge>
-              {/*
-               * `role="status"` is a polite live region, so a screen-reader user hears
-               * "run-42 passed" the moment the status flips. Without it the badge silently
-               * changes colour and text under a user who is watching something else.
-               */}
-              <Badge
-                role="status"
-                aria-live="polite"
-                data-testid={`run-status-${run.id}`}
-                variant={
-                  run.outcome === 'passed'
-                    ? 'success'
-                    : run.outcome === 'failed'
-                      ? 'danger'
-                      : 'secondary'
-                }
-              >
-                {(run.outcome ?? (run.phase === 'running' ? 'running' : run.phase)).toLowerCase()}
-              </Badge>
-            </div>
-          </Link>
-        ))}
-      </div>
     </Panel>
   );
 }
@@ -373,7 +288,15 @@ function DashboardLayout() {
 
   return (
     <div data-testid="dashboard-page" className="h-full min-h-0">
-      {isExactDashboard ? <Dashboard qa={createQaClient()} api={defaultApiClient} /> : <Outlet />}
+      {isExactDashboard ? (
+        <Dashboard
+          qa={createQaClient()}
+          api={defaultApiClient}
+          cockpit={(query, signal) => createCockpitClient().getCockpit(query, signal)}
+        />
+      ) : (
+        <Outlet />
+      )}
     </div>
   );
 }

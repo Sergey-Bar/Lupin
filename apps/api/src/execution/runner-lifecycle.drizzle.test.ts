@@ -648,6 +648,43 @@ describe('a run whose tests arrived as events, not in the completion', () => {
     expect(stored?.summary).toMatchObject({ total: 3, passed: 2, failed: 1 });
   });
 
+  it('keeps why a test failed, as the test.completed event reported it', async () => {
+    const { runId, jobId } = await aRunWithAJob();
+    const runner = await enrol('errors');
+    const claim = await store.claimJob(runner.id, ['browser'], ['ci'], clock, workspaceId);
+    if (!claim) throw new Error('the job was not claimable');
+    const applied = await store.appendEvents(
+      jobId,
+      claim.leaseId,
+      claim.fencingToken,
+      [
+        {
+          eventId: `err-started-${String(counter)}`,
+          type: 'test.started',
+          sequence: 1,
+          payload: { testId: 'pay', title: 'pays', file: 'a.spec.ts' },
+        },
+        {
+          eventId: `err-completed-${String(counter)}`,
+          type: 'test.completed',
+          sequence: 2,
+          payload: {
+            testId: 'pay',
+            status: 'failed',
+            error: { code: 'ASSERTION_FAILED', message: 'expected 200, got 500' },
+          },
+        },
+      ],
+      workspaceId,
+    );
+    expect(applied.every((result) => result.status === 'accepted')).toBe(true);
+    const stored = await store.getRun(runId, workspaceId);
+    expect(stored?.tests.find((test) => test.id === 'pay')?.error).toEqual({
+      code: 'ASSERTION_FAILED',
+      message: 'expected 200, got 500',
+    });
+  });
+
   it('does not call a run with a recorded passing test "interrupted"', async () => {
     const run = await aRunReportedByEvents(['passed']);
 

@@ -1,6 +1,8 @@
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
+import { createHash } from 'node:crypto';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import * as client from 'openid-client';
+import { z } from 'zod';
 import type { OidcConfig } from '@lupin/config';
 import { hashCredential, verifyCredential } from '@lupin/auth';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
@@ -80,17 +82,59 @@ function sealFlow(secret: string, flow: Flow): string {
   return `${payload}.${hashCredential(secret, `oidc:${payload}`)}`;
 }
 
-function openFlow(secret: string, value: string | undefined, now: number): Flow | null {
+const FlowSchema = z.object({
+  state: z.string().min(1),
+  nonce: z.string().min(1),
+  verifier: z.string().min(1),
+  expiresAt: z.number(),
+  draft: z.string().min(1).optional(),
+});
+
+/**
+ * The flow a sealed cookie carries, or `null`. Parsed against its schema after the signature
+ * checks out, not cast: a signed value is still input (ledger MNT-174).
+ */
+export function openFlow(secret: string, value: string | undefined, now: number): Flow | null {
   if (value === undefined) return null;
   const [payload, signature] = value.split('.');
   if (payload === undefined || signature === undefined) return null;
   if (!/^[0-9a-f]{64}$/u.test(signature)) return null;
   if (!verifyCredential(secret, `oidc:${payload}`, signature)) return null;
+  let decoded: unknown;
   try {
-    const flow = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Flow;
-    return typeof flow.expiresAt === 'number' && flow.expiresAt > now ? flow : null;
+    decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as unknown;
   } catch {
     return null;
+  }
+  const flow = FlowSchema.safeParse(decoded);
+  if (!flow.success || flow.data.expiresAt <= now) return null;
+  const { draft, ...rest } = flow.data;
+  return draft === undefined ? rest : { ...rest, draft };
+}
+
+/** How many provider configurations discovery keeps: the live one and a few drafts. */
+const DISCOVERY_LIMIT = 8;
+
+/** A cache key for a configuration that never holds its client secret. */
+export function discoveryKey(oidc: Pick<OidcConfig, 'issuer' | 'clientId' | 'clientSecret'>) {
+  return createHash('sha256')
+    .update(`${oidc.issuer}\u0000${oidc.clientId}\u0000${oidc.clientSecret ?? ''}`)
+    .digest('hex');
+}
+
+/** Keeps `value` under `key`, dropping the oldest entry past `limit`. */
+export function rememberDiscovery<V>(
+  cache: Map<string, V>,
+  key: string,
+  value: V,
+  limit = DISCOVERY_LIMIT,
+): void {
+  cache.delete(key);
+  cache.set(key, value);
+  while (cache.size > limit) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
   }
 }
 
@@ -165,11 +209,12 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
 
   /**
    * Discovery, once per provider configuration; a failure is forgotten so the next sign-in
-   * tries again. Keyed by issuer, client and secret, so a configuration saved from Settings
-   * (or a draft under test) never reuses another's.
+   * tries again. Keyed by a digest of issuer, client and secret, so a configuration saved from
+   * Settings (or a draft under test) never reuses another's, the secret is not a key in this
+   * process's heap, and at most a few configurations are kept (ledger MNT-174).
    */
   const configuration = (oidc: OidcConfig): Promise<client.Configuration> => {
-    const key = `${oidc.issuer}\u0000${oidc.clientId}\u0000${oidc.clientSecret}`;
+    const key = discoveryKey(oidc);
     const cached = discovered.get(key);
     if (cached !== undefined) return cached;
     const pending = client
@@ -185,7 +230,7 @@ export function createOidcRoutes(options: OidcRouteOptions): Hono {
         discovered.delete(key);
         throw error;
       });
-    discovered.set(key, pending);
+    rememberDiscovery(discovered, key, pending);
     return pending;
   };
 

@@ -13,6 +13,8 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  Select,
+  Input,
   Star,
   cn,
 } from '@lupin/ui';
@@ -258,38 +260,34 @@ function RunnerGrid({
     <Panel title="Tools" data-testid="runner-tools" className="flex-1">
       <div className="mb-2 flex shrink-0 gap-2">
         {narrow ? (
-          <label className="shrink-0">
-            <span className="sr-only">Group</span>
-            <select
-              data-testid="runner-group-select"
-              value={group}
-              onChange={(event) => setGroup(event.target.value as GroupId | 'pinned')}
-              className="min-h-11 rounded-lg border border-border bg-surface px-2 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-            >
-              {groups.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {`${candidate.label} (${String(candidate.count)})`}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select
+            data-testid="runner-group-select"
+            aria-label="Group"
+            containerClassName="w-auto shrink-0"
+            value={group}
+            onChange={(event) => setGroup(event.target.value as GroupId | 'pinned')}
+            options={groups.map((candidate) => ({
+              value: candidate.id,
+              label: `${candidate.label} (${String(candidate.count)})`,
+            }))}
+          />
         ) : null}
-        <label className="relative block min-w-0 flex-1">
-          <span className="sr-only">Filter tools</span>
+        <div className="relative min-w-0 flex-1">
           <Search
             size={14}
             aria-hidden="true"
             className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-fg-muted"
           />
-          <input
+          <Input
             type="search"
+            aria-label="Filter tools"
             data-testid="runner-filter"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Filter by name or folder"
-            className="min-h-11 w-full rounded-lg border border-border bg-surface ps-9 pe-3 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            className="ps-9"
           />
-        </label>
+        </div>
       </div>
       <div ref={listRef} className="min-h-0 flex-1 overflow-hidden">
         {pager.items.length === 0 ? (

@@ -125,6 +125,44 @@ describe('the delivery source routes', () => {
       'delivery.sync.request',
     );
   });
+
+  it('says when the sync it started fails, rather than dropping it (ledger MNT-172)', async () => {
+    const { db, close } = await migratedDatabase();
+    closers.push(close);
+    const [project] = await db
+      .insert(schema.projects)
+      .values({ workspaceId: 'ws-1', name: 'S', slug: 's' })
+      .returning({ id: schema.projects.id });
+    const access: CallerResolver = {
+      mode: 'enforced',
+      authenticateToken: async () => ({ actor: 'token:op', role: 'operator', uploaderFor: null }),
+      hasSession: async () => false,
+    };
+    const log = vi.fn();
+    const app = new Hono().route(
+      '/',
+      createDeliveryRoutes({
+        db: db as never,
+        workspaceId: 'ws-1',
+        now: () => NOW,
+        access,
+        uploader: uploaderGuard({ access, reporterSecret: SECRET, requireReporterSecret: true }),
+        syncNow: async () => {
+          throw new Error('GitHub unreachable');
+        },
+        log,
+      }),
+    );
+    const id = (project as { id: string }).id;
+    const queued = await send(app, 'POST', `/api/v1/projects/${id}/delivery/sync`, 'lup_x');
+    expect(queued.status).toBe(202);
+    await vi.waitFor(() =>
+      expect(log).toHaveBeenCalledWith('delivery sync failed after it was queued', {
+        projectId: id,
+        error: 'GitHub unreachable',
+      }),
+    );
+  });
 });
 
 describe('the push door', () => {

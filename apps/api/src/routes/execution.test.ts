@@ -731,6 +731,64 @@ describe('POST /api/v1/runs/:runId/retry', () => {
     expect(run.id).not.toBe(seeded.runId);
   });
 
+  it('retries only the failed tests when asked for scope "failed"', async () => {
+    const h = await workspaceHarness();
+    const seeded = await seed(h);
+    const completed = await h.app.request(`/api/v1/jobs/${seeded.jobId}/complete`, {
+      method: 'POST',
+      headers: { ...JSON_HEADERS, authorization: `Bearer ${seeded.token}` },
+      body: JSON.stringify({
+        phase: 'completed',
+        outcome: 'failed',
+        leaseId: seeded.leaseId,
+        fencingToken: seeded.fencingToken,
+        tests: [
+          { id: 'kept-green', title: 'green', status: 'passed' },
+          { id: 'went-red', title: 'red', status: 'failed' },
+          { id: 'ran-out', title: 'slow', status: 'timed_out' },
+        ],
+      }),
+    });
+    expect(completed.status).toBe(200);
+    const response = await h.app.request(`/api/v1/runs/${seeded.runId}/retry`, {
+      method: 'POST',
+      headers: { ...JSON_HEADERS, 'idempotency-key': 'retry-failed-1' },
+      body: JSON.stringify({ scope: 'failed' }),
+    });
+    expect(response.status).toBe(202);
+    const run = (await response.json()) as {
+      retryOfRunId: string | null;
+      selection: { testIds: string[] } | string[];
+    };
+    expect(run.retryOfRunId).toBe(seeded.runId);
+    expect(run.selection).toEqual(['went-red', 'ran-out']);
+  });
+
+  it('refuses scope "failed" for a run with no failed test to name', async () => {
+    const h = await workspaceHarness();
+    const seeded = await seed(h);
+    await finishJob(h, seeded, 'failed');
+    const response = await h.app.request(`/api/v1/runs/${seeded.runId}/retry`, {
+      method: 'POST',
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ scope: 'failed' }),
+    });
+    expect(response.status).toBe(409);
+    expect(await errorCode(response)).toBe('RUN_NOT_RETRYABLE');
+  });
+
+  it('refuses a retry body it cannot read', async () => {
+    const h = await workspaceHarness();
+    const seeded = await seed(h);
+    await finishJob(h, seeded, 'failed');
+    const response = await h.app.request(`/api/v1/runs/${seeded.runId}/retry`, {
+      method: 'POST',
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ scope: 'some' }),
+    });
+    expect(response.status).toBe(400);
+  });
+
   it('answers 409 for an id that was never issued', async () => {
     const h = await workspaceHarness();
     const response = await h.app.request(`/api/v1/runs/${nextId()}/retry`, { method: 'POST' });

@@ -345,9 +345,6 @@ function rem(variable: string, scales: Map<string, string>): number {
  */
 const TYPE_STEPS = ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl'] as const;
 
-/** The steps on the geometric ladder — everything at or above `base`. */
-const LADDER_STEPS = TYPE_STEPS.slice(TYPE_STEPS.indexOf('base'));
-
 const LEADING_STEPS = ['none', 'tight', 'snug', 'normal', 'relaxed', 'loose'] as const;
 const TRACKING_STEPS = ['tighter', 'tight', 'normal', 'wide', 'wider', 'widest'] as const;
 const RADIUS_STEPS = ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'] as const;
@@ -421,35 +418,26 @@ describe('the scales the product renders from', () => {
   const radius = themeScale('--radius-');
   const zIndex = themeScale('--z-index-');
 
-  it('states the type ladder as a ratio, rather than leaving it to be inferred', () => {
-    // The ratio is a *number in the stylesheet*. A ladder whose steps are hand-tuned
-    // can only be reviewed, which is what happened: `theme.test.ts:278` asserted six
-    // sizes in a table nobody rendered while the product's heading was a seventh value
-    // no test could see.
-    const declared = themeScale('--lupin-type-').get('--lupin-type-ratio');
-    if (declared === undefined) {
-      throw new Error(
-        'theme.css does not declare --lupin-type-ratio, so the relationship between ' +
-          'the sizes is implied rather than stated. That is the defect this assertion exists for.',
-      );
-    }
-    const ratio = Number(declared);
-    expect(Number.isFinite(ratio), `--lupin-type-ratio is "${declared}"`).toBe(true);
-    expect(ratio).toBeGreaterThan(1.05);
-    expect(ratio).toBeLessThan(1.35);
-  });
+  /**
+   * Design language v3: a named scale, set the way Apple's text styles are, rather than a
+   * geometric ladder. Each size is a decision a reviewer reads (12 caption, 13 secondary,
+   * 15 body, 17 emphasis, 22 section, 28 page title, 40 the one large number), and this table
+   * is the authority for it: a size retuned here without the test is a failing assertion.
+   */
+  const V3_SCALE_PX: ReadonlyArray<readonly [string, number]> = [
+    ['xs', 12],
+    ['sm', 13],
+    ['base', 15],
+    ['lg', 17],
+    ['xl', 22],
+    ['2xl', 28],
+    ['3xl', 34],
+    ['4xl', 40],
+    ['5xl', 48],
+  ];
 
-  it.each(LADDER_STEPS)('puts %s one declared ratio above the step below it', (step) => {
-    const ratio = Number(themeScale('--lupin-type-').get('--lupin-type-ratio'));
-    const base = rem('--text-base', text);
-    const position = LADDER_STEPS.indexOf(step);
-    const expected = base * Math.pow(ratio, position);
-    const measured = rem(`--text-${step}`, text);
-    expect(
-      Math.abs(measured - expected) / expected,
-      `--text-${step} is ${String(measured)}rem and the ladder says it should be ` +
-        `${expected.toFixed(4)}rem (base ${String(base)}rem x ${String(ratio)}^${String(position)})`,
-    ).toBeLessThan(0.005);
+  it.each(V3_SCALE_PX)('sets --text-%s to %ipx, as the v3 scale names it', (step, px) => {
+    expect(rem(`--text-${step}`, text) * 16).toBeCloseTo(px, 2);
   });
 
   it('orders every size, and floors the two sub-base steps at 12px', () => {
@@ -989,15 +977,21 @@ describe('design token source', () => {
 
     /**
      * `Alert` and `Toast` render `text-warning` on `bg-warning/10`, and
-     * `text-success` on `bg-success/10`. That pairing has to be measured as the
-     * blend it produces, because the 10% tint raises the background luminance and
-     * *lowers* the contrast — a ratio computed against the untinted surface would
+     * `text-success` on `bg-success/10`; the status pill (`Status`) does the same for all four
+     * tones, `text-info` on `bg-info/10` for a run in progress included. That pairing has to be
+     * measured as the blend it produces, because the 10% tint raises the background luminance
+     * and *lowers* the contrast — a ratio computed against the untinted surface would
      * pass while the shipped rendering failed.
      */
     it.each(BOTH_SELECTORS)(
       'meets 4.5:1 for a status colour on its own 10% tint in %s',
       (selector) => {
-        for (const token of ['--lupin-success', '--lupin-warning', '--lupin-danger']) {
+        for (const token of [
+          '--lupin-success',
+          '--lupin-warning',
+          '--lupin-danger',
+          '--lupin-info',
+        ]) {
           const tint = blend(
             variableValue(selector, token),
             variableValue(selector, '--lupin-surface'),
@@ -1290,14 +1284,14 @@ describe('design token source', () => {
   describe('the hues are the ones the decision names', () => {
     /**
      * Colour is meaning. The accent is not in this table because it is not a verdict: it
-     * is the brand violet, used for focus, the active state, links and the primary fill,
+     * is the brand blue (design language v3), used for focus, the active state, links and the primary fill,
      * and the case below holds it at least 20 degrees from info so it is never read as one.
      */
     const HUES: ReadonlyArray<readonly [string, string, number]> = [
       ['success', '--lupin-success', 148],
       ['warning', '--lupin-warning', 72],
       ['danger', '--lupin-danger', 25],
-      ['info', '--lupin-info', 258],
+      ['info', '--lupin-info', 210],
     ];
 
     /** The shortest way round the hue circle, so 253 and 3 are 10 apart. */
@@ -1321,16 +1315,16 @@ describe('design token source', () => {
       },
     );
 
-    it.each(BOTH_SELECTORS)('keeps the accent the Lupin violet in %s', (selector) => {
-      // The accent is the brand: violet, the colour of the site's wordmark dot and primary
+    it.each(BOTH_SELECTORS)('keeps the accent the Lupin blue in %s', (selector) => {
+      // The accent is the brand: blue (v3), the colour of the site's wordmark dot and primary
       // action. Held to a hue band rather than one number, because each theme tunes its
       // lightness and a few degrees of hue move with it.
       const accent = oklch(variableValue(selector, '--lupin-accent'));
       expect(
         accent.hue,
-        `the accent is at hue ${accent.hue.toFixed(1)} in ${selector}, outside the violet band 280–300`,
-      ).toBeGreaterThanOrEqual(280);
-      expect(accent.hue).toBeLessThanOrEqual(300);
+        `the accent is at hue ${accent.hue.toFixed(1)} in ${selector}, outside the blue band 230–250`,
+      ).toBeGreaterThanOrEqual(230);
+      expect(accent.hue).toBeLessThanOrEqual(250);
       expect(
         accent.chroma,
         `the accent has chroma ${accent.chroma.toFixed(3)} in ${selector}, so it reads as a grey`,
@@ -1340,7 +1334,7 @@ describe('design token source', () => {
     it.each(BOTH_SELECTORS)(
       'keeps the accent visibly apart from info, so the brand is never read as a note, in %s',
       (selector) => {
-        // Info is steel at 258 and the accent violet at about 290. Twenty degrees is the
+        // Info is slate at 210 and the accent blue at about 240. Twenty degrees is the
         // same separation the run states are held to below, for the same reason.
         const distance = hueDistance(
           oklch(variableValue(selector, '--lupin-accent')).hue,
@@ -1665,6 +1659,20 @@ describe('the plane is flat', () => {
     },
   );
 
+  it('is a vibrant material, not a frosted slab: a deep blur, raised saturation, a real tint', () => {
+    // Apple's materials read as glass because the colour behind them comes through, blurred
+    // and saturated. The tint can only drop as far as the legibility test above allows (88%
+    // was measured as the floor), so the vibrancy comes from a deeper blur and saturation.
+    const opacity = Number.parseFloat(themeValueAnywhere('--lupin-translucent-opacity'));
+    expect(opacity).toBeLessThan(90);
+    expect(
+      Number.parseFloat(themeValueAnywhere('--lupin-translucent-blur')),
+    ).toBeGreaterThanOrEqual(24);
+    const utility = utilityBody('surface-translucent');
+    const saturate = /saturate\((\d+)%\)/u.exec(utility)?.[1];
+    expect(Number(saturate)).toBeGreaterThanOrEqual(170);
+  });
+
   it('publishes one ambient gradient, and only as a token', () => {
     expect(declarations).toMatch(/--lupin-gradient-ambient\s*:/);
     // The gradient is drawn from the accent and the plane, never from a literal colour.
@@ -1910,5 +1918,118 @@ describe('the light plane has depth', () => {
       );
     }
     expect(themeBlock(DARK_SELECTOR)).not.toMatch(/--shadow-elevation-/);
+  });
+});
+
+/**
+ * Design language v2: depth and the verdict glow.
+ *
+ * Depth is three elevations, each an alias of a surface step `theme.test.ts` already holds to
+ * contrast in every palette, so no new plane can be one the text fails on. The glow is the
+ * verdict colour mixed into transparency behind the hero: at most a quarter strength, so it
+ * tints the plane and never becomes a fill text has to sit on.
+ */
+describe('design language v2: depth and glow', () => {
+  const v2Css = readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), 'theme.css'),
+    'utf8',
+  );
+
+  it.each([
+    ['1', 'surface'],
+    ['2', 'surface-raised'],
+    ['3', 'surface-muted'],
+  ])('elevation %s is the %s plane', (level, surface) => {
+    expect(v2Css).toContain(`--color-elevation-${level}: var(--lupin-${surface});`);
+  });
+
+  it.each([
+    ['go', 'success'],
+    ['caution', 'warning'],
+    ['no-go', 'danger'],
+  ])('the %s glow is the %s colour at no more than 25%%', (verdict, tone) => {
+    const match = new RegExp(
+      `--color-glow-${verdict}: color-mix\\(in oklab, var\\(--lupin-${tone}\\) (\\d+)%, transparent\\);`,
+    ).exec(v2Css);
+    expect(match, `--color-glow-${verdict} is missing or not a mix of ${tone}`).not.toBeNull();
+    expect(Number(match?.[1])).toBeLessThanOrEqual(25);
+  });
+});
+
+/**
+ * The premium palette (design language v4): neutral planes, one solid blue, true status hues.
+ *
+ * The v3 palette read as generated: a blue-grey plane, a pastel sky-blue button with a dark
+ * label, a salmon red on a pink tint, an orange that also meant "failed", and blue and cyan
+ * glows behind everything. Each rule below is one of those, refused.
+ */
+describe('the premium palette', () => {
+  function themeValueAnywhere(variable: string): string {
+    const escaped = variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = new RegExp(`${escaped}\\s*:\\s*([^;]+);`).exec(themeCss);
+    return match?.[1]?.replace(/\s+/g, ' ').trim() ?? '';
+  }
+
+  const PLANE_STEPS = [
+    '--lupin-surface-sunken',
+    '--lupin-surface',
+    '--lupin-surface-raised',
+    '--lupin-surface-muted',
+  ];
+
+  it.each(BOTH_SELECTORS)('keeps every plane step neutral, not blue-grey, in %s', (selector) => {
+    for (const step of PLANE_STEPS) {
+      const { chroma } = oklch(variableValue(selector, step));
+      expect(chroma, `${step} has chroma ${chroma.toFixed(4)} in ${selector}`).toBeLessThanOrEqual(
+        0.005,
+      );
+    }
+  });
+
+  it.each(BOTH_SELECTORS)(
+    'fills the primary button with one solid, saturated blue under a white label, in %s',
+    (selector) => {
+      const fill = variableValue(selector, '--lupin-primary');
+      const label = variableValue(selector, '--lupin-on-primary');
+      expect(oklch(label).lightness).toBeGreaterThan(0.97);
+      expectAtLeast(contrastRatio(label, fill), 4.5, `the primary label in ${selector}`);
+      const { hue, chroma } = oklch(fill);
+      expect(hue).toBeGreaterThanOrEqual(230);
+      expect(hue).toBeLessThanOrEqual(260);
+      expect(chroma, 'a pastel fill reads as a placeholder').toBeGreaterThanOrEqual(0.17);
+    },
+  );
+
+  it('draws the primary button flat: the gradient is one colour, the primary', () => {
+    const gradient = themeValueAnywhere('--lupin-gradient-primary');
+    expect(gradient).not.toContain('--lupin-accent-2');
+    expect(gradient).toContain('var(--lupin-primary)');
+  });
+
+  it.each(BOTH_SELECTORS)(
+    'says failed and passed in true, saturated hues rather than pastels, in %s',
+    (selector) => {
+      for (const token of ['--lupin-danger', '--lupin-success']) {
+        const { chroma } = oklch(variableValue(selector, token));
+        expect(
+          chroma,
+          `${token} has chroma ${chroma.toFixed(3)} in ${selector}`,
+        ).toBeGreaterThanOrEqual(0.15);
+      }
+    },
+  );
+
+  it.each(BOTH_SELECTORS)(
+    'gives "failed" one colour: the chart mark is the status red, in %s',
+    (selector) => {
+      const fail = oklch(variableValue(selector, '--lupin-chart-fail')).hue;
+      const danger = oklch(variableValue(selector, '--lupin-danger')).hue;
+      expect(Math.abs(fail - danger)).toBeLessThanOrEqual(3);
+    },
+  );
+
+  it('lights the shell without colour: no blue or cyan glow behind the app', () => {
+    const shell = themeValueAnywhere('--lupin-gradient-shell');
+    expect(shell).not.toMatch(/--lupin-accent/u);
   });
 });

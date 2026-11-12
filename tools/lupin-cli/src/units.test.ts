@@ -10,6 +10,8 @@ import {
 import {
   MAX_AGENT_CONFIG_FILE_BYTES as SERVER_FILE_BYTES,
   MAX_AGENT_CONFIG_FILES as SERVER_FILES,
+  MAX_DIFF_GUARD_FINDINGS,
+  TEST_TAMPER_KINDS,
 } from '@lupin/shared-contracts';
 import {
   AGENT_CONFIG_PATHS,
@@ -17,9 +19,17 @@ import {
   MAX_AGENT_CONFIG_FILES,
   isAgentConfigPath,
 } from './agent-config.js';
+import { MAX_FINDINGS, TAMPER_KINDS } from './diff-guard.js';
 import { CliError, EXIT } from './errors.js';
 import { send } from './http.js';
 import { isLoopbackHost, projectUrl, resolveTarget } from './target.js';
+
+describe('one list of tamper kinds, held twice', () => {
+  it('is the contract’s list, in its order, and the contract’s finding limit', () => {
+    expect([...TAMPER_KINDS]).toEqual([...TEST_TAMPER_KINDS]);
+    expect(MAX_FINDINGS).toBe(MAX_DIFF_GUARD_FINDINGS);
+  });
+});
 
 describe('one list of agent-config paths, held twice', () => {
   it('is the server’s list, and the server’s limits', () => {

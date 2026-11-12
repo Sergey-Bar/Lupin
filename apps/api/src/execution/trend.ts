@@ -29,17 +29,54 @@ export function createAnalyticsTrendRoutes(options: {
   store: ExecutionStore;
   workspaceId: string;
   now?: () => Date;
+  /**
+   * The daily rollups (plan task 13): the trend for `days` days ending on `end`, or `null`
+   * before the job's first pass. Absent, the trend is computed from the runs in its window.
+   */
+  rollups?: (projectKey: string, end: Date, days: number) => Promise<AnalyticsTrend | null>;
 }): Hono {
   const app = new Hono();
   app.get('/api/v1/dashboard/analytics/trend', async (context) => {
+    const now = options.now?.() ?? new Date();
+    const projectKey = context.req.query('projectId') ?? '';
+    const range = customRange(context.req.query('from'), context.req.query('to'));
+    if (range !== null && options.rollups !== undefined) {
+      const ranged = await options.rollups(projectKey, range.end, range.days);
+      if (ranged !== null) return context.json(ranged);
+    }
     const requested = Number(context.req.query('days') ?? '14');
     const days = Number.isInteger(requested) ? Math.min(Math.max(requested, 1), 90) : 14;
-    const now = options.now?.() ?? new Date();
+    const rolled = await options.rollups?.(projectKey, now, days);
+    if (rolled !== undefined && rolled !== null) return context.json(rolled);
     const since = startOfDay(now).getTime() - (2 * days - 1) * DAY_MS;
     const { runs, truncated } = await readSince(options.store, options.workspaceId, since);
-    return context.json(buildTrend(runs, now, days, truncated));
+    const scoped = projectKey === '' ? runs : runs.filter((run) => belongsTo(run, projectKey));
+    return context.json(buildTrend(scoped, now, days, truncated));
   });
   return app;
+}
+
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
+/** The longest custom range served, from the rollups only. */
+const MAX_RANGE_DAYS = 366;
+
+/** `from`..`to`, both `YYYY-MM-DD` and inclusive, as an end day and a length; else `null`. */
+export function customRange(
+  from: string | undefined,
+  to: string | undefined,
+): { end: Date; days: number } | null {
+  if (from === undefined || to === undefined) return null;
+  if (!DAY_PATTERN.test(from) || !DAY_PATTERN.test(to)) return null;
+  const start = Date.parse(`${from}T00:00:00.000Z`);
+  const end = Date.parse(`${to}T00:00:00.000Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+  const days = Math.round((end - start) / DAY_MS) + 1;
+  return days > MAX_RANGE_DAYS ? null : { end: new Date(end), days };
+}
+
+/** A run counts toward a project when it names it or names none, as the insights page reads. */
+function belongsTo(run: ExecutionRun, projectId: string): boolean {
+  return run.projectId === projectId || run.projectId === null;
 }
 
 export async function readSince(
@@ -118,6 +155,15 @@ export function buildTrend(
     previous: summarise(inRange(previousFrom, currentFrom), previousFrom, currentFrom),
     truncated,
   };
+}
+
+export function trendBucket(date: string, runs: readonly ExecutionRun[]): TrendBucket {
+  return bucket(date, runs);
+}
+
+/** A run's duration in milliseconds, or `null` when it has none. */
+export function runDuration(run: ExecutionRun): number | null {
+  return durationOf(run);
 }
 
 function bucket(date: string, runs: readonly ExecutionRun[]): TrendBucket {

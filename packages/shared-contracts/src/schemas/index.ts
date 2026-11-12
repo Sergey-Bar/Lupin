@@ -12,6 +12,7 @@ export * from './reporter-events.js';
 export * from './realtime-events.js';
 export * from './agents.js';
 export * from './load.js';
+export * from './security.js';
 export {
   LEGACY_FLAT_V1_CONTRACT_ID,
   RUN_CONTRACT_ID,
@@ -58,6 +59,11 @@ export * from './copilot.js';
 export * from './tui-commands.js';
 export * from './health.js';
 export * from './cockpit.js';
+export * from './change-risk.js';
+export * from './pace.js';
+export * from './sdlc.js';
+export * from './briefing.js';
+export * from './shape.js';
 export * from './scorecard.js';
 export * from './notifications.js';
 export * from './supply-chain.js';
@@ -66,6 +72,7 @@ export * from './github.js';
 export * from './ai-code.js';
 export * from './agent-quality.js';
 export * from './issue-tracking.js';
+export * from './release-signoff.js';
 export * from './test-proposals.js';
 export * from './mcp.js';
 export * from './test-identity.js';

@@ -20,6 +20,7 @@ import {
   type ArtifactDescriptor,
   type CreateRunInput,
   type CreateRunResult,
+  type RetryOverrides,
   type DomainName,
   type DomainStatus,
   type ExecutionEvent,
@@ -767,12 +768,15 @@ export class InMemoryExecutionStore implements ExecutionStore {
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides: RetryOverrides = {},
   ): Promise<CreateRunResult | null> {
     const previous = this.runs.get(runId);
     if (!previous || (workspaceId !== undefined && previous.workspaceId !== workspaceId))
       return null;
     if (!isTerminalPhase(previous.phase)) return null;
-    const key = idempotencyKey ?? `retry:${previous.id}:${previous.attempt + 1}`;
+    const key =
+      idempotencyKey ??
+      `retry${overrides.selection ? '-failed' : ''}:${previous.id}:${previous.attempt + 1}`;
     const result = await this.createRun(
       {
         externalId: previous.externalId,
@@ -786,7 +790,7 @@ export class InMemoryExecutionStore implements ExecutionStore {
         branch: previous.branch ?? undefined,
         commit: previous.commit ?? undefined,
         suite: previous.suite ?? undefined,
-        selection: previous.selection,
+        selection: overrides.selection ?? previous.selection,
         timeoutMs: previous.timeoutMs,
         priority: previous.priority,
         requiredCapabilities: previous.requiredCapabilities,
@@ -1284,8 +1288,9 @@ export class InMemoryExecutionStore implements ExecutionStore {
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides: RetryOverrides = {},
   ): Promise<CreateRunResult | null> {
-    return this.retryRun(runId, workspaceId, idempotencyKey);
+    return this.retryRun(runId, workspaceId, idempotencyKey, overrides);
   }
 
   private jobIdForRun(runId: string): string {

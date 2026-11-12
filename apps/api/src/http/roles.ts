@@ -6,6 +6,7 @@ import { guard } from './access.js';
 import { bearerToken } from './bearer-token.js';
 import type { Caller, Role } from '../services/access-service.js';
 import { satisfies } from '../services/access-service.js';
+import { permissionForRequest, scopeAdmits } from './token-scope.js';
 
 /**
  * Who is calling, resolved once per request, and the guards that read it.
@@ -135,6 +136,12 @@ export function requireRole(role: Role, resolver: CallerResolver): MiddlewareHan
     }
     if (!satisfies(caller, role)) {
       throw new DomainError(ErrorCode.FORBIDDEN, `This needs the ${role} role`);
+    }
+    if (!scopeAdmits(caller.scopes, context.req.method, context.req.path)) {
+      throw new DomainError(
+        ErrorCode.FORBIDDEN,
+        `This token is not scoped for ${permissionForRequest(context.req.method, context.req.path)}`,
+      );
     }
     await next();
   });

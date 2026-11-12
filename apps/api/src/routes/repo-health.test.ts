@@ -8,12 +8,22 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as schema from '@lupin/db';
 import {
   DiffCoverageStatusSchema,
+  DiffGuardStatusSchema,
+  BriefingResponseSchema,
+  PortfolioShapeSchema,
+  ScopedShapeSchema,
   HealthFindingsPageSchema,
   HealthHistorySchema,
   HealthUploadResultSchema,
   PortfolioComponentsPageSchema,
   PortfolioSchema,
   ProjectHealthSchema,
+  PaceReportSchema,
+  PhaseStripSchema,
+  PortfolioPhasesSchema,
+  RepositoryPhasesSchema,
+  PullRequestRiskHistorySchema,
+  PullRequestRiskSchema,
   SbomComponentsPageSchema,
   SupplyChainPolicyRecordSchema,
 } from '@lupin/shared-contracts';
@@ -264,10 +274,12 @@ describe('the pull-request gate', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
       verdict: 'failed',
-      github: { status: true, comment: 'created' },
+      github: { status: true, comment: 'created', check: 'created' },
     });
     expect(requests.map((request) => request.operation)).toEqual([
       'createCommitStatus',
+      'listCheckRuns',
+      'createCheckRun',
       'listIssueComments',
       'createIssueComment',
     ]);
@@ -277,6 +289,13 @@ describe('the pull-request gate', () => {
       sha: 'abc1234',
       target_url: `https://lupin.test/dashboard/repo/${projectId}`,
     });
+    expect(
+      (
+        (await (
+          await json(app, 'POST', path, body, { authorization: `Bearer ${SECRET}` })
+        ).json()) as { githubPayload: unknown }
+      ).githubPayload,
+    ).toBeNull();
   });
 
   it('returns the verdict with no GitHub report for a repository that is not on github.com', async () => {
@@ -288,7 +307,68 @@ describe('the pull-request gate', () => {
       { branch: 'main', commit: 'abc1234' },
       { authorization: `Bearer ${SECRET}` },
     );
-    expect(await response.json()).toMatchObject({ verdict: 'passed', github: null });
+    expect(await response.json()).toMatchObject({ verdict: 'passed', github: null, risk: null });
+  });
+
+  it('assesses a named pull request’s change risk and reports it without blocking by default', async () => {
+    const { app, db, projectId } = await harness();
+    const response = await json(
+      app,
+      'POST',
+      `/api/v1/projects/${projectId}/health/gate/report`,
+      { branch: 'main', commit: 'abc1234', pullRequest: 5 },
+      { authorization: `Bearer ${SECRET}` },
+    );
+    const body = (await response.json()) as {
+      verdict: string;
+      risk: unknown;
+      githubPayload: {
+        sha: string;
+        status: { context: string };
+        checkRun: unknown;
+        comment: unknown;
+      };
+    };
+    expect(body.verdict).toBe('passed');
+    // Nothing posted: no GitHub repository here, so the job is handed what to post itself.
+    expect(body.githubPayload).toMatchObject({
+      sha: 'abc1234',
+      status: { context: 'lupin/health', state: 'success' },
+      checkRun: { name: 'lupin/change-risk', conclusion: 'neutral' },
+      comment: { marker: '<!-- lupin-health -->' },
+    });
+    // Nothing measured for this commit: unknown, and saying what was missing.
+    expect(PullRequestRiskSchema.parse(body.risk).risk).toMatchObject({
+      level: 'unknown',
+      missing: ['tests', 'diff-coverage'],
+    });
+    expect(await db.select().from(schema.pullRequestRiskAssessments)).toHaveLength(1);
+    const [event] = await db
+      .select()
+      .from(schema.auditEvents)
+      .where(eq(schema.auditEvents.action, 'health.gate.report'));
+    expect(event?.details).toMatchObject({ risk: 'unknown', verdict: 'passed' });
+  });
+
+  it('fails the gate on a risk the policy blocks, and says why', async () => {
+    const { app, db, projectId } = await harness();
+    await db
+      .update(schema.projects)
+      .set({ profile: { health: { risk: { blockAt: 'high', blockOnUnknown: true } } } })
+      .where(eq(schema.projects.id, projectId));
+    const response = await json(
+      app,
+      'POST',
+      `/api/v1/projects/${projectId}/health/gate/report`,
+      { branch: 'main', commit: 'abc1234', pullRequest: 5 },
+      { authorization: `Bearer ${SECRET}` },
+    );
+    expect(await response.json()).toMatchObject({
+      verdict: 'failed',
+      reasons: [
+        'Change risk is unknown (tests, diff-coverage not measured), and the policy blocks an unknown risk.',
+      ],
+    });
   });
 });
 
@@ -674,5 +754,232 @@ describe('diff coverage through the routes', () => {
     expect(String((comment?.input as { body: string }).body)).toContain(
       '**Diff coverage:** 33.3% — 1 of 3 changed executable lines ran. Uncovered: `src/a.ts:3-4`.',
     );
+  });
+});
+
+describe('POST /api/v1/projects/:id/health/diff-guard', () => {
+  const report = {
+    commit: 'abc1234',
+    base: 'origin/main',
+    pullRequest: 7,
+    report: {
+      version: 'diff-guard/1',
+      findings: [{ kind: 'skip-added', path: 'src/cart.test.ts', line: 11, side: 'head' }],
+      counts: { 'skip-added': 1 },
+      filesChecked: 2,
+      truncated: false,
+    },
+  };
+  const path = (projectId: string) => `/api/v1/projects/${projectId}/health/diff-guard`;
+
+  it('accepts an uploader’s report, refusing no credential and a wrong one', async () => {
+    const { app, projectId } = await harness();
+    expect((await json(app, 'POST', path(projectId), report)).status).toBe(401);
+    expect(
+      (await json(app, 'POST', path(projectId), report, { authorization: 'Bearer wrong' })).status,
+    ).toBe(403);
+    const accepted = await json(app, 'POST', path(projectId), report, {
+      authorization: `Bearer ${SECRET}`,
+    });
+    expect(accepted.status).toBe(200);
+    expect(DiffGuardStatusSchema.parse(await accepted.json())).toMatchObject({
+      state: 'reported',
+      commit: 'abc1234',
+      report: { counts: { 'skip-added': 1 } },
+    });
+  });
+
+  it('refuses a finding that carries a line of source, and an unknown kind', async () => {
+    const { app, projectId } = await harness();
+    const auth = { authorization: `Bearer ${SECRET}` };
+    const withText = {
+      ...report,
+      report: { ...report.report, findings: [{ ...report.report.findings[0], text: 'it.skip(' }] },
+    };
+    expect((await json(app, 'POST', path(projectId), withText, auth)).status).toBe(400);
+    const unknown = {
+      ...report,
+      report: { ...report.report, findings: [{ ...report.report.findings[0], kind: 'vibes' }] },
+    };
+    expect((await json(app, 'POST', path(projectId), unknown, auth)).status).toBe(400);
+  });
+
+  it('audits the counts and never a path', async () => {
+    const { app, db, projectId } = await harness();
+    await json(app, 'POST', path(projectId), report, { authorization: `Bearer ${SECRET}` });
+    const [event] = await db
+      .select()
+      .from(schema.auditEvents)
+      .where(eq(schema.auditEvents.action, 'health.diff-guard.report'));
+    expect(event?.details).toMatchObject({ commit: 'abc1234', findings: 1, pullRequest: 7 });
+    expect(JSON.stringify(event?.details)).not.toContain('cart.test.ts');
+  });
+
+  it('says a commit nobody checked was not checked, and wants a commit to read', async () => {
+    const { app, projectId } = await harness();
+    const read = await app.request(`${path(projectId)}?commit=def5678`);
+    expect(await read.json()).toEqual({ state: 'none', commit: 'def5678' });
+    expect((await app.request(path(projectId))).status).toBe(400);
+  });
+});
+
+describe('GET /api/v1/projects/:id/pull-requests/:number/risk', () => {
+  it('reads what the gate assessed, latest first, and refuses a number that is not one', async () => {
+    const { app, projectId } = await harness();
+    const path = (number: string) => `/api/v1/projects/${projectId}/pull-requests/${number}/risk`;
+    expect(await (await app.request(path('5'))).json()).toEqual({
+      pullRequest: 5,
+      latest: null,
+      history: [],
+    });
+    await json(
+      app,
+      'POST',
+      `/api/v1/projects/${projectId}/health/gate/report`,
+      { branch: 'main', commit: 'abc1234', pullRequest: 5 },
+      { authorization: `Bearer ${SECRET}` },
+    );
+    const read = PullRequestRiskHistorySchema.parse(await (await app.request(path('5'))).json());
+    expect(read.latest).toMatchObject({ headSha: 'abc1234', risk: { level: 'unknown' } });
+    expect((await app.request(path('zero'))).status).toBe(400);
+    expect((await app.request(path('0'))).status).toBe(400);
+    expect(
+      (
+        await app.request(
+          '/api/v1/projects/00000000-0000-4000-8000-000000000000/pull-requests/5/risk',
+        )
+      ).status,
+    ).toBe(404);
+  });
+});
+
+describe('GET /api/v1/projects/:id/pace', () => {
+  it('answers the pace in its contract, and refuses a window it will not read', async () => {
+    const { app, projectId } = await harness();
+    const read = await app.request(`/api/v1/projects/${projectId}/pace?weeks=4`);
+    expect(PaceReportSchema.parse(await read.json())).toMatchObject({ status: 'not_configured' });
+    expect((await app.request(`/api/v1/projects/${projectId}/pace?weeks=0`)).status).toBe(400);
+    expect((await app.request(`/api/v1/projects/${projectId}/pace?weeks=53`)).status).toBe(400);
+  });
+});
+
+describe('the SDLC phase reads', () => {
+  it('serves a repository’s phases, the portfolio’s, and 404s a pull request nobody synced', async () => {
+    const { app, projectId } = await harness();
+    const repository = await app.request(`/api/v1/projects/${projectId}/phases?days=14`);
+    expect(RepositoryPhasesSchema.parse(await repository.json())).toMatchObject({
+      windowDays: 14,
+      configured: false,
+    });
+    expect((await app.request(`/api/v1/projects/${projectId}/phases?days=0`)).status).toBe(400);
+    const portfolio = await app.request('/api/v1/portfolio/phases');
+    expect(PortfolioPhasesSchema.parse(await portfolio.json()).projects).toHaveLength(1);
+    expect((await app.request(`/api/v1/projects/${projectId}/pull-requests/3/phases`)).status).toBe(
+      404,
+    );
+    expect((await app.request(`/api/v1/projects/${projectId}/pull-requests/x/phases`)).status).toBe(
+      400,
+    );
+  });
+
+  it('serves a synced pull request’s strip', async () => {
+    const { app, db, projectId } = await harness();
+    await db.insert(schema.pullRequests).values({
+      workspaceId: 'ws-1',
+      projectId,
+      externalId: '3',
+      number: 3,
+      state: 'open',
+      title: 'Cart',
+      openedAt: new Date(),
+      lastActivityAt: new Date(),
+    });
+    const strip = await app.request(`/api/v1/projects/${projectId}/pull-requests/3/phases`);
+    expect(PhaseStripSchema.parse(await strip.json()).pullRequest).toBe(3);
+  });
+});
+
+describe('the shape reads', () => {
+  it('serves a repository’s, a pull request’s and the portfolio’s shape', async () => {
+    const { app, db, projectId } = await harness();
+    const repository = ScopedShapeSchema.parse(
+      await (await app.request(`/api/v1/projects/${projectId}/shape`)).json(),
+    );
+    expect(repository).toMatchObject({ projectId, shape: 'unknown', freshness: 'never' });
+    expect((await app.request(`/api/v1/projects/${projectId}/pull-requests/4/shape`)).status).toBe(
+      404,
+    );
+    expect((await app.request(`/api/v1/projects/${projectId}/pull-requests/x/shape`)).status).toBe(
+      400,
+    );
+    await db.insert(schema.pullRequests).values({
+      workspaceId: 'ws-1',
+      projectId,
+      externalId: '4',
+      number: 4,
+      state: 'open',
+      title: 'Cart',
+      openedAt: new Date(),
+      lastActivityAt: new Date(),
+    });
+    const pull = ScopedShapeSchema.parse(
+      await (await app.request(`/api/v1/projects/${projectId}/pull-requests/4/shape`)).json(),
+    );
+    expect(pull.pullRequest).toBe(4);
+    const portfolio = PortfolioShapeSchema.parse(
+      await (await app.request('/api/v1/portfolio/shape')).json(),
+    );
+    expect(portfolio.projects.map((entry) => entry.projectId)).toEqual([projectId]);
+  });
+});
+
+describe('the briefing reads', () => {
+  it('serves a repository’s and the portfolio’s briefing, with no narration unless asked', async () => {
+    const { app, projectId } = await harness();
+    const repository = BriefingResponseSchema.parse(
+      await (await app.request(`/api/v1/projects/${projectId}/briefing?days=14`)).json(),
+    );
+    expect(repository.briefing.windowDays).toBe(14);
+    expect(repository.briefing.scope).toMatchObject({ kind: 'repository', projectId });
+    expect(repository.narration).toBeNull();
+    const portfolio = BriefingResponseSchema.parse(
+      await (await app.request('/api/v1/portfolio/briefing')).json(),
+    );
+    expect(portfolio.briefing.scope).toEqual({ kind: 'portfolio', projects: 1 });
+    expect((await app.request(`/api/v1/projects/${projectId}/briefing?days=0`)).status).toBe(400);
+    expect((await app.request('/api/v1/portfolio/briefing?narrate=yes')).status).toBe(400);
+  });
+
+  it('answers a narration asked for with no narrator as unavailable, the briefing intact', async () => {
+    const { app, projectId } = await harness();
+    const read = BriefingResponseSchema.parse(
+      await (await app.request(`/api/v1/projects/${projectId}/briefing?narrate=true`)).json(),
+    );
+    expect(read.narration?.status).toBe('unavailable');
+    expect(read.briefing.items.length).toBeGreaterThan(0);
+  });
+
+  it('hands the briefing it composed to the narrator, and returns what it said', async () => {
+    const seen: string[] = [];
+    const { app } = await harness({
+      secret: SECRET,
+      extra: {
+        narrator: {
+          narrate: async (briefing) => {
+            seen.push(briefing.headline);
+            return { status: 'rejected', model: 'm', reason: 'Sentence 1 uses 9.' };
+          },
+        },
+      },
+    });
+    const read = BriefingResponseSchema.parse(
+      await (await app.request('/api/v1/portfolio/briefing?narrate=true')).json(),
+    );
+    expect(read.narration).toEqual({
+      status: 'rejected',
+      model: 'm',
+      reason: 'Sentence 1 uses 9.',
+    });
+    expect(seen).toEqual([read.briefing.headline]);
   });
 });

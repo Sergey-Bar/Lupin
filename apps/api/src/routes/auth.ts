@@ -55,9 +55,15 @@ export interface AuthRouteOptions {
   trustProxy?: boolean;
   /**
    * Enforced single sign-on (ADR-014). The installation key signs a browser in only under
-   * break-glass, and `onBreakGlass` is told every time it does.
+   * break-glass, and `onBreakGlass` is told every time it does. It is awaited, and a session
+   * is issued only once it resolves: a break-glass use the trail cannot record does not
+   * happen (ledger MNT-173).
    */
-  sso?: { enforced: boolean; breakGlass: boolean; onBreakGlass?: (context: Context) => void };
+  sso?: {
+    enforced: boolean;
+    breakGlass: boolean;
+    onBreakGlass?: (context: Context) => void | Promise<void>;
+  };
 }
 
 /**
@@ -201,7 +207,20 @@ export function createAuthRoutes(options: AuthRouteOptions) {
           'Single sign-on is enforced: sign in with your identity provider',
         );
       }
-      options.sso.onBreakGlass?.(context);
+      try {
+        await options.sso.onBreakGlass?.(context);
+      } catch {
+        throw new DomainError(
+          'DEPENDENCY_UNAVAILABLE',
+          'This break-glass sign-in could not be recorded, so it was refused.',
+          {
+            callerSafe: true,
+            details: {
+              fix: 'Every break-glass use is written to the audit trail. Check that the database accepts writes, then sign in again.',
+            },
+          },
+        );
+      }
     }
     const issued = await sessions.issue(options.installationId);
     setCookie(context, SESSION_COOKIE, issued.token, {

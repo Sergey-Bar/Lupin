@@ -6,7 +6,7 @@
  * `audit-sink.ts` for why an approval leaves a record.
  */
 
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { DomainError } from '../../errors/domain-error.js';
 import { randomUUID } from 'node:crypto';
 import type { ResolveQuarantineOutcome } from './drizzle-stores.js';
@@ -183,7 +183,7 @@ export interface DashboardQuarantineOptions {
    * credited for is answerable ("nobody"), whereas a row naming a session that
    * never existed is not.
    */
-  contextFor?: (c: { req: { header(name: string): string | undefined } }) => WriteContext;
+  contextFor?: (c: Context) => WriteContext | Promise<WriteContext>;
 }
 
 /**
@@ -243,7 +243,7 @@ export function createDashboardQuarantineRoutes(options: DashboardQuarantineOpti
         stableId: parsed.data.stableId ?? null,
         reason: parsed.data.reason ?? null,
       },
-      contextFor(c),
+      await contextFor(c),
     );
 
     return c.json(entry, 201);
@@ -258,7 +258,7 @@ export function createDashboardQuarantineRoutes(options: DashboardQuarantineOpti
         details: { issues: parsed.error.issues },
       });
     }
-    const outcome = await options.store.resolve(id, parsed.data, contextFor(c));
+    const outcome = await options.store.resolve(id, parsed.data, await contextFor(c));
     if (outcome.kind === 'not_found') {
       throw new DomainError('QUARANTINE_ENTRY_NOT_FOUND', 'Quarantine entry not found');
     }
@@ -285,7 +285,7 @@ export function createDashboardQuarantineRoutes(options: DashboardQuarantineOpti
   // ── DELETE /api/v1/dashboard/quarantine/:id ─────────────────────────────
   app.delete('/api/v1/dashboard/quarantine/:id', async (c) => {
     const id = c.req.param('id');
-    const removed = await options.store.remove(id, contextFor(c));
+    const removed = await options.store.remove(id, await contextFor(c));
     if (!removed) {
       throw new DomainError('QUARANTINE_ENTRY_NOT_FOUND', 'Quarantine entry not found');
     }

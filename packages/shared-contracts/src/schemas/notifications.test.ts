@@ -84,6 +84,16 @@ describe('subscription bodies', () => {
         .success,
     ).toBe(false);
   });
+
+  it('takes quiet hours as two different hours of the day, or none', () => {
+    const body = (quietHours: unknown) =>
+      CreateSubscriptionBodySchema.safeParse({ channelId, cadence: 'daily', quietHours }).success;
+    expect(body({ start: 22, end: 7 })).toBe(true);
+    expect(body(undefined)).toBe(true);
+    expect(body({ start: 7, end: 7 })).toBe(false);
+    expect(body({ start: 24, end: 7 })).toBe(false);
+    expect(body({ start: 22 })).toBe(false);
+  });
 });
 
 describe('delivery summaries', () => {

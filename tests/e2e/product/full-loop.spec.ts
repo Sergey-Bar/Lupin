@@ -206,13 +206,14 @@ test.describe('the full loop', () => {
       const { integrations } = (await listing.json()) as {
         integrations: Array<{ domain: string; status: string; implemented: boolean }>;
       };
-      for (const domain of ['browser', 'api', 'load']) {
+      // Security is a ZAP baseline run on the same runner since the zap pass landed.
+      for (const domain of ['browser', 'api', 'load', 'security']) {
         expect(integrations.find((item) => item.domain === domain)).toMatchObject({
           status: 'configured',
           implemented: true,
         });
       }
-      for (const domain of ['security', 'mobile']) {
+      for (const domain of ['mobile']) {
         expect(integrations.find((item) => item.domain === domain)).toMatchObject({
           status: 'not_configured',
           implemented: false,

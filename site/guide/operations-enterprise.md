@@ -28,7 +28,7 @@ backed up, watched and auditable, and that you can rebuild from a backup.
 3. Connect SCIM so that people are created, have their roles changed and are removed from
    your identity provider. If Cloudflare Access is in front, give `/scim/v2` a _Bypass_
    policy: the SCIM token is the credential there.
-4. Create a workspace per team on _Map → Deployment_. Each team's CI gets an `uploader` token
+4. Create a workspace per team on _Settings → Deployment_. Each team's CI gets an `uploader` token
    issued inside its own workspace.
 
 **Break-glass.** If the identity provider is down, set `LUPIN_BREAK_GLASS=1` in `.env` and
@@ -130,7 +130,7 @@ row was written (`created_at`), and an edit to any of them made behind the datab
 would not show as a break.
 
 Once a month, an admin files the **head**, the position and hash of the newest row, somewhere
-Lupin cannot write to. It is the last line of the NDJSON export on _Map → Audit_ (or
+Lupin cannot write to. It is the last line of the NDJSON export on _Settings → Audit_ (or
 `GET /api/v1/audit/export`), and `head` in `GET /api/v1/audit/verify`; the CSV export has no
 head line. To check a filed head later, find the row at that position in a new export: its hash
 must still be the one you filed. That is what proves the trail was not rewritten up to that
@@ -151,7 +151,7 @@ the database. From a source checkout, `pnpm audit:verify` runs the same check ag
 
 1. `./start.sh backup`.
 2. `./start.sh update` (or `--version X` to pick one). Migrations run on start, in order.
-3. Check _Map → Deployment_ and the readiness probe.
+3. Check _Settings → Deployment_ and the readiness probe.
 
 **Rolling back.** Move to the release you came from first, then restore the backup from step 1:
 

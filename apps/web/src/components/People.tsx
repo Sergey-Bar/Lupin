@@ -1,4 +1,5 @@
 import React from 'react';
+import { ReadFailed } from './ReadFailed.js';
 import {
   Badge,
   Button,
@@ -19,6 +20,7 @@ import { ago } from '../lib/health-view.js';
 import { AccessGate } from './Access.js';
 import { PageFrame, PageBody, PageHeader, PagerControls, Panel, Quiet, usePager } from './kit.js';
 import { StatusLine } from './StatusLine.js';
+import { ConfirmAction } from './ConfirmAction.js';
 
 /**
  * People and the audit trail (ADR-014, team and enterprise). Both pages are an admin's: the
@@ -66,7 +68,7 @@ function MembersBody({ admin }: { admin: AdminClient }): React.ReactElement {
           {members.status === 'loading' ? (
             <Skeleton className="h-16 w-full" />
           ) : members.status === 'error' ? (
-            <Quiet role="alert">{members.message}</Quiet>
+            <ReadFailed failure={members} />
           ) : members.value.length === 0 ? (
             <Quiet data-testid="members-empty">
               Nobody has signed in with single sign-on yet. People appear here the first time they
@@ -119,24 +121,34 @@ function MembersBody({ admin }: { admin: AdminClient }): React.ReactElement {
                       {member.lastLoginAt === null ? 'never' : ago(member.lastLoginAt)}
                     </TableCell>
                     <TableCell className="text-end">
-                      <Button
-                        variant="ghost"
-                        className="min-h-11"
-                        aria-label={`${member.disabled ? 'Enable' : 'Disable'} ${member.email}`}
-                        onClick={() =>
-                          act(admin.updateMember(member.userId, { disabled: !member.disabled }))
-                        }
-                      >
-                        {member.disabled ? 'Enable' : 'Disable'}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="min-h-11"
-                        aria-label={`Remove ${member.email}`}
-                        onClick={() => act(admin.removeMember(member.userId))}
-                      >
-                        Remove
-                      </Button>
+                      {member.disabled ? (
+                        <Button
+                          variant="ghost"
+                          className="min-h-11"
+                          aria-label={`Enable ${member.email}`}
+                          onClick={() =>
+                            act(admin.updateMember(member.userId, { disabled: false }))
+                          }
+                        >
+                          Enable
+                        </Button>
+                      ) : (
+                        <ConfirmAction
+                          label="Disable"
+                          title={`Disable ${member.email}?`}
+                          consequence="They are signed out of every session at once, and every access token they made is revoked, in every workspace."
+                          onConfirm={() =>
+                            act(admin.updateMember(member.userId, { disabled: true }))
+                          }
+                        />
+                      )}
+                      <ConfirmAction
+                        label="Remove"
+                        title={`Remove ${member.email} from this workspace?`}
+                        consequence="They lose their role here, and the access tokens they made here are revoked."
+                        typed={member.email}
+                        onConfirm={() => act(admin.removeMember(member.userId))}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -250,7 +262,7 @@ function verdictSentence(value: AuditVerification): string {
 
 function AuditVerdict({ verdict }: { verdict: Resource<AuditVerification> }): React.ReactElement {
   if (verdict.status === 'loading') return <Skeleton className="h-24 w-full" />;
-  if (verdict.status === 'error') return <Quiet role="alert">{verdict.message}</Quiet>;
+  if (verdict.status === 'error') return <ReadFailed failure={verdict} />;
   const { value } = verdict;
   return (
     <>
@@ -285,7 +297,7 @@ function AuditEvents({
   page: Resource<{ events: AuditEvent[]; next: number | null }>;
 }): React.ReactElement {
   if (page.status === 'loading') return <Skeleton className="h-16 w-full" />;
-  if (page.status === 'error') return <Quiet role="alert">{page.message}</Quiet>;
+  if (page.status === 'error') return <ReadFailed failure={page} />;
   if (page.value.events.length === 0) return <Quiet>Nothing has been recorded yet.</Quiet>;
   return <AuditEventsTable events={page.value.events} />;
 }

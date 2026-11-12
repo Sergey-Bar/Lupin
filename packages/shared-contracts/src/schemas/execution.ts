@@ -138,6 +138,8 @@ export const QualityPolicyRuleSchema = z.object({
   domain: QualityDomainSchema,
   required: z.boolean().default(false),
   minimumPassRate: z.number().min(0).max(100).optional(),
+  /** Security and accessibility: an open finding at or above this fails the domain (task 16). */
+  maxSeverity: z.enum(['critical', 'high', 'medium', 'low']).optional(),
   requiredArtifactKinds: z.array(ArtifactKindSchema).default([]),
 });
 export type QualityPolicyRule = z.infer<typeof QualityPolicyRuleSchema>;
@@ -297,6 +299,15 @@ export const CreateRunRequestSchema = z.object({
   metadata: MetadataSchema.default({}),
 });
 export type CreateRunRequest = z.infer<typeof CreateRunRequestSchema>;
+
+/**
+ * What a retry runs again. `all` repeats the original selection; `failed` names only the
+ * tests that failed or timed out, so a retry of one red test does not re-run the green ones.
+ */
+export const RetryRunRequestSchema = z
+  .object({ scope: z.enum(['all', 'failed']).default('all') })
+  .strict();
+export type RetryRunRequest = z.infer<typeof RetryRunRequestSchema>;
 
 export const RunRunnerReferenceSchema = z.object({
   id: IdSchema,

@@ -39,19 +39,31 @@ const DeploymentPage = lazyPage(() => import('../../components/Deployment.js'), 
  *
  * Appearance is the landing (`/dashboard/settings`); the other tabs reuse the admin and
  * report surfaces under `settings/*`, so the old `/dashboard/access` etc. paths keep
- * working and a reader also finds them in one place. The tab row itself is drawn by
- * `SectionTabs` from the manifest — these routes only supply the pages.
+ * working and a reader also finds them in one place. The sidebar's Settings mode lists them
+ * from the manifest — these routes only supply the pages.
  */
 export const SettingsAppearanceRoute = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/settings',
-  component: () => <SettingsAppearancePage />,
+  component: function SettingsLanding() {
+    // The setup line, while setup is unfinished: it left Home so Home is one decision.
+    const setup = React.useMemo(() => {
+      const settings = createSettingsClient();
+      const health = createHealthClient();
+      return {
+        load: () => settings.getOnboarding(),
+        dismiss: () => settings.dismissStep('checklist'),
+        role: async () => (await health.whoami()).role,
+      };
+    }, []);
+    return <SettingsAppearancePage setup={setup} />;
+  },
 });
 
 /**
  * The remaining Settings tabs are registered here so the tab row never links to a dead
- * path. Reports is the live reports surface; the admin surfaces are wired in Task 5 and
- * until then render the Appearance page so the section stays navigable.
+ * path: Reports, Members, Access, Audit, Deployment and the installation pages, each the same
+ * page the older top-level path opens.
  */
 export const SettingsReportsRoute = createRoute({
   getParentRoute: () => dashboardRoute,

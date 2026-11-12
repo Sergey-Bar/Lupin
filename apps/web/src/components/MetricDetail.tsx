@@ -83,7 +83,8 @@ export function MetricDetailPage({
         <PageHeader title="Unknown metric" subtitle={<BackToCockpit projectId={projectId} />} />
         <PageBody>
           <p className="text-sm text-fg-muted">
-            The cockpit has no metric called “{metricId.slice(0, 60)}”. Open one from the cockpit.
+            The dashboard has no metric called “{metricId.slice(0, 60)}”. Open one from the
+            dashboard.
           </p>
         </PageBody>
       </PageFrame>
@@ -133,7 +134,7 @@ function BackToCockpit({ projectId }: { projectId?: string | undefined }): React
       href={cockpitPath(projectId)}
       className="rounded-sm text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
     >
-      Back to the cockpit
+      Back to the dashboard
     </a>
   );
 }
@@ -181,7 +182,7 @@ function MetricReading({
   if (metric === undefined) {
     return (
       <p data-testid="metric-missing" className="text-sm text-fg-muted">
-        The cockpit did not report this metric for {cockpit.projectName}.
+        The dashboard did not report this metric for {cockpit.projectName}.
       </p>
     );
   }
@@ -310,7 +311,7 @@ function SeriesChart({ metric }: { metric: CockpitMetric }): React.ReactElement 
         </text>
       </svg>
       <figcaption className="sr-only">The readings of {metric.label}, oldest first.</figcaption>
-      <Table>
+      <Table aria-label={`${metric.label} readings`}>
         <TableHeader>
           <TableRow>
             <TableHead>Recorded</TableHead>

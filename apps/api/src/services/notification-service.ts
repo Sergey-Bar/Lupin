@@ -8,6 +8,7 @@ import {
   reportSubscriptions,
   runs,
   schedules,
+  tests,
   type NotificationChannelRow,
   type ReportDeliveryRow,
   type ReportSubscriptionRow,
@@ -29,7 +30,7 @@ import {
   type ReportModel,
 } from '@lupin/reporting';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
-import { isAllowedWebhook } from './health-integrations.js';
+import { assertOutboundUrl } from '../http/outbound-guard.js';
 import { loadReportAreas } from './report-areas.js';
 import { loadCockpitDigest } from './cockpit-digest.js';
 import {
@@ -77,32 +78,34 @@ function channelSummary(row: NotificationChannelRow): ChannelSummary {
   };
 }
 
-/** A secret the server will call: refused here rather than on the first delivery. */
-function assertCallableSecret(body: CreateChannelBody): void {
-  if (body.kind === 'teams' && !isAllowedWebhook(body.secret)) {
-    throw new DomainError(
-      ErrorCode.INVALID_REQUEST_BODY,
-      'A Teams webhook must be an https URL on a public host',
-    );
-  }
-  if (body.kind === 'signal') {
-    // The bridge is expected on this machine or the LAN, so a private http address is
-    // allowed for this kind alone — but it must be a URL with no credentials in it.
-    const url = URL.canParse(body.secret) ? new URL(body.secret) : null;
-    if (url === null || !['http:', 'https:'].includes(url.protocol) || url.username !== '') {
-      throw new DomainError(
-        ErrorCode.INVALID_REQUEST_BODY,
-        'The Signal bridge must be an http(s) URL',
-      );
-    }
-  }
+/**
+ * The channel kinds whose secret is a URL the server calls, and the schemes each may use.
+ * Slack, Telegram and WhatsApp call a fixed public host with a token.
+ */
+export const URL_SECRET_KINDS: Partial<Record<ChannelKind, readonly string[]>> = {
+  teams: ['https:'],
+  signal: ['http:', 'https:'],
+  email: ['http:', 'https:'],
+};
+
+const WHAT_URL: Partial<Record<ChannelKind, string>> = {
+  teams: 'The Teams webhook',
+  signal: 'The Signal bridge',
+  email: 'The email bridge',
+};
+
+/** A secret the server will call: refused here rather than on the first delivery (plan task 9). */
+export async function assertCallableSecret(kind: ChannelKind, secret: string): Promise<void> {
+  const protocols = URL_SECRET_KINDS[kind];
+  if (protocols === undefined) return;
+  await assertOutboundUrl(secret, WHAT_URL[kind] ?? 'The channel', { protocols });
 }
 
 export async function createChannel(
   options: NotificationOptions,
   body: CreateChannelBody,
 ): Promise<ChannelSummary> {
-  if (body.kind !== 'inbox') assertCallableSecret(body);
+  if (body.kind !== 'inbox') await assertCallableSecret(body.kind, body.secret);
   const at = now(options);
   const [row] = await options.db
     .insert(notificationChannels)
@@ -208,7 +211,9 @@ export async function updateChannel(
       details: { issues: parsed.error.issues },
     });
   }
-  if (body.secret !== undefined && parsed.data.kind !== 'inbox') assertCallableSecret(parsed.data);
+  if (body.secret !== undefined && parsed.data.kind !== 'inbox') {
+    await assertCallableSecret(parsed.data.kind, parsed.data.secret);
+  }
   if (body.secret !== undefined && row.kind !== 'inbox') {
     await storeVaultSecret(options, channelSecretName(row.id), body.secret, WHAT);
   }
@@ -297,6 +302,10 @@ function subscriptionSummary(
     // the report it always sent.
     audience: audienceOf(row.audience),
     format: formatOf(row.format),
+    quietHours:
+      row.quietStart === null || row.quietEnd === null
+        ? null
+        : { start: row.quietStart, end: row.quietEnd },
   };
 }
 
@@ -349,6 +358,8 @@ export async function createSubscription(
       // distinguishes "unset" from a deliberate choice.
       audience: body.audience ?? null,
       format: body.format ?? null,
+      quietStart: body.quietHours?.start ?? null,
+      quietEnd: body.quietHours?.end ?? null,
       createdAt: at,
       updatedAt: at,
     })
@@ -366,6 +377,8 @@ export async function createSubscription(
         timezone: body.timezone,
         misfirePolicy: 'run_once',
         nextRunAt: next.toISOString(),
+        // The worker's copy, read where it reads the timezone.
+        ...(body.quietHours === undefined ? {} : { quietHours: body.quietHours }),
       },
       enabled: true,
       workspaceId: options.workspaceId,
@@ -405,6 +418,64 @@ async function deleteSchedule(options: NotificationOptions, subscriptionId: stri
         eq(schedules.id, scheduleIdFor(subscriptionId)),
       ),
     );
+}
+
+/**
+ * Replaces a subscription's settings and moves its schedule to match (plan Wave 1 task 4).
+ * The body is the create body, so an edit is validated exactly as a new one is.
+ */
+export async function updateSubscription(
+  options: NotificationOptions,
+  id: string,
+  body: CreateSubscriptionBody,
+): Promise<SubscriptionSummary> {
+  const channel = await channelRow(options, body.channelId);
+  if (body.projectId !== undefined) await assertProject(options, body.projectId);
+  const cronExpr = cronFor(body);
+  const at = now(options);
+  const next = nextOccurrence(cronExpr, body.timezone, at);
+  const [row] = UUID.test(id)
+    ? await options.db
+        .update(reportSubscriptions)
+        .set({
+          channelId: channel.id,
+          name: body.name,
+          cadence: body.cadence,
+          cronExpr,
+          timezone: body.timezone,
+          projectScope: body.projectId === undefined ? null : [body.projectId],
+          audience: body.audience ?? null,
+          format: body.format ?? null,
+          quietStart: body.quietHours?.start ?? null,
+          quietEnd: body.quietHours?.end ?? null,
+          updatedAt: at,
+        })
+        .where(
+          and(
+            eq(reportSubscriptions.workspaceId, options.workspaceId),
+            eq(reportSubscriptions.id, id),
+          ),
+        )
+        .returning()
+    : [];
+  if (row === undefined) throw new DomainError(ErrorCode.NOT_FOUND, `No subscription ${id}`);
+  await options.db
+    .update(schedules)
+    .set({
+      cronExpr,
+      runOptions: {
+        kind: 'report',
+        subscriptionId: row.id,
+        timezone: body.timezone,
+        misfirePolicy: 'run_once',
+        nextRunAt: next.toISOString(),
+        ...(body.quietHours === undefined ? {} : { quietHours: body.quietHours }),
+      },
+    })
+    .where(
+      and(eq(schedules.workspaceId, options.workspaceId), eq(schedules.id, scheduleIdFor(row.id))),
+    );
+  return subscriptionSummary(row, next.toISOString());
 }
 
 export async function deleteSubscription(options: NotificationOptions, id: string): Promise<void> {
@@ -502,9 +573,93 @@ async function windowOf(options: NotificationOptions, from: Date, to: Date): Pro
   };
 }
 
+/** A test is "slower" when its median grew this much, over at least this many runs each side. */
+export const SLOW_CHANGE_PCT = 25;
+export const SLOW_MIN_RUNS = 3;
+/** And by at least this many milliseconds: 4ms to 6ms is 50%, and nobody's news. */
+export const SLOW_MIN_MS = 50;
+/** Test rows read per window: the digest describes the newest when a window holds more. */
+export const DIGEST_TEST_ROWS = 20_000;
+
+interface TestWindow {
+  flakyKeys: string[];
+  failingKeys: string[];
+  /** stableId → its passing durations, and its title. */
+  durations: Map<string, { title: string; ms: number[] }>;
+}
+
+/** The window's tests, by stable identity: which flaked, which failed, how long each passed in. */
+async function testsOf(options: NotificationOptions, from: Date, to: Date): Promise<TestWindow> {
+  const rows = await options.db
+    .select({
+      stableId: tests.stableId,
+      title: tests.title,
+      status: tests.status,
+      durationMs: tests.durationMs,
+    })
+    .from(tests)
+    .innerJoin(runs, eq(runs.id, tests.runId))
+    .where(
+      and(
+        eq(tests.workspaceId, options.workspaceId),
+        eq(runs.workspaceId, options.workspaceId),
+        gte(runs.startedAt, from),
+        lt(runs.startedAt, to),
+      ),
+    )
+    .orderBy(desc(runs.startedAt))
+    .limit(DIGEST_TEST_ROWS);
+  const flaky = new Set<string>();
+  const failing = new Set<string>();
+  const durations = new Map<string, { title: string; ms: number[] }>();
+  for (const row of rows) {
+    if (row.status === 'flaky') flaky.add(row.stableId);
+    if (row.status === 'failed' || row.status === 'timed_out') failing.add(row.stableId);
+    if (row.status === 'passed' && row.durationMs !== null) {
+      const entry = durations.get(row.stableId) ?? { title: row.title, ms: [] };
+      entry.ms.push(row.durationMs);
+      durations.set(row.stableId, entry);
+    }
+  }
+  return { flakyKeys: [...flaky], failingKeys: [...failing], durations };
+}
+
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1
+    ? (sorted[middle] as number)
+    : ((sorted[middle - 1] as number) + (sorted[middle] as number)) / 2;
+}
+
+/** Tests whose passing median grew past the noise, worst first. */
+export function slowerTests(
+  current: TestWindow['durations'],
+  previous: TestWindow['durations'],
+): Array<{ key: string; title: string; changePct: number }> {
+  const slower: Array<{ key: string; title: string; changePct: number }> = [];
+  for (const [key, now] of current) {
+    const before = previous.get(key);
+    if (before === undefined || now.ms.length < SLOW_MIN_RUNS || before.ms.length < SLOW_MIN_RUNS) {
+      continue;
+    }
+    const was = median(before.ms);
+    const is = median(now.ms);
+    if (was <= 0 || is - was < SLOW_MIN_MS) continue;
+    const changePct = ((is - was) / was) * 100;
+    if (changePct >= SLOW_CHANGE_PCT) slower.push({ key, title: now.title, changePct });
+  }
+  return slower.sort((a, b) => b.changePct - a.changePct);
+}
+
 /**
  * What a report says, for one workspace over its window: the runs, the pass rate and its
- * change, and the failed runs as the things that need someone.
+ * change, the tests that turned flaky, started failing, got fixed or slowed, and the failed
+ * runs as the things that need someone.
+ *
+ * Coverage is left to the cockpit's headline, which reads it per project from the health
+ * snapshots and leads the report; saying it twice, once averaged across projects, would be
+ * two numbers for one thing.
  */
 export async function loadReport(
   options: NotificationOptions,
@@ -513,13 +668,24 @@ export async function loadReport(
   const end = now(options);
   const start = new Date(end.getTime() - input.windowDays * DAY_MS);
   const before = new Date(start.getTime() - input.windowDays * DAY_MS);
-  const [current, previous] = await Promise.all([
+  const [current, previous, currentTests, previousTests] = await Promise.all([
     windowOf(options, start, end),
     windowOf(options, before, start),
+    testsOf(options, start, end),
+    testsOf(options, before, start),
   ]);
   const digest = buildDigest({
-    current: { ...current, flakyKeys: [], failingKeys: [], slowKeys: [] },
-    previous: { ...previous, flakyKeys: [], failingKeys: [] },
+    current: {
+      ...current,
+      flakyKeys: currentTests.flakyKeys,
+      failingKeys: currentTests.failingKeys,
+      slowKeys: slowerTests(currentTests.durations, previousTests.durations),
+    },
+    previous: {
+      ...previous,
+      flakyKeys: previousTests.flakyKeys,
+      failingKeys: previousTests.failingKeys,
+    },
     coverageDelta: null,
   });
   const failedBySuite = new Map<string, number>();

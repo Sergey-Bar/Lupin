@@ -39,6 +39,21 @@ export function hrefOf(action: FindingAction): string {
     : action.to;
 }
 
+/**
+ * The readiness evaluator's evidence lines are written for the system ("pending quarantine
+ * entries"). The ones it is known to send are said as a person would; anything else is shown
+ * as written, since it may name a specific run or file.
+ */
+const EVIDENCE_WORDS: Readonly<Record<string, string>> = {
+  "pass rate over the window's runs with a verdict": 'Across the finished runs in this window',
+  'pending quarantine entries': 'Waiting for you to keep or release them',
+  'no gate evaluation in the window': 'No run in this window was checked against a gate',
+};
+
+export function plainEvidence(evidence: string): string {
+  return EVIDENCE_WORDS[evidence.trim()] ?? evidence;
+}
+
 export interface Finding {
   id: string;
   tone: FindingTone;
@@ -93,7 +108,7 @@ function fromReason(reason: ReadinessReason, projectId: string): Finding {
     id: `reason-${reason.code}`,
     tone: LEVEL_TONE[reason.level],
     title: reason.message,
-    evidence: reason.evidence,
+    evidence: plainEvidence(reason.evidence),
     // Coverage is closed cell by cell, so it goes to the gap queue that names the cells.
     action:
       reason.code === 'coverage'
@@ -160,4 +175,65 @@ export function summarizeHealth({
         : worst.message;
 
   return { verdict: readiness?.verdict ?? null, headline, wrong, good };
+}
+
+/** A finding's action as a plain path, with its route params filled in. */
+export function findingPath(action: FindingAction): string {
+  return 'params' in action
+    ? action.to.replace('$projectId', encodeURIComponent(action.params.projectId))
+    : action.to;
+}
+
+/**
+ * What the Health area asks of a reader: every "what's wrong" finding, worst first. `stated` is
+ * the line the hero already says; the item that says the same is dropped, not repeated.
+ */
+export function healthItems(
+  summary: HealthSummary,
+  stated?: string,
+): Array<{
+  id: string;
+  title: string;
+  detail: string;
+  tone: 'bad' | 'warn' | 'info';
+  action: { label: string; to: string };
+}> {
+  // Worst first, whatever order the findings were gathered in: the first item carries the
+  // page's one solid button, so it has to be real work and never "for context".
+  const RANK = { bad: 0, warn: 1, info: 2 } as const;
+  return allHealthItems(summary)
+    .filter((item) => item.title !== stated)
+    .sort((a, b) => RANK[a.tone] - RANK[b.tone]);
+}
+
+function allHealthItems(summary: HealthSummary): Array<{
+  id: string;
+  title: string;
+  detail: string;
+  tone: 'bad' | 'warn' | 'info';
+  action: { label: string; to: string };
+}> {
+  const toItem = (finding: Finding) => ({
+    id: finding.id,
+    title: finding.title,
+    detail: finding.evidence,
+    tone: (finding.tone === 'bad' ? 'bad' : finding.tone === 'warn' ? 'warn' : 'info') as
+      'bad' | 'warn' | 'info',
+    action: { label: finding.action.label, to: findingPath(finding.action) },
+  });
+  // Coverage gaps come one per cell; sixteen of them crowd out the one finding that blocks.
+  // Two or more are said as one item, worst gap named, opening the gap queue.
+  const gaps = summary.wrong.filter((finding) => finding.id.startsWith('gap-'));
+  if (gaps.length < 2) return summary.wrong.map(toItem);
+  const first = gaps[0] as Finding;
+  return [
+    ...summary.wrong.filter((finding) => !finding.id.startsWith('gap-')).map(toItem),
+    {
+      id: 'gaps',
+      title: `${String(gaps.length)} coverage gaps`,
+      detail: `Biggest: ${first.title}`,
+      tone: 'warn',
+      action: { label: 'Find the gaps', to: findingPath(first.action) },
+    },
+  ];
 }

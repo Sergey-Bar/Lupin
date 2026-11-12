@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CockpitDriver } from '@lupin/shared-contracts';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
@@ -57,20 +57,20 @@ describe('ScoreImpactBanner', () => {
   it('names the run, what it is named for, and says possibly for a candidate', async () => {
     show('run-1');
     const banner = await screen.findByTestId('score-impact');
-    expect(banner).toHaveTextContent('The cockpit names this run.');
+    expect(banner).toHaveTextContent('The dashboard names this run.');
     expect(banner).toHaveTextContent('The overall score changed on this run’s commit.');
     expect(banner).toHaveTextContent('Possibly behind Coverage (-10 pts)');
     expect(banner).toHaveTextContent('Possibly behind Flaky tests (+3)');
     expect(banner).not.toHaveTextContent('Tests (');
   });
 
-  it('links each metric to its page for the same window, and back to the cockpit', async () => {
+  it('links each metric to its page for the same window, and back to the dashboard', async () => {
     show('run-1');
     expect(await screen.findByRole('link', { name: 'Coverage' })).toHaveAttribute(
       'href',
       '/dashboard/metric/coverage?window=7d&project=00000000-0000-4000-8000-000000000001',
     );
-    expect(screen.getByRole('link', { name: 'Back to the cockpit' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Back to the dashboard' })).toHaveAttribute(
       'href',
       '/dashboard/now',
     );
@@ -102,8 +102,11 @@ describe('ScoreImpactBanner', () => {
     const getCockpit = vi.fn(async () => cockpit);
     show('run-9', 'abc1234', getCockpit);
     await waitFor(() => expect(getCockpit).toHaveBeenCalled());
-    // Give the read time to settle; there is no banner to wait for.
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    // Wait on the read itself, not the clock (ledger MNT-200): once it has answered and React
+    // has rendered the answer, there is still no banner.
+    await act(async () => {
+      await getCockpit.mock.results[0]?.value;
+    });
     expect(screen.queryByTestId('score-impact')).toBeNull();
   });
 
@@ -115,7 +118,9 @@ describe('ScoreImpactBanner', () => {
     const failing = vi.fn(() => Promise.reject(new Error('offline')));
     show('run-1', 'abc', failing as never);
     await waitFor(() => expect(failing).toHaveBeenCalled());
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await act(async () => {
+      await (failing.mock.results[0]?.value as Promise<never>).catch(() => undefined);
+    });
     expect(screen.queryByTestId('score-impact')).toBeNull();
   });
 

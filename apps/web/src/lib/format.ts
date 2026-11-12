@@ -29,3 +29,21 @@ export function formatDate(value: string | null | undefined, emptyState: string)
   if (Number.isNaN(date.getTime())) return emptyState;
   return formatDateTime(date);
 }
+
+const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
+
+/**
+ * A size a person can read: `1.5 KB`, `50 MB`. Binary steps (1 KB is 1,024 bytes), one
+ * decimal below ten and none above, the way a file manager shows it (ledger MNT-190).
+ */
+export function formatBytes(bytes: number): string {
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < BYTE_UNITS.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  const digits = unit > 0 && value < 10 ? 1 : 0;
+  const text = new Intl.NumberFormat('en', { maximumFractionDigits: digits }).format(value);
+  return `${text} ${BYTE_UNITS[unit] ?? 'B'}`;
+}

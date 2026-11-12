@@ -61,6 +61,15 @@ export * from './components/Meter/Meter.js';
 export * from './components/Sparkline/Sparkline.js';
 // A verdict as a mark, always paired with a word. See the header in its file.
 export * from './components/StatusDot/StatusDot.js';
+export * from './components/Status/Status.js';
+// Kit v2 (design language v2): Surface, Hero, Row, ActionCard. See the header in its file.
+export * from './components/Kit/Kit.js';
+// A reading with its unit, change and comparison. See the header in its file.
+export * from './components/Metric/Metric.js';
+// The product's name as type. Lupin has no logo mark; see the header in its file.
+export * from './components/Wordmark/Wordmark.js';
+// A tool's real mark (simple-icons, CC0), monochrome. See the header in its file.
+export * from './components/ToolLogo/ToolLogo.js';
 // The icon list. Exported so an application component can draw a shape without
 // taking a second dependency edge on `lucide-react` to do it — see the header in
 // `icons.ts` for the measured reason that matters here.
@@ -71,3 +80,5 @@ export * from './components/StatusDot/StatusDot.js';
 // by looking for a non-test `.tsx` — ask for an accessibility case with no element
 // to audit.
 export * from './icons.js';
+// The selectable palettes (names and labels; the colours are in tokens/palettes.css).
+export * from './tokens/palettes.js';

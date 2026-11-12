@@ -1,26 +1,17 @@
 import React from 'react';
-import {
-  Badge,
-  Button,
-  Input,
-  Select,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@lupin/ui';
+import { ReadFailed } from './ReadFailed.js';
+import { ConfirmAction } from './ConfirmAction.js';
+import { History } from './NotificationHistory.js';
+import { Button, Input, Select, Skeleton } from '@lupin/ui';
 import type {
   ChannelKind,
   ChannelSummary,
   CreateChannelBody,
-  DeliverySummary,
+  QuietHours,
+  SubscriptionSummary,
 } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { NotificationsClient, SubscriptionDraft } from '../lib/notifications-client.js';
-import { ago } from '../lib/health-view.js';
 import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import { useToast } from './Toasts.js';
 
@@ -264,9 +255,12 @@ function Channels({
             <Button size="sm" variant="ghost" onClick={() => test(channel)}>
               Send a test
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => remove(channel)}>
-              Remove
-            </Button>
+            <ConfirmAction
+              label="Remove"
+              title={`Remove ${channel.name}?`}
+              consequence="Its schedules stop sending, and its stored credential is deleted."
+              onConfirm={() => remove(channel)}
+            />
           </span>
         </li>
       ))}
@@ -282,6 +276,54 @@ const PRESETS = [
 
 function browserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+}
+
+/** What the schedule form says, for a new report and for one being edited. */
+const SCHEDULE_COPY = {
+  create: { done: 'Report scheduled', failed: 'Could not schedule it' },
+  update: { done: 'Report updated', failed: 'Could not update it' },
+} as const;
+
+/** The form's buttons: schedule a new report, or save and cancel an edit. */
+function ScheduleActions({
+  editing,
+  onCancel,
+}: {
+  editing: boolean;
+  onCancel: () => void;
+}): React.ReactElement {
+  return (
+    <div className="flex gap-2">
+      <Button type="submit" className="min-h-10">
+        {editing ? 'Save changes' : 'Schedule'}
+      </Button>
+      {editing ? (
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel edit
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+/** Updates the report being edited, or creates one; an API with no update creates. */
+function saveSubscription(
+  client: NotificationsClient,
+  editing: string | null,
+  draft: SubscriptionDraft,
+): Promise<SubscriptionSummary> {
+  return editing !== null && client.updateSubscription !== undefined
+    ? client.updateSubscription(editing, draft)
+    : client.createSubscription(draft);
+}
+
+/** `HH:MM` from a cron's minute and hour fields, for editing a daily or weekly schedule. */
+export function timeOfCron(cron: string): string {
+  const [minute = '0', hour = '9'] = cron.trim().split(/\s+/u);
+  const pad = (value: string) => (/^\d{1,2}$/u.test(value) ? value.padStart(2, '0') : null);
+  const h = pad(hour);
+  const m = pad(minute);
+  return h === null || m === null ? '09:00' : `${h}:${m}`;
 }
 
 /** The project a report is about. Offered only when there is something to choose between. */
@@ -311,6 +353,59 @@ function ProjectMenu({
   );
 }
 
+const HOURS = Array.from({ length: 24 }, (_unused, hour) => ({
+  value: String(hour),
+  label: `${String(hour).padStart(2, '0')}:00`,
+}));
+
+const hourText = (hour: number) => `${String(hour).padStart(2, '0')}:00`;
+
+/** "Quiet 22:00–07:00", for a subscription's line; nothing with no quiet hours. */
+export function quietText(quiet: QuietHours | null): string {
+  return quiet === null ? '' : ` · quiet ${hourText(quiet.start)}–${hourText(quiet.end)}`;
+}
+
+/**
+ * Quiet hours: none, or a start and an end hour in the report's timezone. A report due inside
+ * them waits until they end. The end cannot be the start; a start after the end is overnight.
+ */
+function QuietHoursMenu({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: QuietHours | null;
+  onChange: (next: QuietHours | null) => void;
+}): React.ReactElement {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      <Select
+        id={`${id}-quiet-start`}
+        label="Quiet hours from"
+        value={value === null ? '' : String(value.start)}
+        onChange={(event) =>
+          onChange(
+            event.target.value === ''
+              ? null
+              : { start: Number(event.target.value), end: value?.end ?? 7 },
+          )
+        }
+        options={[{ value: '', label: 'No quiet hours' }, ...HOURS]}
+      />
+      {value === null ? null : (
+        <Select
+          id={`${id}-quiet-end`}
+          label="Quiet hours until"
+          value={String(value.end)}
+          onChange={(event) => onChange({ start: value.start, end: Number(event.target.value) })}
+          options={HOURS.filter((hour) => hour.value !== String(value.start))}
+        />
+      )}
+    </div>
+  );
+}
+
 function Schedules({
   client,
   projects,
@@ -336,31 +431,49 @@ function Schedules({
   const [timezone, setTimezone] = React.useState(browserTimezone);
   const [audience, setAudience] = React.useState<SubscriptionDraft['audience']>('general');
   const [format, setFormat] = React.useState<SubscriptionDraft['format']>('chat');
+  const [quietHours, setQuietHours] = React.useState<QuietHours | null>(null);
+  /** The subscription the form is editing, or `null` for a new one (plan Wave 1 task 4). */
+  const [editing, setEditing] = React.useState<string | null>(null);
   const id = React.useId();
   const chosen = PRESETS.find((entry) => entry.id === preset) ?? PRESETS[0];
   const target = channelId === '' ? (channels[0]?.id ?? '') : channelId;
+  const edit = (subscription: SubscriptionSummary) => {
+    setEditing(subscription.id);
+    setPreset(subscription.cadence);
+    setChannelId(subscription.channelId);
+    setProjectId(subscription.projectId ?? '');
+    setTime(timeOfCron(subscription.cronExpr));
+    setCronExpr(subscription.cronExpr);
+    setTimezone(subscription.timezone);
+    setAudience(subscription.audience);
+    setFormat(subscription.format);
+    setQuietHours(subscription.quietHours);
+  };
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    client
-      .createSubscription({
-        channelId: target,
-        cadence: chosen?.cadence ?? 'daily',
-        time,
-        weekday: chosen?.weekday ?? 1,
-        timezone,
-        audience,
-        format,
-        ...(chosen?.cadence === 'custom' ? { cronExpr } : {}),
-        ...(projectId === '' ? {} : { projectId }),
-      })
-      .then((created) => {
-        toast({ tone: 'success', title: 'Report scheduled', description: created.describe });
+    const draft: SubscriptionDraft = {
+      channelId: target,
+      cadence: chosen?.cadence ?? 'daily',
+      time,
+      weekday: chosen?.weekday ?? 1,
+      timezone,
+      audience,
+      format,
+      ...(chosen?.cadence === 'custom' ? { cronExpr } : {}),
+      ...(projectId === '' ? {} : { projectId }),
+      ...(quietHours === null || quietHours.start === quietHours.end ? {} : { quietHours }),
+    };
+    const copy = editing === null ? SCHEDULE_COPY.create : SCHEDULE_COPY.update;
+    saveSubscription(client, editing, draft)
+      .then((saved) => {
+        toast({ tone: 'success', title: copy.done, description: saved.describe });
+        setEditing(null);
         onChanged();
       })
       .catch((error: unknown) =>
         toast({
           tone: 'danger',
-          title: 'Could not schedule it',
+          title: copy.failed,
           description: failure(error, 'The request failed'),
         }),
       );
@@ -444,6 +557,7 @@ function Schedules({
               onChange={(event) => setTimezone(event.target.value)}
             />
           </div>
+          <QuietHoursMenu id={id} value={quietHours} onChange={setQuietHours} />
           <div className="grid gap-2 sm:grid-cols-2">
             <Select
               id={`${id}-audience`}
@@ -472,17 +586,13 @@ function Schedules({
               ]}
             />
           </div>
-          <div>
-            <Button type="submit" className="min-h-10">
-              Schedule
-            </Button>
-          </div>
+          <ScheduleActions editing={editing !== null} onCancel={() => setEditing(null)} />
         </form>
       )}
       {subscriptions.status === 'loading' ? (
         <Skeleton className="h-10 w-full" />
       ) : subscriptions.status === 'error' ? (
-        <Quiet role="alert">{subscriptions.message}</Quiet>
+        <ReadFailed failure={subscriptions} />
       ) : subscriptions.value.length === 0 ? (
         <Quiet>Nothing scheduled.</Quiet>
       ) : (
@@ -494,81 +604,27 @@ function Schedules({
                 <span className="text-xs text-fg-muted">
                   to {nameOf(subscription.channelId)} · {subscription.timezone}
                   {projectSuffix(subscription.projectId)}
+                  {quietText(subscription.quietHours)}
                 </span>
               </span>
-              <Button size="sm" variant="ghost" onClick={() => remove(subscription.id)}>
-                Remove
-              </Button>
+              <span className="flex shrink-0 gap-1">
+                {client.updateSubscription === undefined ? null : (
+                  <Button size="sm" variant="ghost" onClick={() => edit(subscription)}>
+                    Edit
+                  </Button>
+                )}
+                <ConfirmAction
+                  label="Remove"
+                  title={`Remove "${subscription.describe}"?`}
+                  consequence="No more reports are sent on this schedule. A report already queued still goes out."
+                  onConfirm={() => remove(subscription.id)}
+                />
+              </span>
             </li>
           ))}
         </ul>
       )}
     </div>
-  );
-}
-
-const STATUS_VARIANT: Record<
-  DeliverySummary['status'],
-  'outline' | 'secondary' | 'success' | 'danger'
-> = {
-  pending: 'outline',
-  sending: 'outline',
-  sent: 'success',
-  failed: 'danger',
-};
-
-function History({ deliveries }: { deliveries: DeliverySummary[] }): React.ReactElement {
-  const [open, setOpen] = React.useState<string | null>(null);
-  if (deliveries.length === 0) return <Quiet>No report has been sent yet.</Quiet>;
-  return (
-    <Table aria-label="Delivery history">
-      <TableHeader>
-        <TableRow>
-          <TableHead>When</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="hidden sm:table-cell">Detail</TableHead>
-          <TableHead>
-            <span className="sr-only">Report</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {deliveries.map((delivery) => (
-          <React.Fragment key={delivery.id}>
-            <TableRow data-testid={`delivery-${delivery.id}`}>
-              <TableCell className="text-xs text-fg-muted">
-                {ago(delivery.sentAt ?? delivery.scheduledFor)}
-              </TableCell>
-              <TableCell>
-                <Badge variant={STATUS_VARIANT[delivery.status]}>{delivery.status}</Badge>
-              </TableCell>
-              <TableCell className="hidden font-mono text-xs sm:table-cell">
-                {delivery.errorCode ?? ''}
-              </TableCell>
-              <TableCell>
-                {delivery.rendered === null ? null : (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-expanded={open === delivery.id}
-                    onClick={() => setOpen(open === delivery.id ? null : delivery.id)}
-                  >
-                    {open === delivery.id ? 'Hide' : 'Read'}
-                  </Button>
-                )}
-              </TableCell>
-            </TableRow>
-            {open === delivery.id && delivery.rendered !== null ? (
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <pre className="whitespace-pre-wrap font-sans text-sm">{delivery.rendered}</pre>
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </React.Fragment>
-        ))}
-      </TableBody>
-    </Table>
   );
 }
 
@@ -599,7 +655,7 @@ export function NotificationsPage({
             {channels.status === 'loading' ? (
               <Skeleton className="h-24 w-full" />
             ) : channels.status === 'error' ? (
-              <Quiet role="alert">{channels.message}</Quiet>
+              <ReadFailed failure={channels} />
             ) : (
               <div className="grid gap-4">
                 <Channels client={client} channels={channels.value} onChanged={changed} />
@@ -626,7 +682,7 @@ export function NotificationsPage({
                 {preview.value.text}
               </pre>
             ) : preview.status === 'error' ? (
-              <Quiet role="alert">{preview.message}</Quiet>
+              <ReadFailed failure={preview} />
             ) : (
               <Skeleton className="h-24 w-full" />
             )}
@@ -635,7 +691,7 @@ export function NotificationsPage({
             {deliveries.status === 'ready' ? (
               <History deliveries={deliveries.value} />
             ) : deliveries.status === 'error' ? (
-              <Quiet role="alert">{deliveries.message}</Quiet>
+              <ReadFailed failure={deliveries} />
             ) : (
               <Skeleton className="h-24 w-full" />
             )}

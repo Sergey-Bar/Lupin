@@ -3,8 +3,9 @@ import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { SettingsAppearancePage } from './Settings';
 import { ThemeProvider } from '../theme/ThemeProvider';
-import { PreferencesProvider, PREFERENCES_KEY } from '../theme/preferences';
+import { PreferencesProvider } from '../theme/preferences';
 import { expectNoBlockingAxeViolations } from '../test-axe';
+import { expectOnePrimary } from '../test-utils.js';
 
 function renderAppearance() {
   return render(
@@ -26,18 +27,38 @@ function pressed(groupLabel: string): string | null {
 }
 
 describe('Settings · Appearance', () => {
+  it('draws at most one solid primary button on the screen', async () => {
+    renderAppearance();
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.removeAttribute('data-density');
     document.documentElement.removeAttribute('data-motion');
     document.documentElement.removeAttribute('data-focus');
+    document.documentElement.removeAttribute('data-palette');
   });
 
   it('renders a titled Settings page on the no-scroll kit', () => {
     renderAppearance();
     expect(screen.getByTestId('settings-appearance-page')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+  });
+
+  it('puts each control on its title row, so every setting reads the same way', () => {
+    renderAppearance();
+    for (const name of ['Theme', 'Density', 'Motion']) {
+      const heading = screen.getByRole('heading', { name });
+      const row = heading.parentElement;
+      expect(row, name).not.toBeNull();
+      // The segmented control is a sibling of the heading, not a block below the description.
+      expect(
+        row?.querySelector('[role="radiogroup"], [role="tablist"], [role="group"]'),
+        name,
+      ).not.toBeNull();
+    }
   });
 
   it('reflects the stored theme and writes the chosen one to localStorage and <html>', () => {
@@ -49,12 +70,48 @@ describe('Settings · Appearance', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
-  it('toggles focus mode and sets data-focus on <html>', () => {
+  it('carries the setup line while setup is unfinished, so Home does not have to', async () => {
+    const onboarding = {
+      done: 3,
+      total: 6,
+      dismissed: false,
+      steps: [
+        {
+          id: 'ai',
+          title: 'Connect an AI provider',
+          who: 'admin',
+          href: '/dashboard/settings/ai',
+          state: 'todo',
+        },
+      ],
+    };
+    render(
+      <ThemeProvider>
+        <PreferencesProvider>
+          <SettingsAppearancePage
+            setup={{
+              load: async () => onboarding as never,
+              dismiss: async () => onboarding as never,
+              role: async () => 'admin',
+            }}
+          />
+        </PreferencesProvider>
+      </ThemeProvider>,
+    );
+    expect(await screen.findByTestId('setup-checklist-progress')).toHaveTextContent('Setup 3 of 6');
+    expect(screen.getByRole('link', { name: 'Continue setup' })).toHaveAttribute(
+      'href',
+      '/dashboard/setup',
+    );
+  });
+
+  it('asks only how the product looks: no role to pick and no focus mode to manage', () => {
     renderAppearance();
-    expect(pressed('Focus mode')).toBe('Off');
-    fireEvent.click(within(screen.getByRole('group', { name: 'Focus mode' })).getByText('On'));
-    expect(document.documentElement.dataset['focus']).toBe('on');
-    expect(JSON.parse(localStorage.getItem(PREFERENCES_KEY) ?? '{}').focus).toBe(true);
+    expect(
+      screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent),
+    ).toEqual(['Theme', 'Palette', 'Density', 'Motion']);
+    expect(screen.queryByRole('group', { name: 'Your role' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Focus mode' })).toBeNull();
   });
 
   it('sets compact density on <html> when chosen', () => {
@@ -73,5 +130,13 @@ describe('Settings · Appearance', () => {
   it('has no serious or critical axe violations', async () => {
     const { container } = renderAppearance();
     await expectNoBlockingAxeViolations(container);
+  });
+  it('switches to an OpenCode palette from the Palette setting', () => {
+    renderAppearance();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Palette' }), {
+      target: { value: 'catppuccin' },
+    });
+    expect(document.documentElement.getAttribute('data-palette')).toBe('catppuccin');
+    expect(localStorage.getItem('lupin-palette')).toBe('catppuccin');
   });
 });

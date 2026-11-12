@@ -1,7 +1,13 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
-import { Sparkline, cn } from '@lupin/ui';
-import { SCORE_CATEGORIES, SCORE_SURFACES, type ScoreCell } from '@lupin/shared-contracts';
+import { Hero, Sparkline, cn } from '@lupin/ui';
+import { heroVerdict } from '../lib/hero.js';
+import {
+  PASS_RATE_FLOOR,
+  SCORE_CATEGORIES,
+  SCORE_SURFACES,
+  type ScoreCell,
+} from '@lupin/shared-contracts';
 import { useResource, type Resource } from '../hooks/useResource.js';
 import { repoHealthPath } from '../route-manifest.js';
 import type { ApiClient, QuarantineEntry } from '../lib/api.js';
@@ -38,10 +44,14 @@ import {
   useFitCount,
 } from './kit.js';
 import { ProjectGate } from './ProjectGate.js';
+import { CockpitNumbers } from './Cockpit.js';
+import type { CockpitClient } from '../lib/cockpit-client.js';
 import { FindingsColumns, VerdictHero } from './Readiness.js';
-import { summarizeHealth, type HealthSummary } from '../lib/health-summary.js';
+import { healthItems, summarizeHealth, type HealthSummary } from '../lib/health-summary.js';
+import { AreaPage } from './AreaPage.js';
 import { Responsive } from './responsive.js';
 import { TrendChart } from './TrendChart.js';
+import { useUrlChoice } from '../hooks/useUrlChoice.js';
 
 /**
  * The Overview: can I ship, what is wrong, what is good — and then the detail.
@@ -91,15 +101,24 @@ export function Dashboard({
   qa,
   api,
   projectId,
+  cockpit,
 }: {
   qa: QaClient;
   api: ApiClient;
   projectId?: string;
+  /** How the product is doing (score, metrics, pace), under Details. Absent, not drawn. */
+  cockpit?: CockpitClient['getCockpit'];
 }): React.ReactElement {
   return (
-    <ProjectGate qa={qa} title="Overview" projectId={projectId}>
+    <ProjectGate qa={qa} title="Health" projectId={projectId}>
       {(project, switcher) => (
-        <DashboardBody qa={qa} api={api} project={project} switcher={switcher} />
+        <DashboardBody
+          qa={qa}
+          api={api}
+          project={project}
+          switcher={switcher}
+          {...(cockpit === undefined ? {} : { cockpit })}
+        />
       )}
     </ProjectGate>
   );
@@ -110,13 +129,16 @@ function DashboardBody({
   api,
   project,
   switcher,
+  cockpit,
 }: {
   qa: QaClient;
   api: ApiClient;
   project: RegisteredProject;
   switcher: React.ReactNode;
+  cockpit?: CockpitClient['getCockpit'];
 }): React.ReactElement {
-  const [days, setDays] = React.useState<WindowValue>('14');
+  // In the URL, so a shared or reloaded link opens on the same window.
+  const [days, setDays] = useUrlChoice<WindowValue>('days', ['7', '14', '30'], '14');
   const snapshot = useResource<Snapshot>(
     (signal) => loadSnapshot(api, qa, project.id, signal),
     [api, qa, project.id],
@@ -134,16 +156,61 @@ function DashboardBody({
   );
 
   const summary = overviewSummary(project.id, readiness, insights, snapshot);
+  const navigate = (to: string) => window.location.assign(to);
+  const dense = (
+    <DashboardDense
+      summary={summary}
+      readiness={readiness}
+      snapshot={snapshot}
+      trend={trend}
+      projectId={project.id}
+      cockpit={cockpit}
+    />
+  );
+  if (summary !== null && snapshot.status === 'ready') {
+    const band = readiness.status === 'ready' ? heroVerdict(readiness.value) : undefined;
+    return (
+      <AreaPage
+        title="Health"
+        subtitle={<span data-testid="dashboard-subject">{project.name}</span>}
+        verdict={summary.headline}
+        hero={
+          band === undefined ? undefined : (
+            <Hero
+              headingLevel={2}
+              verdict={band.verdict}
+              word={band.word}
+              reason={band.reason}
+              eyebrow={`Release readiness · ${project.name}`}
+            />
+          )
+        }
+        items={healthItems(summary, band?.reason)}
+        navigate={navigate}
+        clear={`${project.name} is healthy.`}
+        actions={
+          <>
+            {switcher}
+            <Segmented
+              label="Comparison window"
+              options={WINDOWS}
+              value={days}
+              onChange={setDays}
+            />
+          </>
+        }
+        detailsOpen
+        detailsTitle="Everything else"
+        details={<div data-testid="dashboard">{dense}</div>}
+      />
+    );
+  }
 
   return (
     <PageFrame data-testid="dashboard" className="gap-4 sm:gap-6">
       <PageHeader
-        title="Overview"
-        subtitle={
-          <span data-testid="dashboard-subject">
-            {project.name} · {project.repoPath ?? 'no repository path recorded'}
-          </span>
-        }
+        title="Health"
+        subtitle={<span data-testid="dashboard-subject">{project.name}</span>}
         actions={
           <>
             <a
@@ -164,27 +231,21 @@ function DashboardBody({
         }
       />
       <PageBody>
-        <VerdictHero
-          summary={readiness.status === 'ready' ? summary : null}
-          failure={readiness.status === 'error' ? readiness.message : null}
+        <DashboardDense
+          summary={summary}
+          readiness={readiness}
+          snapshot={snapshot}
+          trend={trend}
+          projectId={project.id}
         />
-        {summary === null || snapshot.status === 'loading' ? null : (
-          <FindingsColumns summary={summary} />
-        )}
-        {snapshot.status === 'ready' ? (
-          <DashboardGrid
-            snapshot={snapshot.value}
-            projectId={project.id}
-            trend={trend.status === 'ready' ? trend.value : null}
-            trendFailure={trend.status === 'error' ? trend.message : null}
-          />
-        ) : snapshot.status === 'error' ? (
+        {snapshot.status === 'error' ? (
           <Quiet role="alert" data-testid="dashboard-load-error">
             Could not read the dashboard: {snapshot.message}
           </Quiet>
-        ) : (
+        ) : null}
+        {snapshot.status === 'loading' ? (
           <Quiet data-testid="dashboard-loading">Reading {project.name}…</Quiet>
-        )}
+        ) : null}
       </PageBody>
     </PageFrame>
   );
@@ -269,12 +330,12 @@ function DashboardGrid({
       {trend === null ? (
         <Quiet>{trendFailure ?? 'Reading run history…'}</Quiet>
       ) : (
-        <TrendChart buckets={trend.buckets} data-testid="trend-chart" />
+        <TrendChart buckets={trend.buckets} floor={PASS_RATE_FLOOR} data-testid="trend-chart" />
       )}
     </Panel>
   );
   const beforeNow = <BeforeNow comparisons={comparisons} trend={trend} />;
-  const matrix = <Matrix score={snapshot.score.value} />;
+  const matrix = <Matrix score={snapshot.score.value} projectId={projectId} />;
   const actions = (
     <NextActions gaps={snapshot.gaps.value} scan={snapshot.scan.value} projectId={projectId} />
   );
@@ -521,9 +582,23 @@ const CELL_TONE = {
  * artifact was ingested, and colouring that tile would draw a confident verdict on a
  * dimension nobody measured. It is drawn as a dashed outline and says `unmeasured`.
  */
-function Matrix({ score }: { score: QaScore | null }): React.ReactElement {
+function Matrix({
+  score,
+  projectId,
+}: {
+  score: QaScore | null;
+  projectId: string;
+}): React.ReactElement {
   return (
-    <Panel title="Health matrix" data-testid="dashboard-matrix">
+    <Panel
+      title="Health matrix"
+      data-testid="dashboard-matrix"
+      action={
+        <Link to="/dashboard/score/$projectId" params={{ projectId }} className={LINK}>
+          Full score
+        </Link>
+      }
+    >
       {score === null ? (
         <Quiet>The score could not be read.</Quiet>
       ) : (
@@ -666,9 +741,7 @@ function NextActions({
                 >
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="truncate text-sm">Add {entry.name}</span>
-                    <span className="shrink-0 text-xs uppercase text-warning">
-                      {entry.priority}
-                    </span>
+                    <span className="shrink-0 text-xs text-warning">{entry.priority}</span>
                   </div>
                   <p className="max-w-measure truncate text-xs text-fg-muted">{entry.reason}</p>
                 </Link>
@@ -795,5 +868,47 @@ function Mini({
       <dd className="m-0 tabular-nums text-2xl font-semibold">{value}</dd>
       {hint === undefined ? null : <dd className={cn('m-0 text-xs', hintTone)}>{hint}</dd>}
     </div>
+  );
+}
+
+/** The full Health detail, under Details: the verdict, findings, grid and product numbers. */
+function DashboardDense({
+  summary,
+  readiness,
+  snapshot,
+  trend,
+  projectId,
+  cockpit,
+}: {
+  summary: ReturnType<typeof overviewSummary>;
+  readiness: Resource<ReleaseReadinessCard>;
+  snapshot: Resource<Snapshot>;
+  trend: Resource<AnalyticsTrend>;
+  projectId: string;
+  cockpit?: CockpitClient['getCockpit'];
+}): React.ReactElement {
+  return (
+    <>
+      <VerdictHero
+        summary={readiness.status === 'ready' ? summary : null}
+        failure={readiness.status === 'error' ? readiness.message : null}
+      />
+      {summary === null || snapshot.status === 'loading' ? null : (
+        <FindingsColumns summary={summary} />
+      )}
+      {snapshot.status === 'ready' ? (
+        <DashboardGrid
+          snapshot={snapshot.value}
+          projectId={projectId}
+          trend={trend.status === 'ready' ? trend.value : null}
+          trendFailure={trend.status === 'error' ? trend.message : null}
+        />
+      ) : null}
+      {cockpit === undefined ? null : (
+        <Panel title="How the product is doing">
+          <CockpitNumbers cockpit={cockpit} projectId={projectId} />
+        </Panel>
+      )}
+    </>
   );
 }

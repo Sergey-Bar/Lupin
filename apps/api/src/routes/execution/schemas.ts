@@ -85,6 +85,7 @@ export const PolicySchema = z
           ]),
           required: z.boolean().default(false),
           minimumPassRate: z.number().min(0).max(100).optional(),
+          maxSeverity: z.enum(['critical', 'high', 'medium', 'low']).optional(),
           requiredArtifactKinds: z.array(z.string()).default([]),
         }),
       )

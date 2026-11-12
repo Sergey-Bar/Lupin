@@ -199,6 +199,15 @@ describe('migration graph', () => {
       '0055_report_audience_format',
       '0056_email_channel',
       '0057_settings_onboarding',
+      '0058_change_risk',
+      '0059_report_quiet_hours',
+      '0060_release_signoffs',
+      '0061_token_expiry',
+      '0062_token_scopes',
+      '0063_stored_clusters',
+      '0064_trend_rollups',
+      '0065_run_retention',
+      '0066_drop_dormant_tables',
     ]);
   });
 
@@ -345,6 +354,35 @@ describe('migration graph', () => {
       // A value outside the vocabulary is refused by the CHECK.
       await expect(insert('00000000-0000-4000-8000-0000000000a4', 'ceo', null)).rejects.toThrow();
       await expect(insert('00000000-0000-4000-8000-0000000000a5', null, 'pdf')).rejects.toThrow();
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('gives a report subscription optional quiet hours, both or neither, inside a day', async () => {
+    // `0059_report_quiet_hours.sql`: a start and an end hour in the subscription's timezone.
+    // Both null is the pre-existing shape; a half-set pair, an hour outside 0-23, or a window
+    // that starts where it ends is refused by the database, not merely by the API.
+    const checks = await constraintNames(shared, 'report_subscriptions');
+    expect(checks).toContain('report_subscriptions_quiet_hours_check');
+    const client = await createMigratedDatabase();
+    try {
+      await client.exec(`INSERT INTO workspaces (id, name, config_path, created_at)
+        VALUES ('ws-quiet', 'default', 'config', now())`);
+      await client.exec(`INSERT INTO notification_channels (id, workspace_id, kind, name)
+        VALUES ('00000000-0000-4000-8000-0000000000e1', 'ws-quiet', 'inbox', 'Inbox')`);
+      const insert = (id: string, start: number | null, end: number | null) =>
+        client.exec(`INSERT INTO report_subscriptions
+          (id, workspace_id, channel_id, name, cadence, cron_expr, timezone, quiet_start, quiet_end)
+          VALUES ('${id}', 'ws-quiet', '00000000-0000-4000-8000-0000000000e1', 'r', 'daily',
+          '0 9 * * *', 'UTC', ${String(start)}, ${String(end)})`);
+      await expect(
+        insert('00000000-0000-4000-8000-0000000000f1', null, null),
+      ).resolves.toBeDefined();
+      await expect(insert('00000000-0000-4000-8000-0000000000f2', 22, 7)).resolves.toBeDefined();
+      await expect(insert('00000000-0000-4000-8000-0000000000f3', 22, null)).rejects.toThrow();
+      await expect(insert('00000000-0000-4000-8000-0000000000f4', 24, 7)).rejects.toThrow();
+      await expect(insert('00000000-0000-4000-8000-0000000000f5', 7, 7)).rejects.toThrow();
     } finally {
       await client.close();
     }
@@ -589,27 +627,35 @@ describe('fail-closed constraints from migration 0006', () => {
     ).resolves.toBeDefined();
   });
 
-  it('stamps a generated test suggestion with a real time, not the epoch', async () => {
-    const before = Date.now();
-    await db.insert(schema.generatedTestSuggestions).values({
-      id: 'sug-1',
-      workspaceId: 'default-workspace',
-      sourceType: 'pr_diff',
-      status: 'draft',
-      originalContent: 'test("login", () => {})',
-      createdAt: new Date(),
-    });
-    const row = await client.query<{ updated_at: Date; status: string }>(
-      'SELECT updated_at, status FROM generated_test_suggestions WHERE id = $1',
-      ['sug-1'],
+  it('drops the fourteen dormant tables and keeps tests.suite_id as a plain column (C-6)', async () => {
+    // 0066 dropped every table the product never read or wrote. `tests.suite_id` named
+    // `suites`, so its key went first and its values stay as provenance.
+    const dropped = [
+      'suites',
+      'attachments',
+      'known_failures',
+      'nl_query_history',
+      'failure_taxonomy_rules',
+      'failure_classifications',
+      'locator_suggestions',
+      'roles',
+      'agent_sessions',
+      'agent_session_runs',
+      'agent_session_files',
+      'generated_test_suggestions',
+      'repair_attempts',
+      'agent_conflicts',
+    ];
+    const present = await client.query<{ name: string | null }>(
+      `SELECT to_regclass('public.' || name)::text AS name FROM unnest($1::text[]) AS name`,
+      [dropped],
     );
-    const stamped = row.rows[0]?.updated_at;
-    // Migration 0000 created this column with `DEFAULT '1970-01-01…'`, so a
-    // freshly inserted row looked 56 years stale to every "last updated" query —
-    // indistinguishable from a suggestion nobody ever touched. Migration 0006
-    // changed the default to now().
-    expect(stamped?.getTime()).toBeGreaterThan(before - 60_000);
-    expect(row.rows[0]?.status).toBe('draft');
+    expect(present.rows.map((row) => row.name)).toEqual(dropped.map(() => null));
+    expect(await columnNames(client, 'tests')).toContain('suite_id');
+    const keys = await client.query<{ conname: string }>(
+      `SELECT conname FROM pg_constraint WHERE conrelid = 'tests'::regclass AND contype = 'f'`,
+    );
+    expect(keys.rows.map((row) => row.conname)).not.toContain('tests_suite_id_suites_id_fk');
   });
 
   it('agrees with the contract on the durable event version', async () => {

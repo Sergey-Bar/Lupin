@@ -143,17 +143,20 @@ describe('the other browser actions and the other domains', () => {
     }
   });
 
-  it('keeps security and mobile at the SDK’s 501, byte for byte', async () => {
+  it('keeps mobile, and the unconfigured security.scan, at the SDK’s 501, byte for byte', async () => {
     const { agents, registry } = compose();
-    for (const domain of ['security', 'mobile']) {
-      for (const action of ['generate', 'run', 'scan']) {
-        const response = await post(agents)(`/api/v1/agents/${domain}/${action}`, {});
-        const dispatched = await registry.dispatch(domain, action, {});
-        if (dispatched.ok) throw new Error('dispatched');
-        const problem = toAgentProblem(dispatched.failure);
-        expect(response.status).toBe(501);
-        expect(await response.json()).toEqual(problem.body);
-      }
+    // security.run and security.generate carry a reason (agents-security.test.ts covers them).
+    const pairs = [
+      ...['generate', 'run', 'scan'].map((action) => ['mobile', action] as const),
+      ['security', 'scan'] as const,
+    ];
+    for (const [domain, action] of pairs) {
+      const response = await post(agents)(`/api/v1/agents/${domain}/${action}`, {});
+      const dispatched = await registry.dispatch(domain, action, {});
+      if (dispatched.ok) throw new Error('dispatched');
+      const problem = toAgentProblem(dispatched.failure);
+      expect(response.status).toBe(501);
+      expect(await response.json()).toEqual(problem.body);
     }
   });
 });

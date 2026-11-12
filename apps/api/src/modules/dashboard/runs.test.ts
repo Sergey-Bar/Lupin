@@ -44,6 +44,7 @@ import { PERSISTED_RUN_STATUS_VALUES, RUN_STATUS_VALUES } from '@lupin/shared-co
 import { InMemoryRunRepository } from '../../repositories/in-memory-run-repository.js';
 import { DEFAULT_WORKSPACE_ID, RunRecord, TestRecord } from '../../repositories/run-repository.js';
 import { createDashboardRunsRoutes } from './runs.js';
+import { InMemoryAuditSink } from './audit-sink.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -107,7 +108,13 @@ class WorkspaceScopedRunRepository extends InMemoryRunRepository {
 }
 
 function mount(repository: InMemoryRunRepository): Hono {
-  return withErrorBoundary(createDashboardRunsRoutes({ repository }));
+  return withErrorBoundary(
+    createDashboardRunsRoutes({
+      repository,
+      audit: new InMemoryAuditSink(),
+      contextFor: () => ({ actorId: 'test', actorType: 'user' }),
+    }),
+  );
 }
 
 async function readJson(response: Response): Promise<Record<string, unknown>> {

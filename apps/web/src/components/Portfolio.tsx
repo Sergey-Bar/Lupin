@@ -26,7 +26,21 @@ import { SCORECARD_STATUS_WORD } from '../lib/scorecard-view.js';
 import { repoHealthPath } from '../route-manifest.js';
 import { Delta, PageFrame, PageBody, PageHeader, PagerControls, Panel, usePager } from './kit.js';
 import { PortfolioHeatmap } from './PortfolioHeatmap.js';
+import { PortfolioPhasesPanel } from './Phases.js';
+import { ZoomBar } from './ZoomBar.js';
 import { StatusLine } from './StatusLine.js';
+
+/** The phases grid, read on its own so a slow read never holds the portfolio back. */
+function PortfolioPhasesRead({ health }: { health: HealthClient }): React.ReactElement {
+  const phases = useResource(() => health.getPortfolioPhases(30), [health]);
+  return <PortfolioPhasesPanel phases={phases} />;
+}
+
+/** The workspace's shape and how fresh it is, read on its own beside the grades. */
+function PortfolioZoom({ health }: { health: HealthClient }): React.ReactElement {
+  const shape = useResource(async () => (await health.getPortfolioShape()).overall, [health]);
+  return <ZoomBar levels={[{ label: 'Portfolio', href: null, reading: shape }]} />;
+}
 
 /**
  * Every repository, worst first: the page anyone opening the dashboard lands on.
@@ -87,6 +101,7 @@ export function Portfolio({
           />
         ) : (
           <>
+            <PortfolioZoom health={health} />
             <StatusLine
               data-testid="portfolio-attention"
               value={String(attention)}
@@ -108,6 +123,7 @@ export function Portfolio({
             </p>
             <PortfolioTable entries={entries} scorecards={scorecards} />
             <PortfolioHeatmap health={health} />
+            <PortfolioPhasesRead health={health} />
           </>
         )}
       </PageBody>

@@ -3,6 +3,14 @@ import path from 'node:path';
 import { collectAgentConfig } from './agent-config.js';
 import { optional, parseOptions, required } from './args.js';
 import { CliError, EXIT, usage, type ExitCode } from './errors.js';
+import { githubTarget, payloadOf, postToGitHub, type GitHubTarget } from './github-post.js';
+import {
+  gitlabTarget,
+  isGitLabCi,
+  mergeRequestOf,
+  postToGitLab,
+  type GitLabTarget,
+} from './gitlab-post.js';
 import { send } from './http.js';
 import { projectUrl, resolveTarget, type Target } from './target.js';
 
@@ -20,13 +28,20 @@ export interface Io {
 const COMMIT = /^[0-9a-f]{7,64}$/iu;
 const DIGEST = /^sha256:[0-9a-f]{64}$/iu;
 
-/** The branch and commit CI is building, from the flags or GitHub Actions' own variables. */
+/** The branch and commit CI is building, from the flags or GitHub Actions' or GitLab CI's own variables. */
 export function branchOf(io: Io, flag: string | undefined): string | undefined {
-  return flag ?? io.env['LUPIN_BRANCH'] ?? (io.env['GITHUB_HEAD_REF'] || io.env['GITHUB_REF_NAME']);
+  return (
+    flag ??
+    io.env['LUPIN_BRANCH'] ??
+    (io.env['GITHUB_HEAD_REF'] ||
+      io.env['GITHUB_REF_NAME'] ||
+      io.env['CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'] ||
+      io.env['CI_COMMIT_REF_NAME'])
+  );
 }
 
 export function commitOf(io: Io, flag: string | undefined): string | undefined {
-  const commit = flag ?? io.env['LUPIN_COMMIT'] ?? io.env['GITHUB_SHA'];
+  const commit = flag ?? io.env['LUPIN_COMMIT'] ?? io.env['GITHUB_SHA'] ?? io.env['CI_COMMIT_SHA'];
   if (commit !== undefined && commit !== '' && !COMMIT.test(commit)) {
     throw usage(`Not a commit sha: ${commit}`);
   }
@@ -35,6 +50,16 @@ export function commitOf(io: Io, flag: string | undefined): string | undefined {
 
 export function target(io: Io, parsed: { values: Map<string, string> }): Target {
   return resolveTarget(io.env, parsed.values.get('project'));
+}
+
+/** `--pr`, as a pull request number; refused unless it is a positive integer. */
+export function pullRequestOf(flag: string | undefined): number | undefined {
+  if (flag === undefined) return undefined;
+  const number = Number(flag);
+  if (!(Number.isInteger(number) && number > 0)) {
+    throw usage(`--pr is a pull request number: ${flag}`);
+  }
+  return number;
 }
 
 /** `lupin upload --format <f> --file <path> [--branch --commit --digest --source-root]` */
@@ -76,20 +101,65 @@ interface GateAnswer {
   verdict?: unknown;
   reasons?: unknown;
   grade?: { letter?: string | null };
+  risk?: { risk?: { level?: unknown; score?: unknown; missing?: unknown } } | null;
+  /** What the server posted itself; `null` when it posted nothing. */
+  github?: unknown;
 }
 
-/** `lupin gate --branch <b> --commit <sha> [--pr <n>]` — exits 1 when the gate fails. */
+/** "Change risk: high (50 points)." — read defensively, and left out when the answer has none. */
+function riskLine(answer: GateAnswer | null): string | null {
+  const risk = answer?.risk?.risk;
+  if (typeof risk?.level !== 'string' || typeof risk.score !== 'number') return null;
+  const missing = Array.isArray(risk.missing) ? risk.missing.map(String) : [];
+  const gap = missing.length === 0 ? '' : `; not measured: ${missing.join(', ')}`;
+  return `Change risk: ${risk.level} (${String(risk.score)} points)${gap}.`;
+}
+
+/** `--post`: the server's rendering, posted with the job's own token. Never changes the exit. */
+async function post(
+  io: Io,
+  forge: { kind: 'github'; target: GitHubTarget } | { kind: 'gitlab'; target: GitLabTarget },
+  answer: GateAnswer,
+  pullRequest: number | undefined,
+): Promise<void> {
+  if (answer.github !== null && answer.github !== undefined) {
+    io.out('The server posted to GitHub itself; nothing to post from here.');
+    return;
+  }
+  const payload = payloadOf(answer);
+  if (payload === null) {
+    io.out('The server sent nothing to post; this install may predate --post.');
+    return;
+  }
+  const lines =
+    forge.kind === 'github'
+      ? await postToGitHub(io.fetch, forge.target, payload, pullRequest)
+      : await postToGitLab(io.fetch, forge.target, payload, pullRequest);
+  for (const line of lines) io.out(line);
+}
+
+/** Where `--post` writes: GitLab inside a GitLab CI job, GitHub everywhere else. */
+function forgeOf(io: Io) {
+  return isGitLabCi(io.env)
+    ? { kind: 'gitlab' as const, target: gitlabTarget(io.env) }
+    : { kind: 'github' as const, target: githubTarget(io.env) };
+}
+
+/** `lupin gate --branch <b> --commit <sha> [--pr <n>] [--post]` — exits 1 when the gate fails. */
 export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
-  const parsed = parseOptions(argv, { values: ['project', 'branch', 'commit', 'pr'] });
+  const parsed = parseOptions(argv, {
+    values: ['project', 'branch', 'commit', 'pr'],
+    switches: ['post'],
+  });
   const branch = branchOf(io, optional(parsed, 'branch'));
   const commit = commitOf(io, optional(parsed, 'commit'));
   if (branch === undefined || branch === '') throw usage('--branch is required');
   if (commit === undefined) throw usage('--commit is required');
-  const pr = optional(parsed, 'pr');
-  const pullRequest = pr === undefined ? undefined : Number(pr);
-  if (pullRequest !== undefined && !(Number.isInteger(pullRequest) && pullRequest > 0)) {
-    throw usage(`--pr is a pull request number: ${String(pr)}`);
-  }
+  const pullRequest =
+    pullRequestOf(optional(parsed, 'pr')) ??
+    (isGitLabCi(io.env) ? mergeRequestOf(io.env) : undefined);
+  // Checked before the gate is asked, so a job missing its forge token says so at once.
+  const forge = parsed.switches.has('post') ? forgeOf(io) : null;
   const destination = target(io, parsed);
   const answer = (await send(
     io.fetch,
@@ -110,7 +180,10 @@ export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
     throw new CliError('The server answered without a gate verdict.', EXIT.refused);
   }
   io.out(`Gate ${answer.verdict} on ${branch} — grade ${answer.grade?.letter ?? 'incomplete'}.`);
+  const risk = riskLine(answer);
+  if (risk !== null) io.out(risk);
   for (const reason of reasons) io.out(`- ${reason}`);
+  if (forge !== null) await post(io, forge, answer, pullRequest);
   return answer.verdict === 'passed' ? EXIT.ok : EXIT.gateFailed;
 }
 

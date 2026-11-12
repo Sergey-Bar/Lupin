@@ -61,6 +61,21 @@ describe('the installation key under enforced single sign-on', () => {
     expect(onBreakGlass).toHaveBeenCalledTimes(1);
   });
 
+  it('issues no session when the break-glass use cannot be recorded (ledger MNT-173)', async () => {
+    const { app: target } = app(
+      { enforced: true, breakGlass: true },
+      vi.fn(async () => {
+        throw new Error('audit_events refused the row');
+      }),
+    );
+    const response = await login(target);
+    expect(response.status).toBe(503);
+    expect(response.headers.get('set-cookie')).toBeNull();
+    expect(await response.json()).toMatchObject({
+      error: { code: 'DEPENDENCY_UNAVAILABLE', details: { fix: expect.stringContaining('audit') } },
+    });
+  });
+
   it('works as before when SSO is not enforced', async () => {
     const { app: target, onBreakGlass } = app({ enforced: false, breakGlass: false });
     expect((await login(target)).status).toBe(200);

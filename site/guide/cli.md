@@ -34,6 +34,14 @@ lupin upload --format slsa-provenance --file provenance.json --digest sha256:<64
 # The pull-request gate: exits 1 when it fails, printing every reason
 lupin gate --branch "$BRANCH" --commit "$SHA" --pr 42
 
+# Changes on this branch that weaken the tests: deleted tests, added skips, loosened
+# assertions, lowered thresholds, CI steps that cannot fail. Sends kinds, paths and line
+# numbers, never source; --dry-run sends nothing, --fail-on-findings fails the job.
+lupin diff-guard --base origin/main
+
+# The tests to run first for this branch's change, chosen by file name; sends nothing.
+lupin impact --format paths
+
 # Run the tests, send the report, and keep the command's exit code unless every failure is an
 # approved quarantined test. The command runs without a shell; on Windows, `-- cmd /c npx …`.
 lupin test --format playwright-json --report results.json -- npx playwright test --reporter=json
@@ -51,20 +59,20 @@ lupin deploy --environment production --status success --sha "$SHA"
 # Needs a branch: --branch, LUPIN_BRANCH, or GitHub Actions' own
 lupin agent-config --dir .
 
-# The cockpit as one HTML file that fetches nothing: attach it, or publish it as a CI artifact.
+# The dashboard as one HTML file that fetches nothing: attach it, or publish it as a CI artifact.
 # Reads the project's default branch unless --branch names another; --window 7d|release.
-lupin report --out artifacts/cockpit.html
+lupin report --out artifacts/dashboard.html
 ```
 
 `report` writes the file only if the server answered with a page, so a proxy's error page is never
 published as the report. Publishing it from GitHub Actions is one more step:
 
 ```yaml
-- run: lupin report --out artifacts/cockpit.html
+- run: lupin report --out artifacts/dashboard.html
 - uses: actions/upload-artifact@v4
   with:
-    name: cockpit
-    path: artifacts/cockpit.html
+    name: dashboard
+    path: artifacts/dashboard.html
 ```
 
 The file needs no account to open. It is a snapshot: it does not update, runs no script and makes
@@ -77,6 +85,55 @@ in, so the absolute paths it wrote become repository-relative.
 
 A misspelt option is refused rather than ignored: a step that silently dropped `--commit` would
 gate the wrong commit.
+
+## GitLab CI
+
+Every command runs in a GitLab job too. The CLI reads the branch, commit, merge request and
+target branch from GitLab's own variables (`CI_MERGE_REQUEST_SOURCE_BRANCH_NAME`,
+`CI_COMMIT_SHA`, `CI_MERGE_REQUEST_IID`, `CI_MERGE_REQUEST_TARGET_BRANCH_NAME`), so a merge
+request pipeline needs no flags:
+
+```yaml
+lupin:
+  image: node:24
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    GIT_DEPTH: 0 # diff-guard and impact compare with the target branch
+  script:
+    - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx --yes @lupin/cli diff-guard --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx --yes @lupin/cli gate --post
+```
+
+`gate --post` writes the verdict as a commit status named `lupin/health` and the gate's comment
+as one merge request note, updated on every push. GitLab has no check runs, so the risk factors
+are in the note. Give it `LUPIN_GITLAB_TOKEN`, a project access token with the `api` scope, as a
+masked variable: GitLab's job token cannot write statuses or notes. That token goes only to
+`CI_API_V4_URL`, which must be `https://`, and never to Lupin; a refusal from GitLab is printed
+and never changes the exit code.
+
+What is not there yet: the server does not sync merge requests, pipelines or deployments from
+GitLab, so delivery metrics, SDLC phases and the pull request pages are GitHub only.
+
+## Run the tests this change needs first
+
+`lupin impact` reads the branch's changed files and prints the tests to run first: the test files
+the change touched, and the tests named after the source files it touched (`cart.ts` →
+`cart.test.ts`, `__tests__/cart.ts`, `test_cart.py`, `cart_test.go`), the nearest one first. It
+also lists the changed source files no test is named after, so a change nothing covers is seen.
+
+```bash
+lupin impact --base origin/main               # what to run, and why
+npx vitest run $(lupin impact --format paths) # straight into the test runner
+lupin impact --format json                    # for a script
+```
+
+It reads git in the job and sends nothing, so it needs no token and no Lupin install. When the
+change touched what every test depends on (a manifest, a lockfile, a `tsconfig`, a test runner
+config), the selection is not trusted: the text says to run everything, and `--format paths`
+prints every test file. The selection is by name only; a test that covers a file it is not named
+after is not found, which is why it is a list to run first and not a list to run instead.
 
 ## Exit codes
 

@@ -1,4 +1,9 @@
-import type { DigestItem, ReadinessReason, ReleaseReadinessCard } from '@lupin/shared-contracts';
+import {
+  PASS_RATE_FLOOR,
+  type DigestItem,
+  type ReadinessReason,
+  type ReleaseReadinessCard,
+} from '@lupin/shared-contracts';
 
 /**
  * Release readiness: one go / caution / no-go answer per project, and every reason for it.
@@ -33,8 +38,6 @@ export interface ReadinessInput {
   openQuarantine: number;
 }
 
-/** Below this the release is a no-go regardless of the threshold: one in five runs fails. */
-const PASS_RATE_FLOOR = 80;
 /** A fall smaller than this is noise in a mean over many reports. */
 const COVERAGE_NOISE = 0.5;
 

@@ -32,6 +32,8 @@ export default defineConfig({
      */
     testTimeout: STANDARD_TEST_TIMEOUT_MS,
     hookTimeout: STANDARD_TEST_TIMEOUT_MS,
+    // No test makes a DNS query: the outbound guard resolves every name to a public address.
+    setupFiles: ['src/test-support/outbound-resolver.ts'],
     // `all: true` with an explicit `include` is what makes an untested module
     // visible. Without it V8 reports only the files a test happened to import, so
     // deleting every test in a module would *raise* the reported coverage — and

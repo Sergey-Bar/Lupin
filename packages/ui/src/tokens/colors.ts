@@ -117,11 +117,19 @@ export const semanticColorTokens = {
    */
   'border-strong': '--lupin-border-strong',
   accent: '--lupin-accent',
-  primary: '--lupin-accent',
+  /** The primary button's solid blue (v4); the accent stays the link and focus colour. */
+  primary: '--lupin-primary',
   success: '--lupin-success',
   warning: '--lupin-warning',
   danger: '--lupin-danger',
   info: '--lupin-info',
+  /** Design language v2: three elevations (aliases of plane steps) and the verdict glow. */
+  'elevation-1': '--lupin-surface',
+  'elevation-2': '--lupin-surface-raised',
+  'elevation-3': '--lupin-surface-muted',
+  'glow-go': '--lupin-success',
+  'glow-caution': '--lupin-warning',
+  'glow-no-go': '--lupin-danger',
   /**
    * `error` is the name the components use (`bg-error` is the destructive
    * "Cancel run" button). It is an alias of `danger`, kept because renaming
@@ -150,6 +158,8 @@ export const semanticColorTokens = {
    * value fails 4.5:1 in one of them. `Button` and `Badge` both use it.
    */
   'on-fill': '--lupin-on-fill',
+  /** The white label on the primary fill, in both themes. */
+  'on-primary': '--lupin-on-primary',
   /*
    * The chart palette: four run states and a line, then a six-step categorical series.
    * Its own roles rather than the status colours at three opacities, because a chart is

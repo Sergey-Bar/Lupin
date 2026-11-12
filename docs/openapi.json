@@ -31,6 +31,17 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/access-tokens/{id}/rotate": {
+      "post": {
+        "operationId": "postApiV1AccessTokensIdRotate",
+        "tags": ["access-tokens"],
+        "x-source": "apps/api/src/routes/access.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/agents": {
       "get": {
         "operationId": "getApiV1Agents",
@@ -223,6 +234,22 @@
         "operationId": "getApiV1Cockpit",
         "tags": ["cockpit"],
         "x-source": "apps/api/src/routes/cockpit.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/copilot/ask": {
+      "post": {
+        "operationId": "postApiV1CopilotAsk",
+        "tags": ["copilot"],
+        "x-source": "apps/api/src/copilot/routes.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/copilot/explain": {
+      "post": {
+        "operationId": "postApiV1CopilotExplain",
+        "tags": ["copilot"],
+        "x-source": "apps/api/src/copilot/routes.ts",
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
@@ -693,6 +720,14 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/portfolio/briefing": {
+      "get": {
+        "operationId": "getApiV1PortfolioBriefing",
+        "tags": ["portfolio"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/portfolio/components": {
       "get": {
         "operationId": "getApiV1PortfolioComponents",
@@ -714,6 +749,22 @@
         "operationId": "getApiV1PortfolioHeatmap",
         "tags": ["portfolio"],
         "x-source": "apps/api/src/routes/scorecards.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/portfolio/phases": {
+      "get": {
+        "operationId": "getApiV1PortfolioPhases",
+        "tags": ["portfolio"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/portfolio/shape": {
+      "get": {
+        "operationId": "getApiV1PortfolioShape",
+        "tags": ["portfolio"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
@@ -798,6 +849,28 @@
         "operationId": "getApiV1ProjectsIdAiCodePullRequests",
         "tags": ["projects"],
         "x-source": "apps/api/src/routes/ai-code.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/projects/{id}/briefing": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdBriefing",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/projects/{id}/cluster-issues": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdClusterIssues",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/issue-tracking.ts",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -1062,6 +1135,26 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/health/diff-guard": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdHealthDiffGuard",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "post": {
+        "operationId": "postApiV1ProjectsIdHealthDiffGuard",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/health/findings": {
       "get": {
         "operationId": "getApiV1ProjectsIdHealthFindings",
@@ -1265,6 +1358,64 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/pace": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdPace",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/projects/{id}/phases": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdPhases",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/projects/{id}/pull-requests/{number}/phases": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdPullRequestsNumberPhases",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "number", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/projects/{id}/pull-requests/{number}/risk": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdPullRequestsNumberRisk",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "number", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/projects/{id}/pull-requests/{number}/shape": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdPullRequestsNumberShape",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "number", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/qa/flaky": {
       "get": {
         "operationId": "getApiV1ProjectsIdQaFlaky",
@@ -1395,11 +1546,42 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/shape": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdShape",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/repo-health.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/shards/plan": {
       "post": {
         "operationId": "postApiV1ProjectsIdShardsPlan",
         "tags": ["projects"],
         "x-source": "apps/api/src/routes/shard-plan.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/projects/{id}/signoffs": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdSignoffs",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/projects.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "post": {
+        "operationId": "postApiV1ProjectsIdSignoffs",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/projects.ts",
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -1511,6 +1693,15 @@
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "put": {
+        "operationId": "putApiV1ReportSubscriptionsId",
+        "tags": ["report-subscriptions"],
+        "x-source": "apps/api/src/routes/notifications.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
     "/api/v1/report.html": {
@@ -1572,6 +1763,20 @@
         "parameters": [
           { "name": "runId", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/retention": {
+      "get": {
+        "operationId": "getApiV1Retention",
+        "tags": ["retention"],
+        "x-source": "apps/api/src/routes/retention.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "put": {
+        "operationId": "putApiV1Retention",
+        "tags": ["retention"],
+        "x-source": "apps/api/src/routes/retention.ts",
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
@@ -1810,6 +2015,26 @@
         "parameters": [
           { "name": "key", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/settings/github-app": {
+      "delete": {
+        "operationId": "deleteApiV1SettingsGithubApp",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/github-app.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "get": {
+        "operationId": "getApiV1SettingsGithubApp",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/github-app.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "put": {
+        "operationId": "putApiV1SettingsGithubApp",
+        "tags": ["settings"],
+        "x-source": "apps/api/src/routes/github-app.ts",
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
@@ -9433,6 +9658,64 @@
         ],
         "additionalProperties": false
       },
+      "BlastRadiusSummarySchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "sensitiveAreas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "area": { "type": "string", "minLength": 1 },
+                "count": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                "paths": { "maxItems": 5, "type": "array", "items": { "type": "string" } }
+              },
+              "required": ["area", "count", "paths"],
+              "additionalProperties": false
+            }
+          },
+          "teams": { "type": "array", "items": { "type": "string" } },
+          "individualOwners": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          },
+          "unownedPaths": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          },
+          "linkedTests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "testStableId": { "type": "string", "minLength": 1 },
+                "failures": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                "files": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 }
+              },
+              "required": ["testStableId", "failures", "files"],
+              "additionalProperties": false
+            }
+          },
+          "linkedTestsTotal": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "truncated": { "type": "boolean" }
+        },
+        "required": [
+          "version",
+          "sensitiveAreas",
+          "teams",
+          "individualOwners",
+          "unownedPaths",
+          "linkedTests",
+          "linkedTestsTotal",
+          "truncated"
+        ],
+        "additionalProperties": false
+      },
       "BranchPassRateSchema": {
         "type": "object",
         "properties": {
@@ -9446,6 +9729,299 @@
         },
         "required": ["branch", "runs", "passed", "failed", "passRate"],
         "additionalProperties": false
+      },
+      "BriefingItemSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[a-z]+\\.[a-z0-9-]+$"
+          },
+          "section": {
+            "type": "string",
+            "enum": ["shape", "shipped", "riskier", "quality", "decide"]
+          },
+          "tone": { "type": "string", "enum": ["good", "caution", "bad", "neutral"] },
+          "text": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "evidence": {
+            "minItems": 1,
+            "maxItems": 10,
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "maxLength": 200 }
+          },
+          "link": {
+            "anyOf": [
+              { "type": "string", "maxLength": 300, "format": "starts_with", "pattern": "^\\/.*" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": ["id", "section", "tone", "text", "evidence", "link"],
+        "additionalProperties": false
+      },
+      "BriefingResponseSchema": {
+        "type": "object",
+        "properties": {
+          "briefing": {
+            "type": "object",
+            "properties": {
+              "version": { "type": "string", "minLength": 1 },
+              "scope": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": { "type": "string", "const": "repository" },
+                      "projectId": { "type": "string", "minLength": 1 },
+                      "name": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["kind", "projectId", "name"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": { "type": "string", "const": "portfolio" },
+                      "projects": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                    },
+                    "required": ["kind", "projects"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "windowDays": { "type": "integer", "minimum": 1, "maximum": 366 },
+              "generatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+              "headline": { "type": "string", "minLength": 1, "maxLength": 400 },
+              "items": {
+                "maxItems": 40,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100,
+                      "pattern": "^[a-z]+\\.[a-z0-9-]+$"
+                    },
+                    "section": {
+                      "type": "string",
+                      "enum": ["shape", "shipped", "riskier", "quality", "decide"]
+                    },
+                    "tone": { "type": "string", "enum": ["good", "caution", "bad", "neutral"] },
+                    "text": { "type": "string", "minLength": 1, "maxLength": 300 },
+                    "evidence": {
+                      "minItems": 1,
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": { "type": "string", "minLength": 1, "maxLength": 200 }
+                    },
+                    "link": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 300,
+                          "format": "starts_with",
+                          "pattern": "^\\/.*"
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["id", "section", "tone", "text", "evidence", "link"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "version",
+              "scope",
+              "windowDays",
+              "generatedAt",
+              "shape",
+              "headline",
+              "items"
+            ],
+            "additionalProperties": false
+          },
+          "narration": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": { "type": "string", "const": "accepted" },
+                      "model": { "type": "string", "minLength": 1 },
+                      "narration": {
+                        "type": "object",
+                        "properties": {
+                          "sentences": {
+                            "minItems": 1,
+                            "maxItems": 12,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "text": { "type": "string", "minLength": 1, "maxLength": 400 },
+                                "cites": {
+                                  "minItems": 1,
+                                  "type": "array",
+                                  "items": { "type": "string", "minLength": 1 }
+                                }
+                              },
+                              "required": ["text", "cites"],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": ["sentences"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["status", "model", "narration"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": { "type": "string", "const": "rejected" },
+                      "model": { "type": "string", "minLength": 1 },
+                      "reason": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["status", "model", "reason"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": { "type": "string", "const": "unavailable" },
+                      "reason": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["status", "reason"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": ["briefing", "narration"],
+        "additionalProperties": false
+      },
+      "BriefingSchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "scope": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": { "type": "string", "const": "repository" },
+                  "projectId": { "type": "string", "minLength": 1 },
+                  "name": { "type": "string", "minLength": 1 }
+                },
+                "required": ["kind", "projectId", "name"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": { "type": "string", "const": "portfolio" },
+                  "projects": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                },
+                "required": ["kind", "projects"],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "windowDays": { "type": "integer", "minimum": 1, "maximum": 366 },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "headline": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "items": {
+            "maxItems": 40,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "pattern": "^[a-z]+\\.[a-z0-9-]+$"
+                },
+                "section": {
+                  "type": "string",
+                  "enum": ["shape", "shipped", "riskier", "quality", "decide"]
+                },
+                "tone": { "type": "string", "enum": ["good", "caution", "bad", "neutral"] },
+                "text": { "type": "string", "minLength": 1, "maxLength": 300 },
+                "evidence": {
+                  "minItems": 1,
+                  "maxItems": 10,
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1, "maxLength": 200 }
+                },
+                "link": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 300,
+                      "format": "starts_with",
+                      "pattern": "^\\/.*"
+                    },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": ["id", "section", "tone", "text", "evidence", "link"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["version", "scope", "windowDays", "generatedAt", "shape", "headline", "items"],
+        "additionalProperties": false
+      },
+      "BriefingScopeSchema": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": { "type": "string", "const": "repository" },
+              "projectId": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 }
+            },
+            "required": ["kind", "projectId", "name"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": { "type": "string", "const": "portfolio" },
+              "projects": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+            },
+            "required": ["kind", "projects"],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BriefingSectionIdSchema": {
+        "type": "string",
+        "enum": ["shape", "shipped", "riskier", "quality", "decide"]
       },
       "BrowserRunInputSchema": {
         "type": "object",
@@ -10825,6 +11401,11 @@
                   "k6",
                   "zap",
                   "allure",
+                  "ctrf",
+                  "jest",
+                  "vitest",
+                  "pytest",
+                  "cypress",
                   "sarif",
                   "otel",
                   "generic",
@@ -11200,6 +11781,147 @@
           "weight": { "type": "number", "minimum": 0 }
         },
         "required": ["capability", "covered", "providers", "weight"],
+        "additionalProperties": false
+      },
+      "ChangeRiskEvidenceSchema": {
+        "type": "string",
+        "enum": ["attribution", "tests", "diff-coverage", "findings", "tampering", "evals"]
+      },
+      "ChangeRiskFactorIdSchema": {
+        "type": "string",
+        "enum": [
+          "ai-authorship",
+          "size",
+          "no-tests-touched",
+          "diff-coverage",
+          "new-findings",
+          "failed-tests",
+          "unexcused-flaky",
+          "no-human-approval",
+          "eval-regression",
+          "blast-radius",
+          "test-tampering",
+          "skipped-phases",
+          "attribution",
+          "tests",
+          "findings",
+          "tampering",
+          "evals"
+        ]
+      },
+      "ChangeRiskFactorSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "ai-authorship",
+              "size",
+              "no-tests-touched",
+              "diff-coverage",
+              "new-findings",
+              "failed-tests",
+              "unexcused-flaky",
+              "no-human-approval",
+              "eval-regression",
+              "blast-radius",
+              "test-tampering",
+              "skipped-phases",
+              "attribution",
+              "tests",
+              "findings",
+              "tampering",
+              "evals"
+            ]
+          },
+          "kind": { "type": "string", "enum": ["risk", "missing"] },
+          "points": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "evidence": {
+            "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 500 }, { "type": "null" }]
+          }
+        },
+        "required": ["id", "kind", "points", "detail", "evidence"],
+        "additionalProperties": false
+      },
+      "ChangeRiskLevelSchema": {
+        "type": "string",
+        "enum": ["low", "medium", "unknown", "high", "critical"]
+      },
+      "ChangeRiskPolicySchema": {
+        "type": "object",
+        "properties": {
+          "require": {
+            "maxItems": 6,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["attribution", "tests", "diff-coverage", "findings", "tampering", "evals"]
+            }
+          },
+          "blockAt": {
+            "anyOf": [{ "type": "string", "enum": ["high", "critical"] }, { "type": "null" }]
+          },
+          "blockOnUnknown": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      },
+      "ChangeRiskSchema": {
+        "type": "object",
+        "properties": {
+          "level": { "type": "string", "enum": ["low", "medium", "unknown", "high", "critical"] },
+          "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "version": { "type": "string", "minLength": 1 },
+          "factors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "ai-authorship",
+                    "size",
+                    "no-tests-touched",
+                    "diff-coverage",
+                    "new-findings",
+                    "failed-tests",
+                    "unexcused-flaky",
+                    "no-human-approval",
+                    "eval-regression",
+                    "blast-radius",
+                    "test-tampering",
+                    "skipped-phases",
+                    "attribution",
+                    "tests",
+                    "findings",
+                    "tampering",
+                    "evals"
+                  ]
+                },
+                "kind": { "type": "string", "enum": ["risk", "missing"] },
+                "points": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+                "evidence": {
+                  "anyOf": [
+                    { "type": "string", "minLength": 1, "maxLength": 500 },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": ["id", "kind", "points", "detail", "evidence"],
+              "additionalProperties": false
+            }
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["attribution", "tests", "diff-coverage", "findings", "tampering", "evals"]
+            }
+          }
+        },
+        "required": ["level", "score", "version", "factors", "missing"],
         "additionalProperties": false
       },
       "ChannelSummarySchema": {
@@ -12666,7 +13388,16 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "audience": { "type": "string", "enum": ["general", "manager", "sdet", "quality"] },
-          "format": { "type": "string", "enum": ["chat", "full"] }
+          "format": { "type": "string", "enum": ["chat", "full"] },
+          "quietHours": {
+            "type": "object",
+            "properties": {
+              "start": { "type": "integer", "minimum": 0, "maximum": 23 },
+              "end": { "type": "integer", "minimum": 0, "maximum": 23 }
+            },
+            "required": ["start", "end"],
+            "additionalProperties": false
+          }
         },
         "required": ["channelId", "name", "cadence", "time", "weekday", "timezone"],
         "additionalProperties": false
@@ -14091,6 +14822,251 @@
           }
         },
         "required": ["projectId", "commit", "branch", "state", "result"],
+        "additionalProperties": false
+      },
+      "DiffGuardReportSchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1, "maxLength": 50 },
+          "findings": {
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "test-deleted",
+                    "skip-added",
+                    "assertion-removed",
+                    "assertion-loosened",
+                    "empty-catch",
+                    "snapshot-bulk-update",
+                    "threshold-lowered",
+                    "ci-made-non-failing",
+                    "retry-added"
+                  ]
+                },
+                "path": { "type": "string", "minLength": 1, "maxLength": 500 },
+                "line": {
+                  "anyOf": [
+                    { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                    { "type": "null" }
+                  ]
+                },
+                "side": { "type": "string", "enum": ["base", "head"] }
+              },
+              "required": ["kind", "path", "line", "side"],
+              "additionalProperties": false
+            }
+          },
+          "counts": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "enum": [
+                "test-deleted",
+                "skip-added",
+                "assertion-removed",
+                "assertion-loosened",
+                "empty-catch",
+                "snapshot-bulk-update",
+                "threshold-lowered",
+                "ci-made-non-failing",
+                "retry-added"
+              ]
+            },
+            "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+          },
+          "filesChecked": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "truncated": { "type": "boolean" }
+        },
+        "required": ["version", "findings", "counts", "filesChecked", "truncated"],
+        "additionalProperties": false
+      },
+      "DiffGuardStatusSchema": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "state": { "type": "string", "const": "none" },
+              "commit": { "type": "string", "minLength": 1 }
+            },
+            "required": ["state", "commit"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": { "type": "string", "const": "reported" },
+              "commit": { "type": "string", "minLength": 1 },
+              "base": { "type": "string", "minLength": 1 },
+              "branch": { "type": ["string", "null"] },
+              "pullRequest": {
+                "anyOf": [
+                  { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                  { "type": "null" }
+                ]
+              },
+              "report": {
+                "type": "object",
+                "properties": {
+                  "version": { "type": "string", "minLength": 1, "maxLength": 50 },
+                  "findings": {
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "test-deleted",
+                            "skip-added",
+                            "assertion-removed",
+                            "assertion-loosened",
+                            "empty-catch",
+                            "snapshot-bulk-update",
+                            "threshold-lowered",
+                            "ci-made-non-failing",
+                            "retry-added"
+                          ]
+                        },
+                        "path": { "type": "string", "minLength": 1, "maxLength": 500 },
+                        "line": {
+                          "anyOf": [
+                            { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                            { "type": "null" }
+                          ]
+                        },
+                        "side": { "type": "string", "enum": ["base", "head"] }
+                      },
+                      "required": ["kind", "path", "line", "side"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "counts": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "enum": [
+                        "test-deleted",
+                        "skip-added",
+                        "assertion-removed",
+                        "assertion-loosened",
+                        "empty-catch",
+                        "snapshot-bulk-update",
+                        "threshold-lowered",
+                        "ci-made-non-failing",
+                        "retry-added"
+                      ]
+                    },
+                    "additionalProperties": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "filesChecked": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                  "truncated": { "type": "boolean" }
+                },
+                "required": ["version", "findings", "counts", "filesChecked", "truncated"],
+                "additionalProperties": false
+              },
+              "reportedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": [
+              "state",
+              "commit",
+              "base",
+              "branch",
+              "pullRequest",
+              "report",
+              "reportedAt"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "DiffGuardUploadSchema": {
+        "type": "object",
+        "properties": {
+          "commit": { "type": "string", "pattern": "^[0-9a-f]{7,64}$" },
+          "base": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "branch": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "report": {
+            "type": "object",
+            "properties": {
+              "version": { "type": "string", "minLength": 1, "maxLength": 50 },
+              "findings": {
+                "maxItems": 200,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "test-deleted",
+                        "skip-added",
+                        "assertion-removed",
+                        "assertion-loosened",
+                        "empty-catch",
+                        "snapshot-bulk-update",
+                        "threshold-lowered",
+                        "ci-made-non-failing",
+                        "retry-added"
+                      ]
+                    },
+                    "path": { "type": "string", "minLength": 1, "maxLength": 500 },
+                    "line": {
+                      "anyOf": [
+                        { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                        { "type": "null" }
+                      ]
+                    },
+                    "side": { "type": "string", "enum": ["base", "head"] }
+                  },
+                  "required": ["kind", "path", "line", "side"],
+                  "additionalProperties": false
+                }
+              },
+              "counts": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "enum": [
+                    "test-deleted",
+                    "skip-added",
+                    "assertion-removed",
+                    "assertion-loosened",
+                    "empty-catch",
+                    "snapshot-bulk-update",
+                    "threshold-lowered",
+                    "ci-made-non-failing",
+                    "retry-added"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "filesChecked": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "truncated": { "type": "boolean" }
+            },
+            "required": ["version", "findings", "counts", "filesChecked", "truncated"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["commit", "base", "report"],
         "additionalProperties": false
       },
       "Digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
@@ -15893,7 +16869,8 @@
                     "type": "string",
                     "enum": ["product", "test", "environment", "known-issue"]
                   },
-                  "issueUrl": { "type": ["string", "null"] }
+                  "issueUrl": { "type": ["string", "null"] },
+                  "reason": { "type": ["string", "null"] }
                 },
                 "required": ["category", "issueUrl"],
                 "additionalProperties": false
@@ -16161,6 +17138,7 @@
         ],
         "additionalProperties": false
       },
+      "FreshnessSchema": { "type": "string", "enum": ["fresh", "stale", "never"] },
       "GapSchema": {
         "type": "object",
         "properties": {
@@ -17071,7 +18049,27 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
-          "headSha": { "type": ["string", "null"] }
+          "headSha": { "type": ["string", "null"] },
+          "risk": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "string",
+                    "enum": ["low", "medium", "unknown", "high", "critical"]
+                  },
+                  "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                  "headSha": { "type": "string" },
+                  "assessedAt": { "type": "string" },
+                  "current": { "type": "boolean" }
+                },
+                "required": ["level", "score", "headSha", "assessedAt", "current"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          }
         },
         "required": [
           "id",
@@ -17153,7 +18151,27 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
                 },
-                "headSha": { "type": ["string", "null"] }
+                "headSha": { "type": ["string", "null"] },
+                "risk": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "level": {
+                          "type": "string",
+                          "enum": ["low", "medium", "unknown", "high", "critical"]
+                        },
+                        "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                        "headSha": { "type": "string" },
+                        "assessedAt": { "type": "string" },
+                        "current": { "type": "boolean" }
+                      },
+                      "required": ["level", "score", "headSha", "assessedAt", "current"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                }
               },
               "required": [
                 "id",
@@ -19095,6 +20113,31 @@
               "traceRetentionDays": { "type": "integer", "minimum": 1, "maximum": 90 }
             },
             "additionalProperties": false
+          },
+          "risk": {
+            "type": "object",
+            "properties": {
+              "require": {
+                "maxItems": 6,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "attribution",
+                    "tests",
+                    "diff-coverage",
+                    "findings",
+                    "tampering",
+                    "evals"
+                  ]
+                }
+              },
+              "blockAt": {
+                "anyOf": [{ "type": "string", "enum": ["high", "critical"] }, { "type": "null" }]
+              },
+              "blockOnUnknown": { "type": "boolean" }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -21031,6 +22074,31 @@
         "required": ["suite", "recoveries", "medianMs", "p90Ms", "openSince"],
         "additionalProperties": false
       },
+      "NarrationSchema": {
+        "type": "object",
+        "properties": {
+          "sentences": {
+            "minItems": 1,
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": { "type": "string", "minLength": 1, "maxLength": 400 },
+                "cites": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 }
+                }
+              },
+              "required": ["text", "cites"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["sentences"],
+        "additionalProperties": false
+      },
       "NormalizedRunSchema": {
         "type": "object",
         "properties": {
@@ -21595,6 +22663,132 @@
         "required": ["partialSuccess"],
         "additionalProperties": false
       },
+      "PaceReportSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": { "type": "string", "minLength": 1 },
+          "version": { "type": "string", "minLength": 1 },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "status": { "type": "string", "enum": ["measured", "insufficient", "not_configured"] },
+          "headline": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "weekStart": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "mergedPullRequests": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "changedLines": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "aiShare": {
+                  "anyOf": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "type": "null" }]
+                },
+                "testedShare": {
+                  "anyOf": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "type": "null" }]
+                },
+                "testsAdded": {
+                  "anyOf": [
+                    { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                    { "type": "null" }
+                  ]
+                },
+                "testsPerKloc": {
+                  "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }]
+                },
+                "uncoveredLines": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "unmeasuredLines": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "debt": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+              },
+              "required": [
+                "weekStart",
+                "mergedPullRequests",
+                "changedLines",
+                "aiShare",
+                "testedShare",
+                "testsAdded",
+                "testsPerKloc",
+                "uncoveredLines",
+                "unmeasuredLines",
+                "debt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "debt": {
+            "type": "object",
+            "properties": {
+              "uncoveredLines": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "unmeasuredLines": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+            },
+            "required": ["uncoveredLines", "unmeasuredLines"],
+            "additionalProperties": false
+          },
+          "truncated": { "type": "boolean" }
+        },
+        "required": [
+          "projectId",
+          "version",
+          "evaluatedAt",
+          "status",
+          "headline",
+          "weeks",
+          "debt",
+          "truncated"
+        ],
+        "additionalProperties": false
+      },
+      "PaceWeekSchema": {
+        "type": "object",
+        "properties": {
+          "weekStart": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "mergedPullRequests": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "changedLines": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "aiShare": {
+            "anyOf": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "type": "null" }]
+          },
+          "testedShare": {
+            "anyOf": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "type": "null" }]
+          },
+          "testsAdded": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          },
+          "testsPerKloc": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }] },
+          "uncoveredLines": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "unmeasuredLines": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "debt": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+        },
+        "required": [
+          "weekStart",
+          "mergedPullRequests",
+          "changedLines",
+          "aiShare",
+          "testedShare",
+          "testsAdded",
+          "testsPerKloc",
+          "uncoveredLines",
+          "unmeasuredLines",
+          "debt"
+        ],
+        "additionalProperties": false
+      },
       "PermissionSchema": {
         "type": "string",
         "enum": [
@@ -21611,6 +22805,86 @@
           "admin",
           "admin:all"
         ]
+      },
+      "PhaseBandEntrySchema": {
+        "type": "object",
+        "properties": {
+          "phase": { "type": "string", "enum": ["plan", "code", "test", "review", "release"] },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "measured": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "done": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "skipped": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "stuck": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "medianHours": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }] },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+        },
+        "required": [
+          "phase",
+          "shape",
+          "measured",
+          "done",
+          "skipped",
+          "stuck",
+          "medianHours",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "PhaseStateSchema": {
+        "type": "string",
+        "enum": ["done", "in_progress", "pending", "skipped", "not_measured"]
+      },
+      "PhaseStepSchema": {
+        "type": "object",
+        "properties": {
+          "phase": { "type": "string", "enum": ["plan", "code", "test", "review", "release"] },
+          "state": {
+            "type": "string",
+            "enum": ["done", "in_progress", "pending", "skipped", "not_measured"]
+          },
+          "hours": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }] },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+        },
+        "required": ["phase", "state", "hours", "shape", "reason"],
+        "additionalProperties": false
+      },
+      "PhaseStripSchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "phases": {
+            "minItems": 5,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "phase": {
+                  "type": "string",
+                  "enum": ["plan", "code", "test", "review", "release"]
+                },
+                "state": {
+                  "type": "string",
+                  "enum": ["done", "in_progress", "pending", "skipped", "not_measured"]
+                },
+                "hours": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }] },
+                "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+              },
+              "required": ["phase", "state", "hours", "shape", "reason"],
+              "additionalProperties": false
+            }
+          },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "skipped": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["plan", "code", "test", "review", "release"] }
+          }
+        },
+        "required": ["version", "pullRequest", "phases", "shape", "skipped"],
+        "additionalProperties": false
       },
       "PlainExplanationSchema": {
         "type": "object",
@@ -22178,6 +23452,52 @@
         ],
         "additionalProperties": false
       },
+      "PortfolioPhasesSchema": {
+        "type": "object",
+        "properties": {
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "windowDays": { "type": "integer", "minimum": 1, "maximum": 366 },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "projectId": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "changes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "configured": { "type": "boolean" },
+                "phases": {
+                  "minItems": 5,
+                  "maxItems": 5,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "phase": {
+                        "type": "string",
+                        "enum": ["plan", "code", "test", "review", "release"]
+                      },
+                      "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] }
+                    },
+                    "required": ["phase", "shape"],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": ["projectId", "name", "changes", "configured", "phases"],
+              "additionalProperties": false
+            }
+          },
+          "total": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "truncated": { "type": "boolean" }
+        },
+        "required": ["evaluatedAt", "windowDays", "projects", "total", "truncated"],
+        "additionalProperties": false
+      },
       "PortfolioSchema": {
         "type": "object",
         "properties": {
@@ -22254,6 +23574,131 @@
           }
         },
         "required": ["projects"],
+        "additionalProperties": false
+      },
+      "PortfolioShapeSchema": {
+        "type": "object",
+        "properties": {
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "overall": {
+            "type": "object",
+            "properties": {
+              "version": { "type": "string", "minLength": 1 },
+              "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+              "freshness": { "type": "string", "enum": ["fresh", "stale", "never"] },
+              "measuredAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  { "type": "null" }
+                ]
+              },
+              "reason": { "type": "string", "minLength": 1, "maxLength": 400 },
+              "signals": {
+                "maxItems": 10,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+                    "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                    "at": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+                  },
+                  "required": ["id", "shape", "at", "reason"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["version", "shape", "freshness", "measuredAt", "reason", "signals"],
+            "additionalProperties": false
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "version": { "type": "string", "minLength": 1 },
+                "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                "freshness": { "type": "string", "enum": ["fresh", "stale", "never"] },
+                "measuredAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 400 },
+                "signals": {
+                  "maxItems": 10,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+                      "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                      "at": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          { "type": "null" }
+                        ]
+                      },
+                      "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+                    },
+                    "required": ["id", "shape", "at", "reason"],
+                    "additionalProperties": false
+                  }
+                },
+                "projectId": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "pullRequest": {
+                  "anyOf": [
+                    { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": [
+                "version",
+                "shape",
+                "freshness",
+                "measuredAt",
+                "reason",
+                "signals",
+                "projectId",
+                "name",
+                "pullRequest"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "truncated": { "type": "boolean" }
+        },
+        "required": ["evaluatedAt", "overall", "projects", "total", "truncated"],
         "additionalProperties": false
       },
       "ProjectEvalsSchema": {
@@ -23285,6 +24730,513 @@
         "required": ["policy", "windowDays", "entries"],
         "additionalProperties": false
       },
+      "PullRequestRiskHistorySchema": {
+        "type": "object",
+        "properties": {
+          "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                  "headSha": { "type": "string", "minLength": 1 },
+                  "risk": {
+                    "type": "object",
+                    "properties": {
+                      "level": {
+                        "type": "string",
+                        "enum": ["low", "medium", "unknown", "high", "critical"]
+                      },
+                      "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                      "version": { "type": "string", "minLength": 1 },
+                      "factors": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "enum": [
+                                "ai-authorship",
+                                "size",
+                                "no-tests-touched",
+                                "diff-coverage",
+                                "new-findings",
+                                "failed-tests",
+                                "unexcused-flaky",
+                                "no-human-approval",
+                                "eval-regression",
+                                "blast-radius",
+                                "test-tampering",
+                                "skipped-phases",
+                                "attribution",
+                                "tests",
+                                "findings",
+                                "tampering",
+                                "evals"
+                              ]
+                            },
+                            "kind": { "type": "string", "enum": ["risk", "missing"] },
+                            "points": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+                            "evidence": {
+                              "anyOf": [
+                                { "type": "string", "minLength": 1, "maxLength": 500 },
+                                { "type": "null" }
+                              ]
+                            }
+                          },
+                          "required": ["id", "kind", "points", "detail", "evidence"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "missing": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "attribution",
+                            "tests",
+                            "diff-coverage",
+                            "findings",
+                            "tampering",
+                            "evals"
+                          ]
+                        }
+                      }
+                    },
+                    "required": ["level", "score", "version", "factors", "missing"],
+                    "additionalProperties": false
+                  },
+                  "blastRadius": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "version": { "type": "string", "minLength": 1 },
+                          "sensitiveAreas": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "area": { "type": "string", "minLength": 1 },
+                                "count": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                },
+                                "paths": {
+                                  "maxItems": 5,
+                                  "type": "array",
+                                  "items": { "type": "string" }
+                                }
+                              },
+                              "required": ["area", "count", "paths"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "teams": { "type": "array", "items": { "type": "string" } },
+                          "individualOwners": {
+                            "anyOf": [
+                              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                              { "type": "null" }
+                            ]
+                          },
+                          "unownedPaths": {
+                            "anyOf": [
+                              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                              { "type": "null" }
+                            ]
+                          },
+                          "linkedTests": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "testStableId": { "type": "string", "minLength": 1 },
+                                "failures": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                },
+                                "files": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": ["testStableId", "failures", "files"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "linkedTestsTotal": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "truncated": { "type": "boolean" }
+                        },
+                        "required": [
+                          "version",
+                          "sensitiveAreas",
+                          "teams",
+                          "individualOwners",
+                          "unownedPaths",
+                          "linkedTests",
+                          "linkedTestsTotal",
+                          "truncated"
+                        ],
+                        "additionalProperties": false
+                      },
+                      { "type": "null" }
+                    ]
+                  },
+                  "assessedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": ["pullRequest", "headSha", "risk", "blastRadius", "assessedAt"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                "headSha": { "type": "string", "minLength": 1 },
+                "risk": {
+                  "type": "object",
+                  "properties": {
+                    "level": {
+                      "type": "string",
+                      "enum": ["low", "medium", "unknown", "high", "critical"]
+                    },
+                    "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                    "version": { "type": "string", "minLength": 1 },
+                    "factors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "enum": [
+                              "ai-authorship",
+                              "size",
+                              "no-tests-touched",
+                              "diff-coverage",
+                              "new-findings",
+                              "failed-tests",
+                              "unexcused-flaky",
+                              "no-human-approval",
+                              "eval-regression",
+                              "blast-radius",
+                              "test-tampering",
+                              "skipped-phases",
+                              "attribution",
+                              "tests",
+                              "findings",
+                              "tampering",
+                              "evals"
+                            ]
+                          },
+                          "kind": { "type": "string", "enum": ["risk", "missing"] },
+                          "points": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+                          "evidence": {
+                            "anyOf": [
+                              { "type": "string", "minLength": 1, "maxLength": 500 },
+                              { "type": "null" }
+                            ]
+                          }
+                        },
+                        "required": ["id", "kind", "points", "detail", "evidence"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "missing": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "attribution",
+                          "tests",
+                          "diff-coverage",
+                          "findings",
+                          "tampering",
+                          "evals"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["level", "score", "version", "factors", "missing"],
+                  "additionalProperties": false
+                },
+                "blastRadius": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "version": { "type": "string", "minLength": 1 },
+                        "sensitiveAreas": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "area": { "type": "string", "minLength": 1 },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "paths": {
+                                "maxItems": 5,
+                                "type": "array",
+                                "items": { "type": "string" }
+                              }
+                            },
+                            "required": ["area", "count", "paths"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "teams": { "type": "array", "items": { "type": "string" } },
+                        "individualOwners": {
+                          "anyOf": [
+                            { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                            { "type": "null" }
+                          ]
+                        },
+                        "unownedPaths": {
+                          "anyOf": [
+                            { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                            { "type": "null" }
+                          ]
+                        },
+                        "linkedTests": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "testStableId": { "type": "string", "minLength": 1 },
+                              "failures": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "files": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": ["testStableId", "failures", "files"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "linkedTestsTotal": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "truncated": { "type": "boolean" }
+                      },
+                      "required": [
+                        "version",
+                        "sensitiveAreas",
+                        "teams",
+                        "individualOwners",
+                        "unownedPaths",
+                        "linkedTests",
+                        "linkedTestsTotal",
+                        "truncated"
+                      ],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "assessedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": ["pullRequest", "headSha", "risk", "blastRadius", "assessedAt"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["pullRequest", "latest", "history"],
+        "additionalProperties": false
+      },
+      "PullRequestRiskSchema": {
+        "type": "object",
+        "properties": {
+          "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "headSha": { "type": "string", "minLength": 1 },
+          "risk": {
+            "type": "object",
+            "properties": {
+              "level": {
+                "type": "string",
+                "enum": ["low", "medium", "unknown", "high", "critical"]
+              },
+              "score": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              "version": { "type": "string", "minLength": 1 },
+              "factors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "enum": [
+                        "ai-authorship",
+                        "size",
+                        "no-tests-touched",
+                        "diff-coverage",
+                        "new-findings",
+                        "failed-tests",
+                        "unexcused-flaky",
+                        "no-human-approval",
+                        "eval-regression",
+                        "blast-radius",
+                        "test-tampering",
+                        "skipped-phases",
+                        "attribution",
+                        "tests",
+                        "findings",
+                        "tampering",
+                        "evals"
+                      ]
+                    },
+                    "kind": { "type": "string", "enum": ["risk", "missing"] },
+                    "points": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                    "detail": { "type": "string", "minLength": 1, "maxLength": 300 },
+                    "evidence": {
+                      "anyOf": [
+                        { "type": "string", "minLength": 1, "maxLength": 500 },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["id", "kind", "points", "detail", "evidence"],
+                  "additionalProperties": false
+                }
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "attribution",
+                    "tests",
+                    "diff-coverage",
+                    "findings",
+                    "tampering",
+                    "evals"
+                  ]
+                }
+              }
+            },
+            "required": ["level", "score", "version", "factors", "missing"],
+            "additionalProperties": false
+          },
+          "blastRadius": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "version": { "type": "string", "minLength": 1 },
+                  "sensitiveAreas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "area": { "type": "string", "minLength": 1 },
+                        "count": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                        "paths": { "maxItems": 5, "type": "array", "items": { "type": "string" } }
+                      },
+                      "required": ["area", "count", "paths"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "teams": { "type": "array", "items": { "type": "string" } },
+                  "individualOwners": {
+                    "anyOf": [
+                      { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                      { "type": "null" }
+                    ]
+                  },
+                  "unownedPaths": {
+                    "anyOf": [
+                      { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                      { "type": "null" }
+                    ]
+                  },
+                  "linkedTests": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "testStableId": { "type": "string", "minLength": 1 },
+                        "failures": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "files": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 }
+                      },
+                      "required": ["testStableId", "failures", "files"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "linkedTestsTotal": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "truncated": { "type": "boolean" }
+                },
+                "required": [
+                  "version",
+                  "sensitiveAreas",
+                  "teams",
+                  "individualOwners",
+                  "unownedPaths",
+                  "linkedTests",
+                  "linkedTestsTotal",
+                  "truncated"
+                ],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          },
+          "assessedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": ["pullRequest", "headSha", "risk", "blastRadius", "assessedAt"],
+        "additionalProperties": false
+      },
       "PushDeploymentBodySchema": {
         "type": "object",
         "properties": {
@@ -23598,7 +25550,8 @@
                               "type": "string",
                               "enum": ["product", "test", "environment", "known-issue"]
                             },
-                            "issueUrl": { "type": ["string", "null"] }
+                            "issueUrl": { "type": ["string", "null"] },
+                            "reason": { "type": ["string", "null"] }
                           },
                           "required": ["category", "issueUrl"],
                           "additionalProperties": false
@@ -24076,6 +26029,7 @@
           },
           "required": { "default": false, "type": "boolean" },
           "minimumPassRate": { "type": "number", "minimum": 0, "maximum": 100 },
+          "maxSeverity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
           "requiredArtifactKinds": {
             "default": [],
             "type": "array",
@@ -24154,6 +26108,7 @@
                 },
                 "required": { "default": false, "type": "boolean" },
                 "minimumPassRate": { "type": "number", "minimum": 0, "maximum": 100 },
+                "maxSeverity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
                 "requiredArtifactKinds": {
                   "default": [],
                   "type": "array",
@@ -24241,6 +26196,15 @@
           "blockedRuns",
           "reason"
         ],
+        "additionalProperties": false
+      },
+      "QuietHoursSchema": {
+        "type": "object",
+        "properties": {
+          "start": { "type": "integer", "minimum": 0, "maximum": 23 },
+          "end": { "type": "integer", "minimum": 0, "maximum": 23 }
+        },
+        "required": ["start", "end"],
         "additionalProperties": false
       },
       "ReadinessReasonSchema": {
@@ -24445,6 +26409,68 @@
           "latestRunId",
           "gate",
           "evaluatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ReleaseSignoffListSchema": {
+        "type": "object",
+        "properties": {
+          "signoffs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "projectId": { "type": "string", "minLength": 1 },
+                "commit": { "type": "string", "minLength": 1 },
+                "decision": { "type": "string", "enum": ["ship", "hold"] },
+                "verdict": { "type": "string", "enum": ["go", "caution", "no-go"] },
+                "override": { "type": "boolean" },
+                "reason": { "type": "string", "minLength": 1 },
+                "actor": { "type": "string", "minLength": 1 },
+                "createdAt": { "type": "string", "minLength": 1 }
+              },
+              "required": [
+                "id",
+                "projectId",
+                "commit",
+                "decision",
+                "verdict",
+                "override",
+                "reason",
+                "actor",
+                "createdAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["signoffs"],
+        "additionalProperties": false
+      },
+      "ReleaseSignoffSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "projectId": { "type": "string", "minLength": 1 },
+          "commit": { "type": "string", "minLength": 1 },
+          "decision": { "type": "string", "enum": ["ship", "hold"] },
+          "verdict": { "type": "string", "enum": ["go", "caution", "no-go"] },
+          "override": { "type": "boolean" },
+          "reason": { "type": "string", "minLength": 1 },
+          "actor": { "type": "string", "minLength": 1 },
+          "createdAt": { "type": "string", "minLength": 1 }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "commit",
+          "decision",
+          "verdict",
+          "override",
+          "reason",
+          "actor",
+          "createdAt"
         ],
         "additionalProperties": false
       },
@@ -24783,7 +26809,12 @@
           "k6-json",
           "zap-xml",
           "legacy-upload",
-          "allure-results"
+          "allure-results",
+          "ctrf-json",
+          "jest-json",
+          "vitest-json",
+          "pytest-json",
+          "mochawesome-json"
         ]
       },
       "ReportKindSchema": {
@@ -24808,6 +26839,11 @@
           "k6",
           "zap",
           "allure",
+          "ctrf",
+          "jest",
+          "vitest",
+          "pytest",
+          "cypress",
           "sarif",
           "otel",
           "generic",
@@ -24919,6 +26955,111 @@
           }
         },
         "required": ["title", "file", "status"],
+        "additionalProperties": false
+      },
+      "RepositoryPhasesSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": { "type": "string", "minLength": 1 },
+          "version": { "type": "string", "minLength": 1 },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "windowDays": { "type": "integer", "minimum": 1, "maximum": 366 },
+          "changes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "phases": {
+            "minItems": 5,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "phase": {
+                  "type": "string",
+                  "enum": ["plan", "code", "test", "review", "release"]
+                },
+                "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                "measured": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "done": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "skipped": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "stuck": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                "medianHours": {
+                  "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }]
+                },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+              },
+              "required": [
+                "phase",
+                "shape",
+                "measured",
+                "done",
+                "skipped",
+                "stuck",
+                "medianHours",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "bottleneck": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "phase": {
+                    "type": "string",
+                    "enum": ["plan", "code", "test", "review", "release"]
+                  },
+                  "sentence": { "type": "string", "minLength": 1 }
+                },
+                "required": ["phase", "sentence"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          },
+          "stuck": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pullRequest": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                "title": { "type": "string" },
+                "phase": {
+                  "type": "string",
+                  "enum": ["plan", "code", "test", "review", "release"]
+                },
+                "hours": { "type": "number", "minimum": 0 }
+              },
+              "required": ["pullRequest", "title", "phase", "hours"],
+              "additionalProperties": false
+            }
+          },
+          "truncated": { "type": "boolean" },
+          "configured": { "type": "boolean" }
+        },
+        "required": [
+          "projectId",
+          "version",
+          "evaluatedAt",
+          "windowDays",
+          "changes",
+          "phases",
+          "bottleneck",
+          "stuck",
+          "truncated",
+          "configured"
+        ],
+        "additionalProperties": false
+      },
+      "RetryRunRequestSchema": {
+        "type": "object",
+        "properties": {
+          "scope": { "default": "all", "type": "string", "enum": ["all", "failed"] }
+        },
+        "required": ["scope"],
         "additionalProperties": false
       },
       "RunAssignedEventPayloadSchema": {
@@ -26401,6 +28542,69 @@
         "required": ["id", "automationId", "cron", "timezone", "enabled", "misfirePolicy"],
         "additionalProperties": false
       },
+      "ScopedShapeSchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "freshness": { "type": "string", "enum": ["fresh", "stale", "never"] },
+          "measuredAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              { "type": "null" }
+            ]
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "signals": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+                "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                "at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+              },
+              "required": ["id", "shape", "at", "reason"],
+              "additionalProperties": false
+            }
+          },
+          "projectId": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "pullRequest": {
+            "anyOf": [
+              { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": [
+          "version",
+          "shape",
+          "freshness",
+          "measuredAt",
+          "reason",
+          "signals",
+          "projectId",
+          "name",
+          "pullRequest"
+        ],
+        "additionalProperties": false
+      },
       "ScoreCellKeySchema": {
         "type": "string",
         "pattern": "^(unit|integration|e2e|performance|security):(backend|frontend|platform)$"
@@ -26785,6 +28989,25 @@
         "type": "string",
         "enum": ["pass", "fail", "insufficient", "not_configured"]
       },
+      "SdlcPhaseSchema": {
+        "type": "string",
+        "enum": ["plan", "code", "test", "review", "release"]
+      },
+      "SecurityScanInputSchema": {
+        "type": "object",
+        "properties": {
+          "targetUrl": { "type": "string" },
+          "spiderMinutes": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "projectId": { "type": "string", "minLength": 1 },
+          "environmentId": { "type": "string", "minLength": 1 },
+          "releaseId": { "type": "string", "minLength": 1 },
+          "branch": { "type": "string", "minLength": 1 },
+          "commit": { "type": "string", "minLength": 1 },
+          "idempotencyKey": { "type": "string", "minLength": 1 }
+        },
+        "required": ["targetUrl"],
+        "additionalProperties": false
+      },
       "ServiceHealthStatusSchema": {
         "type": "object",
         "properties": {
@@ -26896,6 +29119,73 @@
         "required": ["settings"],
         "additionalProperties": false
       },
+      "ShapeReadingSchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "freshness": { "type": "string", "enum": ["fresh", "stale", "never"] },
+          "measuredAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              { "type": "null" }
+            ]
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 400 },
+          "signals": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+                "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+                "at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+              },
+              "required": ["id", "shape", "at", "reason"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["version", "shape", "freshness", "measuredAt", "reason", "signals"],
+        "additionalProperties": false
+      },
+      "ShapeSchema": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+      "ShapeSignalIdSchema": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+      "ShapeSignalSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "enum": ["grade", "tests", "phases", "risk"] },
+          "shape": { "type": "string", "enum": ["good", "caution", "bad", "unknown"] },
+          "at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              { "type": "null" }
+            ]
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 300 }
+        },
+        "required": ["id", "shape", "at", "reason"],
+        "additionalProperties": false
+      },
       "ShardPlanBodySchema": {
         "type": "object",
         "properties": {
@@ -26940,6 +29230,17 @@
         "required": ["total", "asOf", "runs", "known", "unknown", "shards"],
         "additionalProperties": false
       },
+      "SignoffBodySchema": {
+        "type": "object",
+        "properties": {
+          "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+          "decision": { "type": "string", "enum": ["ship", "hold"] },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 2000 }
+        },
+        "required": ["commit", "decision", "reason"],
+        "additionalProperties": false
+      },
+      "SignoffDecisionSchema": { "type": "string", "enum": ["ship", "hold"] },
       "SlowTestSchema": {
         "type": "object",
         "properties": {
@@ -27016,7 +29317,21 @@
           "nextRunAt": { "type": ["string", "null"] },
           "projectId": { "type": ["string", "null"] },
           "audience": { "type": "string", "enum": ["general", "manager", "sdet", "quality"] },
-          "format": { "type": "string", "enum": ["chat", "full"] }
+          "format": { "type": "string", "enum": ["chat", "full"] },
+          "quietHours": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "start": { "type": "integer", "minimum": 0, "maximum": 23 },
+                  "end": { "type": "integer", "minimum": 0, "maximum": 23 }
+                },
+                "required": ["start", "end"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          }
         },
         "required": [
           "id",
@@ -27030,7 +29345,8 @@
           "nextRunAt",
           "projectId",
           "audience",
-          "format"
+          "format",
+          "quietHours"
         ],
         "additionalProperties": false
       },
@@ -27610,7 +29926,25 @@
       "TestReportQuerySchema": {
         "type": "object",
         "properties": {
-          "format": { "type": "string", "enum": ["junit", "playwright-json"] },
+          "format": {
+            "type": "string",
+            "enum": [
+              "junit",
+              "playwright-json",
+              "ctrf",
+              "ctrf-json",
+              "jest",
+              "jest-json",
+              "vitest",
+              "vitest-json",
+              "pytest",
+              "pytest-json",
+              "pytest-json-report",
+              "mochawesome",
+              "mochawesome-json",
+              "cypress"
+            ]
+          },
           "branch": { "type": "string", "minLength": 1, "maxLength": 255 },
           "commit": { "type": "string", "pattern": "^[0-9a-f]{7,64}$" },
           "startedAt": {
@@ -27801,6 +30135,49 @@
         },
         "required": ["id", "runId", "title", "file", "total", "passed", "failed", "skipped"],
         "additionalProperties": false
+      },
+      "TestTamperFindingSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "test-deleted",
+              "skip-added",
+              "assertion-removed",
+              "assertion-loosened",
+              "empty-catch",
+              "snapshot-bulk-update",
+              "threshold-lowered",
+              "ci-made-non-failing",
+              "retry-added"
+            ]
+          },
+          "path": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "line": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+              { "type": "null" }
+            ]
+          },
+          "side": { "type": "string", "enum": ["base", "head"] }
+        },
+        "required": ["kind", "path", "line", "side"],
+        "additionalProperties": false
+      },
+      "TestTamperKindSchema": {
+        "type": "string",
+        "enum": [
+          "test-deleted",
+          "skip-added",
+          "assertion-removed",
+          "assertion-loosened",
+          "empty-catch",
+          "snapshot-bulk-update",
+          "threshold-lowered",
+          "ci-made-non-failing",
+          "retry-added"
+        ]
       },
       "TestUpdatedSchema": {
         "type": "object",
@@ -28074,6 +30451,9 @@
           },
           "issueUrl": {
             "anyOf": [{ "type": "string", "maxLength": 2000, "format": "uri" }, { "type": "null" }]
+          },
+          "reason": {
+            "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 500 }, { "type": "null" }]
           }
         },
         "required": ["signature", "category"],
@@ -28088,6 +30468,7 @@
             "enum": ["product", "test", "environment", "known-issue"]
           },
           "issueUrl": { "type": ["string", "null"] },
+          "reason": { "type": ["string", "null"] },
           "labelledAt": { "type": "string", "minLength": 1 },
           "labelledBy": { "type": "string", "minLength": 1 }
         },
@@ -28307,6 +30688,15 @@
           },
           "secret": { "type": "string", "minLength": 1, "maxLength": 2000 }
         },
+        "additionalProperties": false
+      },
+      "ZapJobConfigurationSchema": {
+        "type": "object",
+        "properties": {
+          "scan": { "type": "string", "const": "baseline" },
+          "spiderMinutes": { "type": "integer", "minimum": 1, "maximum": 10 }
+        },
+        "required": ["scan", "spiderMinutes"],
         "additionalProperties": false
       }
     }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate } from './format.js';
+import { formatBytes, formatDate } from './format.js';
 
 /**
  * The three `formatDate` definitions this helper replaced are not
@@ -75,5 +75,20 @@ describe('formatDate', () => {
     expect(formatDate(null, 'Not started')).toBe('Not started');
     expect(formatDate(null, 'UNKNOWN')).toBe('UNKNOWN');
     expect(formatDate(undefined, 'UNKNOWN')).toBe('UNKNOWN');
+  });
+});
+
+/** The artifact list showed "1048576 bytes" (ledger MNT-190). */
+describe('formatBytes', () => {
+  it.each([
+    [0, '0 B'],
+    [512, '512 B'],
+    [1_024, '1 KB'],
+    [1_536, '1.5 KB'],
+    [1_048_576, '1 MB'],
+    [52_428_800, '50 MB'],
+    [3 * 1024 ** 3, '3 GB'],
+  ])('reads %d as %s', (bytes, text) => {
+    expect(formatBytes(bytes)).toBe(text);
   });
 });

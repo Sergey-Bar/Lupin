@@ -498,3 +498,30 @@ describe('stagger, indicator and count', () => {
     }
   });
 });
+
+/**
+ * Design language v2: an expressive tier for the hero and a page's first screen, beside the
+ * calm tier every control keeps. It is still calm by this file's definition (no overshoot, a
+ * token duration the reduced-motion scale reaches) and is bounded so it cannot become travel.
+ */
+describe('the expressive tier', () => {
+  const declaration = /--animate-reveal:\s*([^;]+);/.exec(motionCss)?.[1] ?? '';
+  const keyframes = /@keyframes lupin-reveal \{([\s\S]*?)\n\}/.exec(motionCss)?.[1] ?? '';
+
+  it('publishes a reveal animation on the arrival curve, from a scaled token', () => {
+    expect(declaration).toContain('lupin-reveal');
+    expect(declaration).toContain('var(--lupin-ease-arrive)');
+    expect(declaration).toMatch(/var\(--lupin-duration-(\d+)\)/);
+  });
+
+  it('takes at most 300ms, so the hero lands before the reader looks for it', () => {
+    const step = Number(/var\(--lupin-duration-(\d+)\)/.exec(declaration)?.[1]);
+    expect(step).toBeLessThanOrEqual(300);
+  });
+
+  it('rises between 8 and 12px: more than a control, never far enough to read as travel', () => {
+    const rise = Number(/translateY\((\d+)px\)/.exec(keyframes)?.[1]);
+    expect(rise).toBeGreaterThanOrEqual(8);
+    expect(rise).toBeLessThanOrEqual(12);
+  });
+});

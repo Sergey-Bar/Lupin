@@ -1,10 +1,12 @@
 import React from 'react';
-import { EmptyState, Select } from '@lupin/ui';
+import { Button, ButtonLink, EmptyState, Select } from '@lupin/ui';
 import { useResource } from '../hooks/useResource.js';
 import { useViewerRole } from '../hooks/useViewerRole.js';
 import type { QaClient } from '../lib/qa-client.js';
 import type { RegisteredProject } from '../lib/qa.js';
 import { PageFrame, PageHeader, Quiet } from './kit.js';
+import { isNothingYet } from '../lib/nothing-yet.js';
+import { readScope, SCOPE_EVENT, writeScope } from '../lib/scope.js';
 
 /**
  * Reads the registry once and hands each project-scoped screen its subject.
@@ -33,8 +35,10 @@ export function ProjectGate({
    */
   children: (project: RegisteredProject, switcher: React.ReactNode) => React.ReactNode;
 }): React.ReactElement {
-  const registry = useResource<RegisteredProject[]>(() => qa.listProjects(), [qa]);
+  const [attempt, setAttempt] = React.useState(0);
+  const registry = useResource<RegisteredProject[]>(() => qa.listProjects(), [qa, attempt]);
   const [chosen, choose] = React.useState<string | null>(() => readChoice());
+  useScopeChoice(choose);
   if (registry.status === 'loading') {
     return (
       <PageFrame data-testid="project-gate-loading">
@@ -44,14 +48,30 @@ export function ProjectGate({
     );
   }
   if (registry.status === 'error') {
+    // A bare "not found" means the registry has nothing yet (the same rule the cockpit uses),
+    // so the reader gets the way in rather than a sentence they cannot act on.
+    if (isNothingYet(registry.message)) return <Onboarding title={title} />;
     return (
       <PageFrame>
         <PageHeader title={title} />
         <EmptyState
           headingLevel={2}
           data-testid="project-gate-error"
-          title="The project registry is unavailable"
+          title="Can't load your projects"
           description={registry.message}
+          action={
+            <div className="grid justify-items-center gap-3">
+              <Button onClick={() => setAttempt((count) => count + 1)}>Try again</Button>
+              {registry.detail === undefined ? null : (
+                <details className="text-xs text-fg-muted">
+                  <summary className="cursor-pointer rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus">
+                    Technical details
+                  </summary>
+                  <p className="mt-1 font-mono">{registry.detail}</p>
+                </details>
+              )}
+            </div>
+          }
         />
       </PageFrame>
     );
@@ -83,28 +103,25 @@ export function ProjectGate({
 }
 
 /**
- * The chosen project, shared by every project screen and kept across reloads.
- *
- * `localStorage` rather than the URL because the choice is the reader's, not the page's:
- * moving from the dashboard to the runner should stay on the repository they picked.
- * A stored id that is no longer registered falls back to the first project.
+ * The chosen project, shared by every project screen and kept across reloads: the one scope
+ * (`lib/scope.ts`) the sidebar chooses. A stored id that is no longer registered falls back
+ * to the first project.
  */
-const CHOICE_KEY = 'lupin-project';
-
 function readChoice(): string | null {
-  try {
-    return localStorage.getItem(CHOICE_KEY);
-  } catch {
-    return null;
-  }
+  return readScope() ?? null;
 }
 
 function writeChoice(projectId: string): void {
-  try {
-    localStorage.setItem(CHOICE_KEY, projectId);
-  } catch {
-    // A storage that refuses writes leaves the choice for this page only, which is still a choice.
-  }
+  writeScope(projectId);
+}
+
+/** Follows the scope when it is chosen elsewhere (the sidebar) while this screen is open. */
+function useScopeChoice(choose: (projectId: string | null) => void): void {
+  React.useEffect(() => {
+    const heard = () => choose(readChoice());
+    window.addEventListener(SCOPE_EVENT, heard);
+    return () => window.removeEventListener(SCOPE_EVENT, heard);
+  }, [choose]);
 }
 
 /**
@@ -128,20 +145,16 @@ function Onboarding({ title }: { title: string }): React.ReactElement {
           </p>
           {canConnect ? (
             <div className="flex flex-wrap gap-3">
-              <a
+              <ButtonLink
                 href={role === 'admin' ? '/dashboard/setup' : '/dashboard/settings/projects'}
                 data-testid="onboarding-connect"
-                className="inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-on-fill hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
               >
                 {role === 'admin' ? 'Start setup' : 'Connect a repository'}
-              </a>
+              </ButtonLink>
               {role === 'admin' ? (
-                <a
-                  href="/dashboard/settings/projects"
-                  className="inline-flex min-h-10 items-center text-sm text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
-                >
+                <ButtonLink href="/dashboard/settings/projects" variant="link">
                   Just connect a repository
-                </a>
+                </ButtonLink>
               ) : null}
             </div>
           ) : (

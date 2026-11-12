@@ -120,6 +120,8 @@ export interface ReportSchedule {
   cronExpr: string;
   timezone: string;
   nextRunAt: string;
+  /** Hours in `timezone` when nothing is delivered (`0059`); `null` is none. */
+  quietHours: { start: number; end: number } | null;
 }
 
 export interface ScheduledReportEnqueue {
@@ -127,6 +129,8 @@ export interface ScheduledReportEnqueue {
   scheduledFor: string;
   nextRunAt: string;
   idempotencyKey: string;
+  /** The earliest the dispatcher may send it: now, or the end of quiet hours. */
+  notBefore: string;
 }
 
 /** A `delivery_sources` row that is enabled and due. The API writes it; the worker queues it. */

@@ -347,6 +347,8 @@ export interface QualityPolicy {
     domain: DomainName;
     required: boolean;
     minimumPassRate?: number;
+    /** Security and accessibility: an open finding at or above this fails the domain. */
+    maxSeverity?: 'critical' | 'high' | 'medium' | 'low';
     requiredArtifactKinds: ArtifactKind[];
   }>;
   createdAt: string;
@@ -376,6 +378,12 @@ export interface ReleaseReadiness {
   latestRunId: string | null;
   gate: GateEvaluation | null;
   evaluatedAt: string;
+}
+
+/** What a retry changes from the run it repeats; anything absent is copied. */
+export interface RetryOverrides {
+  /** The test ids to run again, in place of the original selection. */
+  selection?: string[];
 }
 
 export interface CreateRunResult {
@@ -451,11 +459,13 @@ export interface ExecutionStore {
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides?: RetryOverrides,
   ): Promise<CreateRunResult | null>;
   retry(
     runId: string,
     workspaceId?: string,
     idempotencyKey?: string,
+    overrides?: RetryOverrides,
   ): Promise<CreateRunResult | null>;
   getJob(jobId: string, workspaceId?: string): Promise<ExecutionJob | null>;
   listJobs(workspaceId?: string): Promise<ExecutionJob[]>;
@@ -543,6 +553,15 @@ export interface ExecutionStore {
   saveGate(evaluation: GateEvaluation): Promise<GateEvaluation>;
   getGate(workspaceId: string, runId: string): Promise<GateEvaluation | null>;
   getRunGate(workspaceId: string, runId: string): Promise<GateEvaluation | null>;
+  /**
+   * The security, accessibility and performance domains, from evidence uploaded for the run's
+   * own commit (plan task 16). Absent on a store with no evidence to read; a domain with none
+   * is left out and the gate keeps it `not_configured`.
+   */
+  evidenceDomains?(
+    run: ExecutionRun,
+    policy: Pick<QualityPolicy, 'rules'>,
+  ): Promise<Partial<Record<DomainName, DomainStatus>>>;
   reapExpiredLeases(now?: Date): Promise<LeaseReapResult[]>;
   getReadiness(releaseId: string, workspaceId?: string): Promise<ReleaseReadiness>;
   getReleaseReadiness(workspaceId: string, releaseId: string): Promise<ReleaseReadiness>;

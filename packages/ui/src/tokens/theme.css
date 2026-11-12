@@ -75,11 +75,22 @@
   --color-border: var(--lupin-border);
   --color-border-strong: var(--lupin-border-strong);
   --color-accent: var(--lupin-accent);
-  --color-primary: var(--lupin-accent);
+  --color-primary: var(--lupin-primary);
+  --color-on-primary: var(--lupin-on-primary);
   --color-success: var(--lupin-success);
   --color-warning: var(--lupin-warning);
   --color-danger: var(--lupin-danger);
   --color-info: var(--lupin-info);
+  /*
+   * Design language v2: three elevations, each an existing surface step (so contrast is
+   * already held), and the verdict glow behind the hero, at most a quarter strength.
+   */
+  --color-elevation-1: var(--lupin-surface);
+  --color-elevation-2: var(--lupin-surface-raised);
+  --color-elevation-3: var(--lupin-surface-muted);
+  --color-glow-go: color-mix(in oklab, var(--lupin-success) 18%, transparent);
+  --color-glow-caution: color-mix(in oklab, var(--lupin-warning) 18%, transparent);
+  --color-glow-no-go: color-mix(in oklab, var(--lupin-danger) 18%, transparent);
   --color-error: var(--lupin-danger);
   --color-text-primary: var(--lupin-fg);
   --color-text-secondary: var(--lupin-fg-muted);
@@ -192,47 +203,43 @@
  */
 @theme {
   /*
-   * The ratio, as a number rather than as something the sizes imply.
-   *
-   * `--lupin-type-ratio` is read by `theme.test.ts` and checked against every step,
-   * so retuning a size without retuning the ladder is a failing assertion rather than a
-   * reviewer's memory.
+   * Design language v3: a named scale (12, 13, 15, 17, 22, 28, 34, 40, 48px), set the way
+   * Apple's text styles are rather than as a geometric ladder. `theme.test.ts` holds each size.
    */
-  --lupin-type-ratio: 1.2;
 
   /*
-   * Each step carries its own tracking, and the display steps a weight: Geist has no
-   * optical-size axis, so the correction a display cut would make is made here. Tracking
+   * Each step carries its own tracking, and the display steps a weight. Inter has an
+   * optical-size axis as well; the tracking is kept so the relation holds in any fallback. Tracking
    * closes up as the size grows, and 	heme.test.ts holds that relation.
    */
   --text-xs: 0.75rem;
   --text-xs--line-height: 1.4;
   --text-xs--letter-spacing: 0.01em;
-  --text-sm: 0.875rem;
+  --text-sm: 0.8125rem;
   --text-sm--line-height: 1.4286;
   --text-sm--letter-spacing: 0em;
-  --text-base: 1rem;
+  --text-base: 0.9375rem;
   --text-base--line-height: 1.5;
   --text-base--letter-spacing: -0.005em;
-  --text-lg: 1.2rem;
+  --text-lg: 1.0625rem;
   --text-lg--line-height: 1.5;
   --text-lg--letter-spacing: -0.01em;
-  --text-xl: 1.44rem;
+  --text-xl: 1.375rem;
   --text-xl--line-height: 1.4;
   --text-xl--letter-spacing: -0.015em;
-  --text-2xl: 1.728rem;
+  --text-2xl: 1.75rem;
   --text-2xl--line-height: 1.333;
   --text-2xl--letter-spacing: -0.02em;
   --text-2xl--font-weight: 600;
-  --text-3xl: 2.074rem;
+  --text-3xl: 2.125rem;
   --text-3xl--line-height: 1.2;
   --text-3xl--letter-spacing: -0.025em;
   --text-3xl--font-weight: 600;
-  --text-4xl: 2.488rem;
+  --text-4xl: 2.5rem;
   --text-4xl--line-height: 1.111;
   --text-4xl--letter-spacing: -0.03em;
   --text-4xl--font-weight: 600;
-  --text-5xl: 2.986rem;
+  --text-5xl: 3rem;
   --text-5xl--line-height: 1.05;
   --text-5xl--letter-spacing: -0.035em;
   --text-5xl--font-weight: 600;
@@ -316,12 +323,12 @@
 :root,
 [data-theme='dark'] {
   /* The plane. Sunken is the page, surface is a panel, raised is a control. */
-  --lupin-surface-sunken: oklch(17.79% 0.0064 271.04);
-  --lupin-surface: oklch(21.46% 0.0099 276.58);
-  --lupin-surface-raised: oklch(23.61% 0.0097 276.66);
-  --lupin-surface-muted: oklch(25.72% 0.0095 276.72);
-  --lupin-fg: oklch(96.77% 0.0027 286.35);
-  --lupin-fg-muted: oklch(72.33% 0.0101 279.62);
+  --lupin-surface-sunken: oklch(14.5% 0.002 286);
+  --lupin-surface: oklch(17.8% 0.003 286);
+  --lupin-surface-raised: oklch(20.3% 0.003 286);
+  --lupin-surface-muted: oklch(22.8% 0.004 286);
+  --lupin-fg: oklch(97% 0.002 286);
+  --lupin-fg-muted: oklch(72.5% 0.004 286);
   /*
    * Two borders, because WCAG 1.4.11 applies to some of what this token draws
    * and not to the rest.
@@ -338,26 +345,38 @@
    * 1.31:1, so a low-vision keyboard user had no way to see where the field
    * ended.
    */
-  --lupin-border: oklch(30.56% 0.0111 271.04);
-  --lupin-border-strong: oklch(55.34% 0.0141 275.92);
-  /* The Lupin violet, lifted for the dark plane: focus, active, links, the primary fill. */
-  --lupin-accent: oklch(79.25% 0.0891 292.99);
+  --lupin-border: oklch(26.5% 0.004 286);
+  --lupin-border-strong: oklch(52% 0.005 286);
+  /* The Lupin blue, lifted for the dark plane: focus, active, links, the primary fill. */
+  --lupin-accent: oklch(77.5% 0.13 246);
+  /*
+   * The accent's partner, for light and gradients only: the shell's glow and the primary
+   * fill's far end. Never text, never a status, so cyan can never be read as a verdict.
+   */
+  --lupin-accent-2: oklch(82% 0.11 200);
+  /*
+   * The primary button: one solid, saturated blue under a white label, in both themes, as on
+   * Apple and Linear. Its own token because the accent, which is link text on the dark plane,
+   * has to be light, and a light fill under a dark label read as a pastel placeholder.
+   */
+  --lupin-primary: oklch(54% 0.2 255);
+  --lupin-on-primary: oklch(100% 0 0);
   /* Restated off the Tailwind 500 steps. Hues 148 / 72 / 25. */
-  --lupin-success: oklch(72.03% 0.1317 147.83);
-  --lupin-warning: oklch(75.94% 0.1314 71.99);
-  --lupin-danger: oklch(66.66% 0.1313 24.63);
-  --lupin-info: oklch(66.18% 0.0421 257.93);
+  --lupin-success: oklch(74% 0.17 148);
+  --lupin-warning: oklch(79% 0.15 72);
+  --lupin-danger: oklch(66% 0.19 25);
+  --lupin-info: oklch(68% 0.045 210);
   /*
    * The foreground for text sitting *on* a saturated fill — the primary button,
    * the destructive button, the filled badge. It is its own token because the
    * fills are light in dark mode and dark in light mode, so no single
    * `text-white` or `text-fg` can be right for both. Dark here, because the
-   * accent is a light violet: the primary button is lavender with a near-black label.
+   * accent is a light blue: the primary button is light blue with a near-black label.
    */
-  --lupin-on-fill: oklch(17.79% 0.0064 271.04);
+  --lupin-on-fill: oklch(14.5% 0.002 286);
   /* Okabe–Ito, lifted for a near-black plane: every mark is at least 3:1 on every step. */
   --lupin-chart-pass: oklch(73.96% 0.1327 167.66);
-  --lupin-chart-fail: oklch(70.33% 0.16 40.91);
+  --lupin-chart-fail: oklch(66% 0.19 25);
   --lupin-chart-flaky: oklch(73.27% 0.121 337.17);
   --lupin-chart-skipped: oklch(65.66% 0.0155 268.42);
   --lupin-chart-line: oklch(73.92% 0.1225 240.43);
@@ -374,17 +393,21 @@
 [data-theme='light'] {
   /* The plane, inverted: elevation moves towards white rather than away from
      black, so a raised surface in light mode is the *nearest* to the page. */
-  --lupin-surface-sunken: oklch(93.62% 0.004 106.48);
+  --lupin-surface-sunken: oklch(94.2% 0.002 286);
   --lupin-surface: oklch(100% 0 0);
-  --lupin-surface-raised: oklch(99.08% 0.0013 106.42);
-  --lupin-surface-muted: oklch(96.66% 0.0026 106.45);
-  --lupin-fg: oklch(20.09% 0.0081 274.5);
-  --lupin-fg-muted: oklch(49.02% 0.0096 278.47);
-  --lupin-border: oklch(89.39% 0.0027 106.45);
+  --lupin-surface-raised: oklch(99.2% 0.001 286);
+  --lupin-surface-muted: oklch(97.3% 0.002 286);
+  --lupin-fg: oklch(20% 0.004 286);
+  --lupin-fg-muted: oklch(48% 0.004 286);
+  --lupin-border: oklch(90.5% 0.002 286);
   /* 3:1 has to be measured against the *darkest* plane step, not the base. */
-  --lupin-border-strong: oklch(57.7% 0.0124 274.76);
-  /* The Lupin violet: the primary button is violet with a white label, and a link is violet. */
-  --lupin-accent: oklch(50.92% 0.1381 290.35);
+  --lupin-border-strong: oklch(56% 0.004 286);
+  /* The Lupin blue: the primary button is blue with a white label, and a link is blue. */
+  --lupin-accent: oklch(48% 0.16 240);
+  /* Deep enough that the white label on the primary gradient's far end still reads. */
+  --lupin-accent-2: oklch(50% 0.1 210);
+  --lupin-primary: oklch(52% 0.2 255);
+  --lupin-on-primary: oklch(100% 0 0);
   /*
    * The status colours are used as body text — `Alert` and `Toast` render
    * `text-success` over `bg-success/10`, and `StatCard` renders the trend in
@@ -393,15 +416,15 @@
    * the background luminance and *lowers* the contrast, so a ratio computed
    * against the untinted surface would pass while the shipped rendering failed.
    */
-  --lupin-success: oklch(47.06% 0.1167 147.84);
-  --lupin-warning: oklch(48.1% 0.0934 71.99);
-  --lupin-danger: oklch(48.07% 0.1437 25.25);
+  --lupin-success: oklch(50% 0.165 148);
+  --lupin-warning: oklch(52% 0.12 72);
+  --lupin-danger: oklch(53% 0.2 25);
   /* The dark steel, one step down: the dark theme's steel is 2.5:1 on white. */
-  --lupin-info: oklch(48.1% 0.0476 257.53);
+  --lupin-info: oklch(47% 0.05 210);
   --lupin-on-fill: oklch(100% 0 0);
   /* Okabe–Ito, deepened for white: every mark is at least 3:1 on every step. */
   --lupin-chart-pass: oklch(55.06% 0.1223 161.18);
-  --lupin-chart-fail: oklch(56.15% 0.1727 39.73);
+  --lupin-chart-fail: oklch(53% 0.2 25);
   --lupin-chart-flaky: oklch(46.44% 0.1507 336.43);
   --lupin-chart-skipped: oklch(61.33% 0.0158 268.4);
   --lupin-chart-line: oklch(48.56% 0.1492 252.88);
@@ -449,10 +472,10 @@
 @media (prefers-reduced-transparency: reduce) {
   :root,
   [data-theme='dark'] {
-    --lupin-surface-sunken: oklch(17.79% 0.0064 271.04);
-    --lupin-surface: oklch(21.46% 0.0099 276.58);
-    --lupin-surface-raised: oklch(23.61% 0.0097 276.66);
-    --lupin-surface-muted: oklch(25.72% 0.0095 276.72);
+    --lupin-surface-sunken: oklch(14.5% 0.002 286);
+    --lupin-surface: oklch(17.8% 0.003 286);
+    --lupin-surface-raised: oklch(20.3% 0.003 286);
+    --lupin-surface-muted: oklch(22.8% 0.004 286);
     /* Measured on the *lightest* step above, not the base: a border that clears 3:1
        on the page and misses it on the muted step identifies a control on a card and
        not on a panel. */
@@ -461,10 +484,10 @@
   }
 
   [data-theme='light'] {
-    --lupin-surface-sunken: oklch(93.62% 0.004 106.48);
+    --lupin-surface-sunken: oklch(94.2% 0.002 286);
     --lupin-surface: oklch(100% 0 0);
-    --lupin-surface-raised: oklch(99.08% 0.0013 106.42);
-    --lupin-surface-muted: oklch(96.66% 0.0026 106.45);
+    --lupin-surface-raised: oklch(99.2% 0.001 286);
+    --lupin-surface-muted: oklch(97.3% 0.002 286);
     /* At least 3:1 on `--lupin-surface-sunken`, the darkest step, which is the
        binding constraint in this theme. */
     --lupin-border: oklch(59.4% 0.0123 274.77);
@@ -545,8 +568,13 @@
  *    the opaque step with no filter.
  */
 :root {
-  --lupin-translucent-opacity: 90%;
-  --lupin-translucent-blur: 16px;
+  /*
+   * A vibrant material, Apple-style: the colour behind comes through blurred and saturated, so
+   * the chrome reads as glass rather than a frosted slab. 88% is one step above 87%, the lowest tint at which every
+   * text token still clears 4.5:1 over pure black and pure white (`theme.test.ts`).
+   */
+  --lupin-translucent-opacity: 88%;
+  --lupin-translucent-blur: 28px;
   /*
    * The one ambient gradient: a faint violet light from the top of the page, for the
    * sign-in screen, first-run and empty states only. Drawn from the accent and the page,
@@ -557,6 +585,18 @@
     color-mix(in oklab, var(--lupin-accent) 10%, transparent),
     transparent 70%
   );
+  /*
+   * The shell's light, Apple-style: one neutral highlight from the top, no hue. The blue and
+   * cyan glows of v3 read as generated; a room lit from above reads as a material.
+   */
+  --lupin-gradient-shell: radial-gradient(
+    90% 55% at 50% 0%,
+    color-mix(in oklab, var(--lupin-fg) 5%, transparent),
+    transparent 70%
+  );
+  /* The one primary fill per screen: one solid colour, kept as a gradient token so the
+     utility and its callers stay one recipe. */
+  --lupin-gradient-primary: linear-gradient(var(--lupin-primary), var(--lupin-primary));
 }
 
 @utility surface-translucent {
@@ -568,7 +608,7 @@
       var(--lupin-surface-raised) var(--lupin-translucent-opacity),
       transparent
     );
-    backdrop-filter: blur(var(--lupin-translucent-blur)) saturate(140%);
+    backdrop-filter: blur(var(--lupin-translucent-blur)) saturate(180%);
   }
 
   @media (prefers-reduced-transparency: reduce) {
@@ -589,4 +629,49 @@
 
 @utility bg-ambient {
   background-image: var(--lupin-gradient-ambient);
+}
+
+/*
+ * A chart bar lit from its foot to its top in its own tone (`currentColor`, so the bar keeps
+ * whichever chart token its parent sets): the instrument look, not a flat block.
+ */
+@utility bg-chart-bar {
+  background-color: currentColor;
+  background-image: linear-gradient(
+    to top,
+    color-mix(in oklab, currentColor 55%, var(--lupin-surface)),
+    currentColor
+  );
+}
+
+/* The app shell only: the glow behind the translucent chrome. */
+@utility bg-shell {
+  background-image: var(--lupin-gradient-shell);
+  background-attachment: fixed;
+
+  @media (prefers-reduced-transparency: reduce) {
+    background-image: none;
+  }
+
+  @media (prefers-contrast: more) {
+    background-image: none;
+  }
+
+  @media (forced-colors: active) {
+    background-image: none;
+  }
+}
+
+/* The one primary fill per screen. A flat accent under forced colours or more contrast. */
+@utility bg-primary-gradient {
+  background-color: var(--lupin-accent);
+  background-image: var(--lupin-gradient-primary);
+
+  @media (prefers-contrast: more) {
+    background-image: none;
+  }
+
+  @media (forced-colors: active) {
+    background-image: none;
+  }
 }

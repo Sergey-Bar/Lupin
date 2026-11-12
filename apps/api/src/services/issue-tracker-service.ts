@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import {
   healthFindings,
   issueLinks,
@@ -16,6 +16,7 @@ import type {
   IssueTrackerBody,
 } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
+import { assertOutboundUrl } from '../http/outbound-guard.js';
 import { readGitToken } from './git-credential-service.js';
 import { githubRepository } from './health-integrations.js';
 import { projectRow, type ProjectRow } from './health-findings.js';
@@ -137,6 +138,7 @@ export async function setIssueTracker(
   const existing = await trackerRow(options, project.id);
   const name = trackerSecretName(project.id, body.kind);
   const baseUrl = body.baseUrl.replace(/\/+$/u, '');
+  await assertOutboundUrl(baseUrl, 'The tracker base URL');
   // Presence, not a comparison: whether a token was sent is a question about the field, and
   // nothing about its value is compared. A local keeps the check off a secret-named member.
   const { token } = body;
@@ -252,6 +254,8 @@ async function prepareJira(
   const token = await readVaultSecret(options, trackerSecretName(project.id, tracker.kind), WHAT);
   if (token === null) throw notConfigured("This project's Jira tracker has no token");
   if (adapters.jira === undefined) throw notConfigured('No Jira connector is composed');
+  // Checked before every call: the host's addresses may have changed since it was saved.
+  await assertOutboundUrl(tracker.baseUrl, 'The tracker base URL');
   return {
     adapter: adapters.jira,
     token,
@@ -517,6 +521,39 @@ export async function createFindingIssue(
 /** The key a cluster's issue is filed under: its signature, hashed to a bounded width. */
 export function clusterKey(signature: string): string {
   return createHash('sha256').update(signature).digest('hex');
+}
+
+/**
+ * The created issues for these cluster signatures, by signature, so a cluster that already
+ * has an issue shows it on every later occurrence (plan Wave 1 task 3).
+ */
+export async function clusterIssues(
+  options: IssueTrackerOptions,
+  projectId: string,
+  signatures: readonly string[],
+): Promise<Record<string, IssueLink>> {
+  if (signatures.length === 0) return {};
+  const bySourceKey = new Map(signatures.map((signature) => [clusterKey(signature), signature]));
+  const rows = await options.db
+    .select()
+    .from(issueLinks)
+    .where(
+      and(
+        eq(issueLinks.workspaceId, options.workspaceId),
+        eq(issueLinks.projectId, projectId),
+        eq(issueLinks.sourceKind, 'cluster'),
+        eq(issueLinks.state, 'created'),
+        inArray(issueLinks.sourceKey, [...bySourceKey.keys()]),
+      ),
+    );
+  const found: Record<string, IssueLink> = {};
+  for (const row of rows) {
+    const signature = bySourceKey.get(row.sourceKey);
+    if (signature !== undefined && found[signature] === undefined) {
+      found[signature] = linkOf(row, false);
+    }
+  }
+  return found;
 }
 
 /** An issue from one failure cluster, filed against the project the body names. */

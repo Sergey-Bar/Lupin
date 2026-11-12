@@ -22,12 +22,12 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.5.15",
+    "@electric-sql/pglite": "catalog:",
     "@eslint/js": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "eslint": "catalog:",
-    "tsx": "^4.23.15",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"

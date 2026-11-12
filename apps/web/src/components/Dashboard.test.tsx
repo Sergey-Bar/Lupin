@@ -15,9 +15,10 @@ import {
   type ScoreCell,
 } from '@lupin/shared-contracts';
 import { Dashboard, read, summariseReports } from './Dashboard';
-import { makeApi, makeQa, makeScan, makeTrend } from '../test-utils';
+import { cockpitFixture, makeApi, makeQa, makeScan, makeTrend } from '../test-utils';
 import type { QaClient } from '../lib/qa-client';
 import type { QaScore as WebQaScore } from '../lib/qa';
+import { expectOnePrimary } from '../test-utils.js';
 
 /**
  * The dashboard.
@@ -109,9 +110,21 @@ function makeScore(cells?: ScoreCell[]): WebQaScore {
   return QaScoreSchema.parse(base);
 }
 
-function renderDashboard(qa: QaClient, api = makeApi(), projectId?: string) {
+function renderDashboard(
+  qa: QaClient,
+  api = makeApi(),
+  projectId?: string,
+  cockpit?: React.ComponentProps<typeof Dashboard>['cockpit'],
+) {
   const rootRoute = createRootRoute({
-    component: () => <Dashboard qa={qa} api={api} projectId={projectId} />,
+    component: () => (
+      <Dashboard
+        qa={qa}
+        api={api}
+        projectId={projectId}
+        {...(cockpit === undefined ? {} : { cockpit })}
+      />
+    ),
   });
   const router = createRouter({ routeTree: rootRoute });
   router.update({ history: createMemoryHistory({ initialEntries: ['/dashboard'] }) });
@@ -178,6 +191,24 @@ function qaWithScore(overrides: Partial<QaClient> = {}): QaClient {
 }
 
 describe('the dashboard', () => {
+  it('shows how the product is doing, open on the page, for the project it is about', async () => {
+    const cockpit = vi.fn(async () => cockpitFixture());
+    renderDashboard(qaWithScore(), makeApi(), undefined, cockpit);
+    // Open, not folded: a lead should not have to click to see past three items.
+    const details = await screen.findByRole('region', { name: 'Everything else' });
+    const numbers = await within(details).findByTestId('cockpit-numbers');
+    expect(await within(numbers).findByTestId('cockpit-status')).toHaveTextContent('74');
+    expect(cockpit).toHaveBeenCalledWith(
+      { window: '7d', projectId: expect.any(String) },
+      expect.any(AbortSignal),
+    );
+  });
+  it('draws at most one solid primary button on the screen', async () => {
+    renderDashboard(qaWithScore());
+    await screen.findByTestId('readiness-verdict');
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   it('leads with the verdict, then what is wrong beside what is good', async () => {
     renderDashboard(qaWithScore());
     const verdict = await screen.findByTestId('readiness-verdict');
@@ -202,8 +233,9 @@ describe('the dashboard', () => {
   it('reports the six figures, each with its change against the window before', async () => {
     renderDashboard(qaWithScore(), makeApi({ getQuarantine: vi.fn(async () => []) }));
     await waitFor(() => expect(screen.getByTestId('kpi-health')).toHaveTextContent('72'));
-    expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toBeInTheDocument();
-    expect(screen.getByTestId('dashboard-subject')).toHaveTextContent('Lupin · /repos/lupin');
+    expect(screen.getByRole('heading', { level: 1, name: 'Health' })).toBeInTheDocument();
+    // The project's name only: a local folder path is noise to a reader.
+    expect(screen.getByTestId('dashboard-subject')).toHaveTextContent(/^Lupin$/u);
     expect(screen.getByTestId('kpi-health')).toHaveTextContent('limited by security at 0.00');
     // 80% → 90% is ten points better, and says so in words as well as colour.
     expect(screen.getByTestId('kpi-pass-rate')).toHaveTextContent('90.0%');
@@ -223,6 +255,30 @@ describe('the dashboard', () => {
     expect(screen.getByTestId('kpi-runs')).toHaveTextContent('Runs · all projects');
     expect(screen.getByTestId('kpi-maturity')).toHaveTextContent('50%');
     expect(screen.getByTestId('kpi-maturity')).toHaveTextContent('1 of 3 capabilities');
+  });
+
+  it('opens the full score breakdown from the health matrix', async () => {
+    // The score page had no link anywhere after the redesign; only a typed URL reached it.
+    renderDashboard(qaWithScore());
+    const matrix = await screen.findByTestId('dashboard-matrix');
+    await waitFor(() =>
+      expect(within(matrix).getByRole('link', { name: 'Full score' })).toHaveAttribute(
+        'href',
+        '/dashboard/score/project-1',
+      ),
+    );
+  });
+
+  it('opens on the release verdict as the hero', async () => {
+    renderDashboard(qaWithScore());
+    // makeReadiness is a caution.
+    expect(await screen.findByRole('region', { name: 'Caution' })).toBeInTheDocument();
+  });
+
+  it('draws the 80% pass-rate floor on the trend', async () => {
+    renderDashboard(qaWithScore());
+    const chart = await screen.findByTestId('trend-chart');
+    expect(within(chart).getByTestId('trend-floor')).toBeInTheDocument();
   });
 
   it('compares before and now row by row, and tallies what improved', async () => {
@@ -362,7 +418,7 @@ describe('the dashboard', () => {
   it('shows the onboarding screen for an empty registry, and for an unknown project id', async () => {
     renderDashboard(makeQa({ listProjects: vi.fn(async () => []) }));
     await waitFor(() => expect(screen.getByTestId('onboarding')).toBeInTheDocument());
-    expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Health' })).toBeInTheDocument();
   });
 
   it('routes to an explicit project and refuses one that is not registered', async () => {

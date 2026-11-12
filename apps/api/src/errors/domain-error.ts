@@ -218,6 +218,8 @@ export const ErrorCode = {
   LOGIN_RATE_LIMITED: 'LOGIN_RATE_LIMITED',
   /** Any other per-client budget: the GitHub webhook receiver's. */
   RATE_LIMITED: 'RATE_LIMITED',
+  /** This install's monthly model budget is spent (plan task 36). */
+  BUDGET_EXHAUSTED: 'BUDGET_EXHAUSTED',
 
   // 503 — a dependency is unavailable.
   DEPENDENCY_UNAVAILABLE: 'DEPENDENCY_UNAVAILABLE',
@@ -365,6 +367,7 @@ const STATUS_BY_CODE: Record<ErrorCodeValue, number> = {
   CHECK_CONSTRAINT_VIOLATED: 422,
   LOGIN_RATE_LIMITED: 429,
   RATE_LIMITED: 429,
+  BUDGET_EXHAUSTED: 429,
   DEPENDENCY_UNAVAILABLE: 503,
   MODEL_OUTPUT_UNUSABLE: 502,
   NOT_CONFIGURED: 503,

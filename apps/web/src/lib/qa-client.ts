@@ -1,5 +1,14 @@
 import { z } from 'zod/v4';
 import {
+  IssueLinkSchema,
+  ReleaseSignoffListSchema,
+  ReleaseSignoffSchema,
+  type ClusterIssueBody,
+  type IssueLink,
+  type ReleaseSignoff,
+  type SignoffBody,
+} from '@lupin/shared-contracts';
+import {
   AnalyticsTrendSchema,
   CopilotAnswerSchema,
   ProjectDetailResponseSchema,
@@ -68,6 +77,14 @@ export interface QaClient {
     commandId: string,
     idempotencyKey: string,
   ): Promise<{ runId: string }>;
+  /** The issue each of these failure-cluster signatures already has (plan Wave 1 task 3). */
+  clusterIssues?(projectId: string, signatures: string[]): Promise<Record<string, IssueLink>>;
+  /** Opens an issue for a failure cluster, or answers with the one it already has. */
+  openClusterIssue?(body: ClusterIssueBody): Promise<IssueLink>;
+  /** Release sign-offs for a project, newest first (plan Wave 1 task 5). */
+  listSignoffs(projectId: string): Promise<ReleaseSignoff[]>;
+  /** Records a ship or hold; the server records the verdict it computes. */
+  signOff(projectId: string, body: SignoffBody): Promise<ReleaseSignoff>;
 }
 
 /** What a response must look like for `getJson` to accept it. */
@@ -165,6 +182,28 @@ export function createQaClient(baseUrl = '', fetchImpl: typeof fetch = fetch): Q
         `/api/v1/projects/${encodeURIComponent(projectId)}/run.start`,
         { commandId, idempotencyKey },
         z.object({ runId: z.string().min(1), jobId: z.string().min(1), phase: z.string().min(1) }),
+      ),
+    clusterIssues: (projectId, signatures) => {
+      const query = new URLSearchParams(signatures.map((signature) => ['signature', signature]));
+      return get(
+        `/api/v1/projects/${encodeURIComponent(projectId)}/cluster-issues?${query.toString()}`,
+        z.object({ issues: z.record(z.string(), IssueLinkSchema) }),
+      ).then((answer) => answer.issues);
+    },
+    openClusterIssue: (body) =>
+      post('/api/v1/dashboard/failure-clusters/issue', body, IssueLinkSchema),
+    listSignoffs: async (projectId) =>
+      (
+        await get(
+          `/api/v1/projects/${encodeURIComponent(projectId)}/signoffs`,
+          ReleaseSignoffListSchema,
+        )
+      ).signoffs,
+    signOff: (projectId, body) =>
+      post(
+        `/api/v1/projects/${encodeURIComponent(projectId)}/signoffs`,
+        body,
+        ReleaseSignoffSchema,
       ),
   };
 }

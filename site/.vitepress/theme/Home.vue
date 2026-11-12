@@ -1,219 +1,201 @@
 <script setup lang="ts">
 import { withBase } from 'vitepress';
-import runsPreview from '../../../docs/assets/runs.png';
+import focusPreview from '../../../docs/assets/focus.png';
+import insightsPreview from '../../../docs/assets/insights.png';
 import { githubUrl } from '../locales';
+
+/**
+ * The hero's release decision is drawn in HTML, not as a picture: it is the product's
+ * argument in one card, so it has to be readable, translatable and selectable. Every verdict
+ * is a word beside its dot, because colour is never the only carrier.
+ */
+const decision = {
+  release: 'Release 2.4.0',
+  branch: 'release/2.4',
+  verdict: 'Blocked',
+  rows: [
+    { domain: 'Browser tests', detail: '2 of 148 failed', word: 'Failed', tone: 'bad' },
+    { domain: 'Flaky', detail: 'checkout › basket refresh', word: 'Quarantined', tone: 'warn' },
+    { domain: 'API contract', detail: '312 of 312 passed', word: 'Passed', tone: 'good' },
+    {
+      domain: 'Security scan',
+      detail: 'no scanner connected',
+      word: 'Not configured',
+      tone: 'unknown',
+    },
+  ],
+  footer: 'Decided from 4 runs on 7d02b5f · evidence attached',
+} as const;
+
 const stages = [
   {
-    title: 'Observe',
-    text: 'Collect test results and evidence from the tools your team already uses.',
-    link: '/guide/sending-results',
-    action: 'Connect your test tools',
+    title: 'Connect',
+    text: 'Point it at your repo and CI. Two minutes.',
+    link: '/guide/install',
+    action: 'Install',
   },
   {
-    title: 'Investigate',
-    text: 'Understand failures, retries, flaky tests, and the signals behind each result.',
+    title: 'Lupin watches',
+    text: 'Every run, flaky test and health signal, as you ship.',
     link: '/guide/concepts',
-    action: 'Follow a test result',
+    action: 'What it reads',
   },
   {
-    title: 'Decide',
-    text: 'Use explicit quality gates to assess a release. See what passed, failed, or is still unknown.',
+    title: 'You decide',
+    text: 'One thing first. One click to retry or quarantine.',
     link: '/guide/quality-gates',
-    action: 'Understand quality gates',
+    action: 'Gates and quarantine',
   },
 ];
-const capabilities = [
+
+/** The three commands are the guides' own (install.md, cli.md); the quick start does not invent one. */
+const quickStart = [
   {
-    title: 'Unified test results',
-    text: 'One consistent result model across supported producers.',
-    link: '/guide/sending-results',
+    title: 'Start Lupin',
+    command: './start.sh',
+    note: 'Needs Docker. Windows: .\\start.cmd',
+    link: '/guide/install',
   },
   {
-    title: 'Evidence preservation',
-    text: 'Keep original reports and failure artifacts attached to the results they explain.',
-    link: '/guide/concepts',
+    title: 'Send a test run',
+    command:
+      'lupin test --format playwright-json --report results.json -- npx playwright test --reporter=json',
+    note: 'Wraps your test command and uploads the result.',
+    link: '/guide/cli',
   },
   {
-    title: 'Flaky test intelligence',
-    text: 'See retries and inconsistent results without mistaking a later pass for reliability.',
-    link: '/guide/concepts#test-statuses',
-  },
-  {
-    title: 'Quality gates',
-    text: 'Explicit outcomes, including unknown and not configured. Missing evidence stays visible.',
+    title: 'Gate the pull request',
+    command: 'lupin gate --branch "$BRANCH" --commit "$SHA" --pr 42',
+    note: 'Fails CI when the gate fails.',
     link: '/guide/quality-gates',
   },
-  {
-    title: 'Quarantine management',
-    text: 'Manage known flaky tests with reasons and an audit history.',
-    link: '/guide/quality-gates',
-  },
-  {
-    title: 'Self-hosted control',
-    text: 'Run the platform in your environment. Choose the access profile that fits your team.',
-    link: '/guide/profiles',
-  },
-];
-const integrations = [
-  ['Playwright', 'Live reporter + JSON import'],
-  ['JUnit', 'XML report import'],
-  ['k6', 'Summary JSON import'],
-  ['OWASP ZAP', 'XML report import'],
-  ['Allure', 'Results importer'],
 ];
 </script>
+
 <template>
   <main class="lupin-home">
     <section class="lupin-hero" aria-labelledby="hero-title">
-      <p class="lupin-kicker"><span aria-hidden="true"></span> Self-hosted quality intelligence</p>
-      <h1 id="hero-title">Know what broke.<br /><span>Know whether to ship.</span></h1>
-      <p class="lupin-lead">
-        Lupin brings test results, evidence, flaky tests, and quality gates into one self-hosted
-        workspace.
-      </p>
-      <div class="lupin-actions">
-        <a class="lupin-button primary" :href="withBase('/guide/install')"
-          >Get started <span aria-hidden="true">↗</span></a
-        ><a class="lupin-button" :href="githubUrl" target="_blank" rel="noopener noreferrer"
-          >View on GitHub <span aria-hidden="true">↗</span></a
-        >
+      <div class="lupin-hero-copy">
+        <p class="lupin-kicker lupin-arrive">
+          <span aria-hidden="true"></span> The QA copilot for AI-speed teams
+        </p>
+        <h1 id="hero-title" class="lupin-arrive">
+          AI writes the code.<br /><span>Lupin keeps it shippable.</span>
+        </h1>
+        <p class="lupin-lead lupin-arrive">
+          It reads every test run, spots what broke, and fixes the obvious in one click.
+        </p>
+        <div class="lupin-actions lupin-arrive">
+          <a class="lupin-button primary" :href="withBase('/guide/install')"
+            >Get started <span aria-hidden="true">→</span></a
+          ><a class="lupin-button" :href="githubUrl" target="_blank" rel="noopener noreferrer"
+            >View on GitHub <span aria-hidden="true">↗</span></a
+          >
+        </div>
       </div>
-      <p class="lupin-hero-note">Open source. MIT licensed. Runs on your infrastructure.</p>
+
+      <figure
+        class="lupin-decision lupin-arrive"
+        aria-label="Example release decision: Release 2.4.0 is blocked"
+      >
+        <header>
+          <div>
+            <strong>{{ decision.release }}</strong>
+            <span class="lupin-mono">{{ decision.branch }}</span>
+          </div>
+          <span class="lupin-verdict" data-tone="bad">
+            <span class="lupin-dot" data-tone="bad" aria-hidden="true"></span>{{ decision.verdict }}
+          </span>
+        </header>
+        <ul>
+          <li v-for="row in decision.rows" :key="row.domain">
+            <span class="lupin-dot" :data-tone="row.tone" aria-hidden="true"></span>
+            <span class="lupin-decision-domain">{{ row.domain }}</span>
+            <span class="lupin-decision-detail">{{ row.detail }}</span>
+            <span class="lupin-decision-word" :data-tone="row.tone">{{ row.word }}</span>
+          </li>
+        </ul>
+      </figure>
     </section>
 
     <section id="product" class="lupin-showcase" aria-labelledby="showcase-title">
       <div class="lupin-section-line">
-        <h2 id="showcase-title">The evidence, in view.</h2>
+        <h2 id="showcase-title">It already knows what to show you.</h2>
         <a :href="withBase('/guide/concepts')"
-          >Explore the product <span aria-hidden="true">↗</span></a
+          >Explore the product <span aria-hidden="true">→</span></a
         >
       </div>
-      <figure>
-        <img
-          :src="runsPreview"
-          alt="The Lupin runs view: five runs with their outcomes, test counts, release readiness and recent executions."
-          width="1440"
-          height="900"
-          fetchpriority="high"
-          decoding="async"
-        />
-        <figcaption>
-          The Lupin console, captured from the product with demonstration runs.
-        </figcaption>
-      </figure>
-      <div class="lupin-showcase-notes">
-        <p><strong>Results with context</strong>Keep failures and retries visible.</p>
-        <p><strong>Evidence you can inspect</strong>Follow the reports behind a result.</p>
-        <p><strong>Explicit readiness</strong>Distinguish a failure from a missing signal.</p>
+      <div class="lupin-shots">
+        <figure class="lupin-frame">
+          <div class="lupin-frame-bar" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <img
+            :src="focusPreview"
+            alt="Lupin&rsquo;s home: a greeting, one failing test on main to fix first, and a one-click Retry now button."
+            width="1440"
+            height="900"
+            fetchpriority="high"
+            decoding="async"
+          />
+        </figure>
+        <figure class="lupin-frame">
+          <div class="lupin-frame-bar" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <img
+            :src="insightsPreview"
+            alt="Lupin Insights: release readiness, flaky tests ranked by flips, slowest tests and failures by suite and day."
+            width="1440"
+            height="900"
+            loading="lazy"
+            decoding="async"
+          />
+        </figure>
       </div>
     </section>
 
     <section id="how-it-works" class="lupin-section" aria-labelledby="how-title">
       <div class="lupin-section-heading">
         <p class="lupin-kicker">How it works</p>
-        <h2 id="how-title">Observe. Investigate. Decide.</h2>
-        <p>From the first test result to the release decision, keep the context together.</p>
+        <h2 id="how-title">Connect. Forget it. Ship.</h2>
       </div>
       <ol class="lupin-steps">
         <li v-for="(stage, index) in stages" :key="stage.title">
           <span class="lupin-index">0{{ index + 1 }}</span>
           <h3>{{ stage.title }}</h3>
           <p>{{ stage.text }}</p>
-          <a :href="withBase(stage.link)">{{ stage.action }} <span aria-hidden="true">↗</span></a>
+          <a :href="withBase(stage.link)">{{ stage.action }} <span aria-hidden="true">→</span></a>
         </li>
       </ol>
     </section>
 
-    <section class="lupin-section" aria-labelledby="capabilities-title">
+    <section id="get-started" class="lupin-section" aria-labelledby="start-title">
       <div class="lupin-section-heading">
-        <p class="lupin-kicker">Core capabilities</p>
-        <h2 id="capabilities-title">A clearer picture of quality.</h2>
-        <p>The details you need to investigate a failure and assess what comes next.</p>
+        <p class="lupin-kicker">Get started</p>
+        <h2 id="start-title">Three commands.</h2>
       </div>
-      <div class="lupin-capabilities">
-        <article v-for="(item, index) in capabilities" :key="item.title">
+      <ol class="lupin-quickstart">
+        <li v-for="(step, index) in quickStart" :key="step.title">
           <span class="lupin-index">0{{ index + 1 }}</span>
-          <h3>
-            <a :href="withBase(item.link)">{{ item.title }} <span aria-hidden="true">↗</span></a>
-          </h3>
-          <p>{{ item.text }}</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="lupin-section" aria-labelledby="integrations-title">
-      <div class="lupin-section-heading">
-        <p class="lupin-kicker">Works with your tools</p>
-        <h2 id="integrations-title">Keep your test stack.</h2>
-        <p>
-          Stream results through the Playwright reporter or import reports from supported tools.
-        </p>
-      </div>
-      <ul class="lupin-integrations">
-        <li v-for="item in integrations" :key="item[0]">
-          <strong>{{ item[0] }}</strong
-          ><span>{{ item[1] }}</span>
+          <div>
+            <h3>
+              <a :href="withBase(step.link)">{{ step.title }}</a>
+            </h3>
+            <pre><code>{{ step.command }}</code></pre>
+            <p>{{ step.note }}</p>
+          </div>
         </li>
-      </ul>
-      <a class="lupin-text-link" :href="withBase('/guide/sending-results')"
-        >Read the integration guide <span aria-hidden="true">↗</span></a
-      >
-    </section>
-
-    <section class="lupin-section lupin-install" aria-labelledby="install-title">
-      <div>
-        <p class="lupin-kicker">Your infrastructure</p>
-        <h2 id="install-title">Self-hosted.<br />From the start.</h2>
-        <p>
-          Download a release, start Docker, and run the included startup script. Choose a local or
-          shared installation profile.
-        </p>
-        <div class="lupin-actions">
-          <a class="lupin-button primary" :href="withBase('/guide/install')">Installation guide</a
-          ><a class="lupin-text-link" :href="`${githubUrl}/releases`">Browse releases ↗</a>
-        </div>
-      </div>
-      <div class="lupin-install-panel">
-        <p>After extracting the release</p>
-        <dl>
-          <div>
-            <dt>macOS / Linux</dt>
-            <dd><code>./start.sh</code></dd>
-          </div>
-          <div>
-            <dt>Windows</dt>
-            <dd><code>.\start.cmd</code></dd>
-          </div>
-        </dl>
-        <p class="lupin-technical-note">
-          Requires Docker with Compose v2. Release files, packages, and commands still use the
-          <code>lupin</code> name.
-        </p>
-      </div>
-    </section>
-
-    <section class="lupin-section lupin-open" aria-labelledby="open-title">
-      <div>
-        <p class="lupin-kicker">Open source</p>
-        <h2 id="open-title">Inspect the code.<br />Understand the decisions.</h2>
-      </div>
-      <div>
-        <p>
-          MIT licensed, with source code, issue tracking, and contribution guidelines in the public
-          repository.
-        </p>
-        <a class="lupin-text-link" :href="`${githubUrl}/blob/main/.github/CONTRIBUTING.md`"
-          >Read the contributing guide ↗</a
-        >
-      </div>
+      </ol>
     </section>
 
     <section class="lupin-closing" aria-labelledby="closing-title">
-      <p class="lupin-kicker">Lupin</p>
-      <h2 id="closing-title">Make quality a decision,<br />not a guess.</h2>
+      <p class="lupin-kicker">Lupin<span class="lupin-wordmark-dot" aria-hidden="true">.</span></p>
+      <h2 id="closing-title">Free. Forever.<br /><span>Open source, on your machines.</span></h2>
       <div class="lupin-actions">
-        <a class="lupin-button primary" :href="withBase('/guide/install')">Get started ↗</a
-        ><a class="lupin-button" :href="withBase('/guide/')">View documentation</a>
+        <a class="lupin-button primary" :href="withBase('/guide/install')"
+          >Get started <span aria-hidden="true">→</span></a
+        ><a class="lupin-button" :href="withBase('/guide/')">Read the docs</a>
       </div>
     </section>
   </main>

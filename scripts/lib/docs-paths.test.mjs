@@ -561,8 +561,9 @@ test('no document calls something unused while the workspace still imports it', 
  * @param {string} name
  */
 function isImported(name) {
+  // A lazy `import('…')` is a use: every routed page is loaded that way (ledger MNT-192).
   const pattern = new RegExp(
-    `from ['"][^'"]*\\b${escapeRegExp(name)}\\b|require\\(['"][^'"]*${escapeRegExp(name)}`,
+    `from ['"][^'"]*\\b${escapeRegExp(name)}\\b|import\\(['"][^'"]*\\b${escapeRegExp(name)}\\b|require\\(['"][^'"]*${escapeRegExp(name)}`,
   );
   // Test files are excluded on purpose, and a declaration is not a use.
   //
@@ -728,4 +729,23 @@ test('no document cites a path that does not exist', () => {
     }
   }
   assert.deepEqual(missing, [], `cited paths that do not exist:\n${missing.join('\n')}`);
+});
+
+test('a real capability cites no web component that only its own test mounts', () => {
+  // `reporting.explorer` was `real` on the strength of `RunExplorer.tsx`, which nothing in the
+  // product rendered: its own test and the axe sweep were its only callers (ledger MNT-192).
+  // A screen is evidence that a person can see the capability; a component no route mounts
+  // is not.
+  const dead = [];
+  for (const line of readFileSync(REGISTER, 'utf8').split(/\r?\n/)) {
+    const cells = line.split('|').map((cell) => cell.trim());
+    if (cells.length < 6 || cells[3] !== 'real') continue;
+    for (const cited of (cells[5] ?? '').matchAll(/`(apps\/web\/src\/[^`]+\.tsx)`/g)) {
+      const file = cited[1] ?? '';
+      if (/\.test\.tsx$/.test(file) || file.includes('/routes/')) continue;
+      const name = path.basename(file, '.tsx');
+      if (!isImported(name)) dead.push(`${cells[1] ?? ''}: ${file}`);
+    }
+  }
+  assert.deepEqual(dead, [], `real rows citing components nothing mounts:\n${dead.join('\n')}`);
 });

@@ -380,6 +380,102 @@
       "shownToFail": "fc.check refutes a gate that applies its rules to everyone."
     },
     {
+      "id": "RISK-1",
+      "statement": "Adding risk evidence never lowers a change's risk level or score: the same change made worse on every axis, with the same evidence present, ranks at or above where it was.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/change-risk.property.test.ts",
+      "seed": 20261111,
+      "shownToFail": "Scoring a 1000-line change 5 points (below the 400-line band's 10) fails RISK-1 after 163 runs."
+    },
+    {
+      "id": "RISK-2",
+      "statement": "A change whose required evidence (test results, diff coverage) is missing is never low or medium risk: unknown at best, and a measured high or critical stands.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/change-risk.property.test.ts",
+      "seed": 20261111,
+      "shownToFail": "Disabling the missing-evidence rule fails RISK-2 on the first generated clean change; fc.check refutes a model that defaults unmeasured coverage to 100."
+    },
+    {
+      "id": "RISK-3",
+      "statement": "A change-risk score is exactly the sum of its factor points, and missing-evidence factors carry none.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/change-risk.property.test.ts",
+      "seed": 20261111,
+      "shownToFail": "ChangeRiskSchema refuses a score that differs from the sum (packages/shared-contracts/src/schemas/change-risk.test.ts)."
+    },
+    {
+      "id": "PACE-1",
+      "statement": "Changed lines whose diff coverage was not measured are counted as unmeasured, never as covered or uncovered.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/pace.property.test.ts",
+      "seed": 20261112,
+      "shownToFail": "Counting a merge with no coverage as fully covered fails PACE-1 on the first generated input."
+    },
+    {
+      "id": "PACE-2",
+      "statement": "Untested-change debt is a running total: it never decreases from one week to the next.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/pace.property.test.ts",
+      "seed": 20261112,
+      "shownToFail": "fc.check refutes a debt that is each week's own uncovered lines rather than the running total."
+    },
+    {
+      "id": "PHASE-1",
+      "statement": "An SDLC phase with no evidence is not_measured, never done, and a strip with an unmeasured phase is never good.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/sdlc-phases.property.test.ts",
+      "seed": 20261113,
+      "shownToFail": "Reading an unread pull-request body as a linked issue fails PHASE-1 on the first generated input."
+    },
+    {
+      "id": "PHASE-2",
+      "statement": "No SDLC phase is pending or in progress while a later phase is done: a phase a change went past is skipped.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/sdlc-phases.property.test.ts",
+      "seed": 20261113,
+      "shownToFail": "Removing the passed-over pass (markPassedOver) fails PHASE-2."
+    },
+    {
+      "id": "BRIEF-1",
+      "statement": "Every briefing item cites at least one piece of evidence, and item ids are unique within a briefing.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/briefing.property.test.ts",
+      "seed": 20261114,
+      "shownToFail": "BriefingItemSchema refuses an item with no evidence; giving two bottlenecks one id fails BRIEF-1."
+    },
+    {
+      "id": "BRIEF-2",
+      "statement": "A briefing over a window where nothing happened is the one 'nothing happened' line, never a list of zeros, and its shape is never good.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/briefing.property.test.ts",
+      "seed": 20261114,
+      "shownToFail": "Emitting the merged line for zero merges fails BRIEF-2 on the first generated window."
+    },
+    {
+      "id": "SHAPE-1",
+      "statement": "A shape verdict with any signal not measured (no shape, or no time) is never good, at any level.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/shape.property.test.ts",
+      "seed": 20261115,
+      "shownToFail": "fc.check refutes a reading that calls good every set of signals with nothing bad or cautionary in it."
+    },
+    {
+      "id": "SHAPE-2",
+      "statement": "A shape verdict whose evidence is all older than the stale window is never good and reads as stale; a stale bad verdict stays bad.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/shape.property.test.ts",
+      "seed": 20261115,
+      "shownToFail": "Dropping the stale check from shapeReading fails SHAPE-2 on the first generated good signal."
+    },
+    {
+      "id": "SHAPE-3",
+      "statement": "Adding a bad signal to any set of signals never moves the verdict up the order bad, caution, unknown, good, and never leaves it good.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/shape.property.test.ts",
+      "seed": 20261115,
+      "shownToFail": "Ranking a measured bad signal below caution in shapeReading fails SHAPE-3."
+    },
+    {
       "id": "EVAL-1",
       "statement": "An identical baseline and candidate eval run is never a fail, for any run and any comparison seed.",
       "package": "packages/reporting",
@@ -421,7 +517,7 @@
     },
     {
       "id": "DIGEST-1",
-      "statement": "Every rendering of a scheduled report fits its platform limit at any limit from 80 characters up (Telegram, Slack, plain text for WhatsApp and Signal), and a report never shows more than three items, with the rest counted, nor more than three area lines, three actions or three cockpit changes, with no action listed twice, and the cockpit's headline and changes (as hostile as every other line) obey the same limits.",
+      "statement": "Every rendering of a scheduled report fits its platform limit at any limit from 80 characters up (Telegram, Slack, plain text for WhatsApp and Signal), and a report never shows more than three items, with the rest counted, nor more than three area lines, three actions or three cockpit changes, with no action listed twice, and the cockpit's headline and changes (as hostile as every other line) obey the same limits; a briefing's headline and at most three of its lines obey them too.",
       "package": "packages/reporting",
       "testFile": "packages/reporting/src/report.property.test.ts",
       "seed": 20261025,
@@ -474,6 +570,22 @@
       "testFile": "packages/reporting/src/cockpit.property.test.ts",
       "seed": 20261106,
       "shownToFail": "Mutation: counting only a change's additions and not its deletions fails the conservation property, the pinned lines example and the harness checker on the first case with a deletion."
+    },
+    {
+      "id": "GATE-1",
+      "statement": "A domain the policy requires, with no evidence uploaded for it, never lets the release gate pass, whatever else the evidence says.",
+      "package": "apps/api",
+      "testFile": "apps/api/src/execution/evidence-domains.property.test.ts",
+      "seed": 20261112,
+      "shownToFail": "The suite runs the same check against a gate given a passed status for the missing domain, and asserts that fc.assert throws."
+    },
+    {
+      "id": "GATE-2",
+      "statement": "A security or accessibility finding at or above the policy maxSeverity always fails its domain.",
+      "package": "apps/api",
+      "testFile": "apps/api/src/execution/evidence-domains.property.test.ts",
+      "seed": 20261112,
+      "shownToFail": "Deleting the findingsVerdict severity comparison makes the property fail on its first generated case."
     }
   ]
 }

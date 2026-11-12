@@ -302,7 +302,8 @@ describe('production composition', () => {
  * already drives `DrizzleInstallationKeyStore` against it. Two things are substituted,
  * and only because there is no alternative in-process:
  *
- * 1. `createDbResources` returns a PGlite-backed client instead of a `pg.Pool`. A
+ * 1. `createDbResources` returns a PGlite-backed client instead of a `pg.Pool`, and a
+ *    pool whose one connection is that client, for the boot's advisory lock. A
  *    `pg.Pool` needs a TCP Postgres, and this repository has no Postgres in CI and
  *    no PGlite-to-TCP bridge in its dependency set. What is being tested is
  *    everything *above* the socket, and that is the composition.
@@ -346,6 +347,15 @@ describe('a valid production configuration', () => {
         DrizzleSessionStore: CountedSessionStore,
         createDbResources: () => ({
           db: drizzle(database, { schema: dbSchema }),
+          // The real resources carry a `pg.Pool`; the boot takes the one-API-per-database
+          // advisory lock on a connection from it (ledger MNT-175). PGlite is one connection,
+          // so the pool hands that one out and the lock is taken in real SQL.
+          pool: {
+            connect: async () => ({
+              query: (text: string, params: unknown[]) => database.query(text, params),
+              release: () => undefined,
+            }),
+          },
           close: async () => undefined,
         }),
       };

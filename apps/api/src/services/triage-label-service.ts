@@ -19,6 +19,7 @@ function toLabel(row: typeof fingerprintCategories.$inferSelect): TriageLabel {
     signature: row.fingerprint,
     category: row.categoryId as TriageCategory,
     issueUrl: row.issueUrl ?? null,
+    reason: row.reason ?? null,
     labelledAt: row.assignedAt.toISOString(),
     labelledBy: row.labelledBy,
   };
@@ -44,6 +45,7 @@ export async function setTriageLabel(
     fingerprint: body.signature,
     categoryId: body.category,
     issueUrl: body.issueUrl ?? null,
+    reason: body.reason ?? null,
     assignedAt: now,
     labelledBy: actor,
   };
@@ -55,6 +57,7 @@ export async function setTriageLabel(
       set: {
         categoryId: values.categoryId,
         issueUrl: values.issueUrl,
+        reason: values.reason,
         assignedAt: values.assignedAt,
         labelledBy: values.labelledBy,
       },
@@ -87,15 +90,23 @@ export function labelClusters<
   clustered: { clusters: readonly C[]; totals: T },
   labels: readonly TriageLabel[],
 ): {
-  clusters: Array<C & { label: { category: TriageCategory; issueUrl: string | null } | null }>;
+  clusters: Array<
+    C & {
+      label: { category: TriageCategory; issueUrl: string | null; reason: string | null } | null;
+    }
+  >;
   totals: T & { unlabelled: number };
 } {
   const bySignature = new Map(labels.map((label) => [label.signature, label]));
+  // A label never changes `count` or `totals.failures`: a known cause is still a failure.
   const clusters = clustered.clusters.map((cluster) => {
     const label = bySignature.get(cluster.signature);
     return {
       ...cluster,
-      label: label === undefined ? null : { category: label.category, issueUrl: label.issueUrl },
+      label:
+        label === undefined
+          ? null
+          : { category: label.category, issueUrl: label.issueUrl, reason: label.reason ?? null },
     };
   });
   const labelledFailures = clusters

@@ -1,10 +1,12 @@
 import React from 'react';
+import { type PersonaId } from '../lib/persona.js';
 
 /**
  * Three ways to make the dashboard quieter, kept beside the theme and persisted per browser.
  *
- *  - **Focus** hides the secondary navigation (section tabs, bottom tab bar), so a page is
- *    the page and nothing else. The command palette and the shortcuts still go everywhere.
+ *  - **Focus** puts away everything but each page's one thing to do (recent runs, the "then"
+ *    list, folded extras, the numbers, the setup line) and centres what is left. The sidebar's
+ *    focus button, the command palette and Settings all toggle it.
  *  - **Density** compact scales the whole rem-based layout down by one step.
  *  - **Motion** reduced sets the one motion multiplier `motion.css` reads to its floor. It
  *    starts from the operating system's `prefers-reduced-motion`, and a person can override it.
@@ -16,6 +18,8 @@ export interface Preferences {
   focus: boolean;
   density: 'comfortable' | 'compact';
   motion: 'full' | 'reduced';
+  /** The reader's QA role, which decides what Now leads with; `null` until chosen. */
+  persona: PersonaId | null;
 }
 
 export const PREFERENCES_KEY = 'lupin-preferences';
@@ -29,17 +33,25 @@ function systemMotion(): Preferences['motion'] {
 
 /** Validated rather than cast: localStorage is a string anyone can edit. */
 export function readPreferences(raw: string | null): Preferences {
-  const defaults: Preferences = { focus: false, density: 'comfortable', motion: systemMotion() };
+  const defaults: Preferences = {
+    focus: false,
+    density: 'comfortable',
+    motion: systemMotion(),
+    persona: null,
+  };
   if (raw === null) return defaults;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     return {
-      focus: parsed['focus'] === true,
+      focus: false,
       density: parsed['density'] === 'compact' ? 'compact' : 'comfortable',
       motion:
         parsed['motion'] === 'reduced' || parsed['motion'] === 'full'
           ? parsed['motion']
           : defaults.motion,
+      // Focus mode and the QA roles were removed; a value an older build stored is ignored, so
+      // nobody is held in a mode or an order there is no longer a control for.
+      persona: null,
     };
   } catch {
     return defaults;
@@ -52,7 +64,7 @@ interface PreferencesState {
 }
 
 const PreferencesContext = React.createContext<PreferencesState>({
-  preferences: { focus: false, density: 'comfortable', motion: 'full' },
+  preferences: { focus: false, density: 'comfortable', motion: 'full', persona: null },
   update: () => undefined,
 });
 

@@ -80,6 +80,9 @@ function apply(next: SiteTheme, persist = true): void {
         :journey="pageJourneys[page.relativePath]"
       />
     </template>
+    <template #nav-bar-title-after>
+      <span class="lupin-wordmark-dot" aria-hidden="true">.</span>
+    </template>
     <template #nav-bar-content-after>
       <LanguagePicker />
       <ThemePicker

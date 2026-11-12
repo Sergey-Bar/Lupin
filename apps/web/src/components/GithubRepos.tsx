@@ -1,4 +1,5 @@
 import React from 'react';
+import { isNothingYet } from '../lib/nothing-yet.js';
 import { Badge, Button, cn, CircleAlert, CircleCheck, Timer } from '@lupin/ui';
 import type { GithubFinding, GithubRepoItem } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
@@ -489,7 +490,11 @@ export function RepoDetailPage({
   if (repo.status === 'error') {
     return (
       <PageFrame>
-        <Quiet role="alert">Could not load this: {repo.message}</Quiet>
+        <Quiet role={isNothingYet(repo.message) ? undefined : 'alert'}>
+          {isNothingYet(repo.message)
+            ? 'GitHub is not connected yet. Connect it in Settings to see repositories here.'
+            : `Could not load this: ${repo.message}`}
+        </Quiet>
       </PageFrame>
     );
   }

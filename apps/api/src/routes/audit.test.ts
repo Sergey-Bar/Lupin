@@ -168,7 +168,11 @@ describe('the audit trail', () => {
     // Nothing read yet: the stream fetches the one page it keeps ready, and then no more,
     // however long the client leaves it.
     await vi.waitFor(() => expect(reads.pages).toBeGreaterThanOrEqual(1), { timeout: 10_000 });
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    // No real-clock wait (ledger MNT-200). A stream that read ahead would ask for page 2 a
+    // few event-loop turns after page 1 resolved, and PGlite answers one query at a time, so
+    // a round trip queued now returns after page 1's read and after any read queued with it.
+    await db.execute(sql`SELECT 1`);
+    for (let turn = 0; turn < 20; turn += 1) await new Promise((resolve) => setImmediate(resolve));
     expect(reads.pages).toBe(1);
     const lines = ndjson(await response.text());
     expect(reads.pages).toBe(3);

@@ -20,7 +20,21 @@ export interface VaultEnvelope {
   iv: string;
   tag: string;
   ciphertext: string;
+  /**
+   * The PBKDF2 iterations this envelope's key was derived with. Absent on an envelope sealed
+   * before the count was raised, which used {@link LEGACY_PBKDF2_ITERATIONS}.
+   */
+  iterations?: number;
 }
+
+/** The count every envelope was sealed with before plan task 10. */
+export const LEGACY_PBKDF2_ITERATIONS = 100_000;
+/**
+ * The count new envelopes are sealed with: OWASP's figure for PBKDF2-HMAC-SHA256 (Password
+ * Storage Cheat Sheet). An older envelope still opens with the count it was sealed under, and
+ * is raised on its next write.
+ */
+export const VAULT_PBKDF2_ITERATIONS = 600_000;
 
 /**
  * The row an envelope belongs to.
@@ -76,7 +90,7 @@ export const DERIVED_KEY_BYTES = 32;
 const DIGEST = 'sha256';
 
 /** Derivation cost, as a function of the iteration count, for the test. */
-function derive(secret: string, salt: string): Promise<Buffer> {
+function derive(secret: string, salt: string, iterations: number): Promise<Buffer> {
   // **Async, and that is the whole of ledger Q-53.** The row's headline claim — that
   // "pbkdf2Sync still runs per request" — was wrong: `openSecret` passes the *stored*
   // salt, so every repeat open of a given envelope hits the cache and never derives.
@@ -92,7 +106,7 @@ function derive(secret: string, salt: string): Promise<Buffer> {
   // The positional order is `password, salt, iterations, keylen, digest` —
   // iterations *before* keylen. Reversing them throws `RangeError: Invalid key
   // length`, which names neither argument.
-  return pbkdf2Async(secret, salt, 100_000, DERIVED_KEY_BYTES, DIGEST);
+  return pbkdf2Async(secret, salt, iterations, DERIVED_KEY_BYTES, DIGEST);
 }
 
 /**
@@ -109,9 +123,13 @@ function derive(secret: string, salt: string): Promise<Buffer> {
  * dropped when the secret rotates, because a different secret is a different
  * cache key — so a rotation cannot be served a key derived from the old one.
  */
-export function keyFor(secret: string, salt: string): Promise<Buffer> {
+export function keyFor(
+  secret: string,
+  salt: string,
+  iterations: number = LEGACY_PBKDF2_ITERATIONS,
+): Promise<Buffer> {
   if (secret.length < 32) throw new Error('Vault secret must be at least 32 characters');
-  const cacheKey = `${salt}:${secret.length}:${hashOf(secret)}`;
+  const cacheKey = `${salt}:${String(iterations)}:${secret.length}:${hashOf(secret)}`;
   const cached = keyCache.get(cacheKey);
   if (cached !== undefined) {
     // Re-insert so the map keeps insertion order and eviction drops the coldest.
@@ -119,7 +137,7 @@ export function keyFor(secret: string, salt: string): Promise<Buffer> {
     keyCache.set(cacheKey, cached);
     return Promise.resolve(cached);
   }
-  return derive(secret, salt).then((key) => {
+  return derive(secret, salt, iterations).then((key) => {
     keyCache.set(cacheKey, key);
     while (keyCache.size > KEY_CACHE_CAPACITY) {
       const coldest = keyCache.keys().next();
@@ -195,7 +213,7 @@ export async function sealSecret(
   // `createCipheriv`. A *fresh* salt per seal is why this path is always a cache
   // miss — and that is the security property working, not a waste: a new envelope
   // needs a new key.
-  const key = await keyFor(secret, salt.toString('base64url'));
+  const key = await keyFor(secret, salt.toString('base64url'), VAULT_PBKDF2_ITERATIONS);
   const cipher = createCipheriv('aes-256-gcm', key, iv);
   // Authenticated, and never encrypted: GCM covers the AAD without spending ciphertext
   // on it, so the row identity is guaranteed to be the row the ciphertext belongs to.
@@ -209,6 +227,7 @@ export async function sealSecret(
     iv: iv.toString('base64url'),
     tag: cipher.getAuthTag().toString('base64url'),
     ciphertext: ciphertext.toString('base64url'),
+    iterations: VAULT_PBKDF2_ITERATIONS,
   };
 }
 
@@ -232,7 +251,7 @@ export async function openSecret(
   // The *stored* salt, so a repeat open of a given envelope hits the cache and never
   // derives at all. Only an envelope's first open pays the derivation, and it pays
   // it off the event loop.
-  const key = await keyFor(secret, envelope.salt);
+  const key = await keyFor(secret, envelope.salt, envelope.iterations ?? LEGACY_PBKDF2_ITERATIONS);
   const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(envelope.iv, 'base64url'));
   decipher.setAAD(aadFor(binding));
   decipher.setAuthTag(Buffer.from(envelope.tag, 'base64url'));

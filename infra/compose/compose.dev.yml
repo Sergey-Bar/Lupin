@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
     environment:
       POSTGRES_DB: lupin
       POSTGRES_USER: lupin
@@ -22,7 +22,7 @@ services:
   # one-shot bucket job is needed. A real deployment points `OBJECT_STORE_ENDPOINT` at its
   # own S3-compatible store and drops this service; the contract is the five variables.
   objectstore:
-    image: chrislusf/seaweedfs:4.48
+    image: chrislusf/seaweedfs:4.48@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
     environment:
       AWS_ACCESS_KEY_ID: local-only
       AWS_SECRET_ACCESS_KEY: ${OBJECT_STORE_SECRET_ACCESS_KEY:?set OBJECT_STORE_SECRET_ACCESS_KEY}

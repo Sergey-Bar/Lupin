@@ -102,7 +102,7 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
     mockAuthenticatedApi();
     render(<MemoryRouter initialEntries={['/dashboard']} />);
     await waitFor(
-      () => expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument(),
+      () => expect(screen.getByRole('heading', { name: 'Health' })).toBeInTheDocument(),
       { timeout: RENDER_TIMEOUT_MS },
     );
     expect(screen.getByTestId('dashboard-page')).toBeInTheDocument();
@@ -115,11 +115,35 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
     // an onboarding screen — and both are named `Dashboard`, so this assertion holds
     // whichever one a bare install is in.
     await waitFor(
-      () => expect(screen.getByRole('heading', { level: 1, name: 'Cockpit' })).toBeInTheDocument(),
+      () =>
+        expect(
+          screen.getByRole('heading', {
+            level: 1,
+            name: /^Good (morning|afternoon|evening)|^Working late/u,
+          }),
+        ).toBeInTheDocument(),
       {
         timeout: RENDER_TIMEOUT_MS,
       },
     );
+  });
+
+  it('draws setup full-screen, without the sidebar, and sends /setup there', async () => {
+    mockAuthenticatedApi();
+    const { container } = render(<MemoryRouter initialEntries={['/setup']} />);
+    await waitFor(() => expect(screen.getByTestId('setup-page')).toBeInTheDocument(), {
+      timeout: RENDER_TIMEOUT_MS,
+    });
+    expect(container.querySelector('[data-frame="full-screen"]')).not.toBeNull();
+    expect(screen.queryByTestId('side-nav')).toBeNull();
+  });
+
+  it('names the browser tab after the page, then the product', async () => {
+    mockAuthenticatedApi();
+    render(<MemoryRouter initialEntries={['/dashboard/now']} />);
+    await waitFor(() => expect(document.title).toMatch(/^.+ · Lupin$/), {
+      timeout: RENDER_TIMEOUT_MS,
+    });
   });
 
   it('settles in one navigation rather than looping toward the update bound', async () => {
@@ -141,7 +165,7 @@ describe('router', { timeout: TEST_TIMEOUT_MS }, () => {
     mockAuthenticatedApi();
     render(<MemoryRouter initialEntries={['/dashboard']} />);
     await waitFor(
-      () => expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument(),
+      () => expect(screen.getByRole('heading', { name: 'Health' })).toBeInTheDocument(),
       {
         timeout: RENDER_TIMEOUT_MS,
       },

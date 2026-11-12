@@ -5,6 +5,7 @@ import {
   CanonicalTestResultSchema,
   CanonicalTestStatusSchema,
   CreateRunRequestSchema,
+  RetryRunRequestSchema,
   GateEvaluationSchema,
   GateStatusSchema,
   IntegrationMaturitySchema,
@@ -219,6 +220,13 @@ describe('canonical execution dimensions', () => {
     expect(structured.selection).toMatchObject({ testIds: ['test-1'] });
     expect(TestSelectionSchema.parse({}).testIds).toEqual([]);
     expect(CreateRunRequestSchema.safeParse({ ...base, timeoutMs: 0 }).success).toBe(false);
+  });
+
+  it('reads a retry request as a full retry unless it asks for the failed tests', () => {
+    expect(RetryRunRequestSchema.parse({}).scope).toBe('all');
+    expect(RetryRunRequestSchema.parse({ scope: 'failed' }).scope).toBe('failed');
+    expect(RetryRunRequestSchema.safeParse({ scope: 'some' }).success).toBe(false);
+    expect(RetryRunRequestSchema.safeParse({ scope: 'all', extra: 1 }).success).toBe(false);
   });
 
   it('parses normalized tests, attempts, artifacts, and infrastructure outcomes', () => {

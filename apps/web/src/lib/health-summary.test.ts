@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { hrefOf, summarizeHealth, WRONG_SHOWN } from './health-summary.js';
+import {
+  healthItems,
+  hrefOf,
+  plainEvidence,
+  summarizeHealth,
+  WRONG_SHOWN,
+} from './health-summary.js';
 import type { DigestItem, ReleaseReadinessCard } from './qa.js';
 import type { QaGapsResponse } from './qa.js';
 
@@ -204,5 +210,82 @@ describe('summarizeHealth', () => {
     }));
     const summary = summarizeHealth({ projectId: PROJECT, readiness: null, digest, gaps: null });
     expect(summary.wrong).toHaveLength(WRONG_SHOWN + 2);
+  });
+});
+
+describe('plainEvidence', () => {
+  it('rewrites the server’s system wording into a sentence a person reads', () => {
+    expect(plainEvidence("pass rate over the window's runs with a verdict")).toBe(
+      'Across the finished runs in this window',
+    );
+    expect(plainEvidence('pending quarantine entries')).toBe(
+      'Waiting for you to keep or release them',
+    );
+    expect(plainEvidence('no gate evaluation in the window')).toBe(
+      'No run in this window was checked against a gate',
+    );
+    expect(plainEvidence('run run-9')).toBe('run run-9');
+  });
+});
+
+describe('healthItems', () => {
+  const gap = (cell: string) => ({
+    id: `gap-${cell}`,
+    tone: 'warn' as const,
+    title: `Close ${cell}`,
+    evidence: `${cell} · +5 pts`,
+    action: {
+      label: 'Fix',
+      to: '/dashboard/gaps/$projectId' as const,
+      params: { projectId: 'p1' },
+    },
+  });
+
+  it('says many coverage gaps as one item, so they do not crowd out what blocks', () => {
+    const items = healthItems({
+      wrong: [
+        {
+          id: 'reason-pass-rate',
+          tone: 'bad',
+          title: 'Pass rate is low',
+          evidence: 'x',
+          action: { label: 'See the trend', to: '/dashboard/analytics' },
+        },
+        gap('unit:api'),
+        gap('e2e:web'),
+        gap('unit:web'),
+      ],
+    } as never);
+    expect(items.map((entry) => entry.id)).toEqual(['reason-pass-rate', 'gaps']);
+    expect(items[1]).toMatchObject({
+      title: '3 coverage gaps',
+      detail: 'Biggest: Close unit:api',
+      action: { label: 'Find the gaps', to: '/dashboard/gaps/p1' },
+    });
+  });
+
+  it('keeps a single gap as itself', () => {
+    expect(healthItems({ wrong: [gap('unit:api')] } as never).map((entry) => entry.id)).toEqual([
+      'gap-unit:api',
+    ]);
+  });
+
+  it('puts a warning above something only for context, so the solid button is on real work', () => {
+    const items = healthItems({
+      wrong: [
+        { ...gap('x'), id: 'reason-gate', tone: 'info', title: 'No gate yet' },
+        gap('unit:api'),
+        gap('e2e:web'),
+      ],
+    } as never);
+    expect(items.map((item) => item.tone)).toEqual(['warn', 'info']);
+  });
+
+  it('drops the finding the hero already states, so the page does not say it twice', () => {
+    const summary = { wrong: [gap('unit:api')] } as never;
+    const all = healthItems(summary);
+    const stated = (all[0] as { title: string }).title;
+    expect(healthItems(summary, stated)).toEqual([]);
+    expect(healthItems(summary, 'something else')).toHaveLength(1);
   });
 });

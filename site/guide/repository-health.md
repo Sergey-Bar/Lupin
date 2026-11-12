@@ -106,6 +106,17 @@ for the action. None of them is run by Lupin. Your CI writes the file, and Lupin
 | `skillspector-json` | SkillSpector issues as AI-governance findings, keyed on `match_fingerprint`.                   |
 | `git-diff`          | The commit's added lines, for diff coverage. Requires `commit=`.                               |
 
+**axe from a runner job.** A Playwright job queued with `configuration.axe: true` asks for an
+axe pass. The runner cannot add axe to your pages itself, so your project's Playwright fixture
+does it: while `LUPIN_AXE` is `1`, run `new AxeBuilder({ page }).analyze()` from
+`@axe-core/playwright` on each page a test visits, and write the collected results, as one JSON
+array, to the path in `LUPIN_AXE_RESULTS_PATH` once the run ends (a worker-scoped fixture's
+teardown is a good place). The runner then uploads that file to this door as `axe-json` for the
+job's project, commit and branch, with `RUNNER_HEALTH_UPLOAD_TOKEN` as the bearer when it is
+set. A run that asked for the pass and has no file to show, no project to file it under, or an
+upload the door refused is failed with `AXE_NO_RESULTS`, `AXE_NO_PROJECT` or
+`AXE_UPLOAD_FAILED`; it is never reported as a pass. Without the flag nothing changes.
+
 **VEX.** Every stored document is applied again, oldest upload first, after each VEX, SBOM
 and SARIF upload. A re-scan therefore does not reopen a finding that VEX said is not
 affected, and a later `affected` or `under_investigation` statement reopens it. An acceptance
@@ -202,7 +213,7 @@ There are four roles:
 | ---------- | ------------------------------------------------------------------------- |
 | `viewer`   | read every grade, finding and trend                                       |
 | `operator` | also register repositories, start scans, triage, set schedules and alerts |
-| `admin`    | also issue and revoke access tokens (**Map → Access**)                    |
+| `admin`    | also issue and revoke access tokens (**Settings → Access**)               |
 | `uploader` | send reports and CODEOWNERS to one project, from CI                       |
 
 Signing in with the installation key makes you the admin. Every decision is written to the

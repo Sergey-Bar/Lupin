@@ -84,6 +84,9 @@ const SENTINELS: Record<string, string> = {
   // A real metric id: an unknown one renders the "Unknown metric" page instead, which is not the
   // screen the route is for. In an empty workspace this one renders the cockpit's own error state.
   metricId: 'coverage',
+  // A pull request number. Under the sentinel project it resolves to nothing, so the route
+  // renders its own not-found state, like the run and project routes do.
+  number: '1',
 };
 
 /**

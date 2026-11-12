@@ -307,12 +307,16 @@ describe('the supply-chain page', () => {
       target: { value: 'GPL-3.0-only, AGPL-3.0-only' },
     });
     fireEvent.click(within(form).getByLabelText('An unknown licence is a violation'));
+    // The trusted-builder field is read too: what is typed here is the list level 3 checks.
+    fireEvent.change(within(form).getByLabelText('Trusted builders'), {
+      target: { value: 'https://github.com/actions/runner, https://gitlab.com/runner' },
+    });
     fireEvent.click(within(form).getByRole('button', { name: 'Save policy' }));
     await waitFor(() =>
       expect(client.setPolicy).toHaveBeenCalledWith(TEST_PROJECT.id, {
         licences: { deny: ['GPL-3.0-only', 'AGPL-3.0-only'], failOnUnknown: false },
         provenance: {
-          allowedBuilders: ['https://github.com/actions/runner'],
+          allowedBuilders: ['https://github.com/actions/runner', 'https://gitlab.com/runner'],
           trustedKeysPem: ['-----BEGIN PUBLIC KEY-----\nAAAA\n-----END PUBLIC KEY-----'],
           trustedRootsPem: [],
         },

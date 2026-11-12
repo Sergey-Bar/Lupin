@@ -133,6 +133,25 @@ function stringValue(value: unknown): string | undefined {
   return typeof value === 'string' && value ? value : undefined;
 }
 
+/** The job's mode blocks the executor dispatches on. Only the boolean `true` opts into axe. */
+function modeBlocks(specification: Record<string, unknown>): {
+  k6?: unknown;
+  zap?: unknown;
+  axe?: true;
+} {
+  return {
+    ...(specification['k6'] === undefined ? {} : { k6: specification['k6'] }),
+    ...(specification['zap'] === undefined ? {} : { zap: specification['zap'] }),
+    ...(specification['axe'] === true ? { axe: true as const } : {}),
+  };
+}
+
+/** `{ [key]: value }` for a non-empty string, `{}` otherwise; for exact optional fields. */
+function optionalString<K extends string>(key: K, value: unknown): Partial<Record<K, string>> {
+  const text = stringValue(value);
+  return text === undefined ? {} : ({ [key]: text } as Record<K, string>);
+}
+
 function numberValue(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
@@ -423,7 +442,10 @@ export class RunnerService {
         apiCollection: stringValue(specification['apiCollection']),
         apiEnvironment: stringValue(specification['apiEnvironment']),
         command,
-        ...(specification['k6'] === undefined ? {} : { k6: specification['k6'] }),
+        ...modeBlocks(specification),
+        ...optionalString('projectId', claim.spec['projectId']),
+        ...optionalString('commit', claim.spec['commit']),
+        ...optionalString('branch', claim.spec['branch']),
         // The job's own timeout. The lease is *not* a bound on it: every heartbeat
         // renews the lease, so its expiry at claim time says how long the runner may go
         // silent, not how long a suite may run. A cancellation the heartbeat reports

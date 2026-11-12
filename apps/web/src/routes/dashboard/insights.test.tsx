@@ -7,9 +7,10 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
-import { InsightsPage } from './insights';
+import { testItems, testVerdict, InsightsPage } from './insights';
 import {
   makeApi,
+  makeTrend,
   makeHistory,
   makeInsights,
   makeQa,
@@ -18,6 +19,7 @@ import {
 } from '../../test-utils';
 import type { QaClient } from '../../lib/qa-client';
 import type { ApiClient } from '../../lib/api';
+import { expectOnePrimary } from '../../test-utils.js';
 
 function renderInsights(qa: QaClient, api: ApiClient = makeApi()) {
   const rootRoute = createRootRoute({ component: () => <InsightsPage qa={qa} api={api} /> });
@@ -27,11 +29,19 @@ function renderInsights(qa: QaClient, api: ApiClient = makeApi()) {
 }
 
 describe('the insights page', () => {
+  it('draws at most one solid primary button on the screen', async () => {
+    renderInsights(makeQa());
+    await waitFor(() => expect(screen.getByTestId('insights-flaky')).toBeInTheDocument());
+    expect(expectOnePrimary(document.body).length).toBeLessThanOrEqual(1);
+  });
+
   it('leads with readiness, flakiness, recovery and the slowest test', async () => {
     renderInsights(makeQa());
     await waitFor(() => expect(screen.getByTestId('insights-flaky')).toBeInTheDocument());
-    expect(screen.getByRole('heading', { level: 1, name: 'Insights' })).toBeInTheDocument();
-    expect(screen.getByText('12 runs in Lupin over the last 14 days')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Tests' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Unstable' })).toHaveTextContent(
+      '2 flaky tests need a decision.',
+    );
     expect(screen.getByTestId('insight-readiness')).toHaveTextContent('Caution');
     expect(screen.getByTestId('insight-readiness')).toHaveAttribute('data-hero', '');
     expect(screen.getByTestId('insight-flaky')).toHaveTextContent('2');
@@ -100,6 +110,21 @@ describe('the insights page', () => {
     ]);
     expect(screen.getByTestId('insights-recovery')).toHaveTextContent('red since');
     expect(screen.getByTestId('history-chart')).toBeInTheDocument();
+  });
+
+  it('charts failures day by day, so a reader sees whether instability is growing', async () => {
+    const trend = makeTrend();
+    renderInsights(
+      makeQa({
+        getTrend: vi.fn(async () => ({
+          ...trend,
+          buckets: trend.buckets.map((bucket, index) => ({ ...bucket, failed: index })),
+        })),
+      }),
+    );
+    expect(
+      await screen.findByRole('table', { name: 'Failed results per day' }),
+    ).toBeInTheDocument();
   });
 
   it('says what each empty panel is waiting for', async () => {
@@ -190,5 +215,56 @@ describe('the insights page', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+describe('the Tests area', () => {
+  const insights = {
+    runs: 82,
+    flakyLeaderboard: [
+      {
+        key: 'k1',
+        title: 'checkout › basket',
+        file: 'e2e/checkout.spec.ts',
+        runs: 82,
+        flaky: 2,
+        flips: 16,
+        score: 0.2,
+        lastSeen: '2026-11-09T00:00:00.000Z',
+      },
+    ],
+    slowestTests: [
+      {
+        key: 's1',
+        title: 'checkout › card',
+        file: null,
+        samples: 9,
+        p50Ms: 2400,
+        p95Ms: 3500,
+        previousP50Ms: null,
+        changePct: null,
+      },
+    ],
+  } as never;
+
+  it('turns each flaky test into one-click quarantine, with the evidence as the reason', async () => {
+    const addQuarantine = vi.fn(async () => ({}) as never);
+    const items = testItems(insights, { addQuarantine });
+    expect(items.map((item) => item.title)).toEqual([
+      'checkout › basket is flaky',
+      'checkout › card is the slowest test',
+    ]);
+    const first = items[0]?.action;
+    if (first === undefined || !('run' in first)) throw new Error('expected an automatic action');
+    await first.run();
+    expect(addQuarantine).toHaveBeenCalledWith({
+      testTitle: 'checkout › basket',
+      testFile: 'e2e/checkout.spec.ts',
+      reason: 'Flaky: 16 flips in 82 runs (Lupin)',
+    });
+  });
+
+  it('says the verdict in one sentence', () => {
+    expect(testVerdict(insights, 2)).toBe('1 flaky test needs a decision.');
   });
 });
