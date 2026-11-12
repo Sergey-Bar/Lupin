@@ -3,6 +3,7 @@ import { isNothingYet } from '../lib/nothing-yet.js';
 import {
   Badge,
   Button,
+  Checkbox,
   EmptyState,
   Input,
   Select,
@@ -323,8 +324,7 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
                   {ROLE_SCOPES[role].map((scope) => (
                     <label key={scope} className="flex items-center gap-1 text-sm">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={scopes.includes(scope)}
                         onChange={(event) =>
                           setScopes((current) =>
