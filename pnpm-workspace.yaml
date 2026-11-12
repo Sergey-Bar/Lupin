@@ -228,7 +228,7 @@ catalog:
   '@eslint/js': ^10.0.1
   # Shared by two or more packages, so declared once (ledger MNT-198). pglite is exact: the
   # worker pinned it so, and an in-process PostgreSQL is the thing every suite checks SQL on.
-  '@electric-sql/pglite': 0.5.15
+  '@electric-sql/pglite': 0.5.16
   '@testing-library/jest-dom': ^7.0.1
   '@testing-library/user-event': ^14.6.8
   axe-core: ^4.14.0
@@ -256,7 +256,7 @@ catalog:
   fast-check: ^4.10.2
   jsdom: ^31.0.0
   lucide-react: ^1.70.0
-  simple-icons: 16.36.0
+  simple-icons: 16.37.0
   # The read-only MCP server (apps/api/src/mcp): Streamable HTTP and stdio transports.
   # Pinned exactly: it carries its own transitive tree (express, hono, ajv, jose), so a
   # minor bump is a reviewed change rather than one that arrives with an install.
@@ -278,10 +278,10 @@ catalog:
   # `lint` and the complexity gate run with `--max-old-space-size=6144`, and 8.72.1 lints
   # within that (ledger MNT-195). Return to a caret range on the first release that fixes
   # #13109.
-  typescript-eslint: 8.72.1
+  typescript-eslint: 8.72.2
   # QR codes for device pairing (apps/web). Zero dependencies; pinned exactly.
   uqr: 0.1.3
-  vite: ^8.3.6
+  vite: ^8.3.7
   vitest: ^5.1.0
   zod: ^4.6.7
 patchedDependencies:
