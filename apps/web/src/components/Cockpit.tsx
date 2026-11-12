@@ -33,7 +33,7 @@ import { isNothingYet } from '../lib/nothing-yet.js';
 import { FailureClustersPanel } from './InsightsCauses.js';
 import { ReadFailed } from './ReadFailed.js';
 import { RiskSection } from './CockpitRisks.js';
-import { ReleaseSignoffPanel, type SignoffSource } from './ReleaseSignoff.js';
+import { HomeSignoff, type SignoffSource } from './ReleaseSignoff.js';
 import { DailyBars } from './DailyBars.js';
 
 /**
@@ -147,9 +147,7 @@ export function CockpitPage({
             navigate={navigate}
           />
         )}
-        {sources.signoff === undefined || projectId === undefined ? null : (
-          <ReleaseSignoffPanel source={sources.signoff} projectId={projectId} />
-        )}
+        <HomeSignoff source={sources.signoff} projectId={projectId} />
         {view === 'release' ? null : (
           <AttentionSection
             sources={sources.attention}

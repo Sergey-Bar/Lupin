@@ -126,3 +126,15 @@ export function ReleaseSignoffPanel({
     </Panel>
   );
 }
+
+/** The panel on Home, for one project only: a release is a project's, never the portfolio's. */
+export function HomeSignoff({
+  source,
+  projectId,
+}: {
+  source: SignoffSource | undefined;
+  projectId: string | undefined;
+}): React.ReactElement | null {
+  if (source === undefined || projectId === undefined) return null;
+  return <ReleaseSignoffPanel source={source} projectId={projectId} />;
+}

@@ -278,6 +278,45 @@ function browserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 }
 
+/** What the schedule form says, for a new report and for one being edited. */
+const SCHEDULE_COPY = {
+  create: { done: 'Report scheduled', failed: 'Could not schedule it' },
+  update: { done: 'Report updated', failed: 'Could not update it' },
+} as const;
+
+/** The form's buttons: schedule a new report, or save and cancel an edit. */
+function ScheduleActions({
+  editing,
+  onCancel,
+}: {
+  editing: boolean;
+  onCancel: () => void;
+}): React.ReactElement {
+  return (
+    <div className="flex gap-2">
+      <Button type="submit" className="min-h-10">
+        {editing ? 'Save changes' : 'Schedule'}
+      </Button>
+      {editing ? (
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel edit
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+/** Updates the report being edited, or creates one; an API with no update creates. */
+function saveSubscription(
+  client: NotificationsClient,
+  editing: string | null,
+  draft: SubscriptionDraft,
+): Promise<SubscriptionSummary> {
+  return editing !== null && client.updateSubscription !== undefined
+    ? client.updateSubscription(editing, draft)
+    : client.createSubscription(draft);
+}
+
 /** `HH:MM` from a cron's minute and hour fields, for editing a daily or weekly schedule. */
 export function timeOfCron(cron: string): string {
   const [minute = '0', hour = '9'] = cron.trim().split(/\s+/u);
@@ -424,24 +463,17 @@ function Schedules({
       ...(projectId === '' ? {} : { projectId }),
       ...(quietHours === null || quietHours.start === quietHours.end ? {} : { quietHours }),
     };
-    const saving =
-      editing !== null && client.updateSubscription !== undefined
-        ? client.updateSubscription(editing, draft)
-        : client.createSubscription(draft);
-    saving
+    const copy = editing === null ? SCHEDULE_COPY.create : SCHEDULE_COPY.update;
+    saveSubscription(client, editing, draft)
       .then((saved) => {
-        toast({
-          tone: 'success',
-          title: editing === null ? 'Report scheduled' : 'Report updated',
-          description: saved.describe,
-        });
+        toast({ tone: 'success', title: copy.done, description: saved.describe });
         setEditing(null);
         onChanged();
       })
       .catch((error: unknown) =>
         toast({
           tone: 'danger',
-          title: editing === null ? 'Could not schedule it' : 'Could not update it',
+          title: copy.failed,
           description: failure(error, 'The request failed'),
         }),
       );
@@ -554,16 +586,7 @@ function Schedules({
               ]}
             />
           </div>
-          <div className="flex gap-2">
-            <Button type="submit" className="min-h-10">
-              {editing === null ? 'Schedule' : 'Save changes'}
-            </Button>
-            {editing === null ? null : (
-              <Button type="button" variant="outline" onClick={() => setEditing(null)}>
-                Cancel edit
-              </Button>
-            )}
-          </div>
+          <ScheduleActions editing={editing !== null} onCancel={() => setEditing(null)} />
         </form>
       )}
       {subscriptions.status === 'loading' ? (

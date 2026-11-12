@@ -31,16 +31,24 @@ const AREAS: Readonly<Record<string, 'settings' | 'ai' | 'connectors'>> = {
   webhooks: 'connectors',
 };
 
+/** The read and write permission of each area a request can fall in. */
+const PERMISSIONS_OF: Readonly<
+  Record<'settings' | 'ai' | 'connectors' | 'tests' | 'runs', readonly [Permission, Permission]>
+> = {
+  settings: ['settings:read', 'settings:write'],
+  ai: ['runs:read', 'ai:use'],
+  connectors: ['settings:read', 'connectors:manage'],
+  tests: ['tests:read', 'tests:write'],
+  runs: ['runs:read', 'runs:write'],
+};
+
 export function permissionForRequest(method: string, path: string): Permission {
   const read = method === 'GET' || method === 'HEAD';
   const segments = path.split('?')[0]?.split('/') ?? [];
   const area = segments[1] === 'api' && segments[2] === 'v1' ? (segments[3] ?? '') : '';
-  const kind = AREAS[area];
-  if (kind === 'settings') return read ? 'settings:read' : 'settings:write';
-  if (kind === 'ai') return read ? 'runs:read' : 'ai:use';
-  if (kind === 'connectors') return read ? 'settings:read' : 'connectors:manage';
-  if (segments.includes('tests')) return read ? 'tests:read' : 'tests:write';
-  return read ? 'runs:read' : 'runs:write';
+  const kind = AREAS[area] ?? (segments.includes('tests') ? 'tests' : 'runs');
+  const [readPermission, writePermission] = PERMISSIONS_OF[kind];
+  return read ? readPermission : writePermission;
 }
 
 /** Whether a token's scopes admit a request; `null` scopes admit everything its role does. */

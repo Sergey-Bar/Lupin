@@ -90,6 +90,27 @@ export function useOutboundResolver(resolve: Resolve = systemResolver): void {
   resolveAll = resolve;
 }
 
+/** The addresses `host` stands for, or `null` when it resolves to none. */
+async function addressesOf(host: string, resolve: Resolve): Promise<string[] | null> {
+  if (isIP(host) !== 0) return [host];
+  try {
+    const addresses = await resolve(host);
+    return addresses.length === 0 ? null : addresses;
+  } catch {
+    return null;
+  }
+}
+
+/** The first address the server must not call, or `undefined`. */
+function blockedAmong(addresses: readonly string[], allow: OutboundAllowlist): string | undefined {
+  return addresses
+    .map(dottedMapped)
+    .find(
+      (address) =>
+        !isAddressAllowed(address, allow.ranges) && isAddressAllowed(address, BLOCKED_RANGES),
+    );
+}
+
 /**
  * Why the server must not call `url`, or `null` when it may.
  *
@@ -110,27 +131,13 @@ export async function outboundProblem(
   if (parsed.username !== '' || parsed.password !== '') return 'must not carry credentials';
   const host = parsed.hostname.replace(/^\[|\]$/gu, '').toLowerCase();
   if (options.allow.hosts.includes(host)) return null;
-  let addresses: string[];
-  if (isIP(host) !== 0) {
-    addresses = [host];
-  } else {
-    try {
-      addresses = await (options.resolve ?? resolveAll)(host);
-    } catch {
-      return `names a host that does not resolve (${host})`;
-    }
-    if (addresses.length === 0) return `names a host that does not resolve (${host})`;
-  }
-  for (const address of addresses.map(dottedMapped)) {
-    if (isAddressAllowed(address, options.allow.ranges)) continue;
-    if (isAddressAllowed(address, BLOCKED_RANGES)) {
-      return (
-        `points at ${address}, a private, loopback or link-local address. ` +
-        'If this install needs it, add the host to LUPIN_OUTBOUND_ALLOW'
-      );
-    }
-  }
-  return null;
+  const addresses = await addressesOf(host, options.resolve ?? resolveAll);
+  if (addresses === null) return `names a host that does not resolve (${host})`;
+  const blocked = blockedAmong(addresses, options.allow);
+  return blocked === undefined
+    ? null
+    : `points at ${blocked}, a private, loopback or link-local address. ` +
+        'If this install needs it, add the host to LUPIN_OUTBOUND_ALLOW';
 }
 
 /** The allowlist as the environment sets it now. Read per call, so a test can set it. */
