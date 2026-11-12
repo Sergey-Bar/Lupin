@@ -389,3 +389,11 @@ its progress entry rather than claiming it.
 
 - 2026-11-11: plan written and committed.
 - 2026-11-11: second sweep added Wave 0 (D1 to D41) and tasks 36 to 42.
+- 2026-11-12: Wave 0 done; `verify:local` green at `312ad494`.
+- 2026-11-12: Waves 1 and 2 done; `verify:local` green at `11739661`. Not done or not verified:
+  no e2e run and no real Jira, GitHub, Signal or email bridge; a queued delivery uses edited
+  report settings (task 4); sign-off is not in the cockpit report or `lupin gate --post`
+  (task 5); flaky tests are not rerun (task 2); the outbound guard does not check URLs set in
+  the environment, and DNS rebinding between check and request is open (task 9); W7-23, rotation
+  re-sealing every workspace, is still open (task 10). The complexity gate had been dying at its
+  6 GB heap since task 3 and measuring nothing; it now has 8 GB.
