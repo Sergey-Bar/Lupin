@@ -481,6 +481,8 @@ export function makeQa(overrides: Partial<QaClient> = {}): QaClient {
     getInsights: vi.fn(async () => makeInsights()),
     getHistory: vi.fn(async () => makeHistory()),
     getReadiness: vi.fn(async () => makeReadiness()),
+    listSignoffs: vi.fn(async () => []),
+    signOff: vi.fn(never),
     ...overrides,
   };
 }

@@ -1,4 +1,6 @@
 import { Hono, type Context } from 'hono';
+import { SignoffBodySchema } from '@lupin/shared-contracts';
+import { listSignoffs, recordSignoff } from '../services/release-signoff-service.js';
 import { z, ZodError } from 'zod/v4';
 import {
   CopilotQuestionSchema,
@@ -770,9 +772,7 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
      * allowance is the gate policy's own `maxFlakyRate` and the pass-rate threshold is the
      * project's gate row, so the card can never disagree with the gate about a number.
      */
-    app.get('/api/v1/projects/:id/readiness', viewer, async (context) => {
-      const project = await getProject(options, context.req.param('id'));
-      const days = windowDays(context.req.query('days'), 7);
+    const readinessOf = async (project: { id: string }, days: number) => {
       const now = reliability.now?.() ?? new Date();
       const since = startOfDay(now).getTime() - (days - 1) * DAY_MS;
       const { runs } = await readSince(reliability.store, options.workspaceId, since);
@@ -786,29 +786,67 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
         .filter((value): value is number => value !== null);
       const latest = readings.at(-1) ?? null;
       const first = readings[0];
-      return context.json(
-        evaluateReadiness({
-          projectId: project.id,
-          evaluatedAt: now.toISOString(),
-          runs: mine.length,
-          gate:
-            gated?.policyEvaluation === null || gated === undefined
+      return evaluateReadiness({
+        projectId: project.id,
+        evaluatedAt: now.toISOString(),
+        runs: mine.length,
+        gate:
+          gated?.policyEvaluation === null || gated === undefined
+            ? null
+            : { status: gated.policyEvaluation.status, runId: gated.id },
+        passRate: verdictRate(mine),
+        passRateThreshold: await passRateThreshold(options, project.id),
+        flakyRate: tests === 0 ? null : Math.round((flaky / tests) * 1000) / 10,
+        maxFlakyRate: DEFAULT_QUALITY_POLICY.maxFlakyRate,
+        coverage: {
+          current: latest,
+          delta:
+            latest === null || first === undefined || readings.length < 2
               ? null
-              : { status: gated.policyEvaluation.status, runId: gated.id },
-          passRate: verdictRate(mine),
-          passRateThreshold: await passRateThreshold(options, project.id),
-          flakyRate: tests === 0 ? null : Math.round((flaky / tests) * 1000) / 10,
-          maxFlakyRate: DEFAULT_QUALITY_POLICY.maxFlakyRate,
-          coverage: {
-            current: latest,
-            delta:
-              latest === null || first === undefined || readings.length < 2
-                ? null
-                : Math.round((latest - first) * 10) / 10,
+              : Math.round((latest - first) * 10) / 10,
+        },
+        openQuarantine: await reliability.openQuarantine(),
+      });
+    };
+    app.get('/api/v1/projects/:id/readiness', viewer, async (context) => {
+      const project = await getProject(options, context.req.param('id'));
+      return context.json(await readinessOf(project, windowDays(context.req.query('days'), 7)));
+    });
+
+    // Release sign-off (plan Wave 1 task 5): recorded against the verdict computed here, now.
+    app.get('/api/v1/projects/:id/signoffs', viewer, async (context) => {
+      const project = await getProject(options, context.req.param('id'));
+      return context.json({ signoffs: await listSignoffs(options, project.id) });
+    });
+    app.post('/api/v1/projects/:id/signoffs', operator, async (context) => {
+      const parsed = SignoffBodySchema.safeParse(await readJson(context));
+      if (!parsed.success) {
+        throw new DomainError(
+          ErrorCode.INVALID_REQUEST_BODY,
+          'A sign-off needs a commit and a reason',
+          {
+            details: { issues: parsed.error.issues },
           },
-          openQuarantine: await reliability.openQuarantine(),
-        }),
-      );
+        );
+      }
+      const project = await getProject(options, context.req.param('id'));
+      const caller = await callerOf(context, access);
+      const card = await readinessOf(project, 7);
+      const signoff = await recordSignoff(options, {
+        projectId: project.id,
+        body: parsed.data,
+        verdict: card.verdict,
+        actor: caller.actor,
+        isAdmin: caller.role === 'admin',
+      });
+      await audit(options, {
+        actor: caller.actor,
+        action: signoff.override ? 'release.signoff.override' : 'release.signoff',
+        resourceType: 'project',
+        resourceId: project.id,
+        details: { commit: signoff.commit, decision: signoff.decision, verdict: signoff.verdict },
+      });
+      return context.json(signoff, 201);
     });
   }
 

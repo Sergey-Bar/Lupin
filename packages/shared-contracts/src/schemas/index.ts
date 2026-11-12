@@ -71,6 +71,7 @@ export * from './github.js';
 export * from './ai-code.js';
 export * from './agent-quality.js';
 export * from './issue-tracking.js';
+export * from './release-signoff.js';
 export * from './test-proposals.js';
 export * from './mcp.js';
 export * from './test-identity.js';

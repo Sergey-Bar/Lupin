@@ -24,10 +24,10 @@
   ],
   "whatDoesNotBlock": "Workspace-scoped tables without a hard boundary. That is real debt, counted and reported by `pnpm tenancy:check`, because failing on it would make the gate permanently red — and a permanently red gate stops catching the regressions above.",
   "tally": {
-    "total": 92,
+    "total": 93,
     "global": 13,
-    "workspaceScoped": 79,
-    "workspaceScopedWithHardBoundary": 79,
+    "workspaceScoped": 80,
+    "workspaceScopedWithHardBoundary": 80,
     "workspaceScopedNullable": 0,
     "workspaceScopedAbsent": 0,
     "note": "**Derived, not asserted.** An earlier version of this file carried a hand-written tally of 19 / 37 / 18, which was wrong in every field — the numbers had been written from memory rather than measured. `scripts/lib/tenancy-scope.test.mjs` now recomputes all six from the schema and this register and fails if any disagree, so they cannot drift again. That is the `no-second-authority` failure this repository records as `P-6` and `P-5`, committed by the author of the skill that describes it.",
@@ -493,6 +493,11 @@
       "scope": "workspace",
       "column": "not-null",
       "reason": "Which setup steps a tenant skipped, and whether it dismissed the checklist. Hard-scoped from its first migration (`0057_settings_onboarding.sql`). Isolation: `apps/api/src/services/onboarding-service.test.ts`."
+    },
+    "release_signoffs": {
+      "scope": "workspace",
+      "column": "not-null",
+      "reason": "A tenant's release decision on one of its projects' commits. Hard-scoped from its first migration (`0060_release_signoffs.sql`). Isolation: `apps/api/src/services/release-signoff-service.test.ts`."
     }
   }
 }

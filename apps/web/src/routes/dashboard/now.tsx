@@ -72,6 +72,8 @@ export const Route = createRoute({
           })),
         // The week's briefing: the chosen repository's, or the portfolio's with none chosen.
         briefing: (projectId) => health.getBriefing(projectId ?? null, { days: 7 }),
+        // Release sign-off for the chosen project (plan Wave 1 task 5).
+        signoff: { list: (id) => qa.listSignoffs(id), record: (id, body) => qa.signOff(id, body) },
         attention: {
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),

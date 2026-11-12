@@ -421,6 +421,13 @@
       "when": 1790400000054,
       "tag": "0059_report_quiet_hours",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1794475814970,
+      "tag": "0060_release_signoffs",
+      "breakpoints": true
     }
   ]
 }
