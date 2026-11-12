@@ -527,10 +527,14 @@ describe('RunnerService', () => {
       };
     });
     const runner = service(protocol, executor);
-    const stop = setTimeout(() => runner.stop(), 30);
+    // Stopped once the third job is seen, not after a fixed 30 ms: under `pnpm verify`'s load
+    // the timer fired before the last claim, which reported the machine rather than the code.
+    const stop = setInterval(() => {
+      if (seen.length >= 3) runner.stop();
+    }, 2);
 
     await runner.run();
-    clearTimeout(stop);
+    clearInterval(stop);
 
     expect(seen).toEqual([
       { zap, axe: undefined, playwrightProject: undefined },
