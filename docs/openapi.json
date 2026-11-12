@@ -28978,6 +28978,21 @@
         "type": "string",
         "enum": ["plan", "code", "test", "review", "release"]
       },
+      "SecurityScanInputSchema": {
+        "type": "object",
+        "properties": {
+          "targetUrl": { "type": "string" },
+          "spiderMinutes": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "projectId": { "type": "string", "minLength": 1 },
+          "environmentId": { "type": "string", "minLength": 1 },
+          "releaseId": { "type": "string", "minLength": 1 },
+          "branch": { "type": "string", "minLength": 1 },
+          "commit": { "type": "string", "minLength": 1 },
+          "idempotencyKey": { "type": "string", "minLength": 1 }
+        },
+        "required": ["targetUrl"],
+        "additionalProperties": false
+      },
       "ServiceHealthStatusSchema": {
         "type": "object",
         "properties": {
@@ -30640,6 +30655,15 @@
           },
           "secret": { "type": "string", "minLength": 1, "maxLength": 2000 }
         },
+        "additionalProperties": false
+      },
+      "ZapJobConfigurationSchema": {
+        "type": "object",
+        "properties": {
+          "scan": { "type": "string", "const": "baseline" },
+          "spiderMinutes": { "type": "integer", "minimum": 1, "maximum": 10 }
+        },
+        "required": ["scan", "spiderMinutes"],
         "additionalProperties": false
       }
     }
