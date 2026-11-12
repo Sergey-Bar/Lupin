@@ -38,7 +38,7 @@ describe('the drizzle snapshot', () => {
 
   it('has exactly the tables and columns the schema module declares', () => {
     const declared = shape(
-      Object.values(schema)
+      (Object.values(schema) as unknown[])
         .filter((value): value is PgTable => is(value, PgTable))
         .map((table) => [
           getTableName(table),
