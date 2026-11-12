@@ -15,6 +15,8 @@ the task that names them, so `scripts/lib/docs-paths.test.mjs` keeps checking on
   workspace-level budgets in task 36 (project budgets stay); and task 34 narrows to exporting this
   install's data for a restore. Multi-user code that already exists (OIDC, members, SCIM,
   workspaces) is kept and kept passing its tests, and is not extended.
+- **Jira both ways cut (task 22, same day, the owner's call).** The existing one-way Jira issue
+  creation stays; update, transition, comment, search and the inbound webhook are not built.
 
 The owner asked for the plan without answering these, so each is stated and can be overturned
 before its wave starts.
