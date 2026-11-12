@@ -469,13 +469,13 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
 
 export function SetupPage({ clients }: { clients: SetupClients }): React.ReactElement {
   // Full-screen, outside the app frame: the root draws no sidebar or bars on this path. The page
-  // is held to the height the frame gives it and is itself the region that scrolls, so a long
-  // step (or the finished view) never makes main or the document scroll, and the step's
-  // sticky actions stay at the bottom of the screen.
+  // takes the full height of the dashboard layout's wrapper (a block box, so `h-full` rather
+  // than `flex-1`) and is itself the region that scrolls, so a long step or the finished view
+  // never makes main or the document scroll, and the step's sticky actions stay on screen.
   return (
     <div
       data-testid="setup-page"
-      className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col gap-6 overflow-y-auto py-2 sm:py-8 [&>*]:shrink-0"
+      className="mx-auto flex h-full min-h-0 w-full max-w-2xl flex-col gap-6 overflow-y-auto py-2 sm:py-8 [&>*]:shrink-0"
     >
       <header className="flex items-center justify-between gap-3">
         <Wordmark decorative />
