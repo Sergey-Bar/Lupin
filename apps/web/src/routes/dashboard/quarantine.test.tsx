@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { resetViewerRoleCache } from '../../hooks/useViewerRole.js';
 import { QuarantinePage } from './quarantine.js';
 import type { ApiClient, QuarantineEntry } from '../../lib/api.js';
 
@@ -359,5 +361,41 @@ describe('QuarantinePage', () => {
       expect(status.className, 'an unrecognised verdict inherits no tone').not.toContain(tone);
     }
     expect(status.textContent?.trim()).toBe('appealed');
+  });
+});
+
+describe('deciding a quarantine entry from the list (plan Wave 1 task 1)', () => {
+  it('sends the decision with its reason and shows the status the API answered', async () => {
+    HTMLDialogElement.prototype.showModal ??= function showModal(this: HTMLDialogElement) {
+      this.open = true;
+    };
+    HTMLDialogElement.prototype.close ??= function close(this: HTMLDialogElement) {
+      this.open = false;
+    };
+    resetViewerRoleCache();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ actor: 'you', role: 'operator', mode: 'enforced' })),
+      ),
+    );
+    const resolveQuarantine = vi.fn().mockResolvedValue({ ...entry, status: 'approved' });
+    const user = userEvent.setup();
+    render(<QuarantinePage api={stubApi({ resolveQuarantine })} />);
+    const row = within(await screen.findByTestId('quarantine-item-q-1'));
+    await waitFor(() => expect(row.getByRole('button', { name: 'Approve' })).toBeEnabled());
+    await user.click(row.getByRole('button', { name: 'Approve' }));
+    const dialog = within(screen.getByRole('dialog'));
+    await user.type(dialog.getByLabelText('Reason (required)'), 'flaky, ticket QA-12');
+    await user.click(dialog.getByRole('button', { name: 'Approve' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('quarantine-status-q-1')).toHaveTextContent('approved'),
+    );
+    expect(resolveQuarantine).toHaveBeenCalledWith('q-1', {
+      status: 'approved',
+      resolution: 'flaky, ticket QA-12',
+    });
+    vi.unstubAllGlobals();
   });
 });
