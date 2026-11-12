@@ -166,6 +166,9 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
       'services/trend-rollup-store.ts',
       'services/retention-service.ts',
       'services/gate-evidence.ts',
+      // The MCP QA read tools filter every read on `scope.health.workspaceId`;
+      // `routes/mcp.test.ts` proves another workspace's runs are not listed.
+      'mcp/qa-tools.ts',
       'routes/retention.ts',
     ],
   },

@@ -33,6 +33,11 @@ export * from './adapters/legacy-upload.js';
 export * from './adapters/k6-json.js';
 export * from './adapters/zap-xml.js';
 export * from './adapters/allure-results.js';
+export * from './adapters/ctrf-json.js';
+export * from './adapters/jest-json.js';
+export * from './adapters/vitest-json.js';
+export * from './adapters/pytest-json.js';
+export * from './adapters/mochawesome-json.js';
 export {
   COVERAGE_ADAPTERS,
   parseCoverage,

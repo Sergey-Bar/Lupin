@@ -29,15 +29,15 @@ curl --fail-with-body \
 
 ::: details See every upload field
 
-| Field                     | Purpose                                                                                                                              |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `file`                    | The report. Exactly one file part.                                                                                                   |
-| `format`                  | Which adapter reads it: `playwright`, `junit`, `allure`, `k6` or `zap`. See below for what happens when you omit it.                 |
-| `runId`                   | Your identity for the run. Omit it and the report's own SHA-256 becomes the id, so a re-upload is a replay rather than a second run. |
-| `branch`                  | Shown on the run and used to filter trends.                                                                                          |
-| `commitSha`               | The commit under test.                                                                                                               |
-| `environment`             | Free text, such as `staging`.                                                                                                        |
-| `startedAt`, `finishedAt` | ISO 8601 timestamps with seconds, when the report does not carry them.                                                               |
+| Field                     | Purpose                                                                                                                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `file`                    | The report. Exactly one file part.                                                                                                                                      |
+| `format`                  | Which adapter reads it: `playwright`, `junit`, `allure`, `k6`, `zap`, `ctrf`, `jest`, `vitest`, `pytest` or `mochawesome`. See below for what happens when you omit it. |
+| `runId`                   | Your identity for the run. Omit it and the report's own SHA-256 becomes the id, so a re-upload is a replay rather than a second run.                                    |
+| `branch`                  | Shown on the run and used to filter trends.                                                                                                                             |
+| `commitSha`               | The commit under test.                                                                                                                                                  |
+| `environment`             | Free text, such as `staging`.                                                                                                                                           |
+| `startedAt`, `finishedAt` | ISO 8601 timestamps with seconds, when the report does not carry them.                                                                                                  |
 
 :::
 

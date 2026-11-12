@@ -35,12 +35,6 @@ import { parseUploadDocument } from './reporter.js';
 const MAX_REPORT_BYTES = 5 * 1024 * 1024;
 const MAX_LISTED = 50;
 
-/** The canonical format each accepted spelling is read as. */
-const FORMAT_FIELD: Record<(typeof TestReportQuerySchema.shape.format.options)[number], string> = {
-  junit: 'junit-xml',
-  'playwright-json': 'playwright-json',
-};
-
 export interface TestReportSink {
   repository: RunRepository;
   canonicalStore: ReporterResultStore;
@@ -120,7 +114,9 @@ export function createTestReportRoutes(options: TestReportRouteOptions): Hono {
         {
           bytes,
           fields: {
-            format: FORMAT_FIELD[query.data.format],
+            // Passed on as it is: every one of `TEST_REPORT_FORMATS` is a spelling
+            // `reportFormatForSpelling` resolves, which `parseUploadDocument` applies.
+            format: query.data.format,
             runId: runIdFor(projectId, digest),
             projectId,
             sourceUri: 'lupin-cli/test',

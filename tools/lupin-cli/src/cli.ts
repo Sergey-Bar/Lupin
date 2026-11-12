@@ -9,7 +9,7 @@ export const HELP = `lupin — send CI evidence to a Lupin install.
 
 Usage:
   lupin upload --format <format> --file <path> [--branch <b>] [--commit <sha>] [--digest sha256:<hex>]
-  lupin test --format junit|playwright-json --report <path> [--branch <b>] [--commit <sha>] -- <command…>
+  lupin test --format <junit|playwright-json|ctrf|jest|vitest|pytest|mochawesome> --report <path> [--branch <b>] [--commit <sha>] -- <command…>
   lupin shard --total <n> --index <i> [--as-of <time>] (-- <files…> | --files-from <path>)
   lupin gate --branch <b> --commit <sha> [--pr <number>] [--post]
   lupin diff-guard [--base <ref>] [--commit <sha>] [--pr <number>] [--dry-run] [--fail-on-findings]

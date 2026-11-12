@@ -11,6 +11,7 @@ import {
   reportFormatById,
   reportFormatForSpelling,
 } from './report-formats.js';
+import { TEST_REPORT_FORMATS } from './test-reports.js';
 
 describe('the format table is the vocabulary, so its shape has to hold', () => {
   it('gives every format a unique id, a real producer, and a real encoding', () => {
@@ -76,6 +77,25 @@ describe('a spelling resolves to exactly one format', () => {
     expect(reportFormatForSpelling('k6')?.id).toBe('k6-json');
     expect(reportFormatForSpelling('k6-summary')?.id).toBe('k6-json');
     expect(reportFormatForSpelling('zap')?.id).toBe('zap-xml');
+  });
+
+  it('reads the five JSON test-result formats by their names and their tools', () => {
+    expect(reportFormatForSpelling('ctrf')?.id).toBe('ctrf-json');
+    expect(reportFormatForSpelling('jest')?.id).toBe('jest-json');
+    expect(reportFormatForSpelling('vitest')?.id).toBe('vitest-json');
+    expect(reportFormatForSpelling('pytest')?.id).toBe('pytest-json');
+    expect(reportFormatForSpelling('mochawesome')?.id).toBe('mochawesome-json');
+    expect(reportFormatForSpelling('cypress')).toMatchObject({
+      id: 'mochawesome-json',
+      producer: 'cypress',
+    });
+  });
+
+  it("resolves every spelling the CLI's test-report door accepts", () => {
+    for (const spelling of TEST_REPORT_FORMATS) {
+      expect(reportFormatForSpelling(spelling), spelling).toBeDefined();
+      expect(['k6', 'zap', 'legacy']).not.toContain(reportFormatForSpelling(spelling)?.producer);
+    }
   });
 
   it('answers undefined for an empty or unknown declaration rather than guessing', () => {

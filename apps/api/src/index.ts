@@ -150,6 +150,8 @@ import {
   pruneExpiredSpansEverywhere,
   SELF_AGENT_NAME,
   selfInstrumented,
+  budgetedGateway,
+  monthlyTokenBudgetFrom,
   TEST_PROPOSAL_AGENT_NAME,
   BRIEFING_AGENT_NAME,
 } from './services/genai-span-service.js';
@@ -460,6 +462,9 @@ inBackground(
  * **Built per workspace** (ADR-014), so a workspace's spans are written in that workspace,
  * where its runtime page reads them. Unconfigured, both refuse each request with the reason.
  */
+/** Tokens a month this install's own model calls may use; unset is no limit (plan task 36). */
+const monthlyTokenBudget = monthlyTokenBudgetFrom(process.env['LUPIN_AI_MONTHLY_TOKEN_BUDGET']);
+
 function selfGateways(workspaceId: string): {
   chat: AiGateway;
   testProposals: AiGateway | null;
@@ -471,8 +476,12 @@ function selfGateways(workspaceId: string): {
   const instrumented = (agent: string, what: string) =>
     createLiveAiGateway(settingsService, {
       decorate: (gateway, provider) =>
-        selfInstrumented(spans, gateway, provider, agent, (error) =>
-          logger.warn(`${what} span could not be recorded`, { error: String(error) }),
+        budgetedGateway(
+          spans,
+          selfInstrumented(spans, gateway, provider, agent, (error) =>
+            logger.warn(`${what} span could not be recorded`, { error: String(error) }),
+          ),
+          monthlyTokenBudget,
         ),
     }).gateway;
   return {

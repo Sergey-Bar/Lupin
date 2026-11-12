@@ -11401,6 +11401,11 @@
                   "k6",
                   "zap",
                   "allure",
+                  "ctrf",
+                  "jest",
+                  "vitest",
+                  "pytest",
+                  "cypress",
                   "sarif",
                   "otel",
                   "generic",
@@ -26804,7 +26809,12 @@
           "k6-json",
           "zap-xml",
           "legacy-upload",
-          "allure-results"
+          "allure-results",
+          "ctrf-json",
+          "jest-json",
+          "vitest-json",
+          "pytest-json",
+          "mochawesome-json"
         ]
       },
       "ReportKindSchema": {
@@ -26829,6 +26839,11 @@
           "k6",
           "zap",
           "allure",
+          "ctrf",
+          "jest",
+          "vitest",
+          "pytest",
+          "cypress",
           "sarif",
           "otel",
           "generic",
@@ -29911,7 +29926,25 @@
       "TestReportQuerySchema": {
         "type": "object",
         "properties": {
-          "format": { "type": "string", "enum": ["junit", "playwright-json"] },
+          "format": {
+            "type": "string",
+            "enum": [
+              "junit",
+              "playwright-json",
+              "ctrf",
+              "ctrf-json",
+              "jest",
+              "jest-json",
+              "vitest",
+              "vitest-json",
+              "pytest",
+              "pytest-json",
+              "pytest-json-report",
+              "mochawesome",
+              "mochawesome-json",
+              "cypress"
+            ]
+          },
           "branch": { "type": "string", "minLength": 1, "maxLength": 255 },
           "commit": { "type": "string", "pattern": "^[0-9a-f]{7,64}$" },
           "startedAt": {

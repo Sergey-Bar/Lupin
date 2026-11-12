@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, lt, lte } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, lt, lte, sql } from 'drizzle-orm';
 import { genaiSpans, workspaces, type GenAiSpanRow } from '@lupin/db';
 import { instrumentedGateway, type AiGateway, type CompletionSpan } from '@lupin/automation';
 import {
@@ -280,6 +280,66 @@ export function selfInstrumented(
     { record: (span) => recordSelfSpan(options, span, agentName).catch(onError) },
     { provider, now: () => (options.now?.() ?? new Date()).getTime() },
   );
+}
+
+// ─── Spend limit ─────────────────────────────────────────────────────────────
+
+/** `LUPIN_AI_MONTHLY_TOKEN_BUDGET`: tokens a month this install's own model calls may use. */
+export function monthlyTokenBudgetFrom(value: string | undefined): number | null {
+  if (value === undefined || value.trim() === '') return null;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`LUPIN_AI_MONTHLY_TOKEN_BUDGET must be a whole number of tokens: ${value}`);
+  }
+  return parsed;
+}
+
+/** Input and output tokens this install's own calls recorded since the start of the UTC month. */
+export async function selfTokensThisMonth(options: SpanOptions): Promise<number> {
+  const now = options.now?.() ?? new Date();
+  const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const [row] = await options.db
+    .select({
+      total: sql<number>`coalesce(sum(coalesce(${genaiSpans.inputTokens}, 0) + coalesce(${genaiSpans.outputTokens}, 0)), 0)::int`,
+    })
+    .from(genaiSpans)
+    .where(
+      and(
+        eq(genaiSpans.workspaceId, options.workspaceId),
+        eq(genaiSpans.source, 'self'),
+        gte(genaiSpans.startedAt, month),
+      ),
+    );
+  return row?.total ?? 0;
+}
+
+/**
+ * The gateway, refusing a completion once this month's tokens reach `budget` (plan task 36).
+ * Listing models is never refused. The refusal is a stated `BUDGET_EXHAUSTED`, so a caller
+ * falls back to its rules rather than retrying. With no budget, the gateway is unchanged.
+ */
+export function budgetedGateway(
+  options: SpanOptions,
+  gateway: AiGateway,
+  budget: number | null,
+): AiGateway {
+  if (budget === null) return gateway;
+  return {
+    listModels: (signal) => gateway.listModels(signal),
+    streamCompletion: (input) => ({
+      async *[Symbol.asyncIterator]() {
+        const used = await selfTokensThisMonth(options);
+        if (used >= budget) {
+          throw new DomainError(
+            ErrorCode.BUDGET_EXHAUSTED,
+            `This month's model budget of ${String(budget)} tokens is spent (${String(used)} used); it resets on the 1st.`,
+            { callerSafe: true },
+          );
+        }
+        yield* gateway.streamCompletion(input);
+      },
+    }),
+  };
 }
 
 // ─── Reading ─────────────────────────────────────────────────────────────────

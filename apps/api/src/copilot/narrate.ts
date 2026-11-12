@@ -7,10 +7,13 @@
  * rules, so the copilot always says something true.
  */
 import type { AiGateway } from '@lupin/automation';
+import { fenceUntrusted, followedUntrusted, UNTRUSTED_RULE } from './untrusted.js';
 
 export interface Grounding {
   summary: string;
   facts: string[];
+  /** Failure messages and other test output: fenced as data, never instructions (task 37). */
+  untrusted?: string[];
 }
 
 export type Narration =
@@ -32,6 +35,7 @@ export async function narrate(
   if (gateway === undefined) return rules;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const untrusted = grounding.untrusted ?? [];
   try {
     const model = (await gateway.listModels(controller.signal))[0]?.id;
     if (model === undefined) return rules;
@@ -44,9 +48,15 @@ export async function narrate(
           role: 'system',
           content:
             'You explain test results to a QA engineer in two short sentences. Use only the facts given. ' +
-            'Do not add any number, test, cause or recommendation that is not in them.',
+            'Do not add any number, test, cause or recommendation that is not in them. ' +
+            UNTRUSTED_RULE,
         },
-        { role: 'user', content: `Facts:\n- ${grounding.facts.join('\n- ')}` },
+        {
+          role: 'user',
+          content:
+            `Facts:\n- ${grounding.facts.join('\n- ')}` +
+            (untrusted.length === 0 ? '' : `\n\nFailure messages:\n${fenceUntrusted(untrusted)}`),
+        },
       ],
     })) {
       if (chunk.type === 'text') text += chunk.text;
@@ -54,8 +64,11 @@ export async function narrate(
     }
     text = text.trim();
     if (text === '') return rules;
-    const allowed = new Set(numbersIn([grounding.summary, ...grounding.facts].join(' ')));
+    const allowed = new Set(
+      numbersIn([grounding.summary, ...grounding.facts, ...untrusted].join(' ')),
+    );
     if (numbersIn(text).some((number) => !allowed.has(number))) return rules;
+    if (followedUntrusted(text, [grounding.summary, ...grounding.facts], untrusted)) return rules;
     return { source: 'model', model, text };
   } catch {
     return rules;

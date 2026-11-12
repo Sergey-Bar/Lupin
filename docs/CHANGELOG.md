@@ -58,6 +58,15 @@
   numeric non-root user; the compose runner drops every capability.
 - **Maturity from the upload door (task 20).** Every producer the reporter door reads is listed with
   import evidence, so ZAP no longer reads as absent.
+- **Five more result formats (task 21).** CTRF, Jest, Vitest, pytest-json-report and Mochawesome
+  (Cypress) reports are read natively by the reporter door and `lupin test`, keeping retries.
+- **MCP QA read tools (task 24).** `list_runs`, `get_test_history`, `list_quarantine`,
+  `list_failure_causes`, `get_change_risk` and `list_signoffs`.
+- **A monthly model budget (task 36).** `LUPIN_AI_MONTHLY_TOKEN_BUDGET` stops this install's own
+  model calls once the month's tokens are spent, with `BUDGET_EXHAUSTED`; the copilot falls back
+  to its rules.
+- **Test output is untrusted (task 37).** Failure messages sent to a model are fenced as data, and
+  a narration that links, adds code, or copies them verbatim is discarded for the rules' text.
 
 - **Change risk.** Every pull request the gate sees gets a level and a score that is the sum of
   stated factors, each with its own sentence: authorship, size, tests touched, diff coverage,

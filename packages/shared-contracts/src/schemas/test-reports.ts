@@ -7,7 +7,27 @@ import { z } from 'zod/v4';
  * quarantined? The server decides, from the report it parsed and the quarantine it holds,
  * so the CLI never reads a report and cannot read one differently from the gate.
  */
-export const TEST_REPORT_FORMATS = ['junit', 'playwright-json'] as const;
+/**
+ * The `format=` spellings this door reads: the test-result formats in `REPORT_FORMATS`, each
+ * by a spelling that resolves through `reportFormatForSpelling`. Load and security reports are
+ * not test runs a quarantine can excuse, so k6 and ZAP are not here.
+ */
+export const TEST_REPORT_FORMATS = [
+  'junit',
+  'playwright-json',
+  'ctrf',
+  'ctrf-json',
+  'jest',
+  'jest-json',
+  'vitest',
+  'vitest-json',
+  'pytest',
+  'pytest-json',
+  'pytest-json-report',
+  'mochawesome',
+  'mochawesome-json',
+  'cypress',
+] as const;
 
 export const TestReportQuerySchema = z.object({
   format: z.enum(TEST_REPORT_FORMATS),

@@ -113,6 +113,8 @@ export interface CanonicalRunResultInput {
   provenance?: Record<string, unknown>;
   /** The whole result's evidence, when it is not simply every attempt's. */
   evidence?: CanonicalRunResult['evidence'];
+  /** The producer's own steps, when its format carries them; see `RunResultSchema.steps`. */
+  steps?: CanonicalRunResult['steps'];
   /**
    * The producer's document could not be parsed to its end.
    *
@@ -184,6 +186,7 @@ export function canonicalRunResult(
     // attempt's end time would state something the producer never said.
     finishedAt: context.finishedAt,
     attempts,
+    ...(input.steps === undefined || input.steps.length === 0 ? {} : { steps: input.steps }),
     evidence: input.evidence ?? attempts.flatMap((attempt) => attempt.evidence ?? []),
     provenance: {
       producer: input.producer,

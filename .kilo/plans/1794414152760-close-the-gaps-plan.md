@@ -17,6 +17,11 @@ the task that names them, so `scripts/lib/docs-paths.test.mjs` keeps checking on
   workspaces) is kept and kept passing its tests, and is not extended.
 - **Jira both ways cut (task 22, same day, the owner's call).** The existing one-way Jira issue
   creation stays; update, transition, comment, search and the inbound webhook are not built.
+- **Only what must remain (same day, the owner's call).** Kept and done: task 37 (test output that
+  reaches a model is untrusted) and task 36 (a monthly token budget for this install's own model
+  calls, without a price table), because each guards a real failure: a prompt injection from a
+  test log, and an unbounded bill. Tasks 21 and 24 were already built and are kept. Cut: tasks 23,
+  25 to 35 and 38 to 42. Each still reads as a gap above; none is a defect in what exists.
 
 The owner asked for the plan without answering these, so each is stated and can be overturned
 before its wave starts.

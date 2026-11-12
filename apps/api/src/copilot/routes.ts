@@ -49,7 +49,8 @@ export function createCopilotRoutes(options: {
     const narration = await narrate(
       {
         summary: explained.summary,
-        facts: [explained.summary, ...explained.causes.map((cause) => ` tests: ${cause.message}`)],
+        facts: [explained.summary],
+        untrusted: explained.causes.map((cause) => cause.message),
       },
       options.gateway,
     );
