@@ -17,6 +17,7 @@ import {
   type PullRequestRisk,
   type PullRequestRiskHistory,
 } from '@lupin/shared-contracts';
+import { inChunksOf, withinBound } from './bounded-list.js';
 import type { CommitTests } from './commit-tests.js';
 import { tamperForRisk, type DiffGuardOptions } from './diff-guard-service.js';
 import { projectRow, type ProjectRow } from './health-findings.js';
@@ -127,22 +128,31 @@ async function syncedPullRequest(options: ChangeRiskOptions, projectId: string, 
   return row;
 }
 
+/** Changed paths per `inArray` statement; a pull request can change thousands of files. */
+const PATH_CHUNK = 500;
+
 /** The changed files' failure correlations, in this workspace only. */
 async function correlationsFor(options: ChangeRiskOptions, paths: readonly string[]) {
   if (paths.length === 0) return [];
-  return options.db
-    .select({
-      testStableId: testFailureCorrelations.testStableId,
-      sourceFilePath: testFailureCorrelations.sourceFilePath,
-      failureCount: testFailureCorrelations.failureCount,
-    })
-    .from(testFailureCorrelations)
-    .where(
-      and(
-        eq(testFailureCorrelations.workspaceId, options.workspaceId),
-        inArray(testFailureCorrelations.sourceFilePath, [...paths]),
-      ),
+  const found = [];
+  for (const chunk of inChunksOf(paths, PATH_CHUNK)) {
+    found.push(
+      ...(await options.db
+        .select({
+          testStableId: testFailureCorrelations.testStableId,
+          sourceFilePath: testFailureCorrelations.sourceFilePath,
+          failureCount: testFailureCorrelations.failureCount,
+        })
+        .from(testFailureCorrelations)
+        .where(
+          and(
+            eq(testFailureCorrelations.workspaceId, options.workspaceId),
+            inArray(testFailureCorrelations.sourceFilePath, withinBound(chunk, PATH_CHUNK)),
+          ),
+        )),
     );
+  }
+  return found;
 }
 
 async function radiusOf(

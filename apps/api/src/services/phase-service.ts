@@ -24,6 +24,7 @@ import {
   type RepositoryPhases,
   type SdlcPhase,
 } from '@lupin/shared-contracts';
+import { withinBound } from './bounded-list.js';
 import { tamperForRisk } from './diff-guard-service.js';
 import { projectRow, type HealthStoreOptions } from './health-findings.js';
 
@@ -56,7 +57,7 @@ async function testsOnHeads(options: PhaseOptions, projectId: string, heads: rea
       and(
         eq(runs.workspaceId, options.workspaceId),
         eq(runs.projectId, projectId),
-        inArray(runs.commitSha, [...heads]),
+        inArray(runs.commitSha, withinBound(heads, PHASE_CHANGE_LIMIT)),
       ),
     )
     .orderBy(desc(runs.startedAt));
@@ -81,7 +82,7 @@ async function riskLevels(options: PhaseOptions, projectId: string, numbers: rea
       and(
         eq(pullRequestRiskAssessments.workspaceId, options.workspaceId),
         eq(pullRequestRiskAssessments.projectId, projectId),
-        inArray(pullRequestRiskAssessments.prNumber, [...numbers]),
+        inArray(pullRequestRiskAssessments.prNumber, withinBound(numbers, PHASE_CHANGE_LIMIT)),
       ),
     )
     .orderBy(desc(pullRequestRiskAssessments.assessedAt));
@@ -216,7 +217,7 @@ async function configuredFor(options: PhaseOptions, projectIds: readonly string[
     .where(
       and(
         eq(deliverySources.workspaceId, options.workspaceId),
-        inArray(deliverySources.projectId, [...projectIds]),
+        inArray(deliverySources.projectId, withinBound(projectIds, PORTFOLIO_PHASE_LIMIT)),
         eq(deliverySources.enabled, true),
       ),
     );

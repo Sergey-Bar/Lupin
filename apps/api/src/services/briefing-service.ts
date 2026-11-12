@@ -8,6 +8,7 @@ import {
 } from '@lupin/db';
 import { composeBriefing, type BriefingDecision, type BriefingInput } from '@lupin/reporting';
 import { changeRiskRank, type Briefing, type ChangeRiskLevel } from '@lupin/shared-contracts';
+import { inChunksOf, withinBound } from './bounded-list.js';
 import { loadCockpitDigest } from './cockpit-digest.js';
 import type { CockpitOptions } from './cockpit-service.js';
 import { projectRow } from './health-findings.js';
@@ -23,6 +24,10 @@ export type BriefingOptions = CockpitOptions & { now?: () => Date };
 export const BRIEFING_DEFAULT_DAYS = 7;
 const MERGE_LIMIT = 5000;
 const PORTFOLIO_LIMIT = 50;
+/** Values per `inArray` statement. */
+const IN_ARRAY_CHUNK = 500;
+/** `DeliverySourceSchema.productionEnvironments` accepts at most 20. */
+const MAX_PRODUCTION_ENVIRONMENTS = 20;
 const DAY = 86_400_000;
 
 type Merged = NonNullable<BriefingInput['merged']>;
@@ -55,18 +60,9 @@ async function synced(options: BriefingOptions, projectId: string): Promise<bool
   return any !== undefined;
 }
 
-/** pr number → its latest assessment's level and whether it found tampering. */
-async function latestAssessments(
-  options: BriefingOptions,
-  projectId: string,
-  numbers: readonly number[],
-) {
-  const latest = new Map<
-    number,
-    { level: string; score: number; headSha: string; tampered: boolean }
-  >();
-  if (numbers.length === 0) return latest;
-  const rows = await options.db
+/** One chunk's assessments, newest first. */
+function assessmentsFor(options: BriefingOptions, projectId: string, numbers: readonly number[]) {
+  return options.db
     .select({
       number: pullRequestRiskAssessments.prNumber,
       level: pullRequestRiskAssessments.level,
@@ -79,10 +75,29 @@ async function latestAssessments(
       and(
         eq(pullRequestRiskAssessments.workspaceId, options.workspaceId),
         eq(pullRequestRiskAssessments.projectId, projectId),
-        inArray(pullRequestRiskAssessments.prNumber, [...numbers]),
+        inArray(pullRequestRiskAssessments.prNumber, withinBound(numbers, IN_ARRAY_CHUNK)),
       ),
     )
     .orderBy(desc(pullRequestRiskAssessments.assessedAt), desc(pullRequestRiskAssessments.id));
+}
+
+/** pr number → its latest assessment's level and whether it found tampering. */
+async function latestAssessments(
+  options: BriefingOptions,
+  projectId: string,
+  numbers: readonly number[],
+) {
+  const latest = new Map<
+    number,
+    { level: string; score: number; headSha: string; tampered: boolean }
+  >();
+  if (numbers.length === 0) return latest;
+  // Up to MERGE_LIMIT numbers, so one statement per chunk. The chunks are disjoint, so
+  // each chunk's newest-first order is enough to find every number's latest assessment.
+  const rows = [];
+  for (const chunk of inChunksOf(numbers, IN_ARRAY_CHUNK)) {
+    rows.push(...(await assessmentsFor(options, projectId, chunk)));
+  }
   for (const row of rows) {
     if (latest.has(row.number)) continue;
     latest.set(row.number, {
@@ -159,7 +174,7 @@ async function deploymentsSince(
         eq(deployments.workspaceId, options.workspaceId),
         eq(deployments.projectId, projectId),
         eq(deployments.status, 'success'),
-        inArray(deployments.environment, environments),
+        inArray(deployments.environment, withinBound(environments, MAX_PRODUCTION_ENVIRONMENTS)),
         gte(deployments.createdAt, since),
       ),
     );

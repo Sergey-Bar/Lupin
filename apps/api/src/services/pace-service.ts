@@ -61,7 +61,7 @@ async function mergesSince(options: PaceOptions, projectId: string, since: Date)
 async function coverageByHead(options: PaceOptions, projectId: string, heads: readonly string[]) {
   const coverage = new Map<string, { executable: number; covered: number }>();
   for (let index = 0; index < heads.length; index += CHUNK) {
-    const chunk = withinBound(heads.slice(index, index + CHUNK), CHUNK);
+    const chunk = heads.slice(index, index + CHUNK);
     const rows = await options.db
       .select({
         sha: diffCoverageResults.commitSha,
@@ -73,7 +73,7 @@ async function coverageByHead(options: PaceOptions, projectId: string, heads: re
         and(
           eq(diffCoverageResults.workspaceId, options.workspaceId),
           eq(diffCoverageResults.projectId, projectId),
-          inArray(diffCoverageResults.commitSha, chunk),
+          inArray(diffCoverageResults.commitSha, withinBound(chunk, CHUNK)),
           isNotNull(diffCoverageResults.ratio),
         ),
       );
