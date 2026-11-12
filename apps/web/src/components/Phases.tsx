@@ -201,44 +201,54 @@ function PortfolioTable({ read }: { read: PortfolioPhases }): React.ReactElement
   }
   return (
     <div className="flex flex-col gap-2">
-      <table className="w-full text-sm">
-        <caption className="sr-only">
-          Each repository’s shape per SDLC phase, over {String(read.windowDays)} days, worst first
-        </caption>
-        <thead>
-          <tr className="text-xs text-fg-muted">
-            <th scope="col" className="pe-3 text-start font-medium">
-              Repository
-            </th>
-            {read.projects[0]?.phases.map((entry) => (
-              <th key={entry.phase} scope="col" className="px-1 text-center font-medium">
-                {PHASE_LABEL[entry.phase]}
+      {/* Seven phase columns are wider than a phone, so the table scrolls across in its own
+          region (focusable, so a keyboard can scroll it) and the page does not. 
+elative`n          keeps the sr-only caption inside the region too. */}
+      <div
+        role="region"
+        aria-label="Phases per repository"
+        tabIndex={0}
+        className="relative overflow-x-auto rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+      >
+        <table className="w-full text-sm">
+          <caption className="sr-only">
+            Each repository’s shape per SDLC phase, over {String(read.windowDays)} days, worst first
+          </caption>
+          <thead>
+            <tr className="text-xs text-fg-muted">
+              <th scope="col" className="pe-3 text-start font-medium">
+                Repository
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {read.projects.map((row) => (
-            <tr key={row.projectId}>
-              <th scope="row" className="pe-3 text-start font-normal">
-                <UserText>{row.name}</UserText>
-              </th>
-              {row.phases.map((entry) => (
-                <td key={entry.phase} className="px-1 py-1 text-center">
-                  <span
-                    className={cn(
-                      'inline-block rounded-full px-2 py-0.5 text-xs',
-                      SHAPE_TONE[entry.shape],
-                    )}
-                  >
-                    {row.configured ? SHAPE_WORD[entry.shape] : 'Not synced'}
-                  </span>
-                </td>
+              {read.projects[0]?.phases.map((entry) => (
+                <th key={entry.phase} scope="col" className="px-1 text-center font-medium">
+                  {PHASE_LABEL[entry.phase]}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {read.projects.map((row) => (
+              <tr key={row.projectId}>
+                <th scope="row" className="pe-3 text-start font-normal">
+                  <UserText>{row.name}</UserText>
+                </th>
+                {row.phases.map((entry) => (
+                  <td key={entry.phase} className="px-1 py-1 text-center">
+                    <span
+                      className={cn(
+                        'inline-block rounded-full px-2 py-0.5 text-xs',
+                        SHAPE_TONE[entry.shape],
+                      )}
+                    >
+                      {row.configured ? SHAPE_WORD[entry.shape] : 'Not synced'}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {read.truncated ? (
         <p className="max-w-measure text-xs text-warning">
           Showing {String(read.projects.length)} of {String(read.total)} repositories.
