@@ -76,7 +76,7 @@ describe('ButtonLink', () => {
     render(<ButtonLink href="/x">Go</ButtonLink>);
     expect(screen.getByRole('link', { name: 'Go' })).toHaveClass(
       'bg-primary-gradient',
-      'text-on-fill',
+      'text-on-primary',
     );
   });
 });

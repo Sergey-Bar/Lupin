@@ -1955,3 +1955,81 @@ describe('design language v2: depth and glow', () => {
     expect(Number(match?.[1])).toBeLessThanOrEqual(25);
   });
 });
+
+/**
+ * The premium palette (design language v4): neutral planes, one solid blue, true status hues.
+ *
+ * The v3 palette read as generated: a blue-grey plane, a pastel sky-blue button with a dark
+ * label, a salmon red on a pink tint, an orange that also meant "failed", and blue and cyan
+ * glows behind everything. Each rule below is one of those, refused.
+ */
+describe('the premium palette', () => {
+  function themeValueAnywhere(variable: string): string {
+    const escaped = variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = new RegExp(`${escaped}\\s*:\\s*([^;]+);`).exec(themeCss);
+    return match?.[1]?.replace(/\s+/g, ' ').trim() ?? '';
+  }
+
+  const PLANE_STEPS = [
+    '--lupin-surface-sunken',
+    '--lupin-surface',
+    '--lupin-surface-raised',
+    '--lupin-surface-muted',
+  ];
+
+  it.each(BOTH_SELECTORS)('keeps every plane step neutral, not blue-grey, in %s', (selector) => {
+    for (const step of PLANE_STEPS) {
+      const { chroma } = oklch(variableValue(selector, step));
+      expect(chroma, `${step} has chroma ${chroma.toFixed(4)} in ${selector}`).toBeLessThanOrEqual(
+        0.005,
+      );
+    }
+  });
+
+  it.each(BOTH_SELECTORS)(
+    'fills the primary button with one solid, saturated blue under a white label, in %s',
+    (selector) => {
+      const fill = variableValue(selector, '--lupin-primary');
+      const label = variableValue(selector, '--lupin-on-primary');
+      expect(oklch(label).lightness).toBeGreaterThan(0.97);
+      expectAtLeast(contrastRatio(label, fill), 4.5, `the primary label in ${selector}`);
+      const { hue, chroma } = oklch(fill);
+      expect(hue).toBeGreaterThanOrEqual(230);
+      expect(hue).toBeLessThanOrEqual(260);
+      expect(chroma, 'a pastel fill reads as a placeholder').toBeGreaterThanOrEqual(0.17);
+    },
+  );
+
+  it('draws the primary button flat: the gradient is one colour, the primary', () => {
+    const gradient = themeValueAnywhere('--lupin-gradient-primary');
+    expect(gradient).not.toContain('--lupin-accent-2');
+    expect(gradient).toContain('var(--lupin-primary)');
+  });
+
+  it.each(BOTH_SELECTORS)(
+    'says failed and passed in true, saturated hues rather than pastels, in %s',
+    (selector) => {
+      for (const token of ['--lupin-danger', '--lupin-success']) {
+        const { chroma } = oklch(variableValue(selector, token));
+        expect(
+          chroma,
+          `${token} has chroma ${chroma.toFixed(3)} in ${selector}`,
+        ).toBeGreaterThanOrEqual(0.15);
+      }
+    },
+  );
+
+  it.each(BOTH_SELECTORS)(
+    'gives "failed" one colour: the chart mark is the status red, in %s',
+    (selector) => {
+      const fail = oklch(variableValue(selector, '--lupin-chart-fail')).hue;
+      const danger = oklch(variableValue(selector, '--lupin-danger')).hue;
+      expect(Math.abs(fail - danger)).toBeLessThanOrEqual(3);
+    },
+  );
+
+  it('lights the shell without colour: no blue or cyan glow behind the app', () => {
+    const shell = themeValueAnywhere('--lupin-gradient-shell');
+    expect(shell).not.toMatch(/--lupin-accent/u);
+  });
+});

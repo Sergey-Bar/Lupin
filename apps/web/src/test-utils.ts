@@ -1710,7 +1710,7 @@ export function expectOnePrimary(container: HTMLElement): string[] {
   const solid = [...container.querySelectorAll<HTMLElement>('a, button')].filter(
     (element) =>
       element.classList.contains('bg-primary-gradient') &&
-      element.classList.contains('text-on-fill') &&
+      element.classList.contains('text-on-primary') &&
       // Not on screen: inside a closed native dialog, or hidden from everyone.
       element.closest('dialog:not([open]), [hidden], [aria-hidden="true"]') === null,
   );

@@ -75,7 +75,8 @@
   --color-border: var(--lupin-border);
   --color-border-strong: var(--lupin-border-strong);
   --color-accent: var(--lupin-accent);
-  --color-primary: var(--lupin-accent);
+  --color-primary: var(--lupin-primary);
+  --color-on-primary: var(--lupin-on-primary);
   --color-success: var(--lupin-success);
   --color-warning: var(--lupin-warning);
   --color-danger: var(--lupin-danger);
@@ -322,12 +323,12 @@
 :root,
 [data-theme='dark'] {
   /* The plane. Sunken is the page, surface is a panel, raised is a control. */
-  --lupin-surface-sunken: oklch(17.79% 0.0064 271.04);
-  --lupin-surface: oklch(21.46% 0.0099 276.58);
-  --lupin-surface-raised: oklch(23.61% 0.0097 276.66);
-  --lupin-surface-muted: oklch(25.72% 0.0095 276.72);
-  --lupin-fg: oklch(96.77% 0.0027 286.35);
-  --lupin-fg-muted: oklch(72.33% 0.0101 279.62);
+  --lupin-surface-sunken: oklch(14.5% 0.002 286);
+  --lupin-surface: oklch(17.8% 0.003 286);
+  --lupin-surface-raised: oklch(20.3% 0.003 286);
+  --lupin-surface-muted: oklch(22.8% 0.004 286);
+  --lupin-fg: oklch(97% 0.002 286);
+  --lupin-fg-muted: oklch(72.5% 0.004 286);
   /*
    * Two borders, because WCAG 1.4.11 applies to some of what this token draws
    * and not to the rest.
@@ -344,19 +345,26 @@
    * 1.31:1, so a low-vision keyboard user had no way to see where the field
    * ended.
    */
-  --lupin-border: oklch(30.56% 0.0111 271.04);
-  --lupin-border-strong: oklch(55.34% 0.0141 275.92);
+  --lupin-border: oklch(26.5% 0.004 286);
+  --lupin-border-strong: oklch(52% 0.005 286);
   /* The Lupin blue, lifted for the dark plane: focus, active, links, the primary fill. */
-  --lupin-accent: oklch(77% 0.12 242);
+  --lupin-accent: oklch(77.5% 0.13 246);
   /*
    * The accent's partner, for light and gradients only: the shell's glow and the primary
    * fill's far end. Never text, never a status, so cyan can never be read as a verdict.
    */
   --lupin-accent-2: oklch(82% 0.11 200);
+  /*
+   * The primary button: one solid, saturated blue under a white label, in both themes, as on
+   * Apple and Linear. Its own token because the accent, which is link text on the dark plane,
+   * has to be light, and a light fill under a dark label read as a pastel placeholder.
+   */
+  --lupin-primary: oklch(54% 0.2 255);
+  --lupin-on-primary: oklch(100% 0 0);
   /* Restated off the Tailwind 500 steps. Hues 148 / 72 / 25. */
-  --lupin-success: oklch(72.03% 0.1317 147.83);
-  --lupin-warning: oklch(75.94% 0.1314 71.99);
-  --lupin-danger: oklch(66.66% 0.1313 24.63);
+  --lupin-success: oklch(74% 0.17 148);
+  --lupin-warning: oklch(79% 0.15 72);
+  --lupin-danger: oklch(66% 0.19 25);
   --lupin-info: oklch(68% 0.045 210);
   /*
    * The foreground for text sitting *on* a saturated fill — the primary button,
@@ -365,10 +373,10 @@
    * `text-white` or `text-fg` can be right for both. Dark here, because the
    * accent is a light blue: the primary button is light blue with a near-black label.
    */
-  --lupin-on-fill: oklch(17.79% 0.0064 271.04);
+  --lupin-on-fill: oklch(14.5% 0.002 286);
   /* Okabe–Ito, lifted for a near-black plane: every mark is at least 3:1 on every step. */
   --lupin-chart-pass: oklch(73.96% 0.1327 167.66);
-  --lupin-chart-fail: oklch(70.33% 0.16 40.91);
+  --lupin-chart-fail: oklch(66% 0.19 25);
   --lupin-chart-flaky: oklch(73.27% 0.121 337.17);
   --lupin-chart-skipped: oklch(65.66% 0.0155 268.42);
   --lupin-chart-line: oklch(73.92% 0.1225 240.43);
@@ -385,19 +393,21 @@
 [data-theme='light'] {
   /* The plane, inverted: elevation moves towards white rather than away from
      black, so a raised surface in light mode is the *nearest* to the page. */
-  --lupin-surface-sunken: oklch(93.62% 0.004 106.48);
+  --lupin-surface-sunken: oklch(94.2% 0.002 286);
   --lupin-surface: oklch(100% 0 0);
-  --lupin-surface-raised: oklch(99.08% 0.0013 106.42);
-  --lupin-surface-muted: oklch(96.66% 0.0026 106.45);
-  --lupin-fg: oklch(20.09% 0.0081 274.5);
-  --lupin-fg-muted: oklch(49.02% 0.0096 278.47);
-  --lupin-border: oklch(89.39% 0.0027 106.45);
+  --lupin-surface-raised: oklch(99.2% 0.001 286);
+  --lupin-surface-muted: oklch(97.3% 0.002 286);
+  --lupin-fg: oklch(20% 0.004 286);
+  --lupin-fg-muted: oklch(48% 0.004 286);
+  --lupin-border: oklch(90.5% 0.002 286);
   /* 3:1 has to be measured against the *darkest* plane step, not the base. */
-  --lupin-border-strong: oklch(57.7% 0.0124 274.76);
+  --lupin-border-strong: oklch(56% 0.004 286);
   /* The Lupin blue: the primary button is blue with a white label, and a link is blue. */
-  --lupin-accent: oklch(48% 0.15 242);
+  --lupin-accent: oklch(48% 0.16 240);
   /* Deep enough that the white label on the primary gradient's far end still reads. */
   --lupin-accent-2: oklch(50% 0.1 210);
+  --lupin-primary: oklch(52% 0.2 255);
+  --lupin-on-primary: oklch(100% 0 0);
   /*
    * The status colours are used as body text — `Alert` and `Toast` render
    * `text-success` over `bg-success/10`, and `StatCard` renders the trend in
@@ -406,15 +416,15 @@
    * the background luminance and *lowers* the contrast, so a ratio computed
    * against the untinted surface would pass while the shipped rendering failed.
    */
-  --lupin-success: oklch(47.06% 0.1167 147.84);
-  --lupin-warning: oklch(48.1% 0.0934 71.99);
-  --lupin-danger: oklch(48.07% 0.1437 25.25);
+  --lupin-success: oklch(50% 0.165 148);
+  --lupin-warning: oklch(52% 0.12 72);
+  --lupin-danger: oklch(53% 0.2 25);
   /* The dark steel, one step down: the dark theme's steel is 2.5:1 on white. */
   --lupin-info: oklch(47% 0.05 210);
   --lupin-on-fill: oklch(100% 0 0);
   /* Okabe–Ito, deepened for white: every mark is at least 3:1 on every step. */
   --lupin-chart-pass: oklch(55.06% 0.1223 161.18);
-  --lupin-chart-fail: oklch(56.15% 0.1727 39.73);
+  --lupin-chart-fail: oklch(53% 0.2 25);
   --lupin-chart-flaky: oklch(46.44% 0.1507 336.43);
   --lupin-chart-skipped: oklch(61.33% 0.0158 268.4);
   --lupin-chart-line: oklch(48.56% 0.1492 252.88);
@@ -462,10 +472,10 @@
 @media (prefers-reduced-transparency: reduce) {
   :root,
   [data-theme='dark'] {
-    --lupin-surface-sunken: oklch(17.79% 0.0064 271.04);
-    --lupin-surface: oklch(21.46% 0.0099 276.58);
-    --lupin-surface-raised: oklch(23.61% 0.0097 276.66);
-    --lupin-surface-muted: oklch(25.72% 0.0095 276.72);
+    --lupin-surface-sunken: oklch(14.5% 0.002 286);
+    --lupin-surface: oklch(17.8% 0.003 286);
+    --lupin-surface-raised: oklch(20.3% 0.003 286);
+    --lupin-surface-muted: oklch(22.8% 0.004 286);
     /* Measured on the *lightest* step above, not the base: a border that clears 3:1
        on the page and misses it on the muted step identifies a control on a card and
        not on a panel. */
@@ -474,10 +484,10 @@
   }
 
   [data-theme='light'] {
-    --lupin-surface-sunken: oklch(93.62% 0.004 106.48);
+    --lupin-surface-sunken: oklch(94.2% 0.002 286);
     --lupin-surface: oklch(100% 0 0);
-    --lupin-surface-raised: oklch(99.08% 0.0013 106.42);
-    --lupin-surface-muted: oklch(96.66% 0.0026 106.45);
+    --lupin-surface-raised: oklch(99.2% 0.001 286);
+    --lupin-surface-muted: oklch(97.3% 0.002 286);
     /* At least 3:1 on `--lupin-surface-sunken`, the darkest step, which is the
        binding constraint in this theme. */
     --lupin-border: oklch(59.4% 0.0123 274.77);
@@ -576,27 +586,17 @@
     transparent 70%
   );
   /*
-   * The shell's light: two soft glows, the brand blue from the top start and its cyan
-   * partner from the bottom end, so the translucent chrome has something to show through.
-   * Low alpha on purpose: it is a room, not a wallpaper, and text never sits on it directly.
+   * The shell's light, Apple-style: one neutral highlight from the top, no hue. The blue and
+   * cyan glows of v3 read as generated; a room lit from above reads as a material.
    */
-  --lupin-gradient-shell:
-    radial-gradient(
-      60% 50% at 0% 0%,
-      color-mix(in oklab, var(--lupin-accent) 20%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      55% 45% at 100% 100%,
-      color-mix(in oklab, var(--lupin-accent-2) 16%, transparent),
-      transparent 70%
-    );
-  /* The one primary fill per screen: the brand blue running into its partner. */
-  --lupin-gradient-primary: linear-gradient(
-    135deg,
-    var(--lupin-accent),
-    color-mix(in oklab, var(--lupin-accent) 55%, var(--lupin-accent-2))
+  --lupin-gradient-shell: radial-gradient(
+    90% 55% at 50% 0%,
+    color-mix(in oklab, var(--lupin-fg) 5%, transparent),
+    transparent 70%
   );
+  /* The one primary fill per screen: one solid colour, kept as a gradient token so the
+     utility and its callers stay one recipe. */
+  --lupin-gradient-primary: linear-gradient(var(--lupin-primary), var(--lupin-primary));
 }
 
 @utility surface-translucent {

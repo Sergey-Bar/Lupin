@@ -23,7 +23,8 @@ describe('the button rule', () => {
     const offenders = files(SRC).filter((file) =>
       (readFileSync(file, 'utf8').match(/(['"`])[^'"`]*\1/gu) ?? []).some(
         (literal) =>
-          /\bbg-primary(-gradient)?(?![\w-])/u.test(literal) && /\btext-on-fill\b/u.test(literal),
+          /\bbg-primary(-gradient)?(?![\w-])/u.test(literal) &&
+          /\btext-on-(fill|primary)\b/u.test(literal),
       ),
     );
     expect(offenders.map((file) => path.relative(SRC, file).replaceAll('\\', '/'))).toEqual([]);
