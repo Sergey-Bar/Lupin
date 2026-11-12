@@ -277,6 +277,8 @@ export default defineConfig({
       env: {
         PORT: String(apiPort),
         NODE_ENV: 'development',
+        // One browser per worker drives every request from one address; the budget is unit-tested.
+        LUPIN_API_RATE_LIMIT: '0',
         DATABASE_URL: databaseUrl,
         COOKIE_SECRET,
         LUPIN_API_KEY: INSTALLATION_KEY,
