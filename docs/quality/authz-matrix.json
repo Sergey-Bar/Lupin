@@ -9,7 +9,7 @@
   ],
   "summary": {
     "admin": 42,
-    "viewer": 101,
+    "viewer": 102,
     "operator": 36,
     "open": 16,
     "runner-credential": 9,
@@ -696,6 +696,13 @@
       "path": "/api/v1/projects/:id/briefing",
       "access": "viewer",
       "evidenceTest": "apps/api/src/routes/repo-health.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:id/cluster-issues",
+      "access": "viewer",
+      "evidenceTest": null,
       "composition": "database"
     },
     {

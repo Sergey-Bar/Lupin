@@ -17,6 +17,7 @@ import type { Caller } from './access-service.js';
 import { storeGitToken } from './git-credential-service.js';
 import {
   STALE_CLAIM_MS,
+  clusterIssues,
   clusterKey,
   createClusterIssue,
   createFindingIssue,
@@ -603,6 +604,11 @@ describe('an issue from a failure cluster', () => {
     expect(text).toContain('- checkout › refunds');
     expect((await createClusterIssue(options, ADAPTERS, body, 'b')).created).toBe(false);
     expect(sent).toHaveLength(1);
+    // Every later occurrence shows the issue, read by the signature the page has (Wave 1
+    // task 3); an unfiled signature has none.
+    const found = await clusterIssues(options, projectId, [CLUSTER.signature, 'never filed']);
+    expect(Object.keys(found)).toEqual([CLUSTER.signature]);
+    expect(found[CLUSTER.signature]?.key).toBe('ACME-11');
     const rows = await db
       .select()
       .from(schema.issueLinks)

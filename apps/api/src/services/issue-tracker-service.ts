@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import {
   healthFindings,
   issueLinks,
@@ -517,6 +517,39 @@ export async function createFindingIssue(
 /** The key a cluster's issue is filed under: its signature, hashed to a bounded width. */
 export function clusterKey(signature: string): string {
   return createHash('sha256').update(signature).digest('hex');
+}
+
+/**
+ * The created issues for these cluster signatures, by signature, so a cluster that already
+ * has an issue shows it on every later occurrence (plan Wave 1 task 3).
+ */
+export async function clusterIssues(
+  options: IssueTrackerOptions,
+  projectId: string,
+  signatures: readonly string[],
+): Promise<Record<string, IssueLink>> {
+  if (signatures.length === 0) return {};
+  const bySourceKey = new Map(signatures.map((signature) => [clusterKey(signature), signature]));
+  const rows = await options.db
+    .select()
+    .from(issueLinks)
+    .where(
+      and(
+        eq(issueLinks.workspaceId, options.workspaceId),
+        eq(issueLinks.projectId, projectId),
+        eq(issueLinks.sourceKind, 'cluster'),
+        eq(issueLinks.state, 'created'),
+        inArray(issueLinks.sourceKey, [...bySourceKey.keys()]),
+      ),
+    );
+  const found: Record<string, IssueLink> = {};
+  for (const row of rows) {
+    const signature = bySourceKey.get(row.sourceKey);
+    if (signature !== undefined && found[signature] === undefined) {
+      found[signature] = linkOf(row, false);
+    }
+  }
+  return found;
 }
 
 /** An issue from one failure cluster, filed against the project the body names. */

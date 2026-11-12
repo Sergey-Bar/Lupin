@@ -1,6 +1,8 @@
 import React from 'react';
 import { Button, Select } from '@lupin/ui';
+import type { IssueLink, IssueTarget } from '@lupin/shared-contracts';
 import type { ApiClient } from '../lib/api.js';
+import type { QaClient } from '../lib/qa-client.js';
 import { formatDuration, shortDate } from '../lib/insights.js';
 import type { QaInsights } from '../lib/qa.js';
 import { failureText } from '../lib/roles.js';
@@ -32,22 +34,134 @@ const CATEGORY_LABEL: Record<Category, string> = {
 export function FailureClustersPanel({
   clusters,
   api,
+  issueTracking,
   className = 'flex-1',
 }: {
   clusters: QaInsights['failureClusters'];
   /** Absent: labels are shown and cannot be changed here. */
   api?: Pick<ApiClient, 'setTriageLabel'>;
+  /** The project's issue calls. Absent: no issue control is drawn. */
+  issueTracking?: { projectId: string; qa: Pick<QaClient, 'clusterIssues' | 'openClusterIssue'> };
   /** Fills its column on Tests; on Home it is as tall as its rows. */
   className?: string;
 }): React.ReactElement {
+  const issues = useClusterIssues(clusters, issueTracking);
   return (
     <Panel title="Failures by root cause" data-testid="failure-clusters" className={className}>
       {clusters === undefined ? (
         <Quiet data-testid="clusters-unreported">This API does not group failures by cause.</Quiet>
       ) : (
-        <ClusterList clusters={clusters} api={api} />
+        <ClusterList clusters={clusters} api={api} issues={issues} />
       )}
     </Panel>
+  );
+}
+
+interface ClusterIssues {
+  found: Record<string, IssueLink>;
+  open: (cluster: Cluster, target: IssueTarget) => Promise<IssueLink>;
+}
+
+/** The issues the shown clusters already have, read once per list (plan Wave 1 task 3). */
+function useClusterIssues(
+  clusters: QaInsights['failureClusters'],
+  tracking:
+    { projectId: string; qa: Pick<QaClient, 'clusterIssues' | 'openClusterIssue'> } | undefined,
+): ClusterIssues | undefined {
+  const [found, setFound] = React.useState<Record<string, IssueLink>>({});
+  const signatures = (clusters?.clusters ?? []).map((cluster) => cluster.signature);
+  const key = signatures.join('\n');
+  const projectId = tracking?.projectId;
+  const qa = tracking?.qa;
+  React.useEffect(() => {
+    if (projectId === undefined || qa?.clusterIssues === undefined || key === '') return undefined;
+    let live = true;
+    // A failed read leaves each cluster offering a new issue; the create answers with an
+    // existing one, so nothing is filed twice.
+    qa.clusterIssues(projectId, key.split('\n')).then(
+      (issues) => {
+        if (live) setFound(issues);
+      },
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [projectId, qa, key]);
+  if (projectId === undefined || qa?.openClusterIssue === undefined) return undefined;
+  const create = qa.openClusterIssue;
+  return {
+    found,
+    open: async (cluster, target) => {
+      const link = await create({
+        projectId,
+        target,
+        signature: cluster.signature,
+        errorType: cluster.errorType,
+        sampleMessage: cluster.sampleMessage.slice(0, 4000),
+        tests: cluster.tests.slice(0, 50),
+        count: cluster.count,
+        runs: cluster.runs,
+        branches: cluster.branches.slice(0, 20),
+      });
+      setFound((current) => ({ ...current, [cluster.signature]: link }));
+      return link;
+    },
+  };
+}
+
+/** The cause's issue, or a way to open one in Jira or GitHub. */
+function ClusterIssue({
+  cluster,
+  issues,
+}: {
+  cluster: Cluster;
+  issues: ClusterIssues;
+}): React.ReactElement {
+  const toast = useToast();
+  const [busy, setBusy] = React.useState(false);
+  const existing = issues.found[cluster.signature];
+  if (existing !== undefined) {
+    return (
+      <a
+        href={existing.url}
+        target="_blank"
+        rel="noreferrer"
+        data-testid="cluster-issue"
+        className="rounded-sm text-xs text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+      >
+        {existing.key}
+      </a>
+    );
+  }
+  const open = (target: IssueTarget) => {
+    setBusy(true);
+    issues
+      .open(cluster, target)
+      .then((link) =>
+        toast({
+          tone: 'success',
+          title: link.created ? `Opened ${link.key}` : `Already ${link.key}`,
+        }),
+      )
+      .catch((error: unknown) =>
+        toast({
+          tone: 'danger',
+          title: 'No issue was opened',
+          description: failureText(error, 'The tracker refused the issue'),
+        }),
+      )
+      .finally(() => setBusy(false));
+  };
+  return (
+    <span className="flex items-center gap-1" aria-label="Open an issue">
+      <Button size="sm" variant="ghost" disabled={busy} onClick={() => open('jira')}>
+        Jira issue
+      </Button>
+      <Button size="sm" variant="ghost" disabled={busy} onClick={() => open('github')}>
+        GitHub issue
+      </Button>
+    </span>
   );
 }
 
@@ -104,9 +218,11 @@ function CauseLabel({
 function ClusterList({
   clusters,
   api,
+  issues,
 }: {
   clusters: Clusters;
   api: Pick<ApiClient, 'setTriageLabel'> | undefined;
+  issues: ClusterIssues | undefined;
 }): React.ReactElement {
   if (clusters.totals.failures === 0) {
     return <Quiet>No test failed in this window.</Quiet>;
@@ -138,6 +254,7 @@ function ClusterList({
               </p>
               <span className="flex items-center gap-2">
                 <AskAboutCause message={cluster.sampleMessage} />
+                {issues === undefined ? null : <ClusterIssue cluster={cluster} issues={issues} />}
                 <CauseLabel cluster={cluster} api={api} />
               </span>
             </div>

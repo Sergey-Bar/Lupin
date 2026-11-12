@@ -9,6 +9,7 @@ import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { callerOf, requireRole, type CallerResolver } from '../http/roles.js';
 import { audit } from '../services/access-service.js';
 import {
+  clusterIssues,
   createClusterIssue,
   createFindingIssue,
   deleteIssueTracker,
@@ -113,6 +114,17 @@ export function createIssueTrackingRoutes(options: IssueTrackingRouteOptions): H
       await actor(context),
     );
     return recordIssue(context, link);
+  });
+
+  app.get('/api/v1/projects/:id/cluster-issues', viewer, async (context) => {
+    // Up to 50 signatures, the most clusters a page shows.
+    const signatures = context.req
+      .queries('signature')
+      ?.filter((signature) => signature.length > 0 && signature.length <= 1000)
+      .slice(0, 50);
+    return context.json({
+      issues: await clusterIssues(options, context.req.param('id'), signatures ?? []),
+    });
   });
 
   app.post('/api/v1/dashboard/failure-clusters/issue', operator, async (context) => {
