@@ -416,6 +416,64 @@ async function deleteSchedule(options: NotificationOptions, subscriptionId: stri
     );
 }
 
+/**
+ * Replaces a subscription's settings and moves its schedule to match (plan Wave 1 task 4).
+ * The body is the create body, so an edit is validated exactly as a new one is.
+ */
+export async function updateSubscription(
+  options: NotificationOptions,
+  id: string,
+  body: CreateSubscriptionBody,
+): Promise<SubscriptionSummary> {
+  const channel = await channelRow(options, body.channelId);
+  if (body.projectId !== undefined) await assertProject(options, body.projectId);
+  const cronExpr = cronFor(body);
+  const at = now(options);
+  const next = nextOccurrence(cronExpr, body.timezone, at);
+  const [row] = UUID.test(id)
+    ? await options.db
+        .update(reportSubscriptions)
+        .set({
+          channelId: channel.id,
+          name: body.name,
+          cadence: body.cadence,
+          cronExpr,
+          timezone: body.timezone,
+          projectScope: body.projectId === undefined ? null : [body.projectId],
+          audience: body.audience ?? null,
+          format: body.format ?? null,
+          quietStart: body.quietHours?.start ?? null,
+          quietEnd: body.quietHours?.end ?? null,
+          updatedAt: at,
+        })
+        .where(
+          and(
+            eq(reportSubscriptions.workspaceId, options.workspaceId),
+            eq(reportSubscriptions.id, id),
+          ),
+        )
+        .returning()
+    : [];
+  if (row === undefined) throw new DomainError(ErrorCode.NOT_FOUND, `No subscription ${id}`);
+  await options.db
+    .update(schedules)
+    .set({
+      cronExpr,
+      runOptions: {
+        kind: 'report',
+        subscriptionId: row.id,
+        timezone: body.timezone,
+        misfirePolicy: 'run_once',
+        nextRunAt: next.toISOString(),
+        ...(body.quietHours === undefined ? {} : { quietHours: body.quietHours }),
+      },
+    })
+    .where(
+      and(eq(schedules.workspaceId, options.workspaceId), eq(schedules.id, scheduleIdFor(row.id))),
+    );
+  return subscriptionSummary(row, next.toISOString());
+}
+
 export async function deleteSubscription(options: NotificationOptions, id: string): Promise<void> {
   const [row] = UUID.test(id)
     ? await options.db

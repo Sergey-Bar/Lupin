@@ -10,7 +10,7 @@
   "summary": {
     "admin": 42,
     "viewer": 102,
-    "operator": 36,
+    "operator": 37,
     "open": 16,
     "runner-credential": 9,
     "reporter-secret": 14,
@@ -1225,6 +1225,13 @@
     },
     {
       "method": "DELETE",
+      "path": "/api/v1/report-subscriptions/:id",
+      "access": "operator",
+      "evidenceTest": "apps/api/src/services/notification-service.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "PUT",
       "path": "/api/v1/report-subscriptions/:id",
       "access": "operator",
       "evidenceTest": "apps/api/src/services/notification-service.test.ts",

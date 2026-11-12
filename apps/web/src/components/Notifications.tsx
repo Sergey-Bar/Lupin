@@ -1,29 +1,17 @@
 import React from 'react';
 import { ReadFailed } from './ReadFailed.js';
 import { ConfirmAction } from './ConfirmAction.js';
-import {
-  Badge,
-  Button,
-  Input,
-  Select,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@lupin/ui';
+import { History } from './NotificationHistory.js';
+import { Button, Input, Select, Skeleton } from '@lupin/ui';
 import type {
   ChannelKind,
   ChannelSummary,
   CreateChannelBody,
-  DeliverySummary,
   QuietHours,
+  SubscriptionSummary,
 } from '@lupin/shared-contracts';
 import { useResource } from '../hooks/useResource.js';
 import type { NotificationsClient, SubscriptionDraft } from '../lib/notifications-client.js';
-import { ago } from '../lib/health-view.js';
 import { PageFrame, PageBody, PageHeader, Panel, Quiet } from './kit.js';
 import { useToast } from './Toasts.js';
 
@@ -290,6 +278,15 @@ function browserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 }
 
+/** `HH:MM` from a cron's minute and hour fields, for editing a daily or weekly schedule. */
+export function timeOfCron(cron: string): string {
+  const [minute = '0', hour = '9'] = cron.trim().split(/\s+/u);
+  const pad = (value: string) => (/^\d{1,2}$/u.test(value) ? value.padStart(2, '0') : null);
+  const h = pad(hour);
+  const m = pad(minute);
+  return h === null || m === null ? '09:00' : `${h}:${m}`;
+}
+
 /** The project a report is about. Offered only when there is something to choose between. */
 function ProjectMenu({
   id,
@@ -396,32 +393,55 @@ function Schedules({
   const [audience, setAudience] = React.useState<SubscriptionDraft['audience']>('general');
   const [format, setFormat] = React.useState<SubscriptionDraft['format']>('chat');
   const [quietHours, setQuietHours] = React.useState<QuietHours | null>(null);
+  /** The subscription the form is editing, or `null` for a new one (plan Wave 1 task 4). */
+  const [editing, setEditing] = React.useState<string | null>(null);
   const id = React.useId();
   const chosen = PRESETS.find((entry) => entry.id === preset) ?? PRESETS[0];
   const target = channelId === '' ? (channels[0]?.id ?? '') : channelId;
+  const edit = (subscription: SubscriptionSummary) => {
+    setEditing(subscription.id);
+    setPreset(subscription.cadence);
+    setChannelId(subscription.channelId);
+    setProjectId(subscription.projectId ?? '');
+    setTime(timeOfCron(subscription.cronExpr));
+    setCronExpr(subscription.cronExpr);
+    setTimezone(subscription.timezone);
+    setAudience(subscription.audience);
+    setFormat(subscription.format);
+    setQuietHours(subscription.quietHours);
+  };
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    client
-      .createSubscription({
-        channelId: target,
-        cadence: chosen?.cadence ?? 'daily',
-        time,
-        weekday: chosen?.weekday ?? 1,
-        timezone,
-        audience,
-        format,
-        ...(chosen?.cadence === 'custom' ? { cronExpr } : {}),
-        ...(projectId === '' ? {} : { projectId }),
-        ...(quietHours === null || quietHours.start === quietHours.end ? {} : { quietHours }),
-      })
-      .then((created) => {
-        toast({ tone: 'success', title: 'Report scheduled', description: created.describe });
+    const draft: SubscriptionDraft = {
+      channelId: target,
+      cadence: chosen?.cadence ?? 'daily',
+      time,
+      weekday: chosen?.weekday ?? 1,
+      timezone,
+      audience,
+      format,
+      ...(chosen?.cadence === 'custom' ? { cronExpr } : {}),
+      ...(projectId === '' ? {} : { projectId }),
+      ...(quietHours === null || quietHours.start === quietHours.end ? {} : { quietHours }),
+    };
+    const saving =
+      editing !== null && client.updateSubscription !== undefined
+        ? client.updateSubscription(editing, draft)
+        : client.createSubscription(draft);
+    saving
+      .then((saved) => {
+        toast({
+          tone: 'success',
+          title: editing === null ? 'Report scheduled' : 'Report updated',
+          description: saved.describe,
+        });
+        setEditing(null);
         onChanged();
       })
       .catch((error: unknown) =>
         toast({
           tone: 'danger',
-          title: 'Could not schedule it',
+          title: editing === null ? 'Could not schedule it' : 'Could not update it',
           description: failure(error, 'The request failed'),
         }),
       );
@@ -534,10 +554,15 @@ function Schedules({
               ]}
             />
           </div>
-          <div>
+          <div className="flex gap-2">
             <Button type="submit" className="min-h-10">
-              Schedule
+              {editing === null ? 'Schedule' : 'Save changes'}
             </Button>
+            {editing === null ? null : (
+              <Button type="button" variant="outline" onClick={() => setEditing(null)}>
+                Cancel edit
+              </Button>
+            )}
           </div>
         </form>
       )}
@@ -559,82 +584,24 @@ function Schedules({
                   {quietText(subscription.quietHours)}
                 </span>
               </span>
-              <ConfirmAction
-                label="Remove"
-                title={`Remove "${subscription.describe}"?`}
-                consequence="No more reports are sent on this schedule. A report already queued still goes out."
-                onConfirm={() => remove(subscription.id)}
-              />
+              <span className="flex shrink-0 gap-1">
+                {client.updateSubscription === undefined ? null : (
+                  <Button size="sm" variant="ghost" onClick={() => edit(subscription)}>
+                    Edit
+                  </Button>
+                )}
+                <ConfirmAction
+                  label="Remove"
+                  title={`Remove "${subscription.describe}"?`}
+                  consequence="No more reports are sent on this schedule. A report already queued still goes out."
+                  onConfirm={() => remove(subscription.id)}
+                />
+              </span>
             </li>
           ))}
         </ul>
       )}
     </div>
-  );
-}
-
-const STATUS_VARIANT: Record<
-  DeliverySummary['status'],
-  'outline' | 'secondary' | 'success' | 'danger'
-> = {
-  pending: 'outline',
-  sending: 'outline',
-  sent: 'success',
-  failed: 'danger',
-};
-
-function History({ deliveries }: { deliveries: DeliverySummary[] }): React.ReactElement {
-  const [open, setOpen] = React.useState<string | null>(null);
-  if (deliveries.length === 0) return <Quiet>No report has been sent yet.</Quiet>;
-  return (
-    <Table aria-label="Delivery history">
-      <TableHeader>
-        <TableRow>
-          <TableHead>When</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="hidden sm:table-cell">Detail</TableHead>
-          <TableHead>
-            <span className="sr-only">Report</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {deliveries.map((delivery) => (
-          <React.Fragment key={delivery.id}>
-            <TableRow data-testid={`delivery-${delivery.id}`}>
-              <TableCell className="text-xs text-fg-muted">
-                {ago(delivery.sentAt ?? delivery.scheduledFor)}
-              </TableCell>
-              <TableCell>
-                <Badge variant={STATUS_VARIANT[delivery.status]}>{delivery.status}</Badge>
-              </TableCell>
-              <TableCell className="hidden font-mono text-xs sm:table-cell">
-                {delivery.errorCode ?? ''}
-              </TableCell>
-              <TableCell>
-                {delivery.rendered === null ? null : (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-expanded={open === delivery.id}
-                    onClick={() => setOpen(open === delivery.id ? null : delivery.id)}
-                  >
-                    {open === delivery.id ? 'Hide' : 'Read'}
-                  </Button>
-                )}
-              </TableCell>
-            </TableRow>
-            {open === delivery.id && delivery.rendered !== null ? (
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <pre className="whitespace-pre-wrap font-sans text-sm">{delivery.rendered}</pre>
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </React.Fragment>
-        ))}
-      </TableBody>
-    </Table>
   );
 }
 

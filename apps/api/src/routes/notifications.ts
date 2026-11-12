@@ -20,6 +20,7 @@ import {
   composeWorkspaceReportModel,
   queueTestDelivery,
   updateChannel,
+  updateSubscription,
   type NotificationOptions,
 } from '../services/notification-service.js';
 
@@ -113,6 +114,20 @@ export function createNotificationRoutes(options: NotificationRouteOptions): Hon
     const parsed = CreateSubscriptionBodySchema.safeParse(await body(context));
     if (!parsed.success) throw invalid(parsed.error.issues);
     return context.json(await createSubscription(options, parsed.data), 201);
+  });
+
+  app.put('/api/v1/report-subscriptions/:id', operator, async (context) => {
+    const parsed = CreateSubscriptionBodySchema.safeParse(await body(context));
+    if (!parsed.success) throw invalid(parsed.error.issues);
+    const updated = await updateSubscription(options, context.req.param('id'), parsed.data);
+    await audit(options, {
+      actor: await actor(context),
+      action: 'report-subscription.update',
+      resourceType: 'report_subscription',
+      resourceId: updated.id,
+      details: { cadence: parsed.data.cadence, timezone: parsed.data.timezone },
+    });
+    return context.json(updated);
   });
 
   app.delete('/api/v1/report-subscriptions/:id', operator, async (context) => {

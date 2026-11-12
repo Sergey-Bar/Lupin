@@ -91,6 +91,43 @@ afterEach(() => {
 });
 
 describe('NotificationsPage', () => {
+  it('edits a scheduled report in the same form, and saves it in place (Wave 1 task 4)', async () => {
+    const user = userEvent.setup();
+    const updateSubscription = vi.fn(async (id: string) => ({
+      id,
+      channelId: 'c1',
+      name: 'Daily',
+      cadence: 'daily' as const,
+      cronExpr: '30 7 * * *',
+      timezone: 'Europe/Berlin',
+      enabled: true,
+      describe: 'Every day at 07:30',
+      nextRunAt: null,
+      projectId: null,
+      audience: 'general' as const,
+      format: 'chat' as const,
+      quietHours: null,
+    }));
+    const api = client({ updateSubscription });
+    page(api);
+    const list = await screen.findByRole('list', { name: 'Scheduled reports' });
+    await user.click(within(list).getByRole('button', { name: 'Edit' }));
+    const form = screen.getByRole('form', { name: 'Schedule a report' });
+    expect(within(form).getByLabelText('At')).toHaveValue('09:00');
+    const timezone = within(form).getByLabelText('Timezone');
+    await user.clear(timezone);
+    await user.type(timezone, 'Europe/Berlin');
+    await user.click(within(form).getByRole('button', { name: 'Save changes' }));
+    await waitFor(() =>
+      expect(updateSubscription).toHaveBeenCalledWith(
+        's1',
+        expect.objectContaining({ cadence: 'daily', time: '09:00', timezone: 'Europe/Berlin' }),
+      ),
+    );
+    expect(api.createSubscription).not.toHaveBeenCalled();
+    expect(await screen.findByText('Report updated')).toBeInTheDocument();
+    expect(within(form).getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
+  });
   it('shows where, when, the preview and the history, without blocking axe findings', async () => {
     const { container } = page(client());
     expect(await screen.findByText('Every day at 09:00')).toBeTruthy();

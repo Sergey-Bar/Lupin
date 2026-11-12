@@ -23,6 +23,7 @@ import {
   queueTestDelivery,
   slowerTests,
   updateChannel,
+  updateSubscription,
 } from './notification-service.js';
 import { createReportDispatcher, requestFor } from './report-dispatcher.js';
 
@@ -191,6 +192,46 @@ describe('channels', () => {
 });
 
 describe('subscriptions', () => {
+  it('edits a subscription and moves its schedule, refusing one it does not own (Wave 1 task 4)', async () => {
+    const { db, options, other } = await setup();
+    const channel = await createChannel(options, { kind: 'inbox', name: 'Inbox', settings: {} });
+    const created = await createSubscription(options, {
+      channelId: channel.id,
+      name: 'Weekly',
+      cadence: 'weekly',
+      time: '09:30',
+      weekday: 1,
+      timezone: 'UTC',
+    });
+    const change = {
+      channelId: channel.id,
+      name: 'Daily digest',
+      cadence: 'daily' as const,
+      time: '08:00',
+      weekday: 1,
+      timezone: 'Europe/Berlin',
+      quietHours: { start: 22, end: 7 },
+    };
+    const edited = await updateSubscription(options, created.id, change);
+    expect(edited).toMatchObject({
+      id: created.id,
+      name: 'Daily digest',
+      cadence: 'daily',
+      timezone: 'Europe/Berlin',
+      quietHours: { start: 22, end: 7 },
+    });
+    const [schedule] = await db
+      .select()
+      .from(schema.schedules)
+      .where(eq(schema.schedules.id, `report:${created.id}`));
+    expect(schedule?.runOptions).toMatchObject({
+      timezone: 'Europe/Berlin',
+      quietHours: { start: 22, end: 7 },
+    });
+    await expect(updateSubscription(other, created.id, change)).rejects.toThrow(
+      /No (channel|subscription)/u,
+    );
+  });
   it('writes the report schedule the worker fires, in the subscription’s timezone, run once', async () => {
     const { db, options } = await setup();
     const channel = await createChannel(options, { kind: 'inbox', name: 'Inbox', settings: {} });

@@ -30,6 +30,8 @@ export interface SubscriptionDraft {
   audience?: 'general' | 'manager' | 'sdet' | 'quality';
   /** How much the report carries; omitted is read as `chat`. */
   format?: 'chat' | 'full';
+  /** Hours (0–23, local) no report is sent in; omitted is none. */
+  quietHours?: { start: number; end: number };
 }
 
 export interface NotificationsClient {
@@ -39,6 +41,8 @@ export interface NotificationsClient {
   testChannel(id: string): Promise<DeliverySummary | null>;
   listSubscriptions(): Promise<SubscriptionSummary[]>;
   createSubscription(draft: SubscriptionDraft): Promise<SubscriptionSummary>;
+  /** Replaces a subscription's settings; the next report uses them. */
+  updateSubscription?(id: string, draft: SubscriptionDraft): Promise<SubscriptionSummary>;
   deleteSubscription(id: string): Promise<void>;
   listDeliveries(): Promise<DeliverySummary[]>;
   preview(
@@ -96,6 +100,13 @@ export function createNotificationsClient(
       ).subscriptions,
     createSubscription: (draft) =>
       call('POST', '/api/v1/report-subscriptions', SubscriptionSummarySchema, draft),
+    updateSubscription: (subscriptionId, draft) =>
+      call(
+        'PUT',
+        `/api/v1/report-subscriptions/${encodeURIComponent(subscriptionId)}`,
+        SubscriptionSummarySchema,
+        draft,
+      ),
     deleteSubscription: async (subscriptionId) => {
       await call('DELETE', `/api/v1/report-subscriptions/${id(subscriptionId)}`, Ok);
     },
