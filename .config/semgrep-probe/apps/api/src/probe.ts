@@ -72,6 +72,19 @@ export function safeLiteralComparison(presented: Presented): boolean {
   return presented.token === 'literal-value';
 }
 
+/** SAFE: asking whether a credential was configured compares it with nothing. */
+export function safePresenceCheck(presented: Partial<Presented>): boolean {
+  return presented.token === undefined;
+}
+
+/** SAFE: asking whether a map holds a key compares no value. */
+export function safeComputedPresenceCheck(
+  found: Record<string, string>,
+  signature: string,
+): boolean {
+  return found[signature] === undefined;
+}
+
 /** HAZARD: a command *line* is interpreted by a shell. */
 export function hazardCommandLine(): unknown {
   return spawn('git rev-parse HEAD', { shell: false });

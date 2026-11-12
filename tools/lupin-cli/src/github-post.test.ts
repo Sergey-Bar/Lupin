@@ -80,8 +80,9 @@ function harness(options: {
     out: (line: string) => out.push(line),
     err: (line: string) => err.push(line),
   };
-  const lupin = () => calls.filter((call) => call.url.startsWith('https://lupin.example'));
-  const github = () => calls.filter((call) => call.url.startsWith('https://api.github.com'));
+  const lupin = () => calls.filter((call) => new URL(call.url).origin === 'https://lupin.example');
+  const github = () =>
+    calls.filter((call) => new URL(call.url).origin === 'https://api.github.com');
   return { io, out, err, lupin, github };
 }
 

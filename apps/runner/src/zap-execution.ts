@@ -1,6 +1,6 @@
 import { type ChildProcessWithoutNullStreams, spawn, type SpawnOptions } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { copyFile, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, open, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import { ZAP_XML_ADAPTER_VERSION, parseZapReport } from '@lupin/reporter';
 import {
@@ -288,12 +288,32 @@ export class ZapExecutionAdapter implements ExecutionProvider {
     context: ExecutionContext,
     startedAt: Date,
   ): Promise<ZapReading> {
-    const info = await stat(reportPath).catch(() => undefined);
-    if (info?.isFile() !== true) return { result: null, problem: 'ZAP wrote no report' };
-    if (info.size > this.options.artifactMaxBytes) {
-      throw new RunnerInfrastructureError('Artifact exceeds configured limit: ZAP report');
+    // One handle for the size and the read, so a report that changes after the check is
+    // still bounded (CodeQL js/file-system-race), the same shape as k6's summary.
+    const handle = await open(reportPath, 'r').catch(() => undefined);
+    if (handle === undefined) return { result: null, problem: 'ZAP wrote no report' };
+    let bytes: Buffer;
+    try {
+      const info = await handle.stat();
+      if (!info.isFile()) return { result: null, problem: 'ZAP wrote no report' };
+      if (info.size > this.options.artifactMaxBytes) {
+        throw new RunnerInfrastructureError('Artifact exceeds configured limit: ZAP report');
+      }
+      // One byte past the observed size, so growth after the stat is seen.
+      const buffer = Buffer.alloc(info.size + 1);
+      let read = 0;
+      while (read < buffer.length) {
+        const { bytesRead } = await handle.read(buffer, read, buffer.length - read, read);
+        if (bytesRead === 0) break;
+        read += bytesRead;
+      }
+      if (read > info.size) {
+        throw new RunnerInfrastructureError('Artifact changed while it was read: ZAP report');
+      }
+      bytes = buffer.subarray(0, read);
+    } finally {
+      await handle.close();
     }
-    const bytes = await readFile(reportPath);
     try {
       return {
         problem: undefined,

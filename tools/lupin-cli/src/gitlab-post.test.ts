@@ -106,8 +106,8 @@ describe('lupin gate --post on GitLab CI', () => {
   it('keeps the two tokens apart: the GitLab one never reaches Lupin, nor the other way', async () => {
     const { io, calls } = harness({});
     await run(['gate', '--post'], io);
-    const lupin = calls.filter((call) => call.url.startsWith('https://lupin.example'));
-    const gitlab = calls.filter((call) => call.url.startsWith('https://gitlab.example'));
+    const lupin = calls.filter((call) => new URL(call.url).origin === 'https://lupin.example');
+    const gitlab = calls.filter((call) => new URL(call.url).origin === 'https://gitlab.example');
     for (const call of lupin) expect(JSON.stringify(call.headers)).not.toContain(GITLAB_TOKEN);
     for (const call of gitlab) {
       expect(call.headers['private-token']).toBe(GITLAB_TOKEN);

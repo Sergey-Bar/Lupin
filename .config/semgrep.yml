@@ -250,6 +250,19 @@ rules:
           $OBJ.$SECRET_FIELD === "$LITERAL"
       - pattern-not: |
           $OBJ.$SECRET_FIELD === '$LITERAL'
+      # A **presence check** is not an oracle either. `options.token === undefined` asks
+      # whether a credential was configured, and `found[signature] === undefined` whether a
+      # map holds a key; neither compares the value with anything an attacker supplies, so
+      # there is no prefix to measure. Both were reported, in `axe-pass.ts` and
+      # `issue-tracker-service.ts`.
+      - pattern-not: $OBJ.$SECRET_FIELD === undefined
+      - pattern-not: $OBJ.$SECRET_FIELD == undefined
+      - pattern-not: $OBJ.$SECRET_FIELD === null
+      - pattern-not: $OBJ.$SECRET_FIELD == null
+      - pattern-not: $OBJ[$SECRET_FIELD] === undefined
+      - pattern-not: $OBJ[$SECRET_FIELD] == undefined
+      - pattern-not: $OBJ[$SECRET_FIELD] === null
+      - pattern-not: $OBJ[$SECRET_FIELD] == null
 
   # ---------------------------------------------------------------------------
   # Subprocesses
