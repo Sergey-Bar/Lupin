@@ -421,3 +421,8 @@ its progress entry rather than claiming it.
   read from the report the commit uploaded last, through `health_findings.last_report_id`, so a
   later report on another commit can move a finding off it. Job containers do not yet join a
   network limited to the target; the boundary is still `RUNNER_ALLOWED_TARGET_URLS`.
+- 2026-11-12: Plan closed at `3fa33663`, `verify:local` green. Done after Wave 4: tasks 21, 24, 36
+  (as a monthly token budget, not a price table) and 37. Cut by the owner: 22, 23, 25 to 35 and
+  38 to 42. Not verified against a real model: the injection check is pattern-based (links, code
+  blocks, long verbatim copies), so a model that obeys an injected instruction in its own words
+  is not caught.
