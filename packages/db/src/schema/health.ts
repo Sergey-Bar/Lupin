@@ -197,6 +197,8 @@ export const accessTokens = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    /** After this the token no longer authenticates; `null` never expires (plan task 6). */
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
   },
   (table) => [
     uniqueIndex('access_tokens_hash_idx').on(table.tokenHash),

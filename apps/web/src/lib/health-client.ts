@@ -98,8 +98,12 @@ export interface HealthClient {
     name: string;
     role: TokenRole;
     projectId?: string;
+    /** Days until it stops working; omitted, never. */
+    expiresInDays?: number;
   }): Promise<{ token: string; summary: AccessTokenSummary }>;
   revokeToken(id: string): Promise<AccessTokenSummary>;
+  /** Issues a successor and ends the old token after a day's grace (plan task 6). */
+  rotateToken?(id: string): Promise<{ token: string; summary: AccessTokenSummary }>;
   /** Issues a six-digit code that pairs one device. Admin only. */
   issuePairingCode(body: { deviceName: string; role: 'viewer' | 'operator' }): Promise<PairingCode>;
   /** Spends a pairing code: this browser is signed in as the code's role. */
@@ -162,6 +166,8 @@ export const AccessTokenSummarySchema = z.object({
   createdAt: z.string(),
   lastUsedAt: z.string().nullable(),
   revokedAt: z.string().nullable(),
+  /** Absent from an older API, and then read as never. */
+  expiresAt: z.string().nullable().optional(),
 });
 export type AccessTokenSummary = z.infer<typeof AccessTokenSummarySchema>;
 
@@ -275,6 +281,12 @@ export function createHealthClient(baseUrl = '', fetchImpl: typeof fetch = fetch
       post(
         '/api/v1/access-tokens',
         body,
+        z.object({ token: z.string(), summary: AccessTokenSummarySchema }),
+      ),
+    rotateToken: (id) =>
+      post(
+        `/api/v1/access-tokens/${encodeURIComponent(id)}/rotate`,
+        {},
         z.object({ token: z.string(), summary: AccessTokenSummarySchema }),
       ),
     getSettings: (projectId) => get(`${project(projectId)}/health/settings`, HealthSettingsSchema),

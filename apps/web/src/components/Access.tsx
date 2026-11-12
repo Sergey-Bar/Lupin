@@ -189,6 +189,14 @@ export function SignIn({
   );
 }
 
+/** When a token stops working, in words: "Never", "Expired", or the date. */
+export function expiryText(expiresAt: string | null, now = new Date()): string {
+  if (expiresAt === null) return 'Never';
+  const at = new Date(expiresAt);
+  if (at.getTime() <= now.getTime()) return 'Expired';
+  return at.toISOString().slice(0, 10);
+}
+
 /** Issue and revoke access tokens. An admin's page; the API refuses anyone else. */
 export function AccessPage({ health }: { health: HealthClient }): React.ReactElement {
   return (
@@ -202,6 +210,8 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
   const [name, setName] = React.useState('');
   const [role, setRole] = React.useState<TokenRole>('viewer');
   const [projectId, setProjectId] = React.useState('');
+  /** Days until a new token expires; '' is never. 90 by default: a token that never ends is a choice. */
+  const [expiresIn, setExpiresIn] = React.useState('90');
   const [issued, setIssued] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const id = React.useId();
@@ -217,6 +227,7 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
         name: name.trim(),
         role,
         ...(projectId.trim() === '' ? {} : { projectId: projectId.trim() }),
+        ...(expiresIn === '' ? {} : { expiresInDays: Number(expiresIn) }),
       })
       .then((created) => {
         setIssued(created.token);
@@ -256,7 +267,7 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
         <Panel title="Issue a token">
           <form
             onSubmit={create}
-            className="grid gap-2 sm:grid-cols-[2fr_1fr_2fr_auto] sm:items-end"
+            className="grid gap-2 sm:grid-cols-[2fr_1fr_2fr_1fr_auto] sm:items-end"
             aria-label="Issue a token"
           >
             <Input
@@ -280,6 +291,18 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
               required={role === 'uploader'}
               disabled={role !== 'uploader'}
               onChange={(event) => setProjectId(event.target.value)}
+            />
+            <Select
+              id={`${id}-expires`}
+              label="Expires"
+              value={expiresIn}
+              onChange={(event) => setExpiresIn(event.target.value)}
+              options={[
+                { value: '30', label: 'In 30 days' },
+                { value: '90', label: 'In 90 days' },
+                { value: '365', label: 'In a year' },
+                { value: '', label: 'Never' },
+              ]}
             />
             <Button type="submit" className="min-h-10">
               Issue
@@ -316,6 +339,7 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
                   <TableHead>Role</TableHead>
                   <TableHead className="hidden md:table-cell">Token</TableHead>
                   <TableHead className="hidden sm:table-cell">Last used</TableHead>
+                  <TableHead>Expires</TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -336,7 +360,27 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
                     <TableCell className="hidden text-xs text-fg-muted sm:table-cell">
                       {ago(token.lastUsedAt)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs text-fg-muted" data-testid="token-expires">
+                      {expiryText(token.expiresAt ?? null)}
+                    </TableCell>
+                    <TableCell className="flex gap-1">
+                      {token.revokedAt === null && health.rotateToken !== undefined ? (
+                        <ConfirmAction
+                          label="Rotate"
+                          variant="outline"
+                          title={`Rotate ${token.name}?`}
+                          consequence="A new token is issued now. The old one keeps working for one more day, so a pipeline can switch to the new one, then stops."
+                          onConfirm={() => {
+                            health
+                              .rotateToken?.(token.id)
+                              .then((rotated) => {
+                                setIssued(rotated.token);
+                                setVersion((value) => value + 1);
+                              })
+                              .catch(describe);
+                          }}
+                        />
+                      ) : null}
                       {token.revokedAt === null ? (
                         <ConfirmAction
                           label="Revoke"

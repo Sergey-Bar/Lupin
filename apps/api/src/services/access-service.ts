@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, or } from 'drizzle-orm';
 import { accessTokens, auditEvents, projects } from '@lupin/db';
 import { z } from 'zod/v4';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
@@ -45,6 +45,8 @@ export const CreateAccessTokenBodySchema = z
     name: z.string().trim().min(1).max(100),
     role: z.enum(['viewer', 'operator', 'admin', 'uploader']),
     projectId: z.string().uuid().optional(),
+    /** Days until the token stops working; omitted, it never expires. */
+    expiresInDays: z.number().int().min(1).max(365).optional(),
   })
   .refine((body) => body.role !== 'uploader' || body.projectId !== undefined, {
     message: 'an uploader token is pinned to one project',
@@ -67,6 +69,7 @@ export interface AccessTokenSummary {
   createdAt: string;
   lastUsedAt: string | null;
   revokedAt: string | null;
+  expiresAt: string | null;
 }
 
 function summary(row: typeof accessTokens.$inferSelect): AccessTokenSummary {
@@ -80,6 +83,7 @@ function summary(row: typeof accessTokens.$inferSelect): AccessTokenSummary {
     createdAt: row.createdAt.toISOString(),
     lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
     revokedAt: row.revokedAt?.toISOString() ?? null,
+    expiresAt: row.expiresAt?.toISOString() ?? null,
   };
 }
 
@@ -108,9 +112,60 @@ export async function createAccessToken(
       tokenHash: hashToken(token),
       displayPrefix: token.slice(0, TOKEN_PREFIX.length + 6),
       createdBy: actor,
+      expiresAt:
+        body.expiresInDays === undefined
+          ? null
+          : new Date(Date.now() + body.expiresInDays * DAY_MS),
     })
     .returning();
   return { token, summary: summary(row as typeof accessTokens.$inferSelect) };
+}
+
+const DAY_MS = 86_400_000;
+/** How long a rotated token keeps working, so a pipeline can move to its successor. */
+export const ROTATION_GRACE_MS = DAY_MS;
+
+/**
+ * Issues a successor with the same name, role, project and lifetime, and ends the old token
+ * after a grace period (or sooner, if it was due to expire sooner). Plan task 6.
+ */
+export async function rotateAccessToken(
+  options: Options,
+  id: string,
+  actor: string,
+  now = new Date(),
+): Promise<{ token: string; summary: AccessTokenSummary }> {
+  if (!/^[0-9a-f-]{36}$/iu.test(id)) throw new DomainError(ErrorCode.NOT_FOUND, `No token ${id}`);
+  const [old] = await options.db
+    .select()
+    .from(accessTokens)
+    .where(
+      and(
+        eq(accessTokens.workspaceId, options.workspaceId),
+        eq(accessTokens.id, id),
+        isNull(accessTokens.revokedAt),
+      ),
+    )
+    .limit(1);
+  if (old === undefined) throw new DomainError(ErrorCode.NOT_FOUND, `No live token ${id}`);
+  const lifetime =
+    old.expiresAt === null ? undefined : old.expiresAt.getTime() - old.createdAt.getTime();
+  const successor = await createAccessToken(
+    options,
+    {
+      name: old.name,
+      role: old.role as TokenRole,
+      ...(old.projectId === null ? {} : { projectId: old.projectId }),
+      ...(lifetime === undefined
+        ? {}
+        : { expiresInDays: Math.max(1, Math.round(lifetime / DAY_MS)) }),
+    },
+    actor,
+  );
+  const graceEnds = new Date(now.getTime() + ROTATION_GRACE_MS);
+  const ends = old.expiresAt !== null && old.expiresAt < graceEnds ? old.expiresAt : graceEnds;
+  await options.db.update(accessTokens).set({ expiresAt: ends }).where(eq(accessTokens.id, old.id));
+  return successor;
 }
 
 export async function listAccessTokens(options: Options): Promise<AccessTokenSummary[]> {
@@ -161,9 +216,10 @@ export async function revokeTokensMadeBy(
   return revoked.length;
 }
 
-/** The caller a presented token makes, or `null` for one that is unknown or revoked. */
+/** The caller a presented token makes, or `null` for one that is unknown, revoked or expired. */
 export async function authenticateToken(options: Options, token: string): Promise<Caller | null> {
   if (!token.startsWith(TOKEN_PREFIX)) return null;
+  const now = new Date();
   const [row] = await options.db
     .select()
     .from(accessTokens)
@@ -172,6 +228,7 @@ export async function authenticateToken(options: Options, token: string): Promis
         eq(accessTokens.workspaceId, options.workspaceId),
         eq(accessTokens.tokenHash, hashToken(token)),
         isNull(accessTokens.revokedAt),
+        or(isNull(accessTokens.expiresAt), gt(accessTokens.expiresAt, now)),
       ),
     )
     .limit(1);

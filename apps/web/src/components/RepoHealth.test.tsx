@@ -16,7 +16,7 @@ import type { HealthClient } from '../lib/health-client.js';
 import { ago, letterTone, meterVariant, notMeasured, whatIsGood } from '../lib/health-view.js';
 import { Portfolio, needsAttention, worstFirst } from './Portfolio.js';
 import { RepoHealth } from './RepoHealth.js';
-import { AccessGate, AccessPage } from './Access.js';
+import { AccessGate, AccessPage, expiryText } from './Access.js';
 
 const PROJECT = '11111111-1111-4111-8111-111111111111';
 
@@ -489,9 +489,41 @@ describe('AccessGate and AccessPage', () => {
     await user.type(screen.getByLabelText('Name'), 'Ana');
     await user.click(screen.getByRole('button', { name: 'Issue' }));
     expect(await screen.findByTestId('issued-token')).toHaveTextContent('lup_issued-once');
-    expect(api.createToken).toHaveBeenCalledWith({ name: 'Ana', role: 'viewer' });
+    expect(api.createToken).toHaveBeenCalledWith({
+      name: 'Ana',
+      role: 'viewer',
+      expiresInDays: 90,
+    });
     await confirmAction(user, await screen.findByTestId('token-t1'), 'Revoke', 'Ana');
     expect(api.revokeToken).toHaveBeenCalledWith('t1');
+  });
+
+  it('says when each token expires, and rotates one showing the successor once (plan task 6)', async () => {
+    const user = userEvent.setup();
+    const live = {
+      id: 't1',
+      name: 'CI',
+      role: 'operator' as const,
+      projectId: null,
+      displayPrefix: 'lup_ci',
+      createdBy: 'session',
+      createdAt: '2026-10-23T00:00:00.000Z',
+      lastUsedAt: null,
+      revokedAt: null,
+      expiresAt: '2099-01-01T00:00:00.000Z',
+    };
+    const rotateToken = vi.fn(async () => ({
+      token: 'lup_successor-once',
+      summary: { ...live, id: 't2' },
+    }));
+    render(<AccessPage health={client({ listTokens: vi.fn(async () => [live]), rotateToken })} />);
+    const row = await screen.findByTestId('token-t1');
+    expect(within(row).getByTestId('token-expires')).toHaveTextContent('2099-01-01');
+    await confirmAction(user, row, 'Rotate');
+    expect(rotateToken).toHaveBeenCalledWith('t1');
+    expect(await screen.findByTestId('issued-token')).toHaveTextContent('lup_successor-once');
+    expect(expiryText(null)).toBe('Never');
+    expect(expiryText('2000-01-01T00:00:00.000Z')).toBe('Expired');
   });
 });
 
@@ -835,6 +867,7 @@ describe('Portfolio and Access, the edges', () => {
       name: 'ci',
       role: 'uploader',
       projectId: PROJECT,
+      expiresInDays: 90,
     });
     unmount();
     render(

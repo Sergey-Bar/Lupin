@@ -8,7 +8,7 @@
     "`composition: database` rows are mounted only when `DATABASE_URL` is set, so the in-memory composition cannot send them a request; the class is still read from their guards."
   ],
   "summary": {
-    "admin": 42,
+    "admin": 43,
     "viewer": 102,
     "operator": 37,
     "open": 16,
@@ -38,6 +38,13 @@
       "path": "/api/v1/access-tokens/:id",
       "access": "admin",
       "evidenceTest": "apps/api/src/services/access-service.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/access-tokens/:id/rotate",
+      "access": "admin",
+      "evidenceTest": null,
       "composition": "database"
     },
     {
