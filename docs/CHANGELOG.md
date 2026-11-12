@@ -6,6 +6,34 @@
 
 ### Added
 
+- **Quarantine decisions from the list (plan task 1).** Approve, reject and release on each row,
+  with a required reason, audited; a viewer sees the controls disabled with who decides. A
+  failing test in run detail opens the quarantine form filled in.
+- **Rerun failed tests (task 2).** Beside Retry run, a rerun of the failed tests only, for
+  Playwright and generic-command jobs; the new run links to the one it reran. Flaky tests are
+  not included.
+- **An issue from a failure cause (task 3).** Each cause on Tests opens a Jira or GitHub issue,
+  or links the one it already has. `GET /api/v1/projects/:id/cluster-issues`, viewer.
+- **Edit a scheduled report (task 4).** `PUT /api/v1/report-subscriptions/:id`, admin. A delivery
+  already queued sends with the edited settings.
+- **Release sign-off on Home (task 5).** Ship or hold per project and commit, with a reason and the
+  verdict the server computed; shipping against no-go needs an admin and is labelled an override.
+  Not yet in the cockpit report or `lupin gate --post`.
+- **Token expiry, rotation and scopes (tasks 6, 7).** A token can expire (90 days by default in
+  the UI), rotate with a day's grace, and carry a subset of its role's permissions; the role
+  guard refuses a request whose area needs a permission the token lacks. Per-project roles are
+  deferred.
+- **A request budget (task 8).** 600 requests a minute per access token, and per client sending
+  none (`LUPIN_API_RATE_LIMIT`, 0 turns it off), answered with 429 and `retry-after`. Probes and
+  the reporter ingestion routes are not counted.
+- **An outbound address guard (task 9).** Webhooks, notification bridges, the Jira base URL and
+  URL settings are refused when their host resolves to a private, loopback, link-local or
+  metadata address, on save and before each send. `LUPIN_OUTBOUND_ALLOW` names what a LAN
+  install needs. **A Signal or email bridge on the LAN now needs an entry there.** URLs set in
+  the environment are not checked.
+- **Vault keys at 600,000 PBKDF2 iterations (task 10).** Older entries open at their recorded
+  count and are re-sealed on their next write.
+
 - **Change risk.** Every pull request the gate sees gets a level and a score that is the sum of
   stated factors, each with its own sentence: authorship, size, tests touched, diff coverage,
   new findings, failed and flaky tests, human approval, evals, how far the change reaches, and
