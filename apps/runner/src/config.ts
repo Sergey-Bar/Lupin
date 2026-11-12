@@ -92,6 +92,22 @@ const RunnerConfigSchema = z
      * scripts that run are the operator's, never the caller's. See `k6-execution.ts`.
      */
     k6ScriptRoot: z.string().min(1).default(defaultK6ScriptRoot),
+    /**
+     * The ZAP baseline entry point (`RUNNER_ZAP_COMMAND`), run without a shell. Only a security
+     * job runs it, and only with the argv `zap-execution.ts` builds.
+     */
+    zapCommand: z.string().min(1).default('zap-baseline.py'),
+    /**
+     * Where `zap-baseline.py` writes its report (`RUNNER_ZAP_WORK_DIR`). The script writes
+     * reports under `/zap/wrk/` whenever that directory exists, whatever path it is given, so in
+     * the ZAP image this is `/zap/wrk`; unset, the report is read from the job's workspace.
+     */
+    zapWorkDir: z.string().min(1).optional(),
+    /**
+     * The bearer the axe pass uploads with (`RUNNER_HEALTH_UPLOAD_TOKEN`): an uploader token for
+     * the project, or the reporter secret. Optional; without it the health door decides.
+     */
+    healthUploadToken: z.string().min(1).optional(),
     allowedTargetUrls: z.string().default('http://127.0.0.1:3000').transform(origins),
     artifactMaxBytes: z.coerce.number().int().min(1).max(500_000_000).default(50_000_000),
     logMaxBytes: z.coerce.number().int().min(1_024).max(50_000_000).default(5_000_000),
@@ -171,6 +187,9 @@ export function parseRunnerConfig(input: Record<string, string | undefined>): Ru
     apiCollectionRoot: input['RUNNER_API_COLLECTION_ROOT'],
     allowedPlaywrightProjects: input['RUNNER_PLAYWRIGHT_PROJECTS'],
     k6ScriptRoot: input['RUNNER_K6_SCRIPT_ROOT'],
+    zapCommand: input['RUNNER_ZAP_COMMAND'] || undefined,
+    zapWorkDir: input['RUNNER_ZAP_WORK_DIR'] || undefined,
+    healthUploadToken: input['RUNNER_HEALTH_UPLOAD_TOKEN'] || undefined,
     allowedTargetUrls: input['RUNNER_ALLOWED_TARGET_URLS'],
     artifactMaxBytes: input['RUNNER_ARTIFACT_MAX_BYTES'],
     logMaxBytes: input['RUNNER_LOG_MAX_BYTES'],

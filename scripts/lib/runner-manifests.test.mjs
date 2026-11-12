@@ -84,5 +84,46 @@ test('zap: the runner user has a passwd entry, a writable home and the bundled F
   assert.match(dockerfile, new RegExp(`^USER ${user}:${user}$`, 'mu'));
   // The manifest declares a read-only root, so ZAP's state must live on the /tmp tmpfs.
   assert.equal(manifest.readOnly, true);
-  assert.match(dockerfile, /^ENTRYPOINT \["zap\.sh", "-dir", "\/tmp\/[^"]+", "-version"\]$/mu);
+  assert.match(
+    dockerfile,
+    /^ENTRYPOINT \["\/automation\/bin\/zap-entrypoint\.sh"\]$/mu,
+    'the entrypoint is the baseline wrapper',
+  );
+  const wrapper = readFileSync(path.join(RUNNERS, 'zap', 'zap-entrypoint.sh'), 'utf8');
+  assert.match(wrapper, /exec zap\.sh -dir \/tmp\/[^ ]+ -version/u);
+  assert.match(wrapper, /exec zap-baseline\.py -z "-dir \/tmp\/[^"]+" "\$@"/u);
+});
+
+// Plan task 19: the images stop being stubs. Each one's entrypoint is its tool (or, for ZAP,
+// a wrapper that can run only the baseline scan), with no arguments printing the version that
+// `oci:smoke` checks; each switches to the manifest's numeric user, and none carries a secret.
+for (const runner of Object.keys(TOOL_IMAGE)) {
+  test(`${runner}: runs its tool as the manifest's numeric user, with nothing secret baked in`, () => {
+    const dockerfile = readFileSync(path.join(RUNNERS, runner, 'Dockerfile'), 'utf8');
+    const manifest = JSON.parse(readFileSync(path.join(RUNNERS, runner, 'manifest.json'), 'utf8'));
+    const users = [...dockerfile.matchAll(/^USER (.+)$/gmu)].map((match) => match[1]);
+    assert.equal(users.at(-1), `${String(manifest.user)}:${String(manifest.user)}`);
+    assert.notEqual(manifest.user, 0);
+    assert.doesNotMatch(
+      dockerfile,
+      /^ENTRYPOINT \[(?:"node", "-e"|.*"-?-?version"\])/mu,
+      'no stub entrypoint that only prints a version',
+    );
+    assert.doesNotMatch(dockerfile, /^(ENV|ARG) [A-Z_]*(TOKEN|SECRET|PASSWORD|KEY)\b/mu);
+    assert.equal(manifest.network, 'none');
+    assert.equal(typeof manifest.jobNetwork, 'string');
+  });
+}
+
+test('playwright: the image installs the release the workspace locks, and the manifest says so', () => {
+  const dockerfile = readFileSync(path.join(RUNNERS, 'playwright', 'Dockerfile'), 'utf8');
+  const manifest = JSON.parse(
+    readFileSync(path.join(RUNNERS, 'playwright', 'manifest.json'), 'utf8'),
+  );
+  const version = dockerfile.match(/^ARG PLAYWRIGHT_VERSION=(\S+)$/mu)?.[1];
+  assert.equal(version, manifest.toolVersion);
+  const lock = readFileSync(path.join(ROOT, 'pnpm-lock.yaml'), 'utf8');
+  assert.ok(lock.includes(`'@playwright/test@${String(version)}':`), 'the lockfile has it');
+  assert.match(dockerfile, /playwright install --with-deps chromium/u);
+  assert.match(dockerfile, /^ENTRYPOINT \["playwright"\]$/mu);
 });

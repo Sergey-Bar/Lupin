@@ -489,6 +489,30 @@ describe('PlaywrightExecutionAdapter outcomes', () => {
     expect(result.status).toBe('passed');
     expect(calls[0]?.env?.['LUPIN_BASE_URL']).toBe('https://allowed.test/');
     expect(calls[0]?.env?.['CI']).toBe('1');
+    // No axe pass unless the job asked for one.
+    expect(calls[0]?.env?.['LUPIN_AXE']).toBeUndefined();
+    expect(calls[0]?.env?.['LUPIN_AXE_RESULTS_PATH']).toBeUndefined();
+  });
+
+  it('tells the project fixture to run axe, and where to write, only when the job opts in', async () => {
+    const calls: SpawnOptions[] = [];
+    const { adapter } = await adapterWith({
+      spawnProcess: scriptedSpawn((child) => {
+        child.emit('close', 0, null);
+      }, calls),
+    });
+
+    const result = await adapter.execute({
+      jobId: 'job-1',
+      deadlineMs: 5_000,
+      signal: new AbortController().signal,
+      axe: true,
+    });
+
+    expect(calls[0]?.env?.['LUPIN_AXE']).toBe('1');
+    expect(calls[0]?.env?.['LUPIN_AXE_RESULTS_PATH']).toBe(
+      join(result.workspacePath, 'reports', 'axe-results.json'),
+    );
   });
 
   it('withholds secret-named variables and any variable carrying a redacted value', async () => {

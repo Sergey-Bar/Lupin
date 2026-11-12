@@ -201,6 +201,20 @@ services:
     restart: unless-stopped
     mem_limit: 4g
     cpus: '2'
+    # Isolation (plan task 19). The runner runs as the image's `node` user (uid 1000 in the
+    # Node base image), with every capability dropped and no privilege escalation; Playwright
+    # launches Chromium without its own sandbox by default, so it needs none of them.
+    # Not `read_only`: the durable spool and the job workspaces live under /tmp in the
+    # container's own filesystem, so a read-only root with a /tmp tmpfs would lose queued
+    # results on every restart. That needs a spool volume first.
+    # Network: the runner sits on `default` (the API and the allowlisted targets `api` and
+    # `web`) and `runner_egress` (git clones). Nothing here starts a per-job container, so no
+    # job joins an `internal: true` network of its own yet; the target boundary is the runner's
+    # `RUNNER_ALLOWED_TARGET_URLS` check, enforced before any tool is spawned.
+    user: '1000:1000'
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     build:
       context: ../..
       dockerfile: infra/docker/runner.Dockerfile

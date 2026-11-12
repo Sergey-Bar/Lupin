@@ -570,6 +570,22 @@
       "testFile": "packages/reporting/src/cockpit.property.test.ts",
       "seed": 20261106,
       "shownToFail": "Mutation: counting only a change's additions and not its deletions fails the conservation property, the pinned lines example and the harness checker on the first case with a deletion."
+    },
+    {
+      "id": "GATE-1",
+      "statement": "A domain the policy requires, with no evidence uploaded for it, never lets the release gate pass, whatever else the evidence says.",
+      "package": "apps/api",
+      "testFile": "apps/api/src/execution/evidence-domains.property.test.ts",
+      "seed": 20261112,
+      "shownToFail": "The suite runs the same check against a gate given a passed status for the missing domain, and asserts that fc.assert throws."
+    },
+    {
+      "id": "GATE-2",
+      "statement": "A security or accessibility finding at or above the policy maxSeverity always fails its domain.",
+      "package": "apps/api",
+      "testFile": "apps/api/src/execution/evidence-domains.property.test.ts",
+      "seed": 20261112,
+      "shownToFail": "Deleting the findingsVerdict severity comparison makes the property fail on its first generated case."
     }
   ]
 }

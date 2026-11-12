@@ -6,6 +6,7 @@
   "buildStatus": "unbuilt",
   "user": 65532,
   "network": "none",
+  "jobNetwork": "The image starts with no network (`network`). A job container is meant to join one `internal: true` network shared only with the allowlisted target; nothing in this repository starts job containers yet, so the boundary today is the runner's RUNNER_ALLOWED_TARGET_URLS check, not the network.",
   "readOnly": true,
   "capabilities": ["CAP_DROP"],
   "resources": {

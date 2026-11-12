@@ -155,7 +155,10 @@ export function registerRunRoutes(app: Hono, context: ExecutionRouteContext): vo
     const evaluation = createGateEvaluation({
       run,
       policy,
-      domainStatuses: domainStatusesFromRun(run),
+      domainStatuses: {
+        ...((await options.store.evidenceDomains?.(run, policy)) ?? {}),
+        ...domainStatusesFromRun(run),
+      },
       evaluatedAt: run.completedAt ?? undefined,
       quarantined: await options.store.quarantined(ws),
     });

@@ -72,6 +72,7 @@ import { createToolRegistry } from '@lupin/tool-sdk';
 import { registerApiAgent } from './agents/api-adapter.js';
 import { registerBrowserAgent } from './agents/browser-adapter.js';
 import { registerLoadAgent } from './agents/load-adapter.js';
+import { registerSecurityAgent } from './agents/security-adapter.js';
 import { createChatRoutes } from './routes/chat.js';
 import { createCopilotRoutes } from './copilot/routes.js';
 import { createLiveAiGateway } from './observability/live-ai-gateway.js';
@@ -974,8 +975,8 @@ function buildWorkspace(workspaceId: string) {
    * The one tool registry the agent routes dispatch through, and the catalog that
    * `/api/v1/features` and `/api/v1/agents` both read availability from. Browser is the first
    * domain with a real adapter: `browser.run` queues a Playwright job through the same store
-   * `POST /api/v1/runs` uses, `api.run` queues a Bruno job and `load.run` a bounded k6 job the
-   * same way. The other two domains register nothing and answer `501`.
+   * `POST /api/v1/runs` uses, `api.run` queues a Bruno job, `load.run` a bounded k6 job and
+   * `security.scan` a ZAP baseline job the same way. Mobile registers nothing and answers `501`.
    */
   const agentRegistry = createToolRegistry();
   registerBrowserAgent({
@@ -992,6 +993,12 @@ function buildWorkspace(workspaceId: string) {
     requireIdempotencyKey: runtimeConfig.nodeEnv === 'production',
   });
   registerLoadAgent({
+    registry: agentRegistry,
+    store: executionStore,
+    workspaceId,
+    requireIdempotencyKey: runtimeConfig.nodeEnv === 'production',
+  });
+  registerSecurityAgent({
     registry: agentRegistry,
     store: executionStore,
     workspaceId,

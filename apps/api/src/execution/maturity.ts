@@ -1,5 +1,6 @@
 import {
   IntegrationMaturitySchema,
+  REPORT_FORMATS,
   type IntegrationMaturity,
   type IntegrationMaturityLevel,
   type IntegrationEvidenceStatus,
@@ -144,15 +145,18 @@ const INTEGRATION_MATURITY_SOURCE = [
     evidenceStatus: 'implemented',
     evidence: ['load-agent', 'runner-k6-execution'],
   },
+  // The runner's ZAP baseline adapter (`apps/runner/src/zap-execution.ts`), queued by the
+  // `security` agent (plan task 17). `implemented`, not `verified`: no scan against a real
+  // target through a runner carrying ZAP is recorded (ledger BK-2).
   {
     id: 'zap',
     name: 'OWASP ZAP',
     domain: 'security',
-    level: 'L0',
-    capabilities: [],
-    adapterVersion: 'none',
-    evidenceStatus: 'not_configured',
-    evidence: [],
+    level: 'L2',
+    capabilities: ['zap', 'test-execution'],
+    adapterVersion: 'zap-execution',
+    evidenceStatus: 'implemented',
+    evidence: ['security-agent', 'runner-zap-execution'],
   },
   {
     id: 'appium',
@@ -177,7 +181,52 @@ const INTEGRATION_MATURITY_SOURCE = [
 ];
 
 export const INTEGRATION_MATURITY_REGISTRY: readonly IntegrationMaturity[] =
-  IntegrationMaturitySchema.array().parse(INTEGRATION_MATURITY_SOURCE);
+  IntegrationMaturitySchema.array().parse(
+    withUploadDoor(INTEGRATION_MATURITY_SOURCE, REPORT_FORMATS),
+  );
+
+/**
+ * The rows the reporter upload door makes true, derived from its format table rather than
+ * written by hand (plan task 20): a producer the door reads carries `import` and the
+ * `reporter-upload-door` evidence, and an L0 row becomes L2 `implemented`. A producer the door
+ * reads with no row gets one. So ZAP, which the door has read since its adapter landed, no
+ * longer reads as absent, and a format added to the table is reflected without an edit here.
+ */
+export function withUploadDoor(
+  source: ReadonlyArray<(typeof INTEGRATION_MATURITY_SOURCE)[number]>,
+  formats: ReadonlyArray<{ id: string; producer: string; spellings: readonly string[] }>,
+): Array<(typeof INTEGRATION_MATURITY_SOURCE)[number]> {
+  const door = formats.filter((format) => format.spellings.length > 0);
+  const rows = source.map((row) => ({
+    ...row,
+    capabilities: [...row.capabilities],
+    evidence: [...row.evidence],
+  }));
+  for (const format of door) {
+    const row = rows.find((entry) => entry.id === format.producer);
+    if (row === undefined) {
+      rows.push({
+        id: format.producer,
+        name: format.producer,
+        domain: 'import',
+        level: 'L2',
+        capabilities: ['import', 'normalized-results'],
+        adapterVersion: format.id,
+        evidenceStatus: 'implemented',
+        evidence: ['reporter-upload-door'],
+      });
+      continue;
+    }
+    if (!row.capabilities.includes('import')) row.capabilities.push('import');
+    if (!row.evidence.includes('reporter-upload-door')) row.evidence.push('reporter-upload-door');
+    if (row.level === 'L0') {
+      row.level = 'L2';
+      row.adapterVersion = format.id;
+      row.evidenceStatus = 'implemented';
+    }
+  }
+  return rows;
+}
 
 export function listIntegrationMaturity(): IntegrationMaturity[] {
   return INTEGRATION_MATURITY_REGISTRY.map((entry) => ({

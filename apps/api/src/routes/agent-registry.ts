@@ -22,6 +22,7 @@ import { AGENT_ACTIONS, type ToolRegistry } from '@lupin/tool-sdk';
 import { API_UNSUPPORTED_REASONS } from '../agents/api-adapter.js';
 import { BROWSER_UNSUPPORTED_REASONS } from '../agents/browser-adapter.js';
 import { LOAD_UNSUPPORTED_REASONS } from '../agents/load-adapter.js';
+import { SECURITY_UNSUPPORTED_REASONS } from '../agents/security-adapter.js';
 
 /** Every domain the contract declares, in the contract's own order. */
 export const AGENT_DOMAINS: readonly string[] = AgentDomainSchema.options;
@@ -37,6 +38,7 @@ const UNSUPPORTED_REASONS: Readonly<Record<string, string>> = Object.fromEntries
       ['browser', BROWSER_UNSUPPORTED_REASONS],
       ['api', API_UNSUPPORTED_REASONS],
       ['load', LOAD_UNSUPPORTED_REASONS],
+      ['security', SECURITY_UNSUPPORTED_REASONS],
     ] as const
   ).flatMap(([domain, reasons]) =>
     Object.entries(reasons).map(([action, reason]) => [`${domain}.${action}`, reason]),

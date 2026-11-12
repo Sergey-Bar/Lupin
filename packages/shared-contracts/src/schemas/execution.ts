@@ -138,6 +138,8 @@ export const QualityPolicyRuleSchema = z.object({
   domain: QualityDomainSchema,
   required: z.boolean().default(false),
   minimumPassRate: z.number().min(0).max(100).optional(),
+  /** Security and accessibility: an open finding at or above this fails the domain (task 16). */
+  maxSeverity: z.enum(['critical', 'high', 'medium', 'low']).optional(),
   requiredArtifactKinds: z.array(ArtifactKindSchema).default([]),
 });
 export type QualityPolicyRule = z.infer<typeof QualityPolicyRuleSchema>;

@@ -49,6 +49,7 @@ import {
   runStatusFor,
 } from './execution-derivations.js';
 import { resolveSummary } from './summary.js';
+import { evidenceDomainsFor } from '../services/gate-evidence.js';
 import { decodeRunCursor, normalizeEventLimit, normalizeRunLimit } from './run-paging.js';
 import type {
   ArtifactDescriptor,
@@ -578,6 +579,13 @@ export class DrizzleExecutionStore implements ExecutionStore {
   constructor(options: DrizzleExecutionStoreOptions) {
     this.db = options.db;
     this.options = options;
+  }
+
+  async evidenceDomains(
+    run: ExecutionRun,
+    policy: Pick<QualityPolicy, 'rules'>,
+  ): Promise<Partial<Record<DomainName, DomainStatus>>> {
+    return evidenceDomainsFor(this.db as never, run, policy);
   }
 
   private async appendOutbox(tx: unknown, event: OutboxAppend): Promise<void> {
@@ -1675,7 +1683,10 @@ export class DrizzleExecutionStore implements ExecutionStore {
         createGateEvaluation({
           run,
           policy,
-          domainStatuses: { browser: browserGateStatus(run.outcome) },
+          domainStatuses: {
+            ...(await this.evidenceDomains(run, policy)),
+            browser: browserGateStatus(run.outcome),
+          },
           quarantined: await this.quarantined(run.workspaceId),
         }),
       );
@@ -2008,7 +2019,10 @@ export class DrizzleExecutionStore implements ExecutionStore {
         createGateEvaluation({
           run: mapped,
           policy,
-          domainStatuses: { browser: browserGateStatus(mapped.outcome) },
+          domainStatuses: {
+            ...(await this.evidenceDomains(mapped, policy)),
+            browser: browserGateStatus(mapped.outcome),
+          },
           quarantined: await this.quarantined(workspaceId),
         }),
       );
@@ -2023,9 +2037,9 @@ export class DrizzleExecutionStore implements ExecutionStore {
         browser,
         api: 'not_configured',
         mobile: 'not_configured',
-        performance: 'not_configured',
-        security: 'not_configured',
-        accessibility: 'not_configured',
+        performance: gate?.domainStatuses.performance ?? 'not_configured',
+        security: gate?.domainStatuses.security ?? 'not_configured',
+        accessibility: gate?.domainStatuses.accessibility ?? 'not_configured',
         other: 'not_configured',
       },
       latestRunId: mapped?.id ?? null,

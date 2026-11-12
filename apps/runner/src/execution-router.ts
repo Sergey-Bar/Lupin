@@ -9,12 +9,13 @@ import {
 /**
  * Chooses the executor for a job, from the shape of the job itself.
  *
- * Three modes, one seam. `PlaywrightExecutionAdapter` drives a browser suite with an
+ * Five modes, one seam. `PlaywrightExecutionAdapter` drives a browser suite with an
  * allowlist of projects and target origins; `GenericSpawnAdapter` runs a declared
  * argv in a registered repository; `K6ExecutionAdapter` runs one bounded load script;
- * `ApiExecutionAdapter` runs a named Bruno collection. Which one runs is decided by **which
+ * `ApiExecutionAdapter` runs a named Bruno collection; `ZapExecutionAdapter` runs one ZAP
+ * baseline scan. Which one runs is decided by **which
  * keys the job's `configuration` carries** (`command`, `playwrightProject`, `k6`,
- * `apiCollection`) and there is no fallback: a job declaring two of them is a
+ * `apiCollection`, `zap`) and there is no fallback: a job declaring two of them is a
  * configuration failure, not something to guess at.
  *
  * Guessing would be the dangerous failure. A job that arrived with a malformed
@@ -27,22 +28,35 @@ export class RoutingExecutionAdapter implements ExecutionProvider {
     private readonly playwright: ExecutionProvider,
     private readonly k6: ExecutionProvider,
     private readonly api?: ExecutionProvider,
+    private readonly zap?: ExecutionProvider,
   ) {}
 
   async execute(context: ExecutionContext): Promise<ExecutionResult> {
     const command = (context as { command?: GenericCommand }).command;
-    const modes = [command, context.playwrightProject, context.k6, context.apiCollection].filter(
-      (mode) => mode !== undefined,
-    );
+    const modes = [
+      command,
+      context.playwrightProject,
+      context.k6,
+      context.apiCollection,
+      context.zap,
+    ].filter((mode) => mode !== undefined);
     if (modes.length > 1) {
       throw new RunnerConfigurationError(
-        'A job can declare only one of a generic command, a Playwright project, a k6 script and an API collection',
+        'A job can declare only one of a generic command, a Playwright project, a k6 script, an API collection and a ZAP scan',
       );
     }
     if (context.k6 !== undefined) return this.k6.execute(context);
+    if (context.zap !== undefined) return this.executeZap(context);
     if (context.apiCollection !== undefined) return this.executeApi(context);
     if (command === undefined) return this.playwright.execute(context);
     return this.generic.execute({ ...context, command });
+  }
+
+  private executeZap(context: ExecutionContext): Promise<ExecutionResult> {
+    if (this.zap === undefined) {
+      throw new RunnerConfigurationError('This runner does not run ZAP scans');
+    }
+    return this.zap.execute(context);
   }
 
   private executeApi(context: ExecutionContext): Promise<ExecutionResult> {

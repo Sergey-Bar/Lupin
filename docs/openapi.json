@@ -26024,6 +26024,7 @@
           },
           "required": { "default": false, "type": "boolean" },
           "minimumPassRate": { "type": "number", "minimum": 0, "maximum": 100 },
+          "maxSeverity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
           "requiredArtifactKinds": {
             "default": [],
             "type": "array",
@@ -26102,6 +26103,7 @@
                 },
                 "required": { "default": false, "type": "boolean" },
                 "minimumPassRate": { "type": "number", "minimum": 0, "maximum": 100 },
+                "maxSeverity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
                 "requiredArtifactKinds": {
                   "default": [],
                   "type": "array",

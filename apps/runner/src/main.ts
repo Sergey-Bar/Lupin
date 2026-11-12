@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { DurableSpool, readOrCreateSpoolKey } from '@lupin/runner-sdk';
 import { ApiExecutionAdapter } from './api-run.js';
+import { AxePassAdapter, createHealthReportUploader } from './axe-pass.js';
 import { RunnerApiClient } from './client.js';
 import { parseRunnerConfig } from './config.js';
 import { PlaywrightExecutionAdapter } from './execution.js';
@@ -9,6 +10,7 @@ import { RoutingExecutionAdapter } from './execution-router.js';
 import { GenericSpawnAdapter } from './generic-spawn.js';
 import { GitCheckout } from './git-checkout.js';
 import { K6ExecutionAdapter } from './k6-execution.js';
+import { ZapExecutionAdapter } from './zap-execution.js';
 import { HealthServer } from './health-server.js';
 import { RunnerService } from './runner-service.js';
 import { readStoredToken, writeStoredToken } from './token-store.js';
@@ -140,15 +142,22 @@ async function runRunner(env: Record<string, string | undefined>): Promise<void>
   });
   const executor = new RoutingExecutionAdapter(
     genericExecutor,
-    new PlaywrightExecutionAdapter({
-      projectRoot: config.playwrightProjectRoot,
-      allowedProjects: config.allowedPlaywrightProjects,
-      allowedTargetUrls: config.allowedTargetUrls,
-      workspaceRoot: config.workspaceRoot,
-      artifactMaxBytes: config.artifactMaxBytes,
-      logMaxBytes: config.logMaxBytes,
-      redactions: config.redactions,
-    }),
+    new AxePassAdapter(
+      new PlaywrightExecutionAdapter({
+        projectRoot: config.playwrightProjectRoot,
+        allowedProjects: config.allowedPlaywrightProjects,
+        allowedTargetUrls: config.allowedTargetUrls,
+        workspaceRoot: config.workspaceRoot,
+        artifactMaxBytes: config.artifactMaxBytes,
+        logMaxBytes: config.logMaxBytes,
+        redactions: config.redactions,
+      }),
+      createHealthReportUploader({
+        apiUrl: config.apiUrl,
+        token: config.healthUploadToken,
+        timeoutMs: config.requestTimeoutMs,
+      }),
+    ),
     new K6ExecutionAdapter({
       scriptRoot: config.k6ScriptRoot,
       allowedTargetUrls: config.allowedTargetUrls,
@@ -169,6 +178,15 @@ async function runRunner(env: Record<string, string | undefined>): Promise<void>
       }),
       collectionRoot: config.apiCollectionRoot,
       allowedTargetUrls: config.allowedTargetUrls,
+    }),
+    new ZapExecutionAdapter({
+      allowedTargetUrls: config.allowedTargetUrls,
+      workspaceRoot: config.workspaceRoot,
+      artifactMaxBytes: config.artifactMaxBytes,
+      logMaxBytes: config.logMaxBytes,
+      zapCommand: config.zapCommand,
+      ...(config.zapWorkDir === undefined ? {} : { workDir: config.zapWorkDir }),
+      redactions: config.redactions,
     }),
   );
   const spoolKey =
@@ -191,6 +209,7 @@ async function runRunner(env: Record<string, string | undefined>): Promise<void>
       ...config.redactions,
       config.registrationSecret,
       config.credential,
+      config.healthUploadToken,
       spoolKey,
       token,
     ].filter((value): value is string => Boolean(value)),

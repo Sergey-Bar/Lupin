@@ -347,6 +347,8 @@ export interface QualityPolicy {
     domain: DomainName;
     required: boolean;
     minimumPassRate?: number;
+    /** Security and accessibility: an open finding at or above this fails the domain. */
+    maxSeverity?: 'critical' | 'high' | 'medium' | 'low';
     requiredArtifactKinds: ArtifactKind[];
   }>;
   createdAt: string;
@@ -551,6 +553,15 @@ export interface ExecutionStore {
   saveGate(evaluation: GateEvaluation): Promise<GateEvaluation>;
   getGate(workspaceId: string, runId: string): Promise<GateEvaluation | null>;
   getRunGate(workspaceId: string, runId: string): Promise<GateEvaluation | null>;
+  /**
+   * The security, accessibility and performance domains, from evidence uploaded for the run's
+   * own commit (plan task 16). Absent on a store with no evidence to read; a domain with none
+   * is left out and the gate keeps it `not_configured`.
+   */
+  evidenceDomains?(
+    run: ExecutionRun,
+    policy: Pick<QualityPolicy, 'rules'>,
+  ): Promise<Partial<Record<DomainName, DomainStatus>>>;
   reapExpiredLeases(now?: Date): Promise<LeaseReapResult[]>;
   getReadiness(releaseId: string, workspaceId?: string): Promise<ReleaseReadiness>;
   getReleaseReadiness(workspaceId: string, releaseId: string): Promise<ReleaseReadiness>;

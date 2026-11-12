@@ -21,8 +21,14 @@ describe('agents.ts and @lupin/tool-sdk agree', () => {
     let pairs = 0;
     for (const domain of AGENT_DOMAINS) {
       for (const action of AGENT_ACTIONS) {
-        // The browser and api pairs and load's `scan` / `generate` carry a reason; the test below covers them.
-        if (domain === 'browser' || domain === 'api' || (domain === 'load' && action !== 'run'))
+        // The browser and api pairs, load's `scan` / `generate` and security's `run` / `generate`
+        // carry a reason; the test below covers them.
+        if (
+          domain === 'browser' ||
+          domain === 'api' ||
+          (domain === 'load' && action !== 'run') ||
+          (domain === 'security' && action !== 'scan')
+        )
           continue;
         pairs += 1;
         const response = await app.request(`/api/v1/agents/${domain}/${action}`, {
@@ -38,10 +44,10 @@ describe('agents.ts and @lupin/tool-sdk agree', () => {
         expect(Object.keys(body)).toEqual(Object.keys(problem.body));
       }
     }
-    expect(pairs).toBe(7);
+    expect(pairs).toBe(5);
   });
 
-  it('answers the unserved browser, api and load actions with the SDK body plus the reason', async () => {
+  it('answers the unserved browser, api, load and security actions with the SDK body plus the reason', async () => {
     for (const [domain, action] of [
       ['browser', 'scan'],
       ['browser', 'generate'],
@@ -49,6 +55,8 @@ describe('agents.ts and @lupin/tool-sdk agree', () => {
       ['api', 'generate'],
       ['load', 'scan'],
       ['load', 'generate'],
+      ['security', 'run'],
+      ['security', 'generate'],
     ] as const) {
       const response = await app.request(`/api/v1/agents/${domain}/${action}`, { method: 'POST' });
       const dispatched = await registry.dispatch(domain, action, {});
