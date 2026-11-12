@@ -688,6 +688,16 @@ describe('the issue tracking routes', () => {
       .from(schema.auditEvents)
       .where(eq(schema.auditEvents.resourceType, 'failure_cluster'));
     expect(audited).toMatchObject({ action: 'issue.create', actorId: 'token:operator' });
+    // Every later occurrence reads it back by signature, for a viewer and no one less.
+    const lookup = `/api/v1/projects/${projectId}/cluster-issues?signature=${encodeURIComponent(CLUSTER.signature)}`;
+    expect((await call('GET', lookup)).status).toBe(401);
+    const found = await call('GET', lookup, 'lup_viewer');
+    expect(found.status).toBe(200);
+    expect(
+      ((await found.json()) as { issues: Record<string, { key: string }> }).issues[
+        CLUSTER.signature
+      ]?.key,
+    ).toBe('ACME-9');
   });
 
   it('lets only an admin configure a tracker, audits it without the token, and never returns it', async () => {

@@ -232,6 +232,22 @@ describe('the role guards, enforced', () => {
     );
   });
 
+  it('rotates a token for an admin only, through the route (plan task 6)', async () => {
+    const { app, options } = await setup();
+    const { summary } = await createAccessToken(options, { name: 'ci', role: 'viewer' }, 'x');
+    const { token: viewer } = await createAccessToken(options, { name: 'v', role: 'viewer' }, 'x');
+    const refused = await app.request(`/api/v1/access-tokens/${summary.id}/rotate`, {
+      method: 'POST',
+      headers: bearer(viewer),
+    });
+    expect(refused.status).toBe(403);
+    const rotated = await app.request(`/api/v1/access-tokens/${summary.id}/rotate`, {
+      method: 'POST',
+      headers: { cookie: 'lupin_session=valid' },
+    });
+    expect(rotated.status).toBe(201);
+  });
+
   it('treats the installation session as admin: it issues and revokes tokens', async () => {
     const { app } = await setup();
     const cookie = { cookie: 'lupin_session=valid' };

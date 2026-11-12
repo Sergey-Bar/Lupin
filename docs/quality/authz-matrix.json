@@ -44,7 +44,7 @@
       "method": "POST",
       "path": "/api/v1/access-tokens/:id/rotate",
       "access": "admin",
-      "evidenceTest": null,
+      "evidenceTest": "apps/api/src/services/access-service.test.ts",
       "composition": "database"
     },
     {
@@ -709,7 +709,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:id/cluster-issues",
       "access": "viewer",
-      "evidenceTest": null,
+      "evidenceTest": "apps/api/src/services/issue-tracker-service.test.ts",
       "composition": "database"
     },
     {

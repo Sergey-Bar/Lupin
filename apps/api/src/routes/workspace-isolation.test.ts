@@ -152,6 +152,9 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   // a job row, a membership), and `workspace-dispatch.test.ts` proves a token cannot be
   // pointed at another workspace and a person cannot enter one they are not a member of;
   // `workspace-lookups.test.ts` proves the rows behind it on the real migration graph.
+  // Release sign-offs: every read and write filters `release_signoffs` on `workspace_id`, and
+  // `release-signoff-service.test.ts` proves another workspace's sign-offs are never shown.
+  { family: 'release sign-offs', files: ['services/release-signoff-service.ts'] },
   {
     family: 'workspace dispatch',
     files: ['http/workspace-dispatch.ts', 'http/workspace-lookups.ts'],
