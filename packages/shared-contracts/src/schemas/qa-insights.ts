@@ -100,6 +100,8 @@ export const FailureClusterSchema = z.object({
     .object({
       category: z.enum(['product', 'test', 'environment', 'known-issue']),
       issueUrl: z.string().nullable(),
+      /** Why it is known; absent from an older server. A known cause still counts as failed. */
+      reason: z.string().nullable().optional(),
     })
     .nullable()
     .optional(),

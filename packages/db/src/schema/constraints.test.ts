@@ -291,27 +291,15 @@ describe('execution schema referential intent', () => {
     // `workspaces` never registered.
     //
     // The last seven were hard-scoped before MNT-17 by an unkeyed NOT NULL column and
-    // gained the key in 0029 (ledger MNT-18).
+    // gained the key in 0029 (ledger MNT-18). Twelve of the 27 were dropped by 0066 (ledger C-6).
     for (const table of [
       schema.runs,
-      schema.suites,
       schema.tests,
-      schema.attachments,
       schema.trends,
       schema.quarantine,
-      schema.knownFailures,
       schema.qualityGateConfig,
-      schema.nlQueryHistory,
-      schema.failureClassifications,
       schema.testFailureCorrelations,
-      schema.locatorSuggestions,
       schema.failureClusters,
-      schema.agentSessions,
-      schema.agentSessionRuns,
-      schema.agentSessionFiles,
-      schema.generatedTestSuggestions,
-      schema.repairAttempts,
-      schema.agentConflicts,
       schema.auditEvents,
       schema.messageAttachments,
       schema.flowTemplates,

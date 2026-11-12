@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import * as schema from '@lupin/db';
+import { TriageLabelBodySchema } from '@lupin/shared-contracts';
 import { createTriageLabelRoutes } from '../routes/triage-labels.js';
 import { withErrorBoundary } from '../test-support/error-boundary-app.js';
 import { migratedDatabase } from '../test-support/migrated-database.js';
@@ -71,10 +72,26 @@ describe('triage labels', () => {
       await listTriageLabels(options),
     );
     expect(labelled.clusters.map((cluster) => cluster.label)).toEqual([
-      { category: 'environment', issueUrl: null },
+      { category: 'environment', issueUrl: null, reason: null },
       null,
     ]);
     expect(labelled.totals.unlabelled).toBe(2);
+  });
+
+  it('keeps the reason a known failure is given, and needs an issue or a reason for one', async () => {
+    const { options } = await setup();
+    const known = await setTriageLabel(
+      options,
+      { signature: SIGNATURE, category: 'known-issue', reason: 'the database restarts nightly' },
+      'user:ana',
+    );
+    expect(known.reason).toBe('the database restarts nightly');
+    expect(
+      TriageLabelBodySchema.safeParse({ signature: SIGNATURE, category: 'known-issue' }).success,
+    ).toBe(false);
+    expect(
+      TriageLabelBodySchema.safeParse({ signature: SIGNATURE, category: 'product' }).success,
+    ).toBe(true);
   });
 });
 

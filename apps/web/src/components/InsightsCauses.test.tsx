@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { makeApi, makeInsights, makeQa } from '../test-utils.js';
 import { InsightsPage } from '../routes/dashboard/insights.js';
@@ -208,6 +209,56 @@ describe('labelling a failure cause', () => {
       }),
     );
     expect(await screen.findByText('Labelled Environment')).toBeInTheDocument();
+  });
+
+  it('asks why a cause is known, sends the reason, and shows it on the cause', async () => {
+    const user = userEvent.setup();
+    const setTriageLabel = vi.fn(async () => ({
+      signature: 'timeout <n>ms exceeded',
+      category: 'known-issue' as const,
+      issueUrl: null,
+      reason: 'the database restarts nightly',
+      labelledAt: '2026-10-26T00:00:00.000Z',
+      labelledBy: 'user:ana',
+    }));
+    const { unmount } = render(
+      <ToastProvider>
+        <FailureClustersPanel clusters={clusters} api={{ setTriageLabel }} />
+      </ToastProvider>,
+    );
+    fireEvent.change(screen.getByRole('combobox', { name: 'Label this cause' }), {
+      target: { value: 'known-issue' },
+    });
+    expect(setTriageLabel).not.toHaveBeenCalled();
+    await user.type(screen.getByLabelText('Why it is known'), 'the database restarts nightly');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(setTriageLabel).toHaveBeenCalledWith({
+      signature: 'timeout <n>ms exceeded',
+      category: 'known-issue',
+      reason: 'the database restarts nightly',
+    });
+    unmount();
+    render(
+      <FailureClustersPanel
+        clusters={{
+          ...clusters,
+          clusters: [
+            {
+              ...clusters.clusters[0]!,
+              label: {
+                category: 'known-issue',
+                issueUrl: null,
+                reason: 'the database restarts nightly',
+              },
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByTestId('known-reason')).toHaveTextContent(
+      'Known: the database restarts nightly · still counted as a failure',
+    );
+    expect(screen.getByTestId('clusters-summary')).toHaveTextContent('3 failures');
   });
 
   it('puts the label back when the server refuses it', async () => {

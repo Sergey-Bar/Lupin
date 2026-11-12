@@ -153,6 +153,13 @@ import {
   BRIEFING_AGENT_NAME,
 } from './services/genai-span-service.js';
 import { createNarrator } from './services/narration-service.js';
+import {
+  CLUSTER_HISTORY_DAYS,
+  readStoredClusters,
+  refreshAllClusters,
+} from './services/failure-cluster-store.js';
+import { readRollupTrend, refreshAllRollups } from './services/trend-rollup-store.js';
+import { sweepAllWorkspaces } from './services/retention-service.js';
 import { Lifecycle, closeHttpServer, installShutdownHandlers } from './bootstrap/lifecycle.js';
 // T18: dashboard module — runs detail, tests listing, analytics, quarantine, quality gates
 import { createDashboardModule } from './modules/dashboard/index.js';
@@ -1154,6 +1161,12 @@ function buildWorkspace(workspaceId: string) {
       createAnalyticsTrendRoutes({
         store: executionStore,
         workspaceId: workspaceId,
+        ...(databaseResources === undefined
+          ? {}
+          : {
+              rollups: (projectKey: string, end: Date, days: number) =>
+                readRollupTrend(databaseResources.db, workspaceId, projectKey, end, days),
+            }),
       }),
     );
     target.route(
@@ -1170,6 +1183,12 @@ function buildWorkspace(workspaceId: string) {
                   db: databaseResources.db,
                   workspaceId: workspaceId,
                 }),
+              // Stored by the cluster job below (plan task 11).
+              storedClusters: {
+                days: CLUSTER_HISTORY_DAYS,
+                read: (projectKey: string) =>
+                  readStoredClusters(databaseResources.db, workspaceId, projectKey, 20),
+              },
             }),
       }),
     );
@@ -1841,6 +1860,44 @@ if (runtimeConfig.nodeEnv !== 'test') {
   if (retentionSweep) lifecycle.add('outbox retention sweep', () => retentionSweep.stop());
   if (spanRetentionSweep) {
     lifecycle.add('genai span retention sweep', () => spanRetentionSweep.stop());
+  }
+  /**
+   * The failure-cluster job (plan task 11): every five minutes each workspace's last 90 days are
+   * clustered once and stored, and the Tests page reads the stored causes. `listRuns` takes the
+   * workspace, so the default composition's store reads every workspace.
+   */
+  if (databaseResources) {
+    const clusterJob = startOutboxRetentionSweep(
+      {
+        purgeExpired: async () => {
+          const report = (id: string, error: unknown) =>
+            logger.warn('stored insights job failed', { workspaceId: id, error: String(error) });
+          // Causes (task 11) and daily trend rollups (task 13), from the same run history.
+          await refreshAllClusters(databaseResources.db as never, executionStore, report);
+          return refreshAllRollups(databaseResources.db as never, executionStore, report);
+        },
+      },
+      Number(process.env['LUPIN_CLUSTER_JOB_INTERVAL_MS'] ?? 300_000),
+      (error) => logger.warn('failure cluster job failed', { error: String(error) }),
+    );
+    lifecycle.add('failure cluster job', () => clusterJob.stop());
+    /** Run retention (plan task 14): hourly, every workspace that set a policy. */
+    const retentionJob = startOutboxRetentionSweep(
+      {
+        purgeExpired: async () => {
+          const reports = await sweepAllWorkspaces(
+            databaseResources.db as never,
+            artifactBytesStore,
+            (id, error) =>
+              logger.warn('run retention failed', { workspaceId: id, error: String(error) }),
+          );
+          return reports.reduce((sum, report) => sum + report.runsRemoved, 0);
+        },
+      },
+      3_600_000,
+      (error) => logger.warn('run retention failed', { error: String(error) }),
+    );
+    lifecycle.add('run retention sweep', () => retentionJob.stop());
   }
   if (sessionRetentionSweep) {
     lifecycle.add('session retention sweep', () => sessionRetentionSweep.stop());

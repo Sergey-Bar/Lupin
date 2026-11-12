@@ -86,6 +86,7 @@ import {
   type ProjectQuarantineSource,
 } from './project-quarantine.js';
 import { createTriageLabelRoutes } from './triage-labels.js';
+import { createRetentionRoutes } from './retention.js';
 import type { IssueAdapters } from '../services/issue-tracker-service.js';
 import { createRepoHealthRoutes, type RepoHealthRouteOptions } from './repo-health.js';
 
@@ -492,6 +493,11 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
       operator,
       actorOf: async (context) => (await callerOf(context, access)).actor,
     }),
+  );
+  // Run retention (plan task 14).
+  app.route(
+    '/',
+    createRetentionRoutes({ db: options.db, workspaceId: options.workspaceId, access }),
   );
   app.route(
     '/',

@@ -1,37 +1,41 @@
 # Capability justification
 
-`schema/dashboard.ts` defines **30** tables. **8** have a production reader or writer.
-The other **22** have neither, and **19** of those have no access at all outside
-schema-shape assertions. It defined 33 and 25 and 21 until `0030_drop_superseded_tables`
-(ledger MNT-60) dropped the three that were superseded; see _Dropped_ below.
+`schema/dashboard.ts` defines **18** tables. **16** have a production reader or writer.
+The other **2** are justified below: `test_failure_correlations` has a reader and no
+writer, and `saml_config` has no access outside tests. It defined 33 until
+`0030_drop_superseded_tables` (ledger MNT-60) dropped the three that were superseded,
+and 32 until `0066_drop_dormant_tables` (ledger C-6, plan task 15) dropped the fourteen
+that nothing read or wrote; see _Dropped_ below.
 
 This file is the alternative to building each table. Ledger row **C-6** requires
 either a reader, a writer, a route, a UI and a test **or a written justification
-here**, and this is the written justification for the 19.
+here**, and this is the written justification for the 2.
 
 **Why a file rather than a row per table.** A row is a defect awaiting a fix. These
 are columns awaiting a decision, and a decision nobody wrote down is the state this
-programme spent C-6 discovering. One row saying "19 tables are dormant" would be
-closed by the same deletion that removes the tables; one file naming each table and
-its reason means the next reader has to delete the line as well as the table.
+programme spent C-6 discovering. One file naming each table and its reason means the
+next reader has to delete the line as well as the table.
 
-**The count is 19, not ~35.** The remediation plan sized the wave at "`~35` tables";
-the figure cannot be right, because there were only 33. Three of the 22 have test-only
-access, so they are not the same claim. The wave should be re-tallied before it is
-scheduled, since the count is what makes it look like one wave at all.
+## Read and written (16) — not candidates
 
-## Read and written (8) — not candidates
-
-| Table                   | Access                                                                                               |
-| ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| `runs`                  | read and written; the spine of the product                                                           |
-| `tests`                 | read and written by the reporter pipeline                                                            |
-| `canonical_run_results` | read by run detail                                                                                   |
-| `quarantine`            | read and written; a named product surface                                                            |
-| `runners`               | read and written                                                                                     |
-| `schedules`             | one reader, two writers — in `apps/worker/src/postgres-store.ts` as **raw SQL**, not through Drizzle |
-| `audit_events`          | **four writers, zero readers**                                                                       |
-| `quality_gate_config`   | read and written                                                                                     |
+| Table                    | Access                                                                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `runs`                   | read and written; the spine of the product                                                                                   |
+| `tests`                  | read and written by the reporter pipeline                                                                                    |
+| `canonical_run_results`  | read by run detail                                                                                                           |
+| `quarantine`             | read and written; a named product surface                                                                                    |
+| `runners`                | read and written                                                                                                             |
+| `schedules`              | one reader, two writers — in `apps/worker/src/postgres-store.ts` as **raw SQL**, not through Drizzle                         |
+| `audit_events`           | **four writers, zero readers**                                                                                               |
+| `quality_gate_config`    | read and written                                                                                                             |
+| `projects`               | read and written by the project registry                                                                                     |
+| `scan_snapshots`         | written on scan, read by `apps/api/src/services/scan-history-service.ts` and the cockpit                                     |
+| `workspaces`             | written by `ensureWorkspace`, read by `apps/api/src/routes/workspaces.ts`; every `workspace_id` has a `restrict` key onto it |
+| `trends`                 | written by the daily rollup (`apps/api/src/services/trend-rollup-store.ts`, `0064`)                                          |
+| `failure_clusters`       | written by the cluster job (`apps/api/src/services/failure-cluster-store.ts`, `0063`)                                        |
+| `fingerprint_categories` | read and written by triage labels (`apps/api/src/services/triage-label-service.ts`)                                          |
+| `defect_categories`      | the categories `0048` seeded; every triage label write names one through `fingerprint_categories.category_id`'s key          |
+| `users`                  | read and written by members and SCIM (`apps/api/src/routes/members.ts`, `apps/api/src/routes/scim.ts`)                       |
 
 Two corrections that a grep would have got wrong, and both are why this file exists
 rather than a tally:
@@ -42,52 +46,15 @@ rather than a tally:
   `modules/dashboard/audit-sink.ts` already records the _no-writer_ state as a fixed
   defect. It is not a C-6 candidate.
 
-## Dormant, with no access outside schema-shape assertions (19)
+## Not read and written (2)
 
-Every table below is a **Major debt, not a defect**, and none is a security or
-correctness problem: nothing writes them, so nothing can read a wrong value out of
-them. They are migration surface, schema documentation, and the residue of a design
-whose product half was never built.
+Neither is a security or correctness problem: nothing writes them in production, so
+nothing can read a wrong value out of them.
 
-| Table                        | Why it exists                  | Why it is still here                                                                                        |
-| ---------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `workspaces`                 | tenancy boundary               | every `workspace_id` has a `restrict` key onto it since 0028 (MNT-17); `ensureWorkspace` is its only writer |
-| `suites`                     | suite catalogue                | the dashboard reads runs and tests directly and never groups by suite                                       |
-| `attachments`                | reporter evidence blobs        | the reporter never uploads; evidence is carried on the run row                                              |
-| `trends`                     | time-series rollups            | no rollup job was ever written                                                                              |
-| `known_failures`             | flaky-test memory              | no triage UI exists to write to it                                                                          |
-| `defect_categories`          | classification                 | `failureTaxonomyRules` would consume it; that reader is not built                                           |
-| `fingerprint_categories`     | classification                 | same                                                                                                        |
-| `nl_query_history`           | natural-language query history | the NL query feature is not built                                                                           |
-| `failure_taxonomy_rules`     | classification rules           | needs `defect_categories` and the classifier                                                                |
-| `failure_classifications`    | per-test classifications       | same                                                                                                        |
-| `test_failure_correlations`  | cross-test correlation         | the correlation job is not built                                                                            |
-| `locator_suggestions`        | repair suggestions             | no reader or writer yet; its missing `updatedAt` was added in `0026` (below)                                |
-| `failure_clusters`           | clustering                     | needs the correlations                                                                                      |
-| `users`                      | local accounts                 | the install is open; there is no login                                                                      |
-| `roles`                      | authorisation                  | tenancy is `WORKSPACE_ID`, not roles                                                                        |
-| `agent_sessions`             | agent chat                     | the chat UI is not built                                                                                    |
-| `agent_session_runs`         | agent chat                     | same                                                                                                        |
-| `agent_session_files`        | agent chat                     | same                                                                                                        |
-| `generated_test_suggestions` | agent proposals                | same                                                                                                        |
-| `repair_attempts`            | self-healing                   | the repair loop is not built                                                                                |
-| `agent_conflicts`            | merge conflicts                | not built                                                                                                   |
-
-### `locator_suggestions` now records when it changed
-
-It was recorded separately because it was the one table with a mutable `status` and
-no `updatedAt`, so any row in it was permanently current by construction.
-`0026_locator_suggestions_updated_at.sql` adds `updated_at` (`NOT NULL`, defaulting to
-the write time), and `schema.test.ts` pins it. The table is still dormant and stays on
-the list above for the same reason as the others.
-
-## Three with test-only access
-
-`saml_config`, `generated_test_suggestions` and `workspaces` are read
-only by tests. A test-only table is not dormant in the way the other 19 are — the
-test is exercising a contract — but it is equally unreachable by a user, so the same
-decision applies. They are justified by the same argument and are **not** counted
-among the 21.
+| Table                       | Access                                                                | Why it is still here                                                                                           |
+| --------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `test_failure_correlations` | read by `apps/api/src/services/change-risk-service.ts`; no writer yet | change risk reads it, so dropping it would remove a live query; the correlation job that fills it is not built |
+| `saml_config`               | read only by tests                                                    | the test exercises the sealed-key contract; SAML sign-in is not built                                          |
 
 ## Dropped
 
@@ -108,16 +75,45 @@ columns kept, so `attachments.result_id` and `artifacts.result_id` are now unkey
 legacy pointers. `migrate-cli` no longer imports the three tables and reports a
 populated one as skipped.
 
+`0066_drop_dormant_tables.sql` (ledger C-6, plan task 15) removed the fourteen tables
+this file called dormant, after the same search found nothing outside
+`packages/db/src/schema/dashboard.ts`, schema-shape tests and the legacy importer:
+
+| Table                        | What it was for                | What else named it                                      |
+| ---------------------------- | ------------------------------ | ------------------------------------------------------- |
+| `suites`                     | suite catalogue                | the FK from `tests.suite_id`; the `migrate-cli` mapping |
+| `attachments`                | reporter evidence blobs        | the `migrate-cli` mapping                               |
+| `known_failures`             | flaky-test memory              | the `migrate-cli` mapping                               |
+| `nl_query_history`           | natural-language query history | the `migrate-cli` mapping                               |
+| `failure_taxonomy_rules`     | classification rules           | the FK from `failure_classifications`; `migrate-cli`    |
+| `failure_classifications`    | per-test classifications       | the `migrate-cli` mapping                               |
+| `locator_suggestions`        | repair suggestions             | the `migrate-cli` mapping; the `updated_at` 0026 added  |
+| `roles`                      | authorisation                  | the `migrate-cli` mapping                               |
+| `agent_sessions`             | agent chat                     | FKs from the three session tables below; `migrate-cli`  |
+| `agent_session_runs`         | agent chat                     | the `migrate-cli` mapping                               |
+| `agent_session_files`        | agent chat                     | the `migrate-cli` mapping                               |
+| `generated_test_suggestions` | agent proposals                | the `migrate-cli` mapping; the default 0006 fixed       |
+| `repair_attempts`            | self-healing                   | the `migrate-cli` mapping                               |
+| `agent_conflicts`            | merge conflicts                | the `migrate-cli` mapping                               |
+
+The migration follows 0030: it refuses to drop a table that holds rows unless
+`lupin.allow_drop_nonempty` is `on`, drops `tests_suite_id_suites_id_fk` and keeps
+`tests.suite_id` as an unkeyed legacy pointer, and drops the tables children before
+parents without `CASCADE`. `migrate-cli` no longer imports the fourteen tables and
+reports a populated one as skipped (`SUPERSEDED_SOURCE_TABLES` in
+`tools/migrate-cli/src/plan.ts`). `tests/integration/src/drop-dormant-tables.test.ts`
+proves the refusal and the opt-in.
+
 ## What this does not claim
 
 This file does not claim the tables are correct, current, or a good design. It claims
-they are **inert**, and that the cost of leaving them is migration surface and reader
-confusion rather than a wrong number on a screen. The tables are covered by
-`schema-shape assertions`, so a change to one that breaks the contract fails a test —
-which is the only reason nineteen inert tables are safe to leave.
+the two left are **inert or read-only**, and that the cost of leaving them is migration
+surface and reader confusion rather than a wrong number on a screen. The tables are
+covered by schema-shape assertions, so a change to one that breaks the contract fails a
+test.
 
 ## Removal condition
 
-Each table is deleted, or gains a production reader, in a migration that records the
+Each table is deleted, or gains a production writer, in a migration that records the
 decision here. When the last row above is gone this file is empty and is deleted with
-it. The condition names what could happen: a reader being written.
+it. The condition names what could happen: a writer being written.

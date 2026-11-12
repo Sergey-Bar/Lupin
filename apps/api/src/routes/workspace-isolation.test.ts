@@ -155,6 +155,18 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   // Release sign-offs: every read and write filters `release_signoffs` on `workspace_id`, and
   // `release-signoff-service.test.ts` proves another workspace's sign-offs are never shown.
   { family: 'release sign-offs', files: ['services/release-signoff-service.ts'] },
+  // Stored causes, trend rollups and run retention (plan tasks 11, 13, 14): every statement
+  // filters on `workspace_id`; `failure-cluster-store.test.ts`, `trend-rollup-store.test.ts`
+  // and `retention-service.test.ts` prove another workspace's rows are never read or removed.
+  {
+    family: 'stored insights and retention',
+    files: [
+      'services/failure-cluster-store.ts',
+      'services/trend-rollup-store.ts',
+      'services/retention-service.ts',
+      'routes/retention.ts',
+    ],
+  },
   {
     family: 'workspace dispatch',
     files: ['http/workspace-dispatch.ts', 'http/workspace-lookups.ts'],

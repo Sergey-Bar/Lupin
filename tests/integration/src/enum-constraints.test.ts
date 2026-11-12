@@ -122,8 +122,9 @@ afterAll(async () => {
 describe('enum column constraints', () => {
   it('finds the enum declarations to check', () => {
     // An empty list would make every assertion below vacuous, which is the exact
-    // failure mode this suite exists to prevent.
-    expect(declared.length).toBeGreaterThan(20);
+    // failure mode this suite exists to prevent. 0066 (ledger C-6) dropped fourteen
+    // dormant tables and the enum columns they declared, which left eleven.
+    expect(declared.length).toBeGreaterThanOrEqual(11);
   });
 
   it('constrains every declared enum column in the database', async () => {

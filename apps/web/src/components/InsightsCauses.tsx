@@ -9,6 +9,7 @@ import { failureText } from '../lib/roles.js';
 import { Panel, Quiet } from './kit.js';
 import { useToast } from './Toasts.js';
 import { useCopilot } from './CopilotPanel.js';
+import { KnownReason, KnownReasonForm } from './KnownCause.js';
 
 /**
  * Two answers the run history gives once failures are grouped: how many root causes there
@@ -178,16 +179,27 @@ function CauseLabel({
 }): React.ReactElement | null {
   const toast = useToast();
   const [category, setCategory] = React.useState<Category | ''>(cluster.label?.category ?? '');
+  /** Known needs a reason when no issue is linked, so the choice waits for one. */
+  const [askingReason, setAskingReason] = React.useState(false);
   if (api === undefined) {
     return category === '' ? null : (
       <span className="text-xs text-fg-muted">{CATEGORY_LABEL[category]}</span>
     );
   }
-  const choose = (next: Category) => {
+  const choose = (next: Category, reason?: string) => {
+    if (next === 'known-issue' && reason === undefined && !cluster.label?.issueUrl) {
+      setAskingReason(true);
+      return;
+    }
+    setAskingReason(false);
     const previous = category;
     setCategory(next);
     api
-      .setTriageLabel({ signature: cluster.signature, category: next })
+      .setTriageLabel({
+        signature: cluster.signature,
+        category: next,
+        ...(reason === undefined ? {} : { reason }),
+      })
       .then(() => toast({ tone: 'success', title: `Labelled ${CATEGORY_LABEL[next]}` }))
       .catch((error: unknown) => {
         setCategory(previous);
@@ -198,6 +210,14 @@ function CauseLabel({
         });
       });
   };
+  if (askingReason) {
+    return (
+      <KnownReasonForm
+        onSave={(reason) => choose('known-issue', reason)}
+        onCancel={() => setAskingReason(false)}
+      />
+    );
+  }
   return (
     <Select
       aria-label="Label this cause"
@@ -250,7 +270,7 @@ function ClusterList({
             </p>
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs text-fg-muted">
-                {`${String(cluster.tests.length)} test${cluster.tests.length === 1 ? '' : 's'} · ${String(cluster.runs)} run${cluster.runs === 1 ? '' : 's'} · ${cluster.branches.join(', ')} · last ${shortDate(cluster.lastSeen.slice(0, 10))}`}
+                {`${String(cluster.tests.length)} test${cluster.tests.length === 1 ? '' : 's'} · ${String(cluster.runs)} run${cluster.runs === 1 ? '' : 's'} · ${cluster.branches.join(', ')} · first ${shortDate(cluster.firstSeen.slice(0, 10))} · last ${shortDate(cluster.lastSeen.slice(0, 10))}`}
               </p>
               <span className="flex items-center gap-2">
                 <AskAboutCause message={cluster.sampleMessage} />
@@ -258,6 +278,7 @@ function ClusterList({
                 <CauseLabel cluster={cluster} api={api} />
               </span>
             </div>
+            <KnownReason reason={cluster.label?.reason} />
           </li>
         ))}
       </ol>

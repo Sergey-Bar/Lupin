@@ -4,6 +4,7 @@ import {
   clusterFailures,
   flakeCost,
   suggestQuarantine,
+  type FailureClusters,
   type FailureInput,
   type FlakeObservation,
 } from '@lupin/reporting';
@@ -54,6 +55,15 @@ export function createInsightsRoutes(options: {
   now?: () => Date;
   /** The workspace's triage labels; absent, clusters are unlabelled. */
   labels?: () => Promise<readonly TriageLabel[]>;
+  /**
+   * The causes the cluster job stored for a project (`''` for every project), or `null` before
+   * its first pass; absent, causes are computed from the window on each read.
+   */
+  storedClusters?: {
+    /** How many days of history the job clusters, for the summary. */
+    days: number;
+    read: (projectKey: string) => Promise<FailureClusters | null>;
+  };
 }): Hono {
   const app = new Hono();
   app.get('/api/v1/dashboard/insights', async (context) => {
@@ -68,6 +78,21 @@ export function createInsightsRoutes(options: {
         ? runs
         : runs.filter((run) => belongsTo(run, projectId));
     const insights = buildInsights(scoped, now, days, truncated);
+    const stored = await options.storedClusters?.read(projectId ?? '');
+    const storedHistoryDays = options.storedClusters?.days ?? days;
+    if (stored !== undefined && stored !== null) {
+      // The job's causes (plan task 11): first and last seen over the stored history, not only
+      // this window, so the page says which window its counts cover.
+      insights.failureClusters = {
+        clusters: stored.clusters.slice(0, MAX_FAILURE_CLUSTERS),
+        totals: stored.totals,
+        summary: `${plural(stored.totals.failures, 'failure', 'failures')}, ${plural(
+          stored.totals.causes,
+          'cause',
+          'causes',
+        )} in ${String(storedHistoryDays)} days`,
+      };
+    }
     const labels = (await options.labels?.()) ?? [];
     if (insights.failureClusters !== undefined) {
       const labelled = labelClusters(insights.failureClusters, labels);

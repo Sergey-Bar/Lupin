@@ -510,6 +510,7 @@ describe('triage labels on failure causes', () => {
     expect(timeout?.label).toEqual({
       category: 'environment',
       issueUrl: 'https://tracker.example/OPS-1',
+      reason: null,
     });
     expect(insights.failureClusters?.totals.unlabelled).toBe(1);
   });

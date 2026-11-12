@@ -1766,6 +1766,20 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/retention": {
+      "get": {
+        "operationId": "getApiV1Retention",
+        "tags": ["retention"],
+        "x-source": "apps/api/src/routes/retention.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "put": {
+        "operationId": "putApiV1Retention",
+        "tags": ["retention"],
+        "x-source": "apps/api/src/routes/retention.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/runner/v1/enroll": {
       "post": {
         "operationId": "postApiV1RunnerV1Enroll",
@@ -16850,7 +16864,8 @@
                     "type": "string",
                     "enum": ["product", "test", "environment", "known-issue"]
                   },
-                  "issueUrl": { "type": ["string", "null"] }
+                  "issueUrl": { "type": ["string", "null"] },
+                  "reason": { "type": ["string", "null"] }
                 },
                 "required": ["category", "issueUrl"],
                 "additionalProperties": false
@@ -25530,7 +25545,8 @@
                               "type": "string",
                               "enum": ["product", "test", "environment", "known-issue"]
                             },
-                            "issueUrl": { "type": ["string", "null"] }
+                            "issueUrl": { "type": ["string", "null"] },
+                            "reason": { "type": ["string", "null"] }
                           },
                           "required": ["category", "issueUrl"],
                           "additionalProperties": false
@@ -30385,6 +30401,9 @@
           },
           "issueUrl": {
             "anyOf": [{ "type": "string", "maxLength": 2000, "format": "uri" }, { "type": "null" }]
+          },
+          "reason": {
+            "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 500 }, { "type": "null" }]
           }
         },
         "required": ["signature", "category"],
@@ -30399,6 +30418,7 @@
             "enum": ["product", "test", "environment", "known-issue"]
           },
           "issueUrl": { "type": ["string", "null"] },
+          "reason": { "type": ["string", "null"] },
           "labelledAt": { "type": "string", "minLength": 1 },
           "labelledBy": { "type": "string", "minLength": 1 }
         },

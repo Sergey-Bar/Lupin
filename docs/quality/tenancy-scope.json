@@ -24,10 +24,10 @@
   ],
   "whatDoesNotBlock": "Workspace-scoped tables without a hard boundary. That is real debt, counted and reported by `pnpm tenancy:check`, because failing on it would make the gate permanently red — and a permanently red gate stops catching the regressions above.",
   "tally": {
-    "total": 93,
-    "global": 13,
-    "workspaceScoped": 80,
-    "workspaceScopedWithHardBoundary": 80,
+    "total": 79,
+    "global": 11,
+    "workspaceScoped": 68,
+    "workspaceScopedWithHardBoundary": 68,
     "workspaceScopedNullable": 0,
     "workspaceScopedAbsent": 0,
     "note": "**Derived, not asserted.** An earlier version of this file carried a hand-written tally of 19 / 37 / 18, which was wrong in every field — the numbers had been written from memory rather than measured. `scripts/lib/tenancy-scope.test.mjs` now recomputes all six from the schema and this register and fails if any disagree, so they cannot drift again. That is the `no-second-authority` failure this repository records as `P-6` and `P-5`, committed by the author of the skill that describes it.",
@@ -53,11 +53,6 @@
       "scope": "global",
       "column": "absent",
       "reason": "Installation-scoped identity, not workspace-scoped. A user belongs to an installation and holds a role per workspace in `workspace_members` (`0049_workspace_members.sql`), so the person is global and the role is the workspace's."
-    },
-    "roles": {
-      "scope": "global",
-      "column": "absent",
-      "reason": "Installation-scoped identity. Role grants resolve against an installation and are then filtered per workspace by the caller, not by this table."
     },
     "sessions": {
       "scope": "global",
@@ -89,30 +84,15 @@
       "column": "not-null",
       "reason": "A triage label is a team decision about its own failures: which cause is an environment problem, which is a known issue and where it is tracked. Global with no writer until `0048_triage_labels.sql` (ledger MKT-5), which scoped it with the hard boundary: `workspace_id` NOT NULL, a `restrict` key onto `workspaces`, and a primary key leading with it. Isolation: `apps/api/src/services/triage-label-service.test.ts`."
     },
-    "failure_taxonomy_rules": {
-      "scope": "global",
-      "column": "absent",
-      "reason": "Rules describing how failures are classified. Product configuration rather than tenant data, and the same rule set is intended to apply everywhere."
-    },
-    "failure_classifications": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Classified failure records about a tenant-owned run. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces`, an index leading with it, and backfilled from its run's `workspace_id`, never from a caller."
-    },
     "failure_clusters": {
       "scope": "workspace",
       "column": "not-null",
-      "reason": "Clusters of tenant-owned failures. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17), backfilled from the last or first run it was seen in; a cluster seen in runs of two workspaces has no single owner, so the migration raises rather than picking one. Dormant (see `docs/quality/capability-justification.md`)."
+      "reason": "Clusters of tenant-owned failures. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17), backfilled from the last or first run it was seen in; a cluster seen in runs of two workspaces has no single owner, so the migration raises rather than picking one. Written by the cluster job since `0063_stored_clusters.sql` (`apps/api/src/services/failure-cluster-store.ts`). Isolation: `apps/api/src/services/failure-cluster-store.test.ts`."
     },
     "test_failure_correlations": {
       "scope": "workspace",
       "column": "not-null",
       "reason": "Correlations between tenant-owned tests. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17), backfilled from `last_updated_run_id` where set and otherwise by the single-workspace rule; its uniqueness, which was global and let one tenant's correlation suppress another's, is now per workspace. Dormant (see `docs/quality/capability-justification.md`)."
-    },
-    "locator_suggestions": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Suggestions derived from a tenant-owned run. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces`, an index leading with it, and backfilled from its run's `workspace_id`, never from a caller."
     },
     "runs": {
       "scope": "workspace",
@@ -169,65 +149,15 @@
       "column": "not-null",
       "reason": "Run evidence. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17), backfilled from the run; `addArtifact` takes the workspace from the run row, and every read filters on the artifact's own column. The run-scoped download route read an artifact by id with no workspace at all, so any workspace knowing two ids could download another's evidence; it is scoped now. Isolation: `apps/api/src/routes/execution.test.ts`."
     },
-    "suites": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Test suites hang off a tenant-owned run. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces`, an index leading with it, and backfilled from its run's `workspace_id`, never from a caller."
-    },
     "tests": {
       "scope": "workspace",
       "column": "not-null",
       "reason": "Tests belong to a run. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17), backfilled from the run; the execution store writes the run's own workspace and `DrizzleRunRepository` refuses a test under a run its workspace does not own. Isolation: `apps/api/src/repositories/run-repository-workspace-isolation.test.ts`, `apps/api/src/routes/execution.test.ts`."
     },
-    "attachments": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Attachments hang off tenant-owned results; the `results` table itself was dropped by `0030_drop_superseded_tables.sql` (ledger MNT-60), leaving `result_id` as an unkeyed legacy pointer. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17), backfilled from the result's workspace. Dormant (see `docs/quality/capability-justification.md`)."
-    },
     "quarantine": {
       "scope": "workspace",
       "column": "not-null",
       "reason": "Quarantine decisions are tenant-owned, and there was no column, so the list, the decision, the delete and the readiness card's pending count answered for the whole installation. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17); `DrizzleQuarantineStore` is bound to the configured workspace and every statement carries it. Isolation: `apps/api/src/modules/dashboard/dashboard-stores-workspace-isolation.test.ts`."
-    },
-    "known_failures": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Known-failure markers are tenant-owned. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
-    },
-    "nl_query_history": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Natural-language queries against tenant data. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
-    },
-    "agent_sessions": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Agent sessions operate on tenant-owned runs. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
-    },
-    "agent_session_runs": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Joins an agent session to a tenant-owned run. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces`, an index leading with it, and backfilled from its run's `workspace_id`, never from a caller."
-    },
-    "agent_session_files": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Files read or written during an agent session; backfilled from the session. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. Dormant (no production reader or writer, see `docs/quality/capability-justification.md`), so the boundary is in place before a writer exists rather than retrofitted after one."
-    },
-    "generated_test_suggestions": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Suggestions derived from tenant-owned results; backfilled from the run, then the session, then the single-workspace rule. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. Dormant (no production reader or writer, see `docs/quality/capability-justification.md`), so the boundary is in place before a writer exists rather than retrofitted after one."
-    },
-    "repair_attempts": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Repair attempts against tenant-owned failures; backfilled from the session. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. Dormant (no production reader or writer, see `docs/quality/capability-justification.md`), so the boundary is in place before a writer exists rather than retrofitted after one."
-    },
-    "agent_conflicts": {
-      "scope": "workspace",
-      "column": "not-null",
-      "reason": "Conflicts between agents working on one tenant-owned artifact. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17): NOT NULL, a `restrict` key onto `workspaces` and an index leading with it. It has no parent row, so the backfill takes the only workspace, an explicit `lupin.backfill_workspace`, or raises naming the table. Dormant (see `docs/quality/capability-justification.md`)."
     },
     "audit_events": {
       "scope": "workspace",
@@ -297,7 +227,7 @@
     "trends": {
       "scope": "workspace",
       "column": "not-null",
-      "reason": "Tenant-owned reporting aggregates. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17), and its primary key now leads with `workspace_id`: `(date, project, branch)` alone made two workspaces' projects of one name a single row. Parentless, so the single-workspace rule backfills it. Dormant (see `docs/quality/capability-justification.md`)."
+      "reason": "Tenant-owned reporting aggregates. Hard-scoped by `0028_workspace_hard_boundaries.sql` (ledger MNT-17), and its primary key now leads with `workspace_id`: `(date, project, branch)` alone made two workspaces' projects of one name a single row. Parentless, so the single-workspace rule backfills it. Written by the daily rollup since `0064_trend_rollups.sql` (`apps/api/src/services/trend-rollup-store.ts`). Isolation: `apps/api/src/services/trend-rollup-store.test.ts`."
     },
     "scan_snapshots": {
       "scope": "workspace",

@@ -442,6 +442,34 @@
       "when": 1794477279413,
       "tag": "0062_token_scopes",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1794487682979,
+      "tag": "0063_stored_clusters",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1794488077244,
+      "tag": "0064_trend_rollups",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1794488280149,
+      "tag": "0065_run_retention",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1794488695261,
+      "tag": "0066_drop_dormant_tables",
+      "breakpoints": true
     }
   ]
 }

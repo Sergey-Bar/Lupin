@@ -171,14 +171,25 @@ export const TriageLabelBodySchema = z
       .max(2_000)
       .nullable()
       .optional(),
+    /** Why the cause is known, when there is no issue to link (plan task 12). */
+    reason: z.string().trim().min(1).max(500).nullable().optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (body) =>
+      body.category !== 'known-issue' ||
+      (body.issueUrl ?? null) !== null ||
+      (body.reason ?? null) !== null,
+    { message: 'A known failure needs an issue or a reason', path: ['reason'] },
+  );
 export type TriageLabelBody = z.infer<typeof TriageLabelBodySchema>;
 
 export const TriageLabelSchema = z.object({
   signature: z.string().min(1),
   category: z.enum(TRIAGE_CATEGORIES),
   issueUrl: z.string().nullable(),
+  /** Absent from an older server. */
+  reason: z.string().nullable().optional(),
   labelledAt: z.string().min(1),
   labelledBy: z.string().min(1),
 });

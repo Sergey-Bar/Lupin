@@ -29,8 +29,11 @@ const dormantSourceTables = new Set([
   'generation_sessions',
 ]);
 
+const DROPPED_DORMANT = 'Dropped by 0066 (ledger C-6): no reader or writer';
+
 /**
- * Source tables with no target since `0030_drop_superseded_tables` (ledger MNT-60).
+ * Source tables with no target since `0030_drop_superseded_tables` (ledger MNT-60) and
+ * `0066_drop_dormant_tables` (ledger C-6).
  *
  * A legacy file may still hold rows in them. They are not imported, because there is no
  * table to write them to, and the plan and the import report say so rather than leaving
@@ -41,6 +44,21 @@ export const SUPERSEDED_SOURCE_TABLES: Readonly<Record<string, string>> = {
   results: 'Superseded by canonical_run_results; per-retry rows are not imported',
   blob_shards: 'Superseded by runs.read_at; sharded blob tracking is not imported',
   api_keys: 'Superseded by the installation key; hashed personal keys are never imported',
+  // Dropped by `0066_drop_dormant_tables` (ledger C-6, plan task 15).
+  suites: DROPPED_DORMANT,
+  attachments: DROPPED_DORMANT,
+  known_failures: DROPPED_DORMANT,
+  nl_query_history: DROPPED_DORMANT,
+  failure_taxonomy_rules: DROPPED_DORMANT,
+  failure_classifications: DROPPED_DORMANT,
+  locator_suggestions: DROPPED_DORMANT,
+  roles: DROPPED_DORMANT,
+  agent_sessions: DROPPED_DORMANT,
+  agent_session_runs: DROPPED_DORMANT,
+  agent_session_files: DROPPED_DORMANT,
+  generated_test_suggestions: DROPPED_DORMANT,
+  repair_attempts: DROPPED_DORMANT,
+  agent_conflicts: DROPPED_DORMANT,
 };
 
 export function buildPlan(input: {

@@ -8,8 +8,8 @@
     "`composition: database` rows are mounted only when `DATABASE_URL` is set, so the in-memory composition cannot send them a request; the class is still read from their guards."
   ],
   "summary": {
-    "admin": 43,
-    "viewer": 102,
+    "admin": 44,
+    "viewer": 103,
     "operator": 37,
     "open": 16,
     "runner-credential": 9,
@@ -1292,6 +1292,20 @@
       "access": "viewer",
       "evidenceTest": "apps/api/src/routes/reporting.test.ts",
       "composition": "always"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/retention",
+      "access": "viewer",
+      "evidenceTest": "apps/api/src/services/retention-service.test.ts",
+      "composition": "database"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/retention",
+      "access": "admin",
+      "evidenceTest": "apps/api/src/services/retention-service.test.ts",
+      "composition": "database"
     },
     {
       "method": "POST",

@@ -204,6 +204,10 @@ describe('migration graph', () => {
       '0060_release_signoffs',
       '0061_token_expiry',
       '0062_token_scopes',
+      '0063_stored_clusters',
+      '0064_trend_rollups',
+      '0065_run_retention',
+      '0066_drop_dormant_tables',
     ]);
   });
 
@@ -623,27 +627,35 @@ describe('fail-closed constraints from migration 0006', () => {
     ).resolves.toBeDefined();
   });
 
-  it('stamps a generated test suggestion with a real time, not the epoch', async () => {
-    const before = Date.now();
-    await db.insert(schema.generatedTestSuggestions).values({
-      id: 'sug-1',
-      workspaceId: 'default-workspace',
-      sourceType: 'pr_diff',
-      status: 'draft',
-      originalContent: 'test("login", () => {})',
-      createdAt: new Date(),
-    });
-    const row = await client.query<{ updated_at: Date; status: string }>(
-      'SELECT updated_at, status FROM generated_test_suggestions WHERE id = $1',
-      ['sug-1'],
+  it('drops the fourteen dormant tables and keeps tests.suite_id as a plain column (C-6)', async () => {
+    // 0066 dropped every table the product never read or wrote. `tests.suite_id` named
+    // `suites`, so its key went first and its values stay as provenance.
+    const dropped = [
+      'suites',
+      'attachments',
+      'known_failures',
+      'nl_query_history',
+      'failure_taxonomy_rules',
+      'failure_classifications',
+      'locator_suggestions',
+      'roles',
+      'agent_sessions',
+      'agent_session_runs',
+      'agent_session_files',
+      'generated_test_suggestions',
+      'repair_attempts',
+      'agent_conflicts',
+    ];
+    const present = await client.query<{ name: string | null }>(
+      `SELECT to_regclass('public.' || name)::text AS name FROM unnest($1::text[]) AS name`,
+      [dropped],
     );
-    const stamped = row.rows[0]?.updated_at;
-    // Migration 0000 created this column with `DEFAULT '1970-01-01…'`, so a
-    // freshly inserted row looked 56 years stale to every "last updated" query —
-    // indistinguishable from a suggestion nobody ever touched. Migration 0006
-    // changed the default to now().
-    expect(stamped?.getTime()).toBeGreaterThan(before - 60_000);
-    expect(row.rows[0]?.status).toBe('draft');
+    expect(present.rows.map((row) => row.name)).toEqual(dropped.map(() => null));
+    expect(await columnNames(client, 'tests')).toContain('suite_id');
+    const keys = await client.query<{ conname: string }>(
+      `SELECT conname FROM pg_constraint WHERE conrelid = 'tests'::regclass AND contype = 'f'`,
+    );
+    expect(keys.rows.map((row) => row.conname)).not.toContain('tests_suite_id_suites_id_fk');
   });
 
   it('agrees with the contract on the durable event version', async () => {
