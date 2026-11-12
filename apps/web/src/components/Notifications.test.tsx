@@ -127,6 +127,11 @@ describe('NotificationsPage', () => {
     expect(api.createSubscription).not.toHaveBeenCalled();
     expect(await screen.findByText('Report updated')).toBeInTheDocument();
     expect(within(form).getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
+    // Cancelling an edit puts the form back to a new report and saves nothing.
+    await user.click(within(list).getByRole('button', { name: 'Edit' }));
+    await user.click(within(form).getByRole('button', { name: 'Cancel edit' }));
+    expect(within(form).getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
+    expect(updateSubscription).toHaveBeenCalledTimes(1);
   });
   it('shows where, when, the preview and the history, without blocking axe findings', async () => {
     const { container } = page(client());
