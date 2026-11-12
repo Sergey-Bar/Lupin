@@ -226,6 +226,14 @@ overrides:
 
 catalog:
   '@eslint/js': ^10.0.1
+  # Shared by two or more packages, so declared once (ledger MNT-198). pglite is exact: the
+  # worker pinned it so, and an in-process PostgreSQL is the thing every suite checks SQL on.
+  '@electric-sql/pglite': 0.5.15
+  '@testing-library/jest-dom': ^7.0.1
+  '@testing-library/user-event': ^14.6.8
+  axe-core: ^4.14.0
+  tsx: ^4.23.15
+  vitest-axe: ^0.1.0
   '@playwright/test': ^1.65.0
   '@sentry/node': ^11.11.0
   '@sentry/react': ^11.11.0

@@ -11,7 +11,7 @@
  * `.mjs` is not typechecked.
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -260,6 +260,14 @@ console.log(
     `${notConfigured.length} not_configured.`,
 );
 console.log('`not_configured` is not a pass: an unrun check is a gap, and the report says which.');
+
+// The table, as a file the nightly uploads (ledger MNT-201). The upload fails when this is
+// missing, so a run that produced no report says so rather than uploading nothing.
+mkdirSync(path.join(root, 'var'), { recursive: true });
+writeFileSync(
+  path.join(root, 'var', 'quality-baseline.json'),
+  `${JSON.stringify({ generatedAt: new Date().toISOString(), rows }, null, 2)}\n`,
+);
 
 // Non-zero when a gate *fails*. `not_configured` is reported loudly but does not
 // fail the report, because on a contributor's laptop the container runtime and

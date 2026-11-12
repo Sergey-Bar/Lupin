@@ -597,9 +597,9 @@ export function ProjectsSettingsPage({
 /** The rule in words, so a threshold is never just a number. */
 export function describeGate(gate: Pick<QualityGate, 'passRateThreshold'>): string {
   const rate = gate.passRateThreshold;
-  if (rate >= 100) return 'A run passes only when every test passes.';
-  if (rate <= 0) return 'Every run passes, whatever its tests do.';
-  return `A run passes when at least ${String(rate)}% of its tests pass.`;
+  if (rate >= 100) return 'Asks for every test to pass.';
+  if (rate <= 0) return 'Asks for nothing: any pass rate meets it.';
+  return `Asks for at least ${String(rate)}% of tests to pass.`;
 }
 
 function GateRow({
@@ -714,7 +714,7 @@ export function QualityGatesSettingsPage({
     <PageFrame data-testid="settings-quality-gates">
       <PageHeader
         title="Quality gates"
-        subtitle="What counts as a passing run. A run that misses its gate is marked failed."
+        subtitle="The pass rate release readiness asks for. Whether a single run passes is decided by its quality policy."
       />
       <PageBody>
         <AccessGate health={health}>

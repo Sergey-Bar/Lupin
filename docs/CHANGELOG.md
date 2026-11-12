@@ -124,6 +124,11 @@ DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reporte
   `pnpm db:generate` no longer would rewrite 55 migrations and `pnpm db:check` checks today's
   schema (MNT-193). Every query the worker sends is checked against the migrated schema, so a
   renamed column fails a test instead of a production run (MNT-194).
+- **Release readiness follows the default quality gate.** Changing it on Settings → Quality
+  gates now moves the readiness bar, and the page says what a gate does (MNT-203).
+- **Housekeeping.** Shared dependencies come from the catalog (MNT-198), local working files
+  are ignored (MNT-199), three tests no longer wait on the clock (MNT-200), a nightly with no
+  quality report fails (MNT-201), and CI builds once per commit (MNT-202).
 - **The install survives a reboot.** Every long-running service restarts on its own and has
   a memory and CPU limit, so a runaway runner cannot starve the database; the web and edge
   images report their health (MNT-197). Third-party images are pinned by digest, and

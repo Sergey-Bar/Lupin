@@ -251,13 +251,16 @@ describe('Settings → Quality gates', () => {
     const { container } = gatesPage();
     const global = await screen.findByTestId('gate-global');
     expect(within(global).getByText('Default gate')).toBeInTheDocument();
-    expect(
-      within(global).getByText('A run passes when at least 90% of its tests pass.'),
-    ).toBeInTheDocument();
+    expect(within(global).getByText('Asks for at least 90% of tests to pass.')).toBeInTheDocument();
     expect(within(global).queryByRole('button', { name: 'Remove' })).toBeNull();
     expect(
-      within(screen.getByTestId('gate-g2')).getByText('A run passes only when every test passes.'),
+      within(screen.getByTestId('gate-g2')).getByText('Asks for every test to pass.'),
     ).toBeInTheDocument();
+    // Nothing evaluates a run against these rows, so the page must not say it does
+    // (ledger MNT-203): a run's verdict is its quality policy's.
+    const page = screen.getByTestId('settings-quality-gates');
+    expect(page).not.toHaveTextContent(/marked failed|a run passes/iu);
+    expect(page).toHaveTextContent(/quality policy/iu);
     await expectNoBlockingAxeViolations(container);
   });
 
@@ -343,6 +346,8 @@ describe('Settings → Quality gates', () => {
   });
 
   it('describes the edge thresholds in words', () => {
-    expect(describeGate({ passRateThreshold: 0 })).toBe('Every run passes, whatever its tests do.');
+    expect(describeGate({ passRateThreshold: 0 })).toBe(
+      'Asks for nothing: any pass rate meets it.',
+    );
   });
 });

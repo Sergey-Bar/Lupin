@@ -63,7 +63,7 @@ by a test written against the defect and watched failing. Ordered by harm.
   and their audit trail were exposed. Now every statement is limited to shared rows and the
   store's own workspace, a shared gate needs an installation admin, each gate carries its
   scope, and the audit row names the caller.
-- D1a. Found while fixing D1: Settings → Quality gates says "A run that misses its gate is
+- D1a. Done 2026-11-11 (MNT-203): readiness reads the default gate; the copy is true. Found while fixing D1: Settings → Quality gates says "A run that misses its gate is
   marked failed", but nothing marks a run failed from these rows; the run gate reads quality
   policies. Either make a gate feed the run gate, or say what a gate does today.
 - D2. Done 2026-11-11 (ledger MNT-171), and worse than first written: the production
@@ -229,15 +229,15 @@ by a test written against the defect and watched failing. Ordered by harm.
   a memory or CPU limit, so a reboot leaves the install down and a runaway runner can starve
   PostgreSQL. `infra/docker/web.Dockerfile` and `infra/docker/edge.Dockerfile` have no
   HEALTHCHECK of their own.
-- D37. `@electric-sql/pglite` is declared four times with two ranges outside the catalog.
-- D38. `semantic-review/`, `.worktrees/` and `.kiro/` are neither tracked nor ignored, and the
+- D37. Done 2026-11-11 (MNT-198), with five other shared dependencies. `@electric-sql/pglite` is declared four times with two ranges outside the catalog.
+- D38. Done 2026-11-11 (MNT-199); `.kiro/` stays trackable. `semantic-review/`, `.worktrees/` and `.kiro/` are neither tracked nor ignored, and the
   root helper scripts are ignored only through a local exclude. Add them to `.gitignore`.
-- D39. A `pnpm test` flake in `@lupin/unified-web`, recorded in
+- D39. Done 2026-11-11 (MNT-200): three clock waits removed; the old web flake did not recur. A `pnpm test` flake in `@lupin/unified-web`, recorded in
   `.kilo/plans/1791152400000-frontend-finish-plan.md`, was never investigated and has no
   ledger row. `apps/api/src/routes/audit.test.ts` sleeps on the real clock.
-- D40. The nightly quality-baseline upload ignores a missing report, so a run that produced
+- D40. Done 2026-11-11 (MNT-201). The nightly quality-baseline upload ignores a missing report, so a run that produced
   nothing is green. Fail when the report is absent.
-- D41. CI rebuilds the workspace in every job with no shared build cache. Cache the build
+- D41. Done 2026-11-11 (MNT-202). CI rebuilds the workspace in every job with no shared build cache. Cache the build
   output between jobs.
 
 ## Wave 1: QA can act on what it sees

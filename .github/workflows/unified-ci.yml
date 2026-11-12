@@ -41,6 +41,14 @@ jobs:
           cache: pnpm
       - name: Install frozen dependencies
         run: pnpm install --frozen-lockfile
+      # The builds `pnpm typecheck` makes are kept for `unit-and-coverage` (ledger MNT-202).
+      # Keyed on the commit alone, with no fallback key, so no other commit's cached test
+      # results can be replayed; `scripts/lib/ci-turbo-cache.test.mjs` holds it there.
+      - name: Share the turbo cache for this commit
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
       - name: Boundary preflight
         run: pnpm unify:preflight
       # `pnpm compose:config` rather than the raw `docker compose … config` line this
@@ -181,6 +189,13 @@ jobs:
           cache: pnpm
       - name: Install frozen dependencies
         run: pnpm install --frozen-lockfile
+      # What `quality` built for this commit, restored so it is not built again (ledger
+      # MNT-202). Same key, no fallback: see the step of the same name in `quality`.
+      - name: Share the turbo cache for this commit
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
       - name: Unit tests
         run: pnpm test
       - name: Workspace build

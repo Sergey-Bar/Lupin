@@ -214,8 +214,13 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: quality-report
-          path: var/quality-*
-          if-no-files-found: ignore
+          # `error`, not `ignore` (ledger MNT-201): with no report the job fails and the run
+          # shows it, instead of uploading nothing. The job is continue-on-error, so it is
+          # reported, not blocking.
+          path: |
+            var/quality-baseline.json
+            var/quality-*
+          if-no-files-found: error
           retention-days: 30
 
   mutation:

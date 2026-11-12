@@ -701,7 +701,10 @@ describe('RunDetailPage from the cockpit', () => {
     );
     await screen.findByTestId('run-what-failed');
     await waitFor(() => expect(getCockpit).toHaveBeenCalled());
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    // Wait on the read, not the clock (ledger MNT-200).
+    await act(async () => {
+      await getCockpit.mock.results[0]?.value;
+    });
     expect(screen.queryByTestId('score-impact')).toBeNull();
   });
 });

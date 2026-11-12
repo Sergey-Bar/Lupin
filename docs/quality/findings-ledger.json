@@ -8148,6 +8148,120 @@
           "asserts": "Every service but migrate has restart, mem_limit and cpus; the api, worker, runner, web and edge images declare a HEALTHCHECK."
         }
       ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-198",
+      "title": "Six dependencies shared by several packages were declared outside the catalog",
+      "summary": "pglite, tsx, axe-core, vitest-axe and two testing-library packages each carried their own range in two to four package.json files.",
+      "resolution": "Each is declared once in the catalog and referenced as catalog:; no resolved version changed.",
+      "evidence": [
+        {
+          "path": "pnpm-workspace.yaml",
+          "asserts": "The six entries are in the catalog block."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-199",
+      "title": "Local working state was neither tracked nor ignored",
+      "summary": "semantic-review/ and .worktrees/ could be committed by git add, and the root helper scripts were ignored only through one clone's .git/info/exclude.",
+      "resolution": ".gitignore ignores them for every clone; .kiro/ stays trackable as project configuration.",
+      "evidence": [
+        {
+          "path": ".gitignore",
+          "asserts": "The block for local working state."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-200",
+      "title": "Three tests waited on the real clock",
+      "summary": "The audit export test slept 250 ms, and two score-banner tests slept 20 ms, to wait for work they could await directly.",
+      "resolution": "Each waits on the read or the database round trip instead; seeded defects still fail them.",
+      "evidence": [
+        {
+          "path": "apps/api/src/routes/audit.test.ts",
+          "asserts": "A stream that reads ahead is caught without a timed wait."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-201",
+      "title": "A nightly that produced no quality report was green",
+      "summary": "quality:baseline printed its table only to the log, and the upload used if-no-files-found: ignore.",
+      "resolution": "The table is written to var/quality-baseline.json and the upload fails when it is missing.",
+      "evidence": [
+        {
+          "path": ".github/workflows/nightly.yml",
+          "asserts": "The quality-report upload uses if-no-files-found: error."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Minor",
+      "id": "MNT-202",
+      "title": "CI built the workspace twice per commit",
+      "summary": "unit-and-coverage rebuilt from nothing what quality had already built for pnpm typecheck.",
+      "resolution": "Both jobs share turbo's cache keyed on the commit alone, with no fallback key, so no other commit's test results can be replayed.",
+      "evidence": [
+        {
+          "path": "scripts/lib/ci-turbo-cache.test.mjs",
+          "asserts": "Both jobs restore the cache by commit, with no restore-keys."
+        }
+      ]
+    },
+    {
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN6-W0",
+      "confirmed": true,
+      "confirmedOn": "2026-11-11",
+      "confirmedBy": "kilo:fail-before-verification",
+      "band": "Major",
+      "id": "MNT-203",
+      "title": "The default quality gate did not reach release readiness, and its page said it failed runs",
+      "summary": "Readiness read only gate rows owned by the workspace, but the default gate is installation-wide, so editing it changed nothing. The page said a run that misses its gate is marked failed; nothing does that.",
+      "resolution": "Readiness falls back to the installation default gate after the project and workspace ones. The page says the gate is the readiness bar and that a run's verdict comes from its quality policy.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/pass-rate-threshold.test.ts",
+          "asserts": "The installation default applies, a workspace's own wins, another workspace's never counts."
+        }
+      ]
     }
   ]
 }

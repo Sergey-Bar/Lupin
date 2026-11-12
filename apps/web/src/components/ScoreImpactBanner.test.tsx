@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CockpitDriver } from '@lupin/shared-contracts';
 import { expectNoBlockingAxeViolations } from '../test-axe.js';
@@ -102,8 +102,11 @@ describe('ScoreImpactBanner', () => {
     const getCockpit = vi.fn(async () => cockpit);
     show('run-9', 'abc1234', getCockpit);
     await waitFor(() => expect(getCockpit).toHaveBeenCalled());
-    // Give the read time to settle; there is no banner to wait for.
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    // Wait on the read itself, not the clock (ledger MNT-200): once it has answered and React
+    // has rendered the answer, there is still no banner.
+    await act(async () => {
+      await getCockpit.mock.results[0]?.value;
+    });
     expect(screen.queryByTestId('score-impact')).toBeNull();
   });
 
@@ -115,7 +118,9 @@ describe('ScoreImpactBanner', () => {
     const failing = vi.fn(() => Promise.reject(new Error('offline')));
     show('run-1', 'abc', failing as never);
     await waitFor(() => expect(failing).toHaveBeenCalled());
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await act(async () => {
+      await (failing.mock.results[0]?.value as Promise<never>).catch(() => undefined);
+    });
     expect(screen.queryByTestId('score-impact')).toBeNull();
   });
 

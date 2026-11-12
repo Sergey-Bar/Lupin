@@ -1,4 +1,4 @@
-import { and, asc, eq, gte } from 'drizzle-orm';
+import { and, asc, eq, gte, or } from 'drizzle-orm';
 import { qualityGateConfig, scanSnapshots } from '@lupin/db';
 import type { RepoScan, ScanSnapshot } from '@lupin/shared-contracts';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
@@ -123,20 +123,33 @@ export async function readHistory(
 export const DEFAULT_RELEASE_PASS_RATE = 95;
 
 /**
- * The project's own gate threshold, else the workspace default gate's, else 95%.
- *
- * Read from `quality_gate_config`, which the gate evaluation path already reads, so the
- * readiness card and the gate cannot use two different numbers for one project.
+ * The project's own gate threshold, else the workspace default gate's, else the installation
+ * default gate's (`global`, shared by design), else 95%. The installation default was not read,
+ * so editing it on Settings → Quality gates changed nothing (ledger MNT-203).
  */
 export async function passRateThreshold(options: Options, projectId: string): Promise<number> {
   const rows = await options.db
     .select({
+      id: qualityGateConfig.id,
+      workspaceId: qualityGateConfig.workspaceId,
       projectId: qualityGateConfig.projectId,
       threshold: qualityGateConfig.passRateThreshold,
     })
     .from(qualityGateConfig)
-    .where(eq(qualityGateConfig.workspaceId, options.workspaceId));
-  const own = rows.find((row) => row.projectId === projectId);
-  const fallback = rows.find((row) => row.projectId === null);
-  return own?.threshold ?? fallback?.threshold ?? DEFAULT_RELEASE_PASS_RATE;
+    .where(
+      or(
+        eq(qualityGateConfig.workspaceId, options.workspaceId),
+        eq(qualityGateConfig.id, DEFAULT_GATE_ROW),
+      ),
+    );
+  const mine = rows.filter((row) => row.workspaceId === options.workspaceId);
+  const own = mine.find((row) => row.projectId === projectId);
+  const workspace = mine.find((row) => row.projectId === null);
+  const installation = rows.find((row) => row.id === DEFAULT_GATE_ROW && row.workspaceId === null);
+  return (
+    own?.threshold ?? workspace?.threshold ?? installation?.threshold ?? DEFAULT_RELEASE_PASS_RATE
+  );
 }
+
+/** The installation-wide default gate's id (`DEFAULT_GATE_ID` in the dashboard module). */
+const DEFAULT_GATE_ROW = 'global';
