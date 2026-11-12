@@ -14,6 +14,7 @@ import {
   type TestTamperFinding,
 } from '@lupin/shared-contracts';
 import { z } from 'zod/v4';
+import { currentOutboundAllowlist, outboundProblem } from '../http/outbound-guard.js';
 import type { AiGovernanceCheck } from './repo-health-service.js';
 import type { EvalGateReading, EvalGateSuite } from './eval-service.js';
 import type { CommitTests } from './commit-tests.js';
@@ -768,9 +769,8 @@ export type AlertSettings = z.infer<typeof AlertSettingsSchema>;
  * link-local address written as a literal.
  *
  * The server makes the request, so a URL is a request the server makes on the caller's
- * behalf. A hostname that *resolves* to a private address is not caught here — an operator
- * who can configure alerts is trusted not to point them at the metadata service, and the
- * install's egress policy is where that is enforced.
+ * behalf. This is the quick literal check; `http/outbound-guard.ts` resolves the host and is
+ * applied as well, when the URL is saved and again before each send (plan task 9).
  */
 export function isAllowedWebhook(url: string): boolean {
   let parsed: URL;
@@ -931,6 +931,9 @@ async function sendWebhook(
     alerts: event.alerts,
   });
   const unix = Math.floor((transport.now?.() ?? new Date()).getTime() / 1000);
+  // Checked again at send time: the host's addresses may have changed since it was saved.
+  const problem = await outboundProblem(url, { allow: currentOutboundAllowlist() });
+  if (problem !== null) return `webhook: refused, ${problem}`;
   try {
     const response = await (transport.fetch ?? fetch)(url, {
       method: 'POST',

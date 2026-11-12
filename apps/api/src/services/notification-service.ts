@@ -30,7 +30,7 @@ import {
   type ReportModel,
 } from '@lupin/reporting';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
-import { isAllowedWebhook } from './health-integrations.js';
+import { assertOutboundUrl } from '../http/outbound-guard.js';
 import { loadReportAreas } from './report-areas.js';
 import { loadCockpitDigest } from './cockpit-digest.js';
 import {
@@ -78,32 +78,34 @@ function channelSummary(row: NotificationChannelRow): ChannelSummary {
   };
 }
 
-/** A secret the server will call: refused here rather than on the first delivery. */
-function assertCallableSecret(body: CreateChannelBody): void {
-  if (body.kind === 'teams' && !isAllowedWebhook(body.secret)) {
-    throw new DomainError(
-      ErrorCode.INVALID_REQUEST_BODY,
-      'A Teams webhook must be an https URL on a public host',
-    );
-  }
-  if (body.kind === 'signal') {
-    // The bridge is expected on this machine or the LAN, so a private http address is
-    // allowed for this kind alone — but it must be a URL with no credentials in it.
-    const url = URL.canParse(body.secret) ? new URL(body.secret) : null;
-    if (url === null || !['http:', 'https:'].includes(url.protocol) || url.username !== '') {
-      throw new DomainError(
-        ErrorCode.INVALID_REQUEST_BODY,
-        'The Signal bridge must be an http(s) URL',
-      );
-    }
-  }
+/**
+ * The channel kinds whose secret is a URL the server calls, and the schemes each may use.
+ * Slack, Telegram and WhatsApp call a fixed public host with a token.
+ */
+export const URL_SECRET_KINDS: Partial<Record<ChannelKind, readonly string[]>> = {
+  teams: ['https:'],
+  signal: ['http:', 'https:'],
+  email: ['http:', 'https:'],
+};
+
+const WHAT_URL: Partial<Record<ChannelKind, string>> = {
+  teams: 'The Teams webhook',
+  signal: 'The Signal bridge',
+  email: 'The email bridge',
+};
+
+/** A secret the server will call: refused here rather than on the first delivery (plan task 9). */
+export async function assertCallableSecret(kind: ChannelKind, secret: string): Promise<void> {
+  const protocols = URL_SECRET_KINDS[kind];
+  if (protocols === undefined) return;
+  await assertOutboundUrl(secret, WHAT_URL[kind] ?? 'The channel', { protocols });
 }
 
 export async function createChannel(
   options: NotificationOptions,
   body: CreateChannelBody,
 ): Promise<ChannelSummary> {
-  if (body.kind !== 'inbox') assertCallableSecret(body);
+  if (body.kind !== 'inbox') await assertCallableSecret(body.kind, body.secret);
   const at = now(options);
   const [row] = await options.db
     .insert(notificationChannels)
@@ -209,7 +211,9 @@ export async function updateChannel(
       details: { issues: parsed.error.issues },
     });
   }
-  if (body.secret !== undefined && parsed.data.kind !== 'inbox') assertCallableSecret(parsed.data);
+  if (body.secret !== undefined && parsed.data.kind !== 'inbox') {
+    await assertCallableSecret(parsed.data.kind, parsed.data.secret);
+  }
   if (body.secret !== undefined && row.kind !== 'inbox') {
     await storeVaultSecret(options, channelSecretName(row.id), body.secret, WHAT);
   }

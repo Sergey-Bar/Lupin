@@ -18,6 +18,7 @@ import type { ProjectRegistryServiceOptions } from './project-registry-service.j
 import { loadCockpitDigest } from './cockpit-digest.js';
 import { portfolioBriefing, repositoryBriefing } from './briefing-service.js';
 import {
+  URL_SECRET_KINDS,
   channelWithSecret,
   loadReport,
   projectOfScope,
@@ -25,6 +26,7 @@ import {
   formatOf,
 } from './notification-service.js';
 import type { TrendChart } from './trend-chart.js';
+import { currentOutboundAllowlist, outboundProblem } from '../http/outbound-guard.js';
 
 /**
  * Sends the reports the worker queued.
@@ -393,6 +395,16 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
           status: 'failed' as const,
           errorCode: `${channel.kind}_not_configured`,
         };
+        await finish(row, { ...outcome, rendered });
+        return outcome;
+      }
+      // Checked again before every send: the host's addresses may have changed since saving.
+      const protocols = URL_SECRET_KINDS[channel.kind];
+      if (
+        protocols !== undefined &&
+        (await outboundProblem(secret, { allow: currentOutboundAllowlist(), protocols })) !== null
+      ) {
+        const outcome = { id: row.id, status: 'failed' as const, errorCode: 'address_refused' };
         await finish(row, { ...outcome, rendered });
         return outcome;
       }

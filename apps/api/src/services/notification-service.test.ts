@@ -134,17 +134,20 @@ describe('channels', () => {
         secret: 'ftp://signal',
       }),
     ).rejects.toMatchObject({ code: 'INVALID_REQUEST_BODY' });
-    // The bridge on the LAN is the expected shape.
-    expect(
-      (
-        await createChannel(options, {
-          kind: 'signal',
-          name: 's',
-          settings: { number: '+15551234567', recipients: '+15557654321' },
-          secret: 'http://192.168.1.10:8081',
-        })
-      ).kind,
-    ).toBe('signal');
+    // A bridge on the LAN is refused until the install allowlists it (plan task 9).
+    const lan = {
+      kind: 'signal' as const,
+      name: 's',
+      settings: { number: '+15551234567', recipients: '+15557654321' },
+      secret: 'http://192.168.1.10:8081',
+    };
+    await expect(createChannel(options, lan)).rejects.toThrow(/LUPIN_OUTBOUND_ALLOW/);
+    process.env['LUPIN_OUTBOUND_ALLOW'] = '192.168.1.10';
+    try {
+      expect((await createChannel(options, lan)).kind).toBe('signal');
+    } finally {
+      delete process.env['LUPIN_OUTBOUND_ALLOW'];
+    }
   });
 
   it('leaves no half-made channel when the vault is not configured', async () => {

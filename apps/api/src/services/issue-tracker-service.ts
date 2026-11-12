@@ -16,6 +16,7 @@ import type {
   IssueTrackerBody,
 } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
+import { assertOutboundUrl } from '../http/outbound-guard.js';
 import { readGitToken } from './git-credential-service.js';
 import { githubRepository } from './health-integrations.js';
 import { projectRow, type ProjectRow } from './health-findings.js';
@@ -137,6 +138,7 @@ export async function setIssueTracker(
   const existing = await trackerRow(options, project.id);
   const name = trackerSecretName(project.id, body.kind);
   const baseUrl = body.baseUrl.replace(/\/+$/u, '');
+  await assertOutboundUrl(baseUrl, 'The tracker base URL');
   // Presence, not a comparison: whether a token was sent is a question about the field, and
   // nothing about its value is compared. A local keeps the check off a secret-named member.
   const { token } = body;
@@ -252,6 +254,8 @@ async function prepareJira(
   const token = await readVaultSecret(options, trackerSecretName(project.id, tracker.kind), WHAT);
   if (token === null) throw notConfigured("This project's Jira tracker has no token");
   if (adapters.jira === undefined) throw notConfigured('No Jira connector is composed');
+  // Checked before every call: the host's addresses may have changed since it was saved.
+  await assertOutboundUrl(tracker.baseUrl, 'The tracker base URL');
   return {
     adapter: adapters.jira,
     token,

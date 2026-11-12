@@ -25,6 +25,7 @@ import {
 } from '../services/health-integrations.js';
 import { domainErrorResponse } from '../errors/boundary.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
+import { assertOutboundUrl } from '../http/outbound-guard.js';
 import { invalidRequest } from '../http/invalid-request.js';
 import { callerOf, requireRole, type CallerResolver } from '../http/roles.js';
 import { uploaderActor, uploaderGuard } from '../http/uploader.js';
@@ -653,6 +654,9 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
         'A webhook must be an https URL that is not a loopback or private address',
         [{ path: ['webhookUrl'], message: 'not allowed' }],
       );
+    }
+    if (parsed.data.webhookUrl != null) {
+      await assertOutboundUrl(parsed.data.webhookUrl, 'The webhook');
     }
     const alerts = await setAlertSettings(options, context.req.param('id'), parsed.data);
     await audit(options, {

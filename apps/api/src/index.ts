@@ -177,6 +177,7 @@ import {
 // middleware used to be mounted.
 import { createRequestDeadline } from './middleware/request-deadline.js';
 import { apiRateLimitFrom, createApiRateLimit } from './middleware/api-rate-limit.js';
+import { outboundAllowlistFrom } from './http/outbound-guard.js';
 import { createSecurityHeaders } from './middleware/security-headers.js';
 import { getConfig } from './config.js';
 import { createSentryErrorReporter } from './observability/sentry.js';
@@ -1547,6 +1548,8 @@ app.use('*', async (context, next) => {
   await next();
 });
 // A per-token and per-client budget on every route but the probes (plan task 8).
+// The outbound allowlist is read per call; parsed once here so a typo stops the boot.
+outboundAllowlistFrom(process.env['LUPIN_OUTBOUND_ALLOW']);
 app.use(
   '*',
   createApiRateLimit({

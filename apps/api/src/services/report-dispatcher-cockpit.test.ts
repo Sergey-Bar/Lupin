@@ -6,6 +6,7 @@ import { syntheticVaultSecret } from '../test-support/synthetic-credentials.js';
 import { loadCockpitDigest } from './cockpit-digest.js';
 import { createChannel, createSubscription, queueTestDelivery } from './notification-service.js';
 import { createReportDispatcher } from './report-dispatcher.js';
+import { useOutboundResolver } from '../http/outbound-guard.js';
 
 /**
  * The scheduled report with the cockpit at its head and a chart beside it.
@@ -309,13 +310,41 @@ describe('the report with the cockpit', () => {
         kind: 'signal',
         name: 'QA',
         settings: { number: '+15551234567', recipients: '+15557654321' },
-        secret: 'http://192.168.1.10:8081',
+        secret: 'http://signal-bridge.example:8081',
       },
       { signal: adapter },
     );
     expect(calls[0]?.request.operation).toBe('send');
     expect(JSON.stringify(calls[0]?.request.input)).toContain('Down 6 points since last week');
     expect(JSON.stringify(calls[0]?.request.input)).not.toContain('photoBase64');
+  });
+
+  it('refuses to send to a bridge whose host now resolves inward (plan task 9)', async () => {
+    const { db, options } = await setup();
+    await seedCockpit(db);
+    const { adapter, calls } = scripted([ok]);
+    const channel = {
+      kind: 'signal' as const,
+      name: 'QA',
+      settings: { number: '+15551234567', recipients: '+15557654321' },
+      secret: 'http://signal-bridge.example:8081',
+    };
+    const created = await createChannel(options, channel);
+    await queueTestDelivery(options, created.id);
+    useOutboundResolver(async () => ['169.254.169.254']);
+    try {
+      const outcomes = await createReportDispatcher({
+        db: db as never,
+        vaultSecret: VAULT,
+        adapters: { signal: adapter },
+        link: null,
+        now: () => NOW,
+      }).runOnce();
+      expect(outcomes[0]).toMatchObject({ status: 'failed', errorCode: 'address_refused' });
+      expect(calls).toHaveLength(0);
+    } finally {
+      useOutboundResolver(async () => ['203.0.113.10']);
+    }
   });
 
   it('sends the report as it always was when the workspace has no project', async () => {

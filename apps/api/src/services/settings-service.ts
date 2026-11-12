@@ -9,6 +9,7 @@ import {
   type SettingScope,
 } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
+import { assertOutboundUrl } from '../http/outbound-guard.js';
 import { audit } from './access-service.js';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
 import { deleteVaultSecret, readVaultSecret, storeVaultSecret } from './vault-secrets.js';
@@ -288,6 +289,10 @@ export function createSettingsService(options: SettingsServiceOptions): Settings
     }
     const db = requireDb();
     const clean = parsed.data as SettingValue;
+    // A URL the server will call, typed by an admin: the outbound guard (plan task 9).
+    if (definition.kind === 'url' && typeof clean === 'string' && clean !== '') {
+      await assertOutboundUrl(clean, definition.label, { protocols: ['http:', 'https:'] });
+    }
     let stored: Record<string, unknown> = { value: clean };
     if (definition.secret) {
       if (options.vaultSecret === undefined) {
