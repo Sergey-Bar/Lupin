@@ -9,7 +9,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm --filter "@lupin/unified-web..." build
 
 
-FROM nginx:1.31-alpine@sha256:785835ea65db4bba6f021acc0f3be91b0fef76a53fe41f8588c6698d2aed0606 AS runtime
+FROM nginx:1.31-alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11 AS runtime
 ARG LUPIN_VERSION=dev
 ARG LUPIN_REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
