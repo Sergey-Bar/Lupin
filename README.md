@@ -87,6 +87,18 @@ Open `http://localhost:5173`. Sign in with `local-installation-key-32-characters
 PostgreSQL stack, and [sending results](site/guide/sending-results.md) shows the one
 `curl` that gets a report from CI into a run.
 
+## Project status
+
+Lupin is pre-1.0 and built for a single self-hosted install. What works and what doesn't
+is tracked in the [capability register](docs/migration/capability-register.md) and the
+[findings ledger](docs/quality/findings-ledger.json). Open gaps today:
+
+- **Mobile agent domain:** not built. Its routes answer `501 AGENT_NOT_CONFIGURED`.
+- **Security agent domain:** a ZAP baseline adapter exists but has no recorded run yet.
+- **Agent-config skill scan:** reported in CI, not yet blocking.
+
+`/api/v1/features` reports which domains are available on your install.
+
 ## Documentation
 
 | Read                                                         | For                                                      |
