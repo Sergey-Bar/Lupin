@@ -201,6 +201,9 @@ describe('migration graph', () => {
       '0057_settings_onboarding',
       '0058_change_risk',
       '0059_report_quiet_hours',
+      '0060_release_signoffs',
+      '0061_token_expiry',
+      '0062_token_scopes',
     ]);
   });
 
