@@ -270,6 +270,15 @@ function RunHeader({
           <span data-testid="run-id" className="truncate font-mono text-xs">
             {run.id}
           </span>
+          {run.retryOfRunId ? (
+            <a
+              data-testid="rerun-of"
+              href={`/dashboard/runs/${encodeURIComponent(run.retryOfRunId)}`}
+              className="rounded-sm text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+            >
+              Rerun of {run.retryOfRunId.slice(0, 8)}
+            </a>
+          ) : null}
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">

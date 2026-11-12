@@ -585,6 +585,15 @@ describe('RunDetailPage', () => {
     expect(api.retryRun).toHaveBeenCalledWith('failed');
   });
 
+  it('links a rerun to the run it reran (plan Wave 1 task 2)', async () => {
+    const rerun = makeRun({ id: 'retry-run', attempt: 2, retryOfRunId: 'failed-run-1' });
+    render(<RunDetailPage id="retry-run" api={detailApi(rerun)} />);
+    expect(await screen.findByTestId('rerun-of')).toHaveAttribute(
+      'href',
+      '/dashboard/runs/failed-run-1',
+    );
+  });
+
   it('renders terminal infrastructure phases and tests without attempts', async () => {
     const run = makeRun({
       id: 'infra-run',
