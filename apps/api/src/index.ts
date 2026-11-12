@@ -176,6 +176,7 @@ import {
 // `http/route-access.ts`), and the posture is chosen by configuration. See the note where the
 // middleware used to be mounted.
 import { createRequestDeadline } from './middleware/request-deadline.js';
+import { apiRateLimitFrom, createApiRateLimit } from './middleware/api-rate-limit.js';
 import { createSecurityHeaders } from './middleware/security-headers.js';
 import { getConfig } from './config.js';
 import { createSentryErrorReporter } from './observability/sentry.js';
@@ -1545,6 +1546,14 @@ app.use('*', async (context, next) => {
   recordClientAddress(defaultClientKey(context, runtimeConfig.trustProxy ?? false));
   await next();
 });
+// A per-token and per-client budget on every route but the probes (plan task 8).
+app.use(
+  '*',
+  createApiRateLimit({
+    limit: apiRateLimitFrom(process.env['LUPIN_API_RATE_LIMIT']),
+    clientKey: (context) => defaultClientKey(context, runtimeConfig.trustProxy ?? false),
+  }),
+);
 
 /**
  * A server-side deadline on every request that is not a long-lived stream.
