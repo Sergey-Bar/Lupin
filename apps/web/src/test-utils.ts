@@ -219,6 +219,14 @@ export function makeApi(overrides: Partial<ApiClient> = {}): ApiClient {
       avgDurationMs: null,
     })),
     getQuarantine: vi.fn(async () => []),
+    resolveQuarantine: vi.fn(async (id, body): Promise<QuarantineEntry> => ({
+      id,
+      testTitle: 'a test',
+      testFile: 'a.spec.ts',
+      reason: null,
+      quarantinedAt: TEST_TIMESTAMP,
+      status: body.status,
+    })),
     // Annotated rather than inferred: without it `status` widens to `string` and the
     // mock stops satisfying `ApiClient`, so the compile error surfaces here rather
     // than as a `vi.fn()` that returns the wrong shape at runtime.

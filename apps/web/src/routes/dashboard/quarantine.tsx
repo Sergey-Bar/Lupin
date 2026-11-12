@@ -20,13 +20,26 @@ import {
   type BadgeProps,
 } from '@lupin/ui';
 import type { ApiClient, QuarantineEntry } from '../../lib/api.js';
+import { QuarantineDecision } from '../../components/QuarantineDecision.js';
+import { useViewerRole } from '../../hooks/useViewerRole.js';
 import { formatDate } from '../../lib/format.js';
 import { Kpi, PageFrame, PageHeader, Paged, Panel, Quiet } from '../../components/kit.js';
 
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/quarantine',
-  component: () => <QuarantinePage />,
+  validateSearch: (search: Record<string, unknown>): { title?: string; file?: string } => ({
+    ...(typeof search['title'] === 'string' ? { title: search['title'].slice(0, 500) } : {}),
+    ...(typeof search['file'] === 'string' ? { file: search['file'].slice(0, 500) } : {}),
+  }),
+  component: function QuarantineRoute() {
+    const { title, file } = Route.useSearch();
+    return (
+      <QuarantinePage
+        {...(title !== undefined && file !== undefined ? { prefill: { title, file } } : {})}
+      />
+    );
+  },
 });
 
 /**
@@ -52,11 +65,19 @@ const QUARANTINE_STATUS_TONE: Partial<Record<QuarantineEntry['status'], BadgePro
 
 const UNKNOWN_STATUS_TONE = 'default';
 
-export function QuarantinePage({ api }: { api?: ApiClient }) {
-  const { data, isLoading, error, addQuarantine, isUnsaved } = useQuarantine(api);
-  const [isAdding, setIsAdding] = useState(false);
-  const [testTitle, setTestTitle] = useState('');
-  const [testFile, setTestFile] = useState('');
+export function QuarantinePage({
+  api,
+  prefill,
+}: {
+  api?: ApiClient;
+  /** A failing test sent from run detail: the form opens with it filled in. */
+  prefill?: { title: string; file: string };
+}) {
+  const { data, isLoading, error, addQuarantine, decide, isUnsaved } = useQuarantine(api);
+  const role = useViewerRole();
+  const [isAdding, setIsAdding] = useState(prefill !== undefined);
+  const [testTitle, setTestTitle] = useState(prefill?.title ?? '');
+  const [testFile, setTestFile] = useState(prefill?.file ?? '');
   const [reason, setReason] = useState('');
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -171,6 +192,7 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
                     <TableHead>Reason</TableHead>
                     <TableHead>Quarantined</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Decision</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -203,6 +225,17 @@ export function QuarantinePage({ api }: { api?: ApiClient }) {
                         >
                           {entry.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {isUnsaved(entry.id) ? null : (
+                          <QuarantineDecision
+                            entry={entry}
+                            viewerRole={role}
+                            onDecide={(status, resolution) =>
+                              decide(entry.id, { status, resolution })
+                            }
+                          />
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

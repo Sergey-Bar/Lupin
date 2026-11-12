@@ -139,6 +139,11 @@ describe('RunDetailPage', () => {
     render(<RunDetailPage id="run-123" api={detailApi(passedRun)} />);
     const failed = await screen.findByTestId('run-what-failed');
     expect(failed).toHaveTextContent('1 of 1 tests failed');
+    // One step from a failure to quarantining it (plan Wave 1 task 1).
+    expect(within(failed).getByRole('link', { name: 'Quarantine this test' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/dashboard\/quarantine\?title=.+&file=e2e%2Fsmoke\.spec\.ts$/u),
+    );
     expect(failed).toHaveTextContent('loads the command center');
     expect(failed).toHaveTextContent('Expected command center');
     expect(failed).toHaveTextContent('e2e/smoke.spec.ts');

@@ -8,6 +8,11 @@ import { describeGateReason } from '../../lib/gate-reason.js';
 import { statusWord } from '../../lib/status-word.js';
 import { testAnchor } from '../CopilotExplain.js';
 
+/** The quarantine form, prefilled with a failing test (plan Wave 1 task 1). */
+export function quarantineHref(title: string, file: string): string {
+  return `/dashboard/quarantine?${new URLSearchParams({ title, file }).toString()}`;
+}
+
 /**
  * Run detail: the phase timeline, the failures and the verdict. Moved out of
  * `routes/dashboard/run-detail.tsx`, which was 1,135 lines (ledger MNT-191).
@@ -388,6 +393,16 @@ export function RunVerdict({
             <li key={test.id} className="min-w-0 py-2">
               <p className="text-sm font-medium text-fg">{test.title}</p>
               {test.error ? <p className="text-sm text-danger">{test.error.message}</p> : null}
+              {test.file ? (
+                <p className="flex flex-wrap items-baseline gap-x-3">
+                  <a
+                    href={quarantineHref(test.title, test.file)}
+                    className="rounded-sm text-xs text-accent underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+                  >
+                    Quarantine this test
+                  </a>
+                </p>
+              ) : null}
               {test.file ? (
                 <p className="truncate font-mono text-xs text-fg-muted" title={test.file}>
                   {test.file}

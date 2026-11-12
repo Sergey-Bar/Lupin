@@ -355,5 +355,14 @@ export function useQuarantine(api = defaultApiClient) {
       () => api.addQuarantine(entry),
     );
 
-  return { data: list.items, isLoading, error, addQuarantine, isUnsaved: list.isPending };
+  /** A decision on an entry; the list shows the answer the API gave. Rethrows a refusal. */
+  const decide = async (
+    id: string,
+    body: { status: 'approved' | 'rejected' | 'released'; resolution: string },
+  ) => {
+    const updated = await api.resolveQuarantine(id, body);
+    reset(list.items.map((entry) => (entry.id === id ? updated : entry)));
+  };
+
+  return { data: list.items, isLoading, error, addQuarantine, decide, isUnsaved: list.isPending };
 }

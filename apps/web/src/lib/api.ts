@@ -279,6 +279,12 @@ export interface ApiClient {
   ): Promise<ReleaseReadiness | null>;
   getAnalyticsSummary(options?: RequestOptions): Promise<AnalyticsSummary>;
   getQuarantine(options?: RequestOptions): Promise<QuarantineEntry[]>;
+  /** Approve, reject or release an entry; the reason is required and audited. */
+  resolveQuarantine(
+    id: string,
+    body: { status: 'approved' | 'rejected' | 'released'; resolution: string },
+    options?: RequestOptions,
+  ): Promise<QuarantineEntry>;
   addQuarantine(
     entry: { testTitle: string; testFile: string; stableId?: string; reason?: string },
     options?: RequestOptions,
@@ -714,6 +720,27 @@ export const defaultApiClient: ApiClient = {
               credentials: 'include',
               headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
               body: JSON.stringify(entry),
+            },
+            options?.signal,
+          ),
+        ),
+      ),
+      QuarantineEntrySchema,
+      path,
+    );
+  },
+  resolveQuarantine: async (id, body, options) => {
+    const path = `/api/v1/dashboard/quarantine/${encodeURIComponent(id)}`;
+    return parse(
+      await request(
+        await fetch(
+          path,
+          withSignal(
+            {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
             },
             options?.signal,
           ),

@@ -65,6 +65,14 @@ describe('QuarantinePage', () => {
     expect(screen.getByTestId('input-test-title')).toHaveValue('a test');
   });
 
+  it('opens the form filled in with a failing test sent from run detail', async () => {
+    render(
+      <QuarantinePage api={stubApi()} prefill={{ title: 'pays twice', file: 'pay.spec.ts' }} />,
+    );
+    expect(await screen.findByLabelText('Test title')).toHaveValue('pays twice');
+    expect(screen.getByLabelText('Test file')).toHaveValue('pay.spec.ts');
+  });
+
   it('says so when there is nothing in quarantine', async () => {
     render(<QuarantinePage api={stubApi({ getQuarantine: vi.fn().mockResolvedValue([]) })} />);
     await waitFor(() => expect(screen.getByTestId('quarantine-empty')).toBeInTheDocument());
