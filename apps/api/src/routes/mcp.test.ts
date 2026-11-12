@@ -183,6 +183,72 @@ describe('the MCP server at /api/v1/mcp', () => {
     expect(BriefingSchema.parse(projectBriefing.value).scope).toMatchObject({ name: 'Alpha' });
   });
 
+  it('answers the QA read tools from this workspace only (plan task 24)', async () => {
+    const { connect, viewer, projectId, db } = await harness();
+    const [run] = await db
+      .insert(schema.runs)
+      .values({
+        workspaceId: 'ws-1',
+        projectId,
+        startedAt: NOW,
+        phase: 'complete',
+        outcome: 'failed',
+        commit: 'abc1234',
+      })
+      .returning({ id: schema.runs.id });
+    const runId = (run as { id: string }).id;
+    await db.insert(schema.tests).values({
+      id: 't1',
+      runId,
+      workspaceId: 'ws-1',
+      title: 'pays',
+      file: 'pay.spec.ts',
+      stableId: 'pay.spec.ts › pays',
+      status: 'failed',
+    });
+    await db
+      .insert(schema.runs)
+      .values({ workspaceId: 'ws-2', startedAt: NOW, phase: 'complete', outcome: 'failed' });
+    await db.insert(schema.quarantine).values({
+      id: 'q1',
+      workspaceId: 'ws-1',
+      testTitle: 'pays',
+      testFile: 'pay.spec.ts',
+      quarantinedAt: NOW,
+    });
+    const client = await connect(viewer);
+    const call = async (name: string, args: Record<string, unknown> = {}) =>
+      answer(await client.callTool({ name, arguments: args }));
+
+    const listed = await call('list_runs');
+    expect(listed.summary).toBe('1 run(s), 1 failed.');
+    const history = await call('get_test_history', { stableId: 'pay.spec.ts › pays' });
+    expect(history.value).toMatchObject({ failed: 1, flaky: 0, flips: 0 });
+    expect((await call('list_quarantine')).summary).toBe('1 entry, 1 pending.');
+    const causes = await call('list_failure_causes');
+    expect(causes.value).toMatchObject({ computed: false, clusters: [] });
+    const risk = await call('get_change_risk', { projectId, pullRequest: 7 });
+    expect(risk).toMatchObject({
+      isError: false,
+      summary: 'Pull request #7 has no risk assessment yet.',
+    });
+    expect((await call('list_signoffs', { projectId })).summary).toBe(
+      'Nobody has signed off a release of this project.',
+    );
+  });
+
+  it('keeps a pinned caller to its project in the QA read tools', async () => {
+    const { connect, otherId } = await harness();
+    const client = await connect('lup_pinned_viewer');
+    for (const name of ['list_signoffs', 'list_runs', 'list_quarantine']) {
+      const result = answer(await client.callTool({ name, arguments: { projectId: otherId } }));
+      expect(result).toMatchObject({
+        isError: true,
+        summary: 'FORBIDDEN: This token is pinned to another project',
+      });
+    }
+  });
+
   it('refuses a caller with no token, a CI uploader token, and another workspace’s token', async () => {
     const { raw, foreign } = await harness();
     const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
@@ -235,7 +301,12 @@ describe('the MCP server at /api/v1/mcp', () => {
     const projectTools = MCP_TOOL_NAMES.filter((name) => name !== 'list_projects');
     expect(projectTools.length).toBe(MCP_TOOL_NAMES.length - 1);
     for (const name of projectTools) {
-      const args = { projectId: otherId, ...(name === 'get_gate' ? { branch: 'main' } : {}) };
+      const args = {
+        projectId: otherId,
+        ...(name === 'get_gate' ? { branch: 'main' } : {}),
+        ...(name === 'get_test_history' ? { stableId: 'a.spec.ts › a' } : {}),
+        ...(name === 'get_change_risk' ? { pullRequest: 1 } : {}),
+      };
       const result = answer(await client.callTool({ name, arguments: args }));
       expect(result, name).toEqual({
         isError: true,

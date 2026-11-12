@@ -23,6 +23,13 @@ export const MCP_TOOL_NAMES = [
   'get_supply_chain',
   'get_test_effectiveness',
   'get_briefing',
+  // The QA read tools (plan task 24).
+  'list_runs',
+  'get_test_history',
+  'list_quarantine',
+  'list_failure_causes',
+  'get_change_risk',
+  'list_signoffs',
 ] as const;
 export type McpToolName = (typeof MCP_TOOL_NAMES)[number];
 

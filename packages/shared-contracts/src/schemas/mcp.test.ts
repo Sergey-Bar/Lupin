@@ -4,7 +4,7 @@ import { DashboardAnalyticsSummarySchema } from './analytics-trend.js';
 
 describe('the MCP contracts', () => {
   it('names ten tools, each once, and every one of them a read', () => {
-    expect(MCP_TOOL_NAMES).toHaveLength(10);
+    expect(MCP_TOOL_NAMES).toHaveLength(16);
     expect(new Set(MCP_TOOL_NAMES).size).toBe(MCP_TOOL_NAMES.length);
     for (const name of MCP_TOOL_NAMES) expect(name).toMatch(/^(get|list)_/u);
   });
