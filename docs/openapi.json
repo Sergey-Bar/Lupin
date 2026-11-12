@@ -31,6 +31,17 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/access-tokens/{id}/rotate": {
+      "post": {
+        "operationId": "postApiV1AccessTokensIdRotate",
+        "tags": ["access-tokens"],
+        "x-source": "apps/api/src/routes/access.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/agents": {
       "get": {
         "operationId": "getApiV1Agents",
@@ -855,6 +866,17 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/cluster-issues": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdClusterIssues",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/issue-tracking.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/cockpit/report.html": {
       "get": {
         "operationId": "getApiV1ProjectsIdCockpitReportHtml",
@@ -1546,6 +1568,26 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/signoffs": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdSignoffs",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/projects.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "post": {
+        "operationId": "postApiV1ProjectsIdSignoffs",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/projects.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/supply-chain/scorecard": {
       "get": {
         "operationId": "getApiV1ProjectsIdSupplyChainScorecard",
@@ -1645,6 +1687,15 @@
     "/api/v1/report-subscriptions/{id}": {
       "delete": {
         "operationId": "deleteApiV1ReportSubscriptionsId",
+        "tags": ["report-subscriptions"],
+        "x-source": "apps/api/src/routes/notifications.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      },
+      "put": {
+        "operationId": "putApiV1ReportSubscriptionsId",
         "tags": ["report-subscriptions"],
         "x-source": "apps/api/src/routes/notifications.ts",
         "parameters": [
@@ -26338,6 +26389,68 @@
         ],
         "additionalProperties": false
       },
+      "ReleaseSignoffListSchema": {
+        "type": "object",
+        "properties": {
+          "signoffs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "projectId": { "type": "string", "minLength": 1 },
+                "commit": { "type": "string", "minLength": 1 },
+                "decision": { "type": "string", "enum": ["ship", "hold"] },
+                "verdict": { "type": "string", "enum": ["go", "caution", "no-go"] },
+                "override": { "type": "boolean" },
+                "reason": { "type": "string", "minLength": 1 },
+                "actor": { "type": "string", "minLength": 1 },
+                "createdAt": { "type": "string", "minLength": 1 }
+              },
+              "required": [
+                "id",
+                "projectId",
+                "commit",
+                "decision",
+                "verdict",
+                "override",
+                "reason",
+                "actor",
+                "createdAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["signoffs"],
+        "additionalProperties": false
+      },
+      "ReleaseSignoffSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "projectId": { "type": "string", "minLength": 1 },
+          "commit": { "type": "string", "minLength": 1 },
+          "decision": { "type": "string", "enum": ["ship", "hold"] },
+          "verdict": { "type": "string", "enum": ["go", "caution", "no-go"] },
+          "override": { "type": "boolean" },
+          "reason": { "type": "string", "minLength": 1 },
+          "actor": { "type": "string", "minLength": 1 },
+          "createdAt": { "type": "string", "minLength": 1 }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "commit",
+          "decision",
+          "verdict",
+          "override",
+          "reason",
+          "actor",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
       "RepoReportSchema": {
         "type": "object",
         "properties": {
@@ -29069,6 +29182,17 @@
         "required": ["total", "asOf", "runs", "known", "unknown", "shards"],
         "additionalProperties": false
       },
+      "SignoffBodySchema": {
+        "type": "object",
+        "properties": {
+          "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+          "decision": { "type": "string", "enum": ["ship", "hold"] },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 2000 }
+        },
+        "required": ["commit", "decision", "reason"],
+        "additionalProperties": false
+      },
+      "SignoffDecisionSchema": { "type": "string", "enum": ["ship", "hold"] },
       "SlowTestSchema": {
         "type": "object",
         "properties": {
