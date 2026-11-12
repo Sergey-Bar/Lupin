@@ -96,4 +96,25 @@ describe('an issue from a failure cause', () => {
     expect(await screen.findByText('No issue was opened')).toBeInTheDocument();
     expect(within(first).getByRole('button', { name: 'GitHub issue' })).toBeEnabled();
   });
+
+  it('still offers a new issue for each cause when the lookup fails', async () => {
+    const qa = {
+      clusterIssues: vi.fn(async () => {
+        throw new Error('offline');
+      }),
+      openClusterIssue: vi.fn(),
+    };
+    render(
+      <ToastProvider>
+        <FailureClustersPanel
+          clusters={CLUSTERS as never}
+          issueTracking={{ projectId: PROJECT, qa }}
+        />
+      </ToastProvider>,
+    );
+    await waitFor(() => expect(qa.clusterIssues).toHaveBeenCalled());
+    const [first] = screen.getAllByTestId('failure-cluster') as [HTMLElement];
+    expect(within(first).getByRole('button', { name: 'GitHub issue' })).toBeEnabled();
+    expect(within(first).queryByRole('link')).toBeNull();
+  });
 });
