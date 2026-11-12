@@ -18,6 +18,7 @@ import {
 import { useResource } from '../hooks/useResource.js';
 import { ConfirmAction } from './ConfirmAction.js';
 import {
+  ROLE_SCOPES,
   TOKEN_ROLES,
   type AccessTokenSummary,
   type HealthClient,
@@ -212,6 +213,8 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
   const [projectId, setProjectId] = React.useState('');
   /** Days until a new token expires; '' is never. 90 by default: a token that never ends is a choice. */
   const [expiresIn, setExpiresIn] = React.useState('90');
+  /** Empty is the whole role; otherwise the token is limited to these permissions. */
+  const [scopes, setScopes] = React.useState<string[]>([]);
   const [issued, setIssued] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const id = React.useId();
@@ -228,11 +231,13 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
         role,
         ...(projectId.trim() === '' ? {} : { projectId: projectId.trim() }),
         ...(expiresIn === '' ? {} : { expiresInDays: Number(expiresIn) }),
+        ...(role === 'uploader' || scopes.length === 0 ? {} : { scopes }),
       })
       .then((created) => {
         setIssued(created.token);
         setName('');
         setProjectId('');
+        setScopes([]);
         setVersion((value) => value + 1);
       })
       .catch(describe);
@@ -281,7 +286,10 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
               id={`${id}-role`}
               label="Role"
               value={role}
-              onChange={(event) => setRole(event.target.value as TokenRole)}
+              onChange={(event) => {
+                setRole(event.target.value as TokenRole);
+                setScopes([]);
+              }}
               options={TOKEN_ROLES.map((entry) => ({ value: entry, label: entry }))}
             />
             <Input
@@ -307,6 +315,31 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
             <Button type="submit" className="min-h-10">
               Issue
             </Button>
+            {role === 'uploader' ? null : (
+              <fieldset className="sm:col-span-5" data-testid="token-scopes">
+                <legend className="text-xs text-fg-muted">
+                  Limit to (leave all unticked for the whole {role} role)
+                </legend>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                  {ROLE_SCOPES[role].map((scope) => (
+                    <label key={scope} className="flex items-center gap-1 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={scopes.includes(scope)}
+                        onChange={(event) =>
+                          setScopes((current) =>
+                            event.target.checked
+                              ? [...current, scope]
+                              : current.filter((entry) => entry !== scope),
+                          )
+                        }
+                      />
+                      <span className="font-mono text-xs">{scope}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
           </form>
           {issued === null ? null : (
             <div
@@ -353,6 +386,14 @@ function AccessBody({ health, who }: { health: HealthClient; who: WhoAmI }): Rea
                       <Badge variant={token.revokedAt === null ? 'outline' : 'secondary'}>
                         {token.revokedAt === null ? token.role : `${token.role} · revoked`}
                       </Badge>
+                      {token.scopes === null || token.scopes === undefined ? null : (
+                        <span
+                          className="ms-2 font-mono text-xs text-fg-muted"
+                          data-testid="token-scope-list"
+                        >
+                          {token.scopes.join(', ')}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="hidden font-mono text-xs md:table-cell">
                       {token.displayPrefix}…

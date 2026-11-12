@@ -435,6 +435,13 @@
       "when": 1794476451086,
       "tag": "0061_token_expiry",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1794477279413,
+      "tag": "0062_token_scopes",
+      "breakpoints": true
     }
   ]
 }

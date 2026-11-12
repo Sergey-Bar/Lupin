@@ -157,7 +157,11 @@ export function createAccessRoutes(options: AccessRouteOptions): Hono {
       action: 'access-token.create',
       resourceType: 'access_token',
       resourceId: created.summary.id,
-      details: { role: created.summary.role, projectId: created.summary.projectId },
+      details: {
+        role: created.summary.role,
+        projectId: created.summary.projectId,
+        scopes: created.summary.scopes,
+      },
     });
     return context.json(created, 201);
   });

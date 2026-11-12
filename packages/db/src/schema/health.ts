@@ -199,6 +199,8 @@ export const accessTokens = pgTable(
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
     /** After this the token no longer authenticates; `null` never expires (plan task 6). */
     expiresAt: timestamp('expires_at', { withTimezone: true }),
+    /** A subset of the role's permissions; `null` is the whole role (plan task 7). */
+    scopes: text('scopes').array(),
   },
   (table) => [
     uniqueIndex('access_tokens_hash_idx').on(table.tokenHash),

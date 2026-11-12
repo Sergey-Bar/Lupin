@@ -100,6 +100,8 @@ export interface HealthClient {
     projectId?: string;
     /** Days until it stops working; omitted, never. */
     expiresInDays?: number;
+    /** A subset of the role's permissions (plan task 7); omitted, the whole role. */
+    scopes?: string[];
   }): Promise<{ token: string; summary: AccessTokenSummary }>;
   revokeToken(id: string): Promise<AccessTokenSummary>;
   /** Issues a successor and ends the old token after a day's grace (plan task 6). */
@@ -168,8 +170,31 @@ export const AccessTokenSummarySchema = z.object({
   revokedAt: z.string().nullable(),
   /** Absent from an older API, and then read as never. */
   expiresAt: z.string().nullable().optional(),
+  /** Absent from an older API, and then read as the whole role. */
+  scopes: z.array(z.string()).nullable().optional(),
 });
 export type AccessTokenSummary = z.infer<typeof AccessTokenSummarySchema>;
+
+/**
+ * The permissions each role may be scoped down to. The API's `ROLE_PERMISSIONS` decides; this
+ * copy only chooses which boxes to offer, and a box the API refuses is reported as an error.
+ */
+export const ROLE_SCOPES: Readonly<Record<Exclude<TokenRole, 'uploader'>, readonly string[]>> = {
+  viewer: ['runs:read', 'tests:read', 'settings:read'],
+  operator: ['runs:read', 'runs:write', 'tests:read', 'tests:write', 'settings:read', 'ai:use'],
+  admin: [
+    'runs:read',
+    'runs:write',
+    'tests:read',
+    'tests:write',
+    'settings:read',
+    'settings:write',
+    'vault:read',
+    'vault:write',
+    'ai:use',
+    'connectors:manage',
+  ],
+};
 
 export const PairingCodeSchema = z.object({
   id: z.string(),

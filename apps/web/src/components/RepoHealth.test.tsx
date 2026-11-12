@@ -498,6 +498,36 @@ describe('AccessGate and AccessPage', () => {
     expect(api.revokeToken).toHaveBeenCalledWith('t1');
   });
 
+  it('issues a token limited to the ticked scopes, and lists them (plan task 7)', async () => {
+    const user = userEvent.setup();
+    const scoped = {
+      id: 't2',
+      name: 'Reader',
+      role: 'viewer' as const,
+      projectId: null,
+      displayPrefix: 'lup_read',
+      createdBy: 'session',
+      createdAt: '2026-10-23T00:00:00.000Z',
+      lastUsedAt: null,
+      revokedAt: null,
+      scopes: ['runs:read'],
+    };
+    const api = client({ listTokens: vi.fn(async () => [scoped]) });
+    render(<AccessPage health={api} />);
+    await screen.findByTestId('access-page');
+    expect(await screen.findByTestId('token-scope-list')).toHaveTextContent('runs:read');
+    await user.type(screen.getByLabelText('Name'), 'Reader');
+    await user.click(within(screen.getByTestId('token-scopes')).getByLabelText('runs:read'));
+    await user.click(screen.getByRole('button', { name: 'Issue' }));
+    await screen.findByTestId('issued-token');
+    expect(api.createToken).toHaveBeenCalledWith({
+      name: 'Reader',
+      role: 'viewer',
+      expiresInDays: 90,
+      scopes: ['runs:read'],
+    });
+  });
+
   it('says when each token expires, and rotates one showing the successor once (plan task 6)', async () => {
     const user = userEvent.setup();
     const live = {

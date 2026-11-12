@@ -2,6 +2,8 @@ import { createHash, randomBytes } from 'node:crypto';
 import { and, desc, eq, gt, isNull, or } from 'drizzle-orm';
 import { accessTokens, auditEvents, projects } from '@lupin/db';
 import { z } from 'zod/v4';
+import { scopesBeyondRole } from '@lupin/auth';
+import { PERMISSIONS, isAdminPermission, type Permission } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { requestAuditFields } from '../observability/request-context.js';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
@@ -33,7 +35,14 @@ export interface Caller {
   role: Role | null;
   /** Set for an uploader: the only project it may send reports to. */
   uploaderFor: string | null;
+  /** A scoped token's permissions; absent or `null` is everything the role allows. */
+  scopes?: readonly Permission[] | null;
 }
+
+/** The permissions a token can be scoped to: the vocabulary without its admin spellings. */
+export const TOKEN_SCOPES = PERMISSIONS.filter(
+  (permission) => !isAdminPermission(permission),
+) as unknown as readonly [Permission, ...Permission[]];
 
 export function satisfies(caller: Caller, required: Role): boolean {
   if (caller.role === null) return false;
@@ -47,11 +56,24 @@ export const CreateAccessTokenBodySchema = z
     projectId: z.string().uuid().optional(),
     /** Days until the token stops working; omitted, it never expires. */
     expiresInDays: z.number().int().min(1).max(365).optional(),
+    /** A subset of the role's permissions (plan task 7); omitted, the token has the whole role. */
+    scopes: z.array(z.enum(TOKEN_SCOPES)).min(1).max(TOKEN_SCOPES.length).optional(),
   })
   .refine((body) => body.role !== 'uploader' || body.projectId !== undefined, {
     message: 'an uploader token is pinned to one project',
     path: ['projectId'],
-  });
+  })
+  .refine((body) => body.role !== 'uploader' || body.scopes === undefined, {
+    message: 'an uploader token is already limited to sending reports',
+    path: ['scopes'],
+  })
+  .refine(
+    (body) =>
+      body.role === 'uploader' ||
+      body.scopes === undefined ||
+      scopesBeyondRole(body.role, body.scopes).length === 0,
+    { message: "a token's scopes must be permissions its role holds", path: ['scopes'] },
+  );
 
 export const TOKEN_PREFIX = 'lup_';
 
@@ -70,6 +92,7 @@ export interface AccessTokenSummary {
   lastUsedAt: string | null;
   revokedAt: string | null;
   expiresAt: string | null;
+  scopes: Permission[] | null;
 }
 
 function summary(row: typeof accessTokens.$inferSelect): AccessTokenSummary {
@@ -84,6 +107,7 @@ function summary(row: typeof accessTokens.$inferSelect): AccessTokenSummary {
     lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
     revokedAt: row.revokedAt?.toISOString() ?? null,
     expiresAt: row.expiresAt?.toISOString() ?? null,
+    scopes: (row.scopes as Permission[] | null) ?? null,
   };
 }
 
@@ -116,6 +140,7 @@ export async function createAccessToken(
         body.expiresInDays === undefined
           ? null
           : new Date(Date.now() + body.expiresInDays * DAY_MS),
+      scopes: body.scopes === undefined ? null : [...new Set(body.scopes)],
     })
     .returning();
   return { token, summary: summary(row as typeof accessTokens.$inferSelect) };
@@ -159,6 +184,7 @@ export async function rotateAccessToken(
       ...(lifetime === undefined
         ? {}
         : { expiresInDays: Math.max(1, Math.round(lifetime / DAY_MS)) }),
+      ...(old.scopes === null ? {} : { scopes: old.scopes as (typeof TOKEN_SCOPES)[number][] }),
     },
     actor,
   );
@@ -239,7 +265,12 @@ export async function authenticateToken(options: Options, token: string): Promis
     .where(eq(accessTokens.id, row.id));
   return row.role === 'uploader'
     ? { actor: `token:${row.id}`, role: null, uploaderFor: row.projectId }
-    : { actor: `token:${row.id}`, role: row.role as Role, uploaderFor: null };
+    : {
+        actor: `token:${row.id}`,
+        role: row.role as Role,
+        uploaderFor: null,
+        ...(row.scopes === null ? {} : { scopes: row.scopes as Permission[] }),
+      };
 }
 
 /** What an audited decision says about itself. */
