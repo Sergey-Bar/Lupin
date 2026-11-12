@@ -9,6 +9,13 @@ the task that names them, so `scripts/lib/docs-paths.test.mjs` keeps checking on
 
 ## Decisions, and the assumptions behind them
 
+- **Solo first (2026-11-12, the owner's call).** The remaining work targets one person on one
+  install. Cut from this plan: per-project roles; anything for a second person or team (sharing,
+  assignment, per-person notices); SCIM and multi-workspace routes in the OpenAPI work of task 32;
+  workspace-level budgets in task 36 (project budgets stay); and task 34 narrows to exporting this
+  install's data for a restore. Multi-user code that already exists (OIDC, members, SCIM,
+  workspaces) is kept and kept passing its tests, and is not extended.
+
 The owner asked for the plan without answering these, so each is stated and can be overturned
 before its wave starts.
 
