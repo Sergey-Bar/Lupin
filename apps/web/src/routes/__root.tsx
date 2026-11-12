@@ -84,14 +84,16 @@ function RootComponent() {
         <ToastProvider>
           <CopilotProvider>
             {isFullScreen(pathname) ? (
-              // First-run setup stands alone: no sidebar, no bars, one step on the shell.
-              <div className="relative flex min-h-dvh flex-col bg-surface-sunken bg-shell text-fg">
+              // First-run setup stands alone: no sidebar, no bars, one step on the shell. Held to
+              // the viewport like the app frame, with `main` the region that scrolls, so a long
+              // step never makes the document scroll (the no-scroll contract).
+              <div className="relative flex h-dvh overflow-hidden bg-surface-sunken bg-shell text-fg">
                 <SkipLink />
                 <main
                   id="main"
                   tabIndex={-1}
                   data-frame="full-screen"
-                  className="flex min-w-0 flex-1 flex-col p-4 outline-none sm:px-6"
+                  className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4 outline-none sm:px-6"
                 >
                   <Outlet />
                 </main>

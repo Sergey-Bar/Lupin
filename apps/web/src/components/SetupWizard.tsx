@@ -392,9 +392,11 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
       );
   };
 
+  // A column held to the height the page gives it, with the step as the part that scrolls: a
+  // long step scrolls inside its card, and the page itself never does (the no-scroll contract).
   return (
-    <div className="grid gap-5">
-      <div className="grid gap-1">
+    <div className="flex min-h-0 flex-1 flex-col gap-5">
+      <div className="grid shrink-0 gap-1">
         <div className="flex items-baseline justify-between gap-3 text-xs text-fg-muted">
           <span>
             Step {current + 1} of {steps.length}
@@ -415,7 +417,7 @@ function Wizard({ clients, who }: { clients: SetupClients; who: WhoAmI }): React
       </div>
       <section
         aria-labelledby="setup-step-title"
-        className="grid content-start gap-4 rounded-lg border border-border bg-surface p-5 sm:p-6 animate-fade-in"
+        className="grid min-h-0 content-start gap-4 overflow-y-auto rounded-lg border border-border bg-surface p-5 sm:p-6 animate-fade-in"
         key={step.id}
       >
         <div className="grid gap-1">
@@ -472,9 +474,9 @@ export function SetupPage({ clients }: { clients: SetupClients }): React.ReactEl
   return (
     <div
       data-testid="setup-page"
-      className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 py-2 sm:py-8"
+      className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col gap-6 py-2 sm:py-8"
     >
-      <header className="flex items-center justify-between gap-3">
+      <header className="flex shrink-0 items-center justify-between gap-3">
         <Wordmark decorative />
         <a
           href="/dashboard/now"
@@ -484,7 +486,7 @@ export function SetupPage({ clients }: { clients: SetupClients }): React.ReactEl
           Do this later
         </a>
       </header>
-      <div className="grid gap-1">
+      <div className="grid shrink-0 gap-1">
         <h1 className="text-2xl font-semibold text-fg">Set up Lupin</h1>
         <p className="text-sm text-fg-muted">
           From an empty install to your first run. Skip anything and come back later.

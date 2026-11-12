@@ -265,7 +265,9 @@ function ToolboxCatalogue({
           </>
         }
       />
-      <div className="shrink-0">
+      {/* Six goals are wider than a phone. They keep one row and scroll across in place, and
+          the page itself does not; the buttons are the region's focusable content. */}
+      <div className="max-w-full shrink-0 overflow-x-auto">
         <Segmented<GoalId>
           label="What do you want to check?"
           options={[

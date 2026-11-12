@@ -41,7 +41,10 @@ export const Table = forwardRef<HTMLTableElement, TableProps>(({ className, ...p
       {...(scrolls
         ? { tabIndex: 0, role: 'region', 'aria-label': props['aria-label'] ?? 'Table' }
         : {})}
-      className="w-full overflow-auto rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+      // `relative`, so a `sr-only` caption (absolutely positioned) is contained by the region
+      // that scrolls; without it the caption sits at the table's far edge in `<main>`'s
+      // coordinates and makes the page scroll sideways on a phone.
+      className="relative w-full overflow-auto rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
     >
       <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
     </div>
