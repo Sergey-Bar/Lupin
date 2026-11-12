@@ -199,7 +199,7 @@ describe('derivation does not block the event loop', () => {
     // cannot pass this without also failing to compile.
     const source = readFileSync(path.join(import.meta.dirname, 'vault-crypto.ts'), 'utf8');
     expect(source).toMatch(/promisify\(pbkdf2\)/);
-    expect(source).toMatch(/pbkdf2Async\(secret, salt, 100_000/);
+    expect(source).toMatch(/pbkdf2Async\(secret, salt, iterations/);
     // The *import* is what cannot be reintroduced silently, so the check reads the
     // import statement rather than the whole file: the comment above `derive`
     // explains the defect and names `pbkdf2Sync` twice, and a bare "the source does
@@ -212,6 +212,38 @@ describe('derivation does not block the event loop', () => {
     expect(imports[0]).not.toMatch(/pbkdf2Sync/);
     // And there is no call either, which a bare re-import would not be caught by.
     expect(source).not.toMatch(/pbkdf2Sync\(/);
+  });
+});
+
+describe('pbkdf2 iterations (plan task 10)', () => {
+  it('seals at 600 000 iterations and records the count', async () => {
+    const envelope = await sealSecret('the credential', SECRET_A, GITHUB);
+    expect(envelope.iterations).toBe(600_000);
+    await expect(openSecret(envelope, SECRET_A, GITHUB)).resolves.toBe('the credential');
+  });
+
+  it('opens an envelope sealed before the count was raised', async () => {
+    const salt = randomBytes(16).toString('base64url');
+    const iv = randomBytes(12);
+    const key = await keyFor(SECRET_A, salt, 100_000);
+    const cipher = createCipheriv('aes-256-gcm', key, iv);
+    cipher.setAAD(aadFor(GITHUB));
+    const ciphertext = Buffer.concat([cipher.update('old credential', 'utf8'), cipher.final()]);
+    const legacy: VaultEnvelope = {
+      version: 2,
+      algorithm: 'aes-256-gcm',
+      keyVersion: 1,
+      salt,
+      iv: iv.toString('base64url'),
+      tag: cipher.getAuthTag().toString('base64url'),
+      ciphertext: ciphertext.toString('base64url'),
+    };
+    clearKeyCache();
+    await expect(openSecret(legacy, SECRET_A, GITHUB)).resolves.toBe('old credential');
+    // Opened at 600k it would fail authentication, which proves the count is honoured.
+    await expect(
+      openSecret({ ...legacy, iterations: 600_000 }, SECRET_A, GITHUB),
+    ).rejects.toThrow();
   });
 });
 

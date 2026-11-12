@@ -1,7 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq, max } from 'drizzle-orm';
 import { vaultEntries, type VaultEntry } from '@lupin/db';
-import { openSecret, sealSecret, type VaultEnvelope } from '../infrastructure/vault-crypto.js';
+import {
+  LEGACY_PBKDF2_ITERATIONS,
+  openSecret,
+  sealSecret,
+  type VaultEnvelope,
+} from '../infrastructure/vault-crypto.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
 import { audit } from './access-service.js';
 import type { ProjectRegistryServiceOptions } from './project-registry-service.js';
@@ -29,8 +34,6 @@ export type VaultOptions = Pick<ProjectRegistryServiceOptions, 'db' | 'workspace
   /** Who is writing, for the audit row. Absent: `system`. */
   actor?: string;
 };
-
-const PBKDF2_ITERATIONS = 100_000;
 
 function requireVaultSecret(options: VaultOptions, what: string): string {
   if (options.vaultSecret === undefined || options.vaultSecret.length < 32) {
@@ -71,6 +74,7 @@ function envelopeOf(row: VaultEntry): VaultEnvelope {
     iv: row.iv,
     tag: row.authTag,
     ciphertext: row.ciphertext,
+    iterations: row.iterations,
   };
 }
 
@@ -80,7 +84,7 @@ function sealedColumns(envelope: VaultEnvelope, keyVersion: number, now: Date) {
     iv: envelope.iv,
     authTag: envelope.tag,
     salt: envelope.salt,
-    iterations: PBKDF2_ITERATIONS,
+    iterations: envelope.iterations ?? LEGACY_PBKDF2_ITERATIONS,
     keyVersion,
     updatedAt: now,
   };
