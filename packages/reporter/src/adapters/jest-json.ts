@@ -57,6 +57,24 @@ function testOf(producer: Producer, file: string, entry: Json): TestInput | null
   };
 }
 
+/** One suite's tests, and the failure that stopped it from running any, when there was one. */
+function suiteOf(
+  producer: Producer,
+  suite: Record<string, unknown>,
+): { tests: TestInput[]; error: string | null } {
+  const file = relativePath(textOf(suite['name']));
+  const assertions = list(suite['assertionResults']);
+  const tests: TestInput[] = [];
+  for (const assertion of assertions) {
+    const entry = record(assertion);
+    const test = entry === null ? null : testOf(producer, file, entry);
+    if (test !== null) tests.push(test);
+  }
+  const execError = textOf(record(suite['testExecError'])?.['message']);
+  const failure = execError || (assertions.length === 0 ? textOf(suite['message']) : '');
+  return { tests, error: failure === '' ? null : `${file}: ${failure.replace(ANSI, '')}` };
+}
+
 export function jestShapedAdapter(
   producer: Producer,
   label: string,
@@ -74,16 +92,9 @@ export function jestShapedAdapter(
       for (const item of list(document['testResults'])) {
         const suite = record(item);
         if (suite === null) continue;
-        const file = relativePath(textOf(suite['name']));
-        const assertions = list(suite['assertionResults']);
-        for (const assertion of assertions) {
-          const entry = record(assertion);
-          const test = entry === null ? null : testOf(producer, file, entry);
-          if (test !== null) tests.push(test);
-        }
-        const execError = textOf(record(suite['testExecError'])?.['message']);
-        const failure = execError || (assertions.length === 0 ? textOf(suite['message']) : '');
-        if (failure !== '') reportErrors.push({ message: `${file}: ${failure.replace(ANSI, '')}` });
+        const read = suiteOf(producer, suite);
+        tests.push(...read.tests);
+        if (read.error !== null) reportErrors.push({ message: read.error });
       }
       return testResultsRun(
         tests,
