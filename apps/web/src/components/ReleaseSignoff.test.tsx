@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReleaseSignoff } from '@lupin/shared-contracts';
@@ -71,6 +71,34 @@ describe('release sign-off', () => {
         reason: 'smoke is red',
       }),
     );
+  });
+
+  it('ships, then says so when a record is refused, and never submits the form', async () => {
+    signedInAs('operator');
+    const user = userEvent.setup();
+    const record = panel(
+      [],
+      vi
+        .fn()
+        .mockResolvedValueOnce(signoff({ override: false }))
+        .mockRejectedValueOnce(new Error('the server is down')),
+    );
+    const form = await screen.findByRole('form', { name: 'Sign off a release' });
+    await waitFor(() => expect(within(form).getByLabelText('Commit')).toBeEnabled());
+    await user.type(within(form).getByLabelText('Commit'), 'abc1234');
+    await user.type(within(form).getByLabelText('Reason (required)'), 'green');
+    fireEvent.submit(form);
+    expect(record).not.toHaveBeenCalled();
+    await user.click(within(form).getByRole('button', { name: 'Ship' }));
+    expect(await screen.findByText('Recorded: ship')).toBeInTheDocument();
+    await user.type(within(form).getByLabelText('Reason (required)'), 'again');
+    await user.click(within(form).getByRole('button', { name: 'Ship' }));
+    expect(await screen.findByText('The sign-off was not recorded')).toBeInTheDocument();
+    expect(record).toHaveBeenLastCalledWith('p', {
+      commit: 'abc1234',
+      decision: 'ship',
+      reason: 'again',
+    });
   });
 
   it('shows a viewer the record but not the controls', async () => {

@@ -382,3 +382,66 @@ describe('the scan and the trend', () => {
     });
   });
 });
+
+describe('cluster issues and sign-offs (plan Wave 1 tasks 3 and 5)', () => {
+  const link = {
+    id: 'l1',
+    projectId: 'p 1',
+    sourceKind: 'cluster',
+    sourceKey: 'k',
+    target: 'jira',
+    key: 'ACME-9',
+    url: 'https://acme.atlassian.net/browse/ACME-9',
+    created: false,
+    createdBy: 'token:o',
+    createdAt: '2026-11-01T00:00:00.000Z',
+  };
+  const signoff = {
+    id: 's1',
+    projectId: 'p 1',
+    commit: 'abc1234',
+    decision: 'ship',
+    verdict: 'go',
+    override: false,
+    reason: 'green',
+    actor: 'token:a',
+    createdAt: '2026-11-01T00:00:00.000Z',
+  };
+
+  it('asks for each signature in the query, and returns the issues by signature', async () => {
+    const { calls, impl } = respondWith({ issues: { 'Error: a': link } });
+    const issues = await createQaClient('', impl).clusterIssues?.('p 1', ['Error: a', 'b&c']);
+    expect(issues?.['Error: a']?.key).toBe('ACME-9');
+    expect(calls[0]).toBe(
+      '/api/v1/projects/p%201/cluster-issues?signature=Error%3A+a&signature=b%26c',
+    );
+  });
+
+  it('opens a cluster issue, lists sign-offs and records one', async () => {
+    const opened = respondWith(link);
+    await expect(
+      createQaClient('', opened.impl).openClusterIssue?.({
+        projectId: 'p 1',
+        target: 'jira',
+        signature: 'Error: a',
+        errorType: 'Error',
+        sampleMessage: 'Error: a',
+        occurrences: 1,
+        runs: 1,
+        tests: ['t'],
+      } as never),
+    ).resolves.toMatchObject({ key: 'ACME-9' });
+    expect(opened.calls[0]).toBe('/api/v1/dashboard/failure-clusters/issue');
+    const listed = respondWith({ signoffs: [signoff] });
+    await expect(createQaClient('', listed.impl).listSignoffs('p 1')).resolves.toHaveLength(1);
+    expect(listed.calls[0]).toBe('/api/v1/projects/p%201/signoffs');
+    const recorded = respondWith(signoff);
+    await expect(
+      createQaClient('', recorded.impl).signOff('p 1', {
+        commit: 'abc1234',
+        decision: 'ship',
+        reason: 'green',
+      } as never),
+    ).resolves.toMatchObject({ verdict: 'go' });
+  });
+});

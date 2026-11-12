@@ -96,3 +96,24 @@ describe('createNotificationsClient', () => {
     expect(await client.testChannel('c1')).toBeNull();
   });
 });
+
+describe('editing a subscription (plan Wave 1 task 4)', () => {
+  it('puts the whole draft to the subscription and reads it back', async () => {
+    const { client, calls } = server({ 'PUT /api/v1/report-subscriptions/s%201': SUBSCRIPTION });
+    const draft = {
+      channelId: 'c1',
+      name: 'Daily',
+      cadence: 'daily' as const,
+      timezone: 'UTC',
+      quietHours: { start: 22, end: 7 },
+    };
+    await expect(client.updateSubscription?.('s 1', draft as never)).resolves.toMatchObject({
+      id: 's1',
+    });
+    expect(calls[0]).toMatchObject({
+      method: 'PUT',
+      path: '/api/v1/report-subscriptions/s%201',
+      body: draft,
+    });
+  });
+});

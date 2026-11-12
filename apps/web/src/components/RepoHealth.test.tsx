@@ -517,13 +517,18 @@ describe('AccessGate and AccessPage', () => {
     await screen.findByTestId('access-page');
     expect(await screen.findByTestId('token-scope-list')).toHaveTextContent('runs:read');
     await user.type(screen.getByLabelText('Name'), 'Reader');
-    await user.click(within(screen.getByTestId('token-scopes')).getByLabelText('runs:read'));
+    const box = within(screen.getByTestId('token-scopes'));
+    await user.click(box.getByLabelText('tests:read'));
+    await user.click(box.getByLabelText('runs:read'));
+    // Unticked again: only what is still ticked is sent.
+    await user.click(box.getByLabelText('tests:read'));
+    fireEvent.change(screen.getByLabelText('Expires'), { target: { value: '30' } });
     await user.click(screen.getByRole('button', { name: 'Issue' }));
     await screen.findByTestId('issued-token');
     expect(api.createToken).toHaveBeenCalledWith({
       name: 'Reader',
       role: 'viewer',
-      expiresInDays: 90,
+      expiresInDays: 30,
       scopes: ['runs:read'],
     });
   });
