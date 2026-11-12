@@ -76,6 +76,7 @@ const SENTINELS: Record<string, string> = {
   runId: '11111111-1111-4111-8111-111111111111',
   projectId: '22222222-2222-4222-8222-222222222222',
   metricId: 'coverage',
+  number: '1',
 };
 
 function concretePath(template: string): string {

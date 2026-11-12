@@ -284,13 +284,14 @@ describe('key derivation', () => {
   });
 
   it('bounds the cache', async () => {
-    for (let index = 0; index < 300; index += 1) {
-      await openSecret(
-        await sealSecret(`value-${String(index)}`, SECRET_A, GITHUB),
-        SECRET_A,
-        GITHUB,
-      );
-    }
+    // Concurrent, so the derivations share libuv's thread pool: 300 sequential
+    // derivations at 600 000 iterations take longer than the test's timeout under a full
+    // run. Each envelope has its own salt either way, so the cache still has to evict.
+    await Promise.all(
+      Array.from({ length: 300 }, async (_, index) =>
+        openSecret(await sealSecret(`value-${String(index)}`, SECRET_A, GITHUB), SECRET_A, GITHUB),
+      ),
+    );
     expect(keyCacheSize()).toBeLessThanOrEqual(256);
   });
 

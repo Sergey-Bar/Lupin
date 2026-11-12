@@ -56,6 +56,8 @@ function walk(relativeRoot, accept) {
 const isTypeScript = (name) => /\.(ts|tsx|mts|cts)$/.test(name);
 /** @param {string} name */
 const isTestFile = (name) => /\.(test|spec)\.[cm]?tsx?$/.test(name);
+/** @param {string} name */
+const isVitestConfig = (name) => name.startsWith('vitest.') && /\.config\.[cm]?[jt]s$/.test(name);
 
 /**
  * Every product source file: TypeScript, and not itself a test.
@@ -105,7 +107,9 @@ function packagesWithTestSupport() {
   const found = [];
   for (const group of ['apps', 'packages', 'tools']) {
     for (const dir of dirsIn(group)) {
-      const candidate = path.join(group, dir, 'src', 'test-support');
+      // POSIX separators on every host: `unreferencedSupportFiles` matches these by a
+      // `group/` prefix, and a `group\` one made that check pass vacuously on Windows.
+      const candidate = path.posix.join(group, dir, 'src', 'test-support');
       if (isDirectory(candidate)) found.push(candidate);
     }
   }
@@ -135,7 +139,9 @@ function importSpecifiers(source) {
  * @returns {string}
  */
 function testFileSource(relativeRoot) {
-  return walk(relativeRoot, isTestFile)
+  // A Vitest config's `setupFiles` runs before every test in its package, so a
+  // fixture named there is reachable from all of them.
+  return walk(relativeRoot, (name) => isTestFile(name) || isVitestConfig(name))
     .map((file) => readFileSync(file, 'utf8'))
     .join('\n');
 }
