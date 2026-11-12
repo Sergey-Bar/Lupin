@@ -33,6 +33,19 @@
   the environment are not checked.
 - **Vault keys at 600,000 PBKDF2 iterations (task 10).** Older entries open at their recorded
   count and are re-sealed on their next write.
+- **Stored failure causes (task 11).** A job clusters each workspace's last 90 days every five
+  minutes (`LUPIN_CLUSTER_JOB_INTERVAL_MS`) and the Tests page reads the stored causes, with
+  first seen, last seen, occurrences and runs.
+- **Known failures (task 12).** A known-issue label takes a reason when there is no issue to link,
+  and the cause shows it on every later occurrence; it is still counted as a failure.
+- **Trend rollups (task 13).** Daily rollups per project serve any trend window at the same cost,
+  and `GET /api/v1/dashboard/analytics/trend?from=&to=` serves a custom range of up to 366 days.
+- **Run retention (task 14).** `GET`/`PUT /api/v1/retention` (viewer / admin) sets how many days a
+  workspace keeps runs; an hourly sweep removes older runs with their results and artifact bytes,
+  keeps any run with an artifact under legal hold, and audits what it removed. No screen yet.
+- **14 dormant tables dropped (task 15).** `0066_drop_dormant_tables.sql` refuses to drop a table
+  that holds rows unless `lupin.allow_drop_nonempty` is `on`; the legacy importer reports them as
+  skipped.
 
 - **Change risk.** Every pull request the gate sees gets a level and a score that is the sum of
   stated factors, each with its own sentence: authorship, size, tests touched, diff coverage,

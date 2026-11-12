@@ -397,3 +397,7 @@ its progress entry rather than claiming it.
   the environment, and DNS rebinding between check and request is open (task 9); W7-23, rotation
   re-sealing every workspace, is still open (task 10). The complexity gate had been dying at its
   6 GB heap since task 3 and measuring nothing; it now has 8 GB.
+- 2026-11-12: Wave 3 done; `verify:local` green at `3298aa33`. Not done: retention has an API and
+  no screen; custom trend ranges have an API and no picker; `test_failure_correlations` keeps a
+  reader and no writer, so C-6 stays debt with two tables; there is no `quarantine` artifact
+  class to honour, only `legal_hold`.
