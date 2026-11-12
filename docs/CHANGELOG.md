@@ -2,7 +2,7 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
-## Unreleased - the console, simplified
+## 4.1.0 - 2026-11-12 - the console, simplified
 
 ### Added
 
@@ -230,6 +230,17 @@ DEPENDENCY_UNAVAILABLE`, and any other audit row the database refuses is reporte
 
 - **Focus mode**, the **QA roles** and the sidebar's recent-runs list. A setting stored by an
   older build is ignored.
+
+### Fixed
+
+- **The ZAP report is sized and read through one file handle**, so a report that changes after
+  the size check is still held to `artifactMaxBytes` (CodeQL `js/file-system-race`).
+- **Every list the new services put into one query is bounded.** Briefing assessments and a
+  change's paths are read 500 at a time; the phase reads keep the limits their callers apply.
+- **Setup, the Toolbox and Portfolio fit the screen.** A long setup step scrolls inside the page
+  instead of the whole window, the Toolbox's six goals scroll across on a phone, and a table's
+  hidden caption or the phases table no longer makes Portfolio scroll sideways.
+- **The cockpit report and the pace chart use the current colours** of the neutral planes.
 
 ## 4.0.0 - 2026-10-30 - the product is Lupin, with a redesigned console
 
