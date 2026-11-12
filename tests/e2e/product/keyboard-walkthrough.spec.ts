@@ -45,7 +45,10 @@ test.describe('go-to chords', () => {
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     await page.keyboard.press('g');
     await page.waitForTimeout(1_200);
-    await page.keyboard.press('a');
+    // `r` alone is no shortcut, so landing anywhere but Home would be the late chord. (Not
+    // `a`: on its own that takes the page's main action, which on Home retries a failed run
+    // and leaves a job queued for every spec after this one.)
+    await page.keyboard.press('r');
     await expect(page).toHaveURL(`${WEB_BASE}/dashboard/now`);
   });
 

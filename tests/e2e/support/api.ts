@@ -283,7 +283,7 @@ export async function describeRun(request: APIRequestContext, runId: string): Pr
     commit: run['commit'],
     testType: run['testType'],
     suite: run['suite'],
-    retryOf: run['retryOf'] ?? run['rerunOf'],
+    retryOf: run['retryOfRunId'],
     createdAt: run['createdAt'],
   });
 }

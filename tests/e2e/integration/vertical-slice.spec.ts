@@ -307,10 +307,10 @@ test('vertical slice — SSE live update: run:end changes status to passed witho
   await page.goto(`${WEB_BASE}/dashboard/runs`);
   await page.waitForSelector(`[data-testid="run-row-${RUN_ID}"]`, { timeout: 15000 });
 
-  // Verify initial status is "running"
+  // Verify initial status is "running" (the pill reads it in sentence case, "Running")
   const statusLocator = page.locator(`[data-testid="run-status-${RUN_ID}"]`);
   await expect(statusLocator).toBeVisible();
-  await expect(statusLocator).toContainText('running');
+  await expect(statusLocator).toContainText('running', { ignoreCase: true });
 
   // Step 3: POST run:end via Node.js fetch (not via the browser — simulates reporter finishing)
   const endRes = await fetch(`${API_BASE}/api/v1/reporter/events`, {
@@ -352,7 +352,7 @@ test('vertical slice — SSE live update: run:end changes status to passed witho
   ).toBeLessThan(POLL_INTERVAL_MS - 1_000);
 
   // Hard assertion: status element now shows "passed"
-  await expect(statusLocator).toContainText('passed');
+  await expect(statusLocator).toContainText('passed', { ignoreCase: true });
 
   await page.evaluate(() => {
     delete (window as unknown as { __pollDisabled?: boolean }).__pollDisabled;
