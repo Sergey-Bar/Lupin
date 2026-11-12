@@ -37,6 +37,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import {
   createRun,
+  describeRun,
   getRun,
   registerRunner,
   uniqueRunId,
@@ -428,9 +429,10 @@ async function claimJobFor(
   ).toBe(200);
 
   const claim = (await response.json()) as JobClaim;
+  const stray = claim.runId === runId ? '' : ` (${await describeRun(request, claim.runId)})`;
   expect(
     claim.runId,
-    `the first claim off an empty queue returned run ${claim.runId}, not ${runId}. Either ` +
+    `the first claim off an empty queue returned run ${claim.runId}${stray}, not ${runId}. Either ` +
       'another spec queued work without claiming it, or `globalSetup` did not reset the ' +
       'queue. Draining here is not the fix: a runner has one slot, so the retry could ' +
       'never succeed.',

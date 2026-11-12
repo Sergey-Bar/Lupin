@@ -75,7 +75,7 @@ test.describe('reporter run lifecycle', () => {
     await authenticate(context, request);
     await signInAndVisit(page, '/dashboard/runs');
 
-    const runItem = page.getByTestId(`run-item-${runId}`);
+    const runItem = page.getByTestId(`run-row-${runId}`);
     await expect(runItem, 'the seeded run must appear in the runs list').toBeVisible({
       timeout: 15_000,
     });

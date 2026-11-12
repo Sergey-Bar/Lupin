@@ -13,13 +13,17 @@ import { WEB_BASE } from '../support/config.js';
  * 3. the first `Tab` on every primary route reaches a control that shows where focus is.
  */
 
+// The chords `GO_TO` in `apps/web/src/components/Shortcuts.tsx` ships: the five sections,
+// Delivery, and the two settings pages people reach for by name.
 const ROUTES = [
   { key: 'n', path: '/dashboard/now' },
-  { key: 'p', path: '/dashboard/portfolio' },
   { key: 'r', path: '/dashboard/runs' },
-  { key: 'i', path: '/dashboard/insights' },
-  { key: 's', path: '/dashboard/reports' },
-  { key: 'a', path: '/dashboard/access' },
+  { key: 't', path: '/dashboard/insights' },
+  { key: 'h', path: '/dashboard' },
+  { key: 'd', path: '/dashboard/delivery' },
+  { key: 's', path: '/dashboard/settings/reports' },
+  { key: 'a', path: '/dashboard/settings/access' },
+  { key: ',', path: '/dashboard/settings' },
 ] as const;
 
 test.describe('go-to chords', () => {
@@ -27,7 +31,7 @@ test.describe('go-to chords', () => {
     test(`g ${route.key} goes to ${route.path}`, async ({ page }) => {
       // Start somewhere else, so landing on the target is a change and not a coincidence.
       await page.goto(
-        `${WEB_BASE}${route.path === '/dashboard/now' ? '/dashboard/access' : '/dashboard/now'}`,
+        `${WEB_BASE}${route.path === '/dashboard/now' ? '/dashboard/runs' : '/dashboard/now'}`,
       );
       await page.locator('body').click({ position: { x: 1, y: 1 } });
       await page.keyboard.press('g');
@@ -78,13 +82,24 @@ test.describe('rows', () => {
   test('j and k walk the rows of the page and never the navigation', async ({ page }) => {
     await page.goto(`${WEB_BASE}/dashboard/now`);
     await expect(page.locator('[data-page]')).toBeVisible();
-    // The page settles in stages: the cockpit fetch resolves, then a deferred
-    // `setTimeout(0)` lazy-loads the pace chart behind a Suspense boundary. Each stage
-    // reconciles the `[data-page]` subtree, and a reconcile that lands between the
-    // probe injection and a keypress detaches the focused row — the flake this test
-    // used to carry. The pace chart is the last thing to render, so waiting for it
-    // means no further re-render can steal focus mid-walk.
-    await expect(page.getByTestId('cockpit-pace')).toBeVisible();
+    // The page settles in stages as its reads resolve, and each stage reconciles the
+    // `[data-page]` subtree; a reconcile that lands between the probe injection and a
+    // keypress detaches the focused row, the flake this test used to carry. Home no longer
+    // draws the cockpit's pace chart (it moved to Health's Details), so wait for the reads
+    // themselves to finish: the page has settled once its markup holds still for a second.
+    // (Not `networkidle`: the run event stream stays open, so the network never idles.)
+    let previous = '';
+    await expect
+      .poll(
+        async () => {
+          const current = await page.locator('[data-page]').first().innerHTML();
+          const settled = current === previous;
+          previous = current;
+          return settled;
+        },
+        { intervals: [1_000], timeout: 20_000 },
+      )
+      .toBe(true);
     // The rows a screen shows depend on the data behind it. The key handling is the
     // subject here, so make `[data-page]` hold exactly a known list: the probe rows are
     // the only `li`/`tr` the walker (`'[data-page] li, [data-page] tbody tr'`) can see,

@@ -69,6 +69,8 @@ test.describe('onboarding', () => {
     // The setup line lives in Settings now, so Home stays the verdict and what needs you.
     await page.goto(`${WEB_BASE}/dashboard/settings`);
     await expect(page.getByTestId('setup-checklist')).toBeVisible({ timeout: 15_000 });
+    // The steps sit under a collapsed "All steps", so the line stays one line until asked.
+    await page.getByTestId('setup-checklist-steps').locator('summary').click();
     await expect(page.getByTestId('checklist-notifications')).toBeVisible();
     await expectAccessible(page, 'settings with the checklist');
   });

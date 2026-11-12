@@ -296,7 +296,7 @@ export default defineConfig({
         // project-scoped: `Cockpit.tsx` reads `subject.id`, loads five endpoints for it,
         // and returns the onboarding screen outright when no project is registered. The
         // specs seed *runs*, which are workspace-scoped, so without this they were signing
-        // in to an install with runs and finding no dashboard — `run-item-…` and the
+        // in to an install with runs and finding no dashboard — `run-row-…` and the
         // readiness card were absent because the page never reached the list, not because
         // the list was broken.
         //

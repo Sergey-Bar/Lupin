@@ -247,42 +247,45 @@ export async function claimJob(
   capabilities: readonly string[] = ['playwright'],
   wantRunId?: string,
 ): Promise<JobClaim> {
-  // A runner claims off a **shared** queue, so the first claim a test makes is whatever
-  // job was queued earliest — including one an earlier spec enqueued. Asserting that the
-  // first claim is *this* test's run is asserting that the suite ran in an order, which
-  // is why two of the six failures here reported a `runId` belonging to a different
-  // spec.
-  //
-  // So when the caller says which run it is leasing, the claim loops until it gets that
-  // one. That is what a runner actually does, and it makes the specs order-independent
-  // rather than dependent on a queue that happens to be empty. Bounded, and the message
-  // names the run it was looking for: an unbounded loop here would hang the lane rather
-  // than fail it.
-  const attempts = wantRunId === undefined ? 1 : 25;
-  let last: JobClaim | undefined;
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    const response = await request.post(
-      `${API_BASE}/api/v1/runners/${runner.runnerId}/jobs/claim`,
-      {
-        headers: jsonHeaders({ Authorization: `Bearer ${runner.token}` }),
-        data: { capabilities: [...capabilities] },
-      },
-    );
-    // 204 is the API's "nothing to claim", which is a legitimate answer to a single
-    // attempt and is what a flaky claim would look like.
-    expect(
-      response.status(),
-      `POST /api/v1/runners/${runner.runnerId}/jobs/claim -> ${response.status()}`,
-    ).toBe(200);
-    const claim = (await readJson(response)) as JobClaim;
-    if (wantRunId === undefined || claim.runId === wantRunId) return claim;
-    last = claim;
-  }
+  // A runner claims off a **shared** queue, and a registered runner has one slot. So a
+  // claim that returns another spec's job fills that slot, and every later claim by this
+  // runner answers 204: retrying cannot reach this test's run. The suite runs on one
+  // worker and `globalSetup` empties the queue, so a foreign job means an earlier spec
+  // queued work it never claimed, and that is the defect to report, by name.
+  const response = await request.post(`${API_BASE}/api/v1/runners/${runner.runnerId}/jobs/claim`, {
+    headers: jsonHeaders({ Authorization: `Bearer ${runner.token}` }),
+    data: { capabilities: [...capabilities] },
+  });
+  // 204 is the API's "nothing to claim".
+  expect(
+    response.status(),
+    `POST /api/v1/runners/${runner.runnerId}/jobs/claim -> ${response.status()}`,
+  ).toBe(200);
+  const claim = (await readJson(response)) as JobClaim;
+  if (wantRunId === undefined || claim.runId === wantRunId) return claim;
   throw new Error(
-    `no claim returned run ${String(wantRunId)} after ${String(attempts)} attempt(s); the last ` +
-      `claim was for ${String(last?.runId)}. Either the run's job was never enqueued, or the ` +
-      'queue holds more unclaimed jobs than the attempt bound.',
+    `claimed run ${claim.runId} while looking for ${wantRunId}: ` +
+      `${await describeRun(request, claim.runId)}. An earlier spec queued it and never ` +
+      'claimed it.',
   );
+}
+
+/** Enough of a run to tell which spec queued it. */
+export async function describeRun(request: APIRequestContext, runId: string): Promise<string> {
+  const response = await request.get(`${API_BASE}/api/v1/runs/${runId}`, {
+    headers: API_AUTH_HEADERS,
+  });
+  if (!response.ok()) return `unreadable (${String(response.status())})`;
+  const run = (await readJson(response)) as Record<string, unknown>;
+  return JSON.stringify({
+    source: run['source'],
+    branch: run['branch'],
+    commit: run['commit'],
+    testType: run['testType'],
+    suite: run['suite'],
+    retryOf: run['retryOf'] ?? run['rerunOf'],
+    createdAt: run['createdAt'],
+  });
 }
 
 export async function uploadArtifact(
