@@ -18,7 +18,7 @@ const CEILINGS: Readonly<Record<string, number>> = {
   'components/SupplyChain.tsx': 742,
   'components/Agents.tsx': 733,
   'components/Notifications.tsx': 713,
-  'routes/dashboard/runner.tsx': 610,
+  'routes/dashboard/runner-page.tsx': 610,
 };
 const SRC = path.resolve(__dirname);
 
