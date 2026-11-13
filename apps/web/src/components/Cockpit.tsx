@@ -9,8 +9,8 @@ import type {
   CockpitMetric,
   CockpitWindow,
 } from '@lupin/shared-contracts';
-import { BriefingCard } from './Briefing.js';
 import { useCockpit } from '../hooks/useCockpit.js';
+import { lazyPage } from './lazy-page.js';
 import { useCommandActions } from '../hooks/useCommandActions.js';
 import { useResource } from '../hooks/useResource.js';
 import type { CockpitClient } from '../lib/cockpit-client.js';
@@ -30,7 +30,6 @@ import { Delta, PageFrame, PageBody, PageHeader, Panel, Segmented } from './kit.
 import { StatusLine } from './StatusLine.js';
 import { greetingFor } from '../lib/focus.js';
 import { isNothingYet } from '../lib/nothing-yet.js';
-import { FailureClustersPanel } from './InsightsCauses.js';
 import { ReadFailed } from './ReadFailed.js';
 import { RiskSection } from './CockpitRisks.js';
 import { HomeSignoff, type SignoffSource } from './ReleaseSignoff.js';
@@ -81,6 +80,10 @@ function readHomeView(): HomeView {
 }
 
 const PaceChart = React.lazy(() => import('./CockpitPaceChart.js'));
+// Home's briefing and failure causes load with Home, not with the app: Health (/dashboard)
+// imports this module for its numbers, and the first bundle is what the rendering budget times.
+const BriefingCard = lazyPage(() => import('./Briefing.js'), 'BriefingCard');
+const FailureClustersPanel = lazyPage(() => import('./InsightsCauses.js'), 'FailureClustersPanel');
 
 const WINDOWS: ReadonlyArray<{ value: CockpitWindow; label: string }> = [
   { value: '7d', label: 'Last 7 days' },

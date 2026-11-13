@@ -3,7 +3,7 @@ import { createRoute } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
 import { PageFrame, PageHeader, Quiet } from '../../components/kit.js';
 import { ProjectGate } from '../../components/ProjectGate.js';
-import { RepoMap } from '../../components/map/RepoMap.js';
+import { lazyPage } from '../../components/lazy-page.js';
 import { read } from '../../components/Dashboard.js';
 import { useResource } from '../../hooks/useResource.js';
 import { createQaClient, type QaClient } from '../../lib/qa-client.js';
@@ -15,6 +15,9 @@ import {
   type MapSearch,
   type MapSearchParams,
 } from '../../lib/repo-map.js';
+
+// The drawing loads with the route, not with the app: no measured route draws it.
+const RepoMap = lazyPage(() => import('../../components/map/RepoMap.js'), 'RepoMap');
 
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
