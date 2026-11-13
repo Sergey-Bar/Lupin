@@ -1,26 +1,13 @@
-import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Route as dashboardRoute } from '../dashboard.js';
-import { lazyPage } from '../../components/lazy-page.js';
-import { createNotificationsClient } from '../../lib/notifications-client.js';
-import { createQaClient } from '../../lib/qa-client.js';
+import { SettingsReports } from './settings.js';
 
-// Loaded when the route is first opened; see `components/lazy-page.tsx`.
-const NotificationsPage = lazyPage(
-  () => import('../../components/Notifications.js'),
-  'NotificationsPage',
-);
-
-/** Scheduled reports: channels, schedules, the preview and the delivery history. */
+/**
+ * Scheduled reports at their older address. The root redirects it to Settings → Reports; the
+ * route stays so a direct match still draws the same page, from the one definition.
+ */
 export const Route = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/reports',
-  component: function ReportsRoute() {
-    const client = React.useMemo(() => createNotificationsClient(), []);
-    const projects = React.useMemo(() => {
-      const qa = createQaClient();
-      return async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name }));
-    }, []);
-    return <NotificationsPage client={client} projects={projects} />;
-  },
+  component: SettingsReports,
 });

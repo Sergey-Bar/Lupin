@@ -68,15 +68,18 @@ export const SettingsAppearanceRoute = createRoute({
 export const SettingsReportsRoute = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/settings/reports',
-  component: function SettingsReports() {
-    const client = React.useMemo(() => createNotificationsClient(), []);
-    const projects = React.useMemo(() => {
-      const qa = createQaClient();
-      return async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name }));
-    }, []);
-    return <NotificationsPage client={client} projects={projects} />;
-  },
+  component: SettingsReports,
 });
+
+/** The Reports page, also drawn by the older /dashboard/reports route. */
+export function SettingsReports(): React.ReactElement {
+  const client = React.useMemo(() => createNotificationsClient(), []);
+  const projects = React.useMemo(() => {
+    const qa = createQaClient();
+    return async () => (await qa.listProjects()).map(({ id, name }) => ({ id, name }));
+  }, []);
+  return <NotificationsPage client={client} projects={projects} />;
+}
 
 export const SettingsAccessRoute = createRoute({
   getParentRoute: () => dashboardRoute,
