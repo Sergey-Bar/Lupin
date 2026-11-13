@@ -96,7 +96,7 @@
 :root {
   --lupin-font-sans: 'Inter', 'Inter Fallback', ui-sans-serif, system-ui, sans-serif;
   --lupin-font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, monospace;
-  --lupin-font-display: 'Inter Display', 'Inter', 'Inter Fallback', ui-sans-serif, sans-serif;
+  --lupin-font-display: 'Inter', 'Inter Fallback', ui-sans-serif, sans-serif;
 }
 
 /*
