@@ -1,4 +1,4 @@
-FROM node:24.22.2-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS build
+FROM node:24.22.2-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS build
 WORKDIR /src
 # pnpm is not named here: Corepack reads `packageManager` from package.json, so the image uses the
 # same pnpm the repository does. A pin written in this file went stale (it said 10.30.2 while the
@@ -15,7 +15,7 @@ RUN pnpm install --frozen-lockfile \
   && pnpm --filter "@lupin/api" --prod deploy --legacy /out
 
 
-FROM node:24.22.2-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS runtime
+FROM node:24.22.2-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS runtime
 ARG LUPIN_VERSION=dev
 ARG LUPIN_REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/Sergey-Bar/Lupin" \
