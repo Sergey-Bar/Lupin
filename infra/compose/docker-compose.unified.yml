@@ -51,7 +51,7 @@ services:
     restart: unless-stopped
     mem_limit: 1g
     cpus: '1'
-    image: chrislusf/seaweedfs:4.48@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
+    image: chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0
     environment:
       # The store's own credential, from the operator's environment rather than written
       # here: a literal in a committed compose file is a committed secret.
@@ -342,7 +342,7 @@ services:
     # the API refuses to start one without a login and both CF_ACCESS_* settings. The token
     # comes from the Zero Trust dashboard and lives in .env, never in this file.
     profiles: ['cloudflare']
-    image: cloudflare/cloudflared:2026.10.1@sha256:a15a3b50b8dabd57ac2090e9484c0247dba9dfa1f0df4d298d4317f9d69eb2d5
+    image: cloudflare/cloudflared:2026.10.7@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
     command: ['tunnel', '--no-autoupdate', 'run']
     environment:
       TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
