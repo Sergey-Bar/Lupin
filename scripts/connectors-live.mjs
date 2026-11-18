@@ -25,7 +25,19 @@ const adapters = Object.fromEntries(
     ]),
   ),
 );
-const results = await runProbes(adapters, process.env);
+// Exactly the variables the probes read, named here so the docs can say which to set.
+const env = {
+  LUPIN_LIVE_GITHUB_TOKEN: process.env['LUPIN_LIVE_GITHUB_TOKEN'],
+  LUPIN_LIVE_GITHUB_REPO: process.env['LUPIN_LIVE_GITHUB_REPO'],
+  LUPIN_LIVE_JIRA_TOKEN: process.env['LUPIN_LIVE_JIRA_TOKEN'],
+  LUPIN_LIVE_JIRA_BASE_URL: process.env['LUPIN_LIVE_JIRA_BASE_URL'],
+  LUPIN_LIVE_SLACK_TOKEN: process.env['LUPIN_LIVE_SLACK_TOKEN'],
+  LUPIN_LIVE_TELEGRAM_TOKEN: process.env['LUPIN_LIVE_TELEGRAM_TOKEN'],
+  LUPIN_LIVE_WHATSAPP_TOKEN: process.env['LUPIN_LIVE_WHATSAPP_TOKEN'],
+  LUPIN_LIVE_WHATSAPP_PHONE_ID: process.env['LUPIN_LIVE_WHATSAPP_PHONE_ID'],
+  LUPIN_LIVE_SIGNAL_BRIDGE: process.env['LUPIN_LIVE_SIGNAL_BRIDGE'],
+};
+const results = await runProbes(adapters, env);
 const lines = [
   '### Live connector probes',
   '',

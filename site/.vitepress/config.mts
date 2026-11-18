@@ -121,6 +121,7 @@ export default defineConfig({
         items: [
           { text: 'Start here · choose your goal', link: '/guide/' },
           { text: 'Install', link: '/guide/install' },
+          { text: 'Your first release verdict', link: '/guide/first-verdict' },
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'Sending results', link: '/guide/sending-results' },
           { text: 'Choose a profile', link: '/guide/profiles' },
@@ -149,6 +150,7 @@ export default defineConfig({
         collapsed: true,
         items: [
           { text: 'Send results from any CI (CLI)', link: '/guide/cli' },
+          { text: 'Connectors, and how each is proven', link: '/guide/connectors' },
           { text: 'Embedded and firmware QA', link: '/guide/embedded' },
           { text: 'GitHub command center', link: '/guide/github-command-center' },
           { text: 'Ask your editor (MCP)', link: '/guide/mcp' },
@@ -171,6 +173,8 @@ export default defineConfig({
         collapsed: true,
         items: [
           { text: 'How this repository tests itself', link: '/guide/testing-strategy' },
+          { text: 'Upgrade from 4.x to 5.0', link: '/guide/upgrade-5' },
+          { text: 'What 5.0.0 does not do yet', link: '/guide/known-limitations' },
           { text: 'How this project is maintained', link: '/guide/maintenance' },
           { text: 'The design language', link: '/guide/design-language' },
           { text: 'Quality', link: '/pages/quality/' },

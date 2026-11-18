@@ -202,6 +202,46 @@ export const pageJourneys: Record<string, Journey> = {
     takeaway:
       'Every line is a count with its source. A model may reword them, and is thrown out if it adds a number.',
   },
+  'guide/first-verdict.md': {
+    audience: 'QA engineers and SDETs',
+    goal: 'Get a release verdict for your own repository from your own CI, in thirty minutes.',
+    stages: [
+      ['Connect', 'Install Lupin, connect a repository and issue an uploader token.'],
+      ['Wire CI', 'Add the lupin CLI or the Playwright reporter to one job.'],
+      ['Read the verdict', 'Home says Ready, Caution or No-go, and why.'],
+    ],
+    takeaway: 'The CLI keeps your suite’s exit code; Lupin adds the evidence, never a new failure.',
+  },
+  'guide/connectors.md': {
+    audience: 'Admins connecting chat and issue platforms',
+    goal: 'See how each connector is proven, and help prove one against a real account.',
+    stages: [
+      ['Read the level', 'Each connector is fake-verified or live-verified.'],
+      ['Add a secret', 'A fork with a platform secret can run the live probe.'],
+      ['Raise the level', 'A passing run is the evidence for live-verified.'],
+    ],
+    takeaway: 'A probe only reads; it never posts a message.',
+  },
+  'guide/upgrade-5.md': {
+    audience: 'Operators running Lupin 4.x',
+    goal: 'Move to 5.0 with your data, and know how to go back.',
+    stages: [
+      ['Back up', 'Write the database, artifacts and .env to a backup folder.'],
+      ['Update', 'Run the update with the new version; migrations run on start.'],
+      ['Roll back if needed', 'Return to 4.1.0 and restore the backup.'],
+    ],
+    takeaway: 'The upgrade and the rollback are rehearsed from the published 4.1.0 zip.',
+  },
+  'guide/known-limitations.md': {
+    audience: 'Anyone deciding whether 5.0.0 fits',
+    goal: 'Know what this release does not do yet, before you rely on it.',
+    stages: [
+      ['Scan the table', 'Each row is one limitation and the area it affects.'],
+      ['Follow the ledger', 'The ledger row names an owner and what closes it.'],
+      ['Plan around it', 'Choose a workaround or wait for the row to close.'],
+    ],
+    takeaway: 'None of these is a Blocker or a Critical.',
+  },
   'guide/mcp.md': {
     audience: 'Developers using an AI editor',
     goal: 'Ask your editor questions about recorded quality evidence.',

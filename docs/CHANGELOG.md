@@ -2,6 +2,48 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
+## 5.0.0 - unreleased - QA at the pace of AI-era development
+
+Every journey a QA engineer or SDET needs is proven end to end against PostgreSQL, and
+`pnpm release:readiness` says so. `@lupin/cli` and `@lupin/playwright-reporter` move from 1.0.0
+to 5.0.0, in step with the product: pin `@lupin/cli@^5`. Upgrade notes: `site/guide/upgrade-5.md`.
+
+### Fixed
+
+- **Connecting a repository said it failed when it had worked (REL-1).** The registration
+  response dropped each command's label, which the web client requires.
+- **Home never saw a quality gate on a PostgreSQL install, and a green CI upload could not pass
+  one (REL-2).** The readiness card and `GET /runs/:id/gate` now read one gate
+  (`execution/run-gate.ts`), and a run from an uploaded report records the report as its evidence.
+- **A token printed in a failing test's output was stored as it was (REL-3).** Failure messages
+  are redacted where both reporter doors store them.
+- **A fifty-thousand-test suite could not be recorded (REL-4).** Test reports may be 32 MiB (was
+  5 MiB), and tests are written in batches: 50 000 tests ingest in 6.7 s.
+- **Uploading a passing suite graded a repository F (REL-5).** A plain JUnit upload no longer
+  counts as a measured Tests score of 0.
+
+### Added
+
+- **`pnpm release:readiness`**, the release as data (`docs/quality/release-journeys.json`):
+  seven journeys and seven connectors, each naming the specs that prove it.
+- **Journey specs**: onboarding to an exact grade, CI ingestion through the packed CLI and
+  reporter, the release verdict on Home, AI-era signals (eval regression, agent-config scan),
+  failure triage, the MCP server over HTTP and stdio, and a 50 000-test suite.
+- **Connector fakes** for all seven platforms, built from their public API documentation, and the
+  opt-in **live connector probes** (`connectors:live`, `.github/workflows/connectors-live.yml`).
+- **`pnpm tools:smoke`** and the **CI tools matrix**: the packed tarballs on ubuntu, windows and
+  macos, with Playwright 1.40.0 and latest. The reporter declares `@playwright/test >= 1.40.0`
+  as an optional peer.
+- **`pnpm dogfood`**, nightly: Lupin grades its own repository through the packed CLI.
+- **`pnpm upgrade:rehearse`**, in the release gate: from the published 4.1.0 zip to this release
+  and back to the backup.
+- **Docs**: your first release verdict in thirty minutes (GitHub Actions, GitLab, Jenkins),
+  connectors and their verification levels, the 4.x upgrade, and what 5.0.0 does not do yet.
+
+### Changed
+
+- The AI provider settings no longer say a provider powers chat; no chat screen exists.
+
 ## 4.1.0 - 2026-11-12 - the console, simplified
 
 ### Added
