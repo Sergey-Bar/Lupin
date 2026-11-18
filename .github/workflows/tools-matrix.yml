@@ -1,0 +1,59 @@
+name: CI tools matrix
+
+# `@lupin/cli` and `@lupin/playwright-reporter` run inside other people's CI, on every OS a QA
+# team uses and on the Playwright they already pinned. This proves the packed tarballs on
+# ubuntu, windows and macos, and the reporter against the oldest and newest Playwright its
+# `peerDependencies` range names (`pnpm tools:smoke`).
+on:
+  pull_request:
+    paths:
+      - 'tools/**'
+      - 'scripts/tools-smoke.mjs'
+      - '.github/workflows/tools-matrix.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tools-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 24.x
+
+jobs:
+  smoke:
+    name: ${{ matrix.os }} / Playwright ${{ matrix.playwright }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15]
+        # The bounds of the reporter's peerDependencies range; keep the two in step.
+        playwright: ['1.40.0', 'latest']
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
+        with:
+          run_install: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Unit tests of both tools
+        run: pnpm --filter @lupin/cli --filter @lupin/playwright-reporter test
+      - name: Packed tarballs, installed and run
+        env:
+          PLAYWRIGHT_VERSION: ${{ matrix.playwright }}
+        run: pnpm tools:smoke
