@@ -49,7 +49,11 @@ describe('heroVerdict', () => {
   });
 
   it('never claims ready when nothing was measured', () => {
-    expect(heroVerdict(null)).toMatchObject({ verdict: 'unknown', word: 'Not measured' });
+    expect(heroVerdict(null)).toMatchObject({
+      verdict: 'unknown',
+      word: 'Not measured',
+      action: { label: 'Send results from CI', to: '/dashboard/settings/access' },
+    });
   });
 
   it('names what was not measured, rather than saying a gate is warning', () => {

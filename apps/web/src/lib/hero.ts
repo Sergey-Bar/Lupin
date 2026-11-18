@@ -53,7 +53,7 @@ export function heroVerdict(card: ReleaseReadinessCard | null): Hero {
         verdict: 'unknown',
         word: 'Not measured',
         reason: first('unknown') ?? 'No run has been checked against the release gates yet.',
-        action: { label: 'Start a run', to: '/dashboard/runner' },
+        action: { label: 'Send results from CI', to: '/dashboard/settings/access' },
       };
   }
 }
