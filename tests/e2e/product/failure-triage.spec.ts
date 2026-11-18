@@ -62,15 +62,16 @@ test.describe('failure triage', () => {
     ).json()) as {
       failureClusters?: {
         totals: { failures: number; causes: number };
-        clusters: Array<{ count: number; errorType: string | null }>;
+        clusters: Array<{ count: number; errorType: string | null; sampleMessage: string }>;
       };
     };
     const clusters = insights.failureClusters;
     expect(clusters, 'the insights carry failure clusters').toBeDefined();
-    // Other specs' runs that name no project count toward every project, so the counts are at
-    // least these, and the three causes of this upload lead with exactly their sizes.
+    // Other specs' runs that name no project count toward every project, so this upload's causes
+    // are found by their own messages; each must be exactly its size, biggest first.
+    const OWN = [/waiting for #pay-/u, /expected order \d+ total/u, /reading 'sku'/u];
     const mine = (clusters?.clusters ?? []).filter((cluster) =>
-      ['TimeoutError', 'AssertionError', 'TypeError'].includes(cluster.errorType ?? ''),
+      OWN.some((pattern) => pattern.test(cluster.sampleMessage)),
     );
     expect(mine.map((cluster) => [cluster.errorType, cluster.count])).toEqual([
       ['TimeoutError', 20],
