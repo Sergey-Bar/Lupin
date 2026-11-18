@@ -12,39 +12,43 @@
  * }} InstallReading
  */
 
+/** @param {InstallReading} before @param {InstallReading} after @param {string} when */
+function lostProjects(before, after, when) {
+  return before.projects
+    .filter((slug) => !after.projects.includes(slug))
+    .map((slug) => `project ${slug} is gone after the ${when}`);
+}
+
+/** @param {InstallReading} before @param {InstallReading} after */
+function lostCounts(before, after) {
+  return /** @type {const} */ (['findings', 'runs'])
+    .filter((field) => after[field] < before[field])
+    .map(
+      (field) =>
+        `${field} fell from ${String(before[field])} to ${String(after[field])} across the update`,
+    );
+}
+
 /**
  * @param {{ before: InstallReading, after: InstallReading, rolledBack?: InstallReading | null, candidate: string }} input
  * @returns {string[]}
  */
 export function upgradeProblems(input) {
-  /** @type {string[]} */
-  const problems = [];
   const { before, after, rolledBack } = input;
-  if (after.version !== input.candidate) {
-    problems.push(`the install reports ${after.version} after the update, not ${input.candidate}`);
-  }
-  if (after.envDigest !== before.envDigest) problems.push('.env changed across the update');
-  for (const slug of before.projects) {
-    if (!after.projects.includes(slug)) problems.push(`project ${slug} is gone after the update`);
-  }
-  if (after.findings < before.findings) {
-    problems.push(
-      `findings fell from ${String(before.findings)} to ${String(after.findings)} across the update`,
-    );
-  }
-  if (after.runs < before.runs) {
-    problems.push(
-      `runs fell from ${String(before.runs)} to ${String(after.runs)} across the update`,
-    );
-  }
-  if (rolledBack !== undefined && rolledBack !== null) {
-    if (rolledBack.version !== before.version) {
-      problems.push(`the rollback reports ${rolledBack.version}, not ${before.version}`);
-    }
-    for (const slug of before.projects) {
-      if (!rolledBack.projects.includes(slug))
-        problems.push(`project ${slug} is gone after the rollback`);
-    }
-  }
-  return problems;
+  const update = [
+    ...(after.version === input.candidate
+      ? []
+      : [`the install reports ${after.version} after the update, not ${input.candidate}`]),
+    ...(after.envDigest === before.envDigest ? [] : ['.env changed across the update']),
+    ...lostProjects(before, after, 'update'),
+    ...lostCounts(before, after),
+  ];
+  if (rolledBack === undefined || rolledBack === null) return update;
+  return [
+    ...update,
+    ...(rolledBack.version === before.version
+      ? []
+      : [`the rollback reports ${rolledBack.version}, not ${before.version}`]),
+    ...lostProjects(before, rolledBack, 'rollback'),
+  ];
 }

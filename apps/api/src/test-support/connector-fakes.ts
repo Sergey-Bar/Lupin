@@ -105,230 +105,283 @@ const nonEmpty = (value: unknown): value is string =>
 
 // ─── Each platform, as its documentation describes it ───────────────────────
 
+/**
+ * The first refusal whose condition holds, else `accept()`. Each platform below is a list of
+ * documented refusals in the order the platform checks them, so a rule is one line a reader can
+ * hold against the documentation, and no judge is a ladder of branches.
+ */
+type Rule = readonly [refuses: () => boolean, reply: () => Reply];
+function judge(rules: readonly Rule[], accept: () => Reply): Reply {
+  return rules.find(([refuses]) => refuses())?.[1]() ?? accept();
+}
+
+const field = (value: unknown, key: string): unknown => (isRecord(value) ? value[key] : undefined);
+const header = (headers: Record<string, string>, name: string): string => headers[name] ?? '';
+
 /** Slack Web API: JSON POST, bearer token, `channel` and `text`; refusals are 200 with ok:false. */
 function slack(url: URL, headers: Record<string, string>, body: unknown): Reply {
-  if (!/^Bearer xox[abp]-/u.test(headers['authorization'] ?? '')) {
-    return json(200, { ok: false, ...platformError('not_authed') });
-  }
-  if (url.pathname === '/api/auth.test')
+  if (
+    url.pathname === '/api/auth.test' &&
+    /^Bearer xox[abp]-/u.test(header(headers, 'authorization'))
+  ) {
     return json(200, { ok: true, team: 'fake', user: 'lupin' });
-  if (url.pathname !== '/api/chat.postMessage')
-    return json(200, { ok: false, ...platformError('unknown_method') });
-  if (!(headers['content-type'] ?? '').startsWith('application/json')) {
-    return json(200, { ok: false, ...platformError('invalid_form_data') });
   }
-  if (!isRecord(body) || !nonEmpty(body['channel']))
-    return json(200, { ok: false, ...platformError('channel_not_found') });
-  if (!nonEmpty(body['text']) && body['blocks'] === undefined)
-    return json(200, { ok: false, ...platformError('no_text') });
-  if (typeof body['text'] === 'string' && body['text'].length > 40_000) {
-    return json(200, { ok: false, ...platformError('msg_too_long') });
-  }
-  return json(200, { ok: true, channel: body['channel'], ts: '1700000000.000100' });
+  const refusal = (code: string) => () => json(200, { ok: false, ...platformError(code) });
+  const text = field(body, 'text');
+  return judge(
+    [
+      [() => !/^Bearer xox[abp]-/u.test(header(headers, 'authorization')), refusal('not_authed')],
+      [() => url.pathname !== '/api/chat.postMessage', refusal('unknown_method')],
+      [
+        () => !header(headers, 'content-type').startsWith('application/json'),
+        refusal('invalid_form_data'),
+      ],
+      [() => !nonEmpty(field(body, 'channel')), refusal('channel_not_found')],
+      [() => !nonEmpty(text) && field(body, 'blocks') === undefined, refusal('no_text')],
+      [() => typeof text === 'string' && text.length > 40_000, refusal('msg_too_long')],
+    ],
+    () => json(200, { ok: true, channel: field(body, 'channel'), ts: '1700000000.000100' }),
+  );
 }
 
 /** Teams incoming webhook: JSON POST of a MessageCard or an Adaptive Card message; 200 "1". */
 function teams(_url: URL, headers: Record<string, string>, body: unknown): Reply {
-  if (!(headers['content-type'] ?? '').startsWith('application/json'))
-    return json(400, 'Bad payload');
-  if (!isRecord(body)) return json(400, 'Bad payload');
   const messageCard =
-    body['@type'] === 'MessageCard' && (nonEmpty(body['text']) || Array.isArray(body['sections']));
+    field(body, '@type') === 'MessageCard' &&
+    (nonEmpty(field(body, 'text')) || Array.isArray(field(body, 'sections')));
+  const attachments = field(body, 'attachments');
   const adaptive =
-    body['type'] === 'message' &&
-    Array.isArray(body['attachments']) &&
-    body['attachments'].every(
-      (item) => isRecord(item) && item['contentType'] === 'application/vnd.microsoft.card.adaptive',
+    field(body, 'type') === 'message' &&
+    Array.isArray(attachments) &&
+    attachments.every(
+      (item) => field(item, 'contentType') === 'application/vnd.microsoft.card.adaptive',
     );
-  if (!messageCard && !adaptive) return json(400, 'Summary or Text is required.');
-  return { status: 200, body: '1', headers: { 'content-type': 'text/plain' } };
+  return judge(
+    [
+      [
+        () => !header(headers, 'content-type').startsWith('application/json'),
+        () => json(400, 'Bad payload'),
+      ],
+      [() => !messageCard && !adaptive, () => json(400, 'Summary or Text is required.')],
+    ],
+    () => ({ status: 200, body: '1', headers: { 'content-type': 'text/plain' } }),
+  );
 }
 
 /** Telegram Bot API: /bot<token>/<method>; every answer is {ok, result} or {ok:false, error_code}. */
 function telegram(url: URL, _headers: Record<string, string>, body: unknown): Reply {
-  const match = /^\/bot(\d+:[A-Za-z0-9_-]+)\/(\w+)$/u.exec(url.pathname);
-  if (match === null) return json(404, { ok: false, error_code: 404, description: 'Not Found' });
-  const method = match[2];
+  const method = /^\/bot\d+:[A-Za-z0-9_-]+\/(\w+)$/u.exec(url.pathname)?.[1] ?? null;
+  const bad = (description: string) => () => json(400, { ok: false, error_code: 400, description });
+  const text = field(body, 'text');
+  const caption = field(body, 'caption');
   if (method === 'getMe')
     return json(200, { ok: true, result: { id: 1, is_bot: true, username: 'lupin_bot' } });
-  if (method !== 'sendMessage' && method !== 'sendPhoto') {
-    return json(404, { ok: false, error_code: 404, description: 'Not Found: method not found' });
-  }
-  if (!isRecord(body) || !nonEmpty(body['chat_id'])) {
-    return json(400, { ok: false, error_code: 400, description: 'Bad Request: chat not found' });
-  }
-  if (method === 'sendMessage') {
-    const text = body['text'];
-    if (!nonEmpty(text))
-      return json(400, {
-        ok: false,
-        error_code: 400,
-        description: 'Bad Request: message text is empty',
-      });
-    if (text.length > 4096)
-      return json(400, {
-        ok: false,
-        error_code: 400,
-        description: 'Bad Request: message is too long',
-      });
-  } else {
-    if (body['photo'] === undefined)
-      return json(400, {
-        ok: false,
-        error_code: 400,
-        description: 'Bad Request: there is no photo in the request',
-      });
-    if (typeof body['caption'] === 'string' && body['caption'].length > 1024) {
-      return json(400, {
-        ok: false,
-        error_code: 400,
-        description: 'Bad Request: message caption is too long',
-      });
-    }
-  }
-  return json(200, { ok: true, result: { message_id: 7, chat: { id: body['chat_id'] } } });
+  return judge(
+    [
+      [
+        () => method !== 'sendMessage' && method !== 'sendPhoto',
+        () => json(404, { ok: false, error_code: 404, description: 'Not Found' }),
+      ],
+      [() => !nonEmpty(field(body, 'chat_id')), bad('Bad Request: chat not found')],
+      [
+        () => method === 'sendMessage' && !nonEmpty(text),
+        bad('Bad Request: message text is empty'),
+      ],
+      [
+        () => method === 'sendMessage' && typeof text === 'string' && text.length > 4096,
+        bad('Bad Request: message is too long'),
+      ],
+      [
+        () => method === 'sendPhoto' && field(body, 'photo') === undefined,
+        bad('Bad Request: there is no photo in the request'),
+      ],
+      [
+        () => method === 'sendPhoto' && typeof caption === 'string' && caption.length > 1024,
+        bad('Bad Request: message caption is too long'),
+      ],
+    ],
+    () => json(200, { ok: true, result: { message_id: 7, chat: { id: field(body, 'chat_id') } } }),
+  );
+}
+
+/** Every text parameter of a WhatsApp template's components. */
+function templateTexts(template: unknown): unknown[] {
+  const components = field(template, 'components');
+  return (Array.isArray(components) ? components : []).flatMap((component) => {
+    const parameters = field(component, 'parameters');
+    return (Array.isArray(parameters) ? parameters : []).map((parameter) =>
+      field(parameter, 'text'),
+    );
+  });
 }
 
 /** WhatsApp Cloud API: POST /<version>/<phone-id>/messages, bearer token, a template message. */
 function whatsapp(url: URL, headers: Record<string, string>, body: unknown): Reply {
-  if (!(headers['authorization'] ?? '').startsWith('Bearer ')) {
-    return json(401, {
-      error: { message: 'Invalid OAuth access token.', type: 'OAuthException', code: 190 },
-    });
-  }
   const match = /^\/v\d+\.\d+\/(\d+)(\/messages)?$/u.exec(url.pathname);
-  if (match === null) return json(400, { error: { message: 'Unsupported request', code: 100 } });
-  if (match[2] === undefined)
-    return json(200, { id: match[1], display_phone_number: '+1 555 0100' });
-  const template = isRecord(body) ? body['template'] : undefined;
-  if (
-    !isRecord(body) ||
-    body['messaging_product'] !== 'whatsapp' ||
-    !nonEmpty(body['to']) ||
-    body['type'] !== 'template' ||
-    !isRecord(template) ||
-    !nonEmpty(template['name']) ||
-    !isRecord(template['language']) ||
-    !nonEmpty((template['language'] as Record<string, unknown>)['code'])
-  ) {
-    return json(400, {
+  const template = field(body, 'template');
+  const invalid = () =>
+    json(400, {
       error: { message: '(#100) Invalid parameter', type: 'OAuthException', code: 100 },
     });
+  if (
+    match !== null &&
+    match[2] === undefined &&
+    header(headers, 'authorization').startsWith('Bearer ')
+  ) {
+    return json(200, { id: match[1], display_phone_number: '+1 555 0100' });
   }
-  const components = Array.isArray(template['components']) ? template['components'] : [];
-  for (const component of components) {
-    const parameters =
-      isRecord(component) && Array.isArray(component['parameters']) ? component['parameters'] : [];
-    for (const parameter of parameters) {
-      const text = isRecord(parameter) ? parameter['text'] : undefined;
+  return judge(
+    [
+      [
+        () => !header(headers, 'authorization').startsWith('Bearer '),
+        () =>
+          json(401, {
+            error: { message: 'Invalid OAuth access token.', type: 'OAuthException', code: 190 },
+          }),
+      ],
+      [
+        () => match === null,
+        () => json(400, { error: { message: 'Unsupported request', code: 100 } }),
+      ],
+      [
+        () => field(body, 'messaging_product') !== 'whatsapp' || field(body, 'type') !== 'template',
+        invalid,
+      ],
+      [() => !nonEmpty(field(body, 'to')) || !nonEmpty(field(template, 'name')), invalid],
+      [() => !nonEmpty(field(field(template, 'language'), 'code')), invalid],
       // A template body parameter may not contain a new line or tab (error 132018 family).
-      if (typeof text === 'string' && /[\n\t]|\s{5,}/u.test(text)) {
-        return json(400, {
-          error: {
-            message:
-              'Param text cannot have new-line/tab characters or more than 4 consecutive spaces',
-            code: 132018,
-          },
-        });
-      }
-    }
-  }
-  return json(200, {
-    messaging_product: 'whatsapp',
-    contacts: [{ input: body['to'], wa_id: body['to'] }],
-    messages: [{ id: 'wamid.FAKE' }],
-  });
+      [
+        () =>
+          templateTexts(template).some(
+            (text) => typeof text === 'string' && /[\n\t]|\s{5,}/u.test(text),
+          ),
+        () =>
+          json(400, {
+            error: {
+              message:
+                'Param text cannot have new-line/tab characters or more than 4 consecutive spaces',
+              code: 132018,
+            },
+          }),
+      ],
+    ],
+    () =>
+      json(200, {
+        messaging_product: 'whatsapp',
+        contacts: [{ input: field(body, 'to'), wa_id: field(body, 'to') }],
+        messages: [{ id: 'wamid.FAKE' }],
+      }),
+  );
 }
 
 /** signal-cli-rest-api: POST /v2/send {number, recipients[], message}; 201 {timestamp}. */
 function signal(url: URL, _headers: Record<string, string>, body: unknown): Reply {
   if (url.pathname === '/v1/about') return json(200, { versions: ['v1', 'v2'], mode: 'normal' });
-  if (url.pathname !== '/v2/send') return json(404, platformError('not found'));
-  if (
-    !isRecord(body) ||
-    !/^\+\d{7,15}$/u.test(String(body['number'])) ||
-    !Array.isArray(body['recipients']) ||
-    body['recipients'].length === 0 ||
-    !nonEmpty(body['message'])
-  ) {
-    return json(400, { error: "Couldn't process request - invalid request" });
-  }
-  return json(201, { timestamp: '1700000000000' });
+  const recipients = field(body, 'recipients');
+  const invalid = () => json(400, { error: "Couldn't process request - invalid request" });
+  return judge(
+    [
+      [() => url.pathname !== '/v2/send', () => json(404, platformError('not found'))],
+      [() => !/^\+\d{7,15}$/u.test(String(field(body, 'number'))), invalid],
+      [() => !Array.isArray(recipients) || recipients.length === 0, invalid],
+      [() => !nonEmpty(field(body, 'message')), invalid],
+    ],
+    () => json(201, { timestamp: '1700000000000' }),
+  );
+}
+
+/** What Jira Cloud refuses in an issue's fields, keyed by field, as its 400 body names them. */
+function jiraFieldErrors(fields: unknown): Record<string, string> {
+  const summary = field(fields, 'summary');
+  const description = field(fields, 'description');
+  const checks: ReadonlyArray<readonly [string, boolean, string]> = [
+    [
+      'project',
+      !nonEmpty(field(field(fields, 'project'), 'key')),
+      'Specify a valid project ID or key',
+    ],
+    ['issuetype', !nonEmpty(field(field(fields, 'issuetype'), 'name')), 'Specify an issue type'],
+    ['summary', !nonEmpty(summary), 'You must specify a summary of the issue.'],
+    [
+      'summary',
+      typeof summary === 'string' && summary.length > 255,
+      'Summary must be less than 255 characters.',
+    ],
+    [
+      'description',
+      description !== undefined &&
+        !(field(description, 'type') === 'doc' && field(description, 'version') === 1),
+      'Operation value must be an Atlassian Document (see the Atlassian Document Format).',
+    ],
+  ];
+  return Object.fromEntries(
+    checks.filter(([, fails]) => fails).map(([name, , message]) => [name, message]),
+  );
 }
 
 /** Jira Cloud REST v3: POST /rest/api/3/issue; `description` must be an Atlassian Document. */
 function jira(url: URL, headers: Record<string, string>, body: unknown): Reply {
-  if (!(headers['authorization'] ?? '').startsWith('Bearer ')) {
-    return json(401, { errorMessages: ['You are not authenticated.'], errors: {} });
-  }
-  if (url.pathname === '/rest/api/3/myself')
+  const authed = header(headers, 'authorization').startsWith('Bearer ');
+  if (authed && url.pathname === '/rest/api/3/myself')
     return json(200, { accountId: 'fake', displayName: 'Lupin' });
-  if (url.pathname !== '/rest/api/3/issue')
-    return json(404, { errorMessages: ['Not found'], errors: {} });
-  const fields = isRecord(body) ? body['fields'] : undefined;
-  const errors: Record<string, string> = {};
-  if (!isRecord(fields)) return json(400, { errorMessages: ['fields is required'], errors });
-  if (
-    !isRecord(fields['project']) ||
-    !nonEmpty((fields['project'] as Record<string, unknown>)['key'])
-  ) {
-    errors['project'] = 'Specify a valid project ID or key';
-  }
-  if (
-    !isRecord(fields['issuetype']) ||
-    !nonEmpty((fields['issuetype'] as Record<string, unknown>)['name'])
-  ) {
-    errors['issuetype'] = 'Specify an issue type';
-  }
-  if (!nonEmpty(fields['summary'])) errors['summary'] = 'You must specify a summary of the issue.';
-  else if (fields['summary'].length > 255)
-    errors['summary'] = 'Summary must be less than 255 characters.';
-  const description = fields['description'];
-  if (
-    description !== undefined &&
-    !(isRecord(description) && description['type'] === 'doc' && description['version'] === 1)
-  ) {
-    errors['description'] =
-      'Operation value must be an Atlassian Document (see the Atlassian Document Format).';
-  }
-  if (Object.keys(errors).length > 0) return json(400, { errorMessages: [], errors });
-  return json(201, {
-    id: '10001',
-    key: `${String((fields['project'] as Record<string, unknown>)['key'])}-1`,
-    self: `${url.origin}/rest/api/3/issue/10001`,
-  });
+  const fields = field(body, 'fields');
+  const errors = jiraFieldErrors(fields);
+  return judge(
+    [
+      [
+        () => !authed,
+        () => json(401, { errorMessages: ['You are not authenticated.'], errors: {} }),
+      ],
+      [
+        () => url.pathname !== '/rest/api/3/issue',
+        () => json(404, { errorMessages: ['Not found'], errors: {} }),
+      ],
+      [
+        () => !isRecord(fields),
+        () => json(400, { errorMessages: ['fields is required'], errors: {} }),
+      ],
+      [() => Object.keys(errors).length > 0, () => json(400, { errorMessages: [], errors })],
+    ],
+    () =>
+      json(201, {
+        id: '10001',
+        key: `${String(field(field(fields, 'project'), 'key'))}-1`,
+        self: `${url.origin}/rest/api/3/issue/10001`,
+      }),
+  );
 }
 
 /** GitHub REST: POST /repos/{owner}/{repo}/statuses/{sha}; state is one of four. */
 function github(url: URL, headers: Record<string, string>, body: unknown): Reply {
-  if (!/^(Bearer|token) /u.test(headers['authorization'] ?? '')) {
-    return json(401, { message: 'Requires authentication' });
-  }
-  const status = /^\/repos\/[^/]+\/[^/]+\/statuses\/([0-9a-f]{7,40})$/u.exec(url.pathname);
-  if (status !== null) {
-    const state = isRecord(body) ? body['state'] : undefined;
-    if (!['error', 'failure', 'pending', 'success'].includes(String(state))) {
-      return json(422, {
-        message: 'Validation Failed',
-        errors: [{ resource: 'Status', field: 'state', code: 'invalid' }],
-      });
-    }
-    const description = isRecord(body) ? body['description'] : undefined;
-    if (typeof description === 'string' && description.length > 140) {
-      return json(422, {
-        message: 'Validation Failed',
-        errors: [{ resource: 'Status', field: 'description', code: 'custom' }],
-      });
-    }
-    return json(201, {
-      id: 1,
-      state,
-      context: isRecord(body) ? (body['context'] ?? 'default') : 'default',
+  const state = field(body, 'state');
+  const description = field(body, 'description');
+  const invalid = (name: string, code: string) => () =>
+    json(422, {
+      message: 'Validation Failed',
+      errors: [{ resource: 'Status', field: name, code }],
     });
-  }
-  return json(404, { message: 'Not Found' });
+  return judge(
+    [
+      [
+        () => !/^(Bearer|token) /u.test(header(headers, 'authorization')),
+        () => json(401, { message: 'Requires authentication' }),
+      ],
+      [
+        () => !/^\/repos\/[^/]+\/[^/]+\/statuses\/[0-9a-f]{7,40}$/u.test(url.pathname),
+        () => json(404, { message: 'Not Found' }),
+      ],
+      [
+        () => !['error', 'failure', 'pending', 'success'].includes(String(state)),
+        invalid('state', 'invalid'),
+      ],
+      [
+        () => typeof description === 'string' && description.length > 140,
+        invalid('description', 'custom'),
+      ],
+    ],
+    () => json(201, { id: 1, state, context: field(body, 'context') ?? 'default' }),
+  );
 }
-
 const HOSTS: ReadonlyArray<{
   platform: Platform;
   matches: (url: URL) => boolean;

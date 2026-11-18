@@ -70,6 +70,51 @@ function stringList(value) {
 }
 
 /**
+ * @param {(file: string) => boolean} exists
+ * @param {string} root
+ * @param {string} owner
+ * @param {unknown} specs
+ * @returns {string[]}
+ */
+function specProblems(exists, root, owner, specs) {
+  const list = stringList(specs);
+  if (list.length === 0) return [`${owner}: no spec proves it`];
+  return list
+    .filter((spec) => !exists(path.join(root, spec)))
+    .map((spec) => `${owner}: spec ${spec} does not exist`);
+}
+
+/** @param {Map<string, string>} capabilities @param {string} owner @param {unknown} names */
+function capabilityProblems(capabilities, owner, names) {
+  return stringList(names).flatMap((capability) => {
+    const status = capabilities.get(capability);
+    if (status === undefined) return [`${owner}: capability ${capability} is not in the register`];
+    return status === 'real' ? [] : [`${owner}: capability ${capability} is ${status}, not real`];
+  });
+}
+
+/** @param {string} owner @param {unknown} verification */
+function levelProblems(owner, verification) {
+  const level = typeof verification === 'string' ? verification : 'none';
+  const rank = VERIFICATION_LEVELS.indexOf(level);
+  if (rank === -1) return [`${owner}: unknown verification level "${level}"`];
+  return rank < VERIFICATION_LEVELS.indexOf(REQUIRED_LEVEL)
+    ? [`${owner}: verification is ${level}, needs ${REQUIRED_LEVEL}`]
+    : [];
+}
+
+/** @param {LedgerRow[]} rows */
+function ledgerProblems(rows) {
+  if (rows.length === 0) return ['findings ledger is empty'];
+  return rows
+    .filter(
+      (row) =>
+        BLOCKING_BANDS.includes(row.band) && (row.status === 'open' || row.status === 'debt'),
+    )
+    .map((row) => `ledger ${row.id}: ${row.band} is ${row.status}`);
+}
+
+/**
  * @param {{
  *   journeys: JourneysDoc,
  *   ledgerRows: LedgerRow[],
@@ -81,62 +126,24 @@ function stringList(value) {
  */
 export function auditReadiness(input) {
   const exists = input.exists ?? existsSync;
-  /** @type {string[]} */
-  const problems = [];
-
   const journeys = Array.isArray(input.journeys.journeys)
     ? /** @type {Journey[]} */ (input.journeys.journeys)
     : [];
   const connectors = Array.isArray(input.journeys.connectors)
     ? /** @type {Connector[]} */ (input.journeys.connectors)
     : [];
-
-  // A definition that names nothing would be a green gate that measured nothing.
-  if (journeys.length === 0) problems.push('release-journeys.json lists no journeys');
-  if (connectors.length === 0) problems.push('release-journeys.json lists no connectors');
-
-  /** @param {string} owner @param {unknown} specs */
-  const checkSpecs = (owner, specs) => {
-    const list = stringList(specs);
-    if (list.length === 0) {
-      problems.push(`${owner}: no spec proves it`);
-      return;
-    }
-    for (const spec of list) {
-      if (!exists(path.join(input.root, spec)))
-        problems.push(`${owner}: spec ${spec} does not exist`);
-    }
-  };
-
-  for (const journey of journeys) {
-    const owner = `journey ${journey.id}`;
-    checkSpecs(owner, journey.specs);
-    for (const capability of stringList(journey.capabilities)) {
-      const status = input.capabilities.get(capability);
-      if (status === undefined)
-        problems.push(`${owner}: capability ${capability} is not in the register`);
-      else if (status !== 'real')
-        problems.push(`${owner}: capability ${capability} is ${status}, not real`);
-    }
-  }
-
-  const required = VERIFICATION_LEVELS.indexOf(REQUIRED_LEVEL);
-  for (const connector of connectors) {
-    const owner = `connector ${connector.id}`;
-    checkSpecs(owner, connector.specs);
-    const level = typeof connector.verification === 'string' ? connector.verification : 'none';
-    const rank = VERIFICATION_LEVELS.indexOf(level);
-    if (rank === -1) problems.push(`${owner}: unknown verification level "${level}"`);
-    else if (rank < required)
-      problems.push(`${owner}: verification is ${level}, needs ${REQUIRED_LEVEL}`);
-  }
-
-  if (input.ledgerRows.length === 0) problems.push('findings ledger is empty');
-  for (const row of input.ledgerRows) {
-    if (BLOCKING_BANDS.includes(row.band) && (row.status === 'open' || row.status === 'debt')) {
-      problems.push(`ledger ${row.id}: ${row.band} is ${row.status}`);
-    }
-  }
-
-  return problems;
+  return [
+    // A definition that names nothing would be a green gate that measured nothing.
+    ...(journeys.length === 0 ? ['release-journeys.json lists no journeys'] : []),
+    ...(connectors.length === 0 ? ['release-journeys.json lists no connectors'] : []),
+    ...journeys.flatMap((journey) => [
+      ...specProblems(exists, input.root, `journey ${journey.id}`, journey.specs),
+      ...capabilityProblems(input.capabilities, `journey ${journey.id}`, journey.capabilities),
+    ]),
+    ...connectors.flatMap((connector) => [
+      ...specProblems(exists, input.root, `connector ${connector.id}`, connector.specs),
+      ...levelProblems(`connector ${connector.id}`, connector.verification),
+    ]),
+    ...ledgerProblems(input.ledgerRows),
+  ];
 }
