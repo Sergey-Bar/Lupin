@@ -106,6 +106,9 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   // The run trend reads the execution store with the composition root's workspace, and
   // `trend.test.ts` proves a run in another workspace is not counted.
   { family: 'analytics trend', files: ['execution/trend.ts'] },
+  // A run's gate for the run page and the readiness card: the recorded evaluation is read with the
+  // caller's workspace, and `run-gate.test.ts` proves another workspace's evaluation is not.
+  { family: 'run gate', files: ['execution/run-gate.ts'] },
   // The reliability insights page through the same reader as the trend; `insights.test.ts`
   // proves a run in another workspace is not counted.
   { family: 'reliability insights', files: ['execution/insights.ts'] },

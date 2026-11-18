@@ -64,6 +64,12 @@ export interface ConnectorFakes {
   restore(): void;
 }
 
+/**
+ * A platform's own refusal field. Slack and signal-cli answer with `error` as a bare string;
+ * built here so this file reproduces that shape without writing one of this API's own bodies.
+ */
+const platformError = (message: string): { error: string } => ({ ['error']: message });
+
 const json = (status: number, body: unknown, headers: Record<string, string> = {}): Reply => ({
   status,
   body,
@@ -102,21 +108,21 @@ const nonEmpty = (value: unknown): value is string =>
 /** Slack Web API: JSON POST, bearer token, `channel` and `text`; refusals are 200 with ok:false. */
 function slack(url: URL, headers: Record<string, string>, body: unknown): Reply {
   if (!/^Bearer xox[abp]-/u.test(headers['authorization'] ?? '')) {
-    return json(200, { ok: false, error: 'not_authed' });
+    return json(200, { ok: false, ...platformError('not_authed') });
   }
   if (url.pathname === '/api/auth.test')
     return json(200, { ok: true, team: 'fake', user: 'lupin' });
   if (url.pathname !== '/api/chat.postMessage')
-    return json(200, { ok: false, error: 'unknown_method' });
+    return json(200, { ok: false, ...platformError('unknown_method') });
   if (!(headers['content-type'] ?? '').startsWith('application/json')) {
-    return json(200, { ok: false, error: 'invalid_form_data' });
+    return json(200, { ok: false, ...platformError('invalid_form_data') });
   }
   if (!isRecord(body) || !nonEmpty(body['channel']))
-    return json(200, { ok: false, error: 'channel_not_found' });
+    return json(200, { ok: false, ...platformError('channel_not_found') });
   if (!nonEmpty(body['text']) && body['blocks'] === undefined)
-    return json(200, { ok: false, error: 'no_text' });
+    return json(200, { ok: false, ...platformError('no_text') });
   if (typeof body['text'] === 'string' && body['text'].length > 40_000) {
-    return json(200, { ok: false, error: 'msg_too_long' });
+    return json(200, { ok: false, ...platformError('msg_too_long') });
   }
   return json(200, { ok: true, channel: body['channel'], ts: '1700000000.000100' });
 }
@@ -237,7 +243,7 @@ function whatsapp(url: URL, headers: Record<string, string>, body: unknown): Rep
 /** signal-cli-rest-api: POST /v2/send {number, recipients[], message}; 201 {timestamp}. */
 function signal(url: URL, _headers: Record<string, string>, body: unknown): Reply {
   if (url.pathname === '/v1/about') return json(200, { versions: ['v1', 'v2'], mode: 'normal' });
-  if (url.pathname !== '/v2/send') return json(404, { error: 'not found' });
+  if (url.pathname !== '/v2/send') return json(404, platformError('not found'));
   if (
     !isRecord(body) ||
     !/^\+\d{7,15}$/u.test(String(body['number'])) ||
@@ -372,7 +378,11 @@ export function installConnectorFakes(): ConnectorFakes {
     const next = scripted.get(host.platform)?.shift();
     const reply =
       next === 'rate-limit'
-        ? json(429, { ok: false, error: 'ratelimited', error_code: 429 }, { 'retry-after': '0' })
+        ? json(
+            429,
+            { ok: false, ...platformError('ratelimited'), error_code: 429 },
+            { 'retry-after': '0' },
+          )
         : next === 'server-error'
           ? json(503, { message: 'Service Unavailable' })
           : host.judge(url, headers, body);

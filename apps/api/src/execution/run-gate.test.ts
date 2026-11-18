@@ -100,4 +100,15 @@ describe('the gate a run has, read in one place', () => {
     expect(await latestGate(store, WS, [created.run])).toBeNull();
     expect(await latestGate(store, WS, [])).toBeNull();
   });
+
+  it('never returns another workspace’s recorded evaluation for a run', async () => {
+    const store = new InMemoryExecutionStore();
+    const created = await store.create({ projectId: 'p' }, 'k4', WS);
+    const run = finished(store, created.run, 'passed', '2026-11-18T10:00:00.000Z');
+    const policy = await store.createPolicy(defaultPolicy(WS));
+    await store.saveGate(createGateEvaluation({ run: { ...run, outcome: 'failed' }, policy }));
+    // Asked from another workspace, the recorded `failed` is not read; the run is judged afresh.
+    const other = await runGate(store, 'ws-other', run);
+    expect(other?.recorded).toBe(false);
+  });
 });
