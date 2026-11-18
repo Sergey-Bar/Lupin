@@ -19,7 +19,8 @@ jobs:
   verify:
     name: Local verification
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # 29 min on main after 5.0.0's suites landed, and cancelled at 30 on the next run.
+    timeout-minutes: 45
     steps:
       - name: Check out source
         # Full history: `pnpm verify` runs `pnpm security:verify`, whose secret

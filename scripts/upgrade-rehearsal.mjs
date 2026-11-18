@@ -20,7 +20,8 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { upgradeProblems } from './lib/upgrade-rehearsal.mjs';
-import { PUBLISHED_IMAGES, imageReference } from './lib/release-compose.mjs';
+// `imageReference` is the compose template (`:${LUPIN_VERSION:-x}`); `docker tag` needs the literal.
+import { PUBLISHED_IMAGES, REGISTRY } from './lib/release-compose.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const arg = (/** @type {string} */ flag, /** @type {string} */ fallback) => {
@@ -54,6 +55,20 @@ const envValue = (/** @type {string} */ name) =>
 
 /** @param {string} pathname @param {RequestInit} [init] */
 async function api(pathname, init = {}) {
+  // Retried on a refused connection only: the edge proxy can still be settling a moment after
+  // ./start.sh reports ready. An HTTP answer, whatever its status, is returned as it is.
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await request(pathname, init);
+    } catch (error) {
+      if (attempt >= 10) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+}
+
+/** @param {string} pathname @param {RequestInit} [init] */
+async function request(pathname, init = {}) {
   const response = await fetch(`http://127.0.0.1:${String(PORT)}${pathname}`, {
     ...init,
     headers: { authorization: `Bearer ${envValue('LUPIN_INSTALLATION_KEY')}`, ...init.headers },
@@ -65,8 +80,7 @@ async function api(pathname, init = {}) {
 /** @returns {Promise<import('./lib/upgrade-rehearsal.mjs').InstallReading>} */
 async function reading() {
   // The tag the api container actually runs: what an update changes, read from Docker itself.
-  const image = spawnSync('docker', ['compose', 'ps', 'api', '--format', '{{.Image}}'], {
-    cwd: install,
+  const image = spawnSync('docker', ['inspect', 'lupin-api-1', '--format', '{{.Config.Image}}'], {
     encoding: 'utf8',
   }).stdout.trim();
   const version = image.split(':').at(-1) ?? 'unknown';
@@ -123,6 +137,19 @@ try {
   if (created.status !== 201)
     throw new Error(`seeding a project answered ${String(created.status)}`);
   const projectId = created.body.project.id;
+  // Uploads take an uploader token pinned to the project, as CI holds, not the installation key.
+  const minted = await api('/api/v1/access-tokens', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      name: 'upgrade rehearsal',
+      role: 'uploader',
+      projectId,
+      expiresInDays: 1,
+    }),
+  });
+  if (minted.status !== 201)
+    throw new Error(`minting an uploader token answered ${String(minted.status)}`);
   const sarif = {
     version: '2.1.0',
     runs: [
@@ -150,7 +177,7 @@ try {
     `/api/v1/projects/${projectId}/health/reports?format=sarif&branch=main`,
     {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${minted.body.token}` },
       body: JSON.stringify(sarif),
     },
   );
@@ -166,11 +193,25 @@ try {
   // This tree's images, under the names the release compose file pulls.
   sh(
     'docker',
-    ['compose', '-f', 'infra/compose/docker-compose.unified.yml', '-p', 'lupin-candidate', 'build'],
+    [
+      'compose',
+      // The compose file interpolates its variables even to build; the install's .env has them.
+      '--env-file',
+      path.join(install, '.env'),
+      '-f',
+      'infra/compose/docker-compose.unified.yml',
+      '-p',
+      'lupin-candidate',
+      'build',
+    ],
     ROOT,
   );
   for (const service of PUBLISHED_IMAGES) {
-    sh('docker', ['tag', `lupin-candidate-${service}`, imageReference(service, CANDIDATE)], ROOT);
+    sh(
+      'docker',
+      ['tag', `lupin-candidate-${service}`, `${REGISTRY}/lupin-${service}:${CANDIDATE}`],
+      ROOT,
+    );
   }
   sh('sh', ['./start.sh', 'update', '--version', CANDIDATE]);
   const after = await reading();
