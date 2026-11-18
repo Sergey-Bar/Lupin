@@ -8313,6 +8313,25 @@
           "asserts": "With a store whose runs never carry their gate (the PostgreSQL shape), the newest finished run is judged, a recorded evaluation wins and says so, and no finished run means no gate."
         }
       ]
+    },
+    {
+      "id": "REL-3",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (apps/api/src/services/failure-redaction.test.ts, run red then green)",
+      "title": "A token printed in a failing test's output was stored and shown as it was",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "`normaliseFailure`, the one rule both the reporter event door and the upload door apply to a test's failure text, bounded and trimmed it but did not redact it. A CI log routinely prints a credential (a failed request with its Authorization header, an environment dump, a key in a stack trace), and that text is stored in `tests.error_message` and rendered on the run page, the insights, the copilot's explanation and the scheduled reports. The product already had a secret redactor (`redactSecrets` in `@lupin/reporter`) and applied it only to agent trace content.",
+      "resolution": "`normaliseFailure` redacts with `redactSecrets` before bounding the message, so both doors store the redacted text and a truncation can never keep half a token.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/failure-redaction.test.ts",
+          "asserts": "A GitHub token, a Slack token, an AWS key id and a whole private-key block in a failure message are not stored; the surrounding text and an ordinary assertion message are kept exactly."
+        }
+      ]
     }
   ]
 }
