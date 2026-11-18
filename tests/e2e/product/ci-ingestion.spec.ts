@@ -161,6 +161,14 @@ test.describe('CI ingestion through the packed CLI and reporter', () => {
     expect(passed.code, passed.out).toBe(0);
     expect(passed.out).toMatch(/^Gate passed on main/mu);
 
+    // The commit whose own JUnit run failed (the first test's commit(1)) must not pass the gate,
+    // however clean its scans: a gate that passes red tests is the one number QA cannot trust.
+    const red = lupin(['gate', '--branch', 'main', '--commit', commit(1)]);
+    expect(red.code, red.out).toBe(1);
+    expect(red.out).toMatch(
+      /^- 1 failing test on this commit: tests\/checkout\.test\.ts \u203a checkout \u203a totals the basket$/mu,
+    );
+
     const branch = 'feat/orders-search';
     const risky = lupin([
       'upload',
