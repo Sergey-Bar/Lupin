@@ -70,3 +70,20 @@ jobs:
         run: pnpm oci:build
       - name: Verify OCI images
         run: pnpm oci:verify
+
+  upgrade:
+    name: Upgrade from the last release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # The last release's zip, installed and seeded as a user would, backed up, updated to this
+    # tree's images through ./start.sh update, checked for lost data, then rolled back to the
+    # backup. `pnpm upgrade:rehearse`.
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Rehearse the upgrade and the rollback
+        run: node ./scripts/upgrade-rehearsal.mjs --from 4.1.0 --candidate 5.0.0-candidate
