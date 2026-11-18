@@ -23,5 +23,22 @@ export function readEnvironment(): Readonly<Record<string, string | undefined>> 
     GITHUB_TOKEN: process.env['GITHUB_TOKEN'],
     GITHUB_REPOSITORY: process.env['GITHUB_REPOSITORY'],
     GITHUB_API_URL: process.env['GITHUB_API_URL'],
+    // GitLab CI's own: the branch, commit and merge request every command reads there, and what
+    // `lupin gate --post` needs to write a commit status and a merge request note.
+    GITLAB_CI: process.env['GITLAB_CI'],
+    CI_COMMIT_REF_NAME: process.env['CI_COMMIT_REF_NAME'],
+    CI_COMMIT_SHA: process.env['CI_COMMIT_SHA'],
+    CI_MERGE_REQUEST_IID: process.env['CI_MERGE_REQUEST_IID'],
+    CI_MERGE_REQUEST_SOURCE_BRANCH_NAME: process.env['CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'],
+    CI_MERGE_REQUEST_TARGET_BRANCH_NAME: process.env['CI_MERGE_REQUEST_TARGET_BRANCH_NAME'],
+    CI_PROJECT_ID: process.env['CI_PROJECT_ID'],
+    CI_API_V4_URL: process.env['CI_API_V4_URL'],
+    // `--post` on GitLab only. Never sent to Lupin.
+    LUPIN_GITLAB_TOKEN: process.env['LUPIN_GITLAB_TOKEN'],
+    // An install behind Cloudflare Access: the service token pair, sent only to LUPIN_URL.
+    LUPIN_CF_ACCESS_CLIENT_ID: process.env['LUPIN_CF_ACCESS_CLIENT_ID'],
+    LUPIN_CF_ACCESS_CLIENT_SECRET: process.env['LUPIN_CF_ACCESS_CLIENT_SECRET'],
+    // `lupin shard --as-of`, as a variable, so every shard of one CI run plans the same.
+    LUPIN_SHARD_AS_OF: process.env['LUPIN_SHARD_AS_OF'],
   };
 }
