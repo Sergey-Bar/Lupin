@@ -1,3 +1,4 @@
+import { VERDICT_WORD } from './hero.js';
 import {
   SCORE_CATEGORIES,
   type QaCapability,
@@ -194,9 +195,9 @@ const REPORT_LABEL: Record<ReportKind, string> = {
 };
 
 const VERDICT: Record<ReleaseReadinessCard['verdict'], { label: string; status: NodeStatus }> = {
-  go: { label: 'Go', status: 'good' },
-  caution: { label: 'Caution', status: 'warn' },
-  'no-go': { label: 'No-go', status: 'bad' },
+  go: { label: VERDICT_WORD.go, status: 'good' },
+  caution: { label: VERDICT_WORD.caution, status: 'warn' },
+  'no-go': { label: VERDICT_WORD['no-go'], status: 'bad' },
 };
 
 function edge(from: string, to: string): MapEdge {

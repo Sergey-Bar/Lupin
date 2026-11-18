@@ -138,7 +138,7 @@ function coverageReason({ coverage }: ReadinessInput): ReadinessReason {
     return {
       code: 'coverage',
       level: 'unknown',
-      message: 'No coverage report was found on disk',
+      message: 'No coverage reading yet: scan a checkout that has a coverage report',
       evidence: 'no coverage report',
     };
   }
