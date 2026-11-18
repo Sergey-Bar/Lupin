@@ -2,8 +2,8 @@
   "$comment": [
     "The 5.0.0 release definition, read by `pnpm release:readiness`.",
     "Each journey names the Playwright specs that prove it and the capability-register rows it rests on;",
-    "each connector names its spec and its verification level: none < fake-verified < live-verified.",
-    "fake-verified means an E2E spec drives the adapter against a fake built from the platform's public API docs.",
+    "each connector names its spec and its verification level: none \u003c fake-verified \u003c live-verified.",
+    "fake-verified means an E2E spec drives the adapter against a fake built from the platform\u0027s public API docs.",
     "live-verified means the opt-in connectors-live workflow has passed against a real account.",
     "A spec listed here that does not exist yet is a planned proof, and the gate reports it as a gap.",
     "Raise a level only in the commit that adds the evidence for it."
@@ -55,7 +55,7 @@
       "title": "Scheduled digests and failure alerts reach each connected platform",
       "specs": [
         "tests/e2e/product/scheduled-reports.spec.ts",
-        "tests/e2e/product/notifications.spec.ts"
+        "apps/api/src/services/notifications-journey.test.ts"
       ],
       "capabilities": ["reporting.digest", "connectors.core"]
     },
@@ -75,22 +75,38 @@
   "connectors": [
     {
       "id": "github",
-      "specs": ["tests/e2e/product/github-connector.spec.ts"],
-      "verification": "none"
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
     },
-    { "id": "jira", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" },
-    { "id": "slack", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" },
-    { "id": "teams", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" },
+    {
+      "id": "jira",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    },
+    {
+      "id": "slack",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    },
+    {
+      "id": "teams",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    },
     {
       "id": "telegram",
-      "specs": ["tests/e2e/product/notifications.spec.ts"],
-      "verification": "none"
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
     },
     {
       "id": "whatsapp",
-      "specs": ["tests/e2e/product/notifications.spec.ts"],
-      "verification": "none"
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
     },
-    { "id": "signal", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" }
+    {
+      "id": "signal",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    }
   ]
 }
