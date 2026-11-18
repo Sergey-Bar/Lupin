@@ -1,0 +1,128 @@
+/**
+ * `pnpm release:readiness` — what still blocks the release named in
+ * `docs/quality/release-journeys.json`?
+ *
+ * The release definition is data, not a sentence: every journey a QA engineer must be
+ * able to complete names the spec files that prove it, and every connector names its
+ * spec and its verification level. This module reads that file beside the findings
+ * ledger and the capability register, and returns one problem per gap. It invents no
+ * policy of its own about the ledger: a blocking band is the ledger's `Blocker` and
+ * `Critical`, the same two bands `findings:check` refuses as debt.
+ *
+ * Dependency-free and pure apart from `existsSync`, which is injected so the tests can
+ * prove each failure mode without touching the tree.
+ */
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
+export const BLOCKING_BANDS = Object.freeze(['Blocker', 'Critical']);
+export const VERIFICATION_LEVELS = Object.freeze(['none', 'fake-verified', 'live-verified']);
+export const REQUIRED_LEVEL = 'fake-verified';
+
+/**
+ * @typedef {{ id: string, title?: string, specs?: unknown, capabilities?: unknown }} Journey
+ * @typedef {{ id: string, specs?: unknown, verification?: unknown }} Connector
+ * @typedef {{ release?: unknown, journeys?: unknown, connectors?: unknown }} JourneysDoc
+ * @typedef {{ id: string, status: string, band: string }} LedgerRow
+ */
+
+/**
+ * Parse the capability register's markdown table into `id -> status`.
+ * A row is `| id | description | status | ... |`.
+ * @param {string} markdown
+ * @returns {Map<string, string>}
+ */
+export function parseCapabilityStatuses(markdown) {
+  /** @type {Map<string, string>} */
+  const statuses = new Map();
+  for (const line of markdown.split(/\r?\n/)) {
+    if (!line.startsWith('|')) continue;
+    const cells = line.split('|').map((cell) => cell.trim());
+    const id = cells[1] ?? '';
+    const status = cells[3] ?? '';
+    if (/^[a-z][a-z0-9-]*(\.[a-z0-9-]+)+$/.test(id) && /^[a-z-]+$/.test(status)) {
+      statuses.set(id, status);
+    }
+  }
+  return statuses;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {string[]}
+ */
+function stringList(value) {
+  return Array.isArray(value) ? value.filter((item) => typeof item === 'string') : [];
+}
+
+/**
+ * @param {{
+ *   journeys: JourneysDoc,
+ *   ledgerRows: LedgerRow[],
+ *   capabilities: Map<string, string>,
+ *   root: string,
+ *   exists?: (file: string) => boolean,
+ * }} input
+ * @returns {string[]}
+ */
+export function auditReadiness(input) {
+  const exists = input.exists ?? existsSync;
+  /** @type {string[]} */
+  const problems = [];
+
+  const journeys = Array.isArray(input.journeys.journeys)
+    ? /** @type {Journey[]} */ (input.journeys.journeys)
+    : [];
+  const connectors = Array.isArray(input.journeys.connectors)
+    ? /** @type {Connector[]} */ (input.journeys.connectors)
+    : [];
+
+  // A definition that names nothing would be a green gate that measured nothing.
+  if (journeys.length === 0) problems.push('release-journeys.json lists no journeys');
+  if (connectors.length === 0) problems.push('release-journeys.json lists no connectors');
+
+  /** @param {string} owner @param {unknown} specs */
+  const checkSpecs = (owner, specs) => {
+    const list = stringList(specs);
+    if (list.length === 0) {
+      problems.push(`${owner}: no spec proves it`);
+      return;
+    }
+    for (const spec of list) {
+      if (!exists(path.join(input.root, spec)))
+        problems.push(`${owner}: spec ${spec} does not exist`);
+    }
+  };
+
+  for (const journey of journeys) {
+    const owner = `journey ${journey.id}`;
+    checkSpecs(owner, journey.specs);
+    for (const capability of stringList(journey.capabilities)) {
+      const status = input.capabilities.get(capability);
+      if (status === undefined)
+        problems.push(`${owner}: capability ${capability} is not in the register`);
+      else if (status !== 'real')
+        problems.push(`${owner}: capability ${capability} is ${status}, not real`);
+    }
+  }
+
+  const required = VERIFICATION_LEVELS.indexOf(REQUIRED_LEVEL);
+  for (const connector of connectors) {
+    const owner = `connector ${connector.id}`;
+    checkSpecs(owner, connector.specs);
+    const level = typeof connector.verification === 'string' ? connector.verification : 'none';
+    const rank = VERIFICATION_LEVELS.indexOf(level);
+    if (rank === -1) problems.push(`${owner}: unknown verification level "${level}"`);
+    else if (rank < required)
+      problems.push(`${owner}: verification is ${level}, needs ${REQUIRED_LEVEL}`);
+  }
+
+  if (input.ledgerRows.length === 0) problems.push('findings ledger is empty');
+  for (const row of input.ledgerRows) {
+    if (BLOCKING_BANDS.includes(row.band) && (row.status === 'open' || row.status === 'debt')) {
+      problems.push(`ledger ${row.id}: ${row.band} is ${row.status}`);
+    }
+  }
+
+  return problems;
+}

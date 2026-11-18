@@ -71,6 +71,7 @@
     "docs:capability-register": "pr-blocking",
     "capability:evidence": "pr-blocking",
     "findings:check": "pr-blocking",
+    "release:readiness": "pr-reporting",
     "test:e2e": "pr-blocking",
     "test:e2e:api": "pr-blocking",
     "test:e2e:vertical": "pr-blocking",

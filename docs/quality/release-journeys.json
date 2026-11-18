@@ -1,0 +1,89 @@
+{
+  "$comment": [
+    "The 5.0.0 release definition, read by `pnpm release:readiness`.",
+    "Each journey names the Playwright specs that prove it and the capability-register rows it rests on;",
+    "each connector names its spec and its verification level: none < fake-verified < live-verified.",
+    "fake-verified means an E2E spec drives the adapter against a fake built from the platform's public API docs.",
+    "live-verified means the opt-in connectors-live workflow has passed against a real account.",
+    "A spec listed here that does not exist yet is a planned proof, and the gate reports it as a gap.",
+    "Raise a level only in the commit that adds the evidence for it."
+  ],
+  "release": "5.0.0",
+  "journeys": [
+    {
+      "id": "onboarding",
+      "title": "Fresh install, connect a GitHub repository, see its QA score and health grade",
+      "specs": ["tests/e2e/product/onboarding.spec.ts", "tests/e2e/product/repo-health.spec.ts"],
+      "capabilities": ["quality.repo-health", "github.health", "connectors.github-app"]
+    },
+    {
+      "id": "ci-ingestion",
+      "title": "Upload from CI with the packed lupin CLI and Playwright reporter, see runs, flaky tests and the gate verdict",
+      "specs": [
+        "tests/e2e/product/reporter-run-lifecycle.spec.ts",
+        "tests/e2e/product/ci-ingestion.spec.ts"
+      ],
+      "capabilities": [
+        "tool.lupin-cli",
+        "tool.junit",
+        "reporting.playwright-live",
+        "reporting.test-intelligence"
+      ]
+    },
+    {
+      "id": "release-verdict",
+      "title": "Home shows ship or hold, with the reasons and what needs you",
+      "specs": ["tests/e2e/product/release-readiness.spec.ts"],
+      "capabilities": ["quality.cockpit", "reporting.lifecycle"]
+    },
+    {
+      "id": "ai-signals",
+      "title": "AI-code share, eval regression and the agent-config scan",
+      "specs": ["tests/e2e/product/ai-signals.spec.ts"],
+      "capabilities": [
+        "ai-code.attribution",
+        "agents.evals",
+        "agents.eval-gate",
+        "agents.config-scan"
+      ]
+    },
+    {
+      "id": "notifications",
+      "title": "Scheduled digests and failure alerts reach each connected platform",
+      "specs": [
+        "tests/e2e/product/scheduled-reports.spec.ts",
+        "tests/e2e/product/notifications.spec.ts"
+      ],
+      "capabilities": ["reporting.digest", "connectors.core"]
+    },
+    {
+      "id": "triage",
+      "title": "Failures grouped by cause, with an optional AI summary when a provider is configured",
+      "specs": ["tests/e2e/product/failure-triage.spec.ts"],
+      "capabilities": ["reporting.failure-clusters"]
+    },
+    {
+      "id": "mcp",
+      "title": "An AI agent asks the MCP server for the verdict and the flaky tests",
+      "specs": ["tests/e2e/product/mcp.spec.ts"],
+      "capabilities": ["connectors.mcp"]
+    }
+  ],
+  "connectors": [
+    { "id": "github", "specs": ["tests/e2e/product/repo-health.spec.ts"], "verification": "none" },
+    { "id": "jira", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" },
+    { "id": "slack", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" },
+    { "id": "teams", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" },
+    {
+      "id": "telegram",
+      "specs": ["tests/e2e/product/notifications.spec.ts"],
+      "verification": "none"
+    },
+    {
+      "id": "whatsapp",
+      "specs": ["tests/e2e/product/notifications.spec.ts"],
+      "verification": "none"
+    },
+    { "id": "signal", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" }
+  ]
+}
