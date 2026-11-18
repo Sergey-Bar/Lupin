@@ -80,8 +80,7 @@ async function request(pathname, init = {}) {
 /** @returns {Promise<import('./lib/upgrade-rehearsal.mjs').InstallReading>} */
 async function reading() {
   // The tag the api container actually runs: what an update changes, read from Docker itself.
-  const image = spawnSync('docker', ['compose', 'ps', 'api', '--format', '{{.Image}}'], {
-    cwd: install,
+  const image = spawnSync('docker', ['inspect', 'lupin-api-1', '--format', '{{.Config.Image}}'], {
     encoding: 'utf8',
   }).stdout.trim();
   const version = image.split(':').at(-1) ?? 'unknown';
