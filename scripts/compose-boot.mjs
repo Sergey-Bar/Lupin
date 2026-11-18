@@ -122,6 +122,10 @@ async function main() {
   const directory = mkdtempSync(path.join(tmpdir(), 'lupin-boot-'));
   const envFile = path.join(directory, 'boot.env');
   writeFileSync(envFile, envFileText(values), { mode: 0o600 });
+  // `--env-out <file>`: the same values, for a caller that keeps the stack (`--keep`) and has to
+  // sign in to it — `pnpm dogfood`. Never printed; written with the same owner-only mode.
+  const envOut = option('--env-out');
+  if (envOut !== undefined) writeFileSync(envOut, envFileText(values), { mode: 0o600 });
   const base = option('--base') ?? 'http://127.0.0.1:8080';
   /** @type {string[]} */
   let failures = [];

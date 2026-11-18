@@ -116,6 +116,21 @@ test.describe('repository health, from connecting a repository to its grade', ()
     await upload(request, projectId, sarif('osv-scanner'));
     await expectGrade(page, projectId, 'A+', '100 / 100', /.+/u);
 
+    // Green tests from CI that name no score category (plain JUnit) are not a measured zero:
+    // uploading a passing suite must never grade a repository worse than uploading nothing.
+    const junit = Buffer.from(
+      '<?xml version="1.0"?><testsuites><testsuite name="s" tests="1"><testcase classname="s" name="passes" time="0.01"/></testsuite></testsuites>',
+    );
+    const tests = await request.post(
+      `${API_BASE}/api/v1/projects/${projectId}/tests/reports?format=junit&branch=main&startedAt=${encodeURIComponent(new Date().toISOString())}`,
+      {
+        headers: { ...REPORTER_AUTH_HEADERS, 'content-type': 'application/octet-stream' },
+        data: junit,
+      },
+    );
+    expect(tests.status(), await tests.text()).toBe(200);
+    await expectGrade(page, projectId, 'A+', '100 / 100', /.+/u);
+
     // One leaked key: the open-secret gate holds the grade at the top of the D band.
     await upload(request, projectId, sarif('gitleaks', [LEAKED_SECRET]));
     await expectGrade(

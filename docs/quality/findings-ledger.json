@@ -8359,6 +8359,29 @@
           "asserts": "A JUnit upload past the one test-report ceiling is refused before it is parsed."
         }
       ]
+    },
+    {
+      "id": "REL-5",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (found by pnpm dogfood; tests/e2e/product/repo-health.spec.ts run red then green)",
+      "title": "Uploading a passing test suite graded a repository F (0), worse than uploading nothing",
+      "band": "Critical",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Lupin grading its own repository read \"F (0) — Limited by Tests — QA score 0 / 100 over 3 runs\" after three all-green suites. A plain JUnit upload (`lupin test`, the reporter) names no score category or surface — deliberately, `projectTestResult` never defaults one — so its results fill none of the score's cells, every cell has presence 0 and the QA score is 0. `qaTestsReading` only checked that some run existed, so that 0 became a measured Tests dimension, and the grade's geometric mean took the whole repository to F. With no uploads Tests was unmeasured and the grade was unaffected, so the first thing a new user does with the CLI made their grade collapse. Critical rather than Major because the grade is the product's headline number and it inverted the meaning of a green CI run.",
+      "resolution": "`qaTestsReading` returns no reading while no executed result lands in any score cell, so Tests stays unmeasured rather than zero until results carry a category (a detected or declared command, or the runner).",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/repo-health.spec.ts",
+          "asserts": "After clean scans grade A+ at 100, a green JUnit upload leaves the grade A+ at 100."
+        },
+        {
+          "path": "scripts/dogfood.mjs",
+          "asserts": "Lupin's own suites uploaded through the packed CLI produce a grade and a release verdict; the nightly job prints both."
+        }
+      ]
     }
   ]
 }

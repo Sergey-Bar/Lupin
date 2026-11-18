@@ -67,6 +67,7 @@
     "release:readiness": "node ./scripts/release-readiness.mjs",
     "connectors:live": "node ./scripts/connectors-live.mjs",
     "tools:smoke": "node ./scripts/tools-smoke.mjs",
+    "dogfood": "node ./scripts/dogfood.mjs",
     "findings:baseline": "node ./scripts/findings-check.mjs --write",
     "status:10": "node ./scripts/status-ten.mjs",
     "verify": "pnpm unify:preflight && pnpm review:rules && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm coverage:ratchet && pnpm build && pnpm authz:check && pnpm db:check && pnpm tenancy:check && pnpm security:verify",
