@@ -123,6 +123,19 @@ try {
   if (created.status !== 201)
     throw new Error(`seeding a project answered ${String(created.status)}`);
   const projectId = created.body.project.id;
+  // Uploads take an uploader token pinned to the project, as CI holds, not the installation key.
+  const minted = await api('/api/v1/access-tokens', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      name: 'upgrade rehearsal',
+      role: 'uploader',
+      projectId,
+      expiresInDays: 1,
+    }),
+  });
+  if (minted.status !== 201)
+    throw new Error(`minting an uploader token answered ${String(minted.status)}`);
   const sarif = {
     version: '2.1.0',
     runs: [
@@ -150,7 +163,7 @@ try {
     `/api/v1/projects/${projectId}/health/reports?format=sarif&branch=main`,
     {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${minted.body.token}` },
       body: JSON.stringify(sarif),
     },
   );
