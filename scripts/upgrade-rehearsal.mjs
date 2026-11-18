@@ -20,7 +20,8 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { upgradeProblems } from './lib/upgrade-rehearsal.mjs';
-import { PUBLISHED_IMAGES, imageReference } from './lib/release-compose.mjs';
+// `imageReference` is the compose template (`:${LUPIN_VERSION:-x}`); `docker tag` needs the literal.
+import { PUBLISHED_IMAGES, REGISTRY } from './lib/release-compose.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const arg = (/** @type {string} */ flag, /** @type {string} */ fallback) => {
@@ -193,7 +194,11 @@ try {
     ROOT,
   );
   for (const service of PUBLISHED_IMAGES) {
-    sh('docker', ['tag', `lupin-candidate-${service}`, imageReference(service, CANDIDATE)], ROOT);
+    sh(
+      'docker',
+      ['tag', `lupin-candidate-${service}`, `${REGISTRY}/lupin-${service}:${CANDIDATE}`],
+      ROOT,
+    );
   }
   sh('sh', ['./start.sh', 'update', '--version', CANDIDATE]);
   const after = await reading();
