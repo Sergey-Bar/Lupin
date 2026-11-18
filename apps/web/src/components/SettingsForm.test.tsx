@@ -204,6 +204,19 @@ describe('installation settings pages', () => {
     },
   );
 
+  it('says the provider powers what exists, and promises no chat', async () => {
+    // `automation.chat` is mock in the capability register and no screen offers a chat, so the
+    // page names only the features a provider actually drives (release-5.0.0 plan, Task 2).
+    render(
+      <ToastProvider>
+        <AiSettingsPage health={health()} client={settingsClient()} />
+      </ToastProvider>,
+    );
+    const page = await screen.findByTestId('settings-ai');
+    expect(page).toHaveTextContent(/test proposals and evals/u);
+    expect(page).not.toHaveTextContent(/chat/iu);
+  });
+
   it('asks an operator to find an admin instead of drawing a form', async () => {
     render(
       <ToastProvider>

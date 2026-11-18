@@ -26,6 +26,14 @@
       "default": "./dist/index.js"
     }
   },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
+  },
   "engines": {
     "node": ">=24"
   },

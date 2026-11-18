@@ -3141,7 +3141,7 @@
       "status": "debt",
       "owner": "The UI wave of the roadmap's Track A, and the five execution domains behind it. Nothing in this repository can make a route's design world-class, because four of the five agent domains answer an explicit `501 NOT_CONFIGURED` and a console with nothing behind it is a design decision nobody has made yet. A redesign before BK-1 lands is the redesign of an empty screen.",
       "removalCondition": "Either (a) `tests/e2e/accessibility/routes.spec.ts` exists and `pnpm test:e2e` reports axe zero serious and zero critical on every route in `apps/web/src/routes` in **both** themes, with the matrix recorded in the resolution; or (b) BK-1 has shipped a domain, and a state-coverage matrix exists naming loading, empty, error and partial for every route, with a test per state. Condition (a) is the machine-checkable half and `pnpm status:10` reads it; condition (b) is the half that decides whether (a) would be measuring anything worth measuring.",
-      "resolution": "Open: (a) is discharged and (b) is not. `tests/e2e/accessibility/routes.spec.ts` exists and covers every path in `apps/web/src/route-manifest.ts` — eleven, not the thirteen `.tsx` files under `apps/web/src/routes` that `status:10` counts, because five of those are the route tests themselves — in both themes and in four forced data states, 66 generated tests, on its own Playwright project so `pnpm test:e2e` runs it. It was run against a real PostgreSQL and a real browser and is green: zero serious and zero critical violations on all 66. It found `GLASS-2`. (a) also asked for the matrix in the resolution, and the generated test names are the matrix — eleven routes under two themes and four states, one test each — so it cannot drift from the routes without `theme-resolution` or `route-manifest.test.ts` failing. **Not yet discharged: a run of the accessibility project inside CI against a real database**, which this host cannot produce, and (b), which needs `BK-1` to have shipped a domain rather than a mock — `docs/migration/capability-register.md` still records `connectors.core`, `automation.chat` and `automation.agents` as `mock`, so there is nothing to trigger the four states through a real adapter.\n\n**Re-read on 2026-10-23, after BK-1 shipped three domains.** The deferral argument in the owner field (\"a redesign before BK-1 lands is the redesign of an empty screen\") no longer holds: browser, api and load runs now exist behind the console. Condition (a) is still discharged, so the axe-clean result stands. Condition (b), a loading/empty/error/partial state matrix with a test per cell for every route, is **not done and deliberately not scheduled**: the console does not yet read `/api/v1/agents`, so the routes whose states the matrix would pin are not yet the ones that show these domains, and a matrix over screens that are about to change would be written twice. It becomes worth building when the console shows agent runs, and this row should be re-read then.",
+      "resolution": "Open: (a) is discharged and (b) is not. `tests/e2e/accessibility/routes.spec.ts` exists and covers every path in `apps/web/src/route-manifest.ts` — eleven, not the thirteen `.tsx` files under `apps/web/src/routes` that `status:10` counts, because five of those are the route tests themselves — in both themes and in four forced data states, 66 generated tests, on its own Playwright project so `pnpm test:e2e` runs it. It was run against a real PostgreSQL and a real browser and is green: zero serious and zero critical violations on all 66. It found `GLASS-2`. (a) also asked for the matrix in the resolution, and the generated test names are the matrix — eleven routes under two themes and four states, one test each — so it cannot drift from the routes without `theme-resolution` or `route-manifest.test.ts` failing. **Not yet discharged: a run of the accessibility project inside CI against a real database**, which this host cannot produce, and (b), which needs `BK-1` to have shipped a domain rather than a mock — `docs/migration/capability-register.md` still records `connectors.core`, `automation.chat` and `automation.agents` as `mock`, so there is nothing to trigger the four states through a real adapter.\n\n**Re-read on 2026-10-23, after BK-1 shipped three domains.** The deferral argument in the owner field (\"a redesign before BK-1 lands is the redesign of an empty screen\") no longer holds: browser, api and load runs now exist behind the console. Condition (a) is still discharged, so the axe-clean result stands. Condition (b), a loading/empty/error/partial state matrix with a test per cell for every route, is **not done and deliberately not scheduled**: the console does not yet read `/api/v1/agents`, so the routes whose states the matrix would pin are not yet the ones that show these domains, and a matrix over screens that are about to change would be written twice. It becomes worth building when the console shows agent runs, and this row should be re-read then.\n\n**Re-read on 2026-11-18 for the 5.0.0 release.** The CI half of (a) is now discharged: `unified-ci.yml` run 43395721046 on `main` at `a7628e9b` (2026-11-13) ran the `accessibility` project inside the Product E2E job against a `postgres:16-alpine` service, 51 tests in each theme, all passing, within 708 passed and none failed. The row stays `debt` for (b) alone, unchanged.",
       "summary": "§17's fourth point asks for axe zero serious/critical on every route in both themes, and for loading, empty, error and partial states on every route. `expectNoBlockingAxeViolations` exists in `apps/web` and is used by **one** component test, so no route is covered; there is no state-coverage matrix; and four of the five agent domains behind those screens answer an explicit `501 NOT_CONFIGURED`, so the screens the gate would measure render nothing.\n\n**Confirmed by reading the tree, 2026-09-30.** `pnpm status:10` point 4 reports 13 route files under `apps/web/src/routes` and reports the accessibility clause as `fail` — the one route-level assertion that exists is in `GlobalCommandPalette.test.tsx`, which is a component, not a route. The deferred half is the state matrix, for which no artefact exists at all, and naming one as evidence would be asserting the thing that is missing.\n\n**Why this is deferral and not neglect.** The axe spec is about half a day and is worth having for its own sake. The question is what it would measure: a console whose five data domains are unconfigured has screens that render `not_configured` panels, so a green axe run over them says the empty state is accessible — which is true and is not §17's point. Fixing the states is Track A's work and it needs BK-1 behind it; fixing the renderer first means fixing it twice.\n\n**What is not deferred, and is why this row is Major rather than a claim that the console is fine.** One error boundary, one theme implementation, a token-resolution gate over `packages/ui`, and a per-route test suite all exist and hold. The register publishes `ui.legacy-surfaces` as `mock` and the derived `agent.*` availability as `false`, so a reader is not told the console is finished. The deferral is about craft; nothing in it asks the product to overstate anything, which is the distinction that keeps this row honest rather than convenient.\n\n**The removal condition is machine-checked.** `tests/e2e/accessibility/routes.spec.ts` plus a green `pnpm test:e2e` in both themes is half of it; the other half is BK-1 shipping a domain, because a gate that measures an empty screen is a gate that measures nothing. `pnpm status:10` reads this row, so the day it is discharged point 4 stops being `not_configured` on the same table as everything else."
     },
     {
@@ -8263,6 +8263,146 @@
           "asserts": "The installation default applies, a workspace's own wins, another workspace's never counts."
         }
       ]
+    },
+    {
+      "id": "REL-1",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (tests/e2e/product/repo-health.spec.ts, run against PostgreSQL 16)",
+      "title": "Connecting a folder in Settings registered the project and then told the user it had failed",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "`POST /api/v1/projects` answered 201 with `commands: project.profile.commands`, and `ProjectProfileSchema` stored each command without the `label` the detector produced. The web client's `RegisteredSchema` requires `label` (it is the only field `ConnectRepository` renders), so every successful connection from Settings > Projects or the setup guide showed \"Response from /api/v1/projects did not match the expected shape\" and never reached the connected state. The project row was written, so a second attempt failed on the slug. Found by the first release-journey spec, which connects a folder through the UI; the component test mocks the client and the API test asserted only `argv`, so neither half could see the other.",
+      "resolution": "`profileFromDetection` keeps the detector's `label`, a declared command is labelled by its argv, `ProjectProfileSchema` accepts an optional `label`, and the register route derives one with `commandLabel` for a profile stored before labels were kept.",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/repo-health.spec.ts",
+          "asserts": "Connecting a folder through Settings > Projects reaches the connected state, and the project is then graded exactly: incomplete, A+ at 100 after clean scans, D at 69 after one open secret."
+        },
+        {
+          "path": "apps/api/src/routes/projects.test.ts",
+          "asserts": "The registration response gives every command a `label` equal to its argv joined by spaces."
+        },
+        {
+          "path": "packages/projects/src/config.test.ts",
+          "asserts": "Detected and declared commands keep a label, and `commandLabel` derives one for a profile stored without it."
+        }
+      ]
+    },
+    {
+      "id": "REL-2",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (tests/e2e/product/release-verdict.spec.ts, run against PostgreSQL 16)",
+      "title": "Home's release verdict never saw a quality gate on a real install, and a green CI upload could not pass one",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Two defects behind one symptom: Home said \"No quality gate has evaluated a run yet\" however much CI had reported. (1) The readiness card read `run.policyEvaluation`, which `DrizzleExecutionStore` maps as `null` for every run; only the in-memory store copied a saved gate onto the run, so every unit test passed and every PostgreSQL install had no gate reason. (2) A run recorded from an uploaded report (`lupin test`, `/api/v1/reporter/upload`) carried no evidence reference, so the gate correctly refused to call it passed: `evidence:MISSING_REQUIRED_EVIDENCE` made a green CI run `unknown`. Found by the release-verdict journey spec, which uploads a green then a red JUnit report and reads Home.",
+      "resolution": "`execution/run-gate.ts` is the one reading of a run's gate: the recorded evaluation, else the provisional one. `GET /api/v1/runs/:id/gate` and the readiness card both use it, so the run page and Home cannot disagree. A projected canonical run records `report:<sha256 of the document>` as its evidence, persisted by `DrizzleRunRepository.upsertRun`.",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/release-verdict.spec.ts",
+          "asserts": "After a green JUnit upload the readiness gate reason passes and Home shows the card's word; after a red one Home says No-go with the card's first reason and lists the failing branch under what needs you."
+        },
+        {
+          "path": "apps/api/src/execution/run-gate.test.ts",
+          "asserts": "With a store whose runs never carry their gate (the PostgreSQL shape), the newest finished run is judged, a recorded evaluation wins and says so, and no finished run means no gate."
+        }
+      ]
+    },
+    {
+      "id": "REL-3",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (apps/api/src/services/failure-redaction.test.ts, run red then green)",
+      "title": "A token printed in a failing test's output was stored and shown as it was",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "`normaliseFailure`, the one rule both the reporter event door and the upload door apply to a test's failure text, bounded and trimmed it but did not redact it. A CI log routinely prints a credential (a failed request with its Authorization header, an environment dump, a key in a stack trace), and that text is stored in `tests.error_message` and rendered on the run page, the insights, the copilot's explanation and the scheduled reports. The product already had a secret redactor (`redactSecrets` in `@lupin/reporter`) and applied it only to agent trace content.",
+      "resolution": "`normaliseFailure` redacts with `redactSecrets` before bounding the message, so both doors store the redacted text and a truncation can never keep half a token.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/failure-redaction.test.ts",
+          "asserts": "A GitHub token, a Slack token, an AWS key id and a whole private-key block in a failure message are not stored; the surrounding text and an ordinary assertion message are kept exactly."
+        }
+      ]
+    },
+    {
+      "id": "REL-4",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (tests/e2e/product/large-suite.spec.ts, run red then green against PostgreSQL 16)",
+      "title": "A fifty-thousand-test suite could not be recorded: refused at 5 MiB, and too slow to write once allowed",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Two defects in front of the suites the product is for. (1) Size: a 50 000-test JUnit report is 6.4 MiB, and the reporter group's `app.use('*')` body limit of 5 MiB, mounted at `/`, refused it on every route including the CLI's `/projects/:id/tests/reports`, so `lupin test` answered 413 for a large monorepo. (2) Time: with the limit raised, the canonical projection wrote each test with `upsertTest`, an ownership read plus an upsert per row, about 100 000 statements, and the request did not finish in 120 s.",
+      "resolution": "One test-report ceiling, `MAX_TEST_REPORT_BYTES` (32 MiB, about 250 000 test cases), on both report doors; every other route keeps the 5 MiB default. `RunRepository.upsertTests` checks ownership once per run and writes 1 000 rows a statement; the projection uses it. 50 000 tests now ingest in 6.7 s, and the spec fails past 20 s.",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/large-suite.spec.ts",
+          "asserts": "A 6.6 MB report of 50 000 tests with 516 failures is accepted, every test is counted on the run, and it is ingested under the recorded 20 s ceiling."
+        },
+        {
+          "path": "apps/api/src/repositories/drizzle-run-repository.test.ts",
+          "asserts": "upsertTests writes 2 500 rows in chunks, a repeated key is the later row, a later batch overwrites, and rows for a run the workspace does not own are refused."
+        },
+        {
+          "path": "apps/api/src/routes/reporter.test.ts",
+          "asserts": "A JUnit upload past the one test-report ceiling is refused before it is parsed."
+        }
+      ]
+    },
+    {
+      "id": "REL-5",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (found by pnpm dogfood; tests/e2e/product/repo-health.spec.ts run red then green)",
+      "title": "Uploading a passing test suite graded a repository F (0), worse than uploading nothing",
+      "band": "Critical",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Lupin grading its own repository read \"F (0) — Limited by Tests — QA score 0 / 100 over 3 runs\" after three all-green suites. A plain JUnit upload (`lupin test`, the reporter) names no score category or surface — deliberately, `projectTestResult` never defaults one — so its results fill none of the score's cells, every cell has presence 0 and the QA score is 0. `qaTestsReading` only checked that some run existed, so that 0 became a measured Tests dimension, and the grade's geometric mean took the whole repository to F. With no uploads Tests was unmeasured and the grade was unaffected, so the first thing a new user does with the CLI made their grade collapse. Critical rather than Major because the grade is the product's headline number and it inverted the meaning of a green CI run.",
+      "resolution": "`qaTestsReading` returns no reading while no executed result lands in any score cell, so Tests stays unmeasured rather than zero until results carry a category (a detected or declared command, or the runner).",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/repo-health.spec.ts",
+          "asserts": "After clean scans grade A+ at 100, a green JUnit upload leaves the grade A+ at 100."
+        },
+        {
+          "path": "scripts/dogfood.mjs",
+          "asserts": "Lupin's own suites uploaded through the packed CLI produce a grade and a release verdict; the nightly job prints both."
+        }
+      ]
+    },
+    {
+      "id": "REL-6",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (pnpm verify:local; pnpm why picomatch --prod)",
+      "title": "picomatch GHSA-fc5q-39xc-vjpf (high, ReDoS through repeated extglobs) has no patched release, and pnpm audit blocks verify",
+      "band": "Major",
+      "status": "debt",
+      "wave": "REL-5.0.0",
+      "owner": "The next dependency review (pnpm-workspace.yaml review date 2026-12-18), or whoever first sees a fixed picomatch published.",
+      "summary": "`pnpm audit --audit-level=high`, the first step of `security:verify`, fails on GHSA-fc5q-39xc-vjpf: every picomatch release up to the latest, 4.0.7, is affected and no patched version exists. The 131 paths are build and test tooling (vite, tinyglobby, Stryker, eslint) except one runtime path: the runner image's `@usebruno/cli > @usebruno/converters > jscodeshift > picomatch`. The API, the worker and both npm packages have no production path to it. The ReDoS needs an attacker-chosen glob pattern; the runner's Bruno path globs collection files the operator configured. Every other step of `pnpm verify:local` passes on this branch, and `main` is affected in the same way.",
+      "resolution": "Carried as debt, 2026-11-18: no patched release exists. pnpm-workspace.yaml auditConfig.ignoreGhsas exempts this one advisory with its runtime reach and a review date; every other high advisory still fails the audit.",
+      "evidence": [
+        {
+          "path": "pnpm-workspace.yaml",
+          "asserts": "The exemption names the advisory, the one runtime path, this row and a review date, and nothing else is exempted."
+        }
+      ],
+      "removalCondition": "A picomatch release fixing GHSA-fc5q-39xc-vjpf is published and adopted through an overrides row, the auditConfig.ignoreGhsas entry is removed, and pnpm audit --audit-level=high passes without it."
     }
   ]
 }

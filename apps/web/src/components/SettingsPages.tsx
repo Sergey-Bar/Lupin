@@ -32,7 +32,7 @@ const GROUP_PAGES: Record<'ai' | 'integrations' | 'sessions-retention', GroupPag
     group: 'ai',
     title: 'AI provider',
     subtitle:
-      'The model behind chat, test proposals and evals. Use a gateway with an API key, or a local Ollama server so prompts stay on your network.',
+      'The model behind test proposals and evals. Use a gateway with an API key, or a local Ollama server so prompts stay on your network.',
     sections: [{ title: 'Provider' }],
     testKey: 'ai.gatewayUrl',
   },

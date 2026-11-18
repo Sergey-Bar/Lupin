@@ -161,6 +161,13 @@ export interface RunRecord {
    */
   projectId?: string | null;
   triggeredBy: string;
+  /**
+   * What the run's verdict rests on, as the gate reads it (`report:<sha256>` for an uploaded
+   * report). Without one the gate refuses to call a passed run passed — correctly — so a run
+   * recorded from a CI report was `unknown` at its gate however green it was (ledger REL-2).
+   * Absent leaves the column as it was.
+   */
+  rawEvidenceRefs?: string[];
 }
 
 /**
@@ -355,6 +362,13 @@ export interface RunRepository {
    * Composite key is (id, runId).
    */
   upsertTest(test: TestRecord): Promise<void>;
+
+  /**
+   * The same as `upsertTest` for every row, in as few statements as the store can. Optional:
+   * a store without it is written one row at a time. A fifty-thousand-test report written one
+   * row at a time is two statements a row and did not finish in two minutes (REL-4).
+   */
+  upsertTests?(tests: readonly TestRecord[]): Promise<void>;
 
   /**
    * Apply a status/duration/failure patch to a test row. No-op if the test does not

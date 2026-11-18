@@ -46,7 +46,7 @@ const STEP_COPY: Record<OnboardingStepId, { title: string; why: string }> = {
   },
   ai: {
     title: 'Connect an AI provider',
-    why: 'Optional. Powers chat, test proposals and evals. You can use a local Ollama server so nothing leaves your network.',
+    why: 'Optional. Powers test proposals and evals. You can use a local Ollama server so nothing leaves your network.',
   },
   notifications: {
     title: 'Choose where reports go',

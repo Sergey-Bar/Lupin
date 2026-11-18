@@ -241,6 +241,10 @@ describe('registering a repository', () => {
       expect(body.commands.length).toBeGreaterThan(0);
       // argv, never a string — the shape that makes a shell unavailable.
       expect(Array.isArray(body.commands[0]?.argv)).toBe(true);
+      // The screen renders `label` and nothing else (`ConnectRepository.tsx`), and the web
+      // client refuses a command without one, so a registration that drops it reads as a
+      // failure to the person who just connected their repository (ledger REL-1).
+      expect(body.commands[0]).toMatchObject({ label: body.commands[0]?.argv.join(' ') });
     } finally {
       await client.close();
     }

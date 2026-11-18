@@ -1188,6 +1188,10 @@ export async function qaTestsReading(
     return null;
   }
   if (score.provenance.runsRead === 0) return null;
+  // Runs whose results name no score category (a plain JUnit upload) fill no cell, so the score
+  // is a zero about nothing. Tests stays unmeasured until a result lands in a cell, or a passing
+  // suite would grade a repository worse than sending nothing at all (ledger REL-5).
+  if (score.cells.every((cell) => cell.inputs.executedTests === 0)) return null;
   const failing = new Set(score.cells.flatMap((cell) => cell.inputs.failedFingerprints));
   return {
     metric: {

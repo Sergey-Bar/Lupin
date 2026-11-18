@@ -158,6 +158,14 @@ export interface NormalizedReporterEvent {
 }
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+/**
+ * One test report, through either door (`/reporter/upload` and `lupin test`'s
+ * `/projects/:id/tests/reports`). 32 MiB is about 250 000 JUnit test cases; a fifty-thousand-test
+ * suite is 6.4 MiB and was refused at the event ceiling of 5 MiB (ledger REL-4). An event stays
+ * at 5 MiB: it is one test, never a suite.
+ */
+export const MAX_TEST_REPORT_BYTES = 32 * 1024 * 1024;
+const UPLOAD_PATH = /^\/api\/v1\/(reporter\/upload|projects\/[^/]+\/tests\/reports)\/?$/u;
 
 // ---------------------------------------------------------------------------
 // Auth helpers
@@ -416,7 +424,7 @@ export function parseUploadDocument(
 async function readUploadDocument(c: Context): Promise<UploadDocument> {
   const contentType = c.req.header('content-type') ?? '';
   const contentLength = Number(c.req.header('content-length') ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_UPLOAD_BYTES) {
+  if (Number.isFinite(contentLength) && contentLength > MAX_TEST_REPORT_BYTES) {
     throw new DomainError('PAYLOAD_TOO_LARGE', 'Request body too large');
   }
   if (contentType.includes('multipart/form-data')) return readMultipartDocument(c);
@@ -439,7 +447,9 @@ async function readMultipartDocument(c: Context): Promise<UploadDocument> {
     fields['fileName'] = value.name;
   }
   if (bytes === undefined) throw new Error('file field is required for multipart uploads');
-  if (new TextEncoder().encode(new TextDecoder().decode(bytes)).byteLength > MAX_UPLOAD_BYTES) {
+  if (
+    new TextEncoder().encode(new TextDecoder().decode(bytes)).byteLength > MAX_TEST_REPORT_BYTES
+  ) {
     throw new DomainError('PAYLOAD_TOO_LARGE', 'Request body too large');
   }
   return { bytes, fields };
@@ -629,7 +639,17 @@ export function createReporterRoutes(
   // sized to carry the largest artifact the store accepts once encoded. A trace is
   // routinely larger than the 5 MiB an event or a report may be.
   const artifactLimit = bodyLimit({ maxSize: MAX_EXECUTION_BODY_BYTES, onError: tooLarge });
-  app.use('*', (c, next) => (ARTIFACT_PATH.test(c.req.path) ? artifactLimit : eventLimit)(c, next));
+  const reportLimit = bodyLimit({ maxSize: MAX_TEST_REPORT_BYTES, onError: tooLarge });
+  // `*` on purpose: the app is mounted at `/`, so this is the API's default body ceiling, and
+  // routes with no limit of their own rely on it. Only the two test-report doors get the larger
+  // ceiling; the CLI's `/projects/:id/tests/reports` was refused here at 5 MiB (REL-4).
+  app.use('*', (c, next) =>
+    (ARTIFACT_PATH.test(c.req.path)
+      ? artifactLimit
+      : UPLOAD_PATH.test(c.req.path)
+        ? reportLimit
+        : eventLimit)(c, next),
+  );
 
   // ------------------------------------------------------------------
   // Auth middleware — guards all /api/v1/reporter/* paths

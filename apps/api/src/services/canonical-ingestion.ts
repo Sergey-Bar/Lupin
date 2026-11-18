@@ -61,8 +61,10 @@ async function writeProjection(
 ): Promise<CanonicalProjection> {
   const projection = projectCanonicalRun(result, { triggeredBy: options.triggeredBy });
   await options.repository.upsertRun(projection.run);
-  for (const test of projection.tests) {
-    await options.repository.upsertTest(test);
+  if (options.repository.upsertTests !== undefined) {
+    await options.repository.upsertTests(projection.tests);
+  } else {
+    for (const test of projection.tests) await options.repository.upsertTest(test);
   }
   if (options.bus) {
     // Fire-and-forget: the durable bus contract is non-rejecting, so there is nothing to

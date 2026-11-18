@@ -65,6 +65,11 @@ export const ProjectProfileSchema = z.object({
       z.object({
         id: z.string().min(1),
         argv: z.array(z.string().min(1)).min(1),
+        /**
+         * What a screen shows for the command. Optional because profiles stored before it was
+         * kept have none; `commandLabel` derives one from `argv` for those (ledger REL-1).
+         */
+        label: z.string().min(1).optional(),
         category: z.enum(SCORE_CATEGORIES),
         confidence: z.number().min(0).max(1),
         evidence: z.string().min(1),
@@ -88,6 +93,14 @@ export const ProjectProfileSchema = z.object({
   /** Health grade weights, disabled gates and the pull-request policy. Absent: the defaults. */
   health: HealthPolicySchema.optional(),
 });
+
+/** What a screen shows for a stored command: its label, or for an older profile, its argv. */
+export function commandLabel(command: {
+  argv: readonly string[];
+  label?: string | undefined;
+}): string {
+  return command.label ?? command.argv.join(' ');
+}
 export type ProjectProfile = z.infer<typeof ProjectProfileSchema>;
 
 /**

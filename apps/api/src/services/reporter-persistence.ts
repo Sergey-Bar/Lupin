@@ -13,7 +13,7 @@
  *   test:begin with existing (testId, runId) → upsert — idempotent.
  */
 import { z } from 'zod/v4';
-import { safeRelativePath } from '@lupin/reporter';
+import { redactSecrets, safeRelativePath } from '@lupin/reporter';
 import { testIdentity } from '@lupin/shared-contracts';
 import type { NormalizedReporterEvent } from '../routes/reporter.js';
 import {
@@ -131,7 +131,9 @@ export function normaliseFailure(
   if (message === '' && code === '') return { errorCode: null, errorMessage: null };
   return {
     errorCode: code === '' ? null : truncate(code, MAX_FAILURE_CODE),
-    errorMessage: message === '' ? null : truncate(message, MAX_FAILURE_MESSAGE),
+    // Redacted before it is bounded, so a cut can never leave half a token behind; the patterns
+    // are @lupin/reporter's, the ones agent traces are redacted with (ledger REL-3).
+    errorMessage: message === '' ? null : truncate(redactSecrets(message), MAX_FAILURE_MESSAGE),
   };
 }
 
