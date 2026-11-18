@@ -155,8 +155,8 @@ describe('testsGateReason (REL-8)', () => {
   };
 
   it('fails a commit whose own run has failures nothing excuses, naming them', () => {
-    expect(testsGateReason({ ...base, failed: 1, failures: ['cart � totals the basket'] })).toBe(
-      '1 failing test on this commit: cart � totals the basket',
+    expect(testsGateReason({ ...base, failed: 1, failures: ['cart › totals the basket'] })).toBe(
+      '1 failing test on this commit: cart › totals the basket',
     );
     expect(testsGateReason({ ...base, failed: 5, failures: ['a', 'b', 'c', 'd', 'e'] })).toBe(
       '5 failing tests on this commit: a, b, c, and 2 more',
