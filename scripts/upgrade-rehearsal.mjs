@@ -55,6 +55,20 @@ const envValue = (/** @type {string} */ name) =>
 
 /** @param {string} pathname @param {RequestInit} [init] */
 async function api(pathname, init = {}) {
+  // Retried on a refused connection only: the edge proxy can still be settling a moment after
+  // ./start.sh reports ready. An HTTP answer, whatever its status, is returned as it is.
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await request(pathname, init);
+    } catch (error) {
+      if (attempt >= 10) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+}
+
+/** @param {string} pathname @param {RequestInit} [init] */
+async function request(pathname, init = {}) {
   const response = await fetch(`http://127.0.0.1:${String(PORT)}${pathname}`, {
     ...init,
     headers: { authorization: `Bearer ${envValue('LUPIN_INSTALLATION_KEY')}`, ...init.headers },
