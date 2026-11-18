@@ -8263,6 +8263,33 @@
           "asserts": "The installation default applies, a workspace's own wins, another workspace's never counts."
         }
       ]
+    },
+    {
+      "id": "REL-1",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (tests/e2e/product/repo-health.spec.ts, run against PostgreSQL 16)",
+      "title": "Connecting a folder in Settings registered the project and then told the user it had failed",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "`POST /api/v1/projects` answered 201 with `commands: project.profile.commands`, and `ProjectProfileSchema` stored each command without the `label` the detector produced. The web client's `RegisteredSchema` requires `label` (it is the only field `ConnectRepository` renders), so every successful connection from Settings > Projects or the setup guide showed \"Response from /api/v1/projects did not match the expected shape\" and never reached the connected state. The project row was written, so a second attempt failed on the slug. Found by the first release-journey spec, which connects a folder through the UI; the component test mocks the client and the API test asserted only `argv`, so neither half could see the other.",
+      "resolution": "`profileFromDetection` keeps the detector's `label`, a declared command is labelled by its argv, `ProjectProfileSchema` accepts an optional `label`, and the register route derives one with `commandLabel` for a profile stored before labels were kept.",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/repo-health.spec.ts",
+          "asserts": "Connecting a folder through Settings > Projects reaches the connected state, and the project is then graded exactly: incomplete, A+ at 100 after clean scans, D at 69 after one open secret."
+        },
+        {
+          "path": "apps/api/src/routes/projects.test.ts",
+          "asserts": "The registration response gives every command a `label` equal to its argv joined by spaces."
+        },
+        {
+          "path": "packages/projects/src/config.test.ts",
+          "asserts": "Detected and declared commands keep a label, and `commandLabel` derives one for a profile stored without it."
+        }
+      ]
     }
   ]
 }

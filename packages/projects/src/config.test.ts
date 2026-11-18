@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { mergeConfig, profileFromDetection } from './config.js';
-import { LupinConfigSchema } from './profile.js';
+import { LupinConfigSchema, ProjectProfileSchema, commandLabel } from './profile.js';
 import { literalView } from './detect/repository-view.js';
 import { detectProject } from './detect/index.js';
 
@@ -18,6 +18,36 @@ const NODE_REPO = {
 async function detectedProfile() {
   return profileFromDetection(await detectProject(literalView(NODE_REPO)));
 }
+
+describe('a stored command keeps the label a screen shows (REL-1)', () => {
+  it('keeps the detector label, and labels a declared command by its argv', async () => {
+    const detected = await detectedProfile();
+    expect(detected.commands.length).toBeGreaterThan(0);
+    for (const command of detected.commands) expect(command.label).toBe(command.argv.join(' '));
+    const merged = mergeConfig(detected, { version: 1, commands: { unit: ['pytest', '-q'] } });
+    expect(merged.profile.commands.find((c) => c.id === 'declared.unit')?.label).toBe('pytest -q');
+  });
+
+  it('derives a label for a profile stored before labels were kept', () => {
+    const old = ProjectProfileSchema.parse({
+      detectorVersion: 1,
+      ecosystem: 'node',
+      language: null,
+      packageManager: 'npm',
+      commands: [
+        {
+          id: 'node.test',
+          argv: ['npm', 'test'],
+          category: 'unit',
+          confidence: 0.9,
+          evidence: 'x',
+        },
+      ],
+    });
+    expect(old.commands[0]?.label).toBeUndefined();
+    expect(commandLabel(old.commands[0] ?? { argv: ['?'] })).toBe('npm test');
+  });
+});
 
 describe('a declared command is argv, never a shell string (D7)', () => {
   it('refuses a config whose command is a string', () => {

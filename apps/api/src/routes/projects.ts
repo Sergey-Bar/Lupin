@@ -17,7 +17,7 @@ import {
   type RepoScanner,
   type ResolvedCommand,
 } from '../services/repo-scan-service.js';
-import { diffScores } from '@lupin/projects';
+import { commandLabel, diffScores } from '@lupin/projects';
 import { evaluateReadiness } from '@lupin/reporting';
 import type { ProjectHistory } from '@lupin/shared-contracts';
 import { DEFAULT_QUALITY_POLICY } from '../execution/quality-gate.js';
@@ -640,7 +640,12 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
     });
     // `201` with a `Location`: the runnable commands come from the same response so
     // a client does not need a second round trip to learn what it just registered.
-    return context.json({ project, commands: project.profile.commands }, 201);
+    // `label` is what the screen shows; a profile stored before it was kept derives it.
+    const commands = project.profile.commands.map((command) => ({
+      ...command,
+      label: commandLabel(command),
+    }));
+    return context.json({ project, commands }, 201);
   });
 
   app.get('/api/v1/projects', viewer, async (context) => {

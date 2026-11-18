@@ -70,7 +70,11 @@
     }
   ],
   "connectors": [
-    { "id": "github", "specs": ["tests/e2e/product/repo-health.spec.ts"], "verification": "none" },
+    {
+      "id": "github",
+      "specs": ["tests/e2e/product/github-connector.spec.ts"],
+      "verification": "none"
+    },
     { "id": "jira", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" },
     { "id": "slack", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" },
     { "id": "teams", "specs": ["tests/e2e/product/notifications.spec.ts"], "verification": "none" },
