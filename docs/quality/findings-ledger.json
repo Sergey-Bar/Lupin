@@ -8464,6 +8464,44 @@
       "status": "fixed",
       "confirmedOn": "2026-11-19",
       "confirmedBy": "kilo:qa-review (hero.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "first-verdict.md tells a QA engineer to set LUPIN_PROJECT, and neither Settings, Projects nor the connected panel showed the id, so the first CI job could not be written without reading the address bar. The guide also skipped how a CI runner reaches the install, that the CLI is not on npm yet, where LUPIN_REPORTER_SECRET comes from, and that Ready needs coverage.",
+      "id": "REL-10",
+      "resolution": "ProjectId in apps/web/src/components/ProjectId.tsx shows the id with a copy button in both places, and the guide covers each gap.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "The project row and the connected panel show the id and a Copy project id button.",
+          "path": "apps/web/src/components/SettingsPages.test.tsx"
+        }
+      ],
+      "title": "No screen showed the project id the CI guide asks for",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (SettingsPages.test.tsx run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The reporter read LUPIN_BRANCH/LUPIN_COMMIT and the GitHub variables only, so a streamed GitLab run had no branch or commit and could not be tied to a gate.",
+      "id": "REL-11",
+      "resolution": "tools/playwright-reporter/src/index.ts falls back to CI_COMMIT_REF_NAME and CI_COMMIT_SHA.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A run with only the GitLab variables carries their branch and commit.",
+          "path": "tools/playwright-reporter/src/reporter.test.ts"
+        }
+      ],
+      "title": "The Playwright reporter sent no branch or commit from GitLab CI",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (reporter.test.ts run red then green)"
     }
   ]
 }
