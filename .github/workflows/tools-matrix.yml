@@ -51,6 +51,8 @@ jobs:
           cache: pnpm
       - name: Install frozen dependencies
         run: pnpm install --frozen-lockfile
+      - name: Build both tools and what their tests import
+        run: pnpm --filter "@lupin/cli..." --filter "@lupin/playwright-reporter..." build
       - name: Unit tests of both tools
         run: pnpm --filter @lupin/cli --filter @lupin/playwright-reporter test
       - name: Packed tarballs, installed and run
