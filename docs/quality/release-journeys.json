@@ -33,7 +33,10 @@
     {
       "id": "release-verdict",
       "title": "Home shows ship or hold, with the reasons and what needs you",
-      "specs": ["tests/e2e/product/release-readiness.spec.ts"],
+      "specs": [
+        "tests/e2e/product/release-readiness.spec.ts",
+        "tests/e2e/product/release-verdict.spec.ts"
+      ],
       "capabilities": ["quality.cockpit", "reporting.lifecycle"]
     },
     {

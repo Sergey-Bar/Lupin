@@ -8290,6 +8290,29 @@
           "asserts": "Detected and declared commands keep a label, and `commandLabel` derives one for a profile stored without it."
         }
       ]
+    },
+    {
+      "id": "REL-2",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (tests/e2e/product/release-verdict.spec.ts, run against PostgreSQL 16)",
+      "title": "Home's release verdict never saw a quality gate on a real install, and a green CI upload could not pass one",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Two defects behind one symptom: Home said \"No quality gate has evaluated a run yet\" however much CI had reported. (1) The readiness card read `run.policyEvaluation`, which `DrizzleExecutionStore` maps as `null` for every run; only the in-memory store copied a saved gate onto the run, so every unit test passed and every PostgreSQL install had no gate reason. (2) A run recorded from an uploaded report (`lupin test`, `/api/v1/reporter/upload`) carried no evidence reference, so the gate correctly refused to call it passed: `evidence:MISSING_REQUIRED_EVIDENCE` made a green CI run `unknown`. Found by the release-verdict journey spec, which uploads a green then a red JUnit report and reads Home.",
+      "resolution": "`execution/run-gate.ts` is the one reading of a run's gate: the recorded evaluation, else the provisional one. `GET /api/v1/runs/:id/gate` and the readiness card both use it, so the run page and Home cannot disagree. A projected canonical run records `report:<sha256 of the document>` as its evidence, persisted by `DrizzleRunRepository.upsertRun`.",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/release-verdict.spec.ts",
+          "asserts": "After a green JUnit upload the readiness gate reason passes and Home shows the card's word; after a red one Home says No-go with the card's first reason and lists the failing branch under what needs you."
+        },
+        {
+          "path": "apps/api/src/execution/run-gate.test.ts",
+          "asserts": "With a store whose runs never carry their gate (the PostgreSQL shape), the newest finished run is judged, a recorded evaluation wins and says so, and no finished run means no gate."
+        }
+      ]
     }
   ]
 }

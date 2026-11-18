@@ -146,6 +146,7 @@ export class DrizzleRunRepository implements RunRepository {
         commitSha: run.commitSha ?? null,
         ...(run.projectId === undefined ? {} : { projectId: run.projectId }),
         triggeredBy: run.triggeredBy,
+        ...(run.rawEvidenceRefs === undefined ? {} : { rawEvidenceRefs: run.rawEvidenceRefs }),
       })
       .onConflictDoUpdate({
         target: runs.id,
@@ -172,6 +173,7 @@ export class DrizzleRunRepository implements RunRepository {
           commitSha: run.commitSha ?? null,
           ...(run.projectId === undefined ? {} : { projectId: run.projectId }),
           triggeredBy: run.triggeredBy,
+          ...(run.rawEvidenceRefs === undefined ? {} : { rawEvidenceRefs: run.rawEvidenceRefs }),
         },
         setWhere: eq(runs.workspaceId, this.workspaceId),
       })

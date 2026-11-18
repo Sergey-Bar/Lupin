@@ -161,6 +161,13 @@ export interface RunRecord {
    */
   projectId?: string | null;
   triggeredBy: string;
+  /**
+   * What the run's verdict rests on, as the gate reads it (`report:<sha256>` for an uploaded
+   * report). Without one the gate refuses to call a passed run passed — correctly — so a run
+   * recorded from a CI report was `unknown` at its gate however green it was (ledger REL-2).
+   * Absent leaves the column as it was.
+   */
+  rawEvidenceRefs?: string[];
 }
 
 /**

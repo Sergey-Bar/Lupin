@@ -22,6 +22,7 @@ import { evaluateReadiness } from '@lupin/reporting';
 import type { ProjectHistory } from '@lupin/shared-contracts';
 import { DEFAULT_QUALITY_POLICY } from '../execution/quality-gate.js';
 import { belongsTo } from '../execution/insights.js';
+import { latestGate } from '../execution/run-gate.js';
 import { readSince, startOfDay } from '../execution/trend.js';
 import type { ExecutionRun, ExecutionStore } from '../execution/types.js';
 import {
@@ -788,7 +789,7 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
       const since = startOfDay(now).getTime() - (days - 1) * DAY_MS;
       const { runs } = await readSince(reliability.store, options.workspaceId, since);
       const mine = runs.filter((run) => belongsTo(run, project.id));
-      const gated = mine.find((run) => run.policyEvaluation !== null);
+      const gated = await latestGate(reliability.store, options.workspaceId, mine);
       const tests = mine.reduce((sum, run) => sum + run.summary.total, 0);
       const flaky = mine.reduce((sum, run) => sum + run.summary.flaky, 0);
       const history = await readHistory(options, project.id, new Date(since));
@@ -801,10 +802,7 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
         projectId: project.id,
         evaluatedAt: now.toISOString(),
         runs: mine.length,
-        gate:
-          gated?.policyEvaluation === null || gated === undefined
-            ? null
-            : { status: gated.policyEvaluation.status, runId: gated.id },
+        gate: gated === null ? null : { status: gated.status, runId: gated.runId },
         passRate: verdictRate(mine),
         passRateThreshold: await passRateThreshold(options, project.id),
         flakyRate: tests === 0 ? null : Math.round((flaky / tests) * 1000) / 10,

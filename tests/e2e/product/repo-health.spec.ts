@@ -4,6 +4,7 @@ import path from 'node:path';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { API_AUTH_HEADERS, API_BASE, REPORTER_AUTH_HEADERS, WEB_BASE } from '../support/config.js';
 import { authenticate } from '../support/session.js';
+import { removeProject } from '../support/temp-project.js';
 
 /**
  * Release journey 1 (`docs/quality/release-journeys.json`, `onboarding`): a QA engineer
@@ -63,8 +64,10 @@ async function expectGrade(
 
 test.describe('repository health, from connecting a repository to its grade', () => {
   let folder = '';
+  let connected: { id: string; name: string } | undefined;
 
   test.beforeEach(() => {
+    connected = undefined;
     folder = mkdtempSync(path.join(tmpdir(), 'lupin-health-'));
     writeFileSync(
       path.join(folder, 'package.json'),
@@ -72,7 +75,9 @@ test.describe('repository health, from connecting a repository to its grade', ()
     );
   });
 
-  test.afterEach(() => {
+  test.afterEach(async ({ request }) => {
+    // The project goes before its folder, so no later spec opens on a path that is gone.
+    if (connected !== undefined) await removeProject(request, connected.id, connected.name);
     rmSync(folder, { recursive: true, force: true });
   });
 
@@ -92,7 +97,7 @@ test.describe('repository health, from connecting a repository to its grade', ()
 
     const listed = (await (
       await request.get(`${API_BASE}/api/v1/projects`, { headers: API_AUTH_HEADERS })
-    ).json()) as { projects: Array<{ id: string; repoPath?: string | null }> };
+    ).json()) as { projects: Array<{ id: string; name: string; repoPath?: string | null }> };
     const project = listed.projects.find(
       (entry) =>
         entry.repoPath !== undefined &&
@@ -100,6 +105,7 @@ test.describe('repository health, from connecting a repository to its grade', ()
         path.resolve(entry.repoPath) === path.resolve(folder),
     );
     expect(project, `a project registered for ${folder}`).toBeDefined();
+    connected = project;
     const projectId = project?.id ?? '';
 
     // Nothing measured yet: no grade is invented, and the page says what to run.

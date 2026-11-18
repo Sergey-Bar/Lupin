@@ -1,12 +1,12 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { listRuns } from '../support/api.js';
 import { API_AUTH_HEADERS, API_BASE, REPORTER_SECRET, WEB_BASE } from '../support/config.js';
 import { packTools, type PackedTools } from '../support/packed-tools.js';
 import { authenticate } from '../support/session.js';
+import { registerTempProject, type TempProject } from '../support/temp-project.js';
 
 /**
  * Release journey 2 (`docs/quality/release-journeys.json`, `ci-ingestion`): what a CI job
@@ -54,29 +54,20 @@ test.describe('CI ingestion through the packed CLI and reporter', () => {
   test.describe.configure({ mode: 'serial', timeout: 240_000 });
 
   let tools: PackedTools;
-  let repo = '';
+  let shop: TempProject;
   let projectId = '';
   let token = '';
 
   test.beforeAll(async ({ request }) => {
     tools = packTools();
-    repo = mkdtempSync(path.join(tmpdir(), 'lupin-ci-repo-'));
-    writeFileSync(
-      path.join(repo, 'package.json'),
-      JSON.stringify({ name: 'shop', scripts: { test: 'vitest run' } }),
-    );
-    const slug = path.basename(repo).toLowerCase();
-    const created = await request.post(`${API_BASE}/api/v1/projects`, {
-      headers: { ...API_AUTH_HEADERS, 'content-type': 'application/json' },
-      data: { name: slug, slug, repoPath: repo },
-    });
-    expect(created.status(), await created.text()).toBe(201);
-    projectId = ((await created.json()) as { project: { id: string } }).project.id;
+    shop = await registerTempProject(request, 'lupin-ci-repo');
+    projectId = shop.id;
     token = await mintUploaderToken(request, projectId);
   });
 
-  test.afterAll(() => {
-    for (const dir of [tools?.dir, repo]) if (dir) rmSync(dir, { recursive: true, force: true });
+  test.afterAll(async ({ request }) => {
+    await shop?.remove(request);
+    if (tools?.dir) rmSync(tools.dir, { recursive: true, force: true });
   });
 
   /** `npx lupin …` in the user's project, with the environment a CI job sets. */
@@ -192,25 +183,18 @@ test.describe('CI ingestion through the packed CLI and reporter', () => {
   test('the CLI refuses a token pinned to another project, and says so with exit 4', async ({
     request,
   }) => {
-    const otherRepo = mkdtempSync(path.join(tmpdir(), 'lupin-ci-other-'));
+    const other = await registerTempProject(request, 'lupin-ci-other');
     try {
-      writeFileSync(path.join(otherRepo, 'package.json'), JSON.stringify({ name: 'other' }));
-      const slug = path.basename(otherRepo).toLowerCase();
-      const other = await request.post(`${API_BASE}/api/v1/projects`, {
-        headers: { ...API_AUTH_HEADERS, 'content-type': 'application/json' },
-        data: { name: slug, slug, repoPath: otherRepo },
-      });
-      const otherId = ((await other.json()) as { project: { id: string } }).project.id;
       writeFileSync(path.join(tools.dir, 'clean.sarif'), sarif([]));
       const refused = lupin(
         ['upload', '--format', 'sarif', '--file', 'clean.sarif', '--branch', 'main'],
         {
-          LUPIN_PROJECT: otherId,
+          LUPIN_PROJECT: other.id,
         },
       );
       expect(refused.code, refused.out).toBe(4);
     } finally {
-      rmSync(otherRepo, { recursive: true, force: true });
+      await other.remove(request);
     }
   });
 
