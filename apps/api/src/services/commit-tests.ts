@@ -128,3 +128,23 @@ function summaryOf(tests: readonly ExecutionTestResult[]) {
     unknown: count('unknown'),
   };
 }
+
+/**
+ * The gate's reason for a commit whose own test run failed, or `null`. A commit with no recorded
+ * run is not judged here: an unmeasured commit is the gate's other rules' business, and saying
+ * "no tests" would fail every project that sends scans only. Quarantined failures are excused,
+ * as they are everywhere else; errors outside any test are never excused (REL-8).
+ */
+export function testsGateReason(tests: CommitTests | null): string | null {
+  if (tests === null || tests.excused) return null;
+  const failing = tests.failures.length;
+  if (failing > 0) {
+    const shown = tests.failures.slice(0, 3).join(', ');
+    const more = failing > 3 ? `, and ${String(failing - 3)} more` : '';
+    return `${String(failing)} failing ${failing === 1 ? 'test' : 'tests'} on this commit: ${shown}${more}`;
+  }
+  if (tests.reportErrors > 0) {
+    return `The test report for this commit has ${String(tests.reportErrors)} error(s) outside any test`;
+  }
+  return null;
+}

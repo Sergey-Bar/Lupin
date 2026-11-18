@@ -926,6 +926,9 @@ function deriveEnvVars(read, files) {
     // A setting read off a config object the entry point passes in — the runner's
     // `input['RUNNER_K6_SCRIPT_ROOT']` — is as real as one read off `process.env`.
     addFirstGroups(names, source, /\binput\[['"]([A-Z][A-Z0-9_]*)['"]\]/g);
+    // And one read off an injected environment - the Playwright reporter's
+    // `this.env['LUPIN_REPORTER_SECRET']`, which a test can replace.
+    addFirstGroups(names, source, /\benv\[['"]([A-Z][A-Z0-9_]*)['"]\]/g);
 
     // And every name the workspace exports. A document citing
     // `MIGRATION_ADVISORY_LOCK_KEY` as evidence for a decision is naming something

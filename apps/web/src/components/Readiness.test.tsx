@@ -37,7 +37,7 @@ describe('the verdict hero', () => {
   });
 
   it.each([
-    ['go', 'Go', 'text-success'],
+    ['go', 'Ready', 'text-success'],
     ['no-go', 'No-go', 'text-danger'],
   ] as const)('draws %s in its own tone', async (verdict, word, tone) => {
     renderRouted(

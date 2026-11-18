@@ -2,7 +2,7 @@ import { useUrlChoice } from '../../hooks/useUrlChoice.js';
 import React from 'react';
 import { createRoute } from '@tanstack/react-router';
 import { Button, Flame, Hero, Sparkline, Timer, cn } from '@lupin/ui';
-import { areaHero } from '../../lib/hero.js';
+import { VERDICT_WORD, areaHero } from '../../lib/hero.js';
 import { Route as dashboardRoute } from '../dashboard.js';
 import {
   Kpi,
@@ -80,7 +80,6 @@ export function InsightsPage({
   );
 }
 
-const VERDICT_WORD = { go: 'Go', caution: 'Caution', 'no-go': 'No-go' } as const;
 const VERDICT_TONE = {
   go: 'text-success',
   caution: 'text-warning',

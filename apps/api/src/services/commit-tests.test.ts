@@ -3,7 +3,7 @@ import { failureSignature } from '@lupin/reporting';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
 import type { TestRecord } from '../repositories/run-repository.js';
 import type { QuarantineMatch } from '../execution/quarantine-excusal.js';
-import { commitTests } from './commit-tests.js';
+import { commitTests, testsGateReason, type CommitTests } from './commit-tests.js';
 
 const PROJECT = '11111111-1111-4111-8111-111111111111';
 const COMMIT = 'abcdef1234567';
@@ -136,5 +136,40 @@ describe('commitTests', () => {
     const deps = { repository, quarantined: async () => [], reportErrors: async () => 0 };
     expect(await commitTests(deps, PROJECT, 'fffffff')).toBeNull();
     expect(await commitTests(deps, '22222222-2222-4222-8222-222222222222', COMMIT)).toBeNull();
+  });
+});
+
+describe('testsGateReason (REL-8)', () => {
+  const base: CommitTests = {
+    runId: 'r',
+    total: 5,
+    passed: 5,
+    failed: 0,
+    flaky: 0,
+    reportErrors: 0,
+    excused: false,
+    quarantinedFailures: [],
+    failures: [],
+    flakyUnquarantined: [],
+    unlabelledFailures: 0,
+  };
+
+  it('fails a commit whose own run has failures nothing excuses, naming them', () => {
+    expect(testsGateReason({ ...base, failed: 1, failures: ['cart › totals the basket'] })).toBe(
+      '1 failing test on this commit: cart › totals the basket',
+    );
+    expect(testsGateReason({ ...base, failed: 5, failures: ['a', 'b', 'c', 'd', 'e'] })).toBe(
+      '5 failing tests on this commit: a, b, c, and 2 more',
+    );
+  });
+
+  it('passes a green run, a run excused by quarantine, and a commit with no run', () => {
+    expect(testsGateReason(base)).toBeNull();
+    expect(testsGateReason({ ...base, excused: true, failures: ['a'] })).toBeNull();
+    expect(testsGateReason(null)).toBeNull();
+  });
+
+  it('fails a report with errors outside any test, which is never excused', () => {
+    expect(testsGateReason({ ...base, reportErrors: 2 })).toMatch(/2 error\(s\) outside any test/u);
   });
 });

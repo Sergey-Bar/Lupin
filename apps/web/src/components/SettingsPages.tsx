@@ -9,9 +9,10 @@ import { canAdminister, canAdministerInstallation, canOperate } from '../lib/rol
 import { explain, type QualityGate, type SettingsClient } from '../lib/settings-client.js';
 import { AccessGate } from './Access.js';
 import { ConfirmAction } from './ConfirmAction.js';
-import { Bdi, UserText } from './Bidi.js';
+import { UserText } from './Bidi.js';
 import { ConnectRepository } from './ConnectRepository.js';
 import { PageBody, PageFrame, PageHeader, Panel } from './kit.js';
+import { ProjectSource } from './ProjectId.js';
 import { SettingsForm } from './SettingsForm.js';
 import { useToast } from './Toasts.js';
 
@@ -501,14 +502,7 @@ function ProjectRow({
       data-testid={`project-${project.id}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="grid min-w-0 gap-0.5">
-          <UserText className="truncate font-medium text-fg">{project.name}</UserText>
-          {project.repoPath === null ? (
-            <span className="text-xs text-fg-muted">Cloned from git for each scan</span>
-          ) : (
-            <Bdi className="truncate font-mono text-xs text-fg-muted">{project.repoPath}</Bdi>
-          )}
-        </div>
+        <ProjectSource project={project} />
         <div className="flex flex-wrap items-center gap-2">
           {hasToken ? <Badge variant="secondary">Token saved</Badge> : null}
           <RowActions

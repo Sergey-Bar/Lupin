@@ -23,9 +23,26 @@ it found. Nothing in the repository is changed.
 only send reports to that one project: it cannot read anything, and a token for project A is
 refused by project B (the CLI exits `4`). Store it as a masked CI secret named `LUPIN_TOKEN`.
 
+The project id for `LUPIN_PROJECT` is the id in the project page address,
+`/dashboard/repo/<id>`, and in **Settings › Projects**.
+
 ## Add it to CI
 
 The CLI has no runtime dependencies and needs Node 24. Pin the major version, `@lupin/cli@^5`.
+
+::: warning The CLI is not on npm yet
+Until `@lupin/cli` is published, `npx -p @lupin/cli@^5` fails. Build it from a checkout
+(`pnpm install && pnpm build`) and run `node tools/lupin-cli/dist/index.js` in its place; see
+[the CLI](cli.md).
+:::
+
+**Your CI job must reach the install.** `localhost:8080` only works for a runner on the same
+machine. A hosted runner needs the install on an address it can reach: [LAN mode](lan-mode.md)
+for a runner on your network, or [a remote profile](remote-cloudflare.md) for a hosted one.
+Otherwise use a self-hosted runner on the Lupin host.
+
+The `--format` names differ between the two doors: the CLI says `playwright-json`, the raw
+upload form field says `playwright`. JUnit is `junit` in both.
 
 ### GitHub Actions
 
@@ -84,20 +101,23 @@ export default defineConfig({
 });
 ```
 
-Set `LUPIN_URL` and `LUPIN_REPORTER_SECRET` in the job. The reporter never changes your run's exit
+Set `LUPIN_URL` and `LUPIN_REPORTER_SECRET` in the job. The secret is the install's own
+`REPORTER_SECRET`, from the `.env` the installer wrote; store it as a masked CI secret. The reporter never changes your run's exit
 code: if Lupin is down, it says so on stderr and your tests pass or fail as they would have.
 
 ## What the exit codes mean
 
 `lupin test` exits with your suite's own code, or `0` when every failure is an approved
 quarantined test. `lupin gate` exits `0` when the gate passes and `1` when it fails, printing every
-reason. `2` is a usage or configuration error and nothing was sent; `3` means the install refused
+reason. It fails on the health gates and on any failing test uploaded for that commit. `2` is a usage or configuration error and nothing was sent; `3` means the install refused
 or could not be reached; `4` means the token was refused. See [the CLI](cli.md#exit-codes).
 
 ## Read the verdict
 
 **Home** opens on the release verdict for the project chosen in the sidebar: **Ready**, **Caution**
-or **No-go**, the first reason, and what needs you. **Tests** lists the flaky tests (a test that
+or **No-go**, the first reason, and what needs you. **Ready** needs every signal measured,
+coverage included: until a coverage report is scanned or uploaded, the best Home can say is
+**Caution**, naming what is not measured. **Tests** lists the flaky tests (a test that
 passed, failed and passed again is flaky) and the failures grouped by cause. **Health** has the
 repository grade. Each number links to the evidence it was computed from.
 

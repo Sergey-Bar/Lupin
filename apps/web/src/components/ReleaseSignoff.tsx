@@ -8,17 +8,12 @@ import { Panel } from './kit.js';
 import { ReadFailed } from './ReadFailed.js';
 import { useToast } from './Toasts.js';
 import { failureText } from '../lib/roles.js';
+import { VERDICT_WORD } from '../lib/hero.js';
 
 export interface SignoffSource {
   list: (projectId: string) => Promise<ReleaseSignoff[]>;
   record: (projectId: string, body: SignoffBody) => Promise<ReleaseSignoff>;
 }
-
-const VERDICT_WORD: Record<ReleaseSignoff['verdict'], string> = {
-  go: 'Go',
-  caution: 'Caution',
-  'no-go': 'No-go',
-};
 
 /** One decision, in a sentence that says when it overrode the verdict. */
 function SignoffLine({ signoff }: { signoff: ReleaseSignoff }): React.ReactElement {

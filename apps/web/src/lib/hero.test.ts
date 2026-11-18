@@ -49,7 +49,28 @@ describe('heroVerdict', () => {
   });
 
   it('never claims ready when nothing was measured', () => {
-    expect(heroVerdict(null)).toMatchObject({ verdict: 'unknown', word: 'Not measured' });
+    expect(heroVerdict(null)).toMatchObject({
+      verdict: 'unknown',
+      word: 'Not measured',
+      action: { label: 'Send results from CI', to: '/dashboard/settings/access' },
+    });
+  });
+
+  it('names what was not measured, rather than saying a gate is warning', () => {
+    // A caution made only of unmeasured inputs is not a warning, and "A release gate is warning"
+    // sent a new user hunting for a failure that did not exist.
+    const unmeasured = heroVerdict(
+      card('caution', [
+        { level: 'go', message: '3 runs in the window' },
+        { level: 'unknown', message: 'No coverage report has been uploaded' },
+      ]),
+    );
+    expect(unmeasured).toMatchObject({
+      verdict: 'caution',
+      word: 'Caution',
+      reason: 'No coverage report has been uploaded',
+      action: { label: 'See what is not measured' },
+    });
   });
 });
 

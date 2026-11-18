@@ -8403,6 +8403,105 @@
         }
       ],
       "removalCondition": "A picomatch release fixing GHSA-fc5q-39xc-vjpf is published and adopted through an overrides row, the auditConfig.ignoreGhsas entry is removed, and pnpm audit --audit-level=high passes without it."
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The CLI forwarded only an allow-list of variables, and the GitLab CI_* variables, LUPIN_GITLAB_TOKEN, LUPIN_CF_ACCESS_CLIENT_ID/SECRET and LUPIN_SHARD_AS_OF were missing, so uploads from GitLab carried no branch, commit or merge request, and an install behind Cloudflare Access refused them.",
+      "id": "REL-7",
+      "resolution": "tools/lupin-cli/src/environment.ts forwards the GitLab, Cloudflare Access and shard variables.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "Each GitLab, Cloudflare Access and shard variable reaches the CLI environment.",
+          "path": "tools/lupin-cli/src/environment.test.ts"
+        }
+      ],
+      "title": "The lupin CLI dropped GitLab CI and Cloudflare Access variables from its environment",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (environment.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The gate report read only the health dimensions, so a commit with a red test suite exited 0 from lupin gate. Critical because the gate is the release decision a CI pipeline acts on.",
+      "id": "REL-8",
+      "resolution": "testsGateReason in apps/api/src/services/commit-tests.ts adds a failing-tests reason to the gate report in routes/repo-health.ts, and the gate exits 1.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "Failing results on the commit produce a gate reason naming the first failing test.",
+          "path": "apps/api/src/services/commit-tests.test.ts"
+        },
+        {
+          "asserts": "lupin gate exits 1 and names the failing test.",
+          "path": "tests/e2e/product/ci-ingestion.spec.ts"
+        }
+      ],
+      "title": "lupin gate passed a commit whose uploaded tests were failing",
+      "band": "Critical",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (ci-ingestion.spec.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The release verdict read Go on some screens and Ready on others, and a caution raised only by unmeasured signals offered an action pointing at a failure that does not exist.",
+      "id": "REL-9",
+      "resolution": "VERDICT_WORD in apps/web/src/lib/hero.ts is the one table; an unmeasured-only caution reads See what is not measured.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A caution with only unknown reasons names the unmeasured signal and its action.",
+          "path": "apps/web/src/lib/hero.test.ts"
+        }
+      ],
+      "title": "Home used two words for one verdict and sent an unmeasured caution to a failure",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (hero.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "first-verdict.md tells a QA engineer to set LUPIN_PROJECT, and neither Settings, Projects nor the connected panel showed the id, so the first CI job could not be written without reading the address bar. The guide also skipped how a CI runner reaches the install, that the CLI is not on npm yet, where LUPIN_REPORTER_SECRET comes from, and that Ready needs coverage.",
+      "id": "REL-10",
+      "resolution": "ProjectId in apps/web/src/components/ProjectId.tsx shows the id with a copy button in both places, and the guide covers each gap.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "The project row and the connected panel show the id and a Copy project id button.",
+          "path": "apps/web/src/components/SettingsPages.test.tsx"
+        }
+      ],
+      "title": "No screen showed the project id the CI guide asks for",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (SettingsPages.test.tsx run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The reporter read LUPIN_BRANCH/LUPIN_COMMIT and the GitHub variables only, so a streamed GitLab run had no branch or commit and could not be tied to a gate.",
+      "id": "REL-11",
+      "resolution": "tools/playwright-reporter/src/index.ts falls back to CI_COMMIT_REF_NAME and CI_COMMIT_SHA.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A run with only the GitLab variables carries their branch and commit.",
+          "path": "tools/playwright-reporter/src/reporter.test.ts"
+        }
+      ],
+      "title": "The Playwright reporter sent no branch or commit from GitLab CI",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (reporter.test.ts run red then green)"
     }
   ]
 }

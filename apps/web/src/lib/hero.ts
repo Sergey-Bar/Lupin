@@ -24,13 +24,23 @@ export function heroVerdict(card: ReleaseReadinessCard | null): Hero {
         reason: first('no-go') ?? first('caution') ?? 'A release gate is failing.',
         action: { label: 'See what is blocking', to: '/dashboard' },
       };
-    case 'caution':
-      return {
-        verdict: 'caution',
-        word: 'Caution',
-        reason: first('caution') ?? 'A release gate is warning.',
-        action: { label: 'Review the warnings', to: '/dashboard' },
-      };
+    case 'caution': {
+      // A caution with no warning in it is a caution about what is unmeasured: say which.
+      const warning = first('caution');
+      return warning === undefined
+        ? {
+            verdict: 'caution',
+            word: 'Caution',
+            reason: first('unknown') ?? 'A release gate is warning.',
+            action: { label: 'See what is not measured', to: '/dashboard' },
+          }
+        : {
+            verdict: 'caution',
+            word: 'Caution',
+            reason: warning,
+            action: { label: 'Review the warnings', to: '/dashboard' },
+          };
+    }
     case 'go':
       return {
         verdict: 'go',
@@ -43,7 +53,7 @@ export function heroVerdict(card: ReleaseReadinessCard | null): Hero {
         verdict: 'unknown',
         word: 'Not measured',
         reason: first('unknown') ?? 'No run has been checked against the release gates yet.',
-        action: { label: 'Start a run', to: '/dashboard/runner' },
+        action: { label: 'Send results from CI', to: '/dashboard/settings/access' },
       };
   }
 }
@@ -113,3 +123,10 @@ export function runHero(run: HeroRun): RunHero {
     failed: named,
   };
 }
+
+/**
+ * The one word for each readiness verdict, on every screen that shows one (Home's hero, the
+ * readiness card, a sign-off, Tests). Three screens kept their own copies and the same `go`
+ * read Ready on one and Go on the next.
+ */
+export const VERDICT_WORD = { go: 'Ready', caution: 'Caution', 'no-go': 'No-go' } as const;

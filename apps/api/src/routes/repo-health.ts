@@ -70,7 +70,7 @@ import {
   riskGateReason,
   riskPolicyFor,
 } from '../services/change-risk-service.js';
-import type { CommitTests } from '../services/commit-tests.js';
+import { testsGateReason, type CommitTests } from '../services/commit-tests.js';
 
 /**
  * The repository health API.
@@ -323,13 +323,17 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
             riskFactsOf(result, tests, commit, pullRequest),
           );
     const riskReason = riskGateReason(risk, await riskPolicyFor(options, projectId));
+    // The commit's own test run: red tests fail the gate (REL-8), whatever its scans say.
+    const extra = [testsGateReason(tests), riskReason].filter(
+      (reason): reason is string => reason !== null,
+    );
     const verdict =
-      riskReason === null
+      extra.length === 0
         ? result.verdict
         : {
             ...result.verdict,
             verdict: 'failed' as const,
-            reasons: [...result.verdict.reasons, riskReason],
+            reasons: [...result.verdict.reasons, ...extra],
           };
     if (pullRequest !== undefined) {
       await options.onGateReport?.(projectId, {
