@@ -26,10 +26,15 @@ export async function registerTempProject(
   request: APIRequestContext,
   prefix: string,
   manifest: Record<string, unknown> = { scripts: { test: 'vitest run' } },
+  /** Further files, by repository-relative path, written before the project is registered. */
+  files: Record<string, string> = {},
 ): Promise<TempProject> {
   const folder = mkdtempSync(path.join(tmpdir(), `${prefix}-`));
   const name = path.basename(folder).toLowerCase();
   writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ name, ...manifest }));
+  for (const [relative, text] of Object.entries(files)) {
+    writeFileSync(path.join(folder, relative), text);
+  }
   const created = await request.post(`${API_BASE}/api/v1/projects`, {
     headers,
     data: { name, slug: name, repoPath: folder },
