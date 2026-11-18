@@ -187,6 +187,22 @@ describe('streaming a run', () => {
     });
   });
 
+  it('reads the branch and commit from GitLab CI', async () => {
+    const { calls, fetch } = recorder();
+    const { reporter: r } = reporter(fetch, {
+      GITHUB_SHA: undefined,
+      GITHUB_REF_NAME: undefined,
+      CI_COMMIT_REF_NAME: 'feature/cart',
+      CI_COMMIT_SHA: SHA,
+    });
+    r.onBegin(CONFIG, rootSuite(1));
+    await r.onEnd({ status: 'passed', duration: 1 });
+    expect(events(calls)[0]?.body['payload']).toMatchObject({
+      branch: 'feature/cart',
+      commitSha: SHA,
+    });
+  });
+
   it('prefers LUPIN_BRANCH and LUPIN_COMMIT, and drops a commit that is not a sha', async () => {
     const { calls, fetch } = recorder();
     const { reporter: r } = reporter(fetch, {

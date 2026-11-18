@@ -104,8 +104,12 @@ export default class LupinReporter {
     const branch =
       present(this.env['LUPIN_BRANCH']) ??
       present(this.env['GITHUB_HEAD_REF']) ??
-      present(this.env['GITHUB_REF_NAME']);
-    const commit = present(this.env['LUPIN_COMMIT']) ?? present(this.env['GITHUB_SHA']);
+      present(this.env['GITHUB_REF_NAME']) ??
+      present(this.env['CI_COMMIT_REF_NAME']);
+    const commit =
+      present(this.env['LUPIN_COMMIT']) ??
+      present(this.env['GITHUB_SHA']) ??
+      present(this.env['CI_COMMIT_SHA']);
     this.event('run:start', true, {
       total: suite.allTests().length,
       ...(branch === undefined ? {} : { branch }),
