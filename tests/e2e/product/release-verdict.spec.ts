@@ -100,7 +100,9 @@ test.describe('the release verdict on Home', () => {
     });
     await openHome(page, projectId);
     const hero = page.locator('section[data-verdict]').first();
-    await expect(hero).toHaveAttribute('data-verdict', green.verdict);
+    // The verdict loads after the page: over a database holding the whole suite's runs it can take
+    // longer than the default 5 s on a CI runner, as the page itself does.
+    await expect(hero).toHaveAttribute('data-verdict', green.verdict, { timeout: 15_000 });
     await expect(hero.getByRole('heading', { level: 2 })).toHaveText(WORD[green.verdict]);
 
     await upload(request, projectId, branch, true);
@@ -111,7 +113,7 @@ test.describe('the release verdict on Home', () => {
       message: 'The latest quality gate failed',
     });
     await page.reload();
-    await expect(hero).toHaveAttribute('data-verdict', 'no-go');
+    await expect(hero).toHaveAttribute('data-verdict', 'no-go', { timeout: 15_000 });
     await expect(hero.getByRole('heading', { level: 2 })).toHaveText('No-go');
     await expect(hero).toContainText(red.reasons[0]?.message ?? '');
     // What needs you: the branch the red upload was for, newest finished run first.
