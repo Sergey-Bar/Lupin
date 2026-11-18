@@ -179,7 +179,17 @@ try {
   // This tree's images, under the names the release compose file pulls.
   sh(
     'docker',
-    ['compose', '-f', 'infra/compose/docker-compose.unified.yml', '-p', 'lupin-candidate', 'build'],
+    [
+      'compose',
+      // The compose file interpolates its variables even to build; the install's .env has them.
+      '--env-file',
+      path.join(install, '.env'),
+      '-f',
+      'infra/compose/docker-compose.unified.yml',
+      '-p',
+      'lupin-candidate',
+      'build',
+    ],
     ROOT,
   );
   for (const service of PUBLISHED_IMAGES) {
