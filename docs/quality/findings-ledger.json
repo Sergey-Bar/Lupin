@@ -8332,6 +8332,33 @@
           "asserts": "A GitHub token, a Slack token, an AWS key id and a whole private-key block in a failure message are not stored; the surrounding text and an ordinary assertion message are kept exactly."
         }
       ]
+    },
+    {
+      "id": "REL-4",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (tests/e2e/product/large-suite.spec.ts, run red then green against PostgreSQL 16)",
+      "title": "A fifty-thousand-test suite could not be recorded: refused at 5 MiB, and too slow to write once allowed",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Two defects in front of the suites the product is for. (1) Size: a 50 000-test JUnit report is 6.4 MiB, and the reporter group's `app.use('*')` body limit of 5 MiB, mounted at `/`, refused it on every route including the CLI's `/projects/:id/tests/reports`, so `lupin test` answered 413 for a large monorepo. (2) Time: with the limit raised, the canonical projection wrote each test with `upsertTest`, an ownership read plus an upsert per row, about 100 000 statements, and the request did not finish in 120 s.",
+      "resolution": "One test-report ceiling, `MAX_TEST_REPORT_BYTES` (32 MiB, about 250 000 test cases), on both report doors; every other route keeps the 5 MiB default. `RunRepository.upsertTests` checks ownership once per run and writes 1 000 rows a statement; the projection uses it. 50 000 tests now ingest in 6.7 s, and the spec fails past 20 s.",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/large-suite.spec.ts",
+          "asserts": "A 6.6 MB report of 50 000 tests with 516 failures is accepted, every test is counted on the run, and it is ingested under the recorded 20 s ceiling."
+        },
+        {
+          "path": "apps/api/src/repositories/drizzle-run-repository.test.ts",
+          "asserts": "upsertTests writes 2 500 rows in chunks, a repeated key is the later row, a later batch overwrites, and rows for a run the workspace does not own are refused."
+        },
+        {
+          "path": "apps/api/src/routes/reporter.test.ts",
+          "asserts": "A JUnit upload past the one test-report ceiling is refused before it is parsed."
+        }
+      ]
     }
   ]
 }

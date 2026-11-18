@@ -83,6 +83,10 @@ export class InMemoryRunRepository implements RunRepository {
     this._tests.set(this._testKey(test.id, test.runId), { ...test });
   }
 
+  async upsertTests(tests: readonly TestRecord[]): Promise<void> {
+    for (const test of tests) await this.upsertTest(test);
+  }
+
   async patchTest(
     testId: string,
     runId: string,

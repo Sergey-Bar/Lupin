@@ -10,6 +10,9 @@ import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
 import { runs, tests } from '@lupin/db';
 import { storedTestIdentity } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
+
+/** Test rows per insert: ten parameters each, far under PostgreSQL's 65 535. */
+const TEST_UPSERT_CHUNK = 1_000;
 import {
   toPersistedStatus,
   type RunAnalyticsSummary,
@@ -320,6 +323,55 @@ export class DrizzleRunRepository implements RunRepository {
         },
         setWhere: eq(tests.workspaceId, this.workspaceId),
       });
+  }
+
+  async upsertTests(rows: readonly TestRecord[]): Promise<void> {
+    // Ownership is the same question for every row of one run, so it is asked once per run;
+    // then each chunk is one statement. Chunked so no statement's bind count is chosen by the
+    // report: ten columns a row, under PostgreSQL's 65 535 parameters.
+    for (const runId of new Set(rows.map((row) => row.runId))) {
+      const owner = await this.db
+        .select({ id: runs.id })
+        .from(runs)
+        .where(this.ownRun(runId))
+        .limit(1);
+      if (owner.length === 0) {
+        throw new DomainError(ErrorCode.RUN_NOT_FOUND, `Run ${runId} not found`);
+      }
+    }
+    // One row per key in a statement: PostgreSQL refuses to update a row twice in one insert.
+    const unique = [...new Map(rows.map((row) => [`${row.runId}\u0000${row.id}`, row])).values()];
+    for (let start = 0; start < unique.length; start += TEST_UPSERT_CHUNK) {
+      await this.db
+        .insert(tests)
+        .values(
+          unique.slice(start, start + TEST_UPSERT_CHUNK).map((test) => ({
+            id: test.id,
+            runId: test.runId,
+            workspaceId: this.workspaceId,
+            title: test.title,
+            file: test.file,
+            stableId: test.stableId,
+            status: test.status,
+            durationMs: test.durationMs ?? null,
+            errorCode: test.errorCode,
+            errorMessage: test.errorMessage,
+          })),
+        )
+        .onConflictDoUpdate({
+          target: [tests.id, tests.runId],
+          set: {
+            title: sql`excluded.title`,
+            file: sql`excluded.file`,
+            stableId: sql`excluded.stable_id`,
+            status: sql`excluded.status`,
+            durationMs: sql`excluded.duration_ms`,
+            errorCode: sql`excluded.error_code`,
+            errorMessage: sql`excluded.error_message`,
+          },
+          setWhere: eq(tests.workspaceId, this.workspaceId),
+        });
+    }
   }
 
   async patchTest(
