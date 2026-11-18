@@ -24,7 +24,7 @@ curl --fail-with-body \
   -F runId="$CI_PIPELINE_ID" \
   -F branch="$CI_COMMIT_BRANCH" \
   -F commitSha="$CI_COMMIT_SHA" \
-  http://127.0.0.1:3000/api/v1/reporter/upload
+  http://127.0.0.1:8080/api/v1/reporter/upload
 ```
 
 ::: details See every upload field
@@ -69,7 +69,7 @@ Gradle, Jest with `jest-junit`, Go with `gotestsum --junitfile`, and more.
 ```bash
 curl -H "Authorization: Bearer $REPORTER_SECRET" \
   -F file=@junit.xml -F format=junit \
-  http://127.0.0.1:3000/api/v1/reporter/upload
+  http://127.0.0.1:8080/api/v1/reporter/upload
 ```
 
 The parser does not expand external entities, caps failure messages, and treats a
@@ -84,7 +84,7 @@ document and send it with `format=allure`:
 jq -s . allure-results/*-result.json > allure.json
 curl -H "Authorization: Bearer $REPORTER_SECRET" \
   -F file=@allure.json -F format=allure \
-  http://127.0.0.1:3000/api/v1/reporter/upload
+  http://127.0.0.1:8080/api/v1/reporter/upload
 ```
 
 Several results with one identity are one test's attempts, and a test whose attempts disagree

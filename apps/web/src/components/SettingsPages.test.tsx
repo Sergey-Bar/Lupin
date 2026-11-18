@@ -50,6 +50,8 @@ describe('ConnectRepository', () => {
     expect(await screen.findByTestId('repository-connected')).toHaveTextContent(
       'Found 2 commands Lupin can run: npm test, npm run lint.',
     );
+    expect(screen.getByTestId('repository-connected')).toHaveTextContent('Project id p2');
+    expect(screen.getByRole('button', { name: 'Copy project id' })).toBeInTheDocument();
     expect(onConnected).toHaveBeenCalledWith(registered);
     await user.click(screen.getByRole('button', { name: 'Connect another' }));
     expect(screen.getByLabelText('Folder path')).toBeInTheDocument();
@@ -140,6 +142,13 @@ describe('Settings → Projects', () => {
       expect(within(row).getByRole('button', { name })).toBeInTheDocument();
     }
     await expectNoBlockingAxeViolations(container);
+  });
+
+  it('shows the project id a CI job needs, with a copy button', async () => {
+    projectsPage();
+    const row = await screen.findByTestId('project-p1');
+    expect(within(row).getByText('p1')).toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Copy project id' })).toBeInTheDocument();
   });
 
   it('renames, re-scans and replaces the token', async () => {

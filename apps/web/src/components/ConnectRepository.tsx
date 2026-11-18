@@ -10,6 +10,7 @@ import {
 } from '../lib/settings-client.js';
 import { Segmented } from './kit.js';
 import { UserText } from './Bidi.js';
+import { ProjectId } from './ProjectId.js';
 
 /**
  * "Point Lupin at a repository", as a form.
@@ -85,6 +86,7 @@ function Connected({
         </span>
       </p>
       <p className="text-sm text-fg-muted">{foundSentence(registered.commands)}</p>
+      <ProjectId id={registered.project.id} />
       <div>
         <Button type="button" variant="outline" size="sm" onClick={onAnother}>
           Connect another
