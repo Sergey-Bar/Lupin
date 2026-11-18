@@ -40,11 +40,25 @@ export function parseCapabilityStatuses(markdown) {
     const cells = line.split('|').map((cell) => cell.trim());
     const id = cells[1] ?? '';
     const status = cells[3] ?? '';
-    if (/^[a-z][a-z0-9-]*(\.[a-z0-9-]+)+$/.test(id) && /^[a-z-]+$/.test(status)) {
+    if (isCapabilityId(id) && /^[a-z-]+$/.test(status)) {
       statuses.set(id, status);
     }
   }
   return statuses;
+}
+
+/**
+ * `area.name`, lower case, at least two dot-separated segments. Checked per segment rather than
+ * with one `(\.[a-z0-9-]+)+` pattern, which nests quantifiers and can backtrack.
+ * @param {string} id
+ */
+function isCapabilityId(id) {
+  const segments = id.split('.');
+  return (
+    segments.length >= 2 &&
+    /^[a-z]/.test(id) &&
+    segments.every((segment) => /^[a-z0-9-]+$/.test(segment))
+  );
 }
 
 /**
