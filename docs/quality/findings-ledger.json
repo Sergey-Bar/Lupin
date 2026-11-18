@@ -8391,12 +8391,18 @@
       "confirmedBy": "kilo:release-5.0.0 (pnpm verify:local; pnpm why picomatch --prod)",
       "title": "picomatch GHSA-fc5q-39xc-vjpf (high, ReDoS through repeated extglobs) has no patched release, and pnpm audit blocks verify",
       "band": "Major",
-      "status": "open",
+      "status": "debt",
       "wave": "REL-5.0.0",
-      "owner": "The repository owner: whether to accept, override or wait is a security decision, not one an agent makes by adding an ignore.",
+      "owner": "The next dependency review (pnpm-workspace.yaml review date 2026-12-18), or whoever first sees a fixed picomatch published.",
       "summary": "`pnpm audit --audit-level=high`, the first step of `security:verify`, fails on GHSA-fc5q-39xc-vjpf: every picomatch release up to the latest, 4.0.7, is affected and no patched version exists. The 131 paths are build and test tooling (vite, tinyglobby, Stryker, eslint) except one runtime path: the runner image's `@usebruno/cli > @usebruno/converters > jscodeshift > picomatch`. The API, the worker and both npm packages have no production path to it. The ReDoS needs an attacker-chosen glob pattern; the runner's Bruno path globs collection files the operator configured. Every other step of `pnpm verify:local` passes on this branch, and `main` is affected in the same way.",
-      "resolution": "Open. Close it with one of: (a) a patched picomatch adopted through the `overrides` block once it is published; (b) a reviewed `auditConfig.ignoreGhsas` entry with a reason and a review date, decided by the owner; (c) `@usebruno/cli` dropping the converters path, leaving only build tooling.",
-      "evidence": []
+      "resolution": "Carried as debt, 2026-11-18: no patched release exists. pnpm-workspace.yaml auditConfig.ignoreGhsas exempts this one advisory with its runtime reach and a review date; every other high advisory still fails the audit.",
+      "evidence": [
+        {
+          "path": "pnpm-workspace.yaml",
+          "asserts": "The exemption names the advisory, the one runtime path, this row and a review date, and nothing else is exempted."
+        }
+      ],
+      "removalCondition": "A picomatch release fixing GHSA-fc5q-39xc-vjpf is published and adopted through an overrides row, the auditConfig.ignoreGhsas entry is removed, and pnpm audit --audit-level=high passes without it."
     }
   ]
 }

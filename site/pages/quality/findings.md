@@ -11,24 +11,22 @@ its source, then run `pnpm site:generate`.
 
 | Status           | Rows |
 | ---------------- | ---- |
-| `debt`           | 10   |
+| `debt`           | 11   |
 | `false-positive` | 6    |
 | `fixed`          | 324  |
-| `open`           | 5    |
+| `open`           | 4    |
 
-## Open (5)
+## Open (4)
 
 | Band  | Open |
 | ----- | ---- |
-| Major | 1    |
 | Minor | 4    |
 
-| ID          | Band  | Finding                                                                                                                    |
-| ----------- | ----- | -------------------------------------------------------------------------------------------------------------------------- |
-| `REL-6`     | Major | picomatch GHSA-fc5q-39xc-vjpf (high, ReDoS through repeated extglobs) has no patched release, and pnpm audit blocks verify |
-| `RUNTIME-1` | Minor | Node 26 is available and deliberately gated on an LTS date that has not arrived                                            |
-| `DEP-3`     | Minor | Effect 4.0.0 is unblocked at the bootstrap boundary, and its own test helper is the one part not available here            |
-| `DEP-4`     | Minor | TypeScript 7.0.2 is stable and has no Compiler API, so the checker and the linter cannot share a version                   |
-| `DEP-5`     | Minor | PostgreSQL 18 is the correct target and 19 is not available, and 16 is not an exposure while it waits                      |
+| ID          | Band  | Finding                                                                                                         |
+| ----------- | ----- | --------------------------------------------------------------------------------------------------------------- |
+| `RUNTIME-1` | Minor | Node 26 is available and deliberately gated on an LTS date that has not arrived                                 |
+| `DEP-3`     | Minor | Effect 4.0.0 is unblocked at the bootstrap boundary, and its own test helper is the one part not available here |
+| `DEP-4`     | Minor | TypeScript 7.0.2 is stable and has no Compiler API, so the checker and the linter cannot share a version        |
+| `DEP-5`     | Minor | PostgreSQL 18 is the correct target and 19 is not available, and 16 is not an exposure while it waits           |
 
 <!-- /generated -->
