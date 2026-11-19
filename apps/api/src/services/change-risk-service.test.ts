@@ -235,6 +235,9 @@ describe('riskFactsOf', () => {
   const tests: CommitTests = {
     runId: 'run-9',
     runIds: ['run-9'],
+    unfinishedRuns: 0,
+    interruptedRuns: 0,
+    executed: 1,
     total: 30,
     passed: 27,
     failed: 3,

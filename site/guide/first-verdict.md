@@ -113,7 +113,9 @@ code: if Lupin is down, it says so on stderr and your tests pass or fail as they
 quarantined test. `lupin gate` exits `0` when the gate passes and `1` when it fails, printing every
 reason. It fails on the health gates, on any failing test uploaded for that commit by any
 job or shard (a re-run replaces the result it repeats), and on a commit no test results were
-uploaded for. A job that only sends scans passes `--allow-no-tests`. `2` is a usage or configuration error and nothing was sent; `3` means the install refused
+uploaded for. A job that only sends scans passes `--allow-no-tests`. It also fails while a run on the commit is still streaming or was interrupted, when every
+result is skipped, and when every failure is quarantined but nothing passed, which is what
+`lupin test` says about that run too. `2` is a usage or configuration error and nothing was sent; `3` means the install refused
 or could not be reached; `4` means the token was refused. See [the CLI](cli.md#exit-codes).
 
 ## Read the verdict
