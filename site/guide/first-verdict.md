@@ -28,13 +28,14 @@ The project id for `LUPIN_PROJECT` is the id in the project page address,
 
 ## Add it to CI
 
-The CLI has no runtime dependencies and needs Node 24. Pin the major version, `@lupin/cli@^5`.
+The CLI has no runtime dependencies and needs Node 24. It is not on npm yet: each release
+attaches it as a tarball, and `npx` runs it from there. Pin the release you tested:
 
-::: warning The CLI is not on npm yet
-Until `@lupin/cli` is published, `npx -p @lupin/cli@^5` fails. Build it from a checkout
-(`pnpm install && pnpm build`) and run `node tools/lupin-cli/dist/index.js` in its place; see
-[the CLI](cli.md).
-:::
+```sh
+npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz lupin --help
+```
+
+The snippets below write that URL as `$LUPIN_CLI`. Set it once in the job, as shown.
 
 **Your CI job must reach the install.** `localhost:8080` only works for a runner on the same
 machine. A hosted runner needs the install on an address it can reach: [LAN mode](lan-mode.md)
@@ -49,17 +50,19 @@ upload form field says `playwright`. JUnit is `junit` in both.
 ```yaml
 - name: Tests, recorded in Lupin
   env:
+    LUPIN_CLI: https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz
     LUPIN_URL: https://lupin.example.com
     LUPIN_TOKEN: ${{ secrets.LUPIN_TOKEN }}
     LUPIN_PROJECT: 00000000-0000-4000-8000-000000000000
-  run: npx --yes -p @lupin/cli@^5 lupin test --format junit --report reports/junit.xml -- npm test
+  run: npx --yes -p "$LUPIN_CLI" lupin test --format junit --report reports/junit.xml -- npm test
 - name: Release gate
   if: always()
   env:
+    LUPIN_CLI: https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz
     LUPIN_URL: https://lupin.example.com
     LUPIN_TOKEN: ${{ secrets.LUPIN_TOKEN }}
     LUPIN_PROJECT: 00000000-0000-4000-8000-000000000000
-  run: npx --yes -p @lupin/cli@^5 lupin gate
+  run: npx --yes -p "$LUPIN_CLI" lupin gate
 ```
 
 ### GitLab CI
@@ -68,12 +71,13 @@ upload form field says `playwright`. JUnit is `junit` in both.
 test:
   image: node:24
   variables:
+    LUPIN_CLI: https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz
     LUPIN_URL: https://lupin.example.com
     LUPIN_PROJECT: 00000000-0000-4000-8000-000000000000
   script:
     # LUPIN_TOKEN is a masked CI/CD variable. Branch and commit come from GitLab's own variables.
-    - npx --yes -p @lupin/cli@^5 lupin test --format junit --report reports/junit.xml -- npm test
-    - npx --yes -p @lupin/cli@^5 lupin gate
+    - npx --yes -p "$LUPIN_CLI" lupin test --format junit --report reports/junit.xml -- npm test
+    - npx --yes -p "$LUPIN_CLI" lupin gate
 ```
 
 ### Jenkins
@@ -81,14 +85,15 @@ test:
 ```groovy
 stage('Test') {
   environment {
+    LUPIN_CLI = 'https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz'
     LUPIN_URL = 'https://lupin.example.com'
     LUPIN_TOKEN = credentials('lupin-uploader-token')
     LUPIN_PROJECT = '00000000-0000-4000-8000-000000000000'
   }
   // The branch and commit come from Jenkins: CHANGE_BRANCH or BRANCH_NAME, and GIT_COMMIT.
   steps {
-    sh 'npx --yes -p @lupin/cli@^5 lupin test --format junit --report reports/junit.xml -- npm test'
-    sh 'npx --yes -p @lupin/cli@^5 lupin gate'
+    sh 'npx --yes -p "$LUPIN_CLI" lupin test --format junit --report reports/junit.xml -- npm test'
+    sh 'npx --yes -p "$LUPIN_CLI" lupin gate'
   }
 }
 ```
@@ -101,6 +106,8 @@ export default defineConfig({
   reporter: [['list'], ['@lupin/playwright-reporter']],
 });
 ```
+
+Install it from the release: `npm install --save-dev https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-playwright-reporter-5.0.0.tgz`.
 
 Set `LUPIN_URL`, `LUPIN_REPORTER_SECRET` and `LUPIN_PROJECT` in the job. Without
 `LUPIN_PROJECT` the streamed run belongs to no project, and the gate never sees it. The secret is the install's own
