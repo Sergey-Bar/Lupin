@@ -117,6 +117,8 @@ export const RegisteredProjectSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
   repoPath: z.string().nullable(),
+  /** The branch Home judges the release on; absent from a server older than 5.0.0. */
+  defaultBranch: z.string().nullable().optional(),
   detectorVersion: z.number().int().min(1),
   createdAt: z.string().min(1),
 });

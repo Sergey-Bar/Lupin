@@ -52,6 +52,8 @@ export interface RegisteredProject {
   name: string;
   slug: string;
   repoPath: string | null;
+  /** The branch the project releases from, when it is known. */
+  defaultBranch: string | null;
   detectorVersion: number;
   profile: ProjectProfile;
   /** The manifest lines the profile was derived from, when it was derived here. */
@@ -73,6 +75,7 @@ export async function registerProject(
 ): Promise<RegisteredProject> {
   const view = options.viewFor(input.repoPath);
   const detected = await detectProject(view);
+  const branch = await gitDefaultBranch(view);
   const override = await readOverride(view);
   const resolved =
     override === null
@@ -86,7 +89,7 @@ export async function registerProject(
       name: input.name,
       slug: input.slug,
       repoPath: input.repoPath,
-      defaultBranch: await gitDefaultBranch(view),
+      defaultBranch: branch,
       profile: resolved.profile as unknown as Record<string, unknown>,
       detectorVersion: detected.detectorVersion,
     })
@@ -106,6 +109,7 @@ export async function registerProject(
     name: input.name,
     slug: input.slug,
     repoPath: input.repoPath,
+    defaultBranch: branch,
     detectorVersion: detected.detectorVersion,
     profile: resolved.profile,
     evidence: evidenceFrom(detected),
@@ -152,6 +156,7 @@ export async function registerGitProject(
     name: input.name,
     slug: input.slug,
     repoPath: null,
+    defaultBranch: input.defaultBranch ?? null,
     detectorVersion: 1,
     profile,
     evidence: [],
@@ -310,6 +315,7 @@ function toRegistered(row: typeof projects.$inferSelect): RegisteredProject {
     name: row.name,
     slug: row.slug,
     repoPath: row.repoPath,
+    defaultBranch: row.defaultBranch,
     detectorVersion: row.detectorVersion,
     // Re-validated on read rather than trusted: the column is JSONB, and a row
     // written by an older build can carry a shape this one does not know. Parsing
