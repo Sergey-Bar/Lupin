@@ -2,11 +2,12 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
-## 5.0.0 - unreleased - QA at the pace of AI-era development
+## 5.0.0 - 2026-11-19 - QA at the pace of AI-era development
 
 Every journey a QA engineer or SDET needs is proven end to end against PostgreSQL, and
 `pnpm release:readiness` says so. `@lupin/cli` and `@lupin/playwright-reporter` move from 1.0.0
-to 5.0.0, in step with the product: pin `@lupin/cli@^5`. Upgrade notes: `site/guide/upgrade-5.md`.
+to 5.0.0, in step with the product. They are not on npm yet: both are attached to this release as
+tarballs (`npx -p <release url>/lupin-cli-5.0.0.tgz lupin`). Upgrade notes: `site/guide/upgrade-5.md`.
 
 ### Fixed
 
@@ -21,6 +22,20 @@ to 5.0.0, in step with the product: pin `@lupin/cli@^5`. Upgrade notes: `site/gu
   5 MiB), and tests are written in batches: 50 000 tests ingest in 6.7 s.
 - **Uploading a passing suite graded a repository F (REL-5).** A plain JUnit upload no longer
   counts as a measured Tests score of 0.
+- **`lupin gate` passed a commit whose tests failed, or were never sent (REL-8, REL-12).** It now
+  fails both; a scan-only job passes `--allow-no-tests`.
+- **The gate read only the newest run on a commit (REL-13)**, so a later shard hid a failing one.
+  Every run counts, and a re-run replaces the results it repeats. A run still streaming, an
+  interrupted one, an all-skipped one, and one whose every failure is quarantined while nothing
+  passed, all fail the gate (REL-21).
+- **Streamed Playwright runs belonged to no project (REL-14).** The reporter sends `LUPIN_PROJECT`.
+- **Home mixed branches, ignored the flaky allowance and counted every project's quarantine
+  (REL-15, REL-18).** It reads the release branch, detected from git or set in Settings.
+- **One flaky test failed a run twice (REL-19).** A flaky result counts as passed; the default
+  policy allows 5% flaky tests.
+- **Auto-quarantine re-quarantined a test it had just released (REL-21).**
+- **The CLI read no GitLab or Jenkins variables, and the reporter none of GitLab's (REL-7,
+  REL-11, REL-17).**
 
 ### Added
 
@@ -42,6 +57,8 @@ to 5.0.0, in step with the product: pin `@lupin/cli@^5`. Upgrade notes: `site/gu
 
 ### Changed
 
+- **Breaking for scan-only pipelines:** `lupin gate` fails a commit with no uploaded test results.
+  Add `--allow-no-tests`, or the action input `allow-no-tests`.
 - The AI provider settings no longer say a provider powers chat; no chat screen exists.
 
 ## 4.1.0 - 2026-11-12 - the console, simplified
