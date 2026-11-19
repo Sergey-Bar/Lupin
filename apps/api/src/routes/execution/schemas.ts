@@ -69,7 +69,7 @@ export const PolicySchema = z
       )
       .default(['browser']),
     browserPassRateThreshold: z.number().min(0).max(100).default(100),
-    maxFlakyRate: z.number().min(0).max(100).default(0),
+    maxFlakyRate: z.number().min(0).max(100).default(5),
     maxDurationMs: z.number().int().nonnegative().nullable().optional().default(null),
     rules: z
       .array(

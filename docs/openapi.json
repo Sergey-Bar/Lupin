@@ -26086,7 +26086,7 @@
             "minimum": 0,
             "maximum": 100
           },
-          "maxFlakyRate": { "default": 0, "type": "number", "minimum": 0, "maximum": 100 },
+          "maxFlakyRate": { "default": 5, "type": "number", "minimum": 0, "maximum": 100 },
           "maxDurationMs": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }] },
           "rules": {
             "default": [],
