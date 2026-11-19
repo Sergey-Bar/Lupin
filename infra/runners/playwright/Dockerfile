@@ -4,7 +4,7 @@ FROM node:24.22.3-bookworm-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b
 #
 # PLAYWRIGHT_VERSION is the exact release the workspace locks (`pnpm-lock.yaml`), and
 # manifest.json's `toolVersion` must say the same (`scripts/lib/runner-manifests.test.mjs`).
-ARG PLAYWRIGHT_VERSION=1.65.0
+ARG PLAYWRIGHT_VERSION=1.65.1
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 USER root
 WORKDIR /automation

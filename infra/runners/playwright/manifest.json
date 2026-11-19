@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "playwright",
-  "toolVersion": "1.65.0",
+  "toolVersion": "1.65.1",
   "imageDigest": null,
   "buildStatus": "unbuilt",
   "user": 65532,
