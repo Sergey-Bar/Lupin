@@ -8670,6 +8670,25 @@
       "title": "One flaky test failed a run twice, on the flaky rate and on the pass rate",
       "confirmedOn": "2026-11-19",
       "confirmedBy": "kilo:qa-review-2 (quality-gate.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "Lupin detects a project's release branch, but a wrong detection or a folder with no git could only be corrected with PATCH /api/v1/projects/:id.",
+      "id": "REL-20",
+      "resolution": "Settings, Projects, Rename has a Release branch field, sent only when it changed; the projects list carries defaultBranch.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "Typing a release branch and saving sends only defaultBranch.",
+          "path": "apps/web/src/components/SettingsPages.test.tsx"
+        }
+      ],
+      "band": "Minor",
+      "status": "fixed",
+      "provenance": "hand",
+      "title": "The release branch Home judges on could only be changed through the API",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:release-5.0.0 (SettingsPages.test.tsx run red then green)"
     }
   ]
 }

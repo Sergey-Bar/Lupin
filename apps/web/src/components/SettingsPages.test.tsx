@@ -151,6 +151,19 @@ describe('Settings → Projects', () => {
     expect(within(row).getByRole('button', { name: 'Copy project id' })).toBeInTheDocument();
   });
 
+  it('changes the branch Home judges the release on, alone', async () => {
+    const user = userEvent.setup();
+    const { client } = projectsPage();
+    const row = await screen.findByTestId('project-p1');
+    await user.click(within(row).getByRole('button', { name: 'Rename' }));
+    const branch = within(row).getByLabelText('Release branch');
+    await user.type(branch, 'trunk');
+    await user.click(within(row).getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(client.updateProject).toHaveBeenCalledWith('p1', { defaultBranch: 'trunk' }),
+    );
+  });
+
   it('renames, re-scans and replaces the token', async () => {
     const user = userEvent.setup();
     const { client } = projectsPage();
@@ -159,7 +172,7 @@ describe('Settings → Projects', () => {
     const name = within(row).getByLabelText('New name');
     await user.clear(name);
     await user.type(name, 'Store');
-    await user.click(within(row).getByRole('button', { name: 'Save name' }));
+    await user.click(within(row).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(client.updateProject).toHaveBeenCalledWith('p1', { name: 'Store' }));
     await user.click(within(row).getByRole('button', { name: 'Re-scan' }));
     expect(await screen.findByText('Found 3 commands')).toBeInTheDocument();

@@ -13,6 +13,7 @@ import { UserText } from './Bidi.js';
 import { ConnectRepository } from './ConnectRepository.js';
 import { PageBody, PageFrame, PageHeader, Panel } from './kit.js';
 import { ProjectSource } from './ProjectId.js';
+import { RenameForm } from './ProjectEditForm.js';
 import { SettingsForm } from './SettingsForm.js';
 import { useToast } from './Toasts.js';
 
@@ -235,56 +236,11 @@ export function SessionsSettingsPage(props: {
 // ─── Projects ───────────────────────────────────────────────────────────────
 
 /** Runs one project action: a toast either way, and a refresh after success. */
-type RunAction = (
+export type RunAction = (
   action: () => Promise<unknown>,
   success: string,
   failure: string,
 ) => Promise<void>;
-
-function RenameForm({
-  project,
-  client,
-  busy,
-  run,
-}: {
-  project: RegisteredProject;
-  client: SettingsClient;
-  busy: boolean;
-  run: RunAction;
-}): React.ReactElement {
-  const id = React.useId();
-  const [name, setName] = React.useState(project.name);
-  const next = name.trim();
-  return (
-    <form
-      aria-label={`Rename ${project.name}`}
-      className="flex flex-wrap items-end gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void run(
-          () => client.updateProject(project.id, { name: next }),
-          'Project renamed',
-          'Could not rename',
-        );
-      }}
-    >
-      <Input
-        id={`${id}-name`}
-        label="New name"
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-      />
-      <Button
-        type="submit"
-        size="sm"
-        loading={busy}
-        disabled={next === '' || next === project.name}
-      >
-        Save name
-      </Button>
-    </form>
-  );
-}
 
 function TokenForm({
   project,
