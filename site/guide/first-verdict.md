@@ -85,9 +85,10 @@ stage('Test') {
     LUPIN_TOKEN = credentials('lupin-uploader-token')
     LUPIN_PROJECT = '00000000-0000-4000-8000-000000000000'
   }
+  // The branch and commit come from Jenkins: CHANGE_BRANCH or BRANCH_NAME, and GIT_COMMIT.
   steps {
-    sh 'npx --yes -p @lupin/cli@^5 lupin test --format junit --report reports/junit.xml --branch "$BRANCH_NAME" --commit "$GIT_COMMIT" -- npm test'
-    sh 'npx --yes -p @lupin/cli@^5 lupin gate --branch "$BRANCH_NAME" --commit "$GIT_COMMIT"'
+    sh 'npx --yes -p @lupin/cli@^5 lupin test --format junit --report reports/junit.xml -- npm test'
+    sh 'npx --yes -p @lupin/cli@^5 lupin gate'
   }
 }
 ```
@@ -101,7 +102,8 @@ export default defineConfig({
 });
 ```
 
-Set `LUPIN_URL` and `LUPIN_REPORTER_SECRET` in the job. The secret is the install's own
+Set `LUPIN_URL`, `LUPIN_REPORTER_SECRET` and `LUPIN_PROJECT` in the job. Without
+`LUPIN_PROJECT` the streamed run belongs to no project, and the gate never sees it. The secret is the install's own
 `REPORTER_SECRET`, from the `.env` the installer wrote; store it as a masked CI secret. The reporter never changes your run's exit
 code: if Lupin is down, it says so on stderr and your tests pass or fail as they would have.
 
@@ -122,6 +124,13 @@ coverage included: until a coverage report is scanned or uploaded, the best Home
 **Caution**, naming what is not measured. **Tests** lists the flaky tests (a test that
 passed, failed and passed again is flaky) and the failures grouped by cause. **Health** has the
 repository grade. Each number links to the evidence it was computed from.
+
+**Home and `lupin gate` answer different questions.** `lupin gate` judges one commit: its
+tests and its scans. Home judges the release branch over the last seven days: the latest run
+gate, the pass rate, flaky tests, coverage and pending quarantine. The release branch is the
+project's default branch when Lupin knows it (a project connected by git URL); a folder
+project's Home reads every branch. A commit can pass `lupin gate` while Home says Caution,
+for example because coverage is not measured yet.
 
 Next: [connect a chat platform](notifications.md), [ask from your editor](mcp.md), or read
 [what this release does not do yet](known-limitations.md).

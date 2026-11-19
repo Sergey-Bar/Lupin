@@ -240,6 +240,35 @@ export async function listProjects(
   return rows.map(toRegistered);
 }
 
+/** Whether projectId names a project of workspaceId. */
+export async function projectInWorkspace(
+  db: AnyPgDb,
+  workspaceId: string,
+  projectId: string,
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(and(eq(projects.workspaceId, workspaceId), eq(projects.id, projectId)));
+  return rows.length > 0;
+}
+
+/**
+ * The branch a project releases from, when it is known: the default branch recorded when a git
+ * project was registered. 
+ull for a folder project, whose runs are then read on every branch.
+ */
+export async function releaseBranch(
+  options: ProjectRegistryServiceOptions,
+  projectId: string,
+): Promise<string | null> {
+  const rows = await options.db
+    .select({ defaultBranch: projects.defaultBranch })
+    .from(projects)
+    .where(and(eq(projects.workspaceId, options.workspaceId), eq(projects.id, projectId)));
+  return rows[0]?.defaultBranch ?? null;
+}
+
 export async function getProject(
   options: ProjectRegistryServiceOptions,
   projectId: string,

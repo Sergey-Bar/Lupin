@@ -135,6 +135,7 @@ import { createProjectsRoutes } from './routes/projects.js';
 import {
   discoverProjectAtBoot,
   ensureWorkspace,
+  projectInWorkspace,
   type ProjectRegistryServiceOptions,
 } from './services/project-registry-service.js';
 import { DEFAULT_WORKSPACE_ID, type RunRepository } from './repositories/run-repository.js';
@@ -166,7 +167,11 @@ import { sweepAllWorkspaces } from './services/retention-service.js';
 import { Lifecycle, closeHttpServer, installShutdownHandlers } from './bootstrap/lifecycle.js';
 // T18: dashboard module — runs detail, tests listing, analytics, quarantine, quality gates
 import { createDashboardModule } from './modules/dashboard/index.js';
-import { InMemoryQuarantineStore, type QuarantineStore } from './modules/dashboard/quarantine.js';
+import {
+  InMemoryQuarantineStore,
+  pendingFor,
+  type QuarantineStore,
+} from './modules/dashboard/quarantine.js';
 import { boundQuarantineSource } from './execution/quarantine-excusal.js';
 import { commitTests } from './services/commit-tests.js';
 import { publicLink } from './services/public-link.js';
@@ -1111,6 +1116,13 @@ function buildWorkspace(workspaceId: string) {
       '/',
       createReporterRoutes(runtimeConfig.reporterSecret, {
         repository: runRepository,
+        // A streamed run that names a project of this workspace is that project's run.
+        ...(databaseResources === undefined
+          ? {}
+          : {
+              projectExists: (projectId: string) =>
+                projectInWorkspace(databaseResources.db as never, workspaceId, projectId),
+            }),
         // The same store `GET /api/v1/reporting/kpis` reads. Without it an upload has nowhere
         // canonical to land, and every KPI would report the busiest system in the
         // installation as not knowable.
@@ -1478,10 +1490,8 @@ function buildWorkspace(workspaceId: string) {
           // quarantined tests still waiting for a person to decide.
           reliability: {
             store: executionStore,
-            openQuarantine: async () =>
-              ((await dashboardStores.quarantineStore?.list()) ?? []).filter(
-                (entry) => entry.status === 'pending',
-              ).length,
+            openQuarantine: async (projectId) =>
+              pendingFor((await dashboardStores.quarantineStore?.list()) ?? [], projectId),
           },
         }),
       );

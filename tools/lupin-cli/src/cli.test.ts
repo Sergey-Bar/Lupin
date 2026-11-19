@@ -162,6 +162,21 @@ describe('lupin upload', () => {
 });
 
 describe('lupin gate', () => {
+  it('reads the branch and commit from Jenkins, the pull request’s branch first', async () => {
+    reply = () => ({
+      status: 200,
+      body: { verdict: 'passed', reasons: [], grade: { letter: 'A' } },
+    });
+    await invoke(['gate'], { BRANCH_NAME: 'PR-7', CHANGE_BRANCH: 'feature/cart', GIT_COMMIT: SHA });
+    expect(JSON.parse(seen[0]?.body.toString() ?? '{}')).toMatchObject({
+      branch: 'feature/cart',
+      commit: SHA,
+    });
+    seen.length = 0;
+    await invoke(['gate'], { BRANCH_NAME: 'main', GIT_COMMIT: SHA });
+    expect(JSON.parse(seen[0]?.body.toString() ?? '{}')).toMatchObject({ branch: 'main' });
+  });
+
   it('tells the gate a scan-only job sends no tests with --allow-no-tests', async () => {
     reply = () => ({
       status: 200,

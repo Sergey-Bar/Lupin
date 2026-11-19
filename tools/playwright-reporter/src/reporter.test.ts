@@ -187,6 +187,15 @@ describe('streaming a run', () => {
     });
   });
 
+  it('names the project from LUPIN_PROJECT, so the run reaches the gate and Home', async () => {
+    const { calls, fetch } = recorder();
+    const project = '11111111-1111-4111-8111-111111111111';
+    const { reporter: r } = reporter(fetch, { LUPIN_PROJECT: project });
+    r.onBegin(CONFIG, rootSuite(1));
+    await r.onEnd({ status: 'passed', duration: 1 });
+    expect(events(calls)[0]?.body['payload']).toMatchObject({ projectId: project });
+  });
+
   it('reads the branch and commit from GitLab CI', async () => {
     const { calls, fetch } = recorder();
     const { reporter: r } = reporter(fetch, {

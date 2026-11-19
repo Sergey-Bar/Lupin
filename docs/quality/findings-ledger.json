@@ -8502,6 +8502,134 @@
       "status": "fixed",
       "confirmedOn": "2026-11-19",
       "confirmedBy": "kilo:qa-review (reporter.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "With no run on the commit, testsGateReason returned no reason and the default health policy adds none, so a job whose report step broke printed Gate passed and exited 0.",
+      "id": "REL-12",
+      "resolution": "testsGateReason fails a commit with no test results; a scan-only job opts out with lupin gate --allow-no-tests, allowNoTests in the gate report body, or the action input allow-no-tests.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A gate report for a commit with no test results fails, and passes with allowNoTests.",
+          "path": "apps/api/src/routes/repo-health.test.ts"
+        },
+        {
+          "asserts": "lupin gate on a scan-only commit exits 1, and 0 with --allow-no-tests.",
+          "path": "tests/e2e/product/ci-ingestion.spec.ts"
+        }
+      ],
+      "title": "lupin gate passed a commit with no test results",
+      "band": "Critical",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "commitTests read latestRunForCommit, so with lupin shard or separate jobs a failing run was hidden by any run that started later.",
+      "id": "REL-13",
+      "resolution": "RunRepository.runsForCommit reads every run on the commit and commitTests takes each test's newest result across them, so shards all count and a re-run replaces what it repeats.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A later green shard does not hide an earlier failing one; a green re-run of the failing shard clears it.",
+          "path": "apps/api/src/services/commit-tests.test.ts"
+        }
+      ],
+      "title": "The gate judged only the newest run on a commit, hiding a failing shard",
+      "band": "Critical",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "run:start wrote no projectId and the reporter sent none, so streamed runs never reached the commit gate or the auto-quarantine history.",
+      "id": "REL-14",
+      "resolution": "The reporter sends LUPIN_PROJECT as projectId, and the reporter route attributes the run only to a project projectExists confirms in the workspace.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A run naming a project of the workspace is attributed to it; an unknown or malformed id is not.",
+          "path": "apps/api/src/routes/reporter-persistence.test.ts"
+        },
+        {
+          "asserts": "LUPIN_PROJECT reaches the run:start payload.",
+          "path": "tools/playwright-reporter/src/reporter.test.ts"
+        }
+      ],
+      "title": "Streamed Playwright reporter runs belonged to no project",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The readiness card mixed runs from every branch, used DEFAULT_QUALITY_POLICY.maxFlakyRate rather than the workspace policy, and counted pending quarantine across every project.",
+      "id": "REL-15",
+      "resolution": "readinessOf reads the release branch (a branch query, else the project default branch), the workspace policy maxFlakyRate, and pendingFor the project.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A red feature branch, a 10% flaky rate under a 20% policy and another project's quarantine leave main Ready on those reasons.",
+          "path": "apps/api/src/routes/projects.test.ts"
+        },
+        {
+          "asserts": "pendingFor counts the project's and unscoped pending entries only.",
+          "path": "apps/api/src/modules/dashboard/quarantine.test.ts"
+        }
+      ],
+      "title": "Home readiness read every branch, a fixed flaky allowance and the whole workspace quarantine",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "id": "REL-16",
+      "confirmedOn": "2026-11-19",
+      "summary": "Clusters from runs Lupin executed include stack frames in the signature, while commit results carry no stack, so the pull-request count reads the message-only signature. Home coverage is the mean over reports, not weighted by lines.",
+      "removalCondition": "Test rows persist the stack and commitTests uses failureSignature(message, stack), and the coverage reading is weighted by lines found.",
+      "evidence": [
+        {
+          "asserts": "Both limitations are stated with this row.",
+          "path": "site/guide/known-limitations.md"
+        }
+      ],
+      "resolution": "Recorded in site/guide/known-limitations.md.",
+      "title": "A labelled cause from an executed run can count as unlabelled on a pull request, and Home coverage is a mean",
+      "owner": "The failure-triage owner (packages/reporting/src/failure-clusters.ts).",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)",
+      "wave": "REL-5.0.0",
+      "band": "Minor",
+      "status": "debt",
+      "provenance": "hand",
+      "confirmed": true
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The GitHub gate step built the branch from GITHUB_HEAD_REF and GITHUB_REF_NAME together, the CLI Playwright example never wrote its report file, and Jenkins needed explicit flags because the CLI read none of its variables.",
+      "id": "REL-17",
+      "resolution": "The gate step reads the variables itself, the example sets PLAYWRIGHT_JSON_OUTPUT_NAME, and branchOf/commitOf read CHANGE_BRANCH, BRANCH_NAME and GIT_COMMIT.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "lupin gate on Jenkins sends the pull request branch, then the job branch, and GIT_COMMIT.",
+          "path": "tools/lupin-cli/src/cli.test.ts"
+        }
+      ],
+      "title": "Three documented CI examples did not work",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
     }
   ]
 }

@@ -191,7 +191,7 @@ const RunEndPayloadSchema = z
 export async function persistReporterEvent(
   event: NormalizedReporterEvent,
   repo: RunRepository,
-  options: { workspaceId?: string } = {},
+  options: { workspaceId?: string; projectId?: string } = {},
 ): Promise<boolean> {
   // Explicit, defaulted, and the same constant the listing filters on. Omitting it used
   // to write NULL, and the row was then invisible to `GET /api/v1/runs` — persisted,
@@ -200,7 +200,7 @@ export async function persistReporterEvent(
 
   switch (event.type) {
     case 'run:start':
-      return persistRunStart(event, repo, workspaceId);
+      return persistRunStart(event, repo, workspaceId, options.projectId);
     case 'test:begin':
       return persistTestBegin(event, repo);
     case 'test:end':
@@ -218,6 +218,7 @@ async function persistRunStart(
   event: NormalizedReporterEvent,
   repo: RunRepository,
   workspaceId: string,
+  projectId: string | undefined,
 ): Promise<boolean> {
   const parsed = RunStartPayloadSchema.safeParse(event.payload);
   if (!parsed.success) return false;
@@ -243,6 +244,8 @@ async function persistRunStart(
     branch: p.branch ?? null,
     commitSha: p.commitSha ?? null,
     triggeredBy: p.triggeredBy ?? 'reporter',
+    // Confirmed by the route against the workspace's projects; never the payload's own word.
+    ...(projectId === undefined ? {} : { projectId }),
   });
   return true;
 }

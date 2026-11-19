@@ -294,3 +294,14 @@ export function createDashboardQuarantineRoutes(options: DashboardQuarantineOpti
 
   return app;
 }
+
+/**
+ * Entries awaiting a decision that can excuse one project's tests: the project's own, and the
+ * unscoped ones that match a test in any project. Another project's queue is not this one's.
+ */
+export function pendingFor(entries: readonly QuarantineEntry[], projectId: string): number {
+  return entries.filter(
+    (entry) =>
+      entry.status === 'pending' && (entry.projectId === null || entry.projectId === projectId),
+  ).length;
+}

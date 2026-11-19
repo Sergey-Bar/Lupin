@@ -33,6 +33,10 @@ export function readEnvironment(): Readonly<Record<string, string | undefined>> 
     CI_MERGE_REQUEST_TARGET_BRANCH_NAME: process.env['CI_MERGE_REQUEST_TARGET_BRANCH_NAME'],
     CI_PROJECT_ID: process.env['CI_PROJECT_ID'],
     CI_API_V4_URL: process.env['CI_API_V4_URL'],
+    // Jenkins' own: the pull request's source branch, the multibranch job's branch, the commit.
+    CHANGE_BRANCH: process.env['CHANGE_BRANCH'],
+    BRANCH_NAME: process.env['BRANCH_NAME'],
+    GIT_COMMIT: process.env['GIT_COMMIT'],
     // `--post` on GitLab only. Never sent to Lupin.
     LUPIN_GITLAB_TOKEN: process.env['LUPIN_GITLAB_TOKEN'],
     // An install behind Cloudflare Access: the service token pair, sent only to LUPIN_URL.

@@ -564,3 +564,26 @@ describe('Reporter persistence — backward compatibility (no repository)', () =
     expect(res.status).toBe(202);
   });
 });
+
+describe('Reporter persistence — a run names its project', () => {
+  const PROJECT = '11111111-1111-4111-8111-111111111111';
+  const OTHER = '22222222-2222-4222-8222-222222222222';
+
+  it('attributes a run to a project of this workspace, and to none it cannot confirm', async () => {
+    const repository = new InMemoryRunRepository();
+    const app = withErrorBoundary(new Hono());
+    app.route(
+      '/',
+      createReporterRoutes(undefined, {
+        repository,
+        projectExists: async (projectId) => projectId === PROJECT,
+      }),
+    );
+    await sendEvent(app, { type: 'run:start', runId: 'mine', payload: { projectId: PROJECT } });
+    await sendEvent(app, { type: 'run:start', runId: 'theirs', payload: { projectId: OTHER } });
+    await sendEvent(app, { type: 'run:start', runId: 'odd', payload: { projectId: 'not-a-uuid' } });
+    expect((await repository.getRun('mine'))?.projectId).toBe(PROJECT);
+    expect((await repository.getRun('theirs'))?.projectId ?? null).toBeNull();
+    expect((await repository.getRun('odd'))?.projectId ?? null).toBeNull();
+  });
+});
