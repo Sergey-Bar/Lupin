@@ -465,6 +465,22 @@ export class DrizzleRunRepository implements RunRepository {
     return row === undefined ? null : this._mapRun(row);
   }
 
+  async runsForCommit(projectId: string, commitSha: string, limit: number): Promise<RunRecord[]> {
+    const rows = await this.db
+      .select()
+      .from(runs)
+      .where(
+        and(
+          eq(runs.workspaceId, this.workspaceId),
+          eq(runs.projectId, projectId),
+          eq(runs.commitSha, commitSha),
+        ),
+      )
+      .orderBy(desc(runs.startedAt))
+      .limit(limit);
+    return rows.map((row) => this._mapRun(row));
+  }
+
   async testHistory(
     stableId: string,
     page: { since: Date; before?: Date; limit: number },

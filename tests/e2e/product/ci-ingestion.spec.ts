@@ -157,7 +157,12 @@ test.describe('CI ingestion through the packed CLI and reporter', () => {
     ]);
     expect(clean.code, clean.out).toBe(0);
     expect(clean.out).toMatch(/Uploaded clean\.sarif as sarif: 0 new finding\(s\)/u);
-    const passed = lupin(['gate', '--branch', 'main', '--commit', commit(10)]);
+    // No tests were sent for this commit, so the gate cannot call it green on their behalf.
+    const unmeasured = lupin(['gate', '--branch', 'main', '--commit', commit(10)]);
+    expect(unmeasured.code, unmeasured.out).toBe(1);
+    expect(unmeasured.out).toMatch(/^- No test results were uploaded for this commit/mu);
+    // A job that only sends scans says so.
+    const passed = lupin(['gate', '--branch', 'main', '--commit', commit(10), '--allow-no-tests']);
     expect(passed.code, passed.out).toBe(0);
     expect(passed.out).toMatch(/^Gate passed on main/mu);
 

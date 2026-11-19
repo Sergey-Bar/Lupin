@@ -162,6 +162,19 @@ describe('lupin upload', () => {
 });
 
 describe('lupin gate', () => {
+  it('tells the gate a scan-only job sends no tests with --allow-no-tests', async () => {
+    reply = () => ({
+      status: 200,
+      body: { verdict: 'passed', reasons: [], grade: { letter: 'A' } },
+    });
+    await invoke(['gate', '--branch', 'main', '--commit', SHA, '--allow-no-tests']);
+    expect(JSON.parse(seen[0]?.body.toString() ?? '{}')).toEqual({
+      branch: 'main',
+      commit: SHA,
+      allowNoTests: true,
+    });
+  });
+
   it('exits 0 on a passed gate and 1 on a failed one, printing every reason', async () => {
     reply = () => ({
       status: 200,

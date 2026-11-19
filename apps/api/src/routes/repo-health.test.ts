@@ -310,6 +310,27 @@ describe('the pull-request gate', () => {
     expect(await response.json()).toMatchObject({ verdict: 'passed', github: null, risk: null });
   });
 
+  it('fails a commit with no test results, unless the job says it sends scans only', async () => {
+    const { app, projectId } = await harness({
+      secret: SECRET,
+      extra: { commitTests: async () => null },
+    });
+    const gate = async (body: Record<string, unknown>) =>
+      (await (
+        await json(app, 'POST', `/api/v1/projects/${projectId}/health/gate/report`, body, {
+          authorization: `Bearer ${SECRET}`,
+        })
+      ).json()) as { verdict: string; reasons: string[] };
+    expect(await gate({ branch: 'main', commit: 'abc1234' })).toMatchObject({
+      verdict: 'failed',
+      reasons: ['No test results were uploaded for this commit, so its tests were not checked'],
+    });
+    expect(await gate({ branch: 'main', commit: 'abc1234', allowNoTests: true })).toMatchObject({
+      verdict: 'passed',
+      reasons: [],
+    });
+  });
+
   it('assesses a named pull request’s change risk and reports it without blocking by default', async () => {
     const { app, db, projectId } = await harness();
     const response = await json(

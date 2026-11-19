@@ -59,7 +59,7 @@ upload form field says `playwright`. JUnit is `junit` in both.
     LUPIN_URL: https://lupin.example.com
     LUPIN_TOKEN: ${{ secrets.LUPIN_TOKEN }}
     LUPIN_PROJECT: 00000000-0000-4000-8000-000000000000
-  run: npx --yes -p @lupin/cli@^5 lupin gate --branch "$GITHUB_HEAD_REF$GITHUB_REF_NAME" --commit "$GITHUB_SHA"
+  run: npx --yes -p @lupin/cli@^5 lupin gate
 ```
 
 ### GitLab CI
@@ -109,7 +109,9 @@ code: if Lupin is down, it says so on stderr and your tests pass or fail as they
 
 `lupin test` exits with your suite's own code, or `0` when every failure is an approved
 quarantined test. `lupin gate` exits `0` when the gate passes and `1` when it fails, printing every
-reason. It fails on the health gates and on any failing test uploaded for that commit. `2` is a usage or configuration error and nothing was sent; `3` means the install refused
+reason. It fails on the health gates, on any failing test uploaded for that commit by any
+job or shard (a re-run replaces the result it repeats), and on a commit no test results were
+uploaded for. A job that only sends scans passes `--allow-no-tests`. `2` is a usage or configuration error and nothing was sent; `3` means the install refused
 or could not be reached; `4` means the token was refused. See [the CLI](cli.md#exit-codes).
 
 ## Read the verdict

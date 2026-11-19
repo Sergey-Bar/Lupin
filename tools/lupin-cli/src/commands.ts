@@ -145,11 +145,11 @@ function forgeOf(io: Io) {
     : { kind: 'github' as const, target: githubTarget(io.env) };
 }
 
-/** `lupin gate --branch <b> --commit <sha> [--pr <n>] [--post]` — exits 1 when the gate fails. */
+/** `lupin gate --branch <b> --commit <sha> [--pr <n>] [--post] [--allow-no-tests]` — exits 1 when the gate fails. */
 export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
   const parsed = parseOptions(argv, {
     values: ['project', 'branch', 'commit', 'pr'],
-    switches: ['post'],
+    switches: ['post', 'allow-no-tests'],
   });
   const branch = branchOf(io, optional(parsed, 'branch'));
   const commit = commitOf(io, optional(parsed, 'commit'));
@@ -172,6 +172,7 @@ export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
         branch,
         commit,
         ...(pullRequest === undefined ? {} : { pullRequest }),
+        ...(parsed.switches.has('allow-no-tests') ? { allowNoTests: true } : {}),
       }),
     },
   )) as GateAnswer | null;

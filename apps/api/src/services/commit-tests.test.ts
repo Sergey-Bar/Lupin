@@ -8,8 +8,12 @@ import { commitTests, testsGateReason, type CommitTests } from './commit-tests.j
 const PROJECT = '11111111-1111-4111-8111-111111111111';
 const COMMIT = 'abcdef1234567';
 
-async function seed(statuses: Record<string, TestRecord['status']>, startedAt: string, id: string) {
-  const repository = new InMemoryRunRepository();
+async function seed(
+  statuses: Record<string, TestRecord['status']>,
+  startedAt: string,
+  id: string,
+  repository = new InMemoryRunRepository(),
+) {
   await repository.upsertRun({
     id,
     workspaceId: 'ws',
@@ -70,6 +74,7 @@ describe('commitTests', () => {
     );
     expect(tests).toEqual({
       runId: 'run-1',
+      runIds: ['run-1'],
       total: 4,
       passed: 1,
       failed: 1,
@@ -131,6 +136,35 @@ describe('commitTests', () => {
     expect(tests?.excused).toBe(false);
   });
 
+  it('judges every shard on the commit, and lets a re-run replace the result it repeats', async () => {
+    const repository = await seed({ pays: 'failed' }, '2026-10-26T10:00:00.000Z', 'shard-1');
+    await seed({ lists: 'passed' }, '2026-10-26T10:05:00.000Z', 'shard-2', repository);
+    const deps = { repository, quarantined: async () => [], reportErrors: async () => 0 };
+    // The later shard does not hide the earlier one's failure.
+    expect(await commitTests(deps, PROJECT, COMMIT)).toMatchObject({
+      runId: 'shard-2',
+      runIds: ['shard-2', 'shard-1'],
+      total: 2,
+      passed: 1,
+      failures: ['a.spec.ts › pays'],
+    });
+    // Re-running the failed shard green replaces its result.
+    await seed({ pays: 'passed' }, '2026-10-26T10:10:00.000Z', 'shard-1-retry', repository);
+    expect(await commitTests(deps, PROJECT, COMMIT)).toMatchObject({
+      total: 2,
+      passed: 2,
+      failures: [],
+    });
+  });
+
+  it('counts report errors only from runs whose results still stand', async () => {
+    const repository = await seed({ pays: 'passed' }, '2026-10-26T10:00:00.000Z', 'old');
+    await seed({ pays: 'passed' }, '2026-10-26T10:05:00.000Z', 'new', repository);
+    const errors = async (runId: string) => (runId === 'old' ? 1 : 0);
+    const deps = { repository, quarantined: async () => [], reportErrors: errors };
+    expect((await commitTests(deps, PROJECT, COMMIT))?.reportErrors).toBe(0);
+  });
+
   it('answers null for a commit with no run, and for another project', async () => {
     const repository = await seed({ pays: 'passed' }, '2026-10-26T10:00:00.000Z', 'r');
     const deps = { repository, quarantined: async () => [], reportErrors: async () => 0 };
@@ -142,6 +176,7 @@ describe('commitTests', () => {
 describe('testsGateReason (REL-8)', () => {
   const base: CommitTests = {
     runId: 'r',
+    runIds: ['r'],
     total: 5,
     passed: 5,
     failed: 0,
@@ -163,10 +198,19 @@ describe('testsGateReason (REL-8)', () => {
     );
   });
 
-  it('passes a green run, a run excused by quarantine, and a commit with no run', () => {
+  it('passes a green run and a run excused by quarantine', () => {
     expect(testsGateReason(base)).toBeNull();
     expect(testsGateReason({ ...base, excused: true, failures: ['a'] })).toBeNull();
-    expect(testsGateReason(null)).toBeNull();
+  });
+
+  it('fails a commit with no test results, unless the job says it sends none', () => {
+    expect(testsGateReason(null)).toBe(
+      'No test results were uploaded for this commit, so its tests were not checked',
+    );
+    expect(testsGateReason({ ...base, total: 0, passed: 0 })).toBe(
+      'No test results were uploaded for this commit, so its tests were not checked',
+    );
+    expect(testsGateReason(null, { allowNoTests: true })).toBeNull();
   });
 
   it('fails a report with errors outside any test, which is never excused', () => {
