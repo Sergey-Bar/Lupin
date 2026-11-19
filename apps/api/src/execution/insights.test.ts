@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { flakeCost } from '@lupin/reporting';
+import { failureSignature, flakeCost } from '@lupin/reporting';
 import { QaInsightsSchema } from '@lupin/shared-contracts';
 import { InMemoryExecutionStore } from './in-memory-execution-store.js';
-import { belongsTo, buildInsights, createInsightsRoutes, flakeObservationsOf } from './insights.js';
+import {
+  belongsTo,
+  buildInsights,
+  createInsightsRoutes,
+  failureInputsOf,
+  flakeObservationsOf,
+} from './insights.js';
 import type { ExecutionRun, ExecutionTestResult } from './types.js';
 
 const NOW = new Date('2026-10-20T12:00:00.000Z');
@@ -513,5 +519,23 @@ describe('triage labels on failure causes', () => {
       reason: null,
     });
     expect(insights.failureClusters?.totals.unlabelled).toBe(1);
+  });
+});
+
+describe('failureInputsOf (REL-16)', () => {
+  it('keys a cause on its message alone, as the pull request and test history label it', () => {
+    const failing = {
+      ...test('pays', 'failed'),
+      error: { code: 'E', message: 'expected 500 to equal 200' },
+      metadata: { stack: 'at pay (src/pay.ts:10:3)\nat run (src/run.ts:2:1)' },
+    } as ExecutionTestResult;
+    const [input] = failureInputsOf([run('2026-10-20T10:00:00.000Z', 'failed', [failing])]);
+    expect(input).toBeDefined();
+    if (input === undefined) return;
+    // The stack a runner sent is not part of the key, so a label given on the Tests page
+    // matches the same failure uploaded without one.
+    expect(failureSignature(input.message, input.stack).signature).toBe(
+      failureSignature('expected 500 to equal 200').signature,
+    );
   });
 });

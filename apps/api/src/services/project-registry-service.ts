@@ -86,6 +86,7 @@ export async function registerProject(
       name: input.name,
       slug: input.slug,
       repoPath: input.repoPath,
+      defaultBranch: await gitDefaultBranch(view),
       profile: resolved.profile as unknown as Record<string, unknown>,
       detectorVersion: detected.detectorVersion,
     })
@@ -254,21 +255,39 @@ export async function projectInWorkspace(
 }
 
 /**
- * The branch a project releases from, when it is known: the default branch recorded when a git
- * project was registered. 
-ull for a folder project, whose runs are then read on every branch.
+ * The branch a project releases from, when it is known: the default branch recorded when the
+ * project was registered, else, for a folder project registered before that was recorded, the
+ * one its checkout names now. `null` when neither says, and its runs are read on every branch.
  */
 export async function releaseBranch(
   options: ProjectRegistryServiceOptions,
   projectId: string,
 ): Promise<string | null> {
   const rows = await options.db
-    .select({ defaultBranch: projects.defaultBranch })
+    .select({ defaultBranch: projects.defaultBranch, repoPath: projects.repoPath })
     .from(projects)
     .where(and(eq(projects.workspaceId, options.workspaceId), eq(projects.id, projectId)));
-  return rows[0]?.defaultBranch ?? null;
+  const row = rows[0];
+  if (row === undefined) return null;
+  if (row.defaultBranch !== null) return row.defaultBranch;
+  return row.repoPath === null ? null : gitDefaultBranch(options.viewFor(row.repoPath));
 }
 
+const BRANCH_REF = /^ref: refs\/(?:remotes\/origin|heads)\/(\S{1,255})\s*$/u;
+
+/**
+ * A checkout's default branch from its git metadata: the remote's `HEAD` (what `git clone`
+ * records), else the branch checked out. A detached `HEAD` or a folder with no `.git` says none.
+ */
+export async function gitDefaultBranch(view: {
+  read(relativePath: string): Promise<string | null>;
+}): Promise<string | null> {
+  for (const file of ['.git/refs/remotes/origin/HEAD', '.git/HEAD']) {
+    const match = BRANCH_REF.exec((await view.read(file).catch(() => null)) ?? '');
+    if (match?.[1] !== undefined) return match[1];
+  }
+  return null;
+}
 export async function getProject(
   options: ProjectRegistryServiceOptions,
   projectId: string,

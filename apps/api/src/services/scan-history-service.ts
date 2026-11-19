@@ -27,16 +27,31 @@ export function hourOf(at: Date): Date {
   return new Date(Math.floor(at.getTime() / HOUR_MS) * HOUR_MS);
 }
 
-/** Mean line coverage over every coverage report the scan read, or `null` with none. */
+/**
+ * Line coverage over every coverage report the scan read, or `null` with none. Weighed by lines
+ * when every report carries its counts (lcov, an Istanbul summary with totals), so a ten-line
+ * package does not count as much as a thousand-line one; the plain mean otherwise (REL-16).
+ */
 export function meanCoverage(scan: Pick<RepoScan, 'reports'>): number | null {
-  const lines = scan.reports
+  const reports = scan.reports
     .filter((report) => report.kind === 'coverage')
-    .map((report) => report.metrics['lines'])
-    .filter((value): value is number => typeof value === 'number' && value >= 0 && value <= 100);
-  if (lines.length === 0) return null;
-  return Math.round((lines.reduce((sum, value) => sum + value, 0) / lines.length) * 10) / 10;
+    .filter((report) => {
+      const value = report.metrics['lines'];
+      return typeof value === 'number' && value >= 0 && value <= 100;
+    });
+  if (reports.length === 0) return null;
+  const counted = reports.map((report) => ({
+    found: report.metrics['linesFound'],
+    hit: report.metrics['linesHit'],
+  }));
+  const found = counted.reduce((sum, item) => sum + (item.found ?? 0), 0);
+  const weighed =
+    found > 0 && counted.every((item) => item.found !== undefined && item.hit !== undefined);
+  const value = weighed
+    ? (counted.reduce((sum, item) => sum + (item.hit ?? 0), 0) / found) * 100
+    : reports.reduce((sum, report) => sum + (report.metrics['lines'] ?? 0), 0) / reports.length;
+  return Math.round(value * 10) / 10;
 }
-
 export async function hasSnapshotFor(
   options: Options,
   projectId: string,
