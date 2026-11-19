@@ -149,6 +149,14 @@ export class InMemoryRunRepository implements RunRepository {
     return latest === null ? null : { ...latest };
   }
 
+  async runsForCommit(projectId: string, commitSha: string, limit: number): Promise<RunRecord[]> {
+    return [...this._runs.values()]
+      .filter((run) => run.projectId === projectId && run.commitSha === commitSha)
+      .sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt))
+      .slice(0, limit)
+      .map((run) => ({ ...run }));
+  }
+
   async testHistory(
     stableId: string,
     page: { since: Date; before?: Date; limit: number },

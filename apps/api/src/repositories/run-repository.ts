@@ -417,6 +417,12 @@ export interface RunRepository {
   latestRunForCommit(projectId: string, commitSha: string): Promise<RunRecord | null>;
 
   /**
+   * Every run of a project on a commit, newest first by start time, at most limit. What the
+   * gate reads, so a sharded or multi-job pipeline is judged on all of its runs.
+   */
+  runsForCommit(projectId: string, commitSha: string, limit: number): Promise<RunRecord[]>;
+
+  /**
    * One test's results across runs, newest first, from the `(workspace_id, stable_id)` index:
    * results of runs started at or after `since` and before `before`, at most `limit`.
    */

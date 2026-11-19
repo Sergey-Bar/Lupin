@@ -511,6 +511,12 @@ export interface ReporterRouteOptions {
    */
   repository?: RunRepository;
   /**
+   * Whether a project id names a project of this workspace. A `run:start` that names one it
+   * confirms is attributed to it, so a streamed run reaches the gate and Home; absent, or for
+   * an id it does not confirm, the run names no project.
+   */
+  projectExists?: (projectId: string) => Promise<boolean>;
+  /**
    * The canonical store. **Required for uploads** and what makes this door readable by
    * the reporting package at all: without it an upload has nowhere canonical to land, and
    * the only honest answer is to refuse rather than write a row that
@@ -698,7 +704,11 @@ export function createReporterRoutes(
     // T14: persist normalized event to repository (if one is configured)
     if (options?.repository) {
       const repository = options.repository;
-      const runUpdated = await persistReporterEvent(normalized, repository, { workspaceId });
+      const projectId = await attributedProject(normalized, options.projectExists);
+      const runUpdated = await persistReporterEvent(normalized, repository, {
+        workspaceId,
+        ...(projectId === null ? {} : { projectId }),
+      });
       await closeCanonicalRun(normalized, repository, options, workspaceId);
       // T15: broadcast a safe run:updated event after every run-level persistence
       // operation, when the run row was created/updated and a bus is configured.
@@ -852,4 +862,17 @@ export function adaptLegacyEvent(raw: LegacyReporterEvent): NormalizedReporterEv
     timestamp: new Date().toISOString(),
     payload: raw.payload,
   };
+}
+
+const PROJECT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+
+/** The project a `run:start` names, when this workspace has it; otherwise `null`. */
+async function attributedProject(
+  event: NormalizedReporterEvent,
+  projectExists: ((projectId: string) => Promise<boolean>) | undefined,
+): Promise<string | null> {
+  if (event.type !== 'run:start' || projectExists === undefined) return null;
+  const named = (event.payload as Record<string, unknown>)['projectId'];
+  if (typeof named !== 'string' || !PROJECT_ID.test(named)) return null;
+  return (await projectExists(named)) ? named : null;
 }
