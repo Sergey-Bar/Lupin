@@ -8651,6 +8651,25 @@
           "asserts": "The remote default branch wins, then the checked-out branch; a detached HEAD or no git names none."
         }
       ]
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The pass rate counted only passed results, so a flaky result (failed, then passed on a retry) lowered it below the default 100% threshold, and the default maxFlakyRate of 0 failed the same run again. One flaky test in twenty turned Home No-go until someone quarantined it.",
+      "id": "REL-19",
+      "resolution": "passRateOf counts a flaky result as passed, and the default policy allows 5% flaky tests; a policy created before keeps its own value, as upgrade-5.md says.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "One flaky test in twenty passes the default gate; two fail it on the flaky rate alone.",
+          "path": "apps/api/src/execution/quality-gate.test.ts"
+        }
+      ],
+      "band": "Major",
+      "status": "fixed",
+      "provenance": "hand",
+      "title": "One flaky test failed a run twice, on the flaky rate and on the pass rate",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (quality-gate.test.ts run red then green)"
     }
   ]
 }
