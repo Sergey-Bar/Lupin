@@ -8595,20 +8595,22 @@
       "id": "REL-16",
       "confirmedOn": "2026-11-19",
       "summary": "Clusters from runs Lupin executed include stack frames in the signature, while commit results carry no stack, so the pull-request count reads the message-only signature. Home coverage is the mean over reports, not weighted by lines.",
-      "removalCondition": "Test rows persist the stack and commitTests uses failureSignature(message, stack), and the coverage reading is weighted by lines found.",
       "evidence": [
         {
-          "asserts": "Both limitations are stated with this row.",
-          "path": "site/guide/known-limitations.md"
+          "path": "apps/api/src/execution/insights.test.ts",
+          "asserts": "A failure carrying a runner stack gets the same signature as its message alone."
+        },
+        {
+          "path": "apps/api/src/services/scan-history-coverage.test.ts",
+          "asserts": "10 of 10 and 495 of 990 lines read 50.5%, not the 75% a plain mean gives."
         }
       ],
-      "resolution": "Recorded in site/guide/known-limitations.md.",
-      "title": "A labelled cause from an executed run can count as unlabelled on a pull request, and Home coverage is a mean",
-      "owner": "The failure-triage owner (packages/reporting/src/failure-clusters.ts).",
+      "resolution": "failureInputsOf keys every cause on its message alone, the key the pull request and test history use (no uploaded result stores a stack), and meanCoverage weighs reports by lines when each carries lcov or Istanbul counts.",
+      "title": "A labelled cause could count as unlabelled on a pull request, and Home coverage was a plain mean",
       "confirmedBy": "kilo:qa-review-2 (run red then green)",
       "wave": "REL-5.0.0",
       "band": "Minor",
-      "status": "debt",
+      "status": "fixed",
       "provenance": "hand",
       "confirmed": true
     },
@@ -8630,6 +8632,25 @@
       "status": "fixed",
       "confirmedOn": "2026-11-19",
       "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "id": "REL-18",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (project-registry-service.test.ts run red then green)",
+      "title": "A folder project had no release branch, so Home read every branch",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Only a project registered by git URL recorded a default branch, so a folder project's readiness mixed feature-branch runs into the release verdict.",
+      "resolution": "registerProject records the checkout's default branch from .git/refs/remotes/origin/HEAD, else .git/HEAD, and releaseBranch reads it from the checkout for a folder project registered before.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/project-registry-service.test.ts",
+          "asserts": "The remote default branch wins, then the checked-out branch; a detached HEAD or no git names none."
+        }
+      ]
     }
   ]
 }

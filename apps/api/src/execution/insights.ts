@@ -213,7 +213,9 @@ export function failureInputsOf(runs: readonly ExecutionRun[]): FailureInput[] {
         branch: run.branch,
         at: new Date(Date.parse(run.createdAt)).toISOString(),
         message: test.error?.message ?? `${test.status} with no message`,
-        stack: typeof test.metadata?.['stack'] === 'string' ? test.metadata['stack'] : null,
+        // The message alone, never a stack: the pull request and a test's history key a cause on
+        // the message (no uploaded result stores a stack), and a label is one key everywhere.
+        stack: null,
       });
     }
   }

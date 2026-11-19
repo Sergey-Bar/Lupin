@@ -127,9 +127,9 @@ repository grade. Each number links to the evidence it was computed from.
 
 **Home and `lupin gate` answer different questions.** `lupin gate` judges one commit: its
 tests and its scans. Home judges the release branch over the last seven days: the latest run
-gate, the pass rate, flaky tests, coverage and pending quarantine. The release branch is the
-project's default branch when Lupin knows it (a project connected by git URL); a folder
-project's Home reads every branch. A commit can pass `lupin gate` while Home says Caution,
+gate, the pass rate, flaky tests, coverage and pending quarantine. The release branch is the project's default branch: the one given when it was connected by git
+URL, or the one its checkout's git metadata names for a folder. `PATCH
+/api/v1/projects/:id` with `defaultBranch` changes it. A commit can pass `lupin gate` while Home says Caution,
 for example because coverage is not measured yet.
 
 Next: [connect a chat platform](notifications.md), [ask from your editor](mcp.md), or read

@@ -47,6 +47,14 @@ describe('istanbulSummary', () => {
     expect(report?.headline).toBe('81.3% of lines covered');
   });
 
+  it('carries the line counts, so reports of different sizes can be weighed', () => {
+    const report = istanbulSummary(
+      'coverage-summary.json',
+      JSON.stringify({ total: { lines: { pct: 50, total: 200, covered: 100 } } }),
+    );
+    expect(report?.metrics).toEqual({ lines: 50, linesFound: 200, linesHit: 100 });
+  });
+
   it.each([
     ['not JSON', '{'],
     ['no total', '{}'],
