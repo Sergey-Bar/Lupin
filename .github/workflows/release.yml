@@ -306,9 +306,10 @@ jobs:
         run: |
           gh release download "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" \
             -p "lupin-${{ needs.prepare.outputs.version }}.zip" -p SHA256SUMS
-          # Only the zip was downloaded; SHA256SUMS also lists the CLI and reporter tarballs.
-          # The line is required, so a release whose sums omit the zip still fails here.
-          grep -E "  lupin-${{ needs.prepare.outputs.version }}\.zip$" SHA256SUMS | sha256sum -c -
+          # SHA256SUMS also lists the CLI and reporter tarballs, which are not downloaded here.
+          # The zip's line is required, so sums that omit it still fail.
+          grep -qE "  lupin-${{ needs.prepare.outputs.version }}\.zip$" SHA256SUMS
+          sha256sum -c SHA256SUMS --ignore-missing
           unzip -q "lupin-${{ needs.prepare.outputs.version }}.zip"
       - name: Start it
         working-directory: lupin-${{ needs.prepare.outputs.version }}
@@ -407,9 +408,9 @@ jobs:
         run: |
           set -euo pipefail
           gh release download "v$OLD_VERSION" -R "$GITHUB_REPOSITORY" -p "lupin-$OLD_VERSION.zip" -p SHA256SUMS
-          # Only the zip was downloaded; SHA256SUMS also lists the CLI and reporter tarballs.
-          # The line is required, so a release whose sums omit the zip still fails here.
-          grep -E "  lupin-${{ needs.prepare.outputs.version }}\.zip$" SHA256SUMS | sha256sum -c -
+          # A 5.x release also lists its CLI and reporter tarballs, not downloaded here.
+          grep -qE "  lupin-$OLD_VERSION\.zip$" SHA256SUMS
+          sha256sum -c SHA256SUMS --ignore-missing
           unzip -q "lupin-$OLD_VERSION.zip"
           cd "lupin-$OLD_VERSION"
           ./start.sh
