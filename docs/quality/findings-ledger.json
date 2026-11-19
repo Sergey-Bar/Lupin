@@ -8689,6 +8689,29 @@
       "title": "The release branch Home judges on could only be changed through the API",
       "confirmedOn": "2026-11-19",
       "confirmedBy": "kilo:release-5.0.0 (SettingsPages.test.tsx run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "testsGateReason failed only on failed or timed-out tests, so a run still streaming or cut off passed on what had arrived, an all-skipped run passed, and a run whose every failure was quarantined passed even though excusesRun does not excuse it and lupin test kept its exit code. Auto-quarantine re-quarantined a test it had just released, on the old evidence still in the window.",
+      "id": "REL-21",
+      "resolution": "CommitTests carries unfinishedRuns, interruptedRuns and executed, and testsGateReason fails each case; auto-quarantine counts only evidence after the last release.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "Each case produces its gate reason; a scan-only job may still pass with allowNoTests.",
+          "path": "apps/api/src/services/commit-tests.test.ts"
+        },
+        {
+          "asserts": "A released test is not quarantined again on the evidence it was released from.",
+          "path": "apps/api/src/services/auto-quarantine.test.ts"
+        }
+      ],
+      "band": "Major",
+      "status": "fixed",
+      "provenance": "hand",
+      "title": "The gate passed unfinished, interrupted, all-skipped and all-quarantined runs, and auto-quarantine flapped",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-3 (commit-tests.test.ts and auto-quarantine.test.ts run red then green)"
     }
   ]
 }

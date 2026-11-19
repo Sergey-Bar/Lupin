@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { failureSignature } from '@lupin/reporting';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
 import type { TestRecord } from '../repositories/run-repository.js';
+import { phaseForReportedStatus } from '../repositories/run-repository.js';
 import type { QuarantineMatch } from '../execution/quarantine-excusal.js';
 import { commitTests, testsGateReason, type CommitTests } from './commit-tests.js';
 
@@ -13,15 +14,15 @@ async function seed(
   startedAt: string,
   id: string,
   repository = new InMemoryRunRepository(),
+  status: 'passed' | 'failed' | 'running' | 'interrupted' = 'failed',
 ) {
   await repository.upsertRun({
     id,
     workspaceId: 'ws',
-    phase: 'complete',
-    outcome: 'failed',
+    ...phaseForReportedStatus(status),
     startedAt,
     finishedAt: startedAt,
-    status: 'failed',
+    status,
     total: Object.keys(statuses).length,
     passed: 0,
     failed: 0,
@@ -75,6 +76,9 @@ describe('commitTests', () => {
     expect(tests).toEqual({
       runId: 'run-1',
       runIds: ['run-1'],
+      unfinishedRuns: 0,
+      interruptedRuns: 0,
+      executed: 4,
       total: 4,
       passed: 1,
       failed: 1,
@@ -173,10 +177,37 @@ describe('commitTests', () => {
   });
 });
 
+describe('commitTests reads run state (REL-21)', () => {
+  const deps = (repository: InMemoryRunRepository) => ({
+    repository,
+    quarantined: async () => [approved('pays')],
+    reportErrors: async () => 0,
+  });
+
+  it('counts a run still streaming and a run that was interrupted', async () => {
+    const repository = await seed(
+      { lists: 'passed' },
+      '2026-10-26T10:00:00.000Z',
+      'live',
+      undefined,
+      'running',
+    );
+    await seed({ pays: 'passed' }, '2026-10-26T10:05:00.000Z', 'cut', repository, 'interrupted');
+    expect(await commitTests(deps(repository), PROJECT, COMMIT)).toMatchObject({
+      unfinishedRuns: 1,
+      interruptedRuns: 1,
+      executed: 2,
+    });
+  });
+});
+
 describe('testsGateReason (REL-8)', () => {
   const base: CommitTests = {
     runId: 'r',
     runIds: ['r'],
+    unfinishedRuns: 0,
+    interruptedRuns: 0,
+    executed: 5,
     total: 5,
     passed: 5,
     failed: 0,
@@ -211,6 +242,35 @@ describe('testsGateReason (REL-8)', () => {
       'No test results were uploaded for this commit, so its tests were not checked',
     );
     expect(testsGateReason(null, { allowNoTests: true })).toBeNull();
+  });
+
+  it('fails a commit whose run has not finished, or was interrupted (REL-21)', () => {
+    expect(testsGateReason({ ...base, unfinishedRuns: 1 })).toBe(
+      '1 test run on this commit has not finished, so its results are not final',
+    );
+    expect(testsGateReason({ ...base, excused: true, interruptedRuns: 2 })).toBe(
+      '2 test runs on this commit were interrupted before they finished',
+    );
+  });
+
+  it('fails a commit on which no test ran, unless the job says it sends none (REL-21)', () => {
+    const skipped = { ...base, passed: 0, executed: 0 };
+    expect(testsGateReason(skipped)).toBe(
+      'No test on this commit ran: every result is skipped or unknown',
+    );
+    expect(testsGateReason(skipped, { allowNoTests: true })).toBeNull();
+  });
+
+  it('fails a run whose every failure is quarantined but in which nothing passed (REL-21)', () => {
+    expect(
+      testsGateReason({
+        ...base,
+        passed: 0,
+        executed: 2,
+        failed: 2,
+        quarantinedFailures: ['a', 'b'],
+      }),
+    ).toBe('Every failing test is quarantined, but no test passed, so the run is not excused');
   });
 
   it('fails a report with errors outside any test, which is never excused', () => {
