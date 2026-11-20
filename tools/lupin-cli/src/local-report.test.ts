@@ -178,6 +178,14 @@ describe('lupin check', () => {
 });
 
 describe('edges', () => {
+  it('ignores tests inside comments, nested ones included', () => {
+    expect(
+      parseJunit(
+        '<!-- <testcase name="gone"/> --><testsuite><!--<!-- x -->--><testcase name="kept"/></testsuite>',
+      ).map((test) => test.title),
+    ).toEqual(['kept']);
+  });
+
   it('decodes numeric entities and single-quoted attributes, and tolerates a bad time', () => {
     const [test] = parseJunit(
       "<testcase name='a&#x41;&#66;' file='f.ts' time='soon'><error/></testcase>",

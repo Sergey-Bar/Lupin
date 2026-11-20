@@ -77,14 +77,22 @@ function firstLine(text: string): string {
 
 /** JUnit XML, as Jest, pytest, Surefire, Gradle, Go and Playwright's junit reporter write it. */
 export function parseJunit(xml: string): TestResult[] {
-  const body = xml
-    .replace(/<!--[\s\S]*?-->/gu, '')
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gu, (_m, c: string) =>
-      c.replace(/&/gu, '&amp;').replace(/</gu, '&lt;'),
-    );
+  const body = withoutComments(xml).replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gu, (_m, c: string) =>
+    c.replace(/&/gu, '&amp;').replace(/</gu, '&lt;'),
+  );
   return [...body.matchAll(/<testcase\b([^>]*?)(\/>|>([\s\S]*?)<\/testcase>)/gu)].map((match) =>
     readCase(match[1] ?? '', match[3] ?? ''),
   );
+}
+
+/** Removes XML comments until none is left, so a comment nested in one cannot survive. */
+function withoutComments(xml: string): string {
+  let current = xml;
+  for (;;) {
+    const next = current.replace(/<!--[\s\S]*?-->/gu, '');
+    if (next === current) return next.replace(/<!--/gu, '');
+    current = next;
+  }
 }
 
 function readCase(open: string, inner: string): TestResult {
