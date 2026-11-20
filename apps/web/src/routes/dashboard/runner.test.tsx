@@ -7,7 +7,7 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
-import { RunnerPage, inGroup, toolForRun } from './runner';
+import { RunnerPage, inGroup, toolForRun } from './runner-page';
 import { makeApi, makeQa, makeRun, makeScan, makeTool } from '../../test-utils';
 import type { QaClient } from '../../lib/qa-client';
 import type { ApiClient } from '../../lib/api';

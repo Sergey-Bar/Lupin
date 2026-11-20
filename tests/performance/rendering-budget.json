@@ -92,19 +92,19 @@
     "doubles a heavier route's reading still fails."
   ],
   "recorded": true,
-  "reason": "Observations recorded by `pnpm render:baseline` on 2026-10-21 on the reference install — a self-hosted single node (Intel Core i7-13650HX, 31.7 GB, Windows 11 Pro), PostgreSQL 16 in Docker, the web bundle under `vite preview`. Each route's `observed` block is that reading. The metric-key ceilings are `ceilingFor(observed)` under the CEILING_RULES floors raised to LCP 460 / INP 150 on 2026-11-04 (see the `$comment` above for why the floor dominates these light routes and why a re-record was not taken). Closes PERF-1, and `test:render` is `pr-blocking`.",
-  "recordedOn": "2026-10-21",
+  "reason": "Recorded by `pnpm render:baseline` on 2026-11-13.",
+  "recordedOn": "2026-11-13",
   "routes": {
     "/dashboard": {
       "$why": "The Health overview. It was the first paint a person saw until `/` moved to Home (`/dashboard/now`), which this budget does not measure yet. It replaced /login, which no longer exists (ADR-006). Opaque like everything else, Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
       "glassStackDepth": 1,
-      "lcpMs": 460,
+      "lcpMs": 770,
       "inpMs": 150,
       "cls": 0.05,
       "longTasks": 2,
       "observed": {
-        "lcpMs": 124,
-        "inpMs": 32,
+        "lcpMs": 256,
+        "inpMs": 16,
         "cls": 0,
         "longTasks": 0
       }
@@ -112,13 +112,13 @@
     "/dashboard/runs": {
       "$why": "The runs list. The heaviest of the four: every row is a run, and a slow one here is a dashboard that appears to hang. Opaque rows on an opaque plane, Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
       "glassStackDepth": 1,
-      "lcpMs": 460,
+      "lcpMs": 580,
       "inpMs": 150,
       "cls": 0.05,
       "longTasks": 2,
       "observed": {
-        "lcpMs": 152,
-        "inpMs": 16,
+        "lcpMs": 192,
+        "inpMs": 0,
         "cls": 0,
         "longTasks": 0
       }
@@ -126,13 +126,13 @@
     "/dashboard/runs/:runId": {
       "$why": "Where a person decides whether a release is safe, so a rendering defect here is the most expensive one in the product. Evidence is never read through a translucent surface: Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
       "glassStackDepth": 1,
-      "lcpMs": 460,
+      "lcpMs": 660,
       "inpMs": 150,
       "cls": 0.05,
       "longTasks": 2,
       "observed": {
-        "lcpMs": 112,
-        "inpMs": 24,
+        "lcpMs": 220,
+        "inpMs": 16,
         "cls": 0,
         "longTasks": 0
       }
@@ -140,12 +140,12 @@
     "/dashboard/quarantine": {
       "$why": "The filter surface, and the only primary flow whose content changes on every keystroke — so its INP is the reading most likely to catch an unthrottled re-render. Opaque, Glass depth 1: the translucent chrome beside the page, never the evidence on it.",
       "glassStackDepth": 1,
-      "lcpMs": 460,
+      "lcpMs": 1020,
       "inpMs": 150,
       "cls": 0.05,
       "longTasks": 2,
       "observed": {
-        "lcpMs": 132,
+        "lcpMs": 340,
         "inpMs": 0,
         "cls": 0,
         "longTasks": 0

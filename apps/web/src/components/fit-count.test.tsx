@@ -2,7 +2,7 @@
 import React from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { useFitCount } from './kit';
-import { useTileCount } from '../routes/dashboard/toolbox';
+import { useTileCount } from '../routes/dashboard/toolbox-page';
 
 /**
  * The two fitting hooks, against a box whose size the test sets.

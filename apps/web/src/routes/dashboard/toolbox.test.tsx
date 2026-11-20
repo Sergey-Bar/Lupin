@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { GOALS, PRICING, ToolboxPage, sortToolbox } from './toolbox';
+import { GOALS, PRICING, ToolboxPage, sortToolbox } from './toolbox-page';
 import { CAPABILITY_LABELS } from './health';
 import { makeQa, makeScan } from '../../test-utils';
 import type { ToolboxEntry } from '../../lib/qa';
