@@ -85,16 +85,25 @@ export function parseJunit(xml: string): TestResult[] {
   );
 }
 
-/** Removes XML comments until none is left, so a comment nested in one cannot survive. */
+/**
+ * The document with every XML comment removed, by scanning rather than by pattern: text from
+ * `<!--` to the next `-->` is dropped, and an unterminated comment drops the rest of the file.
+ */
 function withoutComments(xml: string): string {
-  let current = xml;
+  const kept: string[] = [];
+  let at = 0;
   for (;;) {
-    const next = current.replace(/<!--[\s\S]*?-->/gu, '');
-    if (next === current) return next.replace(/<!--/gu, '');
-    current = next;
+    const open = xml.indexOf('<!--', at);
+    if (open === -1) {
+      kept.push(xml.slice(at));
+      return kept.join('');
+    }
+    kept.push(xml.slice(at, open));
+    const close = xml.indexOf('-->', open + 4);
+    if (close === -1) return kept.join('');
+    at = close + 3;
   }
 }
-
 function readCase(open: string, inner: string): TestResult {
   const title = attr(open, 'name') ?? '(unnamed)';
   const key = [attr(open, 'file') ?? '', attr(open, 'classname') ?? '', title]

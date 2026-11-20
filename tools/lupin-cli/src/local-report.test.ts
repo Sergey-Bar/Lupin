@@ -178,6 +178,10 @@ describe('lupin check', () => {
 });
 
 describe('edges', () => {
+  it('drops everything after a comment that never closes', () => {
+    expect(parseJunit('<testcase name="a"/><!-- <testcase name="b"/>')).toHaveLength(1);
+  });
+
   it('ignores tests inside comments, nested ones included', () => {
     expect(
       parseJunit(
