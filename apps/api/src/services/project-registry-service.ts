@@ -52,6 +52,8 @@ export interface RegisteredProject {
   name: string;
   slug: string;
   repoPath: string | null;
+  /** The branch the project releases from, when it is known. */
+  defaultBranch: string | null;
   detectorVersion: number;
   profile: ProjectProfile;
   /** The manifest lines the profile was derived from, when it was derived here. */
@@ -73,6 +75,7 @@ export async function registerProject(
 ): Promise<RegisteredProject> {
   const view = options.viewFor(input.repoPath);
   const detected = await detectProject(view);
+  const branch = await gitDefaultBranch(view);
   const override = await readOverride(view);
   const resolved =
     override === null
@@ -86,6 +89,7 @@ export async function registerProject(
       name: input.name,
       slug: input.slug,
       repoPath: input.repoPath,
+      defaultBranch: branch,
       profile: resolved.profile as unknown as Record<string, unknown>,
       detectorVersion: detected.detectorVersion,
     })
@@ -105,6 +109,7 @@ export async function registerProject(
     name: input.name,
     slug: input.slug,
     repoPath: input.repoPath,
+    defaultBranch: branch,
     detectorVersion: detected.detectorVersion,
     profile: resolved.profile,
     evidence: evidenceFrom(detected),
@@ -151,6 +156,7 @@ export async function registerGitProject(
     name: input.name,
     slug: input.slug,
     repoPath: null,
+    defaultBranch: input.defaultBranch ?? null,
     detectorVersion: 1,
     profile,
     evidence: [],
@@ -240,6 +246,53 @@ export async function listProjects(
   return rows.map(toRegistered);
 }
 
+/** Whether projectId names a project of workspaceId. */
+export async function projectInWorkspace(
+  db: AnyPgDb,
+  workspaceId: string,
+  projectId: string,
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(and(eq(projects.workspaceId, workspaceId), eq(projects.id, projectId)));
+  return rows.length > 0;
+}
+
+/**
+ * The branch a project releases from, when it is known: the default branch recorded when the
+ * project was registered, else, for a folder project registered before that was recorded, the
+ * one its checkout names now. `null` when neither says, and its runs are read on every branch.
+ */
+export async function releaseBranch(
+  options: ProjectRegistryServiceOptions,
+  projectId: string,
+): Promise<string | null> {
+  const rows = await options.db
+    .select({ defaultBranch: projects.defaultBranch, repoPath: projects.repoPath })
+    .from(projects)
+    .where(and(eq(projects.workspaceId, options.workspaceId), eq(projects.id, projectId)));
+  const row = rows[0];
+  if (row === undefined) return null;
+  if (row.defaultBranch !== null) return row.defaultBranch;
+  return row.repoPath === null ? null : gitDefaultBranch(options.viewFor(row.repoPath));
+}
+
+const BRANCH_REF = /^ref: refs\/(?:remotes\/origin|heads)\/(\S{1,255})\s*$/u;
+
+/**
+ * A checkout's default branch from its git metadata: the remote's `HEAD` (what `git clone`
+ * records), else the branch checked out. A detached `HEAD` or a folder with no `.git` says none.
+ */
+export async function gitDefaultBranch(view: {
+  read(relativePath: string): Promise<string | null>;
+}): Promise<string | null> {
+  for (const file of ['.git/refs/remotes/origin/HEAD', '.git/HEAD']) {
+    const match = BRANCH_REF.exec((await view.read(file).catch(() => null)) ?? '');
+    if (match?.[1] !== undefined) return match[1];
+  }
+  return null;
+}
 export async function getProject(
   options: ProjectRegistryServiceOptions,
   projectId: string,
@@ -262,6 +315,7 @@ function toRegistered(row: typeof projects.$inferSelect): RegisteredProject {
     name: row.name,
     slug: row.slug,
     repoPath: row.repoPath,
+    defaultBranch: row.defaultBranch,
     detectorVersion: row.detectorVersion,
     // Re-validated on read rather than trusted: the column is JSONB, and a row
     // written by an older build can carry a shape this one does not know. Parsing

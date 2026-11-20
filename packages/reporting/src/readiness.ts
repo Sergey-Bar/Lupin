@@ -138,7 +138,7 @@ function coverageReason({ coverage }: ReadinessInput): ReadinessReason {
     return {
       code: 'coverage',
       level: 'unknown',
-      message: 'No coverage report was found on disk',
+      message: 'No coverage reading yet: scan a checkout that has a coverage report',
       evidence: 'no coverage report',
     };
   }
@@ -148,7 +148,7 @@ function coverageReason({ coverage }: ReadinessInput): ReadinessReason {
       code: 'coverage',
       level: 'go',
       message: `Coverage is ${current}%, with no earlier reading to compare`,
-      evidence: 'mean line coverage over the reports on disk',
+      evidence: 'line coverage over the reports found, weighed by lines',
     };
   }
   const falling = coverage.delta < -COVERAGE_NOISE;
@@ -158,7 +158,7 @@ function coverageReason({ coverage }: ReadinessInput): ReadinessReason {
     message: falling
       ? `Coverage fell ${Math.abs(coverage.delta).toFixed(1)} pts to ${current}%`
       : `Coverage holds at ${current}%`,
-    evidence: 'mean line coverage, against the first reading in the window',
+    evidence: 'line coverage over the reports found, against the first reading in the window',
   };
 }
 

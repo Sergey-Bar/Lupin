@@ -46,6 +46,25 @@ const flakyHistory = () => [
 ];
 
 describe('applyQuarantinePolicy', () => {
+  it('does not quarantine a test again on the evidence it was released from (REL-21)', async () => {
+    const store = new InMemoryQuarantineStore();
+    const policy = { mode: 'auto' as const, releaseAfter: 3 };
+    const history = flakyHistory();
+    expect(
+      (await applyQuarantinePolicy({ policy, projectId: PROJECT, history, store })).quarantined,
+    ).toEqual([KEY]);
+    // Three clean passes release it; the old retry passes are still in the window.
+    history.push(run('passed'), run('passed'), run('passed'));
+    expect(
+      (await applyQuarantinePolicy({ policy, projectId: PROJECT, history, store })).released,
+    ).toEqual([KEY]);
+    // The next pass must not put it straight back on that old evidence.
+    history.push(run('passed'));
+    expect(
+      (await applyQuarantinePolicy({ policy, projectId: PROJECT, history, store })).quarantined,
+    ).toEqual([]);
+  });
+
   it('writes nothing in suggest or off mode', async () => {
     for (const mode of ['suggest', 'off'] as const) {
       const store = new InMemoryQuarantineStore();

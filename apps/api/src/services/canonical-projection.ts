@@ -204,6 +204,8 @@ export function projectCanonicalRun(
       // project. Absent stays absent: `undefined` leaves `runs.project_id` as it was.
       ...(result.identity.projectId === undefined ? {} : { projectId: result.identity.projectId }),
       triggeredBy: options.triggeredBy ?? 'upload',
+      // The document the verdict was read from, so the gate has evidence to hold a pass to.
+      rawEvidenceRefs: [`report:${result.provenance.sourceDigest}`],
     },
     tests: tests.map((test) => ({
       id: test.testId,

@@ -30,9 +30,8 @@ import type { RealtimeBus } from '../realtime/realtime-bus.js';
 import type { RunRepository } from '../repositories/run-repository.js';
 import { ingestCanonicalResult } from '../services/canonical-ingestion.js';
 import type { ReporterResultStore } from '../services/reporter-ingestion.js';
-import { parseUploadDocument } from './reporter.js';
+import { MAX_TEST_REPORT_BYTES, parseUploadDocument } from './reporter.js';
 
-const MAX_REPORT_BYTES = 5 * 1024 * 1024;
 const MAX_LISTED = 50;
 
 export interface TestReportSink {
@@ -80,7 +79,7 @@ export function createTestReportRoutes(options: TestReportRouteOptions): Hono {
     '/api/v1/projects/:id/tests/reports',
     options.uploader,
     bodyLimit({
-      maxSize: MAX_REPORT_BYTES,
+      maxSize: MAX_TEST_REPORT_BYTES,
       onError: (context) =>
         domainErrorResponse(
           context,

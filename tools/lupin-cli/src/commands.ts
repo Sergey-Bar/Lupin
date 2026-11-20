@@ -28,20 +28,27 @@ export interface Io {
 const COMMIT = /^[0-9a-f]{7,64}$/iu;
 const DIGEST = /^sha256:[0-9a-f]{64}$/iu;
 
-/** The branch and commit CI is building, from the flags or GitHub Actions' or GitLab CI's own variables. */
+/** The branch and commit CI is building, from the flags or GitHub Actions', GitLab CI's or Jenkins' own variables. */
 export function branchOf(io: Io, flag: string | undefined): string | undefined {
-  return (
-    flag ??
-    io.env['LUPIN_BRANCH'] ??
-    (io.env['GITHUB_HEAD_REF'] ||
-      io.env['GITHUB_REF_NAME'] ||
-      io.env['CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'] ||
-      io.env['CI_COMMIT_REF_NAME'])
-  );
+  // The first CI variable that is set and not empty: on a push GitHub sets GITHUB_HEAD_REF to ''.
+  const fromCi = [
+    io.env['GITHUB_HEAD_REF'],
+    io.env['GITHUB_REF_NAME'],
+    io.env['CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'],
+    io.env['CI_COMMIT_REF_NAME'],
+    // Jenkins: a pull request build's source branch, then the multibranch job's branch.
+    io.env['CHANGE_BRANCH'],
+    io.env['BRANCH_NAME'],
+  ].find((value) => value !== undefined && value !== '');
+  return flag ?? io.env['LUPIN_BRANCH'] ?? fromCi;
 }
-
 export function commitOf(io: Io, flag: string | undefined): string | undefined {
-  const commit = flag ?? io.env['LUPIN_COMMIT'] ?? io.env['GITHUB_SHA'] ?? io.env['CI_COMMIT_SHA'];
+  const commit =
+    flag ??
+    io.env['LUPIN_COMMIT'] ??
+    io.env['GITHUB_SHA'] ??
+    io.env['CI_COMMIT_SHA'] ??
+    io.env['GIT_COMMIT'];
   if (commit !== undefined && commit !== '' && !COMMIT.test(commit)) {
     throw usage(`Not a commit sha: ${commit}`);
   }
@@ -145,11 +152,26 @@ function forgeOf(io: Io) {
     : { kind: 'github' as const, target: githubTarget(io.env) };
 }
 
-/** `lupin gate --branch <b> --commit <sha> [--pr <n>] [--post]` — exits 1 when the gate fails. */
+/** What the gate is asked: a scan-only job says it sends no tests (`--allow-no-tests`). */
+function gateBody(
+  branch: string,
+  commit: string,
+  pullRequest: number | undefined,
+  switches: ReadonlySet<string>,
+) {
+  return {
+    branch,
+    commit,
+    ...(pullRequest === undefined ? {} : { pullRequest }),
+    ...(switches.has('allow-no-tests') ? { allowNoTests: true } : {}),
+  };
+}
+
+/** `lupin gate --branch <b> --commit <sha> [--pr <n>] [--post] [--allow-no-tests]` — exits 1 when the gate fails. */
 export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
   const parsed = parseOptions(argv, {
     values: ['project', 'branch', 'commit', 'pr'],
-    switches: ['post'],
+    switches: ['post', 'allow-no-tests'],
   });
   const branch = branchOf(io, optional(parsed, 'branch'));
   const commit = commitOf(io, optional(parsed, 'commit'));
@@ -168,11 +190,7 @@ export async function gate(argv: readonly string[], io: Io): Promise<ExitCode> {
     {
       method: 'POST',
       contentType: 'application/json',
-      body: JSON.stringify({
-        branch,
-        commit,
-        ...(pullRequest === undefined ? {} : { pullRequest }),
-      }),
+      body: JSON.stringify(gateBody(branch, commit, pullRequest, parsed.switches)),
     },
   )) as GateAnswer | null;
   const reasons = Array.isArray(answer?.reasons) ? answer.reasons.map(String) : [];

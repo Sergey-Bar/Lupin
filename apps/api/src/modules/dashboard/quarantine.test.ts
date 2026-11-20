@@ -45,6 +45,7 @@ import { Hono } from 'hono';
 import {
   createDashboardQuarantineRoutes,
   InMemoryQuarantineStore,
+  pendingFor,
   type QuarantineEntry,
   type QuarantineStore,
 } from './quarantine.js';
@@ -530,5 +531,21 @@ describe('who a quarantine decision is attributed to (ledger MNT-171)', () => {
       ['quarantine.released', 'user:lead-1'],
       ['quarantine.removed', 'user:lead-1'],
     ]);
+  });
+});
+
+describe('pendingFor', () => {
+  it('counts the project’s own pending entries and the unscoped ones, never another project’s', () => {
+    const entry = (projectId: string | null, status: QuarantineEntry['status']) =>
+      ({ projectId, status }) as QuarantineEntry;
+    const entries = [
+      entry('p1', 'pending'),
+      entry(null, 'pending'),
+      entry('p2', 'pending'),
+      entry('p1', 'approved'),
+    ];
+    expect(pendingFor(entries, 'p1')).toBe(2);
+    expect(pendingFor(entries, 'p2')).toBe(2);
+    expect(pendingFor(entries, 'p3')).toBe(1);
   });
 });

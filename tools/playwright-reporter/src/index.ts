@@ -104,10 +104,17 @@ export default class LupinReporter {
     const branch =
       present(this.env['LUPIN_BRANCH']) ??
       present(this.env['GITHUB_HEAD_REF']) ??
-      present(this.env['GITHUB_REF_NAME']);
-    const commit = present(this.env['LUPIN_COMMIT']) ?? present(this.env['GITHUB_SHA']);
+      present(this.env['GITHUB_REF_NAME']) ??
+      present(this.env['CI_COMMIT_REF_NAME']);
+    const commit =
+      present(this.env['LUPIN_COMMIT']) ??
+      present(this.env['GITHUB_SHA']) ??
+      present(this.env['CI_COMMIT_SHA']);
+    // The same variable the CLI reads; the server attributes the run only to a project it has.
+    const projectId = present(this.env['LUPIN_PROJECT']);
     this.event('run:start', true, {
       total: suite.allTests().length,
+      ...(projectId === undefined ? {} : { projectId }),
       ...(branch === undefined ? {} : { branch }),
       ...(commit === undefined || !COMMIT.test(commit) ? {} : { commitSha: commit }),
       triggeredBy: 'playwright-reporter',

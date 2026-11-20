@@ -19,13 +19,11 @@ import { DomainError } from '../../errors/domain-error.js';
 import { Hono } from 'hono';
 import { CreateRunSchema } from './schemas.js';
 import { toCanonicalRun } from '../../execution/canonical.js';
-import { createGateEvaluation } from '../../execution/quality-gate.js';
+import { runGate } from '../../execution/run-gate.js';
 import { submitRun } from '../../execution/run-submission.js';
 import type { ExecutionRun } from '../../execution/types.js';
 import type { ExecutionRouteContext } from './shared.js';
 import {
-  domainStatusesFromRun,
-  ensurePolicy,
   legacyRun,
   pageCursor,
   pageSize,
@@ -146,23 +144,9 @@ export function registerRunRoutes(app: Hono, context: ExecutionRouteContext): vo
     const runId = c.req.param('runId');
     const run = await options.store.getRun(runId, ws);
     if (!run) throw new DomainError('RUN_NOT_FOUND', 'Run not found');
-    const recorded = await options.store.getRunGate(ws, runId);
-    if (recorded) return c.json({ ...recorded, recorded: true });
-    const policy = run.policyId
-      ? await options.store.getPolicy(run.policyId, ws)
-      : await ensurePolicy(options.store, ws);
-    if (!policy) throw new DomainError('POLICY_NOT_FOUND', 'Quality policy not found');
-    const evaluation = createGateEvaluation({
-      run,
-      policy,
-      domainStatuses: {
-        ...((await options.store.evidenceDomains?.(run, policy)) ?? {}),
-        ...domainStatusesFromRun(run),
-      },
-      evaluatedAt: run.completedAt ?? undefined,
-      quarantined: await options.store.quarantined(ws),
-    });
-    return c.json({ ...evaluation, recorded: false });
+    const gate = await runGate(options.store, ws, run);
+    if (!gate) throw new DomainError('POLICY_NOT_FOUND', 'Quality policy not found');
+    return c.json(gate);
   });
 
   app.get('/api/v1/runs/:runId/events', async (c) => {

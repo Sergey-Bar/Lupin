@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -10,6 +10,8 @@ import * as schema from '@lupin/db';
 import { createErrorBoundary } from '../errors/boundary.js';
 import { createProjectsRoutes } from './projects.js';
 import { InMemoryExecutionStore } from '../execution/in-memory-execution-store.js';
+import { defaultPolicy } from '../execution/quality-gate.js';
+import type { ExecutionRun } from '../execution/types.js';
 import { readHistory } from '../services/scan-history-service.js';
 import { literalView } from '@lupin/projects';
 import type { RepositoryView } from '@lupin/projects';
@@ -241,6 +243,10 @@ describe('registering a repository', () => {
       expect(body.commands.length).toBeGreaterThan(0);
       // argv, never a string — the shape that makes a shell unavailable.
       expect(Array.isArray(body.commands[0]?.argv)).toBe(true);
+      // The screen renders `label` and nothing else (`ConnectRepository.tsx`), and the web
+      // client refuses a command without one, so a registration that drops it reads as a
+      // failure to the person who just connected their repository (ledger REL-1).
+      expect(body.commands[0]).toMatchObject({ label: body.commands[0]?.argv.join(' ') });
     } finally {
       await client.close();
     }
@@ -1006,7 +1012,7 @@ describe('history and readiness', () => {
       workspaceId?: string;
       now: () => Date;
       store?: InMemoryExecutionStore;
-      openQuarantine?: number;
+      openQuarantine?: number | ((projectId: string) => number);
     },
   ) {
     return mounted(
@@ -1019,7 +1025,10 @@ describe('history and readiness', () => {
         startRun: async () => ({ runId: 'run-1', jobId: 'job-1', phase: 'queued' }),
         reliability: {
           store: options.store ?? new InMemoryExecutionStore(),
-          openQuarantine: async () => options.openQuarantine ?? 0,
+          openQuarantine: async (projectId: string) =>
+            typeof options.openQuarantine === 'function'
+              ? options.openQuarantine(projectId)
+              : (options.openQuarantine ?? 0),
           now: options.now,
         },
       }),
@@ -1123,6 +1132,79 @@ describe('history and readiness', () => {
         coverage: 'unknown',
         quarantine: 'caution',
       });
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('reads the release branch only, under the workspace policy, with this project’s quarantine', async () => {
+    const { client, db } = await migrated();
+    try {
+      const store = new InMemoryExecutionStore();
+      const now = new Date('2026-10-20T10:05:00.000Z');
+      const app = withReliability(db, {
+        now: () => now,
+        store,
+        openQuarantine: (projectId) => (projectId === id ? 0 : 5),
+      });
+      const id = await register(app);
+      await db
+        .update(schema.projects)
+        .set({ defaultBranch: 'main' })
+        .where(eq(schema.projects.id, id));
+      await store.createPolicy({ ...defaultPolicy('ws-1'), maxFlakyRate: 20 });
+      const { run } = await store.create({ projectId: id }, 'k1', 'ws-1');
+      const at = now.toISOString();
+      const finished = (
+        runId: string,
+        branch: string,
+        outcome: 'passed' | 'failed',
+        counts: { failed: number; flaky: number },
+      ): ExecutionRun => ({
+        ...run,
+        id: runId,
+        branch,
+        phase: 'complete',
+        outcome,
+        createdAt: at,
+        completedAt: at,
+        summary: {
+          total: 10,
+          passed: 10 - counts.failed - counts.flaky,
+          failed: counts.failed,
+          flaky: counts.flaky,
+          skipped: 0,
+          blocked: 0,
+          unknown: 0,
+          durationMs: 1,
+        },
+      });
+      // A green main with one flaky test in ten, and a red feature branch.
+      vi.spyOn(store, 'listRuns').mockResolvedValue({
+        runs: [
+          finished('r-feature', 'feature/x', 'failed', { failed: 10, flaky: 0 }),
+          finished('r-main', 'main', 'passed', { failed: 0, flaky: 1 }),
+        ],
+        hasMore: false,
+      });
+      const card = ReleaseReadinessCardSchema.parse(
+        await (await app.request(`/api/v1/projects/${id}/readiness?days=7`)).json(),
+      );
+      const reason = (code: string) => card.reasons.find((item) => item.code === code);
+      // The feature branch is not the release: one run, and it passed.
+      expect(reason('activity')).toMatchObject({ message: '1 run in the window' });
+      expect(reason('pass-rate')).toMatchObject({ level: 'go' });
+      // 10% flaky is inside the workspace policy's 20%, not the default's 0%.
+      expect(reason('flaky')).toMatchObject({ level: 'go' });
+      // Another project's pending quarantine is not this project's.
+      expect(reason('quarantine')).toMatchObject({ level: 'go' });
+      // And a branch can still be asked for by name.
+      const feature = ReleaseReadinessCardSchema.parse(
+        await (
+          await app.request(`/api/v1/projects/${id}/readiness?days=7&branch=feature%2Fx`)
+        ).json(),
+      );
+      expect(feature.verdict).toBe('no-go');
     } finally {
       await client.close();
     }

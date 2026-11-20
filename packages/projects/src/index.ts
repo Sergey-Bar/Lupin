@@ -10,6 +10,7 @@ export {
   LUPIN_CONFIG_FILENAME,
   LupinConfigSchema,
   ProjectProfileSchema,
+  commandLabel,
   type LupinConfig,
   type ProjectProfile,
   type ResolvedProfile,

@@ -1,6 +1,6 @@
 {
   "name": "@lupin/playwright-reporter",
-  "version": "1.0.0",
+  "version": "5.0.0",
   "license": "MIT",
   "type": "module",
   "description": "A dependency-free Playwright reporter that streams a run into Lupin as it happens, with the traces, screenshots and videos of every failure.",
@@ -24,6 +24,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
     }
   },
   "engines": {

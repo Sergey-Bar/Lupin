@@ -17,7 +17,9 @@ export const DEFAULT_QUALITY_POLICY: Omit<QualityPolicy, 'id' | 'createdAt' | 'u
   hash: '',
   requiredDomains: DEFAULT_REQUIRED_DOMAINS,
   browserPassRateThreshold: 100,
-  maxFlakyRate: 0,
+  // A flaky result passed on a retry. One in twenty is noise the flaky leaderboard and the
+  // quarantine suggestions deal with; more than that is a run too unstable to trust.
+  maxFlakyRate: 5,
   maxDurationMs: null,
   rules: [],
 };
@@ -180,7 +182,7 @@ function outcomeReasons(run: GateRun, summary: GateSummary, excused: boolean): s
 function thresholdReasons(summary: GateSummary, policy: GatePolicy): string[] {
   if (!(summary.total > 0)) return [];
   const reasons: string[] = [];
-  const passRate = (summary.passed / summary.total) * 100;
+  const passRate = passRateOf(summary);
   if (passRate < policy.browserPassRateThreshold)
     reasons.push(
       refusal('threshold:PASS_RATE', {
@@ -253,7 +255,7 @@ type GateRule = GatePolicy['rules'][number];
 function belowRulePassRate(rule: GateRule, domain: DomainStatus, summary: GateSummary): boolean {
   if (rule.minimumPassRate === undefined || domain !== 'passed' || !(summary.total > 0))
     return false;
-  return (summary.passed / summary.total) * 100 < rule.minimumPassRate;
+  return passRateOf(summary) < rule.minimumPassRate;
 }
 
 function lacksRequiredArtifacts(rule: GateRule, artifacts: NonNullable<GateRun['artifacts']>) {
@@ -276,7 +278,7 @@ function ruleReasons(
     if (belowRulePassRate(rule, domains[rule.domain] ?? 'unknown', summary))
       reasons.push(
         refusal('threshold:PER_RULE_PASS_RATE', {
-          observed: ((summary.passed / summary.total) * 100).toFixed(2),
+          observed: passRateOf(summary).toFixed(2),
           required: rule.minimumPassRate ?? null,
           domain: rule.domain,
           rule: `rules[${rule.domain}].minimumPassRate`,
@@ -400,4 +402,13 @@ export function defaultPolicy(
   workspaceId: string,
 ): Omit<QualityPolicy, 'id' | 'createdAt' | 'updatedAt'> {
   return { ...DEFAULT_QUALITY_POLICY, workspaceId, requiredDomains: [...DEFAULT_REQUIRED_DOMAINS] };
+}
+
+/**
+ * Passed tests as a share of all of them, counting a flaky result as passed: it failed and then
+ * passed on a retry, and `maxFlakyRate` is the rule that judges flakiness. Counting it here too
+ * failed a run twice for one flaky test.
+ */
+function passRateOf(summary: { total: number; passed: number; flaky: number }): number {
+  return ((summary.passed + summary.flaky) / summary.total) * 100;
 }

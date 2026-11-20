@@ -1,4 +1,5 @@
 import React from 'react';
+import { VERDICT_WORD } from '../lib/hero.js';
 import { Link } from '@tanstack/react-router';
 import {
   ArrowRight,
@@ -29,9 +30,9 @@ import type { ReleaseReadinessCard } from '../lib/qa.js';
  * `evaluateReadiness` in `@lupin/reporting`; this file only draws it.
  */
 const VERDICT = {
-  go: { label: 'Go', Icon: CircleCheck, tone: 'text-success' },
-  caution: { label: 'Caution', Icon: CircleAlert, tone: 'text-warning' },
-  'no-go': { label: 'No-go', Icon: OctagonX, tone: 'text-danger' },
+  go: { label: VERDICT_WORD.go, Icon: CircleCheck, tone: 'text-success' },
+  caution: { label: VERDICT_WORD.caution, Icon: CircleAlert, tone: 'text-warning' },
+  'no-go': { label: VERDICT_WORD['no-go'], Icon: OctagonX, tone: 'text-danger' },
 } as const;
 
 const DOT: Record<FindingTone, DotStatus> = {

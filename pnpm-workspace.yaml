@@ -121,6 +121,18 @@ peerDependencyRules:
 # Reviewed 2026-10-20: six overrides past their date (browserslist, two brace-expansion, two
 # postcss/nanoid, and the ajv fast-uri pin) were removed after `pnpm audit` came back clean
 # without them; `vitepress>vite` was kept because it was not.
+# Audit exemptions: one row each, with the advisory, why it cannot be fixed, the runtime reach,
+# the ledger row, and a review date. An exemption with no fix behind it is a decision, and the
+# ledger row is where it is owned.
+auditConfig:
+  ignoreGhsas:
+    # GHSA-fc5q-39xc-vjpf (high): picomatch ReDoS through repeated extglobs. Every release up to
+    # 4.0.7, the latest, is affected; there is no patched version to override to. 130 of 131 paths
+    # are build and test tooling. The one runtime path is the runner image's
+    # `@usebruno/cli > @usebruno/converters > jscodeshift`, which globs collection files the
+    # operator configured, never a pattern from a request. Ledger REL-6. Added 2026-11-18.
+    # Review by 2026-12-18: remove it and add an override as soon as a fixed picomatch ships.
+    - GHSA-fc5q-39xc-vjpf
 overrides:
   # GHSA-fx2h-pf6j-xcff (vite `server.fs.deny` bypass on Windows alternate paths,
   # fixed in 6.4.3) reached through `vitepress`, which pins vite 5. VitePress is a
@@ -230,14 +242,14 @@ catalog:
   # worker pinned it so, and an in-process PostgreSQL is the thing every suite checks SQL on.
   '@electric-sql/pglite': 0.5.16
   '@testing-library/jest-dom': ^7.0.1
-  '@testing-library/user-event': ^14.6.9
-  axe-core: ^4.14.0
+  '@testing-library/user-event': ^14.6.12
+  axe-core: ^4.14.1
   tsx: ^4.23.15
   vitest-axe: ^0.1.0
-  '@playwright/test': ^1.65.0
-  '@sentry/node': ^11.11.0
-  '@sentry/react': ^11.11.0
-  '@sentry/vite-plugin': ^11.11.0
+  '@playwright/test': ^1.65.1
+  '@sentry/node': ^11.13.0
+  '@sentry/react': ^11.13.0
+  '@sentry/vite-plugin': ^11.13.0
   '@tailwindcss/vite': ^4.3.5
   '@testing-library/dom': ^10.4.2
   '@testing-library/react': ^16.3.3
@@ -246,17 +258,17 @@ catalog:
   '@types/react': ^19.3.0
   '@types/react-dom': ^19.3.0
   # Cron parsing for schedules: the worker fires them, the API validates them on save.
-  croner: 11.0.0
+  croner: 11.0.1
   '@stryker-mutator/core': 10.0.0
   '@stryker-mutator/vitest-runner': 10.0.0
   '@vitest/coverage-v8': ^5.1.0
   drizzle-kit: ^0.31.11
   drizzle-orm: ^0.45.4
-  eslint: ^10.14.0
+  eslint: ^10.15.0
   fast-check: ^4.10.2
-  jsdom: ^31.0.0
-  lucide-react: ^1.71.0
-  simple-icons: 16.37.0
+  jsdom: ^31.0.1
+  lucide-react: ^1.73.0
+  simple-icons: 16.38.0
   # The read-only MCP server (apps/api/src/mcp): Streamable HTTP and stdio transports.
   # Pinned exactly: it carries its own transitive tree (express, hono, ajv, jose), so a
   # minor bump is a reviewed change rather than one that arrives with an install.
@@ -264,9 +276,9 @@ catalog:
   # OIDC sign-in for the team profile (apps/api/src/services/oidc-service.ts, ADR-014).
   # Certified, by the author of the jose the MCP SDK already brings; pinned exactly so an
   # authentication library never changes with an install.
-  openid-client: 6.8.9
+  openid-client: 6.9.0
   pg: ^8.23.1
-  prettier: ^3.9.10
+  prettier: ^3.10.1
   react: ^19.3.1
   react-dom: ^19.3.1
   tailwindcss: ^4.3.5
@@ -278,10 +290,10 @@ catalog:
   # `lint` and the complexity gate run with `--max-old-space-size=6144`, and 8.72.1 lints
   # within that (ledger MNT-195). Return to a caret range on the first release that fixes
   # #13109.
-  typescript-eslint: 8.72.2
+  typescript-eslint: 8.73.0
   # QR codes for device pairing (apps/web). Zero dependencies; pinned exactly.
   uqr: 0.1.3
-  vite: ^8.3.7
+  vite: ^8.3.8
   vitest: ^5.1.0
   zod: ^4.6.7
 patchedDependencies:

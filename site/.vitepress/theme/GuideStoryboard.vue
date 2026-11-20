@@ -244,8 +244,9 @@ function next(): void {
         </template>
         <template v-else>
           <div class="story__source">
-            <span>{{ kind === 'upload' ? 'YOUR CI' : 'EXECUTION' }}</span
-            ><strong>{{ kind === 'upload' ? 'Test report' : 'Run request' }}</strong>
+            <span>{{ kind === 'upload' ? 'YOUR CI' : 'EXECUTION' }}</span><strong>{{
+              kind === 'upload' ? 'Test report' : 'Run request'
+            }}</strong>
           </div>
           <div class="story__line">
             <span :style="{ '--progress': (selected + 1) / story.scenes.length }"></span>

@@ -184,8 +184,9 @@ that ships a matching component.
 
 `POST /api/v1/projects/:id/health/gate/report` evaluates the branch's grade and the findings
 the branch has that the default branch does not. A finding already on the default branch is
-not the pull request's to fix. With no policy configured, the gate fails only on a new
-critical finding. For a github.com repository with a token, the result is posted as an
+not the pull request's to fix. With no policy configured, the gate fails on a new
+critical finding, on a failing test uploaded for the commit, and on a commit with no test
+results unless the job asks with `allowNoTests` (`lupin gate --allow-no-tests`). For a github.com repository with a token, the result is posted as an
 `lupin/health` commit status and one comment that is updated on every push.
 
 ## Findings and triage

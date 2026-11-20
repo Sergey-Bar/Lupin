@@ -50,6 +50,8 @@ describe('ConnectRepository', () => {
     expect(await screen.findByTestId('repository-connected')).toHaveTextContent(
       'Found 2 commands Lupin can run: npm test, npm run lint.',
     );
+    expect(screen.getByTestId('repository-connected')).toHaveTextContent('Project id p2');
+    expect(screen.getByRole('button', { name: 'Copy project id' })).toBeInTheDocument();
     expect(onConnected).toHaveBeenCalledWith(registered);
     await user.click(screen.getByRole('button', { name: 'Connect another' }));
     expect(screen.getByLabelText('Folder path')).toBeInTheDocument();
@@ -142,6 +144,26 @@ describe('Settings → Projects', () => {
     await expectNoBlockingAxeViolations(container);
   });
 
+  it('shows the project id a CI job needs, with a copy button', async () => {
+    projectsPage();
+    const row = await screen.findByTestId('project-p1');
+    expect(within(row).getByText('p1')).toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Copy project id' })).toBeInTheDocument();
+  });
+
+  it('changes the branch Home judges the release on, alone', async () => {
+    const user = userEvent.setup();
+    const { client } = projectsPage();
+    const row = await screen.findByTestId('project-p1');
+    await user.click(within(row).getByRole('button', { name: 'Rename' }));
+    const branch = within(row).getByLabelText('Release branch');
+    await user.type(branch, 'trunk');
+    await user.click(within(row).getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(client.updateProject).toHaveBeenCalledWith('p1', { defaultBranch: 'trunk' }),
+    );
+  });
+
   it('renames, re-scans and replaces the token', async () => {
     const user = userEvent.setup();
     const { client } = projectsPage();
@@ -150,7 +172,7 @@ describe('Settings → Projects', () => {
     const name = within(row).getByLabelText('New name');
     await user.clear(name);
     await user.type(name, 'Store');
-    await user.click(within(row).getByRole('button', { name: 'Save name' }));
+    await user.click(within(row).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(client.updateProject).toHaveBeenCalledWith('p1', { name: 'Store' }));
     await user.click(within(row).getByRole('button', { name: 'Re-scan' }));
     expect(await screen.findByText('Found 3 commands')).toBeInTheDocument();

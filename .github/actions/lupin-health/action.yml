@@ -45,6 +45,12 @@ inputs:
     description: Ask for the pull-request gate after uploading, and fail the job when it fails.
     required: false
     default: 'true'
+  allow-no-tests:
+    description: >-
+      The gate fails a commit no test results were uploaded for. Set 'true' when this
+      project sends scans only, so a commit with no tests is not a failure.
+    required: false
+    default: 'false'
   agent-config:
     description: >-
       Send the agent instruction and MCP configuration files tracked in the repository
@@ -236,13 +242,17 @@ runs:
         LUPIN_BRANCH: ${{ github.head_ref || github.ref_name }}
         LUPIN_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         LUPIN_PR: ${{ github.event.pull_request.number }}
+        LUPIN_ALLOW_NO_TESTS: ${{ inputs.allow-no-tests }}
       run: |
         set -euo pipefail
         headers="$(mktemp)"
         trap 'rm -f "$headers"' EXIT
         printf 'Authorization: Bearer %s\n' "$LUPIN_TOKEN" > "$headers"
         body="$(jq -n --arg branch "$LUPIN_BRANCH" --arg commit "$LUPIN_COMMIT" --arg pr "$LUPIN_PR" \
-          '{branch: $branch, commit: $commit} + (if $pr == "" then {} else {pullRequest: ($pr|tonumber)} end)')"
+          --arg allow "$LUPIN_ALLOW_NO_TESTS" \
+          '{branch: $branch, commit: $commit}
+            + (if $pr == "" then {} else {pullRequest: ($pr|tonumber)} end)
+            + (if $allow == "true" then {allowNoTests: true} else {} end)')"
         result="$(curl --fail-with-body --silent --show-error -H @"$headers" -H 'content-type: application/json' \
           --data "$body" "${LUPIN_URL%/}/api/v1/projects/${LUPIN_PROJECT}/health/gate/report")"
         verdict="$(printf '%s' "$result" | jq -r '.verdict')"

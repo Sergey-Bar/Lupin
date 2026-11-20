@@ -3141,7 +3141,7 @@
       "status": "debt",
       "owner": "The UI wave of the roadmap's Track A, and the five execution domains behind it. Nothing in this repository can make a route's design world-class, because four of the five agent domains answer an explicit `501 NOT_CONFIGURED` and a console with nothing behind it is a design decision nobody has made yet. A redesign before BK-1 lands is the redesign of an empty screen.",
       "removalCondition": "Either (a) `tests/e2e/accessibility/routes.spec.ts` exists and `pnpm test:e2e` reports axe zero serious and zero critical on every route in `apps/web/src/routes` in **both** themes, with the matrix recorded in the resolution; or (b) BK-1 has shipped a domain, and a state-coverage matrix exists naming loading, empty, error and partial for every route, with a test per state. Condition (a) is the machine-checkable half and `pnpm status:10` reads it; condition (b) is the half that decides whether (a) would be measuring anything worth measuring.",
-      "resolution": "Open: (a) is discharged and (b) is not. `tests/e2e/accessibility/routes.spec.ts` exists and covers every path in `apps/web/src/route-manifest.ts` — eleven, not the thirteen `.tsx` files under `apps/web/src/routes` that `status:10` counts, because five of those are the route tests themselves — in both themes and in four forced data states, 66 generated tests, on its own Playwright project so `pnpm test:e2e` runs it. It was run against a real PostgreSQL and a real browser and is green: zero serious and zero critical violations on all 66. It found `GLASS-2`. (a) also asked for the matrix in the resolution, and the generated test names are the matrix — eleven routes under two themes and four states, one test each — so it cannot drift from the routes without `theme-resolution` or `route-manifest.test.ts` failing. **Not yet discharged: a run of the accessibility project inside CI against a real database**, which this host cannot produce, and (b), which needs `BK-1` to have shipped a domain rather than a mock — `docs/migration/capability-register.md` still records `connectors.core`, `automation.chat` and `automation.agents` as `mock`, so there is nothing to trigger the four states through a real adapter.\n\n**Re-read on 2026-10-23, after BK-1 shipped three domains.** The deferral argument in the owner field (\"a redesign before BK-1 lands is the redesign of an empty screen\") no longer holds: browser, api and load runs now exist behind the console. Condition (a) is still discharged, so the axe-clean result stands. Condition (b), a loading/empty/error/partial state matrix with a test per cell for every route, is **not done and deliberately not scheduled**: the console does not yet read `/api/v1/agents`, so the routes whose states the matrix would pin are not yet the ones that show these domains, and a matrix over screens that are about to change would be written twice. It becomes worth building when the console shows agent runs, and this row should be re-read then.",
+      "resolution": "Open: (a) is discharged and (b) is not. `tests/e2e/accessibility/routes.spec.ts` exists and covers every path in `apps/web/src/route-manifest.ts` — eleven, not the thirteen `.tsx` files under `apps/web/src/routes` that `status:10` counts, because five of those are the route tests themselves — in both themes and in four forced data states, 66 generated tests, on its own Playwright project so `pnpm test:e2e` runs it. It was run against a real PostgreSQL and a real browser and is green: zero serious and zero critical violations on all 66. It found `GLASS-2`. (a) also asked for the matrix in the resolution, and the generated test names are the matrix — eleven routes under two themes and four states, one test each — so it cannot drift from the routes without `theme-resolution` or `route-manifest.test.ts` failing. **Not yet discharged: a run of the accessibility project inside CI against a real database**, which this host cannot produce, and (b), which needs `BK-1` to have shipped a domain rather than a mock — `docs/migration/capability-register.md` still records `connectors.core`, `automation.chat` and `automation.agents` as `mock`, so there is nothing to trigger the four states through a real adapter.\n\n**Re-read on 2026-10-23, after BK-1 shipped three domains.** The deferral argument in the owner field (\"a redesign before BK-1 lands is the redesign of an empty screen\") no longer holds: browser, api and load runs now exist behind the console. Condition (a) is still discharged, so the axe-clean result stands. Condition (b), a loading/empty/error/partial state matrix with a test per cell for every route, is **not done and deliberately not scheduled**: the console does not yet read `/api/v1/agents`, so the routes whose states the matrix would pin are not yet the ones that show these domains, and a matrix over screens that are about to change would be written twice. It becomes worth building when the console shows agent runs, and this row should be re-read then.\n\n**Re-read on 2026-11-18 for the 5.0.0 release.** The CI half of (a) is now discharged: `unified-ci.yml` run 43395721046 on `main` at `a7628e9b` (2026-11-13) ran the `accessibility` project inside the Product E2E job against a `postgres:16-alpine` service, 51 tests in each theme, all passing, within 708 passed and none failed. The row stays `debt` for (b) alone, unchanged.",
       "summary": "§17's fourth point asks for axe zero serious/critical on every route in both themes, and for loading, empty, error and partial states on every route. `expectNoBlockingAxeViolations` exists in `apps/web` and is used by **one** component test, so no route is covered; there is no state-coverage matrix; and four of the five agent domains behind those screens answer an explicit `501 NOT_CONFIGURED`, so the screens the gate would measure render nothing.\n\n**Confirmed by reading the tree, 2026-09-30.** `pnpm status:10` point 4 reports 13 route files under `apps/web/src/routes` and reports the accessibility clause as `fail` — the one route-level assertion that exists is in `GlobalCommandPalette.test.tsx`, which is a component, not a route. The deferred half is the state matrix, for which no artefact exists at all, and naming one as evidence would be asserting the thing that is missing.\n\n**Why this is deferral and not neglect.** The axe spec is about half a day and is worth having for its own sake. The question is what it would measure: a console whose five data domains are unconfigured has screens that render `not_configured` panels, so a green axe run over them says the empty state is accessible — which is true and is not §17's point. Fixing the states is Track A's work and it needs BK-1 behind it; fixing the renderer first means fixing it twice.\n\n**What is not deferred, and is why this row is Major rather than a claim that the console is fine.** One error boundary, one theme implementation, a token-resolution gate over `packages/ui`, and a per-route test suite all exist and hold. The register publishes `ui.legacy-surfaces` as `mock` and the derived `agent.*` availability as `false`, so a reader is not told the console is finished. The deferral is about craft; nothing in it asks the product to overstate anything, which is the distinction that keeps this row honest rather than convenient.\n\n**The removal condition is machine-checked.** `tests/e2e/accessibility/routes.spec.ts` plus a green `pnpm test:e2e` in both themes is half of it; the other half is BK-1 shipping a domain, because a gate that measures an empty screen is a gate that measures nothing. `pnpm status:10` reads this row, so the day it is discharged point 4 stops being `not_configured` on the same table as everything else."
     },
     {
@@ -8263,6 +8263,455 @@
           "asserts": "The installation default applies, a workspace's own wins, another workspace's never counts."
         }
       ]
+    },
+    {
+      "id": "REL-1",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (tests/e2e/product/repo-health.spec.ts, run against PostgreSQL 16)",
+      "title": "Connecting a folder in Settings registered the project and then told the user it had failed",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "`POST /api/v1/projects` answered 201 with `commands: project.profile.commands`, and `ProjectProfileSchema` stored each command without the `label` the detector produced. The web client's `RegisteredSchema` requires `label` (it is the only field `ConnectRepository` renders), so every successful connection from Settings > Projects or the setup guide showed \"Response from /api/v1/projects did not match the expected shape\" and never reached the connected state. The project row was written, so a second attempt failed on the slug. Found by the first release-journey spec, which connects a folder through the UI; the component test mocks the client and the API test asserted only `argv`, so neither half could see the other.",
+      "resolution": "`profileFromDetection` keeps the detector's `label`, a declared command is labelled by its argv, `ProjectProfileSchema` accepts an optional `label`, and the register route derives one with `commandLabel` for a profile stored before labels were kept.",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/repo-health.spec.ts",
+          "asserts": "Connecting a folder through Settings > Projects reaches the connected state, and the project is then graded exactly: incomplete, A+ at 100 after clean scans, D at 69 after one open secret."
+        },
+        {
+          "path": "apps/api/src/routes/projects.test.ts",
+          "asserts": "The registration response gives every command a `label` equal to its argv joined by spaces."
+        },
+        {
+          "path": "packages/projects/src/config.test.ts",
+          "asserts": "Detected and declared commands keep a label, and `commandLabel` derives one for a profile stored without it."
+        }
+      ]
+    },
+    {
+      "id": "REL-2",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (tests/e2e/product/release-verdict.spec.ts, run against PostgreSQL 16)",
+      "title": "Home's release verdict never saw a quality gate on a real install, and a green CI upload could not pass one",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Two defects behind one symptom: Home said \"No quality gate has evaluated a run yet\" however much CI had reported. (1) The readiness card read `run.policyEvaluation`, which `DrizzleExecutionStore` maps as `null` for every run; only the in-memory store copied a saved gate onto the run, so every unit test passed and every PostgreSQL install had no gate reason. (2) A run recorded from an uploaded report (`lupin test`, `/api/v1/reporter/upload`) carried no evidence reference, so the gate correctly refused to call it passed: `evidence:MISSING_REQUIRED_EVIDENCE` made a green CI run `unknown`. Found by the release-verdict journey spec, which uploads a green then a red JUnit report and reads Home.",
+      "resolution": "`execution/run-gate.ts` is the one reading of a run's gate: the recorded evaluation, else the provisional one. `GET /api/v1/runs/:id/gate` and the readiness card both use it, so the run page and Home cannot disagree. A projected canonical run records `report:<sha256 of the document>` as its evidence, persisted by `DrizzleRunRepository.upsertRun`.",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/release-verdict.spec.ts",
+          "asserts": "After a green JUnit upload the readiness gate reason passes and Home shows the card's word; after a red one Home says No-go with the card's first reason and lists the failing branch under what needs you."
+        },
+        {
+          "path": "apps/api/src/execution/run-gate.test.ts",
+          "asserts": "With a store whose runs never carry their gate (the PostgreSQL shape), the newest finished run is judged, a recorded evaluation wins and says so, and no finished run means no gate."
+        }
+      ]
+    },
+    {
+      "id": "REL-3",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (apps/api/src/services/failure-redaction.test.ts, run red then green)",
+      "title": "A token printed in a failing test's output was stored and shown as it was",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "`normaliseFailure`, the one rule both the reporter event door and the upload door apply to a test's failure text, bounded and trimmed it but did not redact it. A CI log routinely prints a credential (a failed request with its Authorization header, an environment dump, a key in a stack trace), and that text is stored in `tests.error_message` and rendered on the run page, the insights, the copilot's explanation and the scheduled reports. The product already had a secret redactor (`redactSecrets` in `@lupin/reporter`) and applied it only to agent trace content.",
+      "resolution": "`normaliseFailure` redacts with `redactSecrets` before bounding the message, so both doors store the redacted text and a truncation can never keep half a token.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/failure-redaction.test.ts",
+          "asserts": "A GitHub token, a Slack token, an AWS key id and a whole private-key block in a failure message are not stored; the surrounding text and an ordinary assertion message are kept exactly."
+        }
+      ]
+    },
+    {
+      "id": "REL-4",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (tests/e2e/product/large-suite.spec.ts, run red then green against PostgreSQL 16)",
+      "title": "A fifty-thousand-test suite could not be recorded: refused at 5 MiB, and too slow to write once allowed",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Two defects in front of the suites the product is for. (1) Size: a 50 000-test JUnit report is 6.4 MiB, and the reporter group's `app.use('*')` body limit of 5 MiB, mounted at `/`, refused it on every route including the CLI's `/projects/:id/tests/reports`, so `lupin test` answered 413 for a large monorepo. (2) Time: with the limit raised, the canonical projection wrote each test with `upsertTest`, an ownership read plus an upsert per row, about 100 000 statements, and the request did not finish in 120 s.",
+      "resolution": "One test-report ceiling, `MAX_TEST_REPORT_BYTES` (32 MiB, about 250 000 test cases), on both report doors; every other route keeps the 5 MiB default. `RunRepository.upsertTests` checks ownership once per run and writes 1 000 rows a statement; the projection uses it. 50 000 tests now ingest in 6.7 s, and the spec fails past 20 s.",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/large-suite.spec.ts",
+          "asserts": "A 6.6 MB report of 50 000 tests with 516 failures is accepted, every test is counted on the run, and it is ingested under the recorded 20 s ceiling."
+        },
+        {
+          "path": "apps/api/src/repositories/drizzle-run-repository.test.ts",
+          "asserts": "upsertTests writes 2 500 rows in chunks, a repeated key is the later row, a later batch overwrites, and rows for a run the workspace does not own are refused."
+        },
+        {
+          "path": "apps/api/src/routes/reporter.test.ts",
+          "asserts": "A JUnit upload past the one test-report ceiling is refused before it is parsed."
+        }
+      ]
+    },
+    {
+      "id": "REL-5",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (found by pnpm dogfood; tests/e2e/product/repo-health.spec.ts run red then green)",
+      "title": "Uploading a passing test suite graded a repository F (0), worse than uploading nothing",
+      "band": "Critical",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Lupin grading its own repository read \"F (0) — Limited by Tests — QA score 0 / 100 over 3 runs\" after three all-green suites. A plain JUnit upload (`lupin test`, the reporter) names no score category or surface — deliberately, `projectTestResult` never defaults one — so its results fill none of the score's cells, every cell has presence 0 and the QA score is 0. `qaTestsReading` only checked that some run existed, so that 0 became a measured Tests dimension, and the grade's geometric mean took the whole repository to F. With no uploads Tests was unmeasured and the grade was unaffected, so the first thing a new user does with the CLI made their grade collapse. Critical rather than Major because the grade is the product's headline number and it inverted the meaning of a green CI run.",
+      "resolution": "`qaTestsReading` returns no reading while no executed result lands in any score cell, so Tests stays unmeasured rather than zero until results carry a category (a detected or declared command, or the runner).",
+      "evidence": [
+        {
+          "path": "tests/e2e/product/repo-health.spec.ts",
+          "asserts": "After clean scans grade A+ at 100, a green JUnit upload leaves the grade A+ at 100."
+        },
+        {
+          "path": "scripts/dogfood.mjs",
+          "asserts": "Lupin's own suites uploaded through the packed CLI produce a grade and a release verdict; the nightly job prints both."
+        }
+      ]
+    },
+    {
+      "id": "REL-6",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-18",
+      "confirmedBy": "kilo:release-5.0.0 (pnpm verify:local; pnpm why picomatch --prod)",
+      "title": "picomatch GHSA-fc5q-39xc-vjpf (high, ReDoS through repeated extglobs) has no patched release, and pnpm audit blocks verify",
+      "band": "Major",
+      "status": "debt",
+      "wave": "REL-5.0.0",
+      "owner": "The next dependency review (pnpm-workspace.yaml review date 2026-12-18), or whoever first sees a fixed picomatch published.",
+      "summary": "`pnpm audit --audit-level=high`, the first step of `security:verify`, fails on GHSA-fc5q-39xc-vjpf: every picomatch release up to the latest, 4.0.7, is affected and no patched version exists. The 131 paths are build and test tooling (vite, tinyglobby, Stryker, eslint) except one runtime path: the runner image's `@usebruno/cli > @usebruno/converters > jscodeshift > picomatch`. The API, the worker and both npm packages have no production path to it. The ReDoS needs an attacker-chosen glob pattern; the runner's Bruno path globs collection files the operator configured. Every other step of `pnpm verify:local` passes on this branch, and `main` is affected in the same way.",
+      "resolution": "Carried as debt, 2026-11-18: no patched release exists. pnpm-workspace.yaml auditConfig.ignoreGhsas exempts this one advisory with its runtime reach and a review date; every other high advisory still fails the audit.",
+      "evidence": [
+        {
+          "path": "pnpm-workspace.yaml",
+          "asserts": "The exemption names the advisory, the one runtime path, this row and a review date, and nothing else is exempted."
+        }
+      ],
+      "removalCondition": "A picomatch release fixing GHSA-fc5q-39xc-vjpf is published and adopted through an overrides row, the auditConfig.ignoreGhsas entry is removed, and pnpm audit --audit-level=high passes without it."
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The CLI forwarded only an allow-list of variables, and the GitLab CI_* variables, LUPIN_GITLAB_TOKEN, LUPIN_CF_ACCESS_CLIENT_ID/SECRET and LUPIN_SHARD_AS_OF were missing, so uploads from GitLab carried no branch, commit or merge request, and an install behind Cloudflare Access refused them.",
+      "id": "REL-7",
+      "resolution": "tools/lupin-cli/src/environment.ts forwards the GitLab, Cloudflare Access and shard variables.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "Each GitLab, Cloudflare Access and shard variable reaches the CLI environment.",
+          "path": "tools/lupin-cli/src/environment.test.ts"
+        }
+      ],
+      "title": "The lupin CLI dropped GitLab CI and Cloudflare Access variables from its environment",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (environment.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The gate report read only the health dimensions, so a commit with a red test suite exited 0 from lupin gate. Critical because the gate is the release decision a CI pipeline acts on.",
+      "id": "REL-8",
+      "resolution": "testsGateReason in apps/api/src/services/commit-tests.ts adds a failing-tests reason to the gate report in routes/repo-health.ts, and the gate exits 1.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "Failing results on the commit produce a gate reason naming the first failing test.",
+          "path": "apps/api/src/services/commit-tests.test.ts"
+        },
+        {
+          "asserts": "lupin gate exits 1 and names the failing test.",
+          "path": "tests/e2e/product/ci-ingestion.spec.ts"
+        }
+      ],
+      "title": "lupin gate passed a commit whose uploaded tests were failing",
+      "band": "Critical",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (ci-ingestion.spec.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The release verdict read Go on some screens and Ready on others, and a caution raised only by unmeasured signals offered an action pointing at a failure that does not exist.",
+      "id": "REL-9",
+      "resolution": "VERDICT_WORD in apps/web/src/lib/hero.ts is the one table; an unmeasured-only caution reads See what is not measured.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A caution with only unknown reasons names the unmeasured signal and its action.",
+          "path": "apps/web/src/lib/hero.test.ts"
+        }
+      ],
+      "title": "Home used two words for one verdict and sent an unmeasured caution to a failure",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (hero.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "first-verdict.md tells a QA engineer to set LUPIN_PROJECT, and neither Settings, Projects nor the connected panel showed the id, so the first CI job could not be written without reading the address bar. The guide also skipped how a CI runner reaches the install, that the CLI is not on npm yet, where LUPIN_REPORTER_SECRET comes from, and that Ready needs coverage.",
+      "id": "REL-10",
+      "resolution": "ProjectId in apps/web/src/components/ProjectId.tsx shows the id with a copy button in both places, and the guide covers each gap.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "The project row and the connected panel show the id and a Copy project id button.",
+          "path": "apps/web/src/components/SettingsPages.test.tsx"
+        }
+      ],
+      "title": "No screen showed the project id the CI guide asks for",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (SettingsPages.test.tsx run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The reporter read LUPIN_BRANCH/LUPIN_COMMIT and the GitHub variables only, so a streamed GitLab run had no branch or commit and could not be tied to a gate.",
+      "id": "REL-11",
+      "resolution": "tools/playwright-reporter/src/index.ts falls back to CI_COMMIT_REF_NAME and CI_COMMIT_SHA.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A run with only the GitLab variables carries their branch and commit.",
+          "path": "tools/playwright-reporter/src/reporter.test.ts"
+        }
+      ],
+      "title": "The Playwright reporter sent no branch or commit from GitLab CI",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review (reporter.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "With no run on the commit, testsGateReason returned no reason and the default health policy adds none, so a job whose report step broke printed Gate passed and exited 0.",
+      "id": "REL-12",
+      "resolution": "testsGateReason fails a commit with no test results; a scan-only job opts out with lupin gate --allow-no-tests, allowNoTests in the gate report body, or the action input allow-no-tests.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A gate report for a commit with no test results fails, and passes with allowNoTests.",
+          "path": "apps/api/src/routes/repo-health.test.ts"
+        },
+        {
+          "asserts": "lupin gate on a scan-only commit exits 1, and 0 with --allow-no-tests.",
+          "path": "tests/e2e/product/ci-ingestion.spec.ts"
+        }
+      ],
+      "title": "lupin gate passed a commit with no test results",
+      "band": "Critical",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "commitTests read latestRunForCommit, so with lupin shard or separate jobs a failing run was hidden by any run that started later.",
+      "id": "REL-13",
+      "resolution": "RunRepository.runsForCommit reads every run on the commit and commitTests takes each test's newest result across them, so shards all count and a re-run replaces what it repeats.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A later green shard does not hide an earlier failing one; a green re-run of the failing shard clears it.",
+          "path": "apps/api/src/services/commit-tests.test.ts"
+        }
+      ],
+      "title": "The gate judged only the newest run on a commit, hiding a failing shard",
+      "band": "Critical",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "run:start wrote no projectId and the reporter sent none, so streamed runs never reached the commit gate or the auto-quarantine history.",
+      "id": "REL-14",
+      "resolution": "The reporter sends LUPIN_PROJECT as projectId, and the reporter route attributes the run only to a project projectExists confirms in the workspace.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A run naming a project of the workspace is attributed to it; an unknown or malformed id is not.",
+          "path": "apps/api/src/routes/reporter-persistence.test.ts"
+        },
+        {
+          "asserts": "LUPIN_PROJECT reaches the run:start payload.",
+          "path": "tools/playwright-reporter/src/reporter.test.ts"
+        }
+      ],
+      "title": "Streamed Playwright reporter runs belonged to no project",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The readiness card mixed runs from every branch, used DEFAULT_QUALITY_POLICY.maxFlakyRate rather than the workspace policy, and counted pending quarantine across every project.",
+      "id": "REL-15",
+      "resolution": "readinessOf reads the release branch (a branch query, else the project default branch), the workspace policy maxFlakyRate, and pendingFor the project.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "A red feature branch, a 10% flaky rate under a 20% policy and another project's quarantine leave main Ready on those reasons.",
+          "path": "apps/api/src/routes/projects.test.ts"
+        },
+        {
+          "asserts": "pendingFor counts the project's and unscoped pending entries only.",
+          "path": "apps/api/src/modules/dashboard/quarantine.test.ts"
+        }
+      ],
+      "title": "Home readiness read every branch, a fixed flaky allowance and the whole workspace quarantine",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "id": "REL-16",
+      "confirmedOn": "2026-11-19",
+      "summary": "Clusters from runs Lupin executed include stack frames in the signature, while commit results carry no stack, so the pull-request count reads the message-only signature. Home coverage is the mean over reports, not weighted by lines.",
+      "evidence": [
+        {
+          "path": "apps/api/src/execution/insights.test.ts",
+          "asserts": "A failure carrying a runner stack gets the same signature as its message alone."
+        },
+        {
+          "path": "apps/api/src/services/scan-history-coverage.test.ts",
+          "asserts": "10 of 10 and 495 of 990 lines read 50.5%, not the 75% a plain mean gives."
+        }
+      ],
+      "resolution": "failureInputsOf keys every cause on its message alone, the key the pull request and test history use (no uploaded result stores a stack), and meanCoverage weighs reports by lines when each carries lcov or Istanbul counts.",
+      "title": "A labelled cause could count as unlabelled on a pull request, and Home coverage was a plain mean",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)",
+      "wave": "REL-5.0.0",
+      "band": "Minor",
+      "status": "fixed",
+      "provenance": "hand",
+      "confirmed": true
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The GitHub gate step built the branch from GITHUB_HEAD_REF and GITHUB_REF_NAME together, the CLI Playwright example never wrote its report file, and Jenkins needed explicit flags because the CLI read none of its variables.",
+      "id": "REL-17",
+      "resolution": "The gate step reads the variables itself, the example sets PLAYWRIGHT_JSON_OUTPUT_NAME, and branchOf/commitOf read CHANGE_BRANCH, BRANCH_NAME and GIT_COMMIT.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "lupin gate on Jenkins sends the pull request branch, then the job branch, and GIT_COMMIT.",
+          "path": "tools/lupin-cli/src/cli.test.ts"
+        }
+      ],
+      "title": "Three documented CI examples did not work",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (run red then green)"
+    },
+    {
+      "id": "REL-18",
+      "provenance": "hand",
+      "confirmed": true,
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (project-registry-service.test.ts run red then green)",
+      "title": "A folder project had no release branch, so Home read every branch",
+      "band": "Major",
+      "status": "fixed",
+      "wave": "REL-5.0.0",
+      "summary": "Only a project registered by git URL recorded a default branch, so a folder project's readiness mixed feature-branch runs into the release verdict.",
+      "resolution": "registerProject records the checkout's default branch from .git/refs/remotes/origin/HEAD, else .git/HEAD, and releaseBranch reads it from the checkout for a folder project registered before.",
+      "evidence": [
+        {
+          "path": "apps/api/src/services/project-registry-service.test.ts",
+          "asserts": "The remote default branch wins, then the checked-out branch; a detached HEAD or no git names none."
+        }
+      ]
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "The pass rate counted only passed results, so a flaky result (failed, then passed on a retry) lowered it below the default 100% threshold, and the default maxFlakyRate of 0 failed the same run again. One flaky test in twenty turned Home No-go until someone quarantined it.",
+      "id": "REL-19",
+      "resolution": "passRateOf counts a flaky result as passed, and the default policy allows 5% flaky tests; a policy created before keeps its own value, as upgrade-5.md says.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "One flaky test in twenty passes the default gate; two fail it on the flaky rate alone.",
+          "path": "apps/api/src/execution/quality-gate.test.ts"
+        }
+      ],
+      "band": "Major",
+      "status": "fixed",
+      "provenance": "hand",
+      "title": "One flaky test failed a run twice, on the flaky rate and on the pass rate",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-2 (quality-gate.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "Lupin detects a project's release branch, but a wrong detection or a folder with no git could only be corrected with PATCH /api/v1/projects/:id.",
+      "id": "REL-20",
+      "resolution": "Settings, Projects, Rename has a Release branch field, sent only when it changed; the projects list carries defaultBranch.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "Typing a release branch and saving sends only defaultBranch.",
+          "path": "apps/web/src/components/SettingsPages.test.tsx"
+        }
+      ],
+      "band": "Minor",
+      "status": "fixed",
+      "provenance": "hand",
+      "title": "The release branch Home judges on could only be changed through the API",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:release-5.0.0 (SettingsPages.test.tsx run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "testsGateReason failed only on failed or timed-out tests, so a run still streaming or cut off passed on what had arrived, an all-skipped run passed, and a run whose every failure was quarantined passed even though excusesRun does not excuse it and lupin test kept its exit code. Auto-quarantine re-quarantined a test it had just released, on the old evidence still in the window.",
+      "id": "REL-21",
+      "resolution": "CommitTests carries unfinishedRuns, interruptedRuns and executed, and testsGateReason fails each case; auto-quarantine counts only evidence after the last release.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "Each case produces its gate reason; a scan-only job may still pass with allowNoTests.",
+          "path": "apps/api/src/services/commit-tests.test.ts"
+        },
+        {
+          "asserts": "A released test is not quarantined again on the evidence it was released from.",
+          "path": "apps/api/src/services/auto-quarantine.test.ts"
+        }
+      ],
+      "band": "Major",
+      "status": "fixed",
+      "provenance": "hand",
+      "title": "The gate passed unfinished, interrupted, all-skipped and all-quarantined runs, and auto-quarantine flapped",
+      "confirmedOn": "2026-11-19",
+      "confirmedBy": "kilo:qa-review-3 (commit-tests.test.ts and auto-quarantine.test.ts run red then green)"
     }
   ]
 }

@@ -113,6 +113,13 @@ export function istanbulSummary(path: string, text: string): RepoReport | null {
     const value = numberAt(total, key, 'pct');
     if (value !== null) metrics[key] = value;
   }
+  // The counts behind the percentage, so reports of different sizes can be weighed.
+  const found = numberAt(total, 'lines', 'total');
+  const hit = numberAt(total, 'lines', 'covered');
+  if (found !== null && hit !== null && found > 0) {
+    metrics['linesFound'] = found;
+    metrics['linesHit'] = hit;
+  }
   return {
     path,
     kind: 'coverage',

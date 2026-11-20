@@ -9,9 +9,11 @@ import { canAdminister, canAdministerInstallation, canOperate } from '../lib/rol
 import { explain, type QualityGate, type SettingsClient } from '../lib/settings-client.js';
 import { AccessGate } from './Access.js';
 import { ConfirmAction } from './ConfirmAction.js';
-import { Bdi, UserText } from './Bidi.js';
+import { UserText } from './Bidi.js';
 import { ConnectRepository } from './ConnectRepository.js';
 import { PageBody, PageFrame, PageHeader, Panel } from './kit.js';
+import { ProjectSource } from './ProjectId.js';
+import { RenameForm } from './ProjectEditForm.js';
 import { SettingsForm } from './SettingsForm.js';
 import { useToast } from './Toasts.js';
 
@@ -32,7 +34,7 @@ const GROUP_PAGES: Record<'ai' | 'integrations' | 'sessions-retention', GroupPag
     group: 'ai',
     title: 'AI provider',
     subtitle:
-      'The model behind chat, test proposals and evals. Use a gateway with an API key, or a local Ollama server so prompts stay on your network.',
+      'The model behind test proposals and evals. Use a gateway with an API key, or a local Ollama server so prompts stay on your network.',
     sections: [{ title: 'Provider' }],
     testKey: 'ai.gatewayUrl',
   },
@@ -234,56 +236,11 @@ export function SessionsSettingsPage(props: {
 // ─── Projects ───────────────────────────────────────────────────────────────
 
 /** Runs one project action: a toast either way, and a refresh after success. */
-type RunAction = (
+export type RunAction = (
   action: () => Promise<unknown>,
   success: string,
   failure: string,
 ) => Promise<void>;
-
-function RenameForm({
-  project,
-  client,
-  busy,
-  run,
-}: {
-  project: RegisteredProject;
-  client: SettingsClient;
-  busy: boolean;
-  run: RunAction;
-}): React.ReactElement {
-  const id = React.useId();
-  const [name, setName] = React.useState(project.name);
-  const next = name.trim();
-  return (
-    <form
-      aria-label={`Rename ${project.name}`}
-      className="flex flex-wrap items-end gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void run(
-          () => client.updateProject(project.id, { name: next }),
-          'Project renamed',
-          'Could not rename',
-        );
-      }}
-    >
-      <Input
-        id={`${id}-name`}
-        label="New name"
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-      />
-      <Button
-        type="submit"
-        size="sm"
-        loading={busy}
-        disabled={next === '' || next === project.name}
-      >
-        Save name
-      </Button>
-    </form>
-  );
-}
 
 function TokenForm({
   project,
@@ -501,14 +458,7 @@ function ProjectRow({
       data-testid={`project-${project.id}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="grid min-w-0 gap-0.5">
-          <UserText className="truncate font-medium text-fg">{project.name}</UserText>
-          {project.repoPath === null ? (
-            <span className="text-xs text-fg-muted">Cloned from git for each scan</span>
-          ) : (
-            <Bdi className="truncate font-mono text-xs text-fg-muted">{project.repoPath}</Bdi>
-          )}
-        </div>
+        <ProjectSource project={project} />
         <div className="flex flex-wrap items-center gap-2">
           {hasToken ? <Badge variant="secondary">Token saved</Badge> : null}
           <RowActions

@@ -22,7 +22,8 @@ curl http://127.0.0.1:3000/api/v1/runs/<runId>/gate
 
 The default policy (`DEFAULT_QUALITY_POLICY` in `apps/api/src/execution/quality-gate.ts`)
 requires the browser domain, a browser pass-rate threshold of 100, a maximum flaky rate of
-zero, and no duration limit. Each test domain — browser, API, mobile, performance,
+5%, and no duration limit. A flaky test passed on a retry, so it counts as passed for the pass
+rate; the flaky rate is the rule that judges it. Each test domain — browser, API, mobile, performance,
 security, accessibility — gets its own status, and a domain this installation has no
 execution adapter for is reported `not_configured` rather than counted as a pass.
 

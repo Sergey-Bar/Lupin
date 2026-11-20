@@ -370,6 +370,27 @@ describe('DrizzleRunRepository — idempotency (task-18-idempotency)', () => {
     expect(tests[0].status).toBe('running'); // latest value wins
   });
 
+  it('upsertTests writes a whole report in chunks, overwrites by key, and keeps one row per key', async () => {
+    const run = makeRun();
+    await ctx.repo.upsertRun(run);
+    const many = Array.from({ length: 2_500 }, (_, index) =>
+      makeTest({ id: `t-${String(index)}`, title: `test ${String(index)}`, status: 'passed' }),
+    );
+    // A repeated key inside one batch is the later row, as two upsertTest calls would be.
+    await ctx.repo.upsertTests?.([...many, { ...many[0], status: 'failed' } as (typeof many)[0]]);
+    await ctx.repo.upsertTests?.([{ ...(many[1] as (typeof many)[0]), status: 'skipped' }]);
+    const stored = await ctx.repo.listTests(run.id);
+    expect(stored).toHaveLength(2_500);
+    expect(stored.find((test) => test.id === 't-0')?.status).toBe('failed');
+    expect(stored.find((test) => test.id === 't-1')?.status).toBe('skipped');
+  });
+
+  it('upsertTests refuses rows for a run this workspace does not own', async () => {
+    await expect(
+      ctx.repo.upsertTests?.([makeTest({ runId: '550e8400-e29b-41d4-a716-4466554400ff' })]),
+    ).rejects.toThrow(/not found/u);
+  });
+
   it('sending the same run twice via upsert confirms no duplicate rows', async () => {
     const run = makeRun({ id: '550e8400-e29b-41d4-a716-446655440020' });
 
