@@ -8712,6 +8712,25 @@
       "title": "The gate passed unfinished, interrupted, all-skipped and all-quarantined runs, and auto-quarantine flapped",
       "confirmedOn": "2026-11-19",
       "confirmedBy": "kilo:qa-review-3 (commit-tests.test.ts and auto-quarantine.test.ts run red then green)"
+    },
+    {
+      "wave": "REL-5.0.0",
+      "summary": "Every path to a first answer went through installing the server, issuing a token and editing CI, so a QA engineer could not see what Lupin tells them about their own reports in under thirty minutes.",
+      "id": "REL-22",
+      "resolution": "lupin check reads JUnit XML or Playwright JSON on disk with no server and prints the verdict, distinct failure causes, flaky tests (retries and flips across runs) and slowest tests, with --html and --json; the README leads with it.",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "Outcomes, retries, causes, cross-run flips, an empty report and the exit codes.",
+          "path": "tools/lupin-cli/src/local-report.test.ts"
+        }
+      ],
+      "band": "Major",
+      "status": "fixed",
+      "provenance": "hand",
+      "title": "Trying Lupin needed a server, a token and a CI change before showing anything",
+      "confirmedOn": "2026-11-20",
+      "confirmedBy": "kilo:mvp (local-report.test.ts written against the behaviour, run red before the module existed)"
     }
   ]
 }

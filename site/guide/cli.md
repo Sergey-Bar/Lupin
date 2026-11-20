@@ -24,6 +24,16 @@ Actions' own `GITHUB_HEAD_REF`/`GITHUB_REF_NAME` and `GITHUB_SHA`.
 
 Build it from a checkout with the rest of the workspace; the bin is `tools/lupin-cli/dist/index.js`.
 
+## Check reports locally, with no server
+
+`lupin check -- <reports...>` reads JUnit XML or Playwright JSON and prints the verdict, the
+distinct failure causes (failures that differ only in numbers, strings or paths are one
+cause), the flaky tests and the slowest tests. It needs no `LUPIN_URL` or token and sends
+nothing. With several reports, oldest first, a test that passed in one run and failed in
+another is flaky. `--html <path>` writes a self-contained page, `--json` prints the analysis,
+and `--fail-on-flaky` exits 1 on flakiness. It exits 1 when a test fails or no tests were
+found, and 2 when a report cannot be read.
+
 ## Commands
 
 ```bash
