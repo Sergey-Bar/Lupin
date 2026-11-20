@@ -22,6 +22,31 @@ Lupin is a local-first QA control plane. Send it the reports your test tools alr
 or OWASP ZAP, and SARIF, coverage, SBOM and mutation reports for repository health. It keeps each run, retry and artifact together, then shows your team what
 passed, what needs attention and what was never measured.
 
+## Try it in 30 seconds, no server
+
+Point it at the test reports you already have, JUnit XML or Playwright JSON:
+
+```sh
+npx -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz lupin check -- junit.xml
+```
+
+```text
+RED: tests are failing.
+412 tests over 1 report(s): 398 passed, 9 failed, 3 flaky, 2 skipped.
+
+9 failure(s), 2 distinct cause(s) - fix these, biggest first:
+  7 x Timeout 5000ms exceeded waiting for locator('#checkout')
+  2 x expected 500 to be 200
+
+Flaky tests (3) - fix or quarantine, do not just re-run:
+  ...
+```
+
+Pass several CI runs' reports to catch tests that flip between runs, `--html report.html` for a
+page to attach to a pull request, and `--fail-on-flaky` to fail the job on flakiness. Nothing is
+uploaded anywhere. When you want history, gates and a release verdict for your whole team, run the
+[server](site/guide/install.md).
+
 ![The runs view](docs/assets/runs.png)
 
 ## From run to decision
