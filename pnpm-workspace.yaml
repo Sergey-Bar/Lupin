@@ -241,7 +241,7 @@ catalog:
   # Shared by two or more packages, so declared once (ledger MNT-198). pglite is exact: the
   # worker pinned it so, and an in-process PostgreSQL is the thing every suite checks SQL on.
   '@electric-sql/pglite': 0.5.16
-  '@testing-library/jest-dom': ^7.0.1
+  '@testing-library/jest-dom': ^8.0.0
   '@testing-library/user-event': ^14.6.12
   axe-core: ^4.14.1
   tsx: ^4.23.15
