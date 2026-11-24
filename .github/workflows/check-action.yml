@@ -36,6 +36,9 @@ jobs:
           cache: pnpm
       - name: Install frozen dependencies
         run: pnpm install --frozen-lockfile
+      # The CLI's tests import workspace packages, which resolve to their built output.
+      - name: Build what the CLI suite imports
+        run: pnpm --filter "@lupin/cli^..." build
       - name: Run the CLI suite, written as JUnit
         run: pnpm --filter @lupin/cli exec vitest run --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
       - name: Lupin check
