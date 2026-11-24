@@ -11,6 +11,7 @@ import {
   parsePlaywright,
   parseReport,
   renderHtml,
+  renderMarkdown,
   renderText,
 } from './local-report.js';
 
@@ -295,6 +296,13 @@ describe('lupin check --demo and --markdown', () => {
     const markdown = readFileSync(path.join(dir, 'summary.md'), 'utf8');
     expect(markdown).toMatch(/^### :x: RED: tests are failing\./u);
     expect(markdown).toMatch(/\| 4 \| `expected status 502/u);
+    expect(
+      renderMarkdown(
+        analyse([
+          parseReport('w.xml', '<testcase name="a|b"><failure message="C:\\x `y`"/></testcase>'),
+        ]),
+      ),
+    ).toMatch(/\| `C:\\\\x 'y'` \| a\\\|b \|/u);
   });
 
   it('refuses --demo beside report files', async () => {

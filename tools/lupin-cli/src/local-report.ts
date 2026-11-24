@@ -388,7 +388,11 @@ const VERDICT_MARK: Readonly<Record<Analysis['verdict'], string>> = {
 
 /** A Markdown table cell cannot hold a pipe, a newline or a backtick inside code. */
 function cell(text: string): string {
-  return text.replace(/\|/gu, '\\|').replace(/\r?\n/gu, ' ').replace(/`/gu, "'");
+  return text
+    .replace(/\\/gu, '\\\\')
+    .replace(/\|/gu, '\\|')
+    .replace(/\r?\n/gu, ' ')
+    .replace(/`/gu, "'");
 }
 
 function causeTable(analysis: Analysis): string[] {
