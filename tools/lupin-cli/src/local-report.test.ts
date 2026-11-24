@@ -94,7 +94,7 @@ describe('reading reports', () => {
   });
 
   it('refuses a file that is neither', () => {
-    expect(() => parseReport('x.txt', 'hello')).toThrow(/not a JUnit XML or Playwright JSON/u);
+    expect(() => parseReport('x.txt', 'hello')).toThrow(/not a JUnit XML or JSON test report/u);
   });
 });
 

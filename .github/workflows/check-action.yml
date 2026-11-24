@@ -1,0 +1,45 @@
+name: Lupin check on Lupin
+
+# The public `lupin check` Action, run on this repository's own pull requests: the CLI's suite is
+# written as JUnit and the Action reads it, so every pull request shows the verdict, the failure
+# causes and the flaky tests in its summary and in one comment. It is the Action as a user runs it,
+# from ./actions/check, against the released CLI the Action names.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-action-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lupin check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
+        with:
+          run_install: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24.x
+          cache: pnpm
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run the CLI suite, written as JUnit
+        run: pnpm --filter @lupin/cli exec vitest run --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
+      - name: Lupin check
+        if: always()
+        uses: ./actions/check
+        with:
+          reports: tools/lupin-cli/reports/junit.xml

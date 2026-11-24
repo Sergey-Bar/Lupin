@@ -1,6 +1,6 @@
 name: Lupin check
 description: >-
-  Reads your JUnit XML or Playwright JSON test reports and says what a QA engineer needs to know:
+  Reads your JUnit XML, or Playwright, Jest, Vitest, CTRF, Mochawesome or pytest-json-report JSON test reports and says what a QA engineer needs to know:
   the verdict, the distinct failure causes, the flaky tests and the slowest ones. No server, no
   account; nothing leaves the runner. Writes the job summary and, on a pull request, one comment
   that is updated on every push.
