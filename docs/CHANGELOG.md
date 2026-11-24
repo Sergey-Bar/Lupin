@@ -2,6 +2,23 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
+## 5.1.0 - 2026-11-20 - your test reports, explained, with no server
+
+### Added
+
+- **`lupin check`**: reads JUnit XML or Playwright JSON on disk, with no server or token, and
+  prints the verdict, the distinct failure causes (failures differing only in values are one
+  cause), the flaky tests (retries, and tests that flip back and forth across runs) and the
+  slowest tests. `--demo` runs it on three built-in CI runs; `--html`, `--markdown` and
+  `--json` write the result for a pull request, a job summary or a script (REL-22).
+- **The `lupin check` GitHub Action** (`Sergey-Bar/Lupin/actions/check@v5.1.0`): the result in
+  the job summary and one pull-request comment, updated on every push. A job with no report fails.
+
+### Changed
+
+- A test that started failing in the newest run is a regression, not flaky: `lupin check` calls a
+  test flaky only when it passed on a retry or changed back after changing.
+
 ## 5.0.0 - 2026-11-19 - QA at the pace of AI-era development
 
 Every journey a QA engineer or SDET needs is proven end to end against PostgreSQL, and
