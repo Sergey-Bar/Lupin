@@ -1,0 +1,100 @@
+name: Lupin check
+description: >-
+  Reads your JUnit XML or Playwright JSON test reports and says what a QA engineer needs to know:
+  the verdict, the distinct failure causes, the flaky tests and the slowest ones. No server, no
+  account; nothing leaves the runner. Writes the job summary and, on a pull request, one comment
+  that is updated on every push.
+author: Sergey-Bar
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  reports:
+    description: >-
+      Report files or globs, one per line, e.g. `test-results/junit.xml`. Several runs' reports,
+      oldest first, show tests that flip between runs.
+    required: true
+  fail-on-flaky:
+    description: Fail the step when a test is flaky, not only when one fails.
+    required: false
+    default: 'false'
+  comment:
+    description: On a pull request, post the result as one comment, updated on every push.
+    required: false
+    default: 'true'
+  version:
+    description: The Lupin release whose CLI runs the check.
+    required: false
+    default: '5.1.0'
+
+outputs:
+  verdict:
+    description: '`green`, `flaky`, `red` or `empty`.'
+    value: ${{ steps.check.outputs.verdict }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check the reports
+      id: check
+      shell: bash
+      env:
+        REPORTS: ${{ inputs.reports }}
+        FAIL_ON_FLAKY: ${{ inputs.fail-on-flaky }}
+        LUPIN_VERSION: ${{ inputs.version }}
+      run: |
+        set -uo pipefail
+        case "$LUPIN_VERSION" in
+          *[!0-9A-Za-z.-]*) echo "::error::version must be a release number, got $LUPIN_VERSION"; exit 2 ;;
+        esac
+        cli="https://github.com/Sergey-Bar/Lupin/releases/download/v${LUPIN_VERSION}/lupin-cli-${LUPIN_VERSION}.tgz"
+        shopt -s globstar nullglob
+        files=()
+        while IFS= read -r pattern; do
+          [ -n "$pattern" ] || continue
+          matched=($pattern)
+          if [ ${#matched[@]} -eq 0 ]; then echo "::warning::No report matched $pattern"; fi
+          files+=("${matched[@]}")
+        done <<< "$REPORTS"
+        summary="$RUNNER_TEMP/lupin-check.md"
+        flags=(--markdown "$summary")
+        [ "$FAIL_ON_FLAKY" = "true" ] && flags+=(--fail-on-flaky)
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "::error::No test report found. A job that wrote no report has not shown its tests pass."
+          echo "verdict=empty" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+        npx --yes -p "$cli" lupin check "${flags[@]}" -- "${files[@]}"
+        code=$?
+        npx --yes -p "$cli" lupin check --json -- "${files[@]}" > "$RUNNER_TEMP/lupin-check.json" || true
+        verdict="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).verdict)' "$RUNNER_TEMP/lupin-check.json" 2>/dev/null || echo empty)"
+        echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
+        [ -f "$summary" ] && cat "$summary" >> "$GITHUB_STEP_SUMMARY"
+        echo "code=$code" >> "$GITHUB_OUTPUT"
+    - name: Comment on the pull request
+      if: always() && inputs.comment == 'true' && github.event.pull_request.number != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR: ${{ github.event.pull_request.number }}
+      run: |
+        set -uo pipefail
+        summary="$RUNNER_TEMP/lupin-check.md"
+        [ -f "$summary" ] || exit 0
+        body="$(printf '<!-- lupin-check -->\n%s' "$(cat "$summary")")"
+        existing="$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments?per_page=100" \
+          --jq '[.[] | select(.body | startswith("<!-- lupin-check -->"))][0].id // empty' 2>/dev/null)"
+        if [ -n "$existing" ]; then
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -f body="$body" >/dev/null \
+            || echo "::warning::Could not update the comment; the job summary has the result."
+        else
+          gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" >/dev/null \
+            || echo "::warning::Could not comment (a fork's token is read-only); the job summary has the result."
+        fi
+    - name: Result
+      if: always()
+      shell: bash
+      env:
+        CODE: ${{ steps.check.outputs.code }}
+      run: exit "${CODE:-1}"

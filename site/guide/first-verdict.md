@@ -32,7 +32,7 @@ The CLI has no runtime dependencies and needs Node 24. It is not on npm yet: eac
 attaches it as a tarball, and `npx` runs it from there. Pin the release you tested:
 
 ```sh
-npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz lupin --help
+npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin --help
 ```
 
 The snippets below write that URL as `$LUPIN_CLI`. Set it once in the job, as shown.
@@ -50,7 +50,7 @@ upload form field says `playwright`. JUnit is `junit` in both.
 ```yaml
 - name: Tests, recorded in Lupin
   env:
-    LUPIN_CLI: https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz
+    LUPIN_CLI: https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz
     LUPIN_URL: https://lupin.example.com
     LUPIN_TOKEN: ${{ secrets.LUPIN_TOKEN }}
     LUPIN_PROJECT: 00000000-0000-4000-8000-000000000000
@@ -58,7 +58,7 @@ upload form field says `playwright`. JUnit is `junit` in both.
 - name: Release gate
   if: always()
   env:
-    LUPIN_CLI: https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz
+    LUPIN_CLI: https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz
     LUPIN_URL: https://lupin.example.com
     LUPIN_TOKEN: ${{ secrets.LUPIN_TOKEN }}
     LUPIN_PROJECT: 00000000-0000-4000-8000-000000000000
@@ -71,7 +71,7 @@ upload form field says `playwright`. JUnit is `junit` in both.
 test:
   image: node:24
   variables:
-    LUPIN_CLI: https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz
+    LUPIN_CLI: https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz
     LUPIN_URL: https://lupin.example.com
     LUPIN_PROJECT: 00000000-0000-4000-8000-000000000000
   script:
@@ -85,7 +85,7 @@ test:
 ```groovy
 stage('Test') {
   environment {
-    LUPIN_CLI = 'https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz'
+    LUPIN_CLI = 'https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz'
     LUPIN_URL = 'https://lupin.example.com'
     LUPIN_TOKEN = credentials('lupin-uploader-token')
     LUPIN_PROJECT = '00000000-0000-4000-8000-000000000000'

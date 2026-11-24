@@ -3,7 +3,15 @@ import path from 'node:path';
 import { optional, parseOptions } from './args.js';
 import type { Io } from './commands.js';
 import { CliError, EXIT, usage } from './errors.js';
-import { analyse, parseReport, renderHtml, renderText, type Run } from './local-report.js';
+import { DEMO_REPORTS } from './demo-reports.js';
+import {
+  analyse,
+  parseReport,
+  renderHtml,
+  renderMarkdown,
+  renderText,
+  type Run,
+} from './local-report.js';
 
 /**
  * `lupin check [--html <out>] [--json] [--fail-on-flaky] -- <report…>`
@@ -16,12 +24,11 @@ import { analyse, parseReport, renderHtml, renderText, type Run } from './local-
 export async function check(argv: readonly string[], io: Io): Promise<number> {
   const split = argv.indexOf('--');
   const parsed = parseOptions(split === -1 ? argv : argv.slice(0, split), {
-    values: ['html'],
-    switches: ['json', 'fail-on-flaky'],
+    values: ['html', 'markdown'],
+    switches: ['json', 'fail-on-flaky', 'demo'],
   });
   const files = split === -1 ? [] : argv.slice(split + 1);
-  if (files.length === 0) throw usage('Name at least one report: lupin check -- junit.xml');
-  const runs = await readRuns(files, io.cwd);
+  const runs = await runsFor(parsed.switches.has('demo'), files, io.cwd);
   const analysis = analyse(runs);
   io.out(parsed.switches.has('json') ? JSON.stringify(analysis, null, 2) : renderText(analysis));
   const html = optional(parsed, 'html');
@@ -29,9 +36,24 @@ export async function check(argv: readonly string[], io: Io): Promise<number> {
     await writeFile(path.resolve(io.cwd, html), renderHtml(analysis), 'utf8');
     if (!parsed.switches.has('json')) io.out(`\nWrote ${html}`);
   }
+  const markdown = optional(parsed, 'markdown');
+  if (markdown !== undefined)
+    await writeFile(path.resolve(io.cwd, markdown), renderMarkdown(analysis), 'utf8');
   if (analysis.verdict === 'empty' || analysis.verdict === 'red') return EXIT.gateFailed;
   if (analysis.verdict === 'flaky' && parsed.switches.has('fail-on-flaky')) return EXIT.gateFailed;
   return EXIT.ok;
+}
+
+/** The built-in demo runs, or the named reports; never both. */
+async function runsFor(demo: boolean, files: readonly string[], cwd: string): Promise<Run[]> {
+  if (demo) {
+    if (files.length > 0) throw usage('--demo reads its own reports; drop the report files');
+    return DEMO_REPORTS.map((report) => parseReport(report.name, report.xml));
+  }
+  if (files.length === 0) {
+    throw usage('Name at least one report: lupin check -- junit.xml (or try lupin check --demo)');
+  }
+  return readRuns(files, cwd);
 }
 
 async function readRuns(files: readonly string[], cwd: string): Promise<Run[]> {

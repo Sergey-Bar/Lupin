@@ -11,6 +11,7 @@ import {
   parsePlaywright,
   parseReport,
   renderHtml,
+  renderMarkdown,
   renderText,
 } from './local-report.js';
 
@@ -120,11 +121,15 @@ describe('analysis', () => {
         'r.xml',
         `<testsuite><testcase classname="a" name="t">${outcome}</testcase></testsuite>`,
       );
-    const analysis = analyse([run('<failure message="x"/>'), run('')]);
+    const fail = run('<failure message="x"/>');
+    const analysis = analyse([run(''), fail, run('')]);
     expect(analysis.verdict).toBe('flaky');
     expect(analysis.failed).toBe(0);
+    // One change is a fix or a regression, not a flake.
+    expect(analyse([fail, run('')]).flakyTests).toEqual([]);
+    expect(analyse([run(''), fail]).verdict).toBe('red');
     expect(analysis.flakyTests).toEqual([
-      { key: 'a › t', evidence: 'passed 1, failed 1 across runs' },
+      { key: 'a › t', evidence: 'passed 2, failed 1 across runs' },
     ]);
   });
 
@@ -265,5 +270,52 @@ describe('edges', () => {
     expect(await check(['--json', '--html', 'g.html', '--', 'g.xml'], context)).toBe(EXIT.ok);
     expect(JSON.parse(out[0] ?? '{}')).toMatchObject({ verdict: 'green' });
     await expect(check(['--', 'bad.txt'], context)).rejects.toMatchObject({ exitCode: EXIT.usage });
+  });
+});
+
+describe('lupin check --demo and --markdown', () => {
+  it('finds one cause behind four failures, a retry and a flip, in the built-in runs', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'lupin-check-'));
+    const out: string[] = [];
+    const context = {
+      env: {},
+      cwd: dir,
+      fetch: globalThis.fetch,
+      out: (line: string) => out.push(line),
+      now: () => new Date(),
+    };
+    expect(await check(['--demo', '--markdown', 'summary.md'], context)).toBe(EXIT.gateFailed);
+    const text = out.join('\n');
+    expect(text).toMatch(/^RED: tests are failing\./u);
+    expect(text).toMatch(/4 failure\(s\), 1 distinct cause/u);
+    expect(text).toMatch(/updates the address - passed on a retry/u);
+    expect(text).toMatch(/signs in - passed 2, failed 1 across runs/u);
+    // Failing now after passing before is a regression to fix, never a flake to quarantine.
+    expect(text).toMatch(/Flaky tests \(2\)/u);
+    expect(text).not.toMatch(/pays by card - passed/u);
+    const markdown = readFileSync(path.join(dir, 'summary.md'), 'utf8');
+    expect(markdown).toMatch(/^### :x: RED: tests are failing\./u);
+    expect(markdown).toMatch(/\| 4 \| `expected status 502/u);
+    expect(
+      renderMarkdown(
+        analyse([
+          parseReport('w.xml', '<testcase name="a|b"><failure message="C:\\x `y`"/></testcase>'),
+        ]),
+      ),
+    ).toMatch(/\| `C:\\\\x 'y'` \| a\\\|b \|/u);
+  });
+
+  it('refuses --demo beside report files', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'lupin-check-'));
+    const context = {
+      env: {},
+      cwd: dir,
+      fetch: globalThis.fetch,
+      out: () => undefined,
+      now: () => new Date(),
+    };
+    await expect(check(['--demo', '--', 'x.xml'], context)).rejects.toMatchObject({
+      exitCode: EXIT.usage,
+    });
   });
 });

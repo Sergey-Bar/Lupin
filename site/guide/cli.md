@@ -115,8 +115,8 @@ lupin:
     GIT_DEPTH: 0 # diff-guard and impact compare with the target branch
   script:
     - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-    - npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz lupin diff-guard --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-    - npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.0.0/lupin-cli-5.0.0.tgz lupin gate --post
+    - npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin diff-guard --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin gate --post
 ```
 
 `gate --post` writes the verdict as a commit status named `lupin/health` and the gate's comment
