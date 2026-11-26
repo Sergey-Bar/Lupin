@@ -37,9 +37,11 @@ import {
 import type { Context } from 'hono';
 import {
   RetryRunRequestSchema,
+  RunAnalysisSchema,
   storedTestIdentity,
   type RetryRunRequest,
 } from '@lupin/shared-contracts';
+import { analyseRun, type AnalysedRun } from '@lupin/reporting';
 
 /** The statuses a "retry the failed tests" run picks up. */
 const FAILED_TEST = new Set(['failed', 'timed_out']);
@@ -286,6 +288,16 @@ export function registerRunRoutes(app: Hono, context: ExecutionRouteContext): vo
     return c.json(toCanonicalRun(result.run), 202);
   });
 
+  // What changed in this run and why (plan 1795712849115 task 13): compared with the newest
+  // earlier finished run of the same project, branch and suite.
+  app.get('/api/v1/runs/:runId/analysis', async (c) => {
+    const run = await options.store.getRun(c.req.param('runId'), ws);
+    if (!run) throw new DomainError('RUN_NOT_FOUND', 'Run not found');
+    const previous = await previousComparableRun(options.store, ws, run);
+    const analysis = analyseRun(analysedRun(run), previous === null ? null : analysedRun(previous));
+    return c.json(RunAnalysisSchema.parse(analysis));
+  });
+
   app.get('/api/v1/runs/:runId', async (c) => {
     const runId = c.req.param('runId');
     const run = await options.store.getRun(runId, ws);
@@ -296,4 +308,54 @@ export function registerRunRoutes(app: Hono, context: ExecutionRouteContext): vo
     }
     throw new DomainError('RUN_NOT_FOUND', 'Run not found');
   });
+}
+
+/** The pages of older runs read to find one to compare with: at most 300 runs. */
+const COMPARISON_PAGES = 3;
+// Outcomes whose tests ran. A run that never reached its tests (infra, config, cancelled) would
+// make every failure look new.
+const TERMINAL_OUTCOMES = new Set(['passed', 'failed', 'partial', 'timed_out']);
+
+/**
+ * The newest finished run older than `run` with the same project, branch and suite, or `null`.
+ *
+ * Read through the store's own newest-first cursor, starting at `run`, so the cost is a few
+ * bounded pages whatever the history holds. Two runs created in the same millisecond are
+ * ordered by id, not by which came first, so one of them cannot find the other.
+ */
+async function previousComparableRun(
+  store: ExecutionRouteContext['options']['store'],
+  workspaceId: string,
+  run: ExecutionRun,
+): Promise<ExecutionRun | null> {
+  let after: string | undefined = pageCursor(run);
+  for (let page = 0; page < COMPARISON_PAGES && after !== undefined; page += 1) {
+    const { runs, hasMore } = await store.listRuns(workspaceId, undefined, { limit: 100, after });
+    const match = runs.find(
+      (candidate) =>
+        candidate.id !== run.id &&
+        (candidate.projectId ?? null) === (run.projectId ?? null) &&
+        (candidate.branch ?? null) === (run.branch ?? null) &&
+        (candidate.suite ?? null) === (run.suite ?? null) &&
+        TERMINAL_OUTCOMES.has(String(candidate.outcome)) &&
+        candidate.tests.length > 0,
+    );
+    if (match !== undefined) return match;
+    const last = runs.at(-1);
+    after = hasMore && last !== undefined ? pageCursor(last) : undefined;
+  }
+  return null;
+}
+
+function analysedRun(run: ExecutionRun): AnalysedRun {
+  return {
+    id: run.id,
+    tests: run.tests.map((test) => ({
+      key: storedTestIdentity({ ...test, file: test.file ?? null }),
+      title: test.title,
+      status: test.status,
+      durationMs: typeof test.durationMs === 'number' ? test.durationMs : null,
+      message: test.error?.message ?? null,
+    })),
+  };
 }

@@ -34,6 +34,10 @@
   held to the same contract as the others by `new-adapter-parity.test.ts`. A `.trx` is
   recognised by its name, and the .NET project scanner now labels `TestResults/*.trx` as TRX;
   it used to call them JUnit, so a detected TRX reached a parser that found no tests in it.
+- **What changed in a run, and why (task 13).** `GET /api/v1/runs/:runId/analysis` compares a run
+  with the one before it on the same branch and suite: new failures, fixed tests, still failing,
+  newly slow, and the failures grouped by cause with which causes are new. Failure text is only
+  ever quoted as a sample, never written into a sentence, so a test log cannot instruct a reader.
 
 ### Fixed
 

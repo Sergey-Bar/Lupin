@@ -9,7 +9,7 @@
   ],
   "summary": {
     "admin": 44,
-    "viewer": 103,
+    "viewer": 104,
     "operator": 37,
     "open": 16,
     "runner-credential": 9,
@@ -1366,6 +1366,13 @@
     {
       "method": "GET",
       "path": "/api/v1/runs/:runId",
+      "access": "viewer",
+      "evidenceTest": "apps/api/src/routes/execution.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/runs/:runId/analysis",
       "access": "viewer",
       "evidenceTest": "apps/api/src/routes/execution.test.ts",
       "composition": "always"

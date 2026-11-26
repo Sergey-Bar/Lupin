@@ -301,8 +301,14 @@
     {
       "id": "backend.failure-analyzer",
       "area": "backend",
-      "statement": "Failures are clustered by cause and stored, so a correlation table has a writer.",
-      "check": { "probe": "exists", "paths": ["apps/worker/src/failure-analyzer.ts"] }
+      "statement": "Each run says what changed since the run before and why: new, fixed and still-failing tests, slowdowns, and causes.",
+      "check": {
+        "probe": "exists",
+        "paths": [
+          "packages/reporting/src/run-analysis.ts",
+          "apps/api/src/services/failure-cluster-store.ts"
+        ]
+      }
     },
     {
       "id": "backend.no-mock-capability",

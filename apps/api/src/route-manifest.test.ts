@@ -197,6 +197,7 @@ const CANONICAL_API_ROUTES: Array<[string, string]> = [
   ['POST', '/api/v1/runs/:runId/cancel'],
   ['POST', '/api/v1/runs/:runId/retry'],
   ['GET', '/api/v1/runs/:runId/gate'],
+  ['GET', '/api/v1/runs/:runId/analysis'],
   ['GET', '/api/v1/runs/:runId/artifacts'],
   ['GET', '/api/v1/runs/:runId/artifacts/:artifactId'],
   // Releases and policies.

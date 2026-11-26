@@ -1862,6 +1862,17 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/runs/{runId}/analysis": {
+      "get": {
+        "operationId": "getApiV1RunsRunIdAnalysis",
+        "tags": ["runs"],
+        "x-source": "apps/api/src/routes/execution/runs.routes.ts",
+        "parameters": [
+          { "name": "runId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/runs/{runId}/artifacts": {
       "get": {
         "operationId": "getApiV1RunsRunIdArtifacts",
@@ -27094,6 +27105,82 @@
         "required": ["scope"],
         "additionalProperties": false
       },
+      "RunAnalysisSchema": {
+        "type": "object",
+        "properties": {
+          "runId": { "type": "string" },
+          "comparedTo": { "type": ["string", "null"] },
+          "newFailures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": { "key": { "type": "string" }, "title": { "type": "string" } },
+              "required": ["key", "title"],
+              "additionalProperties": false
+            }
+          },
+          "fixed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": { "key": { "type": "string" }, "title": { "type": "string" } },
+              "required": ["key", "title"],
+              "additionalProperties": false
+            }
+          },
+          "stillFailing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": { "key": { "type": "string" }, "title": { "type": "string" } },
+              "required": ["key", "title"],
+              "additionalProperties": false
+            }
+          },
+          "newlySlow": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "title": { "type": "string" },
+                "beforeMs": { "type": "number", "minimum": 0 },
+                "nowMs": { "type": "number", "minimum": 0 }
+              },
+              "required": ["key", "title", "beforeMs", "nowMs"],
+              "additionalProperties": false
+            }
+          },
+          "causes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "signature": { "type": "string" },
+                "errorType": { "type": ["string", "null"] },
+                "tests": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                "newInThisRun": { "type": "boolean" },
+                "sample": { "type": "string" },
+                "sentence": { "type": "string" }
+              },
+              "required": ["signature", "errorType", "tests", "newInThisRun", "sample", "sentence"],
+              "additionalProperties": false
+            }
+          },
+          "summary": { "type": "string" }
+        },
+        "required": [
+          "runId",
+          "comparedTo",
+          "newFailures",
+          "fixed",
+          "stillFailing",
+          "newlySlow",
+          "causes",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
       "RunAssignedEventPayloadSchema": {
         "type": "object",
         "properties": {
@@ -27103,6 +27190,19 @@
           "runnerId": { "type": "string", "minLength": 1 }
         },
         "required": ["phase", "outcome", "jobId", "runnerId"],
+        "additionalProperties": false
+      },
+      "RunCauseSchema": {
+        "type": "object",
+        "properties": {
+          "signature": { "type": "string" },
+          "errorType": { "type": ["string", "null"] },
+          "tests": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "newInThisRun": { "type": "boolean" },
+          "sample": { "type": "string" },
+          "sentence": { "type": "string" }
+        },
+        "required": ["signature", "errorType", "tests", "newInThisRun", "sample", "sentence"],
         "additionalProperties": false
       },
       "RunCommandSchema": {
