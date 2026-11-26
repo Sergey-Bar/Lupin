@@ -240,16 +240,16 @@ catalog:
   '@eslint/js': ^10.0.1
   # Shared by two or more packages, so declared once (ledger MNT-198). pglite is exact: the
   # worker pinned it so, and an in-process PostgreSQL is the thing every suite checks SQL on.
-  '@electric-sql/pglite': 0.5.16
+  '@electric-sql/pglite': 0.5.17
   '@testing-library/jest-dom': ^8.0.0
-  '@testing-library/user-event': ^14.6.12
+  '@testing-library/user-event': ^14.6.13
   axe-core: ^4.14.1
   tsx: ^4.23.15
   vitest-axe: ^0.1.0
   '@playwright/test': ^1.65.1
-  '@sentry/node': ^11.13.0
-  '@sentry/react': ^11.13.0
-  '@sentry/vite-plugin': ^11.13.0
+  '@sentry/node': ^11.16.0
+  '@sentry/react': ^11.16.0
+  '@sentry/vite-plugin': ^11.16.0
   '@tailwindcss/vite': ^4.3.5
   '@testing-library/dom': ^10.4.2
   '@testing-library/react': ^16.3.3
@@ -265,9 +265,9 @@ catalog:
   drizzle-kit: ^0.31.11
   drizzle-orm: ^0.45.4
   eslint: ^10.15.0
-  fast-check: ^4.10.2
+  fast-check: ^4.10.3
   jsdom: ^31.0.1
-  lucide-react: ^1.73.0
+  lucide-react: ^1.77.0
   simple-icons: 16.38.0
   # The read-only MCP server (apps/api/src/mcp): Streamable HTTP and stdio transports.
   # Pinned exactly: it carries its own transitive tree (express, hono, ajv, jose), so a
@@ -276,7 +276,7 @@ catalog:
   # OIDC sign-in for the team profile (apps/api/src/services/oidc-service.ts, ADR-014).
   # Certified, by the author of the jose the MCP SDK already brings; pinned exactly so an
   # authentication library never changes with an install.
-  openid-client: 6.9.0
+  openid-client: 6.9.1
   pg: ^8.23.1
   prettier: ^3.10.1
   react: ^19.3.1

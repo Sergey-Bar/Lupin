@@ -19,7 +19,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "catalog:",
     "simple-icons": "catalog:",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.1"
   },
   "peerDependencies": {
     "react": ">=18.0.0 <20.0.0",
@@ -41,7 +41,7 @@
     "jsdom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "storybook": "^10.6.7",
+    "storybook": "^10.6.8",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
