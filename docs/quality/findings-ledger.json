@@ -8284,6 +8284,19 @@
           "asserts": "On PGlite with the real migration graph, a trigger that refuses the audit insert leaves the run at its previous status and writes no audit row, and a successful change writes the status and exactly one row naming the caller; in memory, a sink that throws puts the run back."
         }
       ]
+    },
+    {
+      "id": "MNT-205",
+      "title": "The API and the worker have no mutation score",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "open",
+      "confirmed": true,
+      "confirmedOn": "2026-11-26",
+      "confirmedBy": "kilo:read-the-config",
+      "summary": "`docs/quality/mutation-baseline.json` scores five packages, and none of the applications. The blocker is not MNT-90: the Vitest 5 runner defect is patched and the five packages mutate correctly. It is cost. The full `apps/api` suite took 249 s on the development host on 2026-11-26 (2,894 tests), and the nightly `mutation` job's 150-minute budget is already spent on the five packages, so a run over the API needs a job of its own, and its score is a measurement nobody has taken yet. Plan 1795712849115 task 9.",
+      "owner": "The quality-gates owner (`scripts/mutation-ratchet.mjs`, `.config/stryker.config.mjs`).",
+      "removalCondition": "A nightly job runs `pnpm mutation` over `apps/api` and `apps/worker` with per-test coverage, and `pnpm mutation:ratchet --record` writes both scores into `docs/quality/mutation-baseline.json` from that run's reports."
     }
   ]
 }

@@ -281,8 +281,8 @@
       "statement": "The API and the worker meet the mutation target.",
       "check": { "probe": "mutation-covers", "packages": ["apps/api", "apps/worker"] },
       "blockedExternal": {
-        "reason": "StrykerJS's Vitest runner runs no tests against mutants on Vitest 5 (stryker-js#6210).",
-        "ledger": "MNT-90"
+        "reason": "A mutation run over the API takes hours; its score needs a nightly job of its own to be measured.",
+        "ledger": "MNT-205"
       }
     },
     {
