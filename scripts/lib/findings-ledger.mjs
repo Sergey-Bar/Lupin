@@ -226,7 +226,19 @@ const STATUS_RULES = {
   // easiest thing for a ledger to accumulate silently.
   open(label, record) {
     const band = /** @type {string} */ (record.band);
-    if (!BLOCKING_BANDS.has(band) || filled(record.wave)) return [];
+    if (!BLOCKING_BANDS.has(band)) {
+      // A non-blocking open row is owned by nobody's wave by construction, so it needs what
+      // debt needs: a name, and a condition that closes it. DEP-3 sat open for a month with
+      // neither, and the only way to learn who would close it was to read its summary.
+      return ['owner', 'removalCondition']
+        .filter((field) => !filled(record[field]))
+        .map(
+          (field) =>
+            `${label}: an open ${band} has no \`${field}\`. A row nobody owns, with no ` +
+            'condition that closes it, is a row that stays open.',
+        );
+    }
+    if (filled(record.wave)) return [];
     return [
       `${label}: an open ${band} names no wave. A blocking-band finding that no ` +
         'wave owns is indistinguishable from one nobody read.',

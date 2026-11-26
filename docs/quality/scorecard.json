@@ -172,13 +172,27 @@
       }
     },
     {
-      "id": "integrations.runner-producers",
+      "id": "integrations.load-producer",
       "area": "integrations",
-      "statement": "The runner produces load and security evidence itself: k6 and ZAP are real.",
+      "statement": "The runner produces load evidence itself: a k6 run is queued, bounded and read back.",
       "check": {
         "probe": "register-status",
-        "ids": ["tool.zap", "quality.load", "quality.security"],
+        "ids": ["tool.k6", "quality.load"],
         "want": "real"
+      }
+    },
+    {
+      "id": "integrations.security-producer",
+      "area": "integrations",
+      "statement": "The runner produces security evidence itself: a ZAP baseline scan is recorded.",
+      "check": {
+        "probe": "register-status",
+        "ids": ["tool.zap", "quality.security"],
+        "want": "real"
+      },
+      "blockedExternal": {
+        "reason": "The adapter and runner path exist; closing it needs a ZAP scan recorded on a host that carries ZAP.",
+        "ledger": "BK-2"
       }
     },
     {

@@ -86,5 +86,5 @@ What the pass fixed that the baseline did not list:
 
 Not done: the per-page rubric score, the row-to-detail shared-element morph, `j`/`k` in the new
 rows, and a visual pass over every page beyond those listed above. `packages/connectors/github`
-is at 99.57% statements against a recorded floor of 100 (line 779); that package is not touched
-by this work.
+was below its recorded floor of 100 when this was written; it measured 100/100/100/100 again on
+2026-11-26.
