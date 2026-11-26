@@ -12,6 +12,12 @@
   owns the number, and a criterion carrying a result is refused. Reporting in CI until its
   first all-pass run.
 
+### Fixed
+
+- **A run's status change and its audit row are one write (task 3, ledger MNT-204).** A failed
+  audit insert used to answer 500 over a run that had already moved; the change now rolls back
+  with it.
+
 ## 4.1.0 - 2026-11-12 - the console, simplified
 
 ### Added

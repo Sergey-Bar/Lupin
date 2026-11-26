@@ -7,9 +7,10 @@
 import { eq, and, sql, asc, desc, gte, lt, lte, inArray, type SQL } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { PgliteQueryResultHKT } from 'drizzle-orm/pglite';
-import { runs, tests } from '@lupin/db';
+import { auditEvents, runs, tests } from '@lupin/db';
 import { storedTestIdentity } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
+import { auditRow, type AuditEntry, type AuditSink } from '../modules/dashboard/audit-sink.js';
 import {
   toPersistedStatus,
   type RunAnalyticsSummary,
@@ -189,37 +190,65 @@ export class DrizzleRunRepository implements RunRepository {
     // conditions of the write itself, so nothing can move the run between a check and it.
     const written = await this.db
       .update(runs)
-      .set({
-        ...(patch.status !== undefined && { status: patch.status }),
-        // The phase and its outcome move together or not at all: the CHECK requires the
-        // pair to agree, so a caller that patched one without the other would get a 500
-        // for a request that was merely malformed.
-        ...(patch.phase !== undefined && { phase: patch.phase }),
-        ...(patch.outcome !== undefined && { outcome: patch.outcome }),
-        ...(patch.finishedAt !== undefined && {
-          finishedAt: patch.finishedAt ? new Date(patch.finishedAt) : null,
-        }),
-        ...(patch.durationMs !== undefined && { durationMs: patch.durationMs }),
-        ...(patch.passedDelta !== undefined && {
-          passed: sql`${runs.passed} + ${patch.passedDelta}`,
-        }),
-        ...(patch.failedDelta !== undefined && {
-          failed: sql`${runs.failed} + ${patch.failedDelta}`,
-        }),
-        ...(patch.flakyDelta !== undefined && {
-          flaky: sql`${runs.flaky} + ${patch.flakyDelta}`,
-        }),
-        ...(patch.skippedDelta !== undefined && {
-          skipped: sql`${runs.skipped} + ${patch.skippedDelta}`,
-        }),
-      })
-      .where(
-        patch.ifStatus === undefined
-          ? this.ownRun(id)
-          : and(this.ownRun(id), eq(runs.status, patch.ifStatus)),
-      )
+      .set(this.patchValues(patch))
+      .where(this.patchCondition(id, patch))
       .returning({ id: runs.id });
     return written.length > 0;
+  }
+
+  async patchRunAudited(
+    id: string,
+    patch: RunPatch,
+    entry: AuditEntry,
+    _fallback: AuditSink,
+  ): Promise<boolean> {
+    // The patch and its record in one transaction (plan 1795712849115 task 3). The audit row
+    // was a second statement after the patch had committed, so a failed insert answered 500
+    // over a run that had already moved, and nothing said who moved it.
+    const now = new Date();
+    return await this.db.transaction(async (tx) => {
+      const written = await tx
+        .update(runs)
+        .set(this.patchValues(patch))
+        .where(this.patchCondition(id, patch))
+        .returning({ id: runs.id });
+      if (written.length === 0) return false;
+      await tx.insert(auditEvents).values(auditRow(entry, this.workspaceId, now));
+      return true;
+    });
+  }
+
+  private patchCondition(id: string, patch: RunPatch): SQL | undefined {
+    return patch.ifStatus === undefined
+      ? this.ownRun(id)
+      : and(this.ownRun(id), eq(runs.status, patch.ifStatus));
+  }
+
+  private patchValues(patch: RunPatch) {
+    return {
+      ...(patch.status !== undefined && { status: patch.status }),
+      // The phase and its outcome move together or not at all: the CHECK requires the
+      // pair to agree, so a caller that patched one without the other would get a 500
+      // for a request that was merely malformed.
+      ...(patch.phase !== undefined && { phase: patch.phase }),
+      ...(patch.outcome !== undefined && { outcome: patch.outcome }),
+      ...(patch.finishedAt !== undefined && {
+        finishedAt: patch.finishedAt ? new Date(patch.finishedAt) : null,
+      }),
+      ...(patch.durationMs !== undefined && { durationMs: patch.durationMs }),
+      ...(patch.passedDelta !== undefined && {
+        passed: sql`${runs.passed} + ${patch.passedDelta}`,
+      }),
+      ...(patch.failedDelta !== undefined && {
+        failed: sql`${runs.failed} + ${patch.failedDelta}`,
+      }),
+      ...(patch.flakyDelta !== undefined && {
+        flaky: sql`${runs.flaky} + ${patch.flakyDelta}`,
+      }),
+      ...(patch.skippedDelta !== undefined && {
+        skipped: sql`${runs.skipped} + ${patch.skippedDelta}`,
+      }),
+    };
   }
 
   async getRun(id: string): Promise<RunRecord | null> {

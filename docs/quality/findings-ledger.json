@@ -8265,6 +8265,25 @@
           "asserts": "The installation default applies, a workspace's own wins, another workspace's never counts."
         }
       ]
+    },
+    {
+      "id": "MNT-204",
+      "title": "A run status change committed even when its audit row could not be written",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN7-W1",
+      "confirmed": true,
+      "confirmedOn": "2026-11-26",
+      "confirmedBy": "kilo:fail-before-verification",
+      "summary": "The leftover MNT-171 named: PATCH /api/v1/dashboard/runs/:id/status wrote the status through `patchRun`, then recorded the audit row through the sink as a second statement. When the insert failed (a constraint, a full disk, a dropped connection) the request answered 500 while the run had already moved, and nothing recorded who moved it, which is the outcome the audit trail exists to rule out.",
+      "resolution": "`RunRepository.patchRunAudited` applies the patch and writes the audit row as one unit. `DrizzleRunRepository` does both in one transaction and rolls back on a failed insert; the in-memory repository, which has no transaction, records through the route's sink and puts the run back when the record throws. The route calls it instead of the two writes. Watched failing first: with a trigger refusing every `audit_events` insert on the real migration graph, the run read `interrupted` after a 500; it reads `running` now, with no row written.",
+      "evidence": [
+        {
+          "path": "apps/api/src/modules/dashboard/runs-status-atomic.test.ts",
+          "asserts": "On PGlite with the real migration graph, a trigger that refuses the audit insert leaves the run at its previous status and writes no audit row, and a successful change writes the status and exactly one row naming the caller; in memory, a sink that throws puts the run back."
+        }
+      ]
     }
   ]
 }

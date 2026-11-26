@@ -12,6 +12,7 @@ import {
   type RunRepository,
   type TestRecord,
 } from './run-repository.js';
+import type { AuditEntry, AuditSink } from '../modules/dashboard/audit-sink.js';
 
 export class InMemoryRunRepository implements RunRepository {
   // Keyed by runId
@@ -55,6 +56,25 @@ export class InMemoryRunRepository implements RunRepository {
     if (patch.skippedDelta !== undefined) updated.skipped += patch.skippedDelta;
 
     this._runs.set(id, updated);
+    return true;
+  }
+
+  async patchRunAudited(
+    id: string,
+    patch: RunPatch,
+    entry: AuditEntry,
+    fallback: AuditSink,
+  ): Promise<boolean> {
+    // No transaction to join, so the record goes through `fallback` and a failure puts the
+    // run back. Nothing else can interleave: this process is the only writer to the map.
+    const before = this._runs.get(id);
+    if (!(await this.patchRun(id, patch))) return false;
+    try {
+      await fallback.record(entry);
+    } catch (error) {
+      if (before !== undefined) this._runs.set(id, before);
+      throw error;
+    }
     return true;
   }
 
