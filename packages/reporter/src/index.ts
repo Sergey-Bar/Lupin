@@ -38,6 +38,14 @@ export * from './adapters/jest-json.js';
 export * from './adapters/vitest-json.js';
 export * from './adapters/pytest-json.js';
 export * from './adapters/mochawesome-json.js';
+export * from './adapters/trx-xml.js';
+export * from './adapters/nunit-xml.js';
+export * from './adapters/xunit-xml.js';
+export * from './adapters/robot-xml.js';
+export * from './adapters/cucumber-json.js';
+export * from './adapters/go-test-json.js';
+export * from './adapters/newman-json.js';
+export * from './adapters/lighthouse-json.js';
 export {
   COVERAGE_ADAPTERS,
   parseCoverage,

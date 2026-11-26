@@ -9,8 +9,8 @@ import { z } from 'zod/v4';
  */
 /**
  * The `format=` spellings this door reads: the test-result formats in `REPORT_FORMATS`, each
- * by a spelling that resolves through `reportFormatForSpelling`. Load and security reports are
- * not test runs a quarantine can excuse, so k6 and ZAP are not here.
+ * by a spelling that resolves through `reportFormatForSpelling`. Load, security and page-budget reports are
+ * not test runs a quarantine can excuse, so k6, ZAP and Lighthouse are not here.
  */
 export const TEST_REPORT_FORMATS = [
   'junit',
@@ -27,6 +27,13 @@ export const TEST_REPORT_FORMATS = [
   'mochawesome',
   'mochawesome-json',
   'cypress',
+  'trx',
+  'nunit',
+  'xunit',
+  'cucumber',
+  'robot',
+  'go-test',
+  'newman',
 ] as const;
 
 export const TestReportQuerySchema = z.object({

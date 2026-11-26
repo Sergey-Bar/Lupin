@@ -29,15 +29,15 @@ curl --fail-with-body \
 
 ::: details See every upload field
 
-| Field                     | Purpose                                                                                                                                                                 |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `file`                    | The report. Exactly one file part.                                                                                                                                      |
-| `format`                  | Which adapter reads it: `playwright`, `junit`, `allure`, `k6`, `zap`, `ctrf`, `jest`, `vitest`, `pytest` or `mochawesome`. See below for what happens when you omit it. |
-| `runId`                   | Your identity for the run. Omit it and the report's own SHA-256 becomes the id, so a re-upload is a replay rather than a second run.                                    |
-| `branch`                  | Shown on the run and used to filter trends.                                                                                                                             |
-| `commitSha`               | The commit under test.                                                                                                                                                  |
-| `environment`             | Free text, such as `staging`.                                                                                                                                           |
-| `startedAt`, `finishedAt` | ISO 8601 timestamps with seconds, when the report does not carry them.                                                                                                  |
+| Field                     | Purpose                                                                                                                                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `file`                    | The report. Exactly one file part.                                                                                                                                                                                                                       |
+| `format`                  | Which adapter reads it: `playwright`, `junit`, `allure`, `k6`, `zap`, `ctrf`, `jest`, `vitest`, `pytest`, `mochawesome`, `trx`, `nunit`, `xunit`, `cucumber`, `robot`, `go-test`, `newman` or `lighthouse`. See below for what happens when you omit it. |
+| `runId`                   | Your identity for the run. Omit it and the report's own SHA-256 becomes the id, so a re-upload is a replay rather than a second run.                                                                                                                     |
+| `branch`                  | Shown on the run and used to filter trends.                                                                                                                                                                                                              |
+| `commitSha`               | The commit under test.                                                                                                                                                                                                                                   |
+| `environment`             | Free text, such as `staging`.                                                                                                                                                                                                                            |
+| `startedAt`, `finishedAt` | ISO 8601 timestamps with seconds, when the report does not carry them.                                                                                                                                                                                   |
 
 :::
 
@@ -49,6 +49,26 @@ into nonsense.
 **Errors name the problem.** A report the adapter cannot read answers
 `INVALID_REPORTER_UPLOAD` with the adapter's own reason in `details.adapterMessage` — for
 example that a JUnit document contains no test cases — so the fix is in the response.
+
+## More test tools
+
+Each of these is read by its own adapter. Produce the file with the command shown and upload it
+with the `format` in the second column; `lupin test --format` takes the same names, except
+Lighthouse, which is a page budget rather than tests a quarantine can excuse.
+
+| Tool                                   | `format`     | Produce it                                                         | What becomes a test                                                        |
+| -------------------------------------- | ------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| .NET (MSTest, xUnit, NUnit via VSTest) | `trx`        | `dotnet test --logger trx`                                         | Each result; a data-driven test's rows, not their summary                  |
+| NUnit 3                                | `nunit`      | `nunit3-console Tests.dll --result=TestResult.xml`                 | Each `test-case`, under its fixture                                        |
+| xUnit.net                              | `xunit`      | `dotnet test --logger "xunit;LogFilePath=results.xml"`             | Each `test`; each row of a theory separately                               |
+| Cucumber (JS, JVM, Behave, SpecFlow)   | `cucumber`   | `--format json:cucumber.json`                                      | Each scenario, background included; outline rows told apart by line        |
+| Robot Framework 6 and 7                | `robot`      | `robot --output output.xml tests/`                                 | Each test, by its own status rather than its first keyword's               |
+| Go                                     | `go-test`    | `go test -json ./... > go-test.json`                               | Each test and subtest; a test that never finished is a failure             |
+| Postman (Newman)                       | `newman`     | `newman run collection.json -r json --reporter-json-export r.json` | Each request, with its assertions as steps; no assertions reads as unknown |
+| Lighthouse                             | `lighthouse` | `lighthouse <url> --output json --output-path lh.json`             | Each category: 90 or above passes, below fails, unscored is unknown        |
+
+A `.trx` file is recognised by its name; every other XML format must be declared, because XML
+on its own does not say which tool wrote it.
 
 ## Playwright
 

@@ -10,6 +10,14 @@ import { jestJsonAdapter } from './adapters/jest-json.js';
 import { vitestJsonAdapter } from './adapters/vitest-json.js';
 import { pytestJsonAdapter } from './adapters/pytest-json.js';
 import { mochawesomeJsonAdapter } from './adapters/mochawesome-json.js';
+import { trxXmlAdapter } from './adapters/trx-xml.js';
+import { nunitXmlAdapter } from './adapters/nunit-xml.js';
+import { xunitXmlAdapter } from './adapters/xunit-xml.js';
+import { robotXmlAdapter } from './adapters/robot-xml.js';
+import { cucumberJsonAdapter } from './adapters/cucumber-json.js';
+import { goTestJsonAdapter } from './adapters/go-test-json.js';
+import { newmanJsonAdapter } from './adapters/newman-json.js';
+import { lighthouseJsonAdapter } from './adapters/lighthouse-json.js';
 import { COVERAGE_ADAPTERS } from './adapters/coverage.js';
 import { INGESTED_PRODUCERS } from './producer-status.js';
 import { CanonicalRunResultSchema } from '@lupin/shared-contracts';
@@ -103,6 +111,61 @@ const RESULT_ADAPTERS: ReadonlyArray<readonly [string, ProducerAdapter, Uint8Arr
     'cypress',
     mochawesomeJsonAdapter,
     json({ results: [{ file: 'a.cy.ts', tests: [{ title: 'a', state: 'passed' }], suites: [] }] }),
+  ],
+  // Plan 1795712849115 task 11.
+  [
+    'vstest',
+    trxXmlAdapter,
+    new TextEncoder().encode(
+      '<TestRun><Results><UnitTestResult testId="1" testName="a" outcome="Passed"/></Results></TestRun>',
+    ),
+  ],
+  [
+    'nunit',
+    nunitXmlAdapter,
+    new TextEncoder().encode(
+      '<test-run><test-suite type="Assembly" name="a.dll"><test-case name="a" result="Passed"/></test-suite></test-run>',
+    ),
+  ],
+  [
+    'xunit',
+    xunitXmlAdapter,
+    new TextEncoder().encode(
+      '<assemblies><assembly name="a.dll"><collection><test name="a" type="A" result="Pass"/></collection></assembly></assemblies>',
+    ),
+  ],
+  [
+    'robot',
+    robotXmlAdapter,
+    new TextEncoder().encode(
+      '<robot><suite name="S" source="/x/s.robot"><test name="a"><status status="PASS"/></test></suite></robot>',
+    ),
+  ],
+  [
+    'cucumber',
+    cucumberJsonAdapter,
+    json([
+      {
+        uri: 'a.feature',
+        name: 'F',
+        elements: [{ type: 'scenario', name: 'a', steps: [{ result: { status: 'passed' } }] }],
+      },
+    ]),
+  ],
+  [
+    'go',
+    goTestJsonAdapter,
+    new TextEncoder().encode(JSON.stringify({ Action: 'pass', Package: 'p', Test: 'TestA' })),
+  ],
+  [
+    'newman',
+    newmanJsonAdapter,
+    json({ run: { executions: [{ item: { name: 'a' }, assertions: [{ assertion: 'ok' }] }] } }),
+  ],
+  [
+    'lighthouse',
+    lighthouseJsonAdapter,
+    json({ lighthouseVersion: '12', categories: { p: { title: 'Performance', score: 1 } } }),
   ],
 ];
 

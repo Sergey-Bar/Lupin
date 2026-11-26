@@ -29,6 +29,11 @@
   bridge stops the attempt and reports `retryAt`, and a scheduled report waits until then instead
   of its fixed backoff. `retryAtFrom` and `refusalOf` in `@lupin/connectors-sdk` are the one
   reading of the header. A Jira setup guide, and a check that every MCP tool is called over HTTP.
+- **Eight more test tools (task 11).** Uploads in .NET TRX, NUnit 3, xUnit.net, Cucumber JSON,
+  Robot Framework, `go test -json`, Newman and Lighthouse are read by their own adapters, each
+  held to the same contract as the others by `new-adapter-parity.test.ts`. A `.trx` is
+  recognised by its name, and the .NET project scanner now labels `TestResults/*.trx` as TRX;
+  it used to call them JUnit, so a detected TRX reached a parser that found no tests in it.
 
 ### Fixed
 
