@@ -236,7 +236,13 @@
       "id": "backend.query-budget",
       "area": "backend",
       "statement": "Hot read paths issue a fixed number of queries however much data exists.",
-      "check": { "probe": "exists", "paths": ["tests/integration/src/query-budget.test.ts"] }
+      "check": {
+        "probe": "exists",
+        "paths": [
+          "apps/api/src/execution/run-listing-queries.test.ts",
+          "apps/api/src/repositories/query-budget.test.ts"
+        ]
+      }
     },
     {
       "id": "backend.execution-store-covered",
