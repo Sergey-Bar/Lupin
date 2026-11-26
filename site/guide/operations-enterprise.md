@@ -167,6 +167,20 @@ with the restore, which only needs the database running. It loads the backup int
 database, so the tables the newer release added do not get in its way, and it keeps the
 upgraded database as `lupin_previous`.
 
+**Checking an image before you trust it.** Every release image is scanned for known
+vulnerabilities before it is tagged, and fails the release on a fixable High or Critical. It
+is then signed without a key: the signature's certificate names this repository's release
+workflow. To check one yourself with [cosign](https://docs.sigstore.dev/cosign/):
+
+```sh
+cosign verify ghcr.io/sergey-bar/lupin-api:<version> \
+  --certificate-identity-regexp '^https://github.com/Sergey-Bar/Lupin/\.github/workflows/release\.yml@refs/tags/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+The same backup and restore you run is run every weekday night in CI against the latest
+release: a row written before the backup must come back, and one written after must not.
+
 ## What this does not give you
 
 - High availability: one host, so a host outage is an outage. Recovery is a restore on

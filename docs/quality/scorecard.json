@@ -33,7 +33,7 @@
       "check": {
         "probe": "contains",
         "path": ".github/workflows/release.yml",
-        "pattern": "(trivy|grype)"
+        "pattern": "anchore/scan-action@[0-9a-f]{40}[\\s\\S]*severity-cutoff: high"
       }
     },
     {
@@ -59,11 +59,11 @@
     {
       "id": "infra.web-healthcheck",
       "area": "infra",
-      "statement": "Every long-running production service has a healthcheck, the web service included.",
+      "statement": "Every long-running production service has a healthcheck: the web image declares its own.",
       "check": {
         "probe": "contains",
-        "path": "infra/compose/docker-compose.unified.yml",
-        "pattern": "^  web:\\n(?:(?!^  [a-z])[\\s\\S])*?^    healthcheck:"
+        "path": "infra/docker/web.Dockerfile",
+        "pattern": "^HEALTHCHECK .*127\\.0\\.0\\.1:8080"
       }
     },
     {

@@ -142,6 +142,18 @@ jobs:
         run: |
           mkdir -p digests
           touch "digests/${DIGEST#sha256:}"
+      # Scanned by digest, before the merge job gives it a tag, so an image with a known,
+      # fixable High or Critical vulnerability never becomes what `latest` pulls (plan
+      # 1795712849115 task 7). `only-fixed`: a finding with no released fix cannot be acted
+      # on by rebuilding, and failing on it would make every release red until upstream moves.
+      - name: Scan for known vulnerabilities
+        uses: anchore/scan-action@11983a512817154c80a9db660c1a184be7513ed6 # v7.4.3
+        with:
+          image: ${{ env.IMAGE_PREFIX }}-${{ matrix.image }}@${{ steps.build.outputs.digest }}
+          fail-build: true
+          severity-cutoff: high
+          only-fixed: true
+          output-format: table
       - name: Keep the digest for the merge
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
@@ -209,6 +221,16 @@ jobs:
           subject-name: ${{ env.IMAGE_PREFIX }}-${{ matrix.image }}
           subject-digest: ${{ steps.merge.outputs.digest }}
           push-to-registry: true
+      # A keyless signature: the certificate names this workflow and this tag, issued through
+      # the job's OIDC token, so there is no signing key to keep or leak. The acceptance job
+      # verifies it the way a user would, before it installs anything.
+      - name: Install cosign
+        uses: sigstore/cosign-installer@881c63bd87e38389154debd8331404ce7ca8a3ab # v4.1.4
+      - name: Sign the image
+        env:
+          IMAGE: ${{ env.IMAGE_PREFIX }}-${{ matrix.image }}
+          DIGEST: ${{ steps.merge.outputs.digest }}
+        run: cosign sign --yes "$IMAGE@$DIGEST"
 
   visibility:
     name: Images are public
@@ -285,6 +307,22 @@ jobs:
     timeout-minutes: 20
     # No checkout: this job has only what a user downloads.
     steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@881c63bd87e38389154debd8331404ce7ca8a3ab # v4.1.4
+      # What a careful user runs before trusting an image: the signature must come from this
+      # repository's release workflow, through GitHub's OIDC issuer. An unsigned image, or
+      # one signed by anything else, stops the release here.
+      - name: Verify every image's signature
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          for image in migrate api worker runner web edge; do
+            cosign verify "$IMAGE_PREFIX-$image:$VERSION" \
+              --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/\.github/workflows/release\.yml@refs/tags/" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null
+            echo "signed: $IMAGE_PREFIX-$image:$VERSION"
+          done
       - name: Download the bundle and its checksum
         env:
           GH_TOKEN: ${{ github.token }}

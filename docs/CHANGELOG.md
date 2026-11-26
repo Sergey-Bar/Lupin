@@ -16,6 +16,11 @@
   failure-cause issues honour `Idempotency-Key`; a repeat answers what the first did instead of
   creating a second record. `cursorPageSchema` and `CursorQuerySchema` in
   `@lupin/shared-contracts` are the one page contract.
+- **Signed, scanned images and a restore drill (task 7).** Release images are scanned with Grype
+  before they are tagged and fail on a fixable High or Critical; each is signed keylessly with
+  cosign, and the acceptance job verifies every signature. A nightly job backs up and restores
+  the latest release and checks what came back. The runner's root filesystem is read-only, with
+  its spool and job workspaces on volumes, so queued results survive a restart.
 
 ### Fixed
 
