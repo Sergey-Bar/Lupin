@@ -29,6 +29,8 @@
  * an extra write on the request path, to answer a question `rate()` already answers.
  */
 
+import { operatorSeries } from './operator-metrics.js';
+
 /** The content type the exposition format requires, with the charset stated. */
 export const PROMETHEUS_CONTENT_TYPE = 'text/plain; version=0.0.4; charset=utf-8';
 
@@ -118,6 +120,7 @@ export function collect(): Series[] {
       value: Math.round(process.uptime()),
     },
     ...requestCounterSamples(),
+    ...operatorSeries(),
   ];
 }
 

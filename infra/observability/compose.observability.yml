@@ -1,0 +1,60 @@
+# Optional: Prometheus and Grafana beside an install (plan 1795712849115 task 8).
+#
+#   docker compose -p lupin -f docker-compose.unified.yml \
+#     -f ../observability/compose.observability.yml up -d
+#
+# An override file rather than services in the production compose, so an install that does not
+# want them carries nothing extra. Both images are pinned by digest, both listen on loopback
+# only, and neither is reachable from another machine. Grafana opens on http://127.0.0.1:3300;
+# set LUPIN_GRAFANA_PASSWORD before the first start, or Grafana asks you to change its default
+# on first sign-in.
+services:
+  prometheus:
+    image: prom/prometheus:v3.16.0@sha256:e04987641b57704f408e31f6373ba4138ecf27cb4a165d24aabb6c38fddd0f06
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: '0.5'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+    volumes:
+      - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - '127.0.0.1:9090:9090'
+    depends_on:
+      api:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:13.3.2@sha256:81556409ba48b2b922e0adb69a2511337d8ba7578f11962eefa6149a2d815101
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: '0.5'
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${LUPIN_GRAFANA_PASSWORD:-}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+    volumes:
+      - ../observability/grafana/datasource.yml:/etc/grafana/provisioning/datasources/lupin.yml:ro
+      - ../observability/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/lupin.yml:ro
+      - ../observability/dashboard.json:/var/lib/grafana/dashboards/lupin.json:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - '127.0.0.1:3300:3000'
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus_data:
+  grafana_data:

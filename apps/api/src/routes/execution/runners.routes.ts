@@ -25,6 +25,7 @@ import {
   requireRunnerCredential,
 } from './shared.js';
 import { ClaimSchema, HeartbeatSchema, RegistrationSchema } from './schemas.js';
+import { recordRunnerHeartbeat } from '../../observability/operator-metrics.js';
 import { createRunnerToken, hashRunnerToken } from '../../execution/in-memory-execution-store.js';
 import { randomUUID } from 'node:crypto';
 type RunnerStore = ExecutionRouteContext['options']['store'];
@@ -154,6 +155,7 @@ export function registerRunnerRoutes(app: Hono, context: ExecutionRouteContext):
       parsed.health,
     );
     if (!heartbeat) throw new DomainError('RUNNER_NOT_FOUND', 'Runner not found');
+    recordRunnerHeartbeat();
     return c.json(heartbeat);
   });
 

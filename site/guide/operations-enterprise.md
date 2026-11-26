@@ -116,7 +116,25 @@ running on its own data again.
   leaves export off; it never stops the API.
 - **Metrics.** The API serves Prometheus text at `/metrics`, inside the compose network
   (`http://api:3000/metrics`). The front door does not publish it, so the scraper runs on the
-  same network.
+  same network. Beside the process and request series it serves
+  `lupin_runner_heartbeat_age_seconds` (how long the runners have been silent),
+  `lupin_connector_calls_total` and `lupin_connector_failures_total` by connector, and
+  `lupin_reporter_events_total` with `lupin_reporter_last_event_age_seconds` (whether results
+  are still arriving). None carries run, test or workspace data.
+- **Alerts and a dashboard, ready made.** `infra/observability/` has Prometheus alert rules
+  (API down, server errors over 5%, no runner heartbeat for five minutes, a connector failing
+  repeatedly, no results for a day, memory near its limit), each with a `fix` line, and a
+  Grafana dashboard. Start both beside the install, on loopback only:
+
+  ```sh
+  cd infra/compose
+  docker compose -p lupin -f docker-compose.unified.yml \
+    -f ../observability/compose.observability.yml up -d
+  ```
+
+  Grafana opens on `http://127.0.0.1:3300`; set `LUPIN_GRAFANA_PASSWORD` before the first
+  start. Point your own Alertmanager at Prometheus to be paged.
+
 - **Errors.** `SENTRY_DSN` reports server errors, with cookies, headers, bodies and local
   variables switched off in code.
 

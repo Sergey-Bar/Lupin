@@ -1,0 +1,62 @@
+# Prometheus alert rules for one Lupin install (plan 1795712849115 task 8).
+#
+# Every series named here is one the API's `/metrics` serves; `scripts/lib/observability.test.mjs`
+# fails when a rule names a series nothing emits, so a renamed metric cannot leave an alert that
+# silently never fires. Thresholds suit the single-node reference install; change them in your
+# own copy rather than here.
+groups:
+  - name: lupin
+    rules:
+      - alert: LupinApiDown
+        expr: up{job="lupin-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: The Lupin API has not answered a scrape for two minutes.
+          fix: Run `./start.sh status`, then `./start.sh logs` for the api service.
+
+      - alert: LupinServerErrors
+        expr: >
+          sum(rate(lupin_http_requests_total{class="5xx"}[10m]))
+          / clamp_min(sum(rate(lupin_http_requests_total[10m])), 1e-9) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: More than 5% of API requests have failed for ten minutes.
+          fix: Read the API log for `unhandled error` lines; each carries a request id.
+
+      - alert: LupinRunnerSilent
+        expr: lupin_runner_heartbeat_age_seconds > 300
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: No runner has sent a heartbeat for five minutes, so queued jobs will not start.
+          fix: Run `./start.sh status`; restart the runner with `docker compose -p lupin restart runner`.
+
+      - alert: LupinConnectorFailing
+        expr: increase(lupin_connector_failures_total[30m]) >= 3
+        labels:
+          severity: warning
+        annotations:
+          summary: 'The {{ $labels.connector }} connector failed three or more times in 30 minutes.'
+          fix: Open Settings, find the {{ $labels.connector }} connection, and send a test message.
+
+      - alert: LupinNoResults
+        expr: lupin_reporter_last_event_age_seconds > 86400
+        labels:
+          severity: info
+        annotations:
+          summary: No test results have arrived for a day.
+          fix: Check that your CI still runs `lupin upload` or the Playwright reporter.
+
+      - alert: LupinMemoryHigh
+        expr: process_resident_memory_bytes{job="lupin-api"} > 1.6e9
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: The API has used more than 1.6 GB for fifteen minutes, near its 2 GB limit.
+          fix: Restart the API; if it climbs again, collect `./start.sh logs` for a report.

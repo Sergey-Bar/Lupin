@@ -80,6 +80,7 @@ import { canonicalRunFromUploadEvents } from '../services/reporter-event-canonic
 import { bearerToken } from '../http/bearer-token.js';
 import { guard } from '../http/access.js';
 import type { RealtimeBus } from '../realtime/realtime-bus.js';
+import { recordReporterEvents } from '../observability/operator-metrics.js';
 
 // ---------------------------------------------------------------------------
 // Legacy wire shape — emitted by @lupin/reporter
@@ -684,6 +685,7 @@ export function createReporterRoutes(
       // operation, when the run row was created/updated and a bus is configured.
       if (runUpdated && options.bus) await broadcastRunUpdated(options.bus, repository, normalized);
     }
+    recordReporterEvents(1);
     return c.json(
       {
         ok: true,
@@ -717,6 +719,8 @@ export function createReporterRoutes(
       bus: options.bus,
       triggeredBy: 'upload',
     });
+    // An upload is results arriving, as an event is: the age gauge counts both.
+    recordReporterEvents(1);
 
     // **Archived after the parse, keyed by the run the document actually named.** For a
     // JSON body the run id is inside the payload, so archiving first meant the key was

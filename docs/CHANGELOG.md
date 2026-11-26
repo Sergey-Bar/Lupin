@@ -21,6 +21,10 @@
   cosign, and the acceptance job verifies every signature. A nightly job backs up and restores
   the latest release and checks what came back. The runner's root filesystem is read-only, with
   its spool and job workspaces on volumes, so queued results survive a restart.
+- **The install watches itself (task 8).** `/metrics` adds runner heartbeat age, connector calls
+  and failures by connector, and reporter events with the age of the last one.
+  `infra/observability/` ships alert rules, each with a fix line, a Grafana dashboard, and an
+  optional compose override that runs both on loopback.
 
 ### Fixed
 

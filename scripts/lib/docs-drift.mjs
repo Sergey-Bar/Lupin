@@ -942,12 +942,16 @@ function deriveEnvVars(read, files) {
   )) {
     names.add(match[1] ?? '');
   }
-  // And every variable the compose file interpolates: `${LUPIN_PORT:-8080}` is a setting
-  // an operator sets, though no service declares it under that name.
-  for (const match of read('infra/compose/docker-compose.unified.yml').matchAll(
-    /\$\{([A-Z][A-Z0-9_]*)/g,
-  )) {
-    names.add(match[1] ?? '');
+  // And every variable a compose file interpolates: `${LUPIN_PORT:-8080}` is a setting an
+  // operator sets, though no service declares it under that name. The observability override
+  // (`infra/observability/compose.observability.yml`) is one an operator runs too.
+  for (const file of [
+    'infra/compose/docker-compose.unified.yml',
+    'infra/observability/compose.observability.yml',
+  ]) {
+    for (const match of read(file).matchAll(/\$\{([A-Z][A-Z0-9_]*)/g)) {
+      names.add(match[1] ?? '');
+    }
   }
   return new Set([...names].filter((name) => name !== ''));
 }

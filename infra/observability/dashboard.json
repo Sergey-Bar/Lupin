@@ -1,0 +1,101 @@
+{
+  "uid": "lupin-install",
+  "title": "Lupin install",
+  "description": "One Lupin install: is it up, is it failing, is a runner alive, are connectors working, are results arriving. Every series is served by the API's /metrics.",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "time": { "from": "now-24h", "to": "now" },
+  "refresh": "1m",
+  "tags": ["lupin"],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "API up",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "lupin-prometheus" },
+      "targets": [{ "refId": "A", "expr": "up{job=\"lupin-api\"}" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Down" }, "1": { "text": "Up" } } }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Since the last runner heartbeat",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "lupin-prometheus" },
+      "targets": [{ "refId": "A", "expr": "lupin_runner_heartbeat_age_seconds" }],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Since the last test result",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "lupin-prometheus" },
+      "targets": [{ "refId": "A", "expr": "lupin_reporter_last_event_age_seconds" }],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Memory in use",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "lupin-prometheus" },
+      "targets": [{ "refId": "A", "expr": "process_resident_memory_bytes{job=\"lupin-api\"}" }],
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Requests by status class",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "lupin-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (class) (rate(lupin_http_requests_total[5m]))",
+          "legendFormat": "{{class}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Connector failures",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "lupin-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (connector) (increase(lupin_connector_failures_total[30m]))",
+          "legendFormat": "{{connector}}"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Test results arriving",
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "lupin-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(lupin_reporter_events_total[15m])",
+          "legendFormat": "events per second"
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    }
+  ]
+}
