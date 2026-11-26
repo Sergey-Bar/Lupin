@@ -78,3 +78,59 @@ export function storedTestIdentity(test: {
     ? testIdentity({ file: test.file, title: test.title })
     : test.stableId;
 }
+
+/**
+ * An identity read back into its parts: the inverse of {@link testIdentity}, honouring its
+ * escaping, so a title containing ` › ` or ` [x]` comes back as the title it was.
+ *
+ * @returns `undefined` for a value that is not an identity this function wrote
+ */
+export function parseTestIdentity(
+  identity: string,
+): { file: string; describePath: string[]; title: string; project: string } | undefined {
+  const segments: string[] = [];
+  let current = '';
+  let project: string | undefined;
+  for (let index = 0; index < identity.length; index += 1) {
+    const char = identity[index] ?? '';
+    if (char === '\\') {
+      current += identity[index + 1] ?? '';
+      index += 1;
+    } else if (identity.startsWith(SEPARATOR, index)) {
+      segments.push(current);
+      current = '';
+      index += SEPARATOR.length - 1;
+    } else if (char === '[' && identity.endsWith(']') && identity[index - 1] === ' ') {
+      // ` [project]` closes the identity; `[` inside a segment is always escaped.
+      segments.push(current.slice(0, -1));
+      project = unescapeSegment(identity.slice(index + 1, -1));
+      current = '';
+      break;
+    } else {
+      current += char;
+    }
+  }
+  if (project === undefined) segments.push(current);
+  if (segments.length < 2) return undefined;
+  const [file = '', ...rest] = segments;
+  const title = rest.pop() ?? '';
+  if (title === '') return undefined;
+  return { file, describePath: rest, title, project: project ?? '' };
+}
+
+function unescapeSegment(value: string): string {
+  return value.replace(/\\(.)/gu, '$1');
+}
+
+/**
+ * The line Playwright's `--test-list` file wants for an identity: `[project] › file › describe
+ * › title`. Playwright ignores line and column numbers and matches the title path.
+ *
+ * @returns `undefined` for an identity with no file, which a test list cannot name
+ */
+export function playwrightTestListLine(identity: string): string | undefined {
+  const parts = parseTestIdentity(identity);
+  if (parts === undefined || parts.file === '') return undefined;
+  const path = [parts.file, ...parts.describePath, parts.title].join(SEPARATOR);
+  return parts.project === '' ? path : `[${parts.project}]${SEPARATOR}${path}`;
+}

@@ -8297,6 +8297,48 @@
       "summary": "`docs/quality/mutation-baseline.json` scores five packages, and none of the applications. The blocker is not MNT-90: the Vitest 5 runner defect is patched and the five packages mutate correctly. It is cost. The full `apps/api` suite took 249 s on the development host on 2026-11-26 (2,894 tests), and the nightly `mutation` job's 150-minute budget is already spent on the five packages, so a run over the API needs a job of its own, and its score is a measurement nobody has taken yet. Plan 1795712849115 task 9.",
       "owner": "The quality-gates owner (`scripts/mutation-ratchet.mjs`, `.config/stryker.config.mjs`).",
       "removalCondition": "A nightly job runs `pnpm mutation` over `apps/api` and `apps/worker` with per-test coverage, and `pnpm mutation:ratchet --record` writes both scores into `docs/quality/mutation-baseline.json` from that run's reports."
+    },
+    {
+      "id": "MNT-206",
+      "title": "Rerun failed tests reruns the whole suite: no runner reads the selection",
+      "band": "Major",
+      "provenance": "hand",
+      "status": "fixed",
+      "wave": "LUPIN7-W3",
+      "confirmed": true,
+      "confirmedOn": "2026-11-26",
+      "confirmedBy": "kilo:read-the-code",
+      "summary": "`POST /api/v1/runs/:runId/retry` with `{scope: 'failed'}` collects the failed tests' ids and stores them as the new run's `selection`, and the claim carries it to the runner (`drizzle-execution-store.ts` claim spec). Nothing under `apps/runner/src` or `packages/runner-sdk` reads `selection`: the Playwright adapter's argv (`execution.ts` playwrightArguments) and the generic spawn have no filter. So the button labelled as rerunning the failed tests runs every test again, and the 4.1.0 CHANGELOG line describing it overstates it. Nor is a test that passes on the rerun linked back to the run it failed in, so a pass-on-rerun is not recorded as flaky.",
+      "owner": "The runner owner (`apps/runner/src/execution.ts`, `apps/runner/src/generic-spawn.ts`).",
+      "removalCondition": "The claim's `selection` reaches the Playwright adapter as a filter Playwright applies (the failed tests' files and titles, through `--test-list` or `--grep`), a runner test asserts the argv for a two-test selection, and a test that fails in a run and passes in its `retryOfRunId` rerun is reported as flaky by the insights reader.",
+      "resolution": "The retry route stores each failed test's identity (`storedTestIdentity`) as the rerun's `selection`, instead of row ids that name nothing outside the database. The runner passes the claim's selection to the executor, and the Playwright adapter writes it as a test-list file and adds `--test-list`, which is Playwright's own filter (1.65); an identity with no file, a row id, or a title with a line break names no line, and an empty list runs everything as before. A test that fails in a run and passes in its rerun is a fail-to-pass flip under one identity, which the insights reader already ranks as flaky; a test now pins that. Watched failing first: with the write still empty, the test-list file read back as one blank line. **Still true and stated:** a generic command (`argv`) has no filter a runner can apply for every tool, so its rerun still runs the whole command.",
+      "evidence": [
+        {
+          "path": "apps/runner/src/rerun-selection.test.ts",
+          "asserts": "A two-test selection reaches Playwright as `--test-list` with one `[project] › file › describe › title` line per test, and no selection adds no flag."
+        },
+        {
+          "path": "packages/shared-contracts/src/schemas/test-identity-parse.test.ts",
+          "asserts": "An identity reads back into its parts with its escaping honoured, and a row id or a fileless identity names no test-list line."
+        },
+        {
+          "path": "apps/api/src/execution/insights.test.ts",
+          "asserts": "A test that failed and passed in a rerun naming the run is on the flaky leaderboard with one flip."
+        }
+      ]
+    },
+    {
+      "id": "MNT-207",
+      "title": "A runner job's log is visible only after the job ends",
+      "band": "Minor",
+      "provenance": "hand",
+      "status": "open",
+      "confirmed": true,
+      "confirmedOn": "2026-11-26",
+      "confirmedBy": "kilo:read-the-code",
+      "summary": "The generic adapter writes `stdout.log` and `stderr.log` and uploads them as artifacts after the process exits (`generic-spawn.ts`), and the runner forwards only test events while a job runs (`runner-service.ts` onEvent). `RunEventTypeSchema` has no log event, so `GET /api/v1/events` cannot carry one, and a long suite shows nothing until it finishes.",
+      "owner": "The realtime owner (`packages/shared-contracts/src/schemas/execution.ts`, `apps/api/src/routes/events.ts`).",
+      "removalCondition": "A bounded `run.log` event type exists in `RunEventTypeSchema`, the runner batches redacted output lines into it while a job runs, and run detail appends them from the SSE stream, each proved by a test."
     }
   ]
 }

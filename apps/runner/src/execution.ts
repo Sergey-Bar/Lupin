@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod/v4';
-import { ExecutionEventLineSchema } from '@lupin/shared-contracts';
+import { ExecutionEventLineSchema, playwrightTestListLine } from '@lupin/shared-contracts';
 import { artifactKind } from './artifact-kind.js';
 import { AXE_ENVIRONMENT } from './axe-pass.js';
 
@@ -69,6 +69,11 @@ export interface ExecutionContext {
   signal: AbortSignal;
   onEvent?: (event: z.infer<typeof eventLineSchema>) => Promise<void>;
   redactions?: string[];
+  /**
+   * The test identities a rerun of failed tests names (the run's `selection`). Empty or absent
+   * runs everything, as before.
+   */
+  selection?: readonly string[];
 }
 
 export interface ExecutionArtifact {
@@ -331,10 +336,14 @@ export class PlaywrightExecutionAdapter implements ExecutionProvider {
         mkdir(layout.reportDirectory, { recursive: true }),
         writeFile(layout.eventPath, ''),
       ]);
+      // A rerun of the failed tests names them; Playwright runs only those (ledger MNT-206).
+      const testList = testListLines(context.selection);
+      const testListPath = testList.length === 0 ? undefined : join(workspacePath, 'test-list.txt');
+      if (testListPath !== undefined) await writeFile(testListPath, `${testList.join('\n')}\n`);
 
       const child = this.spawnProcess(
         process.execPath,
-        this.playwrightArguments(request, layout),
+        this.playwrightArguments(request, layout, testListPath),
         this.spawnOptions(request.target, layout, redactions, context.axe === true),
       );
       const pump = createEventPump(layout.eventPath, context.onEvent);
@@ -419,6 +428,7 @@ export class PlaywrightExecutionAdapter implements ExecutionProvider {
   private playwrightArguments(
     request: { project: string; configPath: string },
     layout: WorkspaceLayout,
+    testListPath?: string,
   ): string[] {
     return [
       this.playwrightCliPath,
@@ -431,6 +441,7 @@ export class PlaywrightExecutionAdapter implements ExecutionProvider {
       layout.outputDirectory,
       '--reporter',
       `list,${this.reporterPath},json,junit`,
+      ...(testListPath === undefined ? [] : ['--test-list', testListPath]),
     ];
   }
 
@@ -544,6 +555,16 @@ interface WorkspaceLayout {
   outputDirectory: string;
   reportDirectory: string;
   eventPath: string;
+}
+
+/**
+ * The `--test-list` lines for a selection: each identity it can name, once. An entry that is not
+ * an identity (a path or tag from a hand-made selection) names no line here.
+ */
+export function testListLines(selection: readonly string[] | undefined): string[] {
+  const lines = (selection ?? []).flatMap((identity) => playwrightTestListLine(identity) ?? []);
+  // A line break inside a title would split one entry into two; such a test is left out.
+  return [...new Set(lines)].filter((line) => !/[\r\n]/u.test(line));
 }
 
 function workspaceLayout(workspacePath: string): WorkspaceLayout {

@@ -35,7 +35,11 @@ import {
   publishCanonical,
 } from './shared.js';
 import type { Context } from 'hono';
-import { RetryRunRequestSchema, type RetryRunRequest } from '@lupin/shared-contracts';
+import {
+  RetryRunRequestSchema,
+  storedTestIdentity,
+  type RetryRunRequest,
+} from '@lupin/shared-contracts';
 
 /** The statuses a "retry the failed tests" run picks up. */
 const FAILED_TEST = new Set(['failed', 'timed_out']);
@@ -241,9 +245,15 @@ export function registerRunRoutes(app: Hono, context: ExecutionRouteContext): vo
     if (!request) throw new DomainError('INVALID_RUN', 'Retry request is invalid');
     if (request.scope === 'failed') {
       const previous = await options.store.getRun(runId, ws);
-      const failed = (previous?.tests ?? [])
-        .filter((test) => FAILED_TEST.has(test.status))
-        .map((test) => test.id);
+      // Each failed test's identity, which the runner turns into the filter its tool reads
+      // (Playwright's `--test-list`); a row id names nothing outside this database (MNT-206).
+      const failed = [
+        ...new Set(
+          (previous?.tests ?? [])
+            .filter((test) => FAILED_TEST.has(test.status))
+            .map((test) => storedTestIdentity({ ...test, file: test.file ?? null })),
+        ),
+      ];
       if (failed.length === 0)
         throw new DomainError('RUN_NOT_RETRYABLE', 'Run has no failed tests to retry');
       const result = await options.store.retryRun(runId, ws, key, { selection: failed });

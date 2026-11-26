@@ -743,9 +743,9 @@ describe('POST /api/v1/runs/:runId/retry', () => {
         leaseId: seeded.leaseId,
         fencingToken: seeded.fencingToken,
         tests: [
-          { id: 'kept-green', title: 'green', status: 'passed' },
-          { id: 'went-red', title: 'red', status: 'failed' },
-          { id: 'ran-out', title: 'slow', status: 'timed_out' },
+          { id: 'kept-green', title: 'green', file: 'cart.spec.ts', status: 'passed' },
+          { id: 'went-red', title: 'red', file: 'cart.spec.ts', status: 'failed' },
+          { id: 'ran-out', title: 'slow', file: 'pay.spec.ts', status: 'timed_out' },
         ],
       }),
     });
@@ -761,7 +761,9 @@ describe('POST /api/v1/runs/:runId/retry', () => {
       selection: { testIds: string[] } | string[];
     };
     expect(run.retryOfRunId).toBe(seeded.runId);
-    expect(run.selection).toEqual(['went-red', 'ran-out']);
+    // Identities, which the runner can turn into a Playwright test list (MNT-206); the row
+    // ids this used to hold name nothing outside the database.
+    expect(run.selection).toEqual(['cart.spec.ts › red', 'pay.spec.ts › slow']);
   });
 
   it('refuses scope "failed" for a run with no failed test to name', async () => {

@@ -62,6 +62,20 @@ describe('buildInsights', () => {
     expect(insights.digest).toEqual([]);
   });
 
+  it('reads a test that failed and passed on its rerun as flaky (MNT-206)', () => {
+    const failed = run('2026-10-19T08:00:00.000Z', 'failed', [
+      test('steady', 'passed'),
+      test('coupon', 'failed'),
+    ]);
+    // The rerun holds only the failed test, under the same identity, and names its original.
+    const rerun = run('2026-10-19T08:10:00.000Z', 'passed', [test('coupon', 'passed')], {
+      retryOfRunId: failed.id,
+    });
+    const insights = buildInsights([failed, rerun], NOW, 7, false);
+    expect(insights.flakyLeaderboard.map((entry) => entry.title)).toEqual(['coupon']);
+    expect(insights.flakyLeaderboard[0]).toMatchObject({ flips: 1, runs: 2 });
+  });
+
   it('ranks flaky tests by flips and retries, and never ranks a test that only fails', () => {
     const insights = buildInsights(
       [
