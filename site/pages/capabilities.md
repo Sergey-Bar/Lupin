@@ -9,10 +9,10 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                   |
 | ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 85    | implemented and exercised, with the stated qualification.                 |
+| **real**     | 86    | implemented and exercised, with the stated qualification.                 |
 | **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
 | **missing**  | 1     | no usable implementation exists in the target.                            |
-| **deferred** | 6     | intentionally outside the launch scope pending a separate decision.       |
+| **deferred** | 5     | intentionally outside the launch scope pending a separate decision.       |
 | **obsolete** | 2     | retained only as historical residue and not part of the target product.   |
 
 The numbers above are derived. To change one, edit the file this page names as
@@ -43,7 +43,7 @@ its source, then run `pnpm site:generate`.
 | **Evidence** from Playwright (events, artifacts, gates)                                             | `real`     |
 | API quality domain                                                                                  | `deferred` |
 | Performance and load quality domain                                                                 | `deferred` |
-| Load and performance quality domain                                                                 | `deferred` |
+| Load and performance quality domain                                                                 | `real`     |
 | Mobile quality domain                                                                               | `deferred` |
 | Accessibility quality domain: **ingestion** of axe-core results                                     | `real`     |
 | Security and SARIF quality domain                                                                   | `deferred` |

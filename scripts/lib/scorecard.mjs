@@ -126,6 +126,21 @@ export function standardThresholds(ctx) {
   return Object.keys(out).length === 0 ? undefined : out;
 }
 
+/**
+ * One package's metrics under the standard. A `not_configured` package has no numbers and
+ * is skipped: the coverage ratchet already reports it.
+ *
+ * @param {string} pkg
+ * @param {Record<string, unknown>} row
+ * @param {Record<string, number>} standard
+ * @returns {string[]}
+ */
+function metricsBelow(pkg, row, standard) {
+  return Object.entries(standard)
+    .filter(([metric, floor]) => typeof row[metric] === 'number' && Number(row[metric]) < floor)
+    .map(([metric, floor]) => `${pkg} ${metric} ${String(row[metric])}<${floor}`);
+}
+
 /** @type {Record<string, (ctx: Context, check: Record<string, unknown>) => ProbeResult>} */
 export const PROBES = {
   exists(ctx, check) {
@@ -160,16 +175,9 @@ export const PROBES = {
     const standard = standardThresholds(ctx);
     if (standard === undefined) return { ok: false, reason: 'STANDARD_THRESHOLDS not found' };
     const baseline = record(ctx.json('docs/quality/coverage-baseline.json'));
-    const below = [];
-    for (const [pkg, floors] of Object.entries(baseline)) {
-      const row = record(floors);
-      if (typeof row.statements !== 'number') continue; // `not_configured` packages
-      for (const [metric, floor] of Object.entries(standard)) {
-        const have = row[metric];
-        if (typeof have === 'number' && have < floor)
-          below.push(`${pkg} ${metric} ${have}<${floor}`);
-      }
-    }
+    const below = Object.entries(baseline).flatMap(([pkg, floors]) =>
+      metricsBelow(pkg, record(floors), standard),
+    );
     return below.length === 0
       ? { ok: true, reason: 'every measured package meets STANDARD_THRESHOLDS' }
       : { ok: false, reason: `below the standard: ${below.join('; ')}` };
@@ -270,40 +278,60 @@ export function rubricProblems(document, ctx) {
   if (!Array.isArray(criteria) || criteria.length === 0) {
     return ['the scorecard has no criteria: a rubric that measures nothing is not a pass'];
   }
-  const problems = [];
-  const seen = new Set();
   const ledger = ledgerRows(ctx);
-  for (const raw of criteria) {
-    const c = record(raw);
-    const id = String(c.id ?? '(no id)');
-    if (seen.has(id)) problems.push(`${id}: duplicate id`);
-    seen.add(id);
-    for (const key of Object.keys(c)) {
-      if (OBSERVATION_KEYS.has(key)) {
-        problems.push(`${id}: '${key}' records a result; the probe derives it`);
-      } else if (!CRITERION_KEYS.has(key)) problems.push(`${id}: unknown key '${key}'`);
-    }
-    if (!AREAS.includes(/** @type {never} */ (c.area))) problems.push(`${id}: unknown area`);
-    if (typeof c.statement !== 'string' || c.statement.trim() === '') {
-      problems.push(`${id}: no statement`);
-    }
-    const check = record(c.check);
-    if (!(String(check.probe) in PROBES))
-      problems.push(`${id}: unknown probe '${String(check.probe)}'`);
-    for (const key of Object.keys(check)) {
-      if (OBSERVATION_KEYS.has(key)) problems.push(`${id}: check.${key} restates a number`);
-    }
-    if (c.blockedExternal !== undefined) {
-      const block = record(c.blockedExternal);
-      if (typeof block.reason !== 'string' || block.reason.trim() === '') {
-        problems.push(`${id}: blockedExternal needs a reason`);
-      }
-      const row = ledger.find((r) => r.id === block.ledger);
-      if (row === undefined) problems.push(`${id}: blockedExternal cites no ledger row`);
-      else if (CLOSED.has(String(row.status))) {
-        problems.push(`${id}: blockedExternal cites ${String(block.ledger)}, which is closed`);
-      }
-    }
+  const ids = criteria.map((raw) => String(record(raw).id ?? '(no id)'));
+  const duplicates = ids
+    .filter((id, index) => ids.indexOf(id) !== index)
+    .map((id) => `${id}: duplicate id`);
+  return [...duplicates, ...criteria.flatMap((raw) => criterionProblems(record(raw), ledger))];
+}
+
+/**
+ * @param {Record<string, unknown>} c
+ * @param {Record<string, unknown>[]} ledger
+ * @returns {string[]}
+ */
+function criterionProblems(c, ledger) {
+  const id = String(c.id ?? '(no id)');
+  const problems = Object.keys(c).flatMap((key) => keyProblems(id, key));
+  if (!AREAS.includes(/** @type {never} */ (c.area))) problems.push(`${id}: unknown area`);
+  if (typeof c.statement !== 'string' || c.statement.trim() === '') {
+    problems.push(`${id}: no statement`);
+  }
+  const check = record(c.check);
+  if (!(String(check.probe) in PROBES)) {
+    problems.push(`${id}: unknown probe '${String(check.probe)}'`);
+  }
+  for (const key of Object.keys(check)) {
+    if (OBSERVATION_KEYS.has(key)) problems.push(`${id}: check.${key} restates a number`);
+  }
+  if (c.blockedExternal !== undefined)
+    problems.push(...blockProblems(id, c.blockedExternal, ledger));
+  return problems;
+}
+
+/** @param {string} id @param {string} key @returns {string[]} */
+function keyProblems(id, key) {
+  if (OBSERVATION_KEYS.has(key)) return [`${id}: '${key}' records a result; the probe derives it`];
+  return CRITERION_KEYS.has(key) ? [] : [`${id}: unknown key '${key}'`];
+}
+
+/**
+ * @param {string} id
+ * @param {unknown} raw
+ * @param {Record<string, unknown>[]} ledger
+ * @returns {string[]}
+ */
+function blockProblems(id, raw, ledger) {
+  const block = record(raw);
+  const problems = [];
+  if (typeof block.reason !== 'string' || block.reason.trim() === '') {
+    problems.push(`${id}: blockedExternal needs a reason`);
+  }
+  const row = ledger.find((r) => r.id === block.ledger);
+  if (row === undefined) problems.push(`${id}: blockedExternal cites no ledger row`);
+  else if (CLOSED.has(String(row.status))) {
+    problems.push(`${id}: blockedExternal cites ${String(block.ledger)}, which is closed`);
   }
   return problems;
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { isNothingYet } from '../lib/nothing-yet.js';
 import { Badge, Button, cn, CircleAlert, CircleCheck, Timer } from '@lupin/ui';
 import type { GithubFinding, GithubRepoItem } from '@lupin/shared-contracts';
-import { useResource } from '../hooks/useResource.js';
+import { useResource, type Resource } from '../hooks/useResource.js';
 import type { DeliveryClient } from '../lib/delivery-client.js';
 import { subjectOfRepo, type ActionKind, type Subject } from '../lib/github-actions.js';
 import type { GithubClient } from '../lib/github-client.js';
@@ -459,6 +459,60 @@ function OpenWorkList({
   );
 }
 
+/** The repository page before its data is in: loading, not connected, or failed. */
+function RepoDetailUnavailable({
+  state,
+}: {
+  state: Exclude<Resource<unknown>, { status: 'ready' }>;
+}): React.ReactElement {
+  if (state.status === 'loading') {
+    return (
+      <PageFrame>
+        <Quiet role="status">Loading…</Quiet>
+      </PageFrame>
+    );
+  }
+  const notConnected = isNothingYet(state.message);
+  return (
+    <PageFrame>
+      <Quiet role={notConnected ? undefined : 'alert'}>
+        {notConnected
+          ? 'GitHub is not connected yet. Connect it in Settings to see repositories here.'
+          : `Could not load this: ${state.message}`}
+      </Quiet>
+    </PageFrame>
+  );
+}
+
+/** The tone a health score is drawn in: under 60 is danger, under 90 a warning. */
+function scoreTone(score: number): 'text-danger' | 'text-warning' | 'text-success' {
+  if (score < 60) return 'text-danger';
+  return score < 90 ? 'text-warning' : 'text-success';
+}
+
+/** The grade beside the title, or why there is none yet. */
+function RepoScore({ health }: { health: GithubRepoItem['health'] }): React.ReactElement {
+  return (
+    <span data-testid="repo-score" className="flex items-baseline gap-2 text-sm text-fg-muted">
+      {health.score === null || health.grade === null ? (
+        'Not graded: this repository has not been read yet'
+      ) : (
+        <>
+          <span
+            className={cn(
+              'text-4xl font-semibold tabular-nums tracking-tight',
+              scoreTone(health.score),
+            )}
+          >
+            {health.score}
+          </span>
+          Grade {health.grade}
+        </>
+      )}
+    </span>
+  );
+}
+
 /** One repository: its grade, why, and what is open. */
 export function RepoDetailPage({
   projectId,
@@ -480,24 +534,7 @@ export function RepoDetailPage({
     [health],
   );
   const operator = who.status === 'ready' && who.value !== null && canOperate(who.value);
-  if (repo.status === 'loading') {
-    return (
-      <PageFrame>
-        <Quiet role="status">Loading…</Quiet>
-      </PageFrame>
-    );
-  }
-  if (repo.status === 'error') {
-    return (
-      <PageFrame>
-        <Quiet role={isNothingYet(repo.message) ? undefined : 'alert'}>
-          {isNothingYet(repo.message)
-            ? 'GitHub is not connected yet. Connect it in Settings to see repositories here.'
-            : `Could not load this: ${repo.message}`}
-        </Quiet>
-      </PageFrame>
-    );
-  }
+  if (repo.status !== 'ready') return <RepoDetailUnavailable state={repo} />;
   const item = repo.value;
   return (
     <PageFrame>
@@ -516,30 +553,7 @@ export function RepoDetailPage({
         }
         actions={
           <>
-            <span
-              data-testid="repo-score"
-              className="flex items-baseline gap-2 text-sm text-fg-muted"
-            >
-              {item.health.score === null || item.health.grade === null ? (
-                'Not graded: this repository has not been read yet'
-              ) : (
-                <>
-                  <span
-                    className={cn(
-                      'text-4xl font-semibold tabular-nums tracking-tight',
-                      item.health.score < 60
-                        ? 'text-danger'
-                        : item.health.score < 90
-                          ? 'text-warning'
-                          : 'text-success',
-                    )}
-                  >
-                    {item.health.score}
-                  </span>
-                  Grade {item.health.grade}
-                </>
-              )}
-            </span>
+            <RepoScore health={item.health} />
             {operator ? (
               <Button variant="outline" onClick={() => setPending('createRelease')}>
                 Create release
