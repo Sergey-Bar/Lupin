@@ -38,6 +38,12 @@
   with the one before it on the same branch and suite: new failures, fixed tests, still failing,
   newly slow, and the failures grouped by cause with which causes are new. Failure text is only
   ever quoted as a sample, never written into a sentence, so a test log cannot instruct a reader.
+- **The quality pulse (task 14).** `GET /api/v1/projects/:id/pulse` and the MCP tool `get_pulse`
+  say whether a project got better, worse or stayed steady against the window before, with the
+  one sign that decided it: the gate, pass rate, failing tests, flaky tests, coverage, and
+  AI-written change over time (its change failure rate, revert rate and the coverage of its
+  lines). One regression makes it "worse" whatever else improved, and the improvements are
+  listed beside it; with nothing to compare it is "unknown", never "steady".
 
 ### Fixed
 

@@ -17,6 +17,7 @@ import {
   CopilotAnswerSchema,
   ProjectHistorySchema,
   QaScoreSchema,
+  QualityPulseSchema,
   ReleaseReadinessCardSchema,
   RepoScanSchema,
   ScoreDeltaSchema,
@@ -1150,6 +1151,138 @@ describe('history and readiness', () => {
         level: 'go',
         message: 'Coverage holds at 80.0%',
       });
+    } finally {
+      await client.close();
+    }
+  });
+});
+
+describe('GET /api/v1/projects/:id/pulse (plan 1795712849115 task 14)', () => {
+  const migratedPulse = migrated;
+
+  /** A store whose finished runs are given, so both windows hold verdicts. */
+  function storeOf(runs: unknown[]) {
+    return {
+      listRuns: async () => ({ runs, hasMore: false }),
+    } as unknown as InMemoryExecutionStore;
+  }
+
+  const finished = (
+    projectId: string,
+    createdAt: string,
+    outcome: 'passed' | 'failed',
+    failing: string[] = [],
+  ) => ({
+    id: `${createdAt}-${outcome}`,
+    projectId,
+    createdAt,
+    outcome,
+    policyEvaluation: null,
+    tests: failing.map((title) => ({ id: title, title, file: 'a.spec.ts', status: 'failed' })),
+    summary: {
+      total: 10,
+      passed: 10 - failing.length,
+      failed: failing.length,
+      flaky: 0,
+      skipped: 0,
+      blocked: 0,
+      unknown: 0,
+      durationMs: null,
+    },
+  });
+
+  function app(
+    db: Awaited<ReturnType<typeof migratedPulse>>['db'],
+    store: InMemoryExecutionStore,
+    workspaceId = 'ws-1',
+  ) {
+    return mounted(
+      createProjectsRoutes({
+        db: db as never,
+        workspaceId,
+        defaultWorkspace: 'ws-1',
+        viewFor: () => literalView(NODE_REPO),
+        startRun: async () => ({ runId: 'run-1', jobId: 'job-1', phase: 'queued' }),
+        reliability: {
+          store,
+          openQuarantine: async () => 0,
+          now: () => new Date('2026-10-20T12:00:00.000Z'),
+        },
+      }),
+    );
+  }
+
+  it('is unknown on an install with nothing to compare, never steady or better', async () => {
+    const { client, db } = await migratedPulse();
+    try {
+      const routes = app(db, storeOf([]));
+      const response = await post(routes, '/api/v1/projects', {
+        name: 'Svc',
+        slug: 'svc',
+        repoPath: '/repos/svc',
+      });
+      const { id } = ((await response.json()) as { project: { id: string } }).project;
+      const pulse = QualityPulseSchema.parse(
+        await (await routes.request(`/api/v1/projects/${id}/pulse`)).json(),
+      );
+      expect(pulse).toMatchObject({ direction: 'unknown', cause: null, windowDays: 7 });
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('says worse when tests started failing this week, naming the cause', async () => {
+    const { client, db } = await migratedPulse();
+    try {
+      const routes = app(db, storeOf([]));
+      const response = await post(routes, '/api/v1/projects', {
+        name: 'Svc',
+        slug: 'svc',
+        repoPath: '/repos/svc',
+      });
+      const { id } = ((await response.json()) as { project: { id: string } }).project;
+      const runs = [
+        finished(id, '2026-10-10T10:00:00.000Z', 'passed'),
+        finished(id, '2026-10-11T10:00:00.000Z', 'passed'),
+        finished(id, '2026-10-18T10:00:00.000Z', 'failed', ['pays', 'refunds', 'ships']),
+        finished(id, '2026-10-19T10:00:00.000Z', 'passed'),
+        // Another project's failure is not this project's news.
+        finished('someone-else', '2026-10-19T11:00:00.000Z', 'failed', ['x', 'y', 'z', 'w']),
+      ];
+      const pulse = QualityPulseSchema.parse(
+        await (await app(db, storeOf(runs)).request(`/api/v1/projects/${id}/pulse?days=7`)).json(),
+      );
+      expect(pulse.direction).toBe('worse');
+      // A 50-point fall is a hundred times its noise; three new failing tests are three.
+      expect(pulse.cause).toEqual({ vital: 'pass-rate', text: 'Pass rate fell 50.0 pts' });
+      expect(pulse.vitals.find((vital) => vital.id === 'failing-tests')).toMatchObject({
+        current: 3,
+        previous: 0,
+        direction: 'worse',
+      });
+      expect(pulse.vitals.find((vital) => vital.id === 'pass-rate')).toMatchObject({
+        current: 50,
+        previous: 100,
+        direction: 'worse',
+      });
+    } finally {
+      await client.close();
+    }
+  });
+
+  it("never answers for another workspace's project", async () => {
+    const { client, db } = await migratedPulse();
+    try {
+      const mine = app(db, storeOf([]));
+      const response = await post(mine, '/api/v1/projects', {
+        name: 'Svc',
+        slug: 'svc',
+        repoPath: '/repos/svc',
+      });
+      const { id } = ((await response.json()) as { project: { id: string } }).project;
+      expect(
+        (await app(db, storeOf([]), 'ws-2').request(`/api/v1/projects/${id}/pulse`)).status,
+      ).toBe(404);
     } finally {
       await client.close();
     }

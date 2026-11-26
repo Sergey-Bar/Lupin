@@ -1416,6 +1416,17 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/pulse": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdPulse",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/projects.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/qa/flaky": {
       "get": {
         "operationId": "getApiV1ProjectsIdQaFlaky",
@@ -25265,6 +25276,50 @@
         "required": ["pullRequest", "headSha", "risk", "blastRadius", "assessedAt"],
         "additionalProperties": false
       },
+      "PulseDirectionSchema": {
+        "type": "string",
+        "enum": ["better", "worse", "steady", "unknown"]
+      },
+      "PulseVitalIdSchema": {
+        "type": "string",
+        "enum": [
+          "gate",
+          "pass-rate",
+          "failing-tests",
+          "flaky-rate",
+          "coverage",
+          "ai-change-failure-rate",
+          "ai-revert-rate",
+          "ai-diff-coverage"
+        ]
+      },
+      "PulseVitalSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "gate",
+              "pass-rate",
+              "failing-tests",
+              "flaky-rate",
+              "coverage",
+              "ai-change-failure-rate",
+              "ai-revert-rate",
+              "ai-diff-coverage"
+            ]
+          },
+          "label": { "type": "string" },
+          "unit": { "type": "string", "enum": ["percent", "count", "status"] },
+          "current": { "type": ["number", "null"] },
+          "previous": { "type": ["number", "null"] },
+          "delta": { "type": ["number", "null"] },
+          "direction": { "type": "string", "enum": ["better", "worse", "steady", "unknown"] },
+          "ai": { "type": "boolean" }
+        },
+        "required": ["id", "label", "unit", "current", "previous", "delta", "direction", "ai"],
+        "additionalProperties": false
+      },
       "PushDeploymentBodySchema": {
         "type": "object",
         "properties": {
@@ -26179,6 +26234,118 @@
           "rules",
           "createdAt",
           "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "QualityPulseSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": { "type": "string" },
+          "evaluatedAt": { "type": "string" },
+          "windowDays": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "direction": { "type": "string", "enum": ["better", "worse", "steady", "unknown"] },
+          "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+          "cause": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "vital": {
+                    "type": "string",
+                    "enum": [
+                      "gate",
+                      "pass-rate",
+                      "failing-tests",
+                      "flaky-rate",
+                      "coverage",
+                      "ai-change-failure-rate",
+                      "ai-revert-rate",
+                      "ai-diff-coverage"
+                    ]
+                  },
+                  "text": { "type": "string" }
+                },
+                "required": ["vital", "text"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          },
+          "sentence": { "type": "string" },
+          "vitals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "gate",
+                    "pass-rate",
+                    "failing-tests",
+                    "flaky-rate",
+                    "coverage",
+                    "ai-change-failure-rate",
+                    "ai-revert-rate",
+                    "ai-diff-coverage"
+                  ]
+                },
+                "label": { "type": "string" },
+                "unit": { "type": "string", "enum": ["percent", "count", "status"] },
+                "current": { "type": ["number", "null"] },
+                "previous": { "type": ["number", "null"] },
+                "delta": { "type": ["number", "null"] },
+                "direction": { "type": "string", "enum": ["better", "worse", "steady", "unknown"] },
+                "ai": { "type": "boolean" }
+              },
+              "required": [
+                "id",
+                "label",
+                "unit",
+                "current",
+                "previous",
+                "delta",
+                "direction",
+                "ai"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "alsoMoved": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "vital": {
+                  "type": "string",
+                  "enum": [
+                    "gate",
+                    "pass-rate",
+                    "failing-tests",
+                    "flaky-rate",
+                    "coverage",
+                    "ai-change-failure-rate",
+                    "ai-revert-rate",
+                    "ai-diff-coverage"
+                  ]
+                },
+                "text": { "type": "string" }
+              },
+              "required": ["vital", "text"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "projectId",
+          "evaluatedAt",
+          "windowDays",
+          "direction",
+          "confidence",
+          "cause",
+          "sentence",
+          "vitals",
+          "alsoMoved"
         ],
         "additionalProperties": false
       },

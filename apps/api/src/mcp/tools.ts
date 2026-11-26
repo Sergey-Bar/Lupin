@@ -11,8 +11,10 @@ import {
   HealthGateResponseSchema,
   PortfolioSchema,
   ProjectHealthSchema,
+  QualityPulseSchema,
   ScorecardSchema,
   type McpToolName,
+  type QualityPulse,
   type Scorecard,
 } from '@lupin/shared-contracts';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
@@ -58,6 +60,8 @@ export interface McpScope {
   history?: ScorecardOptions['history'];
   /** Set for a caller pinned to one project: the only project it may read. */
   pinned: string | null;
+  /** The quality pulse, when the composition has a run history to read it from. */
+  pulse?: (projectId: string, days: number) => Promise<QualityPulse>;
 }
 
 export interface ToolAnswer {
@@ -334,6 +338,23 @@ const getBriefing: McpTool = {
   },
 };
 
+const getPulse = projectTool({
+  name: 'get_pulse',
+  title: 'Quality pulse',
+  description:
+    "Whether a project's quality got better, worse or stayed steady against the window before, with the one sign that decided it, every vital sign it compared (AI-written change among them) and what moved the other way. Unknown when there is not enough evidence; never worded by a model.",
+  input: { projectId: ProjectId, days: Days(7) },
+  answer: async (scope, args) => {
+    if (scope.pulse === undefined) {
+      throw new DomainError(ErrorCode.NOT_CONFIGURED, 'This install has no run history to read', {
+        callerSafe: true,
+      });
+    }
+    const value = QualityPulseSchema.parse(await scope.pulse(args.projectId, args.days));
+    return { summary: value.sentence, value };
+  },
+});
+
 export const MCP_TOOLS: readonly McpTool[] = [
   listProjects,
   getHealth,
@@ -345,5 +366,6 @@ export const MCP_TOOLS: readonly McpTool[] = [
   getSupplyChain,
   getTestEffectiveness,
   getBriefing,
+  getPulse,
   ...QA_READ_TOOLS,
 ];

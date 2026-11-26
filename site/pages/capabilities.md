@@ -9,7 +9,7 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                   |
 | ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 89    | implemented and exercised, with the stated qualification.                 |
+| **real**     | 90    | implemented and exercised, with the stated qualification.                 |
 | **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
 | **missing**  | 1     | no usable implementation exists in the target.                            |
 | **deferred** | 5     | intentionally outside the launch scope pending a separate decision.       |
@@ -26,6 +26,7 @@ its source, then run `pnpm site:generate`.
 | Reporter lifecycle ingestion                                                                        | `real`     |
 | Upload adapters for .NET, BDD, Go, API and page-budget tools                                        | `real`     |
 | What changed in a run, and why                                                                      | `real`     |
+| The quality pulse: better, worse, steady or unknown, and why                                        | `real`     |
 | Run and test persistence                                                                            | `real`     |
 | Run list, detail, quarantine, and quality gates                                                     | `real`     |
 | Basic dashboard analytics                                                                           | `real`     |

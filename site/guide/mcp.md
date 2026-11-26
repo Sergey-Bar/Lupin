@@ -8,24 +8,25 @@ Every tool reads. None of them writes, triages, starts a scan or spends the mode
 
 ## The tools
 
-| Tool                     | What it answers                                                                                     |
-| ------------------------ | --------------------------------------------------------------------------------------------------- |
-| `list_projects`          | The projects the token can read, each with its grade and weakest dimension. Start here for an id.   |
-| `get_health`             | One project's grade on a branch: score, letter, what limits it, all twelve dimensions, what to fix. |
-| `list_findings`          | Findings on a branch, most severe first, filtered by dimension, severity, state, tool or text.      |
-| `get_gate`               | Whether a branch passes the pull-request gate, every reason, and what it adds over the default.     |
-| `get_delivery`           | DORA and pull-request flow over a window.                                                           |
-| `get_agent_quality`      | Eval suites against the default branch, and agent runtime (cost, tokens, tool failures).            |
-| `get_ai_code`            | How much merged change an AI wrote, and whether it fares worse. Never names a person.               |
-| `get_supply_chain`       | SLSA level, licence violations, fixable criticals, vulnerable components, VEX coverage, SBOM age.   |
-| `get_test_effectiveness` | Mutation score, diff coverage of the latest commits, flaky tests and their cost, failure causes.    |
-| `get_briefing`           | What happened over a window, every line cited. One project, or all of them when none is named.      |
-| `list_runs`              | Recent runs, newest first, with outcome, branch, commit and test counts.                            |
-| `get_test_history`       | One test's recent results, and how often it failed, was flaky or flipped.                           |
-| `list_quarantine`        | Quarantined tests and their status; pending ones still count in the pass rate.                      |
-| `list_failure_causes`    | The stored root causes over the last 90 days, most frequent first, with first and last seen.        |
-| `get_change_risk`        | A pull request's change risk: level, score and every factor, for each head.                         |
-| `list_signoffs`          | Ship and hold decisions for a project, with the verdict each was made against.                      |
+| Tool                     | What it answers                                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `list_projects`          | The projects the token can read, each with its grade and weakest dimension. Start here for an id.                                                |
+| `get_health`             | One project's grade on a branch: score, letter, what limits it, all twelve dimensions, what to fix.                                              |
+| `list_findings`          | Findings on a branch, most severe first, filtered by dimension, severity, state, tool or text.                                                   |
+| `get_gate`               | Whether a branch passes the pull-request gate, every reason, and what it adds over the default.                                                  |
+| `get_delivery`           | DORA and pull-request flow over a window.                                                                                                        |
+| `get_agent_quality`      | Eval suites against the default branch, and agent runtime (cost, tokens, tool failures).                                                         |
+| `get_ai_code`            | How much merged change an AI wrote, and whether it fares worse. Never names a person.                                                            |
+| `get_supply_chain`       | SLSA level, licence violations, fixable criticals, vulnerable components, VEX coverage, SBOM age.                                                |
+| `get_test_effectiveness` | Mutation score, diff coverage of the latest commits, flaky tests and their cost, failure causes.                                                 |
+| `get_briefing`           | What happened over a window, every line cited. One project, or all of them when none is named.                                                   |
+| `get_pulse`              | Better, worse, steady or unknown against the window before, the one sign that decided it, and every sign compared, AI-written change among them. |
+| `list_runs`              | Recent runs, newest first, with outcome, branch, commit and test counts.                                                                         |
+| `get_test_history`       | One test's recent results, and how often it failed, was flaky or flipped.                                                                        |
+| `list_quarantine`        | Quarantined tests and their status; pending ones still count in the pass rate.                                                                   |
+| `list_failure_causes`    | The stored root causes over the last 90 days, most frequent first, with first and last seen.                                                     |
+| `get_change_risk`        | A pull request's change risk: level, score and every factor, for each head.                                                                      |
+| `list_signoffs`          | Ship and hold decisions for a project, with the verdict each was made against.                                                                   |
 
 Each answer is two text blocks: a one-line summary, and the full contract as JSON — the same
 shape the matching API route returns. A refusal is a tool error that starts with the stable
