@@ -37,6 +37,10 @@
 
 ### Fixed
 
+- **"Rerun failed tests" reruns only the failed tests (task 12, ledger MNT-206).** Since 4.1.0 the
+  button stored the failed tests and the runner ignored them, so the whole suite ran again. A
+  Playwright rerun now passes them to Playwright as `--test-list`, and a test that passes on the
+  rerun is counted as flaky. A generic command's rerun still runs the whole command.
 - **A run's status change and its audit row are one write (task 3, ledger MNT-204).** A failed
   audit insert used to answer 500 over a run that had already moved; the change now rolls back
   with it.
