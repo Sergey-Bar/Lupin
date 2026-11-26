@@ -11,6 +11,11 @@
   criteria only; every verdict is derived from the baseline, ledger, register or budget that
   owns the number, and a criterion carrying a result is refused. Reporting in CI until its
   first all-pass run.
+- **Retry-safe creates and one page shape (task 5).** The create routes for quarantine, quality
+  gates, quality policies, projects, sign-offs, notification channels, scheduled reports and
+  failure-cause issues honour `Idempotency-Key`; a repeat answers what the first did instead of
+  creating a second record. `cursorPageSchema` and `CursorQuerySchema` in
+  `@lupin/shared-contracts` are the one page contract.
 
 ### Fixed
 

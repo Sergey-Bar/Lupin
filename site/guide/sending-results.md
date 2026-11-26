@@ -129,3 +129,17 @@ A reporter that streams while the suite runs can post events to
 the dashboard updates over server-sent events as they arrive. The event contracts are in
 `packages/shared-contracts/src/schemas/reporter-events.ts`, and the full route list is in
 [`docs/openapi.json`](https://github.com/Sergey-Bar/Lupin/blob/main/docs/openapi.json).
+
+## Retrying a request safely
+
+A script that creates something (a quarantine entry, a quality gate, a scheduled report, an
+issue for a failure cause) can send an `Idempotency-Key` header, any printable value up to 255
+characters. The first request runs. A repeat with the same key and the same body gets the first
+answer back with `x-idempotent-replay: true`, and nothing is created twice. A repeat with a
+different body is refused with `409 IDEMPOTENCY_KEY_REUSED`, and one sent while the first is
+still running with `409 IDEMPOTENCY_KEY_IN_FLIGHT`. Only a success is kept, so a refused
+request can be retried as it is. Keys are kept for a day, and forgotten when Lupin restarts.
+
+Paged lists answer `{ "items": [...], "nextCursor": "..." }`, with `nextCursor` `null` on the
+last page; the runs list keeps its array and puts the next cursor in `X-Next-Cursor`. Pass the
+cursor back as `?cursor=` exactly as you got it, with `?limit=` up to 100.

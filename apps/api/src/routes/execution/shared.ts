@@ -17,6 +17,7 @@ import { DomainError } from '../../errors/domain-error.js';
 import path from 'node:path';
 import type { Context, MiddlewareHandler } from 'hono';
 import { z } from 'zod/v4';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@lupin/shared-contracts';
 import { DEFAULT_WORKSPACE_ID, type RunRecord } from '../../repositories/run-repository.js';
 import type { CanonicalRealtimeEvent, RealtimeBus } from '../../realtime/realtime-bus.js';
 import { defaultPolicy } from '../../execution/quality-gate.js';
@@ -89,9 +90,9 @@ export function requestId(_c: Context): string {
   return requireRequestId();
 }
 
-/** The most runs one page will ever return. */
-export const MAX_RUNS_PER_PAGE = 100;
-export const DEFAULT_RUNS_PER_PAGE = 25;
+/** The most runs one page will ever return: the contract's page bound, not a second one. */
+export const MAX_RUNS_PER_PAGE = MAX_PAGE_SIZE;
+export const DEFAULT_RUNS_PER_PAGE = DEFAULT_PAGE_SIZE;
 
 /**
  * Parses `?limit` and `?cursor` for a list endpoint.

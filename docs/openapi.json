@@ -13402,6 +13402,16 @@
         "required": ["channelId", "name", "cadence", "time", "weekday", "timezone"],
         "additionalProperties": false
       },
+      "CursorQuerySchema": {
+        "type": "object",
+        "properties": {
+          "limit": {},
+          "cursor": { "type": "string", "minLength": 1, "maxLength": 512 }
+        },
+        "required": ["limit"],
+        "additionalProperties": false
+      },
+      "CursorSchema": { "type": "string", "minLength": 1, "maxLength": 512 },
       "DashboardAnalyticsSummarySchema": {
         "type": "object",
         "properties": {

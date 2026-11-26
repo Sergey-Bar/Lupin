@@ -187,6 +187,7 @@ import {
 // middleware used to be mounted.
 import { createRequestDeadline } from './middleware/request-deadline.js';
 import { apiRateLimitFrom, createApiRateLimit } from './middleware/api-rate-limit.js';
+import { createIdempotency, IDEMPOTENT_CREATE_ROUTES } from './middleware/idempotency.js';
 import { outboundAllowlistFrom } from './http/outbound-guard.js';
 import { createSecurityHeaders } from './middleware/security-headers.js';
 import { getConfig } from './config.js';
@@ -1618,6 +1619,14 @@ app.use(
       console.error(`request exceeded its ${String(budgetMs)}ms deadline: ${method} ${path}`),
   }),
 );
+
+/**
+ * `Idempotency-Key` on the create routes that make a record per request (plan 1795712849115
+ * task 5). One instance, so the routes share one bounded table; the list and the routes it
+ * leaves out, with why, are in `middleware/idempotency.ts`.
+ */
+const idempotency = createIdempotency();
+for (const route of IDEMPOTENT_CREATE_ROUTES) app.use(route, idempotency);
 
 /**
  * **No global authentication middleware; every route is guarded where it is declared.**
