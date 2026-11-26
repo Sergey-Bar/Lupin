@@ -11,6 +11,8 @@
  * expanded, because nothing here expands anything.
  */
 
+import { parseOtherJson } from './json-formats.js';
+
 export type Outcome = 'passed' | 'failed' | 'flaky' | 'skipped';
 
 export interface TestResult {
@@ -208,9 +210,22 @@ function readPwTest(test: PwTest, title: string, path: string[]): TestResult {
 /** Reads a report by its content: JSON is Playwright's, XML is JUnit. */
 export function parseReport(source: string, text: string): Run {
   const trimmed = text.trimStart();
-  if (trimmed.startsWith('{')) return { source, tests: parsePlaywright(text) };
   if (trimmed.startsWith('<')) return { source, tests: parseJunit(text) };
-  throw new Error(`${source}: not a JUnit XML or Playwright JSON report`);
+  if (!trimmed.startsWith('{')) throw new Error(`${source}: not a JUnit XML or JSON test report`);
+  let root: Record<string, unknown>;
+  try {
+    root = JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    throw new Error(`${source}: not valid JSON`);
+  }
+  if (Array.isArray(root['suites'])) return { source, tests: parsePlaywright(text) };
+  const tests = parseOtherJson(root);
+  if (tests === null) {
+    throw new Error(
+      `${source}: a JSON report, but not Playwright, Jest, Vitest, CTRF, Mochawesome or pytest-json-report`,
+    );
+  }
+  return { source, tests };
 }
 
 /**

@@ -44,7 +44,7 @@ Flaky tests (2) - fix or quarantine, do not just re-run:
   login.spec.ts › login › signs in - passed 2, failed 1 across runs
 ```
 
-Four red tests, one bug. Then point it at your own JUnit XML or Playwright JSON reports:
+Four red tests, one bug. Then point it at your own JUnit XML, or Playwright, Jest, Vitest, CTRF, Mochawesome or pytest-json-report JSON reports:
 
 ```sh
 npx -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin check -- junit.xml
