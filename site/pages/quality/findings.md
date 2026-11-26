@@ -14,13 +14,13 @@ its source, then run `pnpm site:generate`.
 | `debt`           | 10   |
 | `false-positive` | 6    |
 | `fixed`          | 320  |
-| `open`           | 4    |
+| `open`           | 5    |
 
-## Open (4)
+## Open (5)
 
 | Band  | Open |
 | ----- | ---- |
-| Minor | 4    |
+| Minor | 5    |
 
 | ID          | Band  | Finding                                                                                                         |
 | ----------- | ----- | --------------------------------------------------------------------------------------------------------------- |
@@ -28,5 +28,6 @@ its source, then run `pnpm site:generate`.
 | `DEP-3`     | Minor | Effect 4.0.0 is unblocked at the bootstrap boundary, and its own test helper is the one part not available here |
 | `DEP-4`     | Minor | TypeScript 7.0.2 is stable and has no Compiler API, so the checker and the linter cannot share a version        |
 | `DEP-5`     | Minor | PostgreSQL 18 is the correct target and 19 is not available, and 16 is not an exposure while it waits           |
+| `MNT-205`   | Minor | The API and the worker have no mutation score                                                                   |
 
 <!-- /generated -->

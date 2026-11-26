@@ -139,7 +139,10 @@
       "id": "integrations.mcp-tools-tested",
       "area": "integrations",
       "statement": "Every MCP tool is tested through the HTTP endpoint, not only through stdio.",
-      "check": { "probe": "exists", "paths": ["apps/api/src/mcp/tools.test.ts"] }
+      "check": {
+        "probe": "exists",
+        "paths": ["apps/api/src/mcp/tools.test.ts", "apps/api/src/routes/mcp.test.ts"]
+      }
     },
     {
       "id": "integrations.dotnet-formats",

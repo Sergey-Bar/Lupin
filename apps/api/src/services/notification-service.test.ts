@@ -542,7 +542,9 @@ describe('what a report says', () => {
   });
 });
 
-function fakeAdapter(results: Array<{ ok: boolean; retryable?: boolean; code?: string }>) {
+function fakeAdapter(
+  results: Array<{ ok: boolean; retryable?: boolean; code?: string; retryAt?: string }>,
+) {
   const calls: Array<{ operation: string; input: unknown; secret: string }> = [];
   let index = 0;
   const adapter: ConnectorAdapter = {
@@ -560,6 +562,7 @@ function fakeAdapter(results: Array<{ ok: boolean; retryable?: boolean; code?: s
               code: next.code ?? 'fake_error',
               retryable: next.retryable ?? false,
               message: 'x',
+              ...(next.retryAt === undefined ? {} : { retryAt: next.retryAt }),
             },
           };
     }),
@@ -661,6 +664,36 @@ describe('the dispatcher', () => {
     expect((await listDeliveries(options))[0]).toMatchObject({ status: 'failed', attempts: 2 });
   });
 
+  it('waits until the time a rate limit named, not the shorter backoff (plan task 10)', async () => {
+    const { db, options } = await setup();
+    const channel = await createChannel(options, {
+      kind: 'slack',
+      name: 'QA',
+      settings: { channel: '#qa' },
+      secret: 'xoxb-test',
+    });
+    await queueTestDelivery(options, channel.id);
+    const tenMinutes = new Date(NOW.getTime() + 10 * 60_000).toISOString();
+    const { adapter, calls } = fakeAdapter([
+      { ok: false, retryable: true, code: 'slack_rejected_429', retryAt: tenMinutes },
+      { ok: true },
+    ]);
+    let clock = NOW;
+    const dispatcher = createReportDispatcher({
+      db: db as never,
+      vaultSecret: VAULT,
+      adapters: { slack: adapter },
+      link: null,
+      now: () => clock,
+    });
+    expect(await dispatcher.runOnce()).toMatchObject([{ status: 'pending' }]);
+    // Past the one-minute backoff, still inside the ten minutes Slack asked for.
+    clock = new Date(NOW.getTime() + 2 * 60_000);
+    expect(await dispatcher.runOnce()).toEqual([]);
+    clock = new Date(NOW.getTime() + 10 * 60_000 + 1);
+    expect(await dispatcher.runOnce()).toMatchObject([{ status: 'sent' }]);
+    expect(calls).toHaveLength(2);
+  });
   it('two dispatchers polling together send one message', async () => {
     const { db, options } = await setup();
     const channel = await createChannel(options, {

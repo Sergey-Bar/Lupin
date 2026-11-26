@@ -775,3 +775,40 @@ body {
     outline-color: Highlight;
   }
 }
+
+/* Shared material language: luminous entry surface, quiet reading surfaces. */
+.lupin-hero {
+  position: relative;
+  isolation: isolate;
+}
+.lupin-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--lupin-gradient-shell);
+  border-radius: 24px;
+  opacity: 0.5;
+}
+.lupin-decision {
+  background: color-mix(in oklab, var(--site-surface) 92%, transparent);
+  border-radius: 20px;
+}
+.lupin-capabilities article {
+  border: 1px solid var(--site-border);
+  border-radius: 16px;
+  padding: 24px;
+  background: var(--site-surface);
+}
+.lupin-capabilities article:focus-within {
+  border-color: var(--site-accent);
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .lupin-decision {
+    background: var(--site-surface);
+  }
+  .lupin-hero::before {
+    display: none;
+  }
+}

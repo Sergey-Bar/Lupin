@@ -232,9 +232,14 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
   async function finish(
     row: ReportDeliveryRow,
     outcome: DispatchOutcome & { rendered: string | null },
+    retryAt?: string,
   ) {
     const at = clock();
-    const retry = BACKOFF_MS[Math.min(row.attempts - 1, BACKOFF_MS.length - 1)] ?? 60_000;
+    const backoff = BACKOFF_MS[Math.min(row.attempts - 1, BACKOFF_MS.length - 1)] ?? 60_000;
+    // A platform that named a time (`Retry-After`) is waited out, never asked sooner: the
+    // later of the two, so a short `Retry-After` still gets the backoff's spacing.
+    const named = retryAt === undefined ? Number.NaN : Date.parse(retryAt) - at.getTime();
+    const retry = Number.isFinite(named) ? Math.max(backoff, named) : backoff;
     await options.db
       .update(reportDeliveries)
       .set({
@@ -411,7 +416,7 @@ export function createReportDispatcher(options: ReportDispatcherOptions) {
       const result = await sendWithFallback(row, adapter, secret, request, fallback);
       const status = statusOf(row, result);
       const outcome = { id: row.id, status, errorCode: result.error?.code ?? null };
-      await finish(row, { ...outcome, rendered });
+      await finish(row, { ...outcome, rendered }, result.error?.retryAt);
       return outcome;
     } catch (error) {
       // A channel deleted since it was queued, or a vault that will not open: final, and

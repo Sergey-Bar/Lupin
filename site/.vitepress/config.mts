@@ -141,6 +141,7 @@ export default defineConfig({
           { text: 'The briefing', link: '/guide/briefing' },
           { text: 'Agent quality', link: '/guide/agents' },
           { text: 'Issues and test proposals', link: '/guide/issues-and-test-proposals' },
+          { text: 'Connect Jira', link: '/guide/jira' },
           { text: 'How Lupin compares', link: '/guide/compare' },
         ],
       },

@@ -25,6 +25,10 @@
   and failures by connector, and reporter events with the age of the last one.
   `infra/observability/` ships alert rules, each with a fix line, a Grafana dashboard, and an
   optional compose override that runs both on loopback.
+- **Connectors wait when told to (task 10).** A 429 with `Retry-After` from Jira or the Signal
+  bridge stops the attempt and reports `retryAt`, and a scheduled report waits until then instead
+  of its fixed backoff. `retryAtFrom` and `refusalOf` in `@lupin/connectors-sdk` are the one
+  reading of the header. A Jira setup guide, and a check that every MCP tool is called over HTTP.
 
 ### Fixed
 

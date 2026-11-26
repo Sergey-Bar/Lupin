@@ -1,10 +1,10 @@
 import {
   ConnectorHttpError,
   ConnectorInputError,
-  ConnectorRejectionError,
   connectorFailure,
   dispatchEntry,
   executeWithRetry,
+  refusalOf,
   requireString,
   type ConnectorAdapter,
   type ConnectorRequest,
@@ -48,11 +48,14 @@ function bridgeBase(secret: string): string {
   return url.origin;
 }
 
-/** A 4xx is the bridge refusing (nothing sent); a 5xx may have reached Signal. */
-function bridgeError(status: number): ConnectorHttpError {
-  return status < 500
-    ? new ConnectorRejectionError(status, 'The Signal bridge refused the request')
-    : new ConnectorHttpError(status, 'The Signal bridge failed');
+/**
+ * A 4xx is the bridge refusing (nothing sent), carrying its `Retry-After` when it rate-limits;
+ * a 5xx may have reached Signal.
+ */
+function bridgeError(response: Parameters<typeof refusalOf>[0]): ConnectorHttpError {
+  return response.status < 500
+    ? refusalOf(response, 'The Signal bridge refused the request')
+    : new ConnectorHttpError(response.status, 'The Signal bridge failed');
 }
 
 function sendBody(input: unknown): Record<string, unknown> {
@@ -96,7 +99,7 @@ export const signalAdapter: ConnectorAdapter = {
             redirect: 'error',
             signal,
           });
-          if (!response.ok) throw bridgeError(response.status);
+          if (!response.ok) throw bridgeError(response);
           return (await response.json().catch(() => ({}))) as unknown;
         },
         { retries: 2, signal: request.signal, idempotent, attemptTimeoutMs: timeoutMs },

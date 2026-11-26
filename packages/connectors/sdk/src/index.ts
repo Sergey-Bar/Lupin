@@ -82,10 +82,60 @@ export class ConnectorHttpError extends Error {
   }
 }
 export class ConnectorRejectionError extends ConnectorHttpError {
-  constructor(status: number, message: string) {
+  /**
+   * When the platform said to come back, from its `Retry-After` header. Set only when it said.
+   */
+  retryAt: Date | undefined;
+
+  constructor(status: number, message: string, retryAt?: Date) {
     super(status, message);
     this.name = 'ConnectorRejectionError';
+    this.retryAt = retryAt;
   }
+}
+
+/**
+ * When a `Retry-After` header says to come back, or `undefined` when it says nothing usable.
+ *
+ * RFC 9110 allows a number of seconds or an HTTP date. A value in the past, a negative
+ * number or a garbled one is `undefined` rather than "now": a caller told to retry
+ * immediately after a 429 is a caller that gets a second 429.
+ *
+ * @param header the header's value, as `Headers.get` returns it
+ * @param now the current time
+ */
+export function retryAtFrom(header: string | null | undefined, now: Date): Date | undefined {
+  if (header === null || header === undefined) return undefined;
+  const raw = header.trim();
+  if (/^\d+$/u.test(raw)) {
+    const seconds = Number(raw);
+    return seconds > 0 ? new Date(now.getTime() + seconds * 1000) : undefined;
+  }
+  const date = Date.parse(raw);
+  return Number.isFinite(date) && date > now.getTime() ? new Date(date) : undefined;
+}
+
+/**
+ * The refusal for a failed response: a 4xx is a {@link ConnectorRejectionError} carrying the
+ * time `Retry-After` named, and anything else a {@link ConnectorHttpError}.
+ *
+ * @param response the platform's answer
+ * @param message the adapter's own text, never the remote body
+ * @param now the current time, for a `Retry-After` in seconds
+ */
+export function refusalOf(
+  response: { status: number; headers?: Pick<Headers, 'get'> },
+  message: string,
+  now = new Date(),
+): ConnectorHttpError {
+  if (response.status >= 400 && response.status < 500) {
+    return new ConnectorRejectionError(
+      response.status,
+      message,
+      retryAtFrom(response.headers?.get('retry-after'), now),
+    );
+  }
+  return new ConnectorHttpError(response.status, message);
 }
 
 /**
@@ -189,7 +239,10 @@ function mustStopRetrying(
 ): boolean {
   const transient = error instanceof ConnectorHttpError && isRetryableStatus(error.status);
   const safeToRepeat = options.idempotent === true || error instanceof ConnectorRejectionError;
-  return !transient || !safeToRepeat || attempts > options.retries;
+  // A platform that named a time to come back is refused again by a 100 ms backoff. The
+  // attempt stops and the result carries `retryAt`, so the caller waits exactly that long.
+  const toldWhen = error instanceof ConnectorRejectionError && error.retryAt !== undefined;
+  return !transient || !safeToRepeat || toldWhen || attempts > options.retries;
 }
 /**
  * The longest a single backoff sleep may be.
@@ -333,12 +386,14 @@ export function connectorFailure(prefix: string, error: unknown, message: string
   }
   if (error instanceof ConnectorHttpError) {
     const rejected = error instanceof ConnectorRejectionError;
+    const retryAt = rejected ? error.retryAt : undefined;
     return {
       status: 'error',
       error: {
         code: `${prefix}_${rejected ? 'rejected_' : ''}${String(error.status)}`,
         retryable: isRetryableStatus(error.status),
         message,
+        ...(retryAt === undefined ? {} : { retryAt: retryAt.toISOString() }),
       },
       attempts: error.attempts,
     };
