@@ -78,6 +78,7 @@
     "test:local:browser": "pr-blocking",
     "test:render": "pr-blocking",
     "status:10": "pr-blocking",
+    "scorecard": "pr-reporting",
     "review:pr": "pr-reporting",
     "site:doctor": "pr-reporting",
     "compose:config": "pr-blocking",

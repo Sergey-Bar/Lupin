@@ -26,6 +26,19 @@ fix. `pnpm findings:check` makes it more than a document:
 The generated [findings page](/pages/quality/findings) publishes the ledger, so the public
 site cannot claim more than the ledger does.
 
+## The scorecard
+
+`pnpm scorecard` scores six areas out of ten: infrastructure, integrations, backend,
+frontend, UX and setup. `docs/quality/scorecard.json` lists the criteria, and each one names a
+probe that reads the file that already owns the number: the coverage, mutation and
+complexity baselines, the ledger, the capability register, the rendering budget or the gate
+tiers. A criterion that records its own result is refused, so the file cannot be edited into
+a 10.
+
+A criterion only a run on the reference install can satisfy is marked `blockedExternal` and
+cites an open ledger row. It is left out of the score and printed separately, and it becomes
+a failure the moment it passes, so the block cannot outlive its reason.
+
 ## Dependencies
 
 - Shared versions live once, in the `catalog:` block of `pnpm-workspace.yaml`.

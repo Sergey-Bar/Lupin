@@ -2,6 +2,16 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
+## Unreleased - Lupin 7
+
+### Added
+
+- **The scorecard (plan task 1).** `pnpm scorecard` scores infra, integrations, backend,
+  frontend, UX and setup out of ten from `docs/quality/scorecard.json`. The rubric holds
+  criteria only; every verdict is derived from the baseline, ledger, register or budget that
+  owns the number, and a criterion carrying a result is refused. Reporting in CI until its
+  first all-pass run.
+
 ## 4.1.0 - 2026-11-12 - the console, simplified
 
 ### Added
