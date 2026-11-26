@@ -122,7 +122,7 @@
       "check": {
         "probe": "contains",
         "path": "packages/connectors/jira/src/index.ts",
-        "pattern": "retry-after"
+        "pattern": "throw refusalOf\\(response"
       }
     },
     {
@@ -132,7 +132,17 @@
       "check": {
         "probe": "contains",
         "path": "packages/connectors/signal/src/index.ts",
-        "pattern": "retry-after"
+        "pattern": "refusalOf\\(response"
+      }
+    },
+    {
+      "id": "integrations.retry-after-honoured",
+      "area": "integrations",
+      "statement": "A scheduled report waits until the time a rate limit named, not its own shorter backoff.",
+      "check": {
+        "probe": "contains",
+        "path": "apps/api/src/services/report-dispatcher.ts",
+        "pattern": "finish\\(row, \\{ \\.\\.\\.outcome, rendered \\}, result\\.error\\?\\.retryAt\\)"
       }
     },
     {
