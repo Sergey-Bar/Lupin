@@ -7,6 +7,7 @@ import { createHealthClient } from '../../lib/health-client.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
 import { createGithubClient } from '../../lib/github-client.js';
+import { getSelfChecks } from '../../lib/self-checks-client.js';
 import { putOffSetup, setupPutOff, shouldOpenSetup } from '../../lib/first-run.js';
 import { createSettingsClient } from '../../lib/settings-client.js';
 import { useScope } from '../../hooks/useScope.js';
@@ -80,6 +81,8 @@ export const Route = createRoute({
           deliveries: () => notifications.listDeliveries(),
           retryRun: (runId, scope) => defaultApiClient.retryRun(runId, undefined, { scope }),
           pulls: async () => (await github.listPulls({ state: 'open', limit: 50 })).items,
+          // What the install noticed about itself (plan 1795712849115 task 16).
+          selfChecks: async () => (await getSelfChecks()).items,
         },
       };
     }, []);
