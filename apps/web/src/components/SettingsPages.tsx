@@ -29,6 +29,8 @@ interface GroupPage {
   testKey?: string;
 }
 
+type Suggest = React.ComponentProps<typeof SettingsForm>['suggest'];
+
 const GROUP_PAGES: Record<'ai' | 'integrations' | 'sessions-retention', GroupPage> = {
   ai: {
     group: 'ai',
@@ -60,10 +62,13 @@ function InstallationGroupPage({
   health,
   client,
   children,
+  suggest,
 }: {
   page: GroupPage;
   health: HealthClient;
   client: SettingsClient;
+  /** Suggestions for fields on this page, by key. */
+  suggest?: Suggest;
   /** More of the page, under the form, for a reader who may administer it. */
   children?: (who: WhoAmI) => React.ReactNode;
 }): React.ReactElement {
@@ -82,6 +87,7 @@ function InstallationGroupPage({
                     title={page.title}
                     canEdit={canAdministerInstallation(who)}
                     {...(page.testKey === undefined ? {} : { testKey: page.testKey })}
+                    {...(suggest === undefined ? {} : { suggest })}
                   />
                 </Panel>
                 {children?.(who)}
@@ -109,7 +115,22 @@ export function AiSettingsPage(props: {
   health: HealthClient;
   client: SettingsClient;
 }): React.ReactElement {
-  return <InstallationGroupPage page={GROUP_PAGES.ai} {...props} />;
+  // The provider's own model ids, so the model is picked from what it serves rather than guessed.
+  const { listModelIds } = props.client;
+  const suggest = React.useMemo<Suggest>(
+    () =>
+      listModelIds === undefined
+        ? undefined
+        : { 'ai.model': () => listModelIds.call(props.client) },
+    [listModelIds, props.client],
+  );
+  return (
+    <InstallationGroupPage
+      page={GROUP_PAGES.ai}
+      {...props}
+      {...(suggest === undefined ? {} : { suggest })}
+    />
+  );
 }
 
 export function IntegrationsSettingsPage(props: {

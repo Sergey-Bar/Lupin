@@ -164,6 +164,8 @@ function submitText(count: number, label: string | undefined): string {
 
 interface ControlProps {
   id: string;
+  /** Values to offer for a text field, as a native list the person may still type past. */
+  suggestions?: readonly string[] | undefined;
   definition: SettingDefinition;
   read: SettingRead | undefined;
   label: string;
@@ -219,6 +221,7 @@ function Control({
   value,
   locked,
   onChange,
+  suggestions,
 }: ControlProps): React.ReactElement {
   const shared = { id, disabled: locked, 'aria-describedby': `${id}-help` };
   if (definition.kind === 'boolean') {
@@ -242,20 +245,32 @@ function Control({
       />
     );
   }
+  const listId =
+    suggestions === undefined || suggestions.length === 0 ? undefined : `${id}-suggestions`;
   return (
-    <Input
-      {...shared}
-      label={label}
-      value={String(value)}
-      type={inputType(definition)}
-      inputMode={definition.kind === 'integer' ? 'numeric' : undefined}
-      autoComplete="off"
-      spellCheck={false}
-      placeholder={
-        definition.defaultValue === undefined ? undefined : String(definition.defaultValue)
-      }
-      onChange={(event) => onChange(event.target.value)}
-    />
+    <>
+      <Input
+        {...shared}
+        label={label}
+        list={listId}
+        value={String(value)}
+        type={inputType(definition)}
+        inputMode={definition.kind === 'integer' ? 'numeric' : undefined}
+        autoComplete="off"
+        spellCheck={false}
+        placeholder={
+          definition.defaultValue === undefined ? undefined : String(definition.defaultValue)
+        }
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {listId === undefined ? null : (
+        <datalist id={listId} data-testid={`suggestions-${definition.key}`}>
+          {suggestions?.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+      )}
+    </>
   );
 }
 
@@ -267,7 +282,9 @@ function Field({
   replacing,
   onReplace,
   disabled,
+  suggestions,
 }: {
+  suggestions?: readonly string[] | undefined;
   definition: SettingDefinition;
   read: SettingRead | undefined;
   value: string | boolean;
@@ -283,6 +300,7 @@ function Field({
     read,
     value,
     onChange,
+    suggestions,
     locked: read?.source === 'environment' || disabled,
     label:
       definition.unit === undefined ? definition.label : `${definition.label} (${definition.unit})`,
@@ -300,6 +318,27 @@ function Field({
   );
 }
 
+/** Each key's suggestions, read once per form; a key whose read fails simply has none. */
+function useSuggestions(
+  suggest: Readonly<Record<string, () => Promise<readonly string[]>>> | undefined,
+): Readonly<Record<string, readonly string[]>> {
+  const [found, setFound] = React.useState<Readonly<Record<string, readonly string[]>>>({});
+  React.useEffect(() => {
+    let live = true;
+    for (const [key, read] of Object.entries(suggest ?? {})) {
+      read()
+        .then((values) => {
+          if (live) setFound((current) => ({ ...current, [key]: values }));
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      live = false;
+    };
+  }, [suggest]);
+  return found;
+}
+
 export function SettingsForm({
   client,
   group,
@@ -309,6 +348,7 @@ export function SettingsForm({
   onSaved,
   onSubmitValues,
   submitLabel,
+  suggest,
 }: {
   client: SettingsClient;
   group: SettingGroup;
@@ -326,6 +366,11 @@ export function SettingsForm({
   onSubmitValues?: (values: Record<string, string | number | boolean>) => Promise<void>;
   /** The submit button's label when there are changes. */
   submitLabel?: string;
+  /**
+   * Where to read suggestions for a key's field from. A failed read suggests nothing and says
+   * nothing: the field stays a plain text field, which is what it was before.
+   */
+  suggest?: Readonly<Record<string, () => Promise<readonly string[]>>>;
 }): React.ReactElement {
   const toast = useToast();
   const [version, setVersion] = React.useState(0);
@@ -342,6 +387,7 @@ export function SettingsForm({
   const [testing, setTesting] = React.useState(false);
   const [result, setResult] = React.useState<SettingTestResult | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const suggestions = useSuggestions(suggest);
 
   const byKey = React.useMemo(() => {
     const map = new Map<string, SettingRead>();
@@ -443,6 +489,7 @@ export function SettingsForm({
             read={byKey.get(definition.key)}
             value={draft[definition.key] ?? ''}
             disabled={!canEdit}
+            suggestions={suggestions[definition.key]}
             replacing={replacing.has(definition.key)}
             onReplace={() => setReplacing((current) => new Set(current).add(definition.key))}
             onChange={(value) => {

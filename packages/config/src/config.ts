@@ -244,6 +244,8 @@ const EnvironmentSchema = z.object({
   KILO_GATEWAY_URL: z.string().url().optional(),
   KILO_API_KEY: secretSchema('KILO_API_KEY').optional(),
   OLLAMA_BASE_URL: z.string().url().optional(),
+  // The model id to use at the provider; the saved `ai.model` setting when unset.
+  LUPIN_AI_MODEL: z.string().trim().min(1).max(200).optional(),
   SESSION_TTL_HOURS: z.coerce.number().int().positive().default(24),
   // Whether a reverse proxy in front of the API sets X-Forwarded-For. Off unless said:
   // without a proxy the header is client-chosen (ledger MNT-7).

@@ -11,6 +11,11 @@ import { aiGatewayOrUnconfigured, resolveAiGateway, type GatewayResolution } fro
  * reads the three AI settings (environment first, then the saved value), and builds a gateway
  * only when that configuration changed since the last call. `decorate` wraps each built
  * gateway with the provider it resolved to, so instrumentation still records the right name.
+ *
+ * **The chosen model is listed first.** Narration, briefings and test proposals each take the
+ * first model the provider lists, so the saved `ai.model` (or `LUPIN_AI_MODEL`) is moved to the
+ * front, and every caller uses it without being told about it. A model the provider no longer
+ * offers is ignored rather than invented, and choosing one does not rebuild the provider.
  */
 export interface LiveAiGateway {
   gateway: AiGateway;
@@ -24,6 +29,16 @@ export interface LiveAiGatewayOptions {
 }
 
 const AI_KEYS = ['ai.gatewayUrl', 'ai.apiKey', 'ai.ollamaBaseUrl'] as const;
+
+/** The provider's models, with `chosen` first when the provider offers it. */
+export function chosenFirst<T extends { id: string }>(
+  models: readonly T[],
+  chosen: string | null,
+): T[] {
+  const index = chosen === null ? -1 : models.findIndex((model) => model.id === chosen);
+  if (index <= 0) return [...models];
+  return [models[index] as T, ...models.slice(0, index), ...models.slice(index + 1)];
+}
 
 export function createLiveAiGateway(
   settings: Pick<SettingsService, 'resolve'>,
@@ -51,7 +66,11 @@ export function createLiveAiGateway(
   }
 
   const gateway: AiGateway = {
-    listModels: async (signal) => (await resolved()).gateway.listModels(signal),
+    listModels: async (signal) => {
+      const models = await (await resolved()).gateway.listModels(signal);
+      const chosen = await settings.resolve('ai.model');
+      return chosenFirst(models, typeof chosen === 'string' && chosen !== '' ? chosen : null);
+    },
     streamCompletion: (input: CompletionInput) => ({
       async *[Symbol.asyncIterator]() {
         yield* (await resolved()).gateway.streamCompletion(input);

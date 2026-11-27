@@ -63,6 +63,7 @@ describe('the settings client', () => {
       },
       'GET /api/v1/settings/identity/draft/d': { id: 'd', verified: null },
       'POST /api/v1/settings/identity/apply': { settings: [] },
+      'GET /api/v1/chat/models': { models: [{ id: 'llama3.1:8b' }, { id: 'qwen2.5-coder:7b' }] },
     };
     const fetchImpl = vi.fn<typeof fetch>(async (url, init = {}) => {
       calls.push([String(url), init]);
@@ -93,7 +94,8 @@ describe('the settings client', () => {
     await client.identityDraft({ 'identity.oidcRoleMap': 'admin:a@b.test' });
     await client.identityDraftStatus('d');
     await client.identityApply('d');
-    expect(calls).toHaveLength(24);
+    expect(await client.listModelIds?.()).toEqual(['llama3.1:8b', 'qwen2.5-coder:7b']);
+    expect(calls).toHaveLength(25);
     expect(calls.every(([, init]) => init.credentials === 'include')).toBe(true);
     expect(calls[1]?.[1].body).toBe(JSON.stringify({ value: 'http://o:1' }));
     expect(calls[9]?.[1].body).toBe(JSON.stringify({ confirm: 'n' }));

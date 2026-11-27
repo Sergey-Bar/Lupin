@@ -93,6 +93,9 @@ rationale, model and token counts. `GET` on the same path lists the newest 50.
   whether it compiles and kills the mutant is for whoever applies it (`git apply`).
 - No model provider configured (`KILO_GATEWAY_URL` and `KILO_API_KEY`, or `OLLAMA_BASE_URL`)
   answers `NOT_CONFIGURED`. An answer with no fenced code block is `MODEL_OUTPUT_UNUSABLE`.
+- The model is the one chosen under **Settings → AI provider → Model**, picked from the models
+  the provider lists (or `LUPIN_AI_MODEL`). With none chosen, it is the first model the provider
+  lists. Narration and briefings use the same choice.
 - Each proposal spends model budget, so it is an operator action, and it is recorded as a GenAI
   span under the agent `lupin-test-proposals` on the [agent runtime](agents.md) page.
 
