@@ -138,14 +138,13 @@ describe('the committed matrix and the composed application agree', () => {
     expect(open).toEqual([...PUBLIC_ROUTES].sort());
   });
 
-  it('classifies at least the four credentials the API demands, and some open routes', () => {
+  it('classifies at least the three credentials the API demands, and some open routes', () => {
     const classes = new Set(committed.map((row) => row.access));
     for (const access of [
       'open',
       'reporter-secret',
       'runner-registration-secret',
       'runner-credential',
-      'enrollment-token',
     ]) {
       expect(classes).toContain(access);
     }
@@ -194,10 +193,7 @@ describe('the committed matrix and the composed application agree', () => {
 function probe(row: Row, headers: Record<string, string> = {}): Promise<Response> {
   const url = `http://localhost${lib.concretePath(row.path.replace(':runnerId', MATRIX_RUNNER))}`;
   const hasBody = row.method !== 'GET' && row.method !== 'DELETE';
-  const body =
-    row.access === 'enrollment-token'
-      ? JSON.stringify({ enrollmentToken: 'not-a-token-anybody-issued', capabilities: [] })
-      : '{}';
+  const body = '{}';
   return Promise.resolve(
     app.request(url, {
       method: row.method,
@@ -230,7 +226,7 @@ describe('every guarded route refuses a caller with no credential, and a wrong o
 
   it('refuses with 401 or 403 when a wrong bearer credential is presented', async () => {
     const answers: Array<[string, number]> = [];
-    for (const row of guarded().filter((entry) => entry.access !== 'enrollment-token')) {
+    for (const row of guarded()) {
       const response = await probe(row, {
         authorization: 'Bearer a-credential-nobody-issued',
         'x-runner-registration-secret': 'a-secret-nobody-configured',
@@ -276,7 +272,6 @@ describe('every guarded route refuses a caller with no credential, and a wrong o
     for (const row of guarded().filter(
       (entry) => entry.access === 'runner-credential' && entry.path.startsWith('/api/v1/'),
     )) {
-      if (row.path.startsWith('/api/v1/runner/v1/')) continue; // the legacy door has its own tokens
       const status = await statusOf(await probe(row, { authorization: `Bearer ${token}` }));
       expect(REFUSED, `${row.method} ${row.path}`).not.toContain(status);
     }

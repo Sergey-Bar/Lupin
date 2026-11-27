@@ -1,14 +1,9 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { withErrorBoundary } from '../test-support/error-boundary-app.js';
-import { Hono } from 'hono';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createOrchestrationRoutes } from './orchestration.js';
 import { LocalArtifactBytesStore, LocalArtifactStore } from '../infrastructure/artifact-store.js';
 import { DomainError, ErrorCode } from '../errors/domain-error.js';
-import { createErrorBoundary } from '../errors/boundary.js';
-import type { OrchestrationService } from '../services/orchestration-service.js';
 
 /**
  * A swallowed error is a failure with no symptom.
@@ -16,95 +11,15 @@ import type { OrchestrationService } from '../services/orchestration-service.js'
  * Three handlers caught *anything* and answered as if the thing the caller asked
  * for did not exist. That is the worst possible shape: the caller is told their
  * request was wrong, so they stop retrying, and nothing is logged, so nobody looks.
+ * Two were the process-local automation and job routes, since removed as dead code; the
+ * third is here:
  *
- *   - `POST /automations/:id/jobs` — a defect inside `enqueue` reported 404
- *     "Automation not found".
- *   - `POST /jobs/:id/cancel` — the same for `cancel`.
  *   - artifact bytes — *any* read failure returned `null`, and the caller turned
  *     `null` into 404 "artifact not found". A permissions error, a full disk or a
  *     corrupt file all read as "that artifact was never there".
  *
  * Each test below asserts the miss is still a miss, and that a fault is not.
  */
-function serviceDouble(overrides: Partial<Record<string, unknown>> = {}): OrchestrationService {
-  return {
-    listAutomations: () => [],
-    createAutomation: vi.fn(),
-    createSchedule: vi.fn(),
-    listJobs: () => [],
-    enqueue: vi.fn(() => ({ id: 'job-1' })),
-    cancel: vi.fn(() => ({ id: 'job-1' })),
-    ...overrides,
-  } as unknown as OrchestrationService;
-}
-
-function orchestrationApp(service: OrchestrationService): Hono {
-  const app = withErrorBoundary(new Hono());
-  const boundary = createErrorBoundary({ log: () => undefined, requestId: () => 'req-test' });
-  app.onError(boundary.onError);
-  app.route('/', createOrchestrationRoutes(service));
-  return app;
-}
-
-describe('orchestration routes distinguish a miss from a fault', () => {
-  it('answers 404 when the automation genuinely does not exist', async () => {
-    const app = orchestrationApp(
-      serviceDouble({
-        enqueue: () => {
-          throw new Error('Automation not found');
-        },
-      }),
-    );
-    const response = await app.request('/api/v1/automations/missing/jobs', { method: 'POST' });
-    expect(response.status).toBe(404);
-    expect(
-      ((await response.json()) as { error: { code: string; message: string } }).error,
-    ).toMatchObject({ code: 'AUTOMATION_NOT_FOUND', message: 'Automation not found' });
-  });
-
-  it('does not report a defect inside enqueue as a missing automation', async () => {
-    // The old `catch { 404 }` turned this into "Automation not found", so a
-    // caller would check their id and nobody would see a log line.
-    const app = orchestrationApp(
-      serviceDouble({
-        enqueue: () => {
-          throw new Error('connection pool exhausted');
-        },
-      }),
-    );
-    const response = await app.request('/api/v1/automations/real-id/jobs', { method: 'POST' });
-    expect(response.status).toBe(500);
-    const body = (await response.json()) as { error: { code: string } };
-    expect(body.error.code).toBe(ErrorCode.INTERNAL);
-    // And the cause is not handed to the caller.
-    expect(JSON.stringify(body)).not.toContain('connection pool');
-  });
-
-  it('does not report a defect inside cancel as a missing job', async () => {
-    const app = orchestrationApp(
-      serviceDouble({
-        cancel: () => {
-          throw new Error('scheduler unreachable');
-        },
-      }),
-    );
-    const response = await app.request('/api/v1/jobs/job-1/cancel', { method: 'POST' });
-    expect(response.status).toBe(500);
-  });
-
-  it('still answers 404 for a genuinely missing job', async () => {
-    const app = orchestrationApp(
-      serviceDouble({
-        cancel: () => {
-          throw new Error('Job not found');
-        },
-      }),
-    );
-    const response = await app.request('/api/v1/jobs/missing/cancel', { method: 'POST' });
-    expect(response.status).toBe(404);
-  });
-});
-
 describe('artifact bytes distinguish absent from unreadable', () => {
   let root: string;
 

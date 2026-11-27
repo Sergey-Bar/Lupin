@@ -6,8 +6,6 @@ import { createHealthRoutes } from './routes/health.js';
 import { createReporterRoutes } from './routes/reporter.js';
 import { createReporterResultsRoute } from './routes/reporter-results.js';
 import { createReportingRoutes } from './routes/reporting.js';
-import { createRunnerRoutes } from './routes/runner.js';
-import { createOrchestrationRoutes } from './routes/orchestration.js';
 import { createEventsRoutes } from './routes/events.js';
 import { createAgentRoutes } from './routes/agents.js';
 import { createChatRoutes } from './routes/chat.js';
@@ -20,8 +18,6 @@ import { InMemoryExecutionStore } from './execution/in-memory-execution-store.js
 import { InMemoryRunRepository } from './repositories/in-memory-run-repository.js';
 import { ReporterIngestionService } from './services/reporter-ingestion.js';
 import { InMemoryRealtimeBus } from './realtime/realtime-bus.js';
-import { RunnerControlService } from './services/runner-control.js';
-import { OrchestrationService } from './services/orchestration-service.js';
 
 /**
  * The mounted route set.
@@ -121,8 +117,6 @@ function mountedApp(): Hono {
     }),
   );
   app.route('/', createReportingRoutes(new ReporterIngestionService('workspace-routes')));
-  app.route('/', createRunnerRoutes(new RunnerControlService()));
-  app.route('/', createOrchestrationRoutes(new OrchestrationService()));
   return app;
 }
 
@@ -246,17 +240,6 @@ const CANONICAL_API_ROUTES: Array<[string, string]> = [
   ['GET', '/api/v1/dashboard/quality-gates/:id'],
   ['PATCH', '/api/v1/dashboard/quality-gates/:id'],
   ['DELETE', '/api/v1/dashboard/quality-gates/:id'],
-  // Legacy process-local control plane.
-  ['POST', '/api/v1/runner/v1/enroll'],
-  ['POST', '/api/v1/runner/v1/sync'],
-  ['POST', '/api/v1/runner/v1/jobs/:jobId/events/batch'],
-  ['GET', '/api/v1/automations'],
-  ['POST', '/api/v1/automations'],
-  ['GET', '/api/v1/schedules'],
-  ['POST', '/api/v1/schedules'],
-  ['GET', '/api/v1/jobs'],
-  ['POST', '/api/v1/automations/:id/jobs'],
-  ['POST', '/api/v1/jobs/:id/cancel'],
 ];
 
 describe('the mounted route set', () => {

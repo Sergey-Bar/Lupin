@@ -68,6 +68,13 @@
 
 ### Fixed
 
+- **The capability register says what is real (no `mock` rows left).** The nine mock rows were
+  re-read against the code. Runner credentials, durable schedules, the runner image, chat
+  completions and the model catalog were already real and are recorded so. The legacy
+  process-local runner-control and orchestration routes were dead code (no caller, in-memory
+  state, and a production 503 that never matched their paths) and are removed. What does not exist
+  is recorded as `missing`: a container per job, persisted conversations and model profiles. The
+  legacy migration wave engine is deferred until a legacy install asks to move.
 - **Every page says which state it is in (ledger UI-1).** The accessibility matrix now also
   checks that each route, with the API slow, empty, failing or half-failing, shows a loading
   status, says the read failed, or says there is nothing. It found Trends drawing a failure as a

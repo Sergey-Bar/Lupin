@@ -462,17 +462,18 @@ describe('a valid production configuration', () => {
     expect(rows?.rows[0]?.count).toBe(1);
   });
 
-  it('refuses the legacy process-local control plane', async () => {
-    // The production branch of `mountLegacyProcessLocalRoutes`, reachable only from a
-    // composition that got past every policy gate. Process-local automations and
-    // schedules look like they work and survive nothing.
-    for (const path of ['/api/v1/automations', '/api/v1/schedules', '/api/v1/jobs']) {
-      const response = await request(path);
-      expect(response.status, path).toBe(503);
-      expect(await response.json(), path).toMatchObject({
-        status: 'unavailable',
-        code: 'PROCESS_LOCAL_CONTROL_DISABLED',
-      });
+  it('serves no legacy process-local control plane at all', async () => {
+    // The process-local runner-control and orchestration routes were removed: no client called
+    // them, the runner uses the durable `/api/v1/runners/*` path, and their in-memory state
+    // looked like it worked and survived nothing. Not a 503 any more, so nothing is answering.
+    for (const path of [
+      '/api/v1/automations',
+      '/api/v1/schedules',
+      '/api/v1/jobs',
+      '/api/v1/runner/v1/sync',
+    ]) {
+      const response = await request(path, { method: path.endsWith('sync') ? 'POST' : 'GET' });
+      expect(response.status, path).toBe(404);
     }
   });
 

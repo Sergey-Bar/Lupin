@@ -41,6 +41,18 @@ analyzer have known gaps.
    test2json, Newman and Lighthouse.
 6. Out of scope, as before: HA and Kubernetes, multi-user features, Jira both ways, MCP write
    tools, a translated interface.
+7. **How decision 2 was carried out (2026-11-27).** The nine `mock` rows were re-read against the
+   code. Where a row bundled pieces with different truth values it was split, as the register's
+   own rule asks: what is built and tested became `real`, dead code was removed and its row made
+   `obsolete`, and what does not exist at all is recorded as `missing` (per-job containers,
+   persisted conversations, model profiles). A `missing` row is an open gap stated plainly, not a
+   pass: the scorecard criterion asks only that nothing pretends to work, which is what `mock`
+   meant here.
+8. **L7-D1: the legacy migration wave engine is deferred.** `tools/migrate-cli` plans, validates
+   and reconciles, and its `apply` stays blocked. The resumable wave engine is built when a legacy
+   SQLite install asks to move, not before: no such install is known, and building and keeping a
+   resumable importer for a source nobody has is cost with no user. The register's
+   `migration.tool` row is `deferred` on this decision.
 
 ## Rules every task keeps
 

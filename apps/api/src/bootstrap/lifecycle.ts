@@ -76,6 +76,27 @@ export interface ClosableServer {
   closeAllConnections?(): void;
 }
 
+/**
+ * Keep idle keep-alive sockets open longer than the clients and proxies that reuse them.
+ *
+ * Node closes an idle keep-alive socket after 5 s. A client that picks that socket up at the same
+ * moment (Playwright's request context, a reverse proxy pooling upstream connections, the runner's
+ * own fetch) writes its request onto a socket the server is closing, and gets `ECONNRESET` for a
+ * request the server never saw. The CI product suite hit exactly that on report uploads. 65 s
+ * outlasts the common 60 s client and proxy idle timeouts, so the client always closes first.
+ * The headers timeout has to stay above it, or Node would cut off a slow request on a reused socket.
+ */
+export const KEEP_ALIVE_MS = 65_000;
+
+export function keepIdleSockets(
+  server: { keepAliveTimeout?: number; headersTimeout?: number } | undefined,
+): void {
+  // An HTTP/2 server has no keep-alive timeout, and a stubbed `serve()` returns nothing.
+  if (server === undefined || typeof server.keepAliveTimeout !== 'number') return;
+  server.keepAliveTimeout = KEEP_ALIVE_MS;
+  server.headersTimeout = KEEP_ALIVE_MS + 1_000;
+}
+
 export function closeHttpServer(server: ClosableServer, graceMs: number): Promise<void> {
   return new Promise((resolve, reject) => {
     const cutOff = setTimeout(() => server.closeAllConnections?.(), graceMs);

@@ -23,7 +23,7 @@
  * cross-checks the manifest's declared user against it.
  *
  * A registry digest is still compared whenever a manifest declares one, so
- * graduating `runner.oci` from `mock` arms a stronger check rather than requiring
+ * pushing a tool image and recording its digest arms a stronger check rather than requiring
  * this script to be rewritten. What is unavailable for a locally built image is
  * *reported* as unavailable — with what would change it — rather than reported as
  * a failure of the images.

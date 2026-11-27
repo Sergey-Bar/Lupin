@@ -99,8 +99,6 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
   },
   { family: 'reporter results', files: ['routes/reporter-results.ts'] },
   { family: 'reporting', files: ['routes/reporting.ts'] },
-  { family: 'runner', files: ['routes/runner.ts'] },
-  { family: 'orchestration routes', files: ['routes/orchestration.ts'] },
   { family: 'events', files: ['routes/events.ts'] },
   { family: 'dashboard routes', files: ['modules/dashboard/index.ts'] },
   // The run trend reads the execution store with the composition root's workspace, and
@@ -427,7 +425,6 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
       'repositories/run-repository.ts',
     ],
   },
-  { family: 'orchestration service', files: ['services/orchestration-service.ts'] },
   {
     /**
      * The project registry and everything derived from it.
