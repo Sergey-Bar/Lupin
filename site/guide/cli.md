@@ -24,6 +24,16 @@ Actions' own `GITHUB_HEAD_REF`/`GITHUB_REF_NAME` and `GITHUB_SHA`.
 
 Build it from a checkout with the rest of the workspace; the bin is `tools/lupin-cli/dist/index.js`.
 
+## Check reports locally, with no server
+
+`lupin check -- <reports...>` reads JUnit XML, or Playwright, Jest, Vitest, CTRF, Mochawesome or pytest-json-report JSON and prints the verdict, the
+distinct failure causes (failures that differ only in numbers, strings or paths are one
+cause), the flaky tests and the slowest tests. It needs no `LUPIN_URL` or token and sends
+nothing. With several reports, oldest first, a test that passed in one run and failed in
+another is flaky. `--html <path>` writes a self-contained page, `--json` prints the analysis,
+and `--fail-on-flaky` exits 1 on flakiness. It exits 1 when a test fails or no tests were
+found, and 2 when a report cannot be read.
+
 ## Commands
 
 ```bash
@@ -33,6 +43,8 @@ lupin upload --format slsa-provenance --file provenance.json --digest sha256:<64
 
 # The pull-request gate: exits 1 when it fails, printing every reason
 lupin gate --branch "$BRANCH" --commit "$SHA" --pr 42
+# A job that sends scans only: a commit with no test results is otherwise a failure
+lupin gate --allow-no-tests
 
 # Changes on this branch that weaken the tests: deleted tests, added skips, loosened
 # assertions, lowered thresholds, CI steps that cannot fail. Sends kinds, paths and line
@@ -44,7 +56,8 @@ lupin impact --format paths
 
 # Run the tests, send the report, and keep the command's exit code unless every failure is an
 # approved quarantined test. The command runs without a shell; on Windows, `-- cmd /c npx …`.
-lupin test --format playwright-json --report results.json -- npx playwright test --reporter=json
+PLAYWRIGHT_JSON_OUTPUT_NAME=results.json \
+  lupin test --format playwright-json --report results.json -- npx playwright test --reporter=json
 
 # Which files this shard runs, balanced by how long each took. Never drops a file: if the plan
 # cannot be had, it prints them all. Every shard of one CI run sends the commit time as the
@@ -102,8 +115,8 @@ lupin:
     GIT_DEPTH: 0 # diff-guard and impact compare with the target branch
   script:
     - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-    - npx --yes @lupin/cli diff-guard --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-    - npx --yes @lupin/cli gate --post
+    - npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin diff-guard --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin gate --post
 ```
 
 `gate --post` writes the verdict as a commit status named `lupin/health` and the gate's comment
@@ -171,9 +184,11 @@ A refusal prints the server's own error code and sentence, never the token.
 | `reports`                | required  | One `format:path` per line. A missing file fails the step.             |
 | `codeowners`             | `'true'`  | Send CODEOWNERS so findings get owners.                                |
 | `gate`                   | `'true'`  | Ask for the gate, and fail the job when it fails. Output `verdict`.    |
+| `allow-no-tests`         | `'false'` | Pass the gate on a commit with no test results, for scan-only jobs.    |
 | `agent-config`           | `'false'` | Send the tracked agent instruction and MCP configuration files.        |
 | `deployment-environment` | `''`      | Record a deployment of this commit to the named environment.           |
 | `deployment-status`      | `success` | `success` or `failure`, for that deployment.                           |
 
-Every input the action had before is unchanged. The token goes to curl through the environment and
+Every input the action had before is unchanged, but the gate now fails a commit no test results
+were uploaded for: a scan-only project sets `allow-no-tests`. The token goes to curl through the environment and
 a header file, never argv.

@@ -67,8 +67,7 @@ watch(
         :aria-current="item.lang === lang ? 'true' : undefined"
         @click="dialog?.close()"
       >
-        <bdi>{{ item.label }}</bdi
-        ><span v-if="item.lang === lang" aria-hidden="true">✓</span>
+        <bdi>{{ item.label }}</bdi><span v-if="item.lang === lang" aria-hidden="true">✓</span>
       </a>
     </nav>
   </dialog>

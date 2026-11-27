@@ -10,12 +10,18 @@ const DOT: Record<PulseDirection, DotStatus> = {
   unknown: 'unknown',
 };
 
+/**
+ * Where Home reads the pulse, for the project the verdict reads: better or worse than the window
+ * before, drawn under the verdict. Resolving `null` means there is no project yet.
+ */
+export type PulseSource = (projectId: string | undefined) => Promise<QualityPulse | null>;
+
 /** The pulse on Home, or nothing when the page was given no pulse to read. */
 export function HomePulse({
   source,
   projectId,
 }: {
-  source: React.ComponentProps<typeof PulseLine>['load'] | undefined;
+  source: PulseSource | undefined;
   projectId: string | undefined;
 }): React.ReactElement | null {
   return source === undefined ? null : <PulseLine load={source} projectId={projectId} />;
@@ -34,7 +40,7 @@ export function PulseLine({
   load,
   projectId,
 }: {
-  load: (projectId: string | undefined) => Promise<QualityPulse | null>;
+  load: PulseSource;
   projectId: string | undefined;
 }): React.ReactElement | null {
   const pulse = useResource(() => load(projectId), [load, projectId]);

@@ -1,0 +1,54 @@
+name: Live connector probes
+
+# The opt-in half of connector proof (`docs/quality/release-journeys.json`): one read per
+# connector against a real account, run only for the connectors whose secrets this repository
+# has. A connector with no secret is reported `not_configured`, never passed. Adding a secret
+# and seeing it pass on main is what lets a contributor raise that connector to `live-verified`.
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: connectors-live-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: 24.x
+
+jobs:
+  probe:
+    name: Probe configured connectors
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
+        with:
+          run_install: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build the connectors
+        run: pnpm --filter "./packages/connectors/**" build
+      - name: Probe
+        env:
+          LUPIN_LIVE_GITHUB_TOKEN: ${{ secrets.LUPIN_LIVE_GITHUB_TOKEN }}
+          LUPIN_LIVE_GITHUB_REPO: ${{ vars.LUPIN_LIVE_GITHUB_REPO }}
+          LUPIN_LIVE_JIRA_TOKEN: ${{ secrets.LUPIN_LIVE_JIRA_TOKEN }}
+          LUPIN_LIVE_JIRA_BASE_URL: ${{ vars.LUPIN_LIVE_JIRA_BASE_URL }}
+          LUPIN_LIVE_SLACK_TOKEN: ${{ secrets.LUPIN_LIVE_SLACK_TOKEN }}
+          LUPIN_LIVE_TELEGRAM_TOKEN: ${{ secrets.LUPIN_LIVE_TELEGRAM_TOKEN }}
+          LUPIN_LIVE_WHATSAPP_TOKEN: ${{ secrets.LUPIN_LIVE_WHATSAPP_TOKEN }}
+          LUPIN_LIVE_WHATSAPP_PHONE_ID: ${{ vars.LUPIN_LIVE_WHATSAPP_PHONE_ID }}
+          LUPIN_LIVE_SIGNAL_BRIDGE: ${{ secrets.LUPIN_LIVE_SIGNAL_BRIDGE }}
+        run: pnpm connectors:live

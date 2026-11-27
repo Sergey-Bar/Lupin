@@ -80,6 +80,82 @@
   audit insert used to answer 500 over a run that had already moved; the change now rolls back
   with it.
 
+## 5.1.0 - 2026-11-20 - your test reports, explained, with no server
+
+### Added
+
+- **`lupin check`**: reads JUnit XML or Playwright JSON on disk, with no server or token, and
+  prints the verdict, the distinct failure causes (failures differing only in values are one
+  cause), the flaky tests (retries, and tests that flip back and forth across runs) and the
+  slowest tests. `--demo` runs it on three built-in CI runs; `--html`, `--markdown` and
+  `--json` write the result for a pull request, a job summary or a script (REL-22).
+- **The `lupin check` GitHub Action** (`Sergey-Bar/Lupin/actions/check@v5.1.0`): the result in
+  the job summary and one pull-request comment, updated on every push. A job with no report fails.
+
+### Changed
+
+- A test that started failing in the newest run is a regression, not flaky: `lupin check` calls a
+  test flaky only when it passed on a retry or changed back after changing.
+
+## 5.0.0 - 2026-11-19 - QA at the pace of AI-era development
+
+Every journey a QA engineer or SDET needs is proven end to end against PostgreSQL, and
+`pnpm release:readiness` says so. `@lupin/cli` and `@lupin/playwright-reporter` move from 1.0.0
+to 5.0.0, in step with the product. They are not on npm yet: both are attached to this release as
+tarballs (`npx -p <release url>/lupin-cli-5.0.0.tgz lupin`). Upgrade notes: `site/guide/upgrade-5.md`.
+
+### Fixed
+
+- **Connecting a repository said it failed when it had worked (REL-1).** The registration
+  response dropped each command's label, which the web client requires.
+- **Home never saw a quality gate on a PostgreSQL install, and a green CI upload could not pass
+  one (REL-2).** The readiness card and `GET /runs/:id/gate` now read one gate
+  (`execution/run-gate.ts`), and a run from an uploaded report records the report as its evidence.
+- **A token printed in a failing test's output was stored as it was (REL-3).** Failure messages
+  are redacted where both reporter doors store them.
+- **A fifty-thousand-test suite could not be recorded (REL-4).** Test reports may be 32 MiB (was
+  5 MiB), and tests are written in batches: 50 000 tests ingest in 6.7 s.
+- **Uploading a passing suite graded a repository F (REL-5).** A plain JUnit upload no longer
+  counts as a measured Tests score of 0.
+- **`lupin gate` passed a commit whose tests failed, or were never sent (REL-8, REL-12).** It now
+  fails both; a scan-only job passes `--allow-no-tests`.
+- **The gate read only the newest run on a commit (REL-13)**, so a later shard hid a failing one.
+  Every run counts, and a re-run replaces the results it repeats. A run still streaming, an
+  interrupted one, an all-skipped one, and one whose every failure is quarantined while nothing
+  passed, all fail the gate (REL-21).
+- **Streamed Playwright runs belonged to no project (REL-14).** The reporter sends `LUPIN_PROJECT`.
+- **Home mixed branches, ignored the flaky allowance and counted every project's quarantine
+  (REL-15, REL-18).** It reads the release branch, detected from git or set in Settings.
+- **One flaky test failed a run twice (REL-19).** A flaky result counts as passed; the default
+  policy allows 5% flaky tests.
+- **Auto-quarantine re-quarantined a test it had just released (REL-21).**
+- **The CLI read no GitLab or Jenkins variables, and the reporter none of GitLab's (REL-7,
+  REL-11, REL-17).**
+
+### Added
+
+- **`pnpm release:readiness`**, the release as data (`docs/quality/release-journeys.json`):
+  seven journeys and seven connectors, each naming the specs that prove it.
+- **Journey specs**: onboarding to an exact grade, CI ingestion through the packed CLI and
+  reporter, the release verdict on Home, AI-era signals (eval regression, agent-config scan),
+  failure triage, the MCP server over HTTP and stdio, and a 50 000-test suite.
+- **Connector fakes** for all seven platforms, built from their public API documentation, and the
+  opt-in **live connector probes** (`connectors:live`, `.github/workflows/connectors-live.yml`).
+- **`pnpm tools:smoke`** and the **CI tools matrix**: the packed tarballs on ubuntu, windows and
+  macos, with Playwright 1.40.0 and latest. The reporter declares `@playwright/test >= 1.40.0`
+  as an optional peer.
+- **`pnpm dogfood`**, nightly: Lupin grades its own repository through the packed CLI.
+- **`pnpm upgrade:rehearse`**, in the release gate: from the published 4.1.0 zip to this release
+  and back to the backup.
+- **Docs**: your first release verdict in thirty minutes (GitHub Actions, GitLab, Jenkins),
+  connectors and their verification levels, the 4.x upgrade, and what 5.0.0 does not do yet.
+
+### Changed
+
+- **Breaking for scan-only pipelines:** `lupin gate` fails a commit with no uploaded test results.
+  Add `--allow-no-tests`, or the action input `allow-no-tests`.
+- The AI provider settings no longer say a provider powers chat; no chat screen exists.
+
 ## 4.1.0 - 2026-11-12 - the console, simplified
 
 ### Added

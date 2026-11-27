@@ -152,7 +152,7 @@ export const QualityPolicySchema = z.object({
   hash: DigestSchema,
   requiredDomains: z.array(QualityDomainSchema).min(1).default(['browser']),
   browserPassRateThreshold: z.number().min(0).max(100).default(100),
-  maxFlakyRate: z.number().min(0).max(100).default(0),
+  maxFlakyRate: z.number().min(0).max(100).default(5),
   maxDurationMs: z.number().nonnegative().nullable(),
   rules: z.array(QualityPolicyRuleSchema).default([]),
   createdAt: TimestampSchema,

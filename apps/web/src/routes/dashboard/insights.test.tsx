@@ -211,7 +211,7 @@ describe('the insights page', () => {
       expect(screen.queryByTestId('insights-heatmap')).not.toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Failures' }));
       expect(screen.getByTestId('insights-heatmap')).toBeInTheDocument();
-      expect(screen.getByTestId('insight-readiness')).toHaveTextContent('Go');
+      expect(screen.getByTestId('insight-readiness')).toHaveTextContent('Ready');
     } finally {
       vi.unstubAllGlobals();
     }

@@ -219,6 +219,8 @@ describe('the setup wizard', () => {
     expect(
       await screen.findByRole('heading', { level: 2, name: 'Connect an AI provider' }),
     ).toBeInTheDocument();
+    // The provider step names only what a provider drives today: no chat screen exists.
+    expect(screen.getByText(/test proposals and evals/u)).not.toHaveTextContent(/chat/iu);
     await user.click(
       within(screen.getByRole('list', { name: 'Setup steps' })).getByRole('button', {
         name: /Invite your teammates/u,

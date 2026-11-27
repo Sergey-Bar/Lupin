@@ -38,6 +38,23 @@ const run = (
 });
 
 describe('quality gate policy evaluation', () => {
+  it('passes a run whose one flaky test passed on a retry, and fails one that is broadly unstable', () => {
+    const policy = defaultPolicy('workspace-1');
+    const withFlaky = (flaky: number) => {
+      const base = run('passed');
+      return { ...base, summary: { ...base.summary, total: 20, passed: 20 - flaky, flaky } };
+    };
+    // A flaky result passed: it is not a failure for the pass rate, and one in twenty is noise.
+    expect(evaluateQualityGate({ run: withFlaky(1), policy })).toMatchObject({
+      status: 'passed',
+      reasons: [],
+    });
+    // Two in twenty (10%) is above the default 5% allowance.
+    expect(evaluateQualityGate({ run: withFlaky(2), policy }).reasons).toEqual([
+      'threshold:FLAKY_RATE; observed=10.00; max=5; rule=maxFlakyRate',
+    ]);
+  });
+
   it('distinguishes pass, fail, warning, and unknown outcomes', () => {
     const policy = defaultPolicy('workspace-1');
     expect(evaluateQualityGate({ run: run('passed'), policy }).status).toBe('passed');

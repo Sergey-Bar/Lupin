@@ -579,10 +579,26 @@ function isImported(name) {
   return sourceFiles()
     .filter((file) => !/\.(test|spec)\.[cm]?[jt]sx?$/.test(file))
     .some((file) =>
-      readFileSync(file, 'utf8')
+      readIfPresent(file)
         .split(/\r?\n/)
         .some((line) => pattern.test(line) && !declaring.test(line.trim())),
     );
+}
+
+/**
+ * A file listed a moment ago, or '' when it is gone: the gate meta-tests run in parallel, and
+ * contract-double-assertion.test.mjs writes and removes a probe under packages/ while this
+ * one walks the tree, which failed this test with ENOENT about one run in three.
+ *
+ * @param {string} file
+ */
+function readIfPresent(file) {
+  try {
+    return readFileSync(file, 'utf8');
+  } catch (error) {
+    if (/** @type {{ code?: string }} */ (error).code === 'ENOENT') return '';
+    throw error;
+  }
 }
 
 /** @param {string} value */

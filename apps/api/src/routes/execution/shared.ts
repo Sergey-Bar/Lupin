@@ -24,7 +24,6 @@ import { defaultPolicy } from '../../execution/quality-gate.js';
 import { bearerToken } from '../../http/bearer-token.js';
 import { guard } from '../../http/access.js';
 import type {
-  DomainName,
   ExecutionRun,
   ExecutionStore,
   QualityPolicy,
@@ -426,19 +425,8 @@ export function artifactKind(value: string): string {
   return 'other';
 }
 
-export function domainStatusesFromRun(
-  run: ExecutionRun,
-): Partial<
-  Record<
-    DomainName,
-    'passed' | 'failed' | 'warning' | 'unknown' | 'not_configured' | 'not_implemented'
-  >
-> {
-  if (run.outcome === 'passed') return { browser: 'passed' };
-  if (run.outcome === 'failed') return { browser: 'failed' };
-  if (run.outcome === 'partial') return { browser: 'warning' };
-  return { browser: 'unknown' };
-}
+/** One definition, shared with the readiness card: `execution/run-gate.ts`. */
+export { domainStatusesFromRun } from '../../execution/run-gate.js';
 
 export function publishCanonical(
   bus: RealtimeBus | undefined,

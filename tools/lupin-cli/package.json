@@ -1,6 +1,6 @@
 {
   "name": "@lupin/cli",
-  "version": "1.0.0",
+  "version": "5.1.0",
   "license": "MIT",
   "type": "module",
   "description": "A dependency-free CLI for CI: upload reports, ask for the gate, push a deployment, send agent-config files.",

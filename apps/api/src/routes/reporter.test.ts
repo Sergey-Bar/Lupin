@@ -6,7 +6,12 @@ import {
   REPORTER_EVENT_VERSION,
   RUN_CONTRACT_VERSION,
 } from '@lupin/shared-contracts';
-import { createReporterRoutes, adaptLegacyEvent, type ReporterRouteOptions } from './reporter.js';
+import {
+  MAX_TEST_REPORT_BYTES,
+  createReporterRoutes,
+  adaptLegacyEvent,
+  type ReporterRouteOptions,
+} from './reporter.js';
 import { junitXmlAdapter } from '@lupin/reporter';
 import { InMemoryRunRepository } from '../repositories/in-memory-run-repository.js';
 import { DEFAULT_WORKSPACE_ID } from '../repositories/run-repository.js';
@@ -1038,10 +1043,11 @@ describe('Reporter routes — upload ingestion', () => {
   it('rejects a JUnit body past its own size cap instead of parsing it', async () => {
     const repo = new InMemoryRunRepository();
     const app = buildAppWithRepo(repo);
-    // Comfortably past MAX_JUNIT_BYTES (5 MiB) of well-formed testcases.
+    // Past the one test-report ceiling (REL-4), of well-formed testcases.
     const filler = 'a'.repeat(1_000);
-    const body = `<testsuite>${`<testcase name="${filler}" time="0.1" />`.repeat(6_000)}</testsuite>`;
-    expect(new TextEncoder().encode(body).byteLength).toBeGreaterThan(5 * 1024 * 1024);
+    const repeats = Math.ceil(MAX_TEST_REPORT_BYTES / 1_000) + 1_000;
+    const body = `<testsuite>${`<testcase name="${filler}" time="0.1" />`.repeat(repeats)}</testsuite>`;
+    expect(new TextEncoder().encode(body).byteLength).toBeGreaterThan(MAX_TEST_REPORT_BYTES);
 
     const form = new FormData();
     form.set('runId', 'junit-oversize');

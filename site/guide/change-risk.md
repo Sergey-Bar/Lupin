@@ -69,7 +69,7 @@ It sends kinds, paths and line numbers, **never a line of source**. Run it befor
 ```yaml
 - uses: actions/checkout@v4
   with: { fetch-depth: 0 } # the guard diffs against the base branch
-- run: npx --yes @lupin/cli diff-guard --pr ${{ github.event.pull_request.number }}
+- run: npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin diff-guard --pr ${{ github.event.pull_request.number }}
   env:
     LUPIN_URL: ${{ vars.LUPIN_URL }}
     LUPIN_PROJECT: ${{ vars.LUPIN_PROJECT }}
@@ -101,7 +101,7 @@ permissions:
   pull-requests: write
   statuses: write
 steps:
-  - run: npx --yes @lupin/cli gate --pr ${{ github.event.pull_request.number }} --post
+  - run: npx --yes -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin gate --pr ${{ github.event.pull_request.number }} --post
     env:
       LUPIN_URL: ${{ vars.LUPIN_URL }}
       LUPIN_PROJECT: ${{ vars.LUPIN_PROJECT }}

@@ -24,7 +24,7 @@ import { flakeCost, suggestQuarantine } from '@lupin/reporting';
 import { flakeObservationsOf, QUARANTINE_THRESHOLDS } from '../execution/insights.js';
 import type { ExecutionRun } from '../execution/types.js';
 import type { WriteContext } from '../modules/dashboard/audit-sink.js';
-import type { QuarantineStore } from '../modules/dashboard/quarantine.js';
+import type { QuarantineEntry, QuarantineStore } from '../modules/dashboard/quarantine.js';
 
 export const LUPIN_ACTOR: WriteContext = { actorId: 'lupin', actorType: 'system' };
 
@@ -82,6 +82,7 @@ export async function applyQuarantinePolicy(input: {
   for (const suggestion of eligible) {
     const test = latest.get(suggestion.testKey);
     if (test === undefined || decided(suggestion.testKey, test.title, test.file)) continue;
+    if (!eligibleSinceRelease(suggestion.testKey, entries, history, input.projectId)) continue;
     const created = await input.store.add(
       {
         testTitle: test.title,
@@ -107,6 +108,49 @@ export async function applyQuarantinePolicy(input: {
     outcome.quarantined.push(suggestion.testKey);
   }
 
+  outcome.released.push(...(await releaseRecovered(input, entries, history)));
+  return outcome;
+}
+
+/**
+ * Whether a test is still eligible counting only what happened after the policy last released
+ * it. Without this, the retry passes it was released from were still in the window, and the next
+ * report quarantined it again: released and re-quarantined on every pass (REL-21).
+ */
+function eligibleSinceRelease(
+  identity: string,
+  entries: readonly QuarantineEntry[],
+  history: readonly ExecutionRun[],
+  projectId: string,
+): boolean {
+  const releasedAt = entries
+    .filter(
+      (entry) =>
+        entry.status === 'released' &&
+        entry.stableId === identity &&
+        entry.projectId === projectId &&
+        entry.releasedAt !== null,
+    )
+    .map((entry) => Date.parse(entry.releasedAt ?? ''))
+    .reduce((latest, at) => Math.max(latest, at), Number.NEGATIVE_INFINITY);
+  if (releasedAt === Number.NEGATIVE_INFINITY) return true;
+  const since = history.filter((run) => Date.parse(run.createdAt) > releasedAt);
+  return suggestQuarantine(flakeCost(flakeObservationsOf(since)), QUARANTINE_THRESHOLDS).some(
+    (suggestion) => suggestion.testKey === identity && suggestion.autoEligible,
+  );
+}
+
+/** Releases each automatic entry whose test has passed `releaseAfter` runs in a row. */
+async function releaseRecovered(
+  input: {
+    policy: QuarantinePolicy;
+    projectId: string;
+    store: Pick<QuarantineStore, 'resolve'>;
+  },
+  entries: readonly QuarantineEntry[],
+  history: readonly ExecutionRun[],
+): Promise<string[]> {
+  const released: string[] = [];
   for (const entry of entries) {
     if (
       entry.status !== 'approved' ||
@@ -126,7 +170,7 @@ export async function applyQuarantinePolicy(input: {
       },
       LUPIN_ACTOR,
     );
-    outcome.released.push(entry.stableId);
+    released.push(entry.stableId);
   }
-  return outcome;
+  return released;
 }

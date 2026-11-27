@@ -17,6 +17,7 @@ function declaredCommand(
   return {
     id: `declared.${category}`,
     argv: [...argv],
+    label: argv.join(' '),
     category,
     // A declared command is an operator statement, so it outranks every detected
     // candidate; the ceiling is 1 because there is nothing more certain than
@@ -44,6 +45,7 @@ export function profileFromDetection(detection: DetectResult): ProjectProfile {
       ? detection.candidateCommands.map((candidate) => ({
           id: candidate.id,
           argv: candidate.argv,
+          label: candidate.label,
           category: candidate.category,
           confidence: candidate.confidence,
           evidence: candidate.evidence,

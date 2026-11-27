@@ -70,7 +70,7 @@ import {
   riskGateReason,
   riskPolicyFor,
 } from '../services/change-risk-service.js';
-import type { CommitTests } from '../services/commit-tests.js';
+import { testsGateReason, type CommitTests } from '../services/commit-tests.js';
 
 /**
  * The repository health API.
@@ -164,6 +164,8 @@ const GateReportBodySchema = z.object({
   branch: z.string().trim().min(1).max(255),
   commit: z.string().regex(/^[0-9a-f]{7,64}$/iu),
   pullRequest: z.number().int().min(1).optional(),
+  /** The job sends scans only, so a commit with no test results is not a failure. */
+  allowNoTests: z.boolean().optional(),
 });
 
 const ScheduleBodySchema = z.object({ cadence: z.enum(['daily', 'weekly']).nullable() });
@@ -309,7 +311,7 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
     const parsed = GateReportBodySchema.safeParse(await context.req.json().catch(() => null));
     if (!parsed.success) return invalidRequest(context, 'Invalid gate report', parsed.error.issues);
     const projectId = context.req.param('id');
-    const { branch, commit, pullRequest } = parsed.data;
+    const { branch, commit, pullRequest, allowNoTests } = parsed.data;
     const result = await healthGate(options, projectId, branch, commit, pullRequest);
     const tests = (await options.commitTests?.(projectId, commit)) ?? null;
     // A pull request's own risk at this head: assessed and stored on every report, and a
@@ -323,13 +325,21 @@ export function createRepoHealthRoutes(options: RepoHealthRouteOptions): Hono {
             riskFactsOf(result, tests, commit, pullRequest),
           );
     const riskReason = riskGateReason(risk, await riskPolicyFor(options, projectId));
+    // The commit's own tests: red ones fail the gate (REL-8), whatever its scans say, and so
+    // does a commit with none, unless the job sends scans only. An install with no test store
+    // wired cannot judge tests at all, so it does not try.
+    const testsReason =
+      options.commitTests === undefined
+        ? null
+        : testsGateReason(tests, { allowNoTests: allowNoTests === true });
+    const extra = [testsReason, riskReason].filter((reason): reason is string => reason !== null);
     const verdict =
-      riskReason === null
+      extra.length === 0
         ? result.verdict
         : {
             ...result.verdict,
             verdict: 'failed' as const,
-            reasons: [...result.verdict.reasons, riskReason],
+            reasons: [...result.verdict.reasons, ...extra],
           };
     if (pullRequest !== undefined) {
       await options.onGateReport?.(projectId, {

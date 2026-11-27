@@ -22,6 +22,51 @@ Lupin is a local-first QA control plane. Send it the reports your test tools alr
 or OWASP ZAP, and SARIF, coverage, SBOM and mutation reports for repository health. It keeps each run, retry and artifact together, then shows your team what
 passed, what needs attention and what was never measured.
 
+## Try it in 30 seconds, no server
+
+See what it finds on three built-in CI runs:
+
+```sh
+npx -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin check --demo
+```
+
+```text
+RED: tests are failing.
+11 tests over 3 report(s): 6 passed, 4 failed, 1 flaky, 0 skipped.
+
+4 failure(s), 1 distinct cause(s) - fix these, biggest first:
+  4 x expected status 502 to be 200 from POST /api/payments
+      checkout.spec.ts › checkout › pays by card
+      ...
+
+Flaky tests (2) - fix or quarantine, do not just re-run:
+  account.spec.ts › account › updates the address - passed on a retry in 1 of 3 run(s)
+  login.spec.ts › login › signs in - passed 2, failed 1 across runs
+```
+
+Four red tests, one bug. Then point it at your own JUnit XML, or Playwright, Jest, Vitest, CTRF, Mochawesome or pytest-json-report JSON reports:
+
+```sh
+npx -p https://github.com/Sergey-Bar/Lupin/releases/download/v5.1.0/lupin-cli-5.1.0.tgz lupin check -- junit.xml
+```
+
+A test that started failing is a regression, not a flake: only a test that changes back again is
+called flaky. `--html report.html` writes a page to attach to a pull request, and
+`--fail-on-flaky` fails the job on flakiness. Nothing is uploaded anywhere.
+
+### In GitHub Actions
+
+```yaml
+- uses: Sergey-Bar/Lupin/actions/check@v5.1.0
+  if: always()
+  with:
+    reports: test-results/**/*.xml
+```
+
+The verdict, causes and flaky tests land in the job summary and in one pull-request comment that
+is updated on every push. When you want history, gates and a release verdict for the whole team,
+run the [server](site/guide/install.md).
+
 ![The runs view](docs/assets/runs.png)
 
 ## From run to decision

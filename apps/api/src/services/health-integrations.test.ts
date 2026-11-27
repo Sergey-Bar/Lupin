@@ -314,6 +314,10 @@ describe('the pull-request comment', () => {
   it('says which failures are quarantined, which are not, and which flaky tests nobody has', () => {
     const tests = {
       runId: 'r',
+      runIds: ['r'],
+      unfinishedRuns: 0,
+      interruptedRuns: 0,
+      executed: 1,
       total: 40,
       passed: 36,
       failed: 2,

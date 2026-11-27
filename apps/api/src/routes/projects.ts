@@ -18,11 +18,12 @@ import {
   type RepoScanner,
   type ResolvedCommand,
 } from '../services/repo-scan-service.js';
-import { diffScores } from '@lupin/projects';
+import { commandLabel, diffScores } from '@lupin/projects';
 import { evaluateReadiness } from '@lupin/reporting';
 import type { ProjectHistory } from '@lupin/shared-contracts';
 import { DEFAULT_QUALITY_POLICY } from '../execution/quality-gate.js';
 import { belongsTo } from '../execution/insights.js';
+import { latestGate } from '../execution/run-gate.js';
 import { readSince, startOfDay } from '../execution/trend.js';
 import type { ExecutionRun, ExecutionStore } from '../execution/types.js';
 import {
@@ -35,6 +36,7 @@ import {
 import {
   ensureWorkspace,
   getProject,
+  releaseBranch,
   listCommands,
   listProjects,
   refreshProject,
@@ -147,7 +149,8 @@ export interface ProjectsRouteOptions extends ProjectRegistryServiceOptions {
    */
   reliability?: {
     store: ExecutionStore;
-    openQuarantine: () => Promise<number>;
+    /** Quarantine entries awaiting a decision that can excuse this project's tests. */
+    openQuarantine: (projectId: string) => Promise<number>;
     now?: () => Date;
   };
   /** The health upload credential: the reporter secret, and whether one is required. */
@@ -652,7 +655,12 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
     });
     // `201` with a `Location`: the runnable commands come from the same response so
     // a client does not need a second round trip to learn what it just registered.
-    return context.json({ project, commands: project.profile.commands }, 201);
+    // `label` is what the screen shows; a profile stored before it was kept derives it.
+    const commands = project.profile.commands.map((command) => ({
+      ...command,
+      label: commandLabel(command),
+    }));
+    return context.json({ project, commands }, 201);
   });
 
   app.get('/api/v1/projects', viewer, async (context) => {
@@ -787,15 +795,26 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
      * Release readiness: go, caution or no-go, with every reason and its evidence.
      *
      * The route gathers; `evaluateReadiness` in `@lupin/reporting` decides. The flaky
-     * allowance is the gate policy's own `maxFlakyRate` and the pass-rate threshold is the
-     * project's gate row, so the card can never disagree with the gate about a number.
+     * allowance is the workspace quality policy's `maxFlakyRate` (the one the run gate
+     * applies) and the pass-rate threshold is the project's gate row, so the card can never
+     * disagree with the gate about a number.
+     *
+     * Runs are read on the release branch: `branch` when asked, otherwise the project's default
+     * branch when it is known, so a red feature branch never turns the release No-go. A run
+     * that names no branch counts, as a run that names no project does.
      */
-    const readinessOf = async (project: { id: string }, days: number) => {
+    const readinessOf = async (project: { id: string }, days: number, branch?: string) => {
       const now = reliability.now?.() ?? new Date();
       const since = startOfDay(now).getTime() - (days - 1) * DAY_MS;
       const { runs } = await readSince(reliability.store, options.workspaceId, since);
-      const mine = runs.filter((run) => belongsTo(run, project.id));
-      const gated = mine.find((run) => run.policyEvaluation !== null);
+      const release = branch ?? (await releaseBranch(options, project.id));
+      const mine = runs.filter(
+        (run) =>
+          belongsTo(run, project.id) &&
+          (release === null || run.branch === null || run.branch === release),
+      );
+      const policy = (await reliability.store.listPolicies(options.workspaceId))[0];
+      const gated = await latestGate(reliability.store, options.workspaceId, mine);
       const tests = mine.reduce((sum, run) => sum + run.summary.total, 0);
       const flaky = mine.reduce((sum, run) => sum + run.summary.flaky, 0);
       const history = await readHistory(options, project.id, new Date(since));
@@ -808,14 +827,11 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
         projectId: project.id,
         evaluatedAt: now.toISOString(),
         runs: mine.length,
-        gate:
-          gated?.policyEvaluation === null || gated === undefined
-            ? null
-            : { status: gated.policyEvaluation.status, runId: gated.id },
+        gate: gated === null ? null : { status: gated.status, runId: gated.runId },
         passRate: verdictRate(mine),
         passRateThreshold: await passRateThreshold(options, project.id),
         flakyRate: tests === 0 ? null : Math.round((flaky / tests) * 1000) / 10,
-        maxFlakyRate: DEFAULT_QUALITY_POLICY.maxFlakyRate,
+        maxFlakyRate: policy?.maxFlakyRate ?? DEFAULT_QUALITY_POLICY.maxFlakyRate,
         coverage: {
           current: latest,
           delta:
@@ -823,12 +839,19 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
               ? null
               : Math.round((latest - first) * 10) / 10,
         },
-        openQuarantine: await reliability.openQuarantine(),
+        openQuarantine: await reliability.openQuarantine(project.id),
       });
     };
     app.get('/api/v1/projects/:id/readiness', viewer, async (context) => {
       const project = await getProject(options, context.req.param('id'));
-      return context.json(await readinessOf(project, windowDays(context.req.query('days'), 7)));
+      const branch = context.req.query('branch')?.trim();
+      return context.json(
+        await readinessOf(
+          project,
+          windowDays(context.req.query('days'), 7),
+          branch === undefined || branch === '' ? undefined : branch.slice(0, 255),
+        ),
+      );
     });
     /**
      * The quality pulse: better, worse, steady or unknown against the window before, with

@@ -671,7 +671,12 @@ function pointSix(ctx) {
   const context = ctx.text('apps/api/src/observability/request-context.ts');
   const logger = ctx.text('apps/api/src/observability/logger.ts');
   const health = ctx.text('apps/api/src/routes/health.ts');
-  const runs = ctx.text('apps/api/src/routes/execution/runs.routes.ts');
+  // The gate route delegates to `runGate` (`execution/run-gate.ts`), the one reading of a run's
+  // gate the readiness card shares (REL-2), so the spread it checks for may live there.
+  const runs = [
+    ctx.text('apps/api/src/routes/execution/runs.routes.ts'),
+    ctx.text('apps/api/src/execution/run-gate.ts'),
+  ].join('\n');
   const gate = ctx.text('apps/api/src/execution/quality-gate.ts');
   return [
     /export function requestContext|export const requestContext/.test(context) &&

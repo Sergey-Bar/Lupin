@@ -415,3 +415,33 @@ jobs:
         if: always()
         shell: bash
         run: pkill -f "scripts/performance-server.mjs" || true
+
+  dogfood:
+    name: Lupin grades Lupin
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # Boots the production stack in this job, runs three of this repository's suites through
+    # the packed `lupin test`, sends its agent configuration and asks the gate, then reads the
+    # grade and the release verdict back. With LUPIN_DOGFOOD_URL set (the reference install),
+    # the same uploads go there instead and the history is kept. `pnpm dogfood`.
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
+        with:
+          run_install: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build the workspace
+        run: pnpm build
+      - name: Lupin grades Lupin
+        env:
+          LUPIN_DOGFOOD_URL: ${{ vars.LUPIN_DOGFOOD_URL }}
+          LUPIN_DOGFOOD_KEY: ${{ secrets.LUPIN_DOGFOOD_KEY }}
+        run: pnpm dogfood

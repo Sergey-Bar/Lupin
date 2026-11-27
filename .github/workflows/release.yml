@@ -264,12 +264,26 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115
+        with:
+          run_install: false
       - name: Fetch the release notes
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: release-notes
       - name: Build the bundle
         run: node ./scripts/release-bundle.mjs --version "${{ needs.prepare.outputs.version }}"
+      # The CLI and the Playwright reporter as installable tarballs, until they are on npm:
+      # `npx -p <release url>/lupin-cli-<version>.tgz lupin`. Packed by pnpm, so `workspace:`
+      # and `catalog:` are rewritten exactly as a publish would.
+      - name: Pack the CLI and the Playwright reporter
+        run: |
+          set -euo pipefail
+          pnpm install --frozen-lockfile
+          pnpm --filter @lupin/cli --filter @lupin/playwright-reporter build
+          pnpm --filter @lupin/cli --filter @lupin/playwright-reporter exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/dist/release"
+          (cd dist/release && sha256sum lupin-cli-*.tgz lupin-playwright-reporter-*.tgz >> SHA256SUMS)
       # A CycloneDX software bill of materials for the source tree the release was built
       # from: every npm package in `pnpm-lock.yaml`, with versions and licences. The
       # images already carry buildx's SBOM attestation; this is the one a user who
@@ -289,7 +303,8 @@ jobs:
           PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
         run: |
           set -euo pipefail
-          assets=("dist/release/lupin-${VERSION}.zip" "dist/release/SHA256SUMS" "dist/release/lupin-${VERSION}.cdx.json")
+          assets=("dist/release/lupin-${VERSION}.zip" "dist/release/SHA256SUMS" "dist/release/lupin-${VERSION}.cdx.json"
+            "dist/release/lupin-cli-${VERSION}.tgz" "dist/release/lupin-playwright-reporter-${VERSION}.tgz")
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" "${assets[@]}" --clobber
             gh release edit "$GITHUB_REF_NAME" --notes-file release-notes.md
@@ -329,7 +344,10 @@ jobs:
         run: |
           gh release download "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" \
             -p "lupin-${{ needs.prepare.outputs.version }}.zip" -p SHA256SUMS
-          sha256sum -c SHA256SUMS
+          # SHA256SUMS also lists the CLI and reporter tarballs, which are not downloaded here.
+          # The zip's line is required, so sums that omit it still fail.
+          grep -qE "  lupin-${{ needs.prepare.outputs.version }}\.zip$" SHA256SUMS
+          sha256sum -c SHA256SUMS --ignore-missing
           unzip -q "lupin-${{ needs.prepare.outputs.version }}.zip"
       - name: Start it
         working-directory: lupin-${{ needs.prepare.outputs.version }}
@@ -428,7 +446,9 @@ jobs:
         run: |
           set -euo pipefail
           gh release download "v$OLD_VERSION" -R "$GITHUB_REPOSITORY" -p "lupin-$OLD_VERSION.zip" -p SHA256SUMS
-          sha256sum -c SHA256SUMS
+          # A 5.x release also lists its CLI and reporter tarballs, not downloaded here.
+          grep -qE "  lupin-$OLD_VERSION\.zip$" SHA256SUMS
+          sha256sum -c SHA256SUMS --ignore-missing
           unzip -q "lupin-$OLD_VERSION.zip"
           cd "lupin-$OLD_VERSION"
           ./start.sh

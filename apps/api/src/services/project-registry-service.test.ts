@@ -11,6 +11,9 @@ import {
   discoverProjectAtBoot,
   listProjects,
   readScoreInputs,
+  ensureWorkspace,
+  registerProject,
+  releaseBranch,
   slugifyProjectName,
   type ProjectRegistryServiceOptions,
 } from './project-registry-service.js';
@@ -305,5 +308,32 @@ describe('discovery is opt-in and never fatal', () => {
     } finally {
       await client.close();
     }
+  });
+});
+
+describe('a folder project knows the branch it releases from', () => {
+  const register = async (git: Record<string, string>) => {
+    const { client, options } = await migrated();
+    const withGit = { ...options, viewFor: () => literalView({ ...NODE_REPO, ...git }) };
+    await ensureWorkspace(withGit);
+    const project = await registerProject(withGit, { name: 'svc', slug: 'svc', repoPath: '/r' });
+    const branch = await releaseBranch(withGit, project.id);
+    await client.close();
+    return branch;
+  };
+
+  it('reads the remote default branch, then the checked-out branch, then none', async () => {
+    expect(
+      await register({
+        '.git/refs/remotes/origin/HEAD': 'ref: refs/remotes/origin/trunk\n',
+        '.git/HEAD': 'ref: refs/heads/feature/x\n',
+      }),
+    ).toBe('trunk');
+    expect(await register({ '.git/HEAD': 'ref: refs/heads/master\n' })).toBe('master');
+    // A detached HEAD names no branch, and a folder with no git names none.
+    expect(
+      await register({ '.git/HEAD': '0123456789abcdef0123456789abcdef01234567\n' }),
+    ).toBeNull();
+    expect(await register({})).toBeNull();
   });
 });

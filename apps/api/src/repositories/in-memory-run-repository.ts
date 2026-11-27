@@ -103,6 +103,10 @@ export class InMemoryRunRepository implements RunRepository {
     this._tests.set(this._testKey(test.id, test.runId), { ...test });
   }
 
+  async upsertTests(tests: readonly TestRecord[]): Promise<void> {
+    for (const test of tests) await this.upsertTest(test);
+  }
+
   async patchTest(
     testId: string,
     runId: string,
@@ -163,6 +167,14 @@ export class InMemoryRunRepository implements RunRepository {
       }
     }
     return latest === null ? null : { ...latest };
+  }
+
+  async runsForCommit(projectId: string, commitSha: string, limit: number): Promise<RunRecord[]> {
+    return [...this._runs.values()]
+      .filter((run) => run.projectId === projectId && run.commitSha === commitSha)
+      .sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt))
+      .slice(0, limit)
+      .map((run) => ({ ...run }));
   }
 
   async testHistory(

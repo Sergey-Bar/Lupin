@@ -162,6 +162,13 @@ export interface RunRecord {
    */
   projectId?: string | null;
   triggeredBy: string;
+  /**
+   * What the run's verdict rests on, as the gate reads it (`report:<sha256>` for an uploaded
+   * report). Without one the gate refuses to call a passed run passed — correctly — so a run
+   * recorded from a CI report was `unknown` at its gate however green it was (ledger REL-2).
+   * Absent leaves the column as it was.
+   */
+  rawEvidenceRefs?: string[];
 }
 
 /**
@@ -377,6 +384,13 @@ export interface RunRepository {
   upsertTest(test: TestRecord): Promise<void>;
 
   /**
+   * The same as `upsertTest` for every row, in as few statements as the store can. Optional:
+   * a store without it is written one row at a time. A fifty-thousand-test report written one
+   * row at a time is two statements a row and did not finish in two minutes (REL-4).
+   */
+  upsertTests?(tests: readonly TestRecord[]): Promise<void>;
+
+  /**
    * Apply a status/duration/failure patch to a test row. No-op if the test does not
    * exist.
    *
@@ -421,6 +435,12 @@ export interface RunRepository {
    * comment reads to say how the commit's tests went.
    */
   latestRunForCommit(projectId: string, commitSha: string): Promise<RunRecord | null>;
+
+  /**
+   * Every run of a project on a commit, newest first by start time, at most limit. What the
+   * gate reads, so a sharded or multi-job pipeline is judged on all of its runs.
+   */
+  runsForCommit(projectId: string, commitSha: string, limit: number): Promise<RunRecord[]>;
 
   /**
    * One test's results across runs, newest first, from the `(workspace_id, stable_id)` index:

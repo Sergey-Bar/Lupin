@@ -1,0 +1,112 @@
+{
+  "$comment": [
+    "The 5.0.0 release definition, read by `pnpm release:readiness`.",
+    "Each journey names the Playwright specs that prove it and the capability-register rows it rests on;",
+    "each connector names its spec and its verification level: none \u003c fake-verified \u003c live-verified.",
+    "fake-verified means an E2E spec drives the adapter against a fake built from the platform\u0027s public API docs.",
+    "live-verified means the opt-in connectors-live workflow has passed against a real account.",
+    "A spec listed here that does not exist yet is a planned proof, and the gate reports it as a gap.",
+    "Raise a level only in the commit that adds the evidence for it."
+  ],
+  "release": "5.0.0",
+  "journeys": [
+    {
+      "id": "onboarding",
+      "title": "Fresh install, connect a GitHub repository, see its QA score and health grade",
+      "specs": ["tests/e2e/product/onboarding.spec.ts", "tests/e2e/product/repo-health.spec.ts"],
+      "capabilities": ["quality.repo-health", "github.health", "connectors.github-app"]
+    },
+    {
+      "id": "ci-ingestion",
+      "title": "Upload from CI with the packed lupin CLI and Playwright reporter, see runs, flaky tests and the gate verdict",
+      "specs": [
+        "tests/e2e/product/reporter-run-lifecycle.spec.ts",
+        "tests/e2e/product/ci-ingestion.spec.ts"
+      ],
+      "capabilities": [
+        "tool.lupin-cli",
+        "tool.junit",
+        "reporting.playwright-live",
+        "reporting.test-intelligence"
+      ]
+    },
+    {
+      "id": "release-verdict",
+      "title": "Home shows ship or hold, with the reasons and what needs you",
+      "specs": [
+        "tests/e2e/product/release-readiness.spec.ts",
+        "tests/e2e/product/release-verdict.spec.ts"
+      ],
+      "capabilities": ["quality.cockpit", "reporting.lifecycle"]
+    },
+    {
+      "id": "ai-signals",
+      "title": "AI-code share, eval regression and the agent-config scan",
+      "specs": ["tests/e2e/product/ai-signals.spec.ts"],
+      "capabilities": [
+        "ai-code.attribution",
+        "agents.evals",
+        "agents.eval-gate",
+        "agents.config-scan"
+      ]
+    },
+    {
+      "id": "notifications",
+      "title": "Scheduled digests and failure alerts reach each connected platform",
+      "specs": [
+        "tests/e2e/product/scheduled-reports.spec.ts",
+        "apps/api/src/services/notifications-journey.test.ts"
+      ],
+      "capabilities": ["reporting.digest", "connectors.core"]
+    },
+    {
+      "id": "triage",
+      "title": "Failures grouped by cause, with an optional AI summary when a provider is configured",
+      "specs": ["tests/e2e/product/failure-triage.spec.ts"],
+      "capabilities": ["reporting.failure-clusters"]
+    },
+    {
+      "id": "mcp",
+      "title": "An AI agent asks the MCP server for the verdict and the flaky tests",
+      "specs": ["tests/e2e/product/mcp.spec.ts"],
+      "capabilities": ["connectors.mcp"]
+    }
+  ],
+  "connectors": [
+    {
+      "id": "github",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    },
+    {
+      "id": "jira",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    },
+    {
+      "id": "slack",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    },
+    {
+      "id": "teams",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    },
+    {
+      "id": "telegram",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    },
+    {
+      "id": "whatsapp",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    },
+    {
+      "id": "signal",
+      "specs": ["apps/api/src/services/notifications-journey.test.ts"],
+      "verification": "fake-verified"
+    }
+  ]
+}
