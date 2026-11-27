@@ -1,20 +1,641 @@
 {
   "$comment": [
-    "Known offenders over the ceiling, recorded rather than refactored. There are none at 12.",
+    "Known offenders over the ceiling, recorded rather than refactored: 124 at a ceiling of 10, none over 12.",
     "",
     "The ceiling was 15 with 31 recorded offenders (worst 73) until 2026-10-22, when every function",
-    "over 12 was split into named helpers behind characterization tests (Q-1 clause (a) in the",
-    "findings ledger carries the path to 10). The design-system gates that used to be recorded here",
-    "(`apps/web/src/theme-resolution.test.ts`, `packages/ui/src/tokens/theme.test.ts`,",
-    "`apps/web/src/Composition.test.tsx`) were refactored with their assertions unchanged, and the",
-    "composition scanners gained control-arm tests proving they still flag what they claim to.",
+    "over 12 was split into named helpers behind characterization tests. It moved from 12 to 10 on",
+    "2026-11-27 (plan 1795712849115, the frontend.complexity criterion), and the functions between 11",
+    "and 12 were recorded here rather than rewritten in one pass: the gate now refuses any new function",
+    "over 10, a second offender in a recorded file, and any offender getting worse, while the list is",
+    "worked down. Removing a row means splitting that function, never raising the ceiling.",
     "",
     "The gate fails when a file holds more offenders than recorded here, or when the worst offender",
     "gets worse (`scripts/lib/complexity-ratchet.mjs`). It used to compare only the number of files."
   ],
-  "ceiling": 12,
-  "count": 0,
-  "offenders": [],
-  "measuredAt": "2026-11-26",
-  "worst": 0
+  "ceiling": 10,
+  "count": 124,
+  "offenders": [
+    {
+      "file": "apps/api/src/copilot/narrate.ts",
+      "line": 30,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/execution/drizzle-execution-store.ts",
+      "line": 652,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/execution/quarantine-excusal.ts",
+      "line": 77,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/http/roles.ts",
+      "line": 104,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/routes/execution/jobs.routes.ts",
+      "line": 144,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/routes/projects.ts",
+      "line": 300,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/services/ai-code-outcomes.ts",
+      "line": 153,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/services/eval-runner.ts",
+      "line": 174,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/services/github-facts.ts",
+      "line": 27,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/services/github-inbox-service.ts",
+      "line": 120,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/services/health-integrations.ts",
+      "line": 119,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/services/health-integrations.ts",
+      "line": 307,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/services/identity-settings.ts",
+      "line": 141,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/services/supply-chain-service.ts",
+      "line": 436,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/Composition.test.tsx",
+      "line": 278,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/components/Access.tsx",
+      "line": 209,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/components/AreaPage.tsx",
+      "line": 97,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/components/Cockpit.tsx",
+      "line": 105,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/components/DailyBars.tsx",
+      "line": 13,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/components/GithubIssues.tsx",
+      "line": 45,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/components/GithubPullDetail.tsx",
+      "line": 89,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/components/Now.tsx",
+      "line": 251,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/components/ProjectQuarantine.tsx",
+      "line": 56,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/components/SettingsPages.tsx",
+      "line": 555,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/lib/api.ts",
+      "line": 479,
+      "complexity": 12
+    },
+    {
+      "file": "apps/web/src/lib/qa-client.ts",
+      "line": 241,
+      "complexity": 12
+    },
+    {
+      "file": "packages/db/src/migrate-apply.test.ts",
+      "line": 50,
+      "complexity": 12
+    },
+    {
+      "file": "packages/projects/src/health/agent-config-scan.ts",
+      "line": 864,
+      "complexity": 12
+    },
+    {
+      "file": "packages/projects/src/score/diff.ts",
+      "line": 138,
+      "complexity": 12
+    },
+    {
+      "file": "packages/reporter/src/adapters/provenance.ts",
+      "line": 499,
+      "complexity": 12
+    },
+    {
+      "file": "packages/reporter/src/adapters/sbom.ts",
+      "line": 380,
+      "complexity": 12
+    },
+    {
+      "file": "packages/reporting/src/change-risk.ts",
+      "line": 133,
+      "complexity": 12
+    },
+    {
+      "file": "packages/ui/src/tokens/theme.test.ts",
+      "line": 1469,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/blueprint-consistency.mjs",
+      "line": 272,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/blueprint-consistency.mjs",
+      "line": 410,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/capability-evidence.mjs",
+      "line": 197,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/compose-contract.mjs",
+      "line": 277,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/compose-contract.mjs",
+      "line": 424,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/docs-drift.mjs",
+      "line": 824,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/docs-paths.test.mjs",
+      "line": 494,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/encoding-integrity.test.mjs",
+      "line": 169,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/gate-tooling.mjs",
+      "line": 596,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/gate-tooling.mjs",
+      "line": 646,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/ledger-json.test.mjs",
+      "line": 79,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/lib/mutation-ratchet.mjs",
+      "line": 82,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/local-smoke.mjs",
+      "line": 26,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/secret-scan.mjs",
+      "line": 335,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/unify-preflight.mjs",
+      "line": 49,
+      "complexity": 12
+    },
+    {
+      "file": "scripts/write-coverage-provenance.mjs",
+      "line": 63,
+      "complexity": 12
+    },
+    {
+      "file": "tools/lupin-cli/src/impact.ts",
+      "line": 100,
+      "complexity": 12
+    },
+    {
+      "file": "tools/lupin-cli/src/target.ts",
+      "line": 46,
+      "complexity": 12
+    },
+    {
+      "file": "apps/api/src/execution/drizzle-execution-store.ts",
+      "line": 1205,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/execution/drizzle-execution-store.ts",
+      "line": 1494,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/execution/trend.ts",
+      "line": 82,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/middleware/idempotency.ts",
+      "line": 96,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/observability/logger.ts",
+      "line": 112,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/repositories/in-memory-run-repository.ts",
+      "line": 199,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/repositories/query-budget.test.ts",
+      "line": 53,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/repositories/run-repository.ts",
+      "line": 290,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/routes/agents-tool-sdk-parity.test.ts",
+      "line": 20,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/routes/execution/runs.routes.ts",
+      "line": 227,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/routes/workspace-isolation.test.ts",
+      "line": 468,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/services/ai-code-service.test.ts",
+      "line": 220,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/services/github-health.ts",
+      "line": 108,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/services/health-integrations.ts",
+      "line": 217,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/services/repo-health-service.ts",
+      "line": 909,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/services/repo-health-service.ts",
+      "line": 1248,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/services/repo-health-service.ts",
+      "line": 1573,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/services/scorecard-service.ts",
+      "line": 126,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/services/supply-chain-service.ts",
+      "line": 311,
+      "complexity": 11
+    },
+    {
+      "file": "apps/api/src/services/trend-rollup-store.ts",
+      "line": 74,
+      "complexity": 11
+    },
+    {
+      "file": "apps/runner/src/execution.ts",
+      "line": 323,
+      "complexity": 11
+    },
+    {
+      "file": "apps/runner/src/runner-service.ts",
+      "line": 395,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/components/GithubPulls.tsx",
+      "line": 88,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/components/Notifications.tsx",
+      "line": 409,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/components/Portfolio.tsx",
+      "line": 52,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/components/RepoHealth.tsx",
+      "line": 585,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/components/SettingsPages.tsx",
+      "line": 131,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/components/Shortcuts.tsx",
+      "line": 68,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/components/TrendChart.tsx",
+      "line": 53,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/components/kit.tsx",
+      "line": 122,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/lib/gate-reason.ts",
+      "line": 70,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/lib/settings-client.ts",
+      "line": 117,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/routes/dashboard/insights.tsx",
+      "line": 465,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/routes/dashboard/now.test.tsx",
+      "line": 167,
+      "complexity": 11
+    },
+    {
+      "file": "apps/web/src/routes/dashboard/test-history.tsx",
+      "line": 158,
+      "complexity": 11
+    },
+    {
+      "file": "apps/worker/src/postgres-store.ts",
+      "line": 451,
+      "complexity": 11
+    },
+    {
+      "file": "packages/automation/src/kilo-gateway.ts",
+      "line": 64,
+      "complexity": 11
+    },
+    {
+      "file": "packages/config/src/config.ts",
+      "line": 452,
+      "complexity": 11
+    },
+    {
+      "file": "packages/config/src/remote.ts",
+      "line": 105,
+      "complexity": 11
+    },
+    {
+      "file": "packages/projects/src/health/agent-config-scan.ts",
+      "line": 384,
+      "complexity": 11
+    },
+    {
+      "file": "packages/projects/src/health/agent-config-scan.ts",
+      "line": 885,
+      "complexity": 11
+    },
+    {
+      "file": "packages/projects/src/health/agent-config-scan.ts",
+      "line": 946,
+      "complexity": 11
+    },
+    {
+      "file": "packages/projects/src/health/agent-config-scan.ts",
+      "line": 1013,
+      "complexity": 11
+    },
+    {
+      "file": "packages/projects/src/health/agent-config-scan.ts",
+      "line": 1359,
+      "complexity": 11
+    },
+    {
+      "file": "packages/reporter/src/adapters/allure-results.ts",
+      "line": 97,
+      "complexity": 11
+    },
+    {
+      "file": "packages/reporter/src/adapters/evals.ts",
+      "line": 462,
+      "complexity": 11
+    },
+    {
+      "file": "packages/reporter/src/adapters/robot-xml.ts",
+      "line": 57,
+      "complexity": 11
+    },
+    {
+      "file": "packages/reporting/src/agent-runtime.ts",
+      "line": 209,
+      "complexity": 11
+    },
+    {
+      "file": "packages/reporting/src/cockpit.ts",
+      "line": 653,
+      "complexity": 11
+    },
+    {
+      "file": "packages/reporting/src/eval-regression.ts",
+      "line": 155,
+      "complexity": 11
+    },
+    {
+      "file": "packages/reporting/src/failure-clusters.ts",
+      "line": 270,
+      "complexity": 11
+    },
+    {
+      "file": "packages/reporting/src/flow.ts",
+      "line": 267,
+      "complexity": 11
+    },
+    {
+      "file": "packages/reporting/src/quality-pulse.ts",
+      "line": 197,
+      "complexity": 11
+    },
+    {
+      "file": "packages/shared-contracts/src/schemas/settings.test.ts",
+      "line": 28,
+      "complexity": 11
+    },
+    {
+      "file": "packages/tool-sdk/src/registry.ts",
+      "line": 140,
+      "complexity": 11
+    },
+    {
+      "file": "packages/ui/src/components/Table/Table.tsx",
+      "line": 99,
+      "complexity": 11
+    },
+    {
+      "file": "packages/ui/src/tokens/theme.test.ts",
+      "line": 724,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/compose-boot.mjs",
+      "line": 79,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/coverage-ratchet.mjs",
+      "line": 65,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/compose-contract.mjs",
+      "line": 63,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/coverage-exclusions.mjs",
+      "line": 144,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/deps-policy.mjs",
+      "line": 501,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/deps-policy.mjs",
+      "line": 683,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/docs-paths.test.mjs",
+      "line": 750,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/gate-tooling.mjs",
+      "line": 375,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/gate-tooling.mjs",
+      "line": 401,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/property-invariants.mjs",
+      "line": 36,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/status-ten.mjs",
+      "line": 524,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/lib/test-support-boundary.test.mjs",
+      "line": 156,
+      "complexity": 11
+    },
+    {
+      "file": "scripts/unify-preflight.mjs",
+      "line": 165,
+      "complexity": 11
+    },
+    {
+      "file": "tools/lupin-cli/src/agent-config.ts",
+      "line": 81,
+      "complexity": 11
+    },
+    {
+      "file": "tools/lupin-cli/src/commands.ts",
+      "line": 171,
+      "complexity": 11
+    },
+    {
+      "file": "tools/lupin-cli/src/shard-command.ts",
+      "line": 167,
+      "complexity": 11
+    }
+  ],
+  "measuredAt": "2026-11-27",
+  "worst": 12
 }

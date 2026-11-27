@@ -299,16 +299,21 @@ test('a verdict is decided by the facts, not by the report: each probe is shown 
     assert.equal(mutationClause(unreadable)?.verdict, 'fail', JSON.stringify(unreadable));
   }
 
-  // And the real tree does not meet the target, so the flip above was a flip rather
-  // than a restatement. Read from the baseline rather than written down, so this
-  // survives the ceiling being lowered on the day someone does the refactoring.
-  const recorded = /** @type {{ ceiling?: number }} */ (
-    context.json('docs/quality/complexity-baseline.json')
-  );
-  assert.ok(
-    (recorded.ceiling ?? 0) > 10,
-    `the recorded ceiling is ${String(recorded.ceiling)}; if it is at most 10 the test above is ` +
-      'asserting the real state and no longer proves the probe reads anything',
+  // And a ceiling above 10 is a fail, so the pass above was a flip rather than a restatement.
+  // Forced rather than read from the tree: the tree's ceiling is 10 since plan 1795712849115.
+  const loosened = withFacts({
+    ledgerRows: noDeferrals.ledgerRows,
+    json: (relative) =>
+      relative === 'docs/quality/complexity-baseline.json'
+        ? { .../** @type {Record<string, unknown>} */ (context.json(relative)), ceiling: 12 }
+        : context.json(relative),
+  });
+  assert.equal(
+    evaluate(loosened)
+      .find((report) => report.number === 5)
+      ?.clauses.find((clause) => clause.claim.includes('complexity ceiling'))?.verdict,
+    'fail',
+    'a ceiling of 12 fails the at-most-10 clause',
   );
 });
 
@@ -324,8 +329,14 @@ test('a debt row converts a fail into a not_configured, and only a complete one 
   // statement about the moment it was written and failed the day it stopped being true.
   const real = context.ledgerRows.find((candidate) => candidate.id === 'Q-1');
   assert.ok(real, 'Q-1 is the deferral row for point 5 and must be in the ledger');
+  // A ceiling above 10, so there is a fail for a debt row to defer: the real tree's ceiling is 10
+  // since plan 1795712849115, and a test that leaned on it would stop testing the day it moved.
+  const overTen = (/** @type {string} */ relative) =>
+    relative === 'docs/quality/complexity-baseline.json'
+      ? { .../** @type {Record<string, unknown>} */ (context.json(relative)), ceiling: 12 }
+      : context.json(relative);
   const complexityClause = (/** @type {Array<Record<string, unknown>>} */ rows) =>
-    evaluate({ ...context, ledgerRows: rows })
+    evaluate({ ...context, ledgerRows: rows, json: overTen })
       .find((report) => report.number === 5)
       ?.clauses.find((clause) => clause.claim.includes('complexity ceiling'));
 
@@ -333,7 +344,7 @@ test('a debt row converts a fail into a not_configured, and only a complete one 
   assert.equal(
     complexityClause(withoutRow)?.verdict,
     'fail',
-    'with no row at all, the complexity clause reports the real state',
+    'with no row at all, a ceiling above 10 is a fail',
   );
 
   // A complete `debt` row defers it, and the reason names the owner and the condition.
