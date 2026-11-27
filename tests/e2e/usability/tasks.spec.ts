@@ -15,6 +15,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { claimJob, completeJob, createRun, registerRunner, uniqueRunId } from '../support/api.js';
 import { saveEvidence } from '../support/evidence.js';
 import { authenticate, signInAndVisit } from '../support/session.js';
+import { registerTempProject, type TempProject } from '../support/temp-project.js';
 
 /** One task: what it asks, how many actions it may take, and how long. */
 interface Budget {
@@ -75,16 +76,35 @@ async function seedFailure(request: Parameters<typeof createRun>[0]) {
   return { runId: created.id, branch, failing };
 }
 
+/**
+ * Home as a person who has set up sees it: their project chosen in the sidebar, and setup put
+ * off, so a fresh install's first-run redirect does not send them to setup instead.
+ */
+async function openHome(page: Page, projectId: string): Promise<void> {
+  await page.addInitScript((id) => {
+    window.localStorage.setItem('lupin-project', id);
+    window.localStorage.setItem('lupin-setup-later', '1');
+  }, projectId);
+  await signInAndVisit(page, '/');
+}
+
 test.describe('the questions a QA person opens Lupin to answer', () => {
+  let project: TempProject | undefined;
+  test.afterEach(async ({ request }) => {
+    await project?.remove(request);
+    project = undefined;
+  });
+
   test('can we ship? The verdict is on Home with nothing to click', async ({
     page,
     context,
     request,
   }) => {
     await seedFailure(request);
+    project = await registerTempProject(request, 'lupin-usability');
     await authenticate(context, request);
     const person = new Person(page);
-    await signInAndVisit(page, '/');
+    await openHome(page, project.id);
     const verdict = page
       .getByRole('region', { name: 'Page content' })
       .getByRole('heading', { level: 2, name: /^(Ready|Caution|No-go|Not measured)$/u })
@@ -99,9 +119,10 @@ test.describe('the questions a QA person opens Lupin to answer', () => {
     request,
   }) => {
     await seedFailure(request);
+    project = await registerTempProject(request, 'lupin-usability');
     await authenticate(context, request);
     const person = new Person(page);
-    await signInAndVisit(page, '/');
+    await openHome(page, project.id);
     const pulse = page.getByRole('region', { name: 'Quality pulse' });
     await expect(pulse).toBeVisible();
     // The answer is one of four words, never a blank or a number left to interpret.
