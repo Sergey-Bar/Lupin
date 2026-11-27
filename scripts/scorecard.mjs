@@ -8,7 +8,7 @@
  *
  * `--json` prints the structure instead of the table.
  */
-import { appendFileSync, existsSync } from 'node:fs';
+import { appendFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -61,7 +61,8 @@ if (process.argv.includes('--strict') && failing.length > 0) {
 
 function writeSummary() {
   const summaryPath = process.env['GITHUB_STEP_SUMMARY'];
-  if (!summaryPath || !existsSync(summaryPath)) return;
+  // No existence check first: checking then writing is a race, and the runner creates the file.
+  if (!summaryPath) return;
   appendFileSync(
     summaryPath,
     [
