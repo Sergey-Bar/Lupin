@@ -1,0 +1,432 @@
+{
+  "$comment": [
+    "The 10/10 rubric (plan .kilo/plans/1795712849115-lupin-7-ten-out-of-ten-plan.md, task 1).",
+    "",
+    "Criteria, never results. Each `check` names a probe in `scripts/lib/scorecard.mjs`, and",
+    "the probe reads the file that already owns the number: the coverage, mutation and",
+    "complexity baselines, the findings ledger, the capability register, the rendering budget",
+    "and the gate tiers. A criterion carrying `status`, `score`, `observed` or any other",
+    "result field is refused, because a pasted result is how a scorecard says 10/10 about a",
+    "tree that is not.",
+    "",
+    "`blockedExternal` is for a criterion only a run on the reference install can satisfy. It",
+    "is honoured while the probe fails and its ledger row is open, and is itself a failure",
+    "once the probe passes, so the block cannot outlive its reason.",
+    "",
+    "`pnpm scorecard` prints the score per area."
+  ],
+  "criteria": [
+    {
+      "id": "infra.provenance",
+      "area": "infra",
+      "statement": "Release images are built with SLSA provenance and an SBOM, and attested.",
+      "check": {
+        "probe": "contains",
+        "path": ".github/workflows/release.yml",
+        "pattern": "provenance: mode=max[\\s\\S]*actions/attest"
+      }
+    },
+    {
+      "id": "infra.image-cve-scan",
+      "area": "infra",
+      "statement": "Every release image is scanned for known vulnerabilities before it is published.",
+      "check": {
+        "probe": "contains",
+        "path": ".github/workflows/release.yml",
+        "pattern": "anchore/scan-action@[0-9a-f]{40}[\\s\\S]*severity-cutoff: high"
+      }
+    },
+    {
+      "id": "infra.image-signing",
+      "area": "infra",
+      "statement": "Release images carry a keyless cosign signature that the acceptance job verifies.",
+      "check": {
+        "probe": "contains",
+        "path": ".github/workflows/release.yml",
+        "pattern": "cosign sign[\\s\\S]*cosign verify"
+      }
+    },
+    {
+      "id": "infra.restore-drill",
+      "area": "infra",
+      "statement": "CI backs an install up and restores it, and compares what came back.",
+      "check": {
+        "probe": "contains",
+        "path": ".github/workflows/nightly.yml",
+        "pattern": "start\\.sh backup[\\s\\S]*start\\.sh restore"
+      }
+    },
+    {
+      "id": "infra.web-healthcheck",
+      "area": "infra",
+      "statement": "Every long-running production service has a healthcheck: the web image declares its own.",
+      "check": {
+        "probe": "contains",
+        "path": "infra/docker/web.Dockerfile",
+        "pattern": "^HEALTHCHECK .*127\\.0\\.0\\.1:8080"
+      }
+    },
+    {
+      "id": "infra.runner-read-only",
+      "area": "infra",
+      "statement": "The runner container has a read-only root filesystem, with its spool on a volume.",
+      "check": {
+        "probe": "contains",
+        "path": "infra/compose/docker-compose.unified.yml",
+        "pattern": "^  runner:\\n(?:(?!^  [a-z])[\\s\\S])*?^    read_only: true"
+      }
+    },
+    {
+      "id": "infra.alert-rules",
+      "area": "infra",
+      "statement": "The install ships alert rules and a dashboard for its own metrics.",
+      "check": {
+        "probe": "exists",
+        "paths": ["infra/observability/alerts.yml", "infra/observability/dashboard.json"]
+      }
+    },
+    {
+      "id": "infra.postgres-18",
+      "area": "infra",
+      "statement": "The stack runs on PostgreSQL 18, rehearsed on the reference install.",
+      "check": { "probe": "ledger-closed", "ids": ["DEP-5"] },
+      "blockedExternal": {
+        "reason": "Closing it needs an RF-5 rehearsal recorded against PostgreSQL 18 on the reference install.",
+        "ledger": "DEP-5"
+      }
+    },
+    {
+      "id": "infra.node-26",
+      "area": "infra",
+      "statement": "The stack runs on Node 26 LTS, smoke-tested on a compose stack.",
+      "check": { "probe": "ledger-closed", "ids": ["RUNTIME-1"] },
+      "blockedExternal": {
+        "reason": "Closing it needs verify and smoke:local recorded on a compose stack running Node 26.",
+        "ledger": "RUNTIME-1"
+      }
+    },
+    {
+      "id": "integrations.retry-policy",
+      "area": "integrations",
+      "statement": "Connector retries are bounded, honour idempotency, and time out each attempt.",
+      "check": {
+        "probe": "contains",
+        "path": "packages/connectors/sdk/src/index.ts",
+        "pattern": "MAX_RETRY_BACKOFF_MS[\\s\\S]*attemptTimeoutMs"
+      }
+    },
+    {
+      "id": "integrations.jira-rate-limit",
+      "area": "integrations",
+      "statement": "The Jira connector waits out a 429 using Retry-After instead of failing.",
+      "check": {
+        "probe": "contains",
+        "path": "packages/connectors/jira/src/index.ts",
+        "pattern": "throw refusalOf\\(response"
+      }
+    },
+    {
+      "id": "integrations.signal-rate-limit",
+      "area": "integrations",
+      "statement": "The Signal connector waits out a 429 using Retry-After instead of failing.",
+      "check": {
+        "probe": "contains",
+        "path": "packages/connectors/signal/src/index.ts",
+        "pattern": "refusalOf\\(response"
+      }
+    },
+    {
+      "id": "integrations.retry-after-honoured",
+      "area": "integrations",
+      "statement": "A scheduled report waits until the time a rate limit named, not its own shorter backoff.",
+      "check": {
+        "probe": "contains",
+        "path": "apps/api/src/services/report-dispatcher.ts",
+        "pattern": "finish\\(row, \\{ \\.\\.\\.outcome, rendered \\}, result\\.error\\?\\.retryAt\\)"
+      }
+    },
+    {
+      "id": "integrations.mcp-tools-tested",
+      "area": "integrations",
+      "statement": "Every MCP tool is tested through the HTTP endpoint, not only through stdio.",
+      "check": {
+        "probe": "exists",
+        "paths": ["apps/api/src/mcp/tools.test.ts", "apps/api/src/routes/mcp.test.ts"]
+      }
+    },
+    {
+      "id": "integrations.dotnet-formats",
+      "area": "integrations",
+      "statement": "Lupin reads .NET results: TRX, NUnit 3 and xUnit.net.",
+      "check": {
+        "probe": "contains",
+        "path": "packages/shared-contracts/src/schemas/report-formats.ts",
+        "pattern": "(?=[\\s\\S]*'trx')(?=[\\s\\S]*'nunit')(?=[\\s\\S]*'xunit')"
+      }
+    },
+    {
+      "id": "integrations.bdd-formats",
+      "area": "integrations",
+      "statement": "Lupin reads Cucumber JSON and Robot Framework output.xml.",
+      "check": {
+        "probe": "contains",
+        "path": "packages/shared-contracts/src/schemas/report-formats.ts",
+        "pattern": "(?=[\\s\\S]*'cucumber')(?=[\\s\\S]*'robot')"
+      }
+    },
+    {
+      "id": "integrations.more-formats",
+      "area": "integrations",
+      "statement": "Lupin reads Go test2json, Postman/Newman and Lighthouse reports.",
+      "check": {
+        "probe": "contains",
+        "path": "packages/shared-contracts/src/schemas/report-formats.ts",
+        "pattern": "(?=[\\s\\S]*'go-test')(?=[\\s\\S]*'newman')(?=[\\s\\S]*'lighthouse')"
+      }
+    },
+    {
+      "id": "integrations.load-producer",
+      "area": "integrations",
+      "statement": "The runner produces load evidence itself: a k6 run is queued, bounded and read back.",
+      "check": {
+        "probe": "register-status",
+        "ids": ["tool.k6", "quality.load"],
+        "want": "real"
+      }
+    },
+    {
+      "id": "integrations.security-producer",
+      "area": "integrations",
+      "statement": "The runner produces security evidence itself: a ZAP baseline scan is recorded.",
+      "check": {
+        "probe": "register-status",
+        "ids": ["tool.zap", "quality.security"],
+        "want": "real"
+      },
+      "blockedExternal": {
+        "reason": "The adapter and runner path exist; closing it needs a ZAP scan recorded on a host that carries ZAP.",
+        "ledger": "BK-2"
+      }
+    },
+    {
+      "id": "integrations.jira-guide",
+      "area": "integrations",
+      "statement": "Jira has a setup guide of its own.",
+      "check": { "probe": "exists", "paths": ["site/guide/jira.md"] }
+    },
+    {
+      "id": "backend.one-error-boundary",
+      "area": "backend",
+      "statement": "Every API failure goes through one error boundary that carries a request id.",
+      "check": { "probe": "exists", "paths": ["apps/api/src/errors/boundary.ts"] }
+    },
+    {
+      "id": "backend.run-status-atomic",
+      "area": "backend",
+      "statement": "A run status change and its audit row commit together or not at all.",
+      "check": {
+        "probe": "contains",
+        "path": "apps/api/src/repositories/drizzle-run-repository.ts",
+        "pattern": "patchRunAudited[\\s\\S]*?\\.transaction\\("
+      }
+    },
+    {
+      "id": "backend.pagination-contract",
+      "area": "backend",
+      "statement": "Every cursor-paged list answers one shared page shape.",
+      "check": {
+        "probe": "exists",
+        "paths": ["packages/shared-contracts/src/schemas/pagination.ts"]
+      }
+    },
+    {
+      "id": "backend.idempotent-creates",
+      "area": "backend",
+      "statement": "Create requests honour an Idempotency-Key, so a retried POST makes one record.",
+      "check": { "probe": "exists", "paths": ["apps/api/src/middleware/idempotency.ts"] }
+    },
+    {
+      "id": "backend.query-budget",
+      "area": "backend",
+      "statement": "Hot read paths issue a fixed number of queries however much data exists.",
+      "check": {
+        "probe": "exists",
+        "paths": [
+          "apps/api/src/execution/run-listing-queries.test.ts",
+          "apps/api/src/repositories/query-budget.test.ts"
+        ]
+      }
+    },
+    {
+      "id": "backend.execution-store-covered",
+      "area": "backend",
+      "statement": "The execution store is measured by coverage, not excluded from it.",
+      "check": {
+        "probe": "lacks",
+        "path": "docs/quality/coverage-exclusions.md",
+        "pattern": "drizzle-execution-store\\.ts"
+      }
+    },
+    {
+      "id": "backend.coverage-standard",
+      "area": "backend",
+      "statement": "Every measured package meets the standard coverage thresholds.",
+      "check": { "probe": "coverage-standard" }
+    },
+    {
+      "id": "backend.mutation-packages",
+      "area": "backend",
+      "statement": "The core packages meet the mutation target.",
+      "check": {
+        "probe": "mutation-covers",
+        "packages": [
+          "packages/shared-contracts",
+          "packages/reporting",
+          "packages/auth",
+          "packages/orchestration",
+          "packages/runner-sdk"
+        ]
+      }
+    },
+    {
+      "id": "backend.mutation-apps",
+      "area": "backend",
+      "statement": "The API and the worker meet the mutation target.",
+      "check": { "probe": "mutation-covers", "packages": ["apps/api", "apps/worker"] },
+      "blockedExternal": {
+        "reason": "A mutation run over the API takes hours; its score needs a nightly job of its own to be measured.",
+        "ledger": "MNT-205"
+      }
+    },
+    {
+      "id": "backend.failure-analyzer",
+      "area": "backend",
+      "statement": "Each run says what changed since the run before and why: new, fixed and still-failing tests, slowdowns, and causes.",
+      "check": {
+        "probe": "exists",
+        "paths": [
+          "packages/reporting/src/run-analysis.ts",
+          "apps/api/src/services/failure-cluster-store.ts"
+        ]
+      }
+    },
+    {
+      "id": "backend.no-mock-capability",
+      "area": "backend",
+      "statement": "No capability in the register is a mock: each is real or removed.",
+      "check": { "probe": "register-none", "want": "mock" }
+    },
+    {
+      "id": "frontend.design-gates",
+      "area": "frontend",
+      "statement": "Every Tailwind class resolves, and colour is always a token.",
+      "check": { "probe": "exists", "paths": ["apps/web/src/theme-resolution.test.ts"] }
+    },
+    {
+      "id": "frontend.accessibility",
+      "area": "frontend",
+      "statement": "axe runs on every route in both themes and every state.",
+      "check": { "probe": "exists", "paths": ["tests/e2e/accessibility/routes.spec.ts"] }
+    },
+    {
+      "id": "frontend.complexity",
+      "area": "frontend",
+      "statement": "No function is over the complexity ceiling of 10.",
+      "check": { "probe": "complexity-clean", "ceiling": 10 }
+    },
+    {
+      "id": "frontend.home-render-budget",
+      "area": "frontend",
+      "statement": "Home, the first screen, is inside the recorded rendering budget.",
+      "check": { "probe": "render-route", "routes": ["/dashboard/now"] },
+      "blockedExternal": {
+        "reason": "Closing it needs pnpm render:baseline run on the reference install with /dashboard/now added to the measured routes.",
+        "ledger": "PERF-2"
+      }
+    },
+    {
+      "id": "frontend.bundle-budget",
+      "area": "frontend",
+      "statement": "The web bundle has a size budget that blocks a pull request.",
+      "check": { "probe": "tier", "script": "bundle:budget", "tier": "pr-blocking" }
+    },
+    {
+      "id": "frontend.shared-states",
+      "area": "frontend",
+      "statement": "Loading and error states come from one shared component each.",
+      "check": {
+        "probe": "exists",
+        "paths": [
+          "packages/ui/src/components/ErrorState/ErrorState.tsx",
+          "packages/ui/src/components/LoadingState/LoadingState.tsx"
+        ]
+      }
+    },
+    {
+      "id": "ux.quality-pulse",
+      "area": "ux",
+      "statement": "One pure model says whether quality got better or worse, and why.",
+      "check": { "probe": "exists", "paths": ["packages/reporting/src/quality-pulse.ts"] }
+    },
+    {
+      "id": "ux.self-checks",
+      "area": "ux",
+      "statement": "The app notices its own problems: stale data, failing connectors, an offline runner, an old backup.",
+      "check": { "probe": "exists", "paths": ["packages/reporting/src/self-checks.ts"] }
+    },
+    {
+      "id": "ux.glossary",
+      "area": "ux",
+      "statement": "Every term the interface uses is explained in one glossary.",
+      "check": { "probe": "exists", "paths": ["site/guide/glossary.md"] }
+    },
+    {
+      "id": "ux.task-scenarios",
+      "area": "ux",
+      "statement": "The core QA jobs are tested as timed task scenarios.",
+      "check": { "probe": "exists", "paths": ["tests/e2e/usability/tasks.spec.ts"] }
+    },
+    {
+      "id": "ux.route-states",
+      "area": "ux",
+      "statement": "The route-state and design-world-class debt (UI-1) is closed.",
+      "check": { "probe": "ledger-closed", "ids": ["UI-1"] }
+    },
+    {
+      "id": "setup.one-command-start",
+      "area": "setup",
+      "statement": "One command starts an install, with backup and restore beside it.",
+      "check": {
+        "probe": "contains",
+        "path": "infra/release/start.sh",
+        "pattern": "^  backup\\) backup[\\s\\S]*^  restore\\) restore"
+      }
+    },
+    {
+      "id": "setup.acceptance",
+      "area": "setup",
+      "statement": "Every release is installed from its own release page and probed as a user.",
+      "check": {
+        "probe": "contains",
+        "path": ".github/workflows/release.yml",
+        "pattern": "Install from the release page"
+      }
+    },
+    {
+      "id": "setup.doctor",
+      "area": "setup",
+      "statement": "`start doctor` checks a host and names the fix for each problem, on every platform.",
+      "check": {
+        "probe": "contains",
+        "path": "infra/release/start.sh",
+        "pattern": "^  doctor\\) doctor"
+      }
+    },
+    {
+      "id": "setup.five-minutes",
+      "area": "setup",
+      "statement": "A five-minute guide takes a new user from download to a first result.",
+      "check": { "probe": "exists", "paths": ["site/guide/five-minutes.md"] }
+    }
+  ]
+}

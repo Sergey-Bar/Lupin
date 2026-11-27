@@ -586,6 +586,30 @@
       "testFile": "apps/api/src/execution/evidence-domains.property.test.ts",
       "seed": 20261112,
       "shownToFail": "Deleting the findingsVerdict severity comparison makes the property fail on its first generated case."
+    },
+    {
+      "id": "IDEM-1",
+      "statement": "Over any sequence of keyed create requests, a key runs its route once: the records made equal the distinct keys, every repeat with the first body answers what the first answered, and a repeat with another body is refused with 409.",
+      "package": "apps/api",
+      "testFile": "apps/api/src/middleware/idempotency.property.test.ts",
+      "seed": 20261126,
+      "shownToFail": "The control arm: without the middleware, two keyed requests make two records where the model allows one."
+    },
+    {
+      "id": "PULSE-1",
+      "statement": "The quality pulse is worse exactly when some vital sign is worse past its noise, so a regression never sits under a better or steady word, and a worse pulse always names its cause.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/quality-pulse.property.test.ts",
+      "seed": 20261126,
+      "shownToFail": "Choosing the direction by the largest move instead of any worse sign lets a large improvement hide a regression; the property fails on the first such input."
+    },
+    {
+      "id": "PULSE-2",
+      "statement": "Missing evidence is never good: a vital with either window missing is unknown, not steady, and with no comparable vital the pulse is unknown.",
+      "package": "packages/reporting",
+      "testFile": "packages/reporting/src/quality-pulse.property.test.ts",
+      "seed": 20261126,
+      "shownToFail": "The control arm: a pulse that called missing evidence steady is caught."
     }
   ]
 }

@@ -43,6 +43,8 @@ function ledgerWith(overrides = {}) {
         provenance: 'hand',
         status: 'open',
         summary: 'What it is.',
+        owner: 'Whoever owns it.',
+        removalCondition: 'A thing that could happen.',
         ...overrides,
       },
     ],
@@ -115,6 +117,28 @@ test('an open Major with no wave is allowed', () => {
   assert.deepEqual(findings, []);
 });
 
+test('an open Minor or Major with no owner or no removal condition is a finding', () => {
+  for (const field of ['owner', 'removalCondition']) {
+    for (const band of ['Major', 'Minor']) {
+      const { findings } = auditLedger(ledgerWith({ band, status: 'open', [field]: '' }), {
+        root,
+      });
+      assert.ok(
+        hasFinding(findings, new RegExp(`an open ${band} has no \`${field}\``)),
+        `${band} without ${field}: ${findings.join(' | ')}`,
+      );
+    }
+  }
+});
+
+test('an open Blocker is owned by its wave, so it needs no owner field', () => {
+  const { findings } = auditLedger(
+    ledgerWith({ band: 'Blocker', status: 'open', wave: 'W1', owner: '', removalCondition: '' }),
+    { root },
+  );
+  assert.deepEqual(findings, []);
+});
+
 test('an owned open Blocker is a finding-free row', () => {
   const { findings } = auditLedger(ledgerWith({ band: 'Blocker', status: 'open', wave: 'W1.1' }), {
     root,
@@ -132,7 +156,12 @@ test('a Blocker recorded as debt is a finding, because the policy forbids it', (
 
 test('a debt row with no owner is a finding', () => {
   const { findings } = auditLedger(
-    ledgerWith({ band: 'Minor', status: 'debt', removalCondition: 'when the retry lands' }),
+    ledgerWith({
+      band: 'Minor',
+      status: 'debt',
+      owner: '',
+      removalCondition: 'when the retry lands',
+    }),
     { root },
   );
   assert.ok(hasFinding(findings, /`owner` is empty/));
@@ -140,7 +169,7 @@ test('a debt row with no owner is a finding', () => {
 
 test('a debt row with no removal condition is a finding', () => {
   const { findings } = auditLedger(
-    ledgerWith({ band: 'Minor', status: 'debt', owner: 'a person' }),
+    ledgerWith({ band: 'Minor', status: 'debt', owner: 'a person', removalCondition: '' }),
     { root },
   );
   assert.ok(hasFinding(findings, /`removalCondition` is empty/));

@@ -204,14 +204,19 @@ services:
     # Isolation (plan task 19). The runner runs as the image's `node` user (uid 1000 in the
     # Node base image), with every capability dropped and no privilege escalation; Playwright
     # launches Chromium without its own sandbox by default, so it needs none of them.
-    # Not `read_only`: the durable spool and the job workspaces live under /tmp in the
-    # container's own filesystem, so a read-only root with a /tmp tmpfs would lose queued
-    # results on every restart. That needs a spool volume first.
+    # `read_only` since plan 1795712849115 task 7: the root filesystem is the image, and the
+    # three places the runner writes are named. The durable spool is a volume, so queued
+    # results survive a restart; the job workspaces and the tools' home directory are a second
+    # volume, because a clone with its dependencies can be gigabytes and a tmpfs is memory; and
+    # /tmp is a small tmpfs for what tools put there.
     # Network: the runner sits on `default` (the API and the allowlisted targets `api` and
     # `web`) and `runner_egress` (git clones). Nothing here starts a per-job container, so no
     # job joins an `internal: true` network of its own yet; the target boundary is the runner's
     # `RUNNER_ALLOWED_TARGET_URLS` check, enforced before any tool is spawned.
     user: '1000:1000'
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
     cap_drop: [ALL]
     security_opt:
       - no-new-privileges:true
@@ -226,11 +231,18 @@ services:
       RUNNER_SLOTS: '1'
       RUNNER_ALLOWED_TARGET_URLS: 'http://api,http://web'
       ARTIFACT_ROOT: /var/lib/lupin/artifacts
+      RUNNER_SPOOL_ROOT: /var/lib/lupin/spool
+      RUNNER_WORKSPACE_ROOT: /var/lib/lupin/work
+      # Tools that keep a cache under $HOME (npm, pip, Playwright's own) write to the work
+      # volume rather than to the read-only image.
+      HOME: /var/lib/lupin/work/home
     depends_on:
       api:
         condition: service_healthy
     volumes:
       - artifact_data:/var/lib/lupin/artifacts
+      - runner_spool:/var/lib/lupin/spool
+      - runner_work:/var/lib/lupin/work
     networks:
       - default
       - runner_egress
@@ -368,3 +380,9 @@ volumes:
   objectstore_data:
   # The Signal bridge's linked account. Optional, with the `signal` profile.
   signal_data:
+  # The runner's durable spool: results queued while the API was unreachable survive a
+  # restart of the runner (plan 1795712849115 task 7).
+  runner_spool:
+  # The runner's job workspaces and its tools' home directory. Disposable, but a volume
+  # rather than a tmpfs because a clone with its dependencies can outgrow the memory limit.
+  runner_work:

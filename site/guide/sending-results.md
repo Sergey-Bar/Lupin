@@ -29,15 +29,15 @@ curl --fail-with-body \
 
 ::: details See every upload field
 
-| Field                     | Purpose                                                                                                                                                                 |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `file`                    | The report. Exactly one file part.                                                                                                                                      |
-| `format`                  | Which adapter reads it: `playwright`, `junit`, `allure`, `k6`, `zap`, `ctrf`, `jest`, `vitest`, `pytest` or `mochawesome`. See below for what happens when you omit it. |
-| `runId`                   | Your identity for the run. Omit it and the report's own SHA-256 becomes the id, so a re-upload is a replay rather than a second run.                                    |
-| `branch`                  | Shown on the run and used to filter trends.                                                                                                                             |
-| `commitSha`               | The commit under test.                                                                                                                                                  |
-| `environment`             | Free text, such as `staging`.                                                                                                                                           |
-| `startedAt`, `finishedAt` | ISO 8601 timestamps with seconds, when the report does not carry them.                                                                                                  |
+| Field                     | Purpose                                                                                                                                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `file`                    | The report. Exactly one file part.                                                                                                                                                                                                                       |
+| `format`                  | Which adapter reads it: `playwright`, `junit`, `allure`, `k6`, `zap`, `ctrf`, `jest`, `vitest`, `pytest`, `mochawesome`, `trx`, `nunit`, `xunit`, `cucumber`, `robot`, `go-test`, `newman` or `lighthouse`. See below for what happens when you omit it. |
+| `runId`                   | Your identity for the run. Omit it and the report's own SHA-256 becomes the id, so a re-upload is a replay rather than a second run.                                                                                                                     |
+| `branch`                  | Shown on the run and used to filter trends.                                                                                                                                                                                                              |
+| `commitSha`               | The commit under test.                                                                                                                                                                                                                                   |
+| `environment`             | Free text, such as `staging`.                                                                                                                                                                                                                            |
+| `startedAt`, `finishedAt` | ISO 8601 timestamps with seconds, when the report does not carry them.                                                                                                                                                                                   |
 
 :::
 
@@ -49,6 +49,26 @@ into nonsense.
 **Errors name the problem.** A report the adapter cannot read answers
 `INVALID_REPORTER_UPLOAD` with the adapter's own reason in `details.adapterMessage` — for
 example that a JUnit document contains no test cases — so the fix is in the response.
+
+## More test tools
+
+Each of these is read by its own adapter. Produce the file with the command shown and upload it
+with the `format` in the second column; `lupin test --format` takes the same names, except
+Lighthouse, which is a page budget rather than tests a quarantine can excuse.
+
+| Tool                                   | `format`     | Produce it                                                         | What becomes a test                                                        |
+| -------------------------------------- | ------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| .NET (MSTest, xUnit, NUnit via VSTest) | `trx`        | `dotnet test --logger trx`                                         | Each result; a data-driven test's rows, not their summary                  |
+| NUnit 3                                | `nunit`      | `nunit3-console Tests.dll --result=TestResult.xml`                 | Each `test-case`, under its fixture                                        |
+| xUnit.net                              | `xunit`      | `dotnet test --logger "xunit;LogFilePath=results.xml"`             | Each `test`; each row of a theory separately                               |
+| Cucumber (JS, JVM, Behave, SpecFlow)   | `cucumber`   | `--format json:cucumber.json`                                      | Each scenario, background included; outline rows told apart by line        |
+| Robot Framework 6 and 7                | `robot`      | `robot --output output.xml tests/`                                 | Each test, by its own status rather than its first keyword's               |
+| Go                                     | `go-test`    | `go test -json ./... > go-test.json`                               | Each test and subtest; a test that never finished is a failure             |
+| Postman (Newman)                       | `newman`     | `newman run collection.json -r json --reporter-json-export r.json` | Each request, with its assertions as steps; no assertions reads as unknown |
+| Lighthouse                             | `lighthouse` | `lighthouse <url> --output json --output-path lh.json`             | Each category: 90 or above passes, below fails, unscored is unknown        |
+
+A `.trx` file is recognised by its name; every other XML format must be declared, because XML
+on its own does not say which tool wrote it.
 
 ## Playwright
 
@@ -129,3 +149,17 @@ A reporter that streams while the suite runs can post events to
 the dashboard updates over server-sent events as they arrive. The event contracts are in
 `packages/shared-contracts/src/schemas/reporter-events.ts`, and the full route list is in
 [`docs/openapi.json`](https://github.com/Sergey-Bar/Lupin/blob/main/docs/openapi.json).
+
+## Retrying a request safely
+
+A script that creates something (a quarantine entry, a quality gate, a scheduled report, an
+issue for a failure cause) can send an `Idempotency-Key` header, any printable value up to 255
+characters. The first request runs. A repeat with the same key and the same body gets the first
+answer back with `x-idempotent-replay: true`, and nothing is created twice. A repeat with a
+different body is refused with `409 IDEMPOTENCY_KEY_REUSED`, and one sent while the first is
+still running with `409 IDEMPOTENCY_KEY_IN_FLIGHT`. Only a success is kept, so a refused
+request can be retried as it is. Keys are kept for a day, and forgotten when Lupin restarts.
+
+Paged lists answer `{ "items": [...], "nextCursor": "..." }`, with `nextCursor` `null` on the
+last page; the runs list keeps its array and puts the next cursor in `X-Next-Cursor`. Pass the
+cursor back as `?cursor=` exactly as you got it, with `?limit=` up to 100.

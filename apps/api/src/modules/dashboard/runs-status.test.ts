@@ -28,7 +28,7 @@ interface BoundaryBody {
 
 import { withErrorBoundary } from '../../test-support/error-boundary-app.js';
 import { Hono } from 'hono';
-import { InMemoryAuditSink } from './audit-sink.js';
+import { InMemoryAuditSink, type AuditEntry, type AuditSink } from './audit-sink.js';
 import { createDashboardRunsRoutes, type DashboardRunsOptions } from './runs.js';
 import type { RunRecord } from '../../repositories/run-repository.js';
 
@@ -71,18 +71,30 @@ function build(initial: RunRecord = run(), race?: RunRecord['status']): Harness 
   const store = new Map([[initial.id, initial]]);
   const audit = new InMemoryAuditSink();
 
+  const patchRun = async (id: string, patch: Partial<RunRecord> & { ifStatus?: string }) => {
+    const current = store.get(id);
+    if (!current) return false;
+    if (race !== undefined) store.set(id, { ...current, status: race });
+    const now = store.get(id) as RunRecord;
+    if (patch.ifStatus !== undefined && now.status !== patch.ifStatus) return false;
+    const { ifStatus: _ifStatus, ...change } = patch;
+    store.set(id, { ...now, ...change });
+    return true;
+  };
+
   const options: DashboardRunsOptions = {
     repository: {
       getRun: async (id: string) => store.get(id) ?? null,
       listRuns: async () => [...store.values()],
-      patchRun: async (id: string, patch: Partial<RunRecord> & { ifStatus?: string }) => {
-        const current = store.get(id);
-        if (!current) return false;
-        if (race !== undefined) store.set(id, { ...current, status: race });
-        const now = store.get(id) as RunRecord;
-        if (patch.ifStatus !== undefined && now.status !== patch.ifStatus) return false;
-        const { ifStatus: _ifStatus, ...change } = patch;
-        store.set(id, { ...now, ...change });
+      patchRun,
+      patchRunAudited: async (
+        id: string,
+        patch: Partial<RunRecord> & { ifStatus?: string },
+        entry: AuditEntry,
+        sink: AuditSink,
+      ) => {
+        if (!(await patchRun(id, patch))) return false;
+        await sink.record(entry);
         return true;
       },
     } as never,

@@ -167,6 +167,66 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+  # Backup and restore, driven the way a user drives them (plan 1795712849115 task 7). The
+  # start scripts' own suite runs against a fake docker, so until this job nothing had ever
+  # restored a real backup in CI. It installs the latest published release from its release
+  # page, writes a row, backs up, writes a second row, restores, and checks the first row is
+  # back and the second is gone. The artifacts' digests are checked by `restore` itself, against
+  # the SHA256SUMS the backup wrote, before it replaces anything. No checkout:
+  # like the acceptance job, it has only what a user downloads.
+  restore-drill:
+    name: Backup and restore drill
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      LUPIN_NO_BROWSER: '1'
+    steps:
+      - name: Install the latest release
+        run: |
+          set -euo pipefail
+          tag="$(gh release view -R "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+          version="${tag#v}"
+          gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "lupin-$version.zip" -p SHA256SUMS
+          sha256sum -c --ignore-missing SHA256SUMS
+          unzip -q "lupin-$version.zip"
+          mv "lupin-$version" lupin
+          cd lupin && ./start.sh
+      - name: Write a row, back up, write another
+        working-directory: lupin
+        run: |
+          set -euo pipefail
+          key="$(sed -n 's/^LUPIN_INSTALLATION_KEY=//p' .env)"
+          api() { curl -fsS -b jar -c jar -H 'content-type: application/json' "$@"; }
+          api -X POST -d "{\"apiKey\":\"$key\"}" http://127.0.0.1:8080/api/v1/auth/login > /dev/null
+          api -X POST -d '{"name":"drill-before","passRateThreshold":90}' \
+            http://127.0.0.1:8080/api/v1/dashboard/quality-gates > /dev/null
+          ./start.sh backup
+          api -X POST -d '{"name":"drill-after","passRateThreshold":90}' \
+            http://127.0.0.1:8080/api/v1/dashboard/quality-gates > /dev/null
+      - name: Restore it
+        working-directory: lupin
+        run: ./start.sh restore "$(ls -d backups/lupin-* | tail -n 1)"
+      - name: The backup came back, and only the backup
+        working-directory: lupin
+        run: |
+          set -euo pipefail
+          key="$(sed -n 's/^LUPIN_INSTALLATION_KEY=//p' .env)"
+          curl -fsS -c jar -H 'content-type: application/json' -d "{\"apiKey\":\"$key\"}" \
+            http://127.0.0.1:8080/api/v1/auth/login > /dev/null
+          gates="$(curl -fsS -b jar http://127.0.0.1:8080/api/v1/dashboard/quality-gates)"
+          echo "$gates" | grep -q '"drill-before"' || { echo "the row written before the backup is missing"; exit 1; }
+          if echo "$gates" | grep -q '"drill-after"'; then echo "a row written after the backup survived the restore"; exit 1; fi
+          echo "Restored: the gate written before the backup is back, and the later one is gone." >> "$GITHUB_STEP_SUMMARY"
+      - name: Logs, if it failed
+        if: failure()
+        working-directory: lupin
+        run: ./start.sh status; docker compose -p lupin --env-file .env -f compose.yml logs --no-color --tail 80
+      - name: Remove it
+        if: always()
+        working-directory: lupin
+        run: ./start.sh uninstall --purge || true
+
   quality-baseline:
     name: Quality baseline
     runs-on: ubuntu-24.04

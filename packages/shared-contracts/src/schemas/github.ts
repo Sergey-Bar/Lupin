@@ -1,5 +1,6 @@
 import { z } from 'zod/v4';
 import { ChangeRiskLevelSchema } from './change-risk.js';
+import { cursorPageSchema } from './pagination.js';
 
 /**
  * The GitHub command center's contracts: what the inbox returns and what an action asks for.
@@ -100,14 +101,8 @@ export const GithubIssueItemSchema = z.object({
 });
 export type GithubIssueItem = z.infer<typeof GithubIssueItemSchema>;
 
-export const GithubPullPageSchema = z.object({
-  items: z.array(GithubPullItemSchema),
-  nextCursor: z.string().nullable(),
-});
-export const GithubIssuePageSchema = z.object({
-  items: z.array(GithubIssueItemSchema),
-  nextCursor: z.string().nullable(),
-});
+export const GithubPullPageSchema = cursorPageSchema(GithubPullItemSchema);
+export const GithubIssuePageSchema = cursorPageSchema(GithubIssueItemSchema);
 
 const SeverityCountsSchema = z.object({
   critical: z.number().int(),

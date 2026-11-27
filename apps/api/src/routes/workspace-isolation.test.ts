@@ -247,6 +247,11 @@ const WORKSPACE_SCOPED_FAMILIES: ReadonlyArray<{
       'routes/ai-code.ts',
     ],
   },
+  // The quality pulse: runs through `readSince` (the trend's reader), coverage through the
+  // health history and AI outcomes through `aiCodeWindows`, all with the bound workspace.
+  // `routes/projects.test.ts` proves the store is asked for that workspace only and that
+  // another workspace's project is a 404.
+  { family: 'quality pulse', files: ['services/quality-pulse-service.ts'] },
   // Change risk: what `lupin diff-guard` sent per commit, and each pull request's assessed risk
   // per head. `diff-guard-service.test.ts` and `change-risk-service.test.ts` prove another
   // workspace can neither write nor read either for a project, and that a commit or pull request

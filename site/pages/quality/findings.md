@@ -13,14 +13,14 @@ its source, then run `pnpm site:generate`.
 | ---------------- | ---- |
 | `debt`           | 11   |
 | `false-positive` | 6    |
-| `fixed`          | 340  |
-| `open`           | 4    |
+| `fixed`          | 343  |
+| `open`           | 7    |
 
-## Open (4)
+## Open (7)
 
 | Band  | Open |
 | ----- | ---- |
-| Minor | 4    |
+| Minor | 7    |
 
 | ID          | Band  | Finding                                                                                                         |
 | ----------- | ----- | --------------------------------------------------------------------------------------------------------------- |
@@ -28,5 +28,8 @@ its source, then run `pnpm site:generate`.
 | `DEP-3`     | Minor | Effect 4.0.0 is unblocked at the bootstrap boundary, and its own test helper is the one part not available here |
 | `DEP-4`     | Minor | TypeScript 7.0.2 is stable and has no Compiler API, so the checker and the linter cannot share a version        |
 | `DEP-5`     | Minor | PostgreSQL 18 is the correct target and 19 is not available, and 16 is not an exposure while it waits           |
+| `MNT-205`   | Minor | The API and the worker have no mutation score                                                                   |
+| `MNT-207`   | Minor | A runner job's log is visible only after the job ends                                                           |
+| `PERF-2`    | Minor | Home, the landing page, has no rendering ceiling                                                                |
 
 <!-- /generated -->

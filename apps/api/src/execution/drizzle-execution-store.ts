@@ -913,7 +913,8 @@ export class DrizzleExecutionStore implements ExecutionStore {
     if (!previous || !isTerminalPhase(previous.phase)) return null;
     return this.createRun(
       {
-        externalId: previous.externalId,
+        // Not the caller's id: it names the run they submitted, and on PostgreSQL it is unique per
+        // workspace and source, so a retry that copied it could not be written (ledger MNT-208).
         source: previous.source,
         framework: previous.framework,
         adapterVersion: previous.adapterVersion,

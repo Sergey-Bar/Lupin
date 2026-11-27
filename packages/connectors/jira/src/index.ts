@@ -6,6 +6,7 @@ import {
   executeWithRetry,
   isRetryableStatus,
   operationSpec,
+  refusalOf,
   requireString,
   type ConnectorAdapter,
   type ConnectorRequest,
@@ -178,9 +179,8 @@ export const jiraAdapter: ConnectorAdapter = {
             // A 4xx is a statement about the *request* and nothing was created; a 5xx is a
             // statement about the response only, and for a create that is the ambiguous
             // case finding P-13 is about.
-            throw response.status >= 400 && response.status < 500
-              ? new ConnectorRejectionError(response.status, 'Jira request failed')
-              : new ConnectorHttpError(response.status, 'Jira request failed');
+            // A 429's `Retry-After` travels with the refusal, so the caller waits that long.
+            throw refusalOf(response, 'Jira request failed');
           }
           return response.json();
         },
@@ -288,6 +288,7 @@ function failure(error: unknown): ConnectorResult {
   }
 
   const status = error instanceof ConnectorHttpError ? error.status : undefined;
+  const retryAt = error instanceof ConnectorRejectionError ? error.retryAt : undefined;
   return {
     status: 'error',
     error: {
@@ -299,6 +300,7 @@ function failure(error: unknown): ConnectorResult {
       // answered is not retried without this adapter having to know that separately.
       retryable: isRetryableStatus(status),
       message: 'Jira operation failed',
+      ...(retryAt === undefined ? {} : { retryAt: retryAt.toISOString() }),
     },
     attempts: attemptsOf(error),
   };

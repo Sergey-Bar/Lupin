@@ -14,6 +14,7 @@ import {
   compareAiOutcomes,
   evaluateAiGovernance,
   type AiOutcomeChange,
+  type AiOutcomeComparison,
   type AttributionOptions,
 } from '@lupin/reporting';
 import type {
@@ -499,4 +500,24 @@ function metricOf(card: Scorecard): DimensionMetric | null {
     score: card.score,
     summary: `AI-written code ${String(card.score)} / 100 over ${String(card.windowDays)} days, limited by ${String(card.cappedBy)}`,
   };
+}
+
+/**
+ * The AI-against-human comparison for the window ending now and for the window before it, so
+ * the quality pulse can say whether AI-written change got better or worse over time (plan
+ * 1795712849115 task 14). Two computations over the same reader, never a second formula.
+ */
+export async function aiCodeWindows(
+  options: AiCodeOptions,
+  projectId: string,
+  windowDays: number,
+): Promise<{ current: AiOutcomeComparison; previous: AiOutcomeComparison }> {
+  const project = await projectRow(options, projectId);
+  const now = options.now?.() ?? new Date();
+  const before = new Date(now.getTime() - windowDays * DAY_MS);
+  const [current, previous] = await Promise.all([
+    computeAiCode(options, project, windowDays, now),
+    computeAiCode(options, project, windowDays, before),
+  ]);
+  return { current: current.comparison, previous: previous.comparison };
 }

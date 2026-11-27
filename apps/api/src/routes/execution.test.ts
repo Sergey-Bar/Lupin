@@ -1,3 +1,4 @@
+import { resetOperatorMetrics } from '../observability/operator-metrics.js';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -297,10 +298,13 @@ function eventLine(
 }
 
 /** A run with a claimed job, an enrolled runner, and one uploaded artifact. */
-async function seed(h: Harness, options: { releaseId?: string } = {}): Promise<Seeded> {
+async function seed(
+  h: Harness,
+  options: { releaseId?: string; key?: string } = {},
+): Promise<Seeded> {
   const created = await h.app.request('/api/v1/runs', {
     method: 'POST',
-    headers: { ...JSON_HEADERS, 'idempotency-key': 'seed-run' },
+    headers: { ...JSON_HEADERS, 'idempotency-key': options.key ?? 'seed-run' },
     body: JSON.stringify({
       projectId: h.projectId,
       releaseId: options.releaseId,
@@ -316,7 +320,7 @@ async function seed(h: Harness, options: { releaseId?: string } = {}): Promise<S
     headers: { ...JSON_HEADERS, 'x-runner-registration-secret': REGISTRATION_SECRET },
     body: JSON.stringify({
       runnerId: nextId(),
-      name: 'routes-runner',
+      name: `routes-runner-${options.key ?? 'seed-run'}`,
       capabilities: ['playwright'],
       labels: ['ci'],
       slots: 1,
@@ -743,9 +747,9 @@ describe('POST /api/v1/runs/:runId/retry', () => {
         leaseId: seeded.leaseId,
         fencingToken: seeded.fencingToken,
         tests: [
-          { id: 'kept-green', title: 'green', status: 'passed' },
-          { id: 'went-red', title: 'red', status: 'failed' },
-          { id: 'ran-out', title: 'slow', status: 'timed_out' },
+          { id: 'kept-green', title: 'green', file: 'cart.spec.ts', status: 'passed' },
+          { id: 'went-red', title: 'red', file: 'cart.spec.ts', status: 'failed' },
+          { id: 'ran-out', title: 'slow', file: 'pay.spec.ts', status: 'timed_out' },
         ],
       }),
     });
@@ -761,7 +765,78 @@ describe('POST /api/v1/runs/:runId/retry', () => {
       selection: { testIds: string[] } | string[];
     };
     expect(run.retryOfRunId).toBe(seeded.runId);
-    expect(run.selection).toEqual(['went-red', 'ran-out']);
+    // Identities, which the runner can turn into a Playwright test list (MNT-206); the row
+    // ids this used to hold name nothing outside the database.
+    expect(run.selection).toEqual(['cart.spec.ts › red', 'pay.spec.ts › slow']);
+  });
+
+  it('says what changed since the run before: new, fixed, and the cause (plan task 13)', async () => {
+    const h = await workspaceHarness();
+    const complete = async (
+      seeded: Seeded,
+      tests: Array<{ id: string; title: string; status: string; error?: { message: string } }>,
+    ) => {
+      const response = await h.app.request(`/api/v1/jobs/${seeded.jobId}/complete`, {
+        method: 'POST',
+        headers: { ...JSON_HEADERS, authorization: `Bearer ${seeded.token}` },
+        body: JSON.stringify({
+          phase: 'completed',
+          outcome: 'failed',
+          leaseId: seeded.leaseId,
+          fencingToken: seeded.fencingToken,
+          tests: tests.map((test) => ({ ...test, file: 'cart.spec.ts' })),
+        }),
+      });
+      expect(response.status).toBe(200);
+    };
+    const first = await seed(h, { key: 'analysis-1' });
+    await complete(first, [
+      { id: 'a', title: 'adds', status: 'passed' },
+      {
+        id: 'b',
+        title: 'applies coupon',
+        status: 'failed',
+        error: { message: 'expected 90, got 100' },
+      },
+    ]);
+    // Runs are ordered by creation time, then id, and this suite's clock stands still: the
+    // second run is created a second later, as two CI runs always are, and the clock is put
+    // back for the tests after this one.
+    const original = clock.getTime();
+    clock.setTime(original + 1000);
+    const second = await seed(h, { key: 'analysis-2' }).finally(() => clock.setTime(original));
+    await complete(second, [
+      {
+        id: 'a',
+        title: 'adds',
+        status: 'failed',
+        error: { message: 'connect ECONNREFUSED 127.0.0.1:3000' },
+      },
+      { id: 'b', title: 'applies coupon', status: 'passed' },
+    ]);
+
+    const response = await h.app.request(`/api/v1/runs/${second.runId}/analysis`);
+    expect(response.status).toBe(200);
+    const analysis = (await response.json()) as {
+      comparedTo: string | null;
+      newFailures: Array<{ title: string }>;
+      fixed: Array<{ title: string }>;
+      causes: Array<{ tests: number; newInThisRun: boolean; sample: string }>;
+      summary: string;
+    };
+    expect(analysis.comparedTo).toBe(first.runId);
+    expect(analysis.newFailures.map((test) => test.title)).toEqual(['adds']);
+    expect(analysis.fixed.map((test) => test.title)).toEqual(['applies coupon']);
+    expect(analysis.causes[0]).toMatchObject({ tests: 1, newInThisRun: true });
+    expect(analysis.causes[0]?.sample).toContain('ECONNREFUSED');
+    expect(analysis.summary).toBe(
+      'Since the run before: 1 new failure, 1 new cause, 1 test fixed.',
+    );
+
+    const missing = await h.app.request(
+      '/api/v1/runs/00000000-0000-4000-8000-000000000000/analysis',
+    );
+    expect(missing.status).toBe(404);
   });
 
   it('refuses scope "failed" for a run with no failed test to name', async () => {
@@ -1657,5 +1732,31 @@ describe('a run’s tests and artifacts carry the run’s own workspace', () => 
     expect(await h.otherStore.listArtifacts(h.otherWorkspaceId, seeded.runId)).toEqual([]);
     expect(await h.otherStore.getArtifact(seeded.artifactId, h.otherWorkspaceId)).toBeNull();
     expect(await h.store.getArtifact(seeded.artifactId, h.workspaceId)).not.toBeNull();
+  });
+});
+
+describe('GET /api/v1/self-checks (plan 1795712849115 task 16)', () => {
+  it('is quiet on a fresh install, and says a runner is missing once work is queued', async () => {
+    resetOperatorMetrics();
+    const h = await workspaceHarness();
+    const quiet = (await (await h.app.request('/api/v1/self-checks')).json()) as {
+      items: Array<{ id: string; fix: { to: string } }>;
+    };
+    expect(quiet.items).toEqual([]);
+
+    const created = await h.app.request('/api/v1/runs', {
+      method: 'POST',
+      headers: { ...JSON_HEADERS, 'idempotency-key': 'self-check-run' },
+      body: JSON.stringify({ projectId: h.projectId, requiredCapabilities: ['playwright'] }),
+    });
+    expect(created.status).toBe(202);
+    const noticed = (await (await h.app.request('/api/v1/self-checks')).json()) as {
+      items: Array<{ id: string; title: string; fix: { to: string } }>;
+    };
+    expect(noticed.items[0]).toMatchObject({
+      id: 'self-runner-offline',
+      title: 'No runner has connected',
+      fix: { to: '/dashboard/runner' },
+    });
   });
 });

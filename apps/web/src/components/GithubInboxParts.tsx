@@ -1,6 +1,6 @@
 import React from 'react';
 import { isNothingYet } from '../lib/nothing-yet.js';
-import { Button, Checkbox } from '@lupin/ui';
+import { Button, Checkbox, ErrorState, LoadingState } from '@lupin/ui';
 import type { PagedList } from '../hooks/usePagedList.js';
 import type { Resource } from '../hooks/useResource.js';
 import { useResource } from '../hooks/useResource.js';
@@ -167,18 +167,25 @@ export function inboxNotice({
   if (list.status === 'loading') {
     return (
       <Panel title={noun} className="flex-1">
-        <Quiet role="status">Loading…</Quiet>
+        <LoadingState label={noun.toLowerCase()} />
       </Panel>
     );
   }
   if (list.status === 'error') {
     return (
       <Panel title={noun} className="flex-1">
-        <Quiet role={isNothingYet(list.message) ? undefined : 'alert'}>
-          {isNothingYet(list.message)
-            ? 'GitHub is not connected yet. Connect it in Settings to see pull requests and issues here.'
-            : `Could not load this: ${list.message}`}
-        </Quiet>
+        {isNothingYet(list.message) ? (
+          <Quiet>
+            GitHub is not connected yet. Connect it in Settings to see pull requests and issues
+            here.
+          </Quiet>
+        ) : (
+          <ErrorState
+            title={`Could not load the ${noun.toLowerCase()}`}
+            description="GitHub did not answer, or answered with an error. Try again in a moment."
+            detail={list.message}
+          />
+        )}
       </Panel>
     );
   }

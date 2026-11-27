@@ -116,7 +116,25 @@ running on its own data again.
   leaves export off; it never stops the API.
 - **Metrics.** The API serves Prometheus text at `/metrics`, inside the compose network
   (`http://api:3000/metrics`). The front door does not publish it, so the scraper runs on the
-  same network.
+  same network. Beside the process and request series it serves
+  `lupin_runner_heartbeat_age_seconds` (how long the runners have been silent),
+  `lupin_connector_calls_total` and `lupin_connector_failures_total` by connector, and
+  `lupin_reporter_events_total` with `lupin_reporter_last_event_age_seconds` (whether results
+  are still arriving). None carries run, test or workspace data.
+- **Alerts and a dashboard, ready made.** `infra/observability/` has Prometheus alert rules
+  (API down, server errors over 5%, no runner heartbeat for five minutes, a connector failing
+  repeatedly, no results for a day, memory near its limit), each with a `fix` line, and a
+  Grafana dashboard. Start both beside the install, on loopback only:
+
+  ```sh
+  cd infra/compose
+  docker compose -p lupin -f docker-compose.unified.yml \
+    -f ../observability/compose.observability.yml up -d
+  ```
+
+  Grafana opens on `http://127.0.0.1:3300`; set `LUPIN_GRAFANA_PASSWORD` before the first
+  start. Point your own Alertmanager at Prometheus to be paged.
+
 - **Errors.** `SENTRY_DSN` reports server errors, with cookies, headers, bodies and local
   variables switched off in code.
 
@@ -166,6 +184,20 @@ again. On the newer schema the older release may fail to start, and `update` say
 with the restore, which only needs the database running. It loads the backup into a new
 database, so the tables the newer release added do not get in its way, and it keeps the
 upgraded database as `lupin_previous`.
+
+**Checking an image before you trust it.** Every release image is scanned for known
+vulnerabilities before it is tagged, and fails the release on a fixable High or Critical. It
+is then signed without a key: the signature's certificate names this repository's release
+workflow. To check one yourself with [cosign](https://docs.sigstore.dev/cosign/):
+
+```sh
+cosign verify ghcr.io/sergey-bar/lupin-api:<version> \
+  --certificate-identity-regexp '^https://github.com/Sergey-Bar/Lupin/\.github/workflows/release\.yml@refs/tags/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+The same backup and restore you run is run every weekday night in CI against the latest
+release: a row written before the backup must come back, and one written after must not.
 
 ## What this does not give you
 

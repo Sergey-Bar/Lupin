@@ -95,6 +95,11 @@ jobs:
         # needs no tool, no database and no build. `--run` executes the commands and is
         # deliberately not in this job.
         run: pnpm capability:evidence
+      - name: Scorecard
+        # The 10/10 rubric per area (`docs/quality/scorecard.json`). Reporting until its
+        # first all-pass run: a malformed rubric fails here, a failing criterion does not.
+        # Graduating adds `--strict` and moves the tier in one commit.
+        run: pnpm scorecard
       # Not here, because another job already runs them and a check that runs twice
       # is minutes spent to learn nothing new (`scripts/lib/gate-duplication.mjs`):
       # `db:check` is the `migration-report` job; `docs:check` and `docs:dead-exports`
@@ -518,6 +523,9 @@ jobs:
       # is the thing that changes — the command does not.
       - name: Rendering budget
         run: pnpm test:render
+      # The bundle test:render just built, gzipped, against docs/quality/bundle-budget.json.
+      - name: Bundle size budget
+        run: pnpm bundle:budget
 
   security:
     name: Security and license audit

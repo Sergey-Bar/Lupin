@@ -21,7 +21,7 @@ on a regression instead.
 | `apps/web`                     | 97.6       | 91       | 97.7      | 98.6  |
 | `apps/worker`                  | 96.1       | 91.3     | 97.3      | 97.5  |
 | `packages/auth`                | 100        | 100      | 100       | 100   |
-| `packages/automation`          | 94.57      | 85.5     | 89.65     | 96.52 |
+| `packages/automation`          | 97.9       | 89.8     | 95.1      | 98.8  |
 | `packages/config`              | 92         | 96.29    | 100       | 95    |
 | `packages/connectors/email`    | 100        | 100      | 100       | 100   |
 | `packages/connectors/github`   | 100        | 100      | 100       | 100   |
@@ -41,7 +41,7 @@ on a regression instead.
 | `packages/runner-sdk`          | 93         | 90.04    | 100       | 93.58 |
 | `packages/shared-contracts`    | 99.27      | 97.72    | 97.22     | 99.25 |
 | `packages/tool-sdk`            | 100        | 100      | 100       | 100   |
-| `packages/ui`                  | 89.6       | 86.5     | 96.5      | 90.4  |
+| `packages/ui`                  | 90         | 86.5     | 96.5      | 90.4  |
 | `tests/integration`            | 100        | 100      | 100       | 100   |
 | `tools/lupin-cli`              | 98.1       | 92.8     | 93.7      | 98.5  |
 | `tools/migrate-cli`            | 95.6       | 91.6     | 98.3      | 95.5  |

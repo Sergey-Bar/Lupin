@@ -13,7 +13,9 @@ const DOTNET_FRAMEWORKS: ReadonlyArray<readonly [string, FrameworkSignal['catego
 ];
 
 const DOTNET_ARTIFACTS: readonly ArtifactGlob[] = [
-  { glob: '**/TestResults/*.trx', format: 'junit-xml', category: 'unit' },
+  // `trx-xml`, not `junit-xml`: a TRX is VSTest's own schema, and the JUnit adapter finds no
+  // `<testcase>` in it (plan 1795712849115 task 11).
+  { glob: '**/TestResults/*.trx', format: 'trx-xml', category: 'unit' },
 ];
 
 /** Coverage is not a result: `canonical_run_results` has no row for a percentage. */

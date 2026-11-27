@@ -13,6 +13,7 @@
 import { PERSISTED_RUN_STATUS_VALUES, RUN_STATUS_VALUES } from '@lupin/shared-contracts';
 import { deriveRunState } from '../execution/phase-outcome.js';
 import type { RunOutcome, RunPhase } from '../execution/types.js';
+import type { AuditEntry, AuditSink } from '../modules/dashboard/audit-sink.js';
 
 /**
  * The run statuses this repository persists.
@@ -326,6 +327,25 @@ export interface RunRepository {
    *   `patch.ifStatus`.
    */
   patchRun(id: string, patch: RunPatch): Promise<boolean>;
+
+  /**
+   * {@link patchRun}, and the audit row that records who made the change, as one unit:
+   * both are written or neither is (plan 1795712849115 task 3, the D2 leftover of MNT-171).
+   *
+   * A database-backed store writes the row in the same transaction as the patch and does
+   * not call `fallback`. A store with no transaction to join records through `fallback` and
+   * puts the run back if the record fails. Nothing is recorded when the patch was not
+   * applied, because a change that did not happen is not an event.
+   *
+   * @returns whether the patch was applied, exactly as {@link patchRun} does
+   * @throws whatever the audit write threw, after the patch has been undone
+   */
+  patchRunAudited(
+    id: string,
+    patch: RunPatch,
+    entry: AuditEntry,
+    fallback: AuditSink,
+  ): Promise<boolean>;
 
   /** Retrieve a run by id.  Returns null when not found. */
   getRun(id: string): Promise<RunRecord | null>;

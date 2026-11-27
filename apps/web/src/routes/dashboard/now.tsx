@@ -7,6 +7,8 @@ import { createHealthClient } from '../../lib/health-client.js';
 import { createNotificationsClient } from '../../lib/notifications-client.js';
 import { createQaClient } from '../../lib/qa-client.js';
 import { createGithubClient } from '../../lib/github-client.js';
+import { getSelfChecks } from '../../lib/self-checks-client.js';
+import { getPulse } from '../../lib/pulse-client.js';
 import { putOffSetup, setupPutOff, shouldOpenSetup } from '../../lib/first-run.js';
 import { createSettingsClient } from '../../lib/settings-client.js';
 import { useScope } from '../../hooks/useScope.js';
@@ -74,12 +76,19 @@ export const Route = createRoute({
         briefing: (projectId) => health.getBriefing(projectId ?? null, { days: 7 }),
         // Release sign-off for the chosen project (plan Wave 1 task 5).
         signoff: { list: (id) => qa.listSignoffs(id), record: (id, body) => qa.signOff(id, body) },
+        // Better or worse than the week before, for the same project the verdict reads (task 15).
+        pulse: async (projectId) => {
+          const id = projectId ?? (await qa.listProjects())[0]?.id;
+          return id === undefined ? null : getPulse(id, 7);
+        },
         attention: {
           runs: () => defaultApiClient.getRuns(),
           portfolio: () => health.getPortfolio(),
           deliveries: () => notifications.listDeliveries(),
           retryRun: (runId, scope) => defaultApiClient.retryRun(runId, undefined, { scope }),
           pulls: async () => (await github.listPulls({ state: 'open', limit: 50 })).items,
+          // What the install noticed about itself (plan 1795712849115 task 16).
+          selfChecks: async () => (await getSelfChecks()).items,
         },
       };
     }, []);

@@ -393,3 +393,36 @@ describe('a create is not repeated after a failure that says nothing about it', 
     expect(calls).toHaveLength(2);
   });
 });
+
+describe('a rate-limited Jira (plan 1795712849115 task 10)', () => {
+  it('waits out Retry-After: one call, and the result says when to come back', async () => {
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', (url: string) => {
+      calls.push(url);
+      return Promise.resolve({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'retry-after': '90' }),
+        json: () => Promise.resolve({}),
+      });
+    });
+    const before = Date.now();
+    const result = await jiraAdapter.execute(request, 'token');
+
+    expect(calls).toHaveLength(1);
+    expect(result.status).toBe('error');
+    expect(result.error?.code).toBe('jira_429');
+    expect(result.error?.retryable).toBe(true);
+    const retryAt = Date.parse(result.error?.retryAt ?? '');
+    expect(retryAt - before).toBeGreaterThanOrEqual(89_000);
+    expect(retryAt - before).toBeLessThan(120_000);
+  });
+
+  it('control: a 429 with no Retry-After is retried on the backoff and names no time', async () => {
+    const calls = stubFetchSequence([{ ok: false, status: 429, body: {} }]);
+    const result = await jiraAdapter.execute(request, 'token');
+
+    expect(calls).toHaveLength(3);
+    expect(result.error?.retryAt).toBeUndefined();
+  });
+});

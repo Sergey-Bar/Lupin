@@ -19,8 +19,10 @@ import { PatchRunStatusBodySchema } from './schemas.js';
 export interface DashboardRunsOptions {
   repository: RunRepository;
   /**
-   * Where a status change is recorded. Required: the production composition passed none,
-   * so every status change there went unaudited (ledger MNT-171).
+   * Where a status change is recorded when the repository has no transaction for the row to
+   * join (the in-memory store). A database-backed repository writes the row in the same
+   * transaction as the change and does not call this. Required: the production composition
+   * once passed none, so every status change there went unaudited (ledger MNT-171).
    */
   audit: AuditSink;
   /** The authenticated caller a change is attributed to; never a header the client sends. */
@@ -103,7 +105,23 @@ export function createDashboardRunsRoutes(options: DashboardRunsOptions): Hono {
 
     // `ifStatus` makes the terminal check above a condition of the write: a run that
     // finished after it was read is refused here, not revived (ledger MNT-171).
-    const applied = await options.repository.patchRun(id, { status: next, ifStatus: run.status });
+    //
+    // The record, for the same reason quarantine writes one: a status change is a claim
+    // about a run, and "who moved this run and when" has to be answerable later. It is
+    // written with the change, not after it, so a failed record cannot leave a run moved by
+    // nobody (plan 1795712849115 task 3).
+    const applied = await options.repository.patchRunAudited(
+      id,
+      { status: next, ifStatus: run.status },
+      {
+        action: 'run.status_changed',
+        resourceType: 'run',
+        resourceId: id,
+        ...(await options.contextFor(c)),
+        details: { from: run.status, to: next },
+      },
+      options.audit,
+    );
     if (!applied) {
       const current = await options.repository.getRun(id);
       if (!current) throw new DomainError('RUN_VANISHED', 'Run not found');
@@ -111,17 +129,6 @@ export function createDashboardRunsRoutes(options: DashboardRunsOptions): Hono {
         details: { from: current.status, to: next },
       });
     }
-
-    // The record, for the same reason quarantine writes one: a status change is a
-    // claim about a run, and "who moved this run and when" has to be answerable
-    // later.
-    await options.audit.record({
-      action: 'run.status_changed',
-      resourceType: 'run',
-      resourceId: id,
-      ...(await options.contextFor(c)),
-      details: { from: run.status, to: next },
-    });
 
     const updated = await options.repository.getRun(id);
     // Never a literal `null` with a 200. The run existed a moment ago; if it is gone

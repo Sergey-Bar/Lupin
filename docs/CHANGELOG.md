@@ -2,6 +2,84 @@
 
 > Historical release claims are not current product truth. Current capability status is `docs/migration/capability-register.md`.
 
+## Unreleased - Lupin 7
+
+### Added
+
+- **The scorecard (plan task 1).** `pnpm scorecard` scores infra, integrations, backend,
+  frontend, UX and setup out of ten from `docs/quality/scorecard.json`. The rubric holds
+  criteria only; every verdict is derived from the baseline, ledger, register or budget that
+  owns the number, and a criterion carrying a result is refused. Reporting in CI until its
+  first all-pass run.
+- **Retry-safe creates and one page shape (task 5).** The create routes for quarantine, quality
+  gates, quality policies, projects, sign-offs, notification channels, scheduled reports and
+  failure-cause issues honour `Idempotency-Key`; a repeat answers what the first did instead of
+  creating a second record. `cursorPageSchema` and `CursorQuerySchema` in
+  `@lupin/shared-contracts` are the one page contract.
+- **Signed, scanned images and a restore drill (task 7).** Release images are scanned with Grype
+  before they are tagged and fail on a fixable High or Critical; each is signed keylessly with
+  cosign, and the acceptance job verifies every signature. A nightly job backs up and restores
+  the latest release and checks what came back. The runner's root filesystem is read-only, with
+  its spool and job workspaces on volumes, so queued results survive a restart.
+- **The install watches itself (task 8).** `/metrics` adds runner heartbeat age, connector calls
+  and failures by connector, and reporter events with the age of the last one.
+  `infra/observability/` ships alert rules, each with a fix line, a Grafana dashboard, and an
+  optional compose override that runs both on loopback.
+- **Connectors wait when told to (task 10).** A 429 with `Retry-After` from Jira or the Signal
+  bridge stops the attempt and reports `retryAt`, and a scheduled report waits until then instead
+  of its fixed backoff. `retryAtFrom` and `refusalOf` in `@lupin/connectors-sdk` are the one
+  reading of the header. A Jira setup guide, and a check that every MCP tool is called over HTTP.
+- **Eight more test tools (task 11).** Uploads in .NET TRX, NUnit 3, xUnit.net, Cucumber JSON,
+  Robot Framework, `go test -json`, Newman and Lighthouse are read by their own adapters, each
+  held to the same contract as the others by `new-adapter-parity.test.ts`. A `.trx` is
+  recognised by its name, and the .NET project scanner now labels `TestResults/*.trx` as TRX;
+  it used to call them JUnit, so a detected TRX reached a parser that found no tests in it.
+- **What changed in a run, and why (task 13).** `GET /api/v1/runs/:runId/analysis` compares a run
+  with the one before it on the same branch and suite: new failures, fixed tests, still failing,
+  newly slow, and the failures grouped by cause with which causes are new. Failure text is only
+  ever quoted as a sample, never written into a sentence, so a test log cannot instruct a reader.
+- **The quality pulse (task 14).** `GET /api/v1/projects/:id/pulse` and the MCP tool `get_pulse`
+  say whether a project got better, worse or stayed steady against the window before, with the
+  one sign that decided it: the gate, pass rate, failing tests, flaky tests, coverage, and
+  AI-written change over time (its change failure rate, revert rate and the coverage of its
+  lines). One regression makes it "worse" whatever else improved, and the improvements are
+  listed beside it; with nothing to compare it is "unknown", never "steady".
+- **The install notices its own faults (task 16).** `GET /api/v1/self-checks` says when a runner
+  is offline while work is queued, test results have gone quiet for two days, a connector keeps
+  failing, or runs arrive that no quality gate judges, each with one fix. Home lists them under
+  "what needs you" beside failing runs. Backup age is left to the start scripts, which can see
+  the backups.
+- **`start doctor`, and Lupin in five minutes (task 19).** `./start.sh doctor` and
+  `.\start.cmd doctor` check Docker, `.env`, disk space, whether Lupin answers and how old the
+  newest backup is, one line each with the fix, and change nothing. A new guide goes from the
+  download to a first result in five steps, each with how you know it worked.
+- **One way to say "loading" and "that failed", and a bundle budget (task 17).** `LoadingState`
+  and `ErrorState` in `@lupin/ui` give every page the same wording, live region and retry
+  action. `pnpm bundle:budget` fails when the built web bundle grows more than 15% past its
+  recorded size, in total or for any one script.
+- **Home says which way quality is going (task 15).** Under the release verdict, one line
+  says whether the chosen project got better or worse than the week before and the sign that
+  decided it, with what also improved beside a "worse", and "unknown" when there is not enough
+  to compare.
+- **Usability as timed tasks (task 18).** `tests/e2e/usability/tasks.spec.ts` asks four
+  questions a QA person opens Lupin for (can we ship, which way is quality going, why did my
+  branch fail, quarantine a broken test) and fails when one takes more clicks or longer than
+  its budget. Each run records what it observed under `test-results/evidence/usability/`.
+
+### Fixed
+
+- **Retrying a run submitted with an external id works on PostgreSQL (ledger MNT-208).** The
+  retry copied the caller's id, which PostgreSQL holds unique per workspace and source, so the
+  Retry button answered 409 for every such run. A retry now links to its run through
+  `retryOfRunId` and leaves the external id with the run it named.
+- **"Rerun failed tests" reruns only the failed tests (task 12, ledger MNT-206).** Since 4.1.0 the
+  button stored the failed tests and the runner ignored them, so the whole suite ran again. A
+  Playwright rerun now passes them to Playwright as `--test-list`, and a test that passes on the
+  rerun is counted as flaky. A generic command's rerun still runs the whole command.
+- **A run's status change and its audit row are one write (task 3, ledger MNT-204).** A failed
+  audit insert used to answer 500 over a run that had already moved; the change now rolls back
+  with it.
+
 ## 5.1.0 - 2026-11-20 - your test reports, explained, with no server
 
 ### Added

@@ -9,7 +9,7 @@
   ],
   "summary": {
     "admin": 44,
-    "viewer": 103,
+    "viewer": 105,
     "operator": 37,
     "open": 16,
     "runner-credential": 9,
@@ -1372,6 +1372,13 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/runs/:runId/analysis",
+      "access": "viewer",
+      "evidenceTest": "apps/api/src/routes/execution.test.ts",
+      "composition": "always"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/runs/:runId/artifacts",
       "access": "viewer",
       "evidenceTest": "apps/api/src/routes/execution.test.ts",
@@ -1453,6 +1460,13 @@
       "access": "admin",
       "evidenceTest": "apps/api/src/routes/scim.test.ts",
       "composition": "database"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/self-checks",
+      "access": "viewer",
+      "evidenceTest": "apps/api/src/routes/execution.test.ts",
+      "composition": "always"
     },
     {
       "method": "GET",

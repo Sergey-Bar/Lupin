@@ -1134,6 +1134,32 @@ for (const [kind, shell] of /** @type {const} */ ([
     }
   });
 
+  test(`${label}: doctor names each fix, and passes a healthy install`, { skip }, async () => {
+    const where = install();
+    const server = await readyServer();
+    try {
+      // Nothing set up yet: no .env, nothing answering, no backup.
+      const fresh = await run(kind, where, ['doctor'], { LUPIN_PORT: '1' });
+      assert.notEqual(fresh.status, 0, fresh.output);
+      assert.match(fresh.output, /ok {4}Docker and Compose v2/u);
+      assert.match(fresh.output, /FIX {3}No \.env yet/u);
+      assert.match(fresh.output, /FIX {3}Lupin is not answering on port 1/u);
+      assert.match(fresh.output, /FIX {3}No backup yet/u);
+      // Doctor changes nothing: still no .env, and Docker was only asked, never told.
+      assert.equal(existsSync(path.join(where.dir, '.env')), false);
+      assert.equal(composeCall(calls(where.log), 'up'), undefined);
+
+      writeFileSync(path.join(where.dir, '.env'), 'COOKIE_SECRET=x\n');
+      mkdirSync(path.join(where.dir, 'backups', 'lupin-20261126T120000Z'), { recursive: true });
+      const healthy = await run(kind, where, ['doctor'], { LUPIN_PORT: String(server.port) });
+      assert.equal(healthy.status, 0, healthy.output);
+      assert.match(healthy.output, /All good\./u);
+    } finally {
+      await server.close();
+      where.cleanup();
+    }
+  });
+
   test(`${label}: stop, status and logs pass through to compose`, { skip }, async () => {
     const where = install();
     try {

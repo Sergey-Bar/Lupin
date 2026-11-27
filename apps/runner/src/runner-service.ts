@@ -134,6 +134,13 @@ function stringValue(value: unknown): string | undefined {
 }
 
 /** The job's mode blocks the executor dispatches on. Only the boolean `true` opts into axe. */
+/** The strings in a list, or none: a claim arrives from a database and another process. */
+function stringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
+
 function modeBlocks(specification: Record<string, unknown>): {
   k6?: unknown;
   zap?: unknown;
@@ -454,6 +461,7 @@ export class RunnerService {
         deadlineMs: claim.timeoutMs,
         signal: state.controller.signal,
         redactions: [...(this.options.redactions ?? []), ...tokenOf(cloned)],
+        selection: stringList(claim.spec['selection']),
 
         onEvent: async (event) => {
           const draft = this.reporterEvent(claim, event);

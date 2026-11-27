@@ -8,12 +8,13 @@ import path from 'node:path';
  * change is expected to arrive at ≥90% lines and ≥80% branches.
  *
  * They are applied by `scripts/coverage-ratchet.mjs` against each package's
- * recorded floor, not as per-package Vitest `thresholds`. Enforcing them
- * per-package would fail four packages that are genuinely under-covered today
- * (`apps/worker` 57%, `packages/db` 31%, `packages/ui` 62%,
- * `tools/migrate-cli` 78%), and a gate that blocks every test run gets raised
- * until it means nothing. The ratchet records the real number per package and
- * fails on regression, so the floor only ever moves up.
+ * recorded floor, not as per-package Vitest `thresholds`. Per-package thresholds
+ * were declined when several packages sat far below them, because a gate that
+ * blocks every test run gets raised until it means nothing. The ratchet records
+ * the real number per package in `docs/quality/coverage-baseline.json` and fails
+ * on regression, so the floor only ever moves up; `pnpm scorecard` reports any
+ * package still under these standards. No per-package number is written here,
+ * because a copy of one is the copy that goes stale.
  */
 export const STANDARD_THRESHOLDS = {
   statements: 90,

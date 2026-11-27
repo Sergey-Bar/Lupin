@@ -23,6 +23,8 @@ export const MCP_TOOL_NAMES = [
   'get_supply_chain',
   'get_test_effectiveness',
   'get_briefing',
+  // Better, worse, steady or unknown, and why (plan 1795712849115 task 14).
+  'get_pulse',
   // The QA read tools (plan task 24).
   'list_runs',
   'get_test_history',

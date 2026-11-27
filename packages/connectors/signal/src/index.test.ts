@@ -92,3 +92,40 @@ describe('signal adapter', () => {
     expect((await signalAdapter.execute(send, BRIDGE)).error?.code).toBe('signal_transport_failed');
   });
 });
+
+describe('a rate-limited bridge (plan 1795712849115 task 10)', () => {
+  it('stops on a 429 with Retry-After and reports when to send again', async () => {
+    let calls = 0;
+    vi.stubGlobal('fetch', () => {
+      calls += 1;
+      return Promise.resolve({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'retry-after': '30' }),
+        json: () => Promise.resolve({}),
+      });
+    });
+    const before = Date.now();
+    const result = await signalAdapter.execute({ operation: 'about', input: {} }, BRIDGE);
+
+    expect(calls).toBe(1);
+    expect(result.error?.code).toBe('signal_rejected_429');
+    expect(Date.parse(result.error?.retryAt ?? '') - before).toBeGreaterThanOrEqual(29_000);
+  });
+
+  it('never repeats a send that a 5xx may have delivered', async () => {
+    const calls = stubFetch([{ status: 502 }]);
+    const result = await signalAdapter.execute(send, BRIDGE);
+
+    expect(calls).toHaveLength(1);
+    expect(result.error?.code).toBe('signal_502');
+  });
+
+  it('refuses a bridge address that is not http(s) before sending anything', async () => {
+    const calls = stubFetch([{ status: 200, body: {} }]);
+    const result = await signalAdapter.execute(send, 'file:///etc/passwd');
+
+    expect(calls).toHaveLength(0);
+    expect(result.error?.code).toBe('signal_invalid_bridge');
+  });
+});

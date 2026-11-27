@@ -9,6 +9,7 @@ import { registerJobRoutes } from './execution/jobs.routes.js';
 import { registerPolicyRoutes } from './execution/policies.routes.js';
 import { registerRunRoutes } from './execution/runs.routes.js';
 import { registerRunnerRoutes } from './execution/runners.routes.js';
+import { registerSelfCheckRoutes } from './execution/self-checks.routes.js';
 
 /**
  * execution.ts — the execution API, composed from five route groups.
@@ -74,6 +75,7 @@ export function createExecutionRoutes(options: ExecutionRoutesOptions): Hono {
   registerPolicyRoutes(app, context);
   registerRunnerRoutes(app, context);
   registerJobRoutes(app, context);
+  registerSelfCheckRoutes(app, context);
 
   return app;
 }

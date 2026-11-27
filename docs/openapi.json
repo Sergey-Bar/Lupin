@@ -1416,6 +1416,17 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/projects/{id}/pulse": {
+      "get": {
+        "operationId": "getApiV1ProjectsIdPulse",
+        "tags": ["projects"],
+        "x-source": "apps/api/src/routes/projects.ts",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/projects/{id}/qa/flaky": {
       "get": {
         "operationId": "getApiV1ProjectsIdQaFlaky",
@@ -1862,6 +1873,17 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/runs/{runId}/analysis": {
+      "get": {
+        "operationId": "getApiV1RunsRunIdAnalysis",
+        "tags": ["runs"],
+        "x-source": "apps/api/src/routes/execution/runs.routes.ts",
+        "parameters": [
+          { "name": "runId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/runs/{runId}/artifacts": {
       "get": {
         "operationId": "getApiV1RunsRunIdArtifacts",
@@ -1976,6 +1998,14 @@
         "parameters": [
           { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
+    "/api/v1/self-checks": {
+      "get": {
+        "operationId": "getApiV1SelfChecks",
+        "tags": ["self-checks"],
+        "x-source": "apps/api/src/routes/execution/self-checks.routes.ts",
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
@@ -11406,6 +11436,13 @@
                   "vitest",
                   "pytest",
                   "cypress",
+                  "vstest",
+                  "nunit",
+                  "xunit",
+                  "cucumber",
+                  "go",
+                  "newman",
+                  "lighthouse",
                   "sarif",
                   "otel",
                   "generic",
@@ -13402,6 +13439,16 @@
         "required": ["channelId", "name", "cadence", "time", "weekday", "timezone"],
         "additionalProperties": false
       },
+      "CursorQuerySchema": {
+        "type": "object",
+        "properties": {
+          "limit": {},
+          "cursor": { "type": "string", "minLength": 1, "maxLength": 512 }
+        },
+        "required": ["limit"],
+        "additionalProperties": false
+      },
+      "CursorSchema": { "type": "string", "minLength": 1, "maxLength": 512 },
       "DashboardAnalyticsSummarySchema": {
         "type": "object",
         "properties": {
@@ -25237,6 +25284,50 @@
         "required": ["pullRequest", "headSha", "risk", "blastRadius", "assessedAt"],
         "additionalProperties": false
       },
+      "PulseDirectionSchema": {
+        "type": "string",
+        "enum": ["better", "worse", "steady", "unknown"]
+      },
+      "PulseVitalIdSchema": {
+        "type": "string",
+        "enum": [
+          "gate",
+          "pass-rate",
+          "failing-tests",
+          "flaky-rate",
+          "coverage",
+          "ai-change-failure-rate",
+          "ai-revert-rate",
+          "ai-diff-coverage"
+        ]
+      },
+      "PulseVitalSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "gate",
+              "pass-rate",
+              "failing-tests",
+              "flaky-rate",
+              "coverage",
+              "ai-change-failure-rate",
+              "ai-revert-rate",
+              "ai-diff-coverage"
+            ]
+          },
+          "label": { "type": "string" },
+          "unit": { "type": "string", "enum": ["percent", "count", "status"] },
+          "current": { "type": ["number", "null"] },
+          "previous": { "type": ["number", "null"] },
+          "delta": { "type": ["number", "null"] },
+          "direction": { "type": "string", "enum": ["better", "worse", "steady", "unknown"] },
+          "ai": { "type": "boolean" }
+        },
+        "required": ["id", "label", "unit", "current", "previous", "delta", "direction", "ai"],
+        "additionalProperties": false
+      },
       "PushDeploymentBodySchema": {
         "type": "object",
         "properties": {
@@ -26154,6 +26245,118 @@
         ],
         "additionalProperties": false
       },
+      "QualityPulseSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": { "type": "string" },
+          "evaluatedAt": { "type": "string" },
+          "windowDays": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "direction": { "type": "string", "enum": ["better", "worse", "steady", "unknown"] },
+          "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+          "cause": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "vital": {
+                    "type": "string",
+                    "enum": [
+                      "gate",
+                      "pass-rate",
+                      "failing-tests",
+                      "flaky-rate",
+                      "coverage",
+                      "ai-change-failure-rate",
+                      "ai-revert-rate",
+                      "ai-diff-coverage"
+                    ]
+                  },
+                  "text": { "type": "string" }
+                },
+                "required": ["vital", "text"],
+                "additionalProperties": false
+              },
+              { "type": "null" }
+            ]
+          },
+          "sentence": { "type": "string" },
+          "vitals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "gate",
+                    "pass-rate",
+                    "failing-tests",
+                    "flaky-rate",
+                    "coverage",
+                    "ai-change-failure-rate",
+                    "ai-revert-rate",
+                    "ai-diff-coverage"
+                  ]
+                },
+                "label": { "type": "string" },
+                "unit": { "type": "string", "enum": ["percent", "count", "status"] },
+                "current": { "type": ["number", "null"] },
+                "previous": { "type": ["number", "null"] },
+                "delta": { "type": ["number", "null"] },
+                "direction": { "type": "string", "enum": ["better", "worse", "steady", "unknown"] },
+                "ai": { "type": "boolean" }
+              },
+              "required": [
+                "id",
+                "label",
+                "unit",
+                "current",
+                "previous",
+                "delta",
+                "direction",
+                "ai"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "alsoMoved": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "vital": {
+                  "type": "string",
+                  "enum": [
+                    "gate",
+                    "pass-rate",
+                    "failing-tests",
+                    "flaky-rate",
+                    "coverage",
+                    "ai-change-failure-rate",
+                    "ai-revert-rate",
+                    "ai-diff-coverage"
+                  ]
+                },
+                "text": { "type": "string" }
+              },
+              "required": ["vital", "text"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "projectId",
+          "evaluatedAt",
+          "windowDays",
+          "direction",
+          "confidence",
+          "cause",
+          "sentence",
+          "vitals",
+          "alsoMoved"
+        ],
+        "additionalProperties": false
+      },
       "QuarantinePolicySchema": {
         "type": "object",
         "properties": {
@@ -26814,7 +27017,15 @@
           "jest-json",
           "vitest-json",
           "pytest-json",
-          "mochawesome-json"
+          "mochawesome-json",
+          "trx-xml",
+          "nunit-xml",
+          "xunit-xml",
+          "cucumber-json",
+          "robot-xml",
+          "go-test-json",
+          "newman-json",
+          "lighthouse-json"
         ]
       },
       "ReportKindSchema": {
@@ -26844,6 +27055,13 @@
           "vitest",
           "pytest",
           "cypress",
+          "vstest",
+          "nunit",
+          "xunit",
+          "cucumber",
+          "go",
+          "newman",
+          "lighthouse",
           "sarif",
           "otel",
           "generic",
@@ -27062,6 +27280,82 @@
         "required": ["scope"],
         "additionalProperties": false
       },
+      "RunAnalysisSchema": {
+        "type": "object",
+        "properties": {
+          "runId": { "type": "string" },
+          "comparedTo": { "type": ["string", "null"] },
+          "newFailures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": { "key": { "type": "string" }, "title": { "type": "string" } },
+              "required": ["key", "title"],
+              "additionalProperties": false
+            }
+          },
+          "fixed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": { "key": { "type": "string" }, "title": { "type": "string" } },
+              "required": ["key", "title"],
+              "additionalProperties": false
+            }
+          },
+          "stillFailing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": { "key": { "type": "string" }, "title": { "type": "string" } },
+              "required": ["key", "title"],
+              "additionalProperties": false
+            }
+          },
+          "newlySlow": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "title": { "type": "string" },
+                "beforeMs": { "type": "number", "minimum": 0 },
+                "nowMs": { "type": "number", "minimum": 0 }
+              },
+              "required": ["key", "title", "beforeMs", "nowMs"],
+              "additionalProperties": false
+            }
+          },
+          "causes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "signature": { "type": "string" },
+                "errorType": { "type": ["string", "null"] },
+                "tests": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                "newInThisRun": { "type": "boolean" },
+                "sample": { "type": "string" },
+                "sentence": { "type": "string" }
+              },
+              "required": ["signature", "errorType", "tests", "newInThisRun", "sample", "sentence"],
+              "additionalProperties": false
+            }
+          },
+          "summary": { "type": "string" }
+        },
+        "required": [
+          "runId",
+          "comparedTo",
+          "newFailures",
+          "fixed",
+          "stillFailing",
+          "newlySlow",
+          "causes",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
       "RunAssignedEventPayloadSchema": {
         "type": "object",
         "properties": {
@@ -27071,6 +27365,19 @@
           "runnerId": { "type": "string", "minLength": 1 }
         },
         "required": ["phase", "outcome", "jobId", "runnerId"],
+        "additionalProperties": false
+      },
+      "RunCauseSchema": {
+        "type": "object",
+        "properties": {
+          "signature": { "type": "string" },
+          "errorType": { "type": ["string", "null"] },
+          "tests": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "newInThisRun": { "type": "boolean" },
+          "sample": { "type": "string" },
+          "sentence": { "type": "string" }
+        },
+        "required": ["signature", "errorType", "tests", "newInThisRun", "sample", "sentence"],
         "additionalProperties": false
       },
       "RunCommandSchema": {
@@ -29008,6 +29315,59 @@
         "required": ["targetUrl"],
         "additionalProperties": false
       },
+      "SelfCheckItemSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "severity": { "type": "string", "enum": ["bad", "caution"] },
+          "title": { "type": "string", "minLength": 1 },
+          "detail": { "type": "string" },
+          "fix": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string", "minLength": 1 },
+              "to": { "type": "string", "format": "starts_with", "pattern": "^\\/.*" }
+            },
+            "required": ["label", "to"],
+            "additionalProperties": false
+          },
+          "at": { "type": "string" }
+        },
+        "required": ["id", "severity", "title", "detail", "fix", "at"],
+        "additionalProperties": false
+      },
+      "SelfChecksSchema": {
+        "type": "object",
+        "properties": {
+          "evaluatedAt": { "type": "string" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "severity": { "type": "string", "enum": ["bad", "caution"] },
+                "title": { "type": "string", "minLength": 1 },
+                "detail": { "type": "string" },
+                "fix": {
+                  "type": "object",
+                  "properties": {
+                    "label": { "type": "string", "minLength": 1 },
+                    "to": { "type": "string", "format": "starts_with", "pattern": "^\\/.*" }
+                  },
+                  "required": ["label", "to"],
+                  "additionalProperties": false
+                },
+                "at": { "type": "string" }
+              },
+              "required": ["id", "severity", "title", "detail", "fix", "at"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["evaluatedAt", "items"],
+        "additionalProperties": false
+      },
       "ServiceHealthStatusSchema": {
         "type": "object",
         "properties": {
@@ -29942,7 +30302,14 @@
               "pytest-json-report",
               "mochawesome",
               "mochawesome-json",
-              "cypress"
+              "cypress",
+              "trx",
+              "nunit",
+              "xunit",
+              "cucumber",
+              "robot",
+              "go-test",
+              "newman"
             ]
           },
           "branch": { "type": "string", "minLength": 1, "maxLength": 255 },

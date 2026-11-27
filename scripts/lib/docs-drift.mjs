@@ -909,50 +909,57 @@ function deriveEnvVars(read, files) {
   const names = new Set();
   for (const name of configVocabulary(read)) names.add(name);
   for (const file of files()) {
-    if (!/\.[cm]?[jt]sx?$/.test(file)) continue;
-    const source = read(file);
-    // Two shapes, because the workspace uses two. Most settings are read as
-    // `process.env['X']`; Sentry's are named in a `const` map and looked up by key
-    // afterwards, which is the better shape and is why the first version of this
-    // collector missed `SENTRY_DSN` and reported it as undeclared.
-    for (const match of source.matchAll(
-      /process\.env(?:\.([A-Z][A-Z0-9_]*)|\[['"]([A-Z][A-Z0-9_]*)['"]\])/g,
-    )) {
-      names.add(match[1] ?? match[2] ?? '');
-    }
-    for (const match of source.matchAll(/:\s*'([A-Z][A-Z0-9_]*)'/g)) {
-      names.add(match[1] ?? '');
-    }
-    // A setting read off a config object the entry point passes in — the runner's
-    // `input['RUNNER_K6_SCRIPT_ROOT']` — is as real as one read off `process.env`.
-    addFirstGroups(names, source, /\binput\[['"]([A-Z][A-Z0-9_]*)['"]\]/g);
-    // And one read off an injected environment - the Playwright reporter's
-    // `this.env['LUPIN_REPORTER_SECRET']`, which a test can replace.
-    addFirstGroups(names, source, /\benv\[['"]([A-Z][A-Z0-9_]*)['"]\]/g);
-
-    // And every name the workspace exports. A document citing
-    // `MIGRATION_ADVISORY_LOCK_KEY` as evidence for a decision is naming something
-    // that exists, which is the opposite of the claim this detector makes, and the
-    // first version of it reported that citation as an undeclared setting.
-    for (const match of source.matchAll(
-      /export (?:declare )?(?:const|function|class|interface|type|enum|let)\s+([A-Z][A-Z0-9_]*)/g,
-    )) {
-      names.add(match[1] ?? '');
-    }
+    if (/\.[cm]?[jt]sx?$/.test(file)) addSourceNames(names, read(file));
   }
-  for (const match of read('infra/compose/docker-compose.unified.yml').matchAll(
+  addFirstGroups(
+    names,
+    read('infra/compose/docker-compose.unified.yml'),
     /^\s+([A-Z][A-Z0-9_]+):/gm,
-  )) {
-    names.add(match[1] ?? '');
-  }
-  // And every variable the compose file interpolates: `${LUPIN_PORT:-8080}` is a setting
-  // an operator sets, though no service declares it under that name.
-  for (const match of read('infra/compose/docker-compose.unified.yml').matchAll(
-    /\$\{([A-Z][A-Z0-9_]*)/g,
-  )) {
-    names.add(match[1] ?? '');
+  );
+  // And every variable a compose file interpolates: `${LUPIN_PORT:-8080}` is a setting an
+  // operator sets, though no service declares it under that name. The observability override
+  // (`infra/observability/compose.observability.yml`) is one an operator runs too.
+  for (const file of [
+    'infra/compose/docker-compose.unified.yml',
+    'infra/observability/compose.observability.yml',
+  ]) {
+    addFirstGroups(names, read(file), /\$\{([A-Z][A-Z0-9_]*)/g);
   }
   return new Set([...names].filter((name) => name !== ''));
+}
+
+/**
+ * The setting names one source file reads or exports.
+ *
+ * @param {Set<string>} names
+ * @param {string} source
+ */
+function addSourceNames(names, source) {
+  // Two shapes, because the workspace uses two. Most settings are read as
+  // `process.env['X']`; Sentry's are named in a `const` map and looked up by key
+  // afterwards, which is the better shape and is why the first version of this
+  // collector missed `SENTRY_DSN` and reported it as undeclared.
+  for (const match of source.matchAll(
+    /process\.env(?:\.([A-Z][A-Z0-9_]*)|\[['"]([A-Z][A-Z0-9_]*)['"]\])/g,
+  )) {
+    names.add(match[1] ?? match[2] ?? '');
+  }
+  addFirstGroups(names, source, /:\s*'([A-Z][A-Z0-9_]*)'/g);
+  // A setting read off a config object the entry point passes in — the runner's
+  // `input['RUNNER_K6_SCRIPT_ROOT']` — is as real as one read off `process.env`.
+  addFirstGroups(names, source, /\binput\[['"]([A-Z][A-Z0-9_]*)['"]\]/g);
+  // And one read off an injected environment - the Playwright reporter's
+  // `this.env['LUPIN_REPORTER_SECRET']`, which a test can replace.
+  addFirstGroups(names, source, /\benv\[['"]([A-Z][A-Z0-9_]*)['"]\]/g);
+  // And every name the workspace exports. A document citing
+  // `MIGRATION_ADVISORY_LOCK_KEY` as evidence for a decision is naming something
+  // that exists, which is the opposite of the claim this detector makes, and the
+  // first version of it reported that citation as an undeclared setting.
+  addFirstGroups(
+    names,
+    source,
+    /export (?:declare )?(?:const|function|class|interface|type|enum|let)\s+([A-Z][A-Z0-9_]*)/g,
+  );
 }
 
 /**

@@ -447,7 +447,9 @@ describe('PullRequestsPage', () => {
       listRepos: vi.fn(async () => ({ items: [repo()] })),
     } as unknown as GithubClient;
     const { unmount } = render(<PullRequestsPage github={failing} now={() => NOW} />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this: boom');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Could not load the pull requests');
+    expect(alert).toHaveTextContent('boom');
     unmount();
 
     const { github } = client([{ items: [], nextCursor: null }]);

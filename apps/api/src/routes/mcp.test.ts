@@ -5,6 +5,7 @@ import * as schema from '@lupin/db';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import {
+  QualityPulseSchema,
   AgentQualitySnapshotSchema,
   AiCodeReportSchema,
   BriefingSchema,
@@ -25,6 +26,7 @@ import { ingestHealthReport } from '../services/repo-health-service.js';
 import { migratedDatabase } from '../test-support/migrated-database.js';
 import { agentProject } from '../test-support/agent-fixtures.js';
 import { createMcpRoutes, MCP_MAX_BYTES } from './mcp.js';
+import { qualityPulse } from '@lupin/reporting';
 
 const closers: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -37,6 +39,7 @@ const ENDPOINT = 'http://lupin.test/api/v1/mcp';
 async function harness(
   extra: Record<string, unknown> = {},
   log?: (message: string, details: Record<string, unknown>) => void,
+  routes: Partial<Parameters<typeof createMcpRoutes>[0]> = {},
 ) {
   const { db, close } = await migratedDatabase();
   closers.push(close);
@@ -69,6 +72,7 @@ async function harness(
       health: { ...options, ...extra },
       history: async () => [],
       ...(log === undefined ? {} : { log }),
+      ...routes,
     }),
   );
   const viewer = (await createAccessToken(options, { name: 'editor', role: 'viewer' }, 'session'))
@@ -235,6 +239,50 @@ describe('the MCP server at /api/v1/mcp', () => {
     expect((await call('list_signoffs', { projectId })).summary).toBe(
       'Nobody has signed off a release of this project.',
     );
+  });
+
+  it('answers get_pulse with the pulse and its sentence, and says when it has no history', async () => {
+    const asked: Array<[string, number]> = [];
+    const pulse = async (projectId: string, days: number) => {
+      asked.push([projectId, days]);
+      return qualityPulse({
+        projectId,
+        evaluatedAt: NOW.toISOString(),
+        windowDays: days,
+        runs: { current: 6, previous: 6 },
+        gate: { current: 1, previous: 1 },
+        passRate: { current: 90, previous: 97 },
+        failingTests: { current: 4, previous: 1 },
+        flakyRate: { current: 1, previous: 1 },
+        coverage: { current: 80, previous: 80 },
+        aiChangeFailureRate: { current: null, previous: null },
+        aiRevertRate: { current: null, previous: null },
+        aiDiffCoverage: { current: null, previous: null },
+      });
+    };
+    const { connect, viewer, projectId } = await harness({}, undefined, { pulse });
+    const client = await connect(viewer);
+    const result = answer(
+      await client.callTool({ name: 'get_pulse', arguments: { projectId, days: 14 } }),
+    );
+    expect(result.isError).toBe(false);
+    expect(QualityPulseSchema.parse(result.value).direction).toBe('worse');
+    expect(result.summary).toBe('Worse: Pass rate fell 7.0 pts.');
+    expect(asked).toEqual([[projectId, 14]]);
+
+    const bare = await harness();
+    const unconfigured = answer(
+      await (
+        await bare.connect(bare.viewer)
+      ).callTool({
+        name: 'get_pulse',
+        arguments: { projectId: bare.projectId },
+      }),
+    );
+    expect(unconfigured).toMatchObject({
+      isError: true,
+      summary: 'NOT_CONFIGURED: This install has no run history to read',
+    });
   });
 
   it('keeps a pinned caller to its project in the QA read tools', async () => {

@@ -192,6 +192,8 @@ import {
 // middleware used to be mounted.
 import { createRequestDeadline } from './middleware/request-deadline.js';
 import { apiRateLimitFrom, createApiRateLimit } from './middleware/api-rate-limit.js';
+import { createIdempotency, IDEMPOTENT_CREATE_ROUTES } from './middleware/idempotency.js';
+import { metered } from './observability/operator-metrics.js';
 import { outboundAllowlistFrom } from './http/outbound-guard.js';
 import { createSecurityHeaders } from './middleware/security-headers.js';
 import { getConfig } from './config.js';
@@ -226,10 +228,10 @@ const runtimeConfig = getConfig();
 let githubInner = createGitHubAdapter(
   runtimeConfig.githubApiUrl === undefined ? {} : { apiBase: runtimeConfig.githubApiUrl },
 );
-const githubAdapter: typeof githubInner = {
+const githubAdapter: typeof githubInner = metered({
   manifest: githubInner.manifest,
   execute: (request, secret) => githubInner.execute(request, secret),
-};
+});
 useGitHubApi(runtimeConfig.githubApiUrl);
 /**
  * Session lifetimes, in milliseconds, read from configuration.
@@ -636,12 +638,12 @@ const reportDispatcher = databaseResources
       db: databaseResources.db as never,
       vaultSecret: runtimeConfig.vaultSecret,
       adapters: {
-        slack: slackAdapter,
-        teams: teamsAdapter,
-        telegram: telegramAdapter,
-        whatsapp: whatsappAdapter,
-        signal: signalAdapter,
-        email: emailAdapter,
+        slack: metered(slackAdapter),
+        teams: metered(teamsAdapter),
+        telegram: metered(telegramAdapter),
+        whatsapp: metered(whatsappAdapter),
+        signal: metered(signalAdapter),
+        email: metered(emailAdapter),
       },
       link: publicLink(runtimeConfig.publicAppUrl, '/dashboard/now'),
     })
@@ -824,7 +826,10 @@ async function healthAlertChannels() {
   const token = await settingsService.resolve('integrations.slackBotToken');
   const secret = await settingsService.resolve('integrations.healthWebhookSecret');
   return {
-    slack: typeof token === 'string' && token !== '' ? { adapter: slackAdapter, token } : undefined,
+    slack:
+      typeof token === 'string' && token !== ''
+        ? { adapter: metered(slackAdapter), token }
+        : undefined,
     webhookSecret: typeof secret === 'string' && secret !== '' ? secret : undefined,
   };
 }
@@ -1335,7 +1340,7 @@ function buildWorkspace(workspaceId: string) {
           // The installation key's session is the admin; tokens carry their own role. With
           // ACCESS_CONTROL=open, a caller with neither is the single operator ADR-006 describes.
           access: access,
-          issues: { jira: jiraAdapter, github: githubAdapter, detailsUrl: dashboardUrl },
+          issues: { jira: metered(jiraAdapter), github: githubAdapter, detailsUrl: dashboardUrl },
           testProposals: {
             gateway: gateways.testProposals,
             provider: chatProvider,
@@ -1628,6 +1633,14 @@ app.use(
       console.error(`request exceeded its ${String(budgetMs)}ms deadline: ${method} ${path}`),
   }),
 );
+
+/**
+ * `Idempotency-Key` on the create routes that make a record per request (plan 1795712849115
+ * task 5). One instance, so the routes share one bounded table; the list and the routes it
+ * leaves out, with why, are in `middleware/idempotency.ts`.
+ */
+const idempotency = createIdempotency();
+for (const route of IDEMPOTENT_CREATE_ROUTES) app.use(route, idempotency);
 
 /**
  * **No global authentication middleware; every route is guarded where it is declared.**

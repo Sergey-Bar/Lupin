@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono';
-import { SignoffBodySchema } from '@lupin/shared-contracts';
+import { QualityPulseSchema, SignoffBodySchema } from '@lupin/shared-contracts';
+import { projectPulse } from '../services/quality-pulse-service.js';
 import { listSignoffs, recordSignoff } from '../services/release-signoff-service.js';
 import { z, ZodError } from 'zod/v4';
 import {
@@ -435,6 +436,17 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
       access,
       health: healthOptions,
       history,
+      // The same gathering the pulse route uses, so a tool and a route cannot disagree.
+      ...(options.reliability === undefined
+        ? {}
+        : {
+            pulse: async (projectId: string, days: number) => {
+              const reliability = options.reliability as NonNullable<typeof options.reliability>;
+              const project = await getProject(options, projectId);
+              const now = reliability.now?.() ?? new Date();
+              return projectPulse(options, reliability.store, project.id, days, now);
+            },
+          }),
     }),
   );
   // Agent quality: evals, OTLP traces, runtime, the MCP inventory and the built-in eval runner.
@@ -838,6 +850,20 @@ export function createProjectsRoutes(options: ProjectsRouteOptions): Hono {
           project,
           windowDays(context.req.query('days'), 7),
           branch === undefined || branch === '' ? undefined : branch.slice(0, 255),
+        ),
+      );
+    });
+    /**
+     * The quality pulse: better, worse, steady or unknown against the window before, with
+     * one cause (plan 1795712849115 task 14). `projectPulse` gathers; `qualityPulse` decides.
+     */
+    app.get('/api/v1/projects/:id/pulse', viewer, async (context) => {
+      const project = await getProject(options, context.req.param('id'));
+      const now = reliability.now?.() ?? new Date();
+      const days = windowDays(context.req.query('days'), 7);
+      return context.json(
+        QualityPulseSchema.parse(
+          await projectPulse(options, reliability.store, project.id, days, now),
         ),
       );
     });

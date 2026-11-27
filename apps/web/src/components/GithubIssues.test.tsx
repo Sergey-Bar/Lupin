@@ -111,7 +111,9 @@ describe('IssuesPage', () => {
       listRepos: vi.fn(async () => ({ items: [] })),
     } as unknown as GithubClient;
     render(<IssuesPage github={failing} now={() => NOW} />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this: nope');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Could not load the issues');
+    expect(alert).toHaveTextContent('nope');
   });
 });
 

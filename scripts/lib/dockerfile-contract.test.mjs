@@ -128,6 +128,14 @@ function unpinnedImages(text) {
     .filter((from) => !aliases.has(from) && !/^[^@\s]+:[^@\s]+@sha256:[0-9a-f]{64}$/u.test(from));
 }
 
+test('the runner spool starts private, so EncryptedSpool accepts its volume', () => {
+  // `privateDirectoryProblem` refuses a spool another account can read, and a new named volume
+  // copies its mount point's mode from the image. Without this the read-only runner of plan
+  // 1795712849115 task 7 exited with SpoolError on every start of the compose stack.
+  const dockerfile = read('infra/docker/runner.Dockerfile');
+  assert.match(dockerfile, /chmod 0700 \/var\/lib\/lupin\/spool\b/);
+});
+
 test('the pin check refuses a tag alone, a digest alone, and accepts a stage alias', () => {
   assert.deepEqual(unpinnedImages('FROM node:24-alpine AS build\nFROM build\n'), [
     'node:24-alpine',

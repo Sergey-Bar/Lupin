@@ -34,6 +34,7 @@ import { ReadFailed } from './ReadFailed.js';
 import { RiskSection } from './CockpitRisks.js';
 import { HomeSignoff, type SignoffSource } from './ReleaseSignoff.js';
 import { DailyBars } from './DailyBars.js';
+import { HomePulse, type PulseSource } from './PulseLine.js';
 
 /**
  * The cockpit: is the product better or worse than it was, and why.
@@ -62,6 +63,7 @@ export interface CockpitSources {
   briefing?: (projectId: string | undefined) => Promise<BriefingResponse>;
   /** Release sign-off for the chosen project; absent, or with no project chosen, none drawn. */
   signoff?: SignoffSource;
+  pulse?: PulseSource;
 }
 
 /** Which Home a reader opens on: Triage for the engineer, Release for the lead. Kept per browser. */
@@ -150,6 +152,7 @@ export function CockpitPage({
             navigate={navigate}
           />
         )}
+        <HomePulse source={sources.pulse} projectId={projectId} />
         <HomeSignoff source={sources.signoff} projectId={projectId} />
         {view === 'release' ? null : (
           <AttentionSection

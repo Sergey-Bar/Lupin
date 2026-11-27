@@ -65,6 +65,14 @@ import {
   K6_JSON_ADAPTER,
   legacyUploadAdapter,
   mochawesomeJsonAdapter,
+  trxXmlAdapter,
+  nunitXmlAdapter,
+  xunitXmlAdapter,
+  robotXmlAdapter,
+  cucumberJsonAdapter,
+  goTestJsonAdapter,
+  newmanJsonAdapter,
+  lighthouseJsonAdapter,
   playwrightJsonAdapter,
   pytestJsonAdapter,
   vitestJsonAdapter,
@@ -80,6 +88,7 @@ import { canonicalRunFromUploadEvents } from '../services/reporter-event-canonic
 import { bearerToken } from '../http/bearer-token.js';
 import { guard } from '../http/access.js';
 import type { RealtimeBus } from '../realtime/realtime-bus.js';
+import { recordReporterEvents } from '../observability/operator-metrics.js';
 
 // ---------------------------------------------------------------------------
 // Legacy wire shape — emitted by @lupin/reporter
@@ -232,9 +241,15 @@ const ADAPTER_VERSION = '2';
  * be made right** — XML is XML and a ZAP report is XML — so a ZAP caller is expected to
  * declare its format, and the refusal it gets says so.
  */
+function isTrxFileName(document: UploadDocument): boolean {
+  return document.fields['fileName']?.toLowerCase().endsWith('.trx') === true;
+}
+
 function pickAdapter(document: UploadDocument): ProducerAdapter {
   const declared = declaredFormat(document);
   if (declared !== undefined) return adapterForFormat(declared.id);
+  // `.trx` is VSTest's own extension and no other format uses it, so the name is enough.
+  if (isTrxFileName(document)) return adapterForFormat('trx-xml');
   if (document.fields['fileName']?.toLowerCase().endsWith('.xml') === true) {
     return adapterForFormat('junit-xml');
   }
@@ -280,15 +295,27 @@ function adapterForFormat(id: ReportFormatId): ProducerAdapter {
     'vitest-json': vitestJsonAdapter,
     'pytest-json': pytestJsonAdapter,
     'mochawesome-json': mochawesomeJsonAdapter,
+    'trx-xml': trxXmlAdapter,
+    'nunit-xml': nunitXmlAdapter,
+    'xunit-xml': xunitXmlAdapter,
+    'robot-xml': robotXmlAdapter,
+    'cucumber-json': cucumberJsonAdapter,
+    'go-test-json': goTestJsonAdapter,
+    'newman-json': newmanJsonAdapter,
+    'lighthouse-json': lighthouseJsonAdapter,
     'legacy-upload': legacyUploadAdapter,
   };
   return adapters[id];
 }
 
-/** Whether the body's first bytes are an XML document. The first 64 is enough. */
+/**
+ * Whether the body's first bytes are an XML document. The first 64 is enough: a declaration,
+ * or the root element of one of the XML formats this door reads (JUnit, TRX, NUnit 3,
+ * xUnit.net, Robot Framework).
+ */
 function looksLikeXml(document: UploadDocument): boolean {
   const head = new TextDecoder().decode(document.bytes.slice(0, 64));
-  return /^\s*<(?:\?xml|testsuites?|testsuite)\b/i.test(head);
+  return /^\s*<(?:\?xml|testsuites?|testsuite|TestRun|test-run|assemblies|robot)\b/i.test(head);
 }
 
 /**
@@ -311,10 +338,14 @@ function assertFormatMatches(adapter: ProducerAdapter, document: UploadDocument)
   const xml = looksLikeXml(document);
   if (declared === undefined) {
     // The one rule that needs no declaration: nothing but the JUnit adapter may read XML.
-    if (xml && adapter !== junitXmlAdapter) {
+    if (
+      xml &&
+      adapter !== junitXmlAdapter &&
+      !(adapter === trxXmlAdapter && isTrxFileName(document))
+    ) {
       throw new DomainError(
         'INVALID_REPORTER_UPLOAD',
-        'The uploaded body is XML; declare format=junit so the right adapter reads it',
+        'The uploaded body is XML; declare its format (junit, trx, nunit, xunit or robot) so the right adapter reads it',
         { callerSafe: true, details: { detectedEncoding: 'xml' } },
       );
     }
@@ -714,6 +745,7 @@ export function createReporterRoutes(
       // operation, when the run row was created/updated and a bus is configured.
       if (runUpdated && options.bus) await broadcastRunUpdated(options.bus, repository, normalized);
     }
+    recordReporterEvents(1);
     return c.json(
       {
         ok: true,
@@ -747,6 +779,8 @@ export function createReporterRoutes(
       bus: options.bus,
       triggeredBy: 'upload',
     });
+    // An upload is results arriving, as an event is: the age gauge counts both.
+    recordReporterEvents(1);
 
     // **Archived after the parse, keyed by the run the document actually named.** For a
     // JSON body the run id is inside the payload, so archiving first meant the key was

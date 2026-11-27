@@ -120,6 +120,7 @@ export default defineConfig({
         text: 'Get started',
         items: [
           { text: 'Start here · choose your goal', link: '/guide/' },
+          { text: 'Lupin in five minutes', link: '/guide/five-minutes' },
           { text: 'Install', link: '/guide/install' },
           { text: 'Your first release verdict', link: '/guide/first-verdict' },
           { text: 'Getting started', link: '/guide/getting-started' },
@@ -142,6 +143,7 @@ export default defineConfig({
           { text: 'The briefing', link: '/guide/briefing' },
           { text: 'Agent quality', link: '/guide/agents' },
           { text: 'Issues and test proposals', link: '/guide/issues-and-test-proposals' },
+          { text: 'Connect Jira', link: '/guide/jira' },
           { text: 'How Lupin compares', link: '/guide/compare' },
         ],
       },

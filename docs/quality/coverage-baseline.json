@@ -36,10 +36,10 @@
     "lines": 100
   },
   "packages/automation": {
-    "statements": 94.57,
-    "branches": 85.5,
-    "functions": 89.65,
-    "lines": 96.52
+    "statements": 97.9,
+    "branches": 89.8,
+    "functions": 95.1,
+    "lines": 98.8
   },
   "packages/config": {
     "statements": 92,
@@ -156,7 +156,7 @@
     "lines": 100
   },
   "packages/ui": {
-    "statements": 89.6,
+    "statements": 90,
     "branches": 86.5,
     "functions": 96.5,
     "lines": 90.4

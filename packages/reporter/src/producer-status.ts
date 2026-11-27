@@ -51,6 +51,14 @@ export const INGESTED_PRODUCERS = [
   'vitest',
   'pytest',
   'cypress',
+  'vstest',
+  'nunit',
+  'xunit',
+  'cucumber',
+  'robot',
+  'go',
+  'newman',
+  'lighthouse',
 ] as const;
 export type IngestedProducer = (typeof INGESTED_PRODUCERS)[number];
 
@@ -213,6 +221,80 @@ export const TEST_STATUS_MAPPING = {
     failed: 'failed',
     pending: 'skipped',
     skipped: 'skipped',
+  },
+  // VSTest's TRX outcome, in the spelling it writes. NotExecuted and NotRunnable are tests
+  // that did not run; Inconclusive, Pending, InProgress and Disconnected carry no
+  // verdict; Warning and PassedButRunAborted are tests that passed.
+  vstest: {
+    Passed: 'passed',
+    PassedButRunAborted: 'passed',
+    Warning: 'passed',
+    Completed: 'passed',
+    Failed: 'failed',
+    Error: 'failed',
+    Aborted: 'failed',
+    Timeout: 'timedOut',
+    NotExecuted: 'skipped',
+    NotRunnable: 'skipped',
+    Inconclusive: 'unknown',
+    Pending: 'unknown',
+    InProgress: 'unknown',
+    Disconnected: 'unknown',
+  },
+  // NUnit 3's `result`. `Inconclusive` is NUnit's own "no verdict"; Warning passed with a
+  // warning attached.
+  nunit: {
+    Passed: 'passed',
+    Warning: 'passed',
+    Failed: 'failed',
+    Skipped: 'skipped',
+    Inconclusive: 'unknown',
+  },
+  // xUnit.net v2 XML `result`.
+  xunit: {
+    Pass: 'passed',
+    Fail: 'failed',
+    Skip: 'skipped',
+    NotRun: 'skipped',
+  },
+  // Cucumber JSON step status, read for a scenario as its worst step. An undefined step has
+  // no definition and an `ambiguous` one has two, and Cucumber's strict mode fails both.
+  cucumber: {
+    passed: 'passed',
+    failed: 'failed',
+    undefined: 'failed',
+    ambiguous: 'failed',
+    pending: 'skipped',
+    skipped: 'skipped',
+  },
+  // Robot Framework's test status.
+  robot: {
+    PASS: 'passed',
+    FAIL: 'failed',
+    SKIP: 'skipped',
+    'NOT RUN': 'skipped',
+  },
+  // go test -json (test2json) terminal actions for a test.
+  go: {
+    pass: 'passed',
+    fail: 'failed',
+    skip: 'skipped',
+  },
+  // Newman, per request: `failed` when an assertion or the request failed, `no-assertions`
+  // for a request that asserted nothing, which is not a pass.
+  newman: {
+    passed: 'passed',
+    failed: 'failed',
+    skipped: 'skipped',
+    'no-assertions': 'unknown',
+  },
+  // Lighthouse category scores, banded the way Lighthouse colours them: 0.9 and above is
+  // good, and anything below is a failure of the budget the category stands for.
+  lighthouse: {
+    good: 'passed',
+    'needs-improvement': 'failed',
+    poor: 'failed',
+    unscored: 'unknown',
   },
 } as const satisfies {
   [P in IngestedProducer]: Record<string, CanonicalStatus>;

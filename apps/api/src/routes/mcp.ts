@@ -33,6 +33,7 @@ export interface McpRouteOptions {
   access: CallerResolver;
   health: RepoHealthOptions;
   history?: McpScope['history'] | undefined;
+  pulse?: McpScope['pulse'] | undefined;
   /** Where a tool's server-side failure is logged; console.error when absent. */
   log?: McpLog | undefined;
 }
@@ -73,6 +74,7 @@ export function createMcpRoutes(options: McpRouteOptions): Hono {
         {
           health: options.health,
           ...(options.history === undefined ? {} : { history: options.history }),
+          ...(options.pulse === undefined ? {} : { pulse: options.pulse }),
           pinned: caller.uploaderFor,
         },
         options.log,

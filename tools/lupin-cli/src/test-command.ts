@@ -54,6 +54,13 @@ export const TEST_FORMATS = [
   'mochawesome',
   'mochawesome-json',
   'cypress',
+  'trx',
+  'nunit',
+  'xunit',
+  'cucumber',
+  'robot',
+  'go-test',
+  'newman',
 ] as const;
 
 interface Verdict {
