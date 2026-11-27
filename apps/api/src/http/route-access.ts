@@ -26,7 +26,6 @@ export const ROUTE_ROLES: ReadonlyArray<
   ['GET', '/api/v1/agents', 'viewer'],
   ['GET', '/api/v1/agents/:domain', 'viewer'],
   ['GET', '/api/v1/artifacts/:artifactId', 'viewer'],
-  ['GET', '/api/v1/automations', 'viewer'],
   ['GET', '/api/v1/chat/models', 'viewer'],
   ['GET', '/api/v1/dashboard/analytics/summary', 'viewer'],
   ['GET', '/api/v1/dashboard/analytics/trend', 'viewer'],
@@ -44,7 +43,6 @@ export const ROUTE_ROLES: ReadonlyArray<
   ['GET', '/api/v1/dashboard/tests/history', 'viewer'],
   ['GET', '/api/v1/events', 'viewer'],
   ['GET', '/api/v1/integrations/maturity', 'viewer'],
-  ['GET', '/api/v1/jobs', 'viewer'],
   // The read-only MCP server. Also guarded where it is mounted (`routes/mcp.ts`), because it
   // is mounted only with a database; this row is the composed app's own copy of the rule.
   ['GET', '/api/v1/mcp', 'viewer'],
@@ -61,12 +59,9 @@ export const ROUTE_ROLES: ReadonlyArray<
   ['GET', '/api/v1/runs/:runId/artifacts/:artifactId', 'viewer'],
   ['GET', '/api/v1/runs/:runId/events', 'viewer'],
   ['GET', '/api/v1/runs/:runId/gate', 'viewer'],
-  ['GET', '/api/v1/schedules', 'viewer'],
   // Starting, stopping and triaging work is operating. Chat is here because a completion
   // spends the installation's model budget.
   ['POST', '/api/v1/agents/:domain/:action', 'operator'],
-  ['POST', '/api/v1/automations', 'operator'],
-  ['POST', '/api/v1/automations/:id/jobs', 'operator'],
   ['POST', '/api/v1/chat/completions', 'operator'],
   // An eval run is model completions in a loop: the same budget, the same class as chat.
   ['POST', '/api/v1/projects/:id/evals/datasets/:datasetId/run', 'operator'],
@@ -76,11 +71,9 @@ export const ROUTE_ROLES: ReadonlyArray<
   ['PATCH', '/api/v1/dashboard/quarantine/:id', 'operator'],
   ['DELETE', '/api/v1/dashboard/quarantine/:id', 'operator'],
   ['PATCH', '/api/v1/dashboard/runs/:id/status', 'operator'],
-  ['POST', '/api/v1/jobs/:id/cancel', 'operator'],
   ['POST', '/api/v1/runs', 'operator'],
   ['POST', '/api/v1/runs/:runId/cancel', 'operator'],
   ['POST', '/api/v1/runs/:runId/retry', 'operator'],
-  ['POST', '/api/v1/schedules', 'operator'],
   // Changing what "passing" means for everyone is configuration.
   ['POST', '/api/v1/dashboard/quality-gates', 'admin'],
   ['PATCH', '/api/v1/dashboard/quality-gates/:id', 'admin'],

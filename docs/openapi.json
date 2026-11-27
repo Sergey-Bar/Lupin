@@ -180,31 +180,6 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
-    "/api/v1/automations": {
-      "get": {
-        "operationId": "getApiV1Automations",
-        "tags": ["automations"],
-        "x-source": "apps/api/src/routes/orchestration.ts",
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      },
-      "post": {
-        "operationId": "postApiV1Automations",
-        "tags": ["automations"],
-        "x-source": "apps/api/src/routes/orchestration.ts",
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      }
-    },
-    "/api/v1/automations/{id}/jobs": {
-      "post": {
-        "operationId": "postApiV1AutomationsIdJobs",
-        "tags": ["automations"],
-        "x-source": "apps/api/src/routes/orchestration.ts",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      }
-    },
     "/api/v1/chat/completions": {
       "post": {
         "operationId": "postApiV1ChatCompletions",
@@ -491,25 +466,6 @@
         "operationId": "getApiV1IntegrationsMaturity",
         "tags": ["integrations"],
         "x-source": "apps/api/src/routes/execution/policies.routes.ts",
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      }
-    },
-    "/api/v1/jobs": {
-      "get": {
-        "operationId": "getApiV1Jobs",
-        "tags": ["jobs"],
-        "x-source": "apps/api/src/routes/orchestration.ts",
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      }
-    },
-    "/api/v1/jobs/{id}/cancel": {
-      "post": {
-        "operationId": "postApiV1JobsIdCancel",
-        "tags": ["jobs"],
-        "x-source": "apps/api/src/routes/orchestration.ts",
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
@@ -1791,33 +1747,6 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
-    "/api/v1/runner/v1/enroll": {
-      "post": {
-        "operationId": "postApiV1RunnerV1Enroll",
-        "tags": ["runner"],
-        "x-source": "apps/api/src/routes/runner.ts",
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      }
-    },
-    "/api/v1/runner/v1/jobs/{jobId}/events/batch": {
-      "post": {
-        "operationId": "postApiV1RunnerV1JobsJobIdEventsBatch",
-        "tags": ["runner"],
-        "x-source": "apps/api/src/routes/runner.ts",
-        "parameters": [
-          { "name": "jobId", "in": "path", "required": true, "schema": { "type": "string" } }
-        ],
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      }
-    },
-    "/api/v1/runner/v1/sync": {
-      "post": {
-        "operationId": "postApiV1RunnerV1Sync",
-        "tags": ["runner"],
-        "x-source": "apps/api/src/routes/runner.ts",
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      }
-    },
     "/api/v1/runners/{runnerId}/heartbeat": {
       "post": {
         "operationId": "postApiV1RunnersRunnerIdHeartbeat",
@@ -1959,20 +1888,6 @@
         "parameters": [
           { "name": "runId", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      }
-    },
-    "/api/v1/schedules": {
-      "get": {
-        "operationId": "getApiV1Schedules",
-        "tags": ["schedules"],
-        "x-source": "apps/api/src/routes/orchestration.ts",
-        "responses": { "default": { "description": "Defined by the route handler." } }
-      },
-      "post": {
-        "operationId": "postApiV1Schedules",
-        "tags": ["schedules"],
-        "x-source": "apps/api/src/routes/orchestration.ts",
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },

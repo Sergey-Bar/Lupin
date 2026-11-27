@@ -284,6 +284,11 @@ function capabilityPage() {
       ]),
     ),
     '',
+    // Said, not left to the table: these are the two statuses a reader may want to change.
+    `The rows to act on are \`missing\` (nothing usable exists yet) and \`mock\` (something exists ` +
+      `but does not do the job). Today there are ${String(counts.get('missing') ?? 0)} \`missing\` ` +
+      `and ${String(counts.get('mock') ?? 0)} \`mock\`.`,
+    '',
     ...regenerationFooter(),
     '',
     ...table(

@@ -9,12 +9,11 @@
   ],
   "summary": {
     "admin": 44,
-    "viewer": 105,
-    "operator": 37,
+    "viewer": 102,
+    "operator": 33,
     "open": 16,
-    "runner-credential": 9,
+    "runner-credential": 7,
     "reporter-secret": 14,
-    "enrollment-token": 1,
     "runner-registration-secret": 1,
     "scim-token": 10
   },
@@ -158,27 +157,6 @@
       "access": "open",
       "evidenceTest": "apps/api/src/services/access-service.test.ts",
       "composition": "database"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/automations",
-      "access": "viewer",
-      "evidenceTest": "apps/api/src/routes/orchestration.test.ts",
-      "composition": "always"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/automations",
-      "access": "operator",
-      "evidenceTest": "apps/api/src/routes/orchestration.test.ts",
-      "composition": "always"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/automations/:id/jobs",
-      "access": "operator",
-      "evidenceTest": "apps/api/src/routes/orchestration.test.ts",
-      "composition": "always"
     },
     {
       "method": "POST",
@@ -416,20 +394,6 @@
       "path": "/api/v1/integrations/maturity",
       "access": "viewer",
       "evidenceTest": "apps/api/src/routes/execution.test.ts",
-      "composition": "always"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/jobs",
-      "access": "viewer",
-      "evidenceTest": "apps/api/src/routes/execution.test.ts",
-      "composition": "always"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/jobs/:id/cancel",
-      "access": "operator",
-      "evidenceTest": "apps/api/src/routes/orchestration.test.ts",
       "composition": "always"
     },
     {
@@ -1309,27 +1273,6 @@
     },
     {
       "method": "POST",
-      "path": "/api/v1/runner/v1/enroll",
-      "access": "enrollment-token",
-      "evidenceTest": "apps/api/src/routes/runner.test.ts",
-      "composition": "always"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/runner/v1/jobs/:jobId/events/batch",
-      "access": "runner-credential",
-      "evidenceTest": "apps/api/src/routes/runner.test.ts",
-      "composition": "always"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/runner/v1/sync",
-      "access": "runner-credential",
-      "evidenceTest": "apps/api/src/routes/runner.test.ts",
-      "composition": "always"
-    },
-    {
-      "method": "POST",
       "path": "/api/v1/runners/:runnerId/heartbeat",
       "access": "runner-credential",
       "evidenceTest": "apps/api/src/routes/execution.test.ts",
@@ -1425,20 +1368,6 @@
       "access": "operator",
       "evidenceTest": "apps/api/src/routes/projects.test.ts",
       "composition": "database"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/schedules",
-      "access": "viewer",
-      "evidenceTest": "apps/api/src/routes/orchestration.test.ts",
-      "composition": "always"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/schedules",
-      "access": "operator",
-      "evidenceTest": "apps/api/src/routes/orchestration.test.ts",
-      "composition": "always"
     },
     {
       "method": "GET",

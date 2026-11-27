@@ -49,8 +49,6 @@ import { createOriginCheck } from './middleware/origin-check.js';
 import { hashCredential } from '@lupin/auth';
 import { createReporterResultsRoute } from './routes/reporter-results.js';
 import { createReportingRoutes } from './routes/reporting.js';
-import { createRunnerRoutes } from './routes/runner.js';
-import { createOrchestrationRoutes } from './routes/orchestration.js';
 import { ReporterIngestionService } from './services/reporter-ingestion.js';
 import type { ReporterResultStore } from './services/reporter-ingestion.js';
 import { DrizzleReporterIngestionService } from './services/drizzle-reporter-ingestion.js';
@@ -60,8 +58,6 @@ import {
   bootstrapDisplayPrefix,
   mayDeriveInstallationKey,
 } from './bootstrap-display-prefix.js';
-import { RunnerControlService } from './services/runner-control.js';
-import { OrchestrationService } from './services/orchestration-service.js';
 import { createEventsRoutes } from './routes/events.js';
 import { createExecutionRoutes } from './routes/execution.js';
 import { createAnalyticsTrendRoutes, readSince } from './execution/trend.js';
@@ -577,41 +573,6 @@ function createExecutionStore(
   return new InMemoryExecutionStore({ quarantined: quarantineFor });
 }
 
-/**
- * The one canonical store both reporting and the reporter doors resolve.
- *
- * **Two instances would be two ingestion systems again.** `mountReportingRoutes` used to
- * build its own, and the reporter routes had none — so an upload could land in the
- * installation and `/api/v1/reporting/kpis` answered `proofCeiling: 'unknown'` about a
- * system with a year of test history (ledger row P-73). The store is now built here, once,
- * and handed to both.
- */
-function mountLegacyProcessLocalRoutes(target: Hono): void {
-  if (runtimeConfig.nodeEnv === 'production') {
-    const disabled = new Hono();
-    const body = {
-      status: 'unavailable',
-      implemented: false,
-      code: 'PROCESS_LOCAL_CONTROL_DISABLED',
-      message: 'Legacy process-local control routes are disabled in production',
-    };
-    disabled.all('/runner/v1', (context) => context.json(body, 503));
-    disabled.all('/runner/v1/*', (context) => context.json(body, 503));
-    for (const path of [
-      '/api/v1/automations',
-      '/api/v1/automations/*',
-      '/api/v1/schedules',
-      '/api/v1/jobs',
-      '/api/v1/jobs/*',
-    ]) {
-      disabled.all(path, (context) => context.json(body, 503));
-    }
-    target.route('/', disabled);
-    return;
-  }
-  target.route('/', createRunnerRoutes(new RunnerControlService()));
-  target.route('/', createOrchestrationRoutes(new OrchestrationService()));
-}
 // Durable outbox-backed realtime in production; process-local events otherwise. One feed serves
 // every workspace; each composition has its own bus, which stamps its workspace on what it writes.
 const realtimeFeed = databaseResources ? new DrizzleRealtimeFeed(databaseResources.db) : undefined;
@@ -1027,6 +988,15 @@ function buildWorkspace(workspaceId: string) {
   const gateways = selfGateways(workspaceId);
   let reporterStore: ReporterResultStore | undefined;
 
+  /**
+   * The one canonical store both reporting and the reporter doors resolve.
+   *
+   * **Two instances would be two ingestion systems again.** `mountReportingRoutes` used to
+   * build its own, and the reporter routes had none — so an upload could land in the
+   * installation and `/api/v1/reporting/kpis` answered `proofCeiling: 'unknown'` about a
+   * system with a year of test history (ledger row P-73). The store is now built here, once,
+   * and handed to both.
+   */
   function resolveReporterStore(): ReporterResultStore {
     if (reporterStore) return reporterStore;
     reporterStore = databaseResources
@@ -1551,8 +1521,6 @@ function buildWorkspace(workspaceId: string) {
       }),
     );
     mountReportingRoutes(target);
-    // Process-local, so one copy: a second would split its in-memory state.
-    if (workspaceId === defaultWorkspace) mountLegacyProcessLocalRoutes(target);
   }
 
   return {

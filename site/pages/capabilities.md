@@ -7,13 +7,14 @@ truth for this page. A capability is not promoted because a page says it is.
 
 **What the statuses mean**, in the register's own words:
 
-| Status       | Count | Meaning                                                                   |
-| ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 91    | implemented and exercised, with the stated qualification.                 |
-| **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
-| **missing**  | 1     | no usable implementation exists in the target.                            |
-| **deferred** | 5     | intentionally outside the launch scope pending a separate decision.       |
-| **obsolete** | 2     | retained only as historical residue and not part of the target product.   |
+| Status       | Count | Meaning                                                                 |
+| ------------ | ----- | ----------------------------------------------------------------------- |
+| **real**     | 96    | implemented and exercised, with the stated qualification.               |
+| **missing**  | 5     | no usable implementation exists in the target.                          |
+| **deferred** | 6     | intentionally outside the launch scope pending a separate decision.     |
+| **obsolete** | 6     | retained only as historical residue and not part of the target product. |
+
+The rows to act on are `missing` (nothing usable exists yet) and `mock` (something exists but does not do the job). Today there are 5 `missing` and 0 `mock`.
 
 The numbers above are derived. To change one, edit the file this page names as
 its source, then run `pnpm site:generate`.
@@ -35,15 +36,18 @@ its source, then run `pnpm site:generate`.
 | Live run updates over SSE                                                                           | `real`     |
 | Binary artifact storage and retrieval                                                               | `real`     |
 | Revocable installation sessions                                                                     | `real`     |
-| Scoped service credentials and runner identities                                                    | `mock`     |
+| Scoped runner credentials: enrolment, rotation, expiry and revocation                               | `real`     |
+| The `service_credentials` table                                                                     | `obsolete` |
 | One shared contract authority                                                                       | `real`     |
 | PostgreSQL target schema and forward migrations                                                     | `real`     |
-| Automation inventory and schedules                                                                  | `mock`     |
+| Durable schedules: scheduled reports and health scans                                               | `real`     |
+| Process-local automation inventory, ad-hoc jobs and generic schedules                               | `obsolete` |
 | Atomic job leases and fencing                                                                       | `real`     |
-| Legacy runner enrollment and control route                                                          | `mock`     |
-| Independently deployable OCI runner                                                                 | `mock`     |
+| Legacy runner enrolment and control route (`/runner/v1`)                                            | `obsolete` |
+| Independently deployable OCI runner                                                                 | `real`     |
+| A container and an internal-only network per job                                                    | `missing`  |
 | Encrypted durable runner event spool                                                                | `real`     |
-| **Isolation** of Playwright execution (pinned image, isolated runner)                               | `mock`     |
+| **Isolation** of Playwright execution (pinned image, isolated runner)                               | `missing`  |
 | JUnit producer adapter                                                                              | `real`     |
 | **Evidence** from Playwright (events, artifacts, gates)                                             | `real`     |
 | API quality domain                                                                                  | `deferred` |
@@ -101,13 +105,15 @@ its source, then run `pnpm site:generate`.
 | k6 load execution and threshold adapter                                                             | `real`     |
 | ZAP scan producer: an image that runs a scan                                                        | `missing`  |
 | ZAP XML import                                                                                      | `real`     |
-| Provider-backed chat                                                                                | `mock`     |
+| Provider-backed chat completions                                                                    | `real`     |
+| Persisted conversations, messages and tool runs                                                     | `missing`  |
 | AI test proposals from surviving mutants and uncovered diff lines                                   | `real`     |
-| Browser/API/load/security/mobile agents                                                             | `mock`     |
+| Browser/API/load/security/mobile agents (umbrella row)                                              | `obsolete` |
 | `browser.run` through the execution pipeline                                                        | `real`     |
 | `api.run` through the execution pipeline                                                            | `real`     |
 | `load.run` through the execution pipeline                                                           | `real`     |
-| Dynamic Kilo model catalog and gateway                                                              | `mock`     |
+| Dynamic Kilo and Ollama model catalog                                                               | `real`     |
+| Persisted model profiles and their approval                                                         | `missing`  |
 | GitHub, Jira, and Slack execution                                                                   | `real`     |
 | Version-encrypted vault storage                                                                     | `real`     |
 | Read-only MCP server over Streamable HTTP, and a stdio proxy for editors                            | `real`     |
@@ -116,7 +122,7 @@ its source, then run `pnpm site:generate`.
 | Product dashboard and KPIs                                                                          | `real`     |
 | Webwright, MCP, legacy automation, and admin surfaces                                               | `obsolete` |
 | Tauri desktop application                                                                           | `obsolete` |
-| Resumable source migration and reconciliation                                                       | `mock`     |
+| Resumable source migration and reconciliation                                                       | `deferred` |
 | One root governance command surface                                                                 | `real`     |
 | Automated repository-boundary validation                                                            | `real`     |
 | Deployment profiles: solo, startup, team, enterprise (ADR-014)                                      | `real`     |

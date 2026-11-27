@@ -603,14 +603,6 @@
       "confirmedBy": "Findings-remediation wave 1.4. Read all four files and traced every claim. Three reproduced; the two `events.ts` claims were each turned into a test first, and neither test could distinguish the defect from the fix — which is the evidence that they are not defects.",
       "evidence": [
         {
-          "path": "apps/api/src/services/runner-control.ts",
-          "asserts": "The lease record holds the `leaseId` it was granted, and `acceptEvent` compares it. An event naming a lease that was never issued is `conflict` and nothing is stored — before the fix it was accepted whenever the runner and token matched."
-        },
-        {
-          "path": "apps/api/src/services/runner-control.test.ts",
-          "asserts": "A never-issued lease id is refused with nothing recorded; a retry whose payload keys are in the other order is `duplicate` rather than `conflict`; a genuinely different event at the same sequence is still `conflict`, so canonicalisation did not make the comparison weaker; and a superseded token after a re-lease is refused, which is what distinguishes the token from the id."
-        },
-        {
           "path": "apps/api/src/execution/digest.ts",
           "asserts": "One `canonicalJson`, replacing three byte-identical copies. It sorts object keys, preserves array order — the one place where being order-insensitive would be a bug — and drops `undefined` properties so a spread payload has the shape of the one it copied. A fourth copy in `runner-control.ts` is what forced the extraction."
         },
@@ -619,18 +611,19 @@
           "asserts": "The rule itself, including that the canonical form differs from `JSON.stringify` (so the test cannot pass on a serialiser that does nothing) and that `[1, 2]` and `[2, 1]` do not. `Uint8Array` is hashed as bytes rather than as an object, which the three copies each got right and none of them said why."
         },
         {
-          "path": "apps/api/src/services/orchestration-service.ts",
-          "asserts": "An illegal cancellation is refused with `INVALID_STATE_TRANSITION` and a 409 rather than answered as a success, and the record is untouched — the fall-through this closes is the `orchestration-service.ts:47-49` half."
-        },
-        {
-          "path": "apps/api/src/services/orchestration-service.test.ts",
-          "asserts": "Cancelling twice is refused the second time, and `listJobs()` afterwards equals the job as it was after the first cancel — so the refusal did not mutate anything on its way out."
-        },
-        {
           "path": "apps/api/src/routes/events.ts",
           "asserts": "Unchanged behaviour, and that is the finding: the two `events.ts` claims in this row are not defects. A direct probe of the pinned Hono shows `writeSSE` resolving after the client cancels, and the `if (closed || stream.aborted) return` at line 106 closes the abort window the row names."
+        },
+        {
+          "path": "apps/api/src/index-production-composition.test.ts",
+          "asserts": "The process-local runner-control and orchestration routes are not served at all: `/api/v1/automations`, `/api/v1/schedules`, `/api/v1/jobs` and `/api/v1/runner/v1/sync` answer 404 from a production composition, so the code these defects lived in cannot be reached."
+        },
+        {
+          "path": "apps/api/src/route-manifest.test.ts",
+          "asserts": "The app registers no route the manifest does not list, and the manifest no longer lists the legacy control plane, so the removed routes cannot come back without this test failing."
         }
-      ]
+      ],
+      "resolution": " **The code this row fixed was removed on 2026-11-27** with the rest of the legacy process-local control plane (`routes/runner.ts`, `routes/orchestration.ts` and their services): no client called it, the runner uses the durable `/api/v1/runners/*` path, and its in-memory state survived nothing. The evidence that it is gone replaces the evidence that it was fixed."
     },
     {
       "id": "P-72",
@@ -866,22 +859,23 @@
           "asserts": "A worker on token 1 cannot finish a job the store has re-leased on token 2; the worker holding token 2 can, so the refusals are refusals and not a closed door; a token newer than the store's is refused; and fencing does not license an illegal edge. The last two matter because a fence that only ever said no would pass the first case."
         },
         {
-          "path": "apps/api/src/services/orchestration-service.ts",
-          "asserts": "`cancel` consults the machine and refuses an illegal transition with `INVALID_STATE_TRANSITION` (409) instead of falling through and returning a 200-shaped envelope whose state had not moved. This is the only production call site of the state machine, so it is the only place the two-argument call could still do damage."
-        },
-        {
-          "path": "apps/api/src/services/orchestration-service.test.ts",
-          "asserts": "Cancelling an already-cancelled job is refused with a 409 rather than answered as though it succeeded, and the job is left byte-identical — a refused request that still mutated the record would be the same defect one layer down."
-        },
-        {
           "path": "apps/api/src/execution/runner-lifecycle.drizzle.test.ts",
           "asserts": "`completeJob`'s own fence is asserted at the store, which nothing did before. The route already refused the same thing, which is precisely why deleting `drizzle-execution-store.ts:1387` would have changed nothing any test could see — this case was written, the line was removed, and both refusals went red before it was put back."
         },
         {
           "path": "apps/api/src/execution/drizzle-execution-store.ts",
           "asserts": "The second comparison is kept, and the comment on it now says that a test asserts it directly. A defence in depth that nothing checks is one refactor from not being there, and the comment is the part that stops the next reader assuming it is covered by the route."
+        },
+        {
+          "path": "apps/api/src/index-production-composition.test.ts",
+          "asserts": "The process-local runner-control and orchestration routes are not served at all: `/api/v1/automations`, `/api/v1/schedules`, `/api/v1/jobs` and `/api/v1/runner/v1/sync` answer 404 from a production composition, so the code these defects lived in cannot be reached."
+        },
+        {
+          "path": "apps/api/src/route-manifest.test.ts",
+          "asserts": "The app registers no route the manifest does not list, and the manifest no longer lists the legacy control plane, so the removed routes cannot come back without this test failing."
         }
-      ]
+      ],
+      "resolution": " **The code this row fixed was removed on 2026-11-27** with the rest of the legacy process-local control plane (`routes/runner.ts`, `routes/orchestration.ts` and their services): no client called it, the runner uses the durable `/api/v1/runners/*` path, and its in-memory state survived nothing. The evidence that it is gone replaces the evidence that it was fixed."
     },
     {
       "id": "O-2",
@@ -2548,14 +2542,19 @@
           "asserts": "No `error()` helper, and `missingArtifact` refuses instead of returning a response. Its 503 is `callerSafe` and carries the artifact id, run id, size and checksum — the caller's own resource — with `storageKey` deliberately dropped, which is the field that does not qualify."
         },
         {
-          "path": "apps/api/src/routes/runner.ts",
-          "asserts": "No private `app.onError` and no `UnauthorizedError`. The runner client can now branch on `UNAUTHENTICATED` instead of matching the string \"Unauthorized\", and an internal defect inside a handler is no longer something this file can answer as an authentication failure."
-        },
-        {
           "path": "apps/api/src/routes/reporter.test.ts",
           "asserts": "Names the body it asserts (`ErrorBody`) instead of casting to `Record<string, unknown>`, and asserts a code beside every message. A reporter is the one client that reads these programmatically, so this is the case that proves the migration was lossless rather than merely green."
+        },
+        {
+          "path": "apps/api/src/index-production-composition.test.ts",
+          "asserts": "The process-local runner-control and orchestration routes are not served at all: `/api/v1/automations`, `/api/v1/schedules`, `/api/v1/jobs` and `/api/v1/runner/v1/sync` answer 404 from a production composition, so the code these defects lived in cannot be reached."
+        },
+        {
+          "path": "apps/api/src/route-manifest.test.ts",
+          "asserts": "The app registers no route the manifest does not list, and the manifest no longer lists the legacy control plane, so the removed routes cannot come back without this test failing."
         }
-      ]
+      ],
+      "resolution": " **The code this row fixed was removed on 2026-11-27** with the rest of the legacy process-local control plane (`routes/runner.ts`, `routes/orchestration.ts` and their services): no client called it, the runner uses the durable `/api/v1/runners/*` path, and its in-memory state survived nothing. The evidence that it is gone replaces the evidence that it was fixed."
     },
     {
       "id": "C-4",
@@ -7723,11 +7722,15 @@
       "band": "Minor",
       "title": "GET /api/v1/schedules answered a literal empty list whatever POST had stored",
       "summary": "The legacy process-local orchestration routes stored a schedule on POST and answered GET with `{ schedules: [] }`, so a schedule could never be read back. Its test was named \"creates and lists schedules\" and checked only the 200. The family answers 503 in production.",
-      "resolution": "GET answers what the service stored, and the test asserts the listed schedule.",
+      "resolution": "GET answers what the service stored, and the test asserts the listed schedule. **The code this row fixed was removed on 2026-11-27** with the rest of the legacy process-local control plane (`routes/runner.ts`, `routes/orchestration.ts` and their services): no client called it, the runner uses the durable `/api/v1/runners/*` path, and its in-memory state survived nothing. The evidence that it is gone replaces the evidence that it was fixed.",
       "evidence": [
         {
-          "path": "apps/api/src/routes/orchestration.test.ts",
-          "asserts": "A schedule created through POST is listed by GET."
+          "path": "apps/api/src/index-production-composition.test.ts",
+          "asserts": "The process-local runner-control and orchestration routes are not served at all: `/api/v1/automations`, `/api/v1/schedules`, `/api/v1/jobs` and `/api/v1/runner/v1/sync` answer 404 from a production composition, so the code these defects lived in cannot be reached."
+        },
+        {
+          "path": "apps/api/src/route-manifest.test.ts",
+          "asserts": "The app registers no route the manifest does not list, and the manifest no longer lists the legacy control plane, so the removed routes cannot come back without this test failing."
         }
       ]
     },
