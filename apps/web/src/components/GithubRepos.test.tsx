@@ -218,7 +218,9 @@ describe('RepoDetailPage', () => {
       }),
     } as unknown as GithubClient;
     render(<RepoDetailPage projectId="nope" github={github} />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load this: No project');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Could not load this repository');
+    expect(alert).toHaveTextContent('No project');
   });
 });
 

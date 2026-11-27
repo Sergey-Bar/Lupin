@@ -1,6 +1,15 @@
 import React from 'react';
 import { isNothingYet } from '../lib/nothing-yet.js';
-import { Badge, Button, cn, CircleAlert, CircleCheck, Timer } from '@lupin/ui';
+import {
+  Badge,
+  Button,
+  cn,
+  CircleAlert,
+  CircleCheck,
+  ErrorState,
+  LoadingState,
+  Timer,
+} from '@lupin/ui';
 import type { GithubFinding, GithubRepoItem } from '@lupin/shared-contracts';
 import { useResource, type Resource } from '../hooks/useResource.js';
 import type { DeliveryClient } from '../lib/delivery-client.js';
@@ -468,18 +477,22 @@ function RepoDetailUnavailable({
   if (state.status === 'loading') {
     return (
       <PageFrame>
-        <Quiet role="status">Loading…</Quiet>
+        <LoadingState label="the repository" />
       </PageFrame>
     );
   }
   const notConnected = isNothingYet(state.message);
   return (
     <PageFrame>
-      <Quiet role={notConnected ? undefined : 'alert'}>
-        {notConnected
-          ? 'GitHub is not connected yet. Connect it in Settings to see repositories here.'
-          : `Could not load this: ${state.message}`}
-      </Quiet>
+      {notConnected ? (
+        <Quiet>GitHub is not connected yet. Connect it in Settings to see repositories here.</Quiet>
+      ) : (
+        <ErrorState
+          title="Could not load this repository"
+          description="GitHub did not answer, or answered with an error. Try again in a moment."
+          detail={state.message}
+        />
+      )}
     </PageFrame>
   );
 }
