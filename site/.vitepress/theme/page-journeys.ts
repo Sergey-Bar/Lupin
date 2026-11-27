@@ -10,6 +10,32 @@ export interface Journey {
 }
 
 export const pageJourneys: Record<string, Journey> = {
+  'guide/five-minutes.md': {
+    audience: 'Someone who has just downloaded Lupin',
+    goal: 'Go from the download to a first test result on Home in five minutes.',
+    stages: [
+      ['Start it', 'One command starts Lupin, and start doctor says what is missing.'],
+      ['Send a result', 'Point CI or a local run at Lupin with the lupin CLI.'],
+      ['Read Home', 'See the verdict, which way quality is going, and what needs you.'],
+    ],
+    takeaway: 'Each step says how you know it worked, so you never have to guess.',
+  },
+  'guide/jira.md': {
+    audience: 'QA leads whose team tracks work in Jira',
+    goal: 'Turn a failure Lupin found into a Jira issue without copying it by hand.',
+    stages: [
+      ['Connect Jira', 'One admin request stores the site, the project key and an API token.'],
+      [
+        'File from a cause',
+        'On Tests, open an issue from a failure cause; asking twice opens one.',
+      ],
+      [
+        'Trust the retry',
+        'When Jira says to wait, Lupin waits as long as it was told and tries again.',
+      ],
+    ],
+    takeaway: 'The issue carries the evidence, and a busy Jira never loses a report.',
+  },
   'guide/glossary.md': {
     audience: 'Anyone learning the product',
     goal: 'Turn an unfamiliar word into something you can recognize on screen.',
