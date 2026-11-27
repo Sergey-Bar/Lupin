@@ -338,7 +338,11 @@
       "id": "frontend.home-render-budget",
       "area": "frontend",
       "statement": "Home, the first screen, is inside the recorded rendering budget.",
-      "check": { "probe": "render-route", "routes": ["/dashboard/now"] }
+      "check": { "probe": "render-route", "routes": ["/dashboard/now"] },
+      "blockedExternal": {
+        "reason": "Closing it needs pnpm render:baseline run on the reference install with /dashboard/now added to the measured routes.",
+        "ledger": "PERF-2"
+      }
     },
     {
       "id": "frontend.bundle-budget",

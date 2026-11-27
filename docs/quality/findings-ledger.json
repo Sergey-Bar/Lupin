@@ -8360,6 +8360,22 @@
       "confirmedBy": "kilo:read-the-code",
       "removalCondition": "A retry of a run with an external id succeeds on both stores, links to its original through `retryOfRunId`, and leaves the original's external id where it was.",
       "band": "Major"
+    },
+    {
+      "summary": "`/` lands on Home (`/dashboard/now`), but `tests/performance/rendering-budget.json` holds ceilings for `/dashboard`, the runs list, run detail and quarantine only, and `tests/e2e/performance/rendering-budget.spec.ts` measures only those four. The screen most people see first is the one `pnpm test:render` does not time. The budget file says why it was left out: a ceiling needs a reading on the reference install (plan D18), and a ceiling recorded on another host is a guess with a number on it.",
+      "id": "PERF-2",
+      "owner": "Whoever runs `pnpm render:baseline` on the reference install.",
+      "provenance": "hand",
+      "wave": "LUPIN7-W5",
+      "title": "Home, the landing page, has no rendering ceiling",
+      "confirmedOn": "2026-11-27",
+      "status": "open",
+      "confirmed": true,
+      "evidence": [],
+      "resolution": "Open. Home gained the quality pulse and the self-checks in plan 1795712849115, so a ceiling recorded before those would have measured a different screen; the reading belongs after them.",
+      "confirmedBy": "kilo:read-the-code",
+      "removalCondition": "`/dashboard/now` is a route in `rendering-budget.spec.ts` and has ceilings in `rendering-budget.json` recorded by `pnpm render:baseline` on the reference install, and `pnpm test:render` compares it on every pull request.",
+      "band": "Minor"
     }
   ]
 }
