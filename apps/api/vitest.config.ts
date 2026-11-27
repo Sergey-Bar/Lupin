@@ -72,16 +72,9 @@ export default defineConfig({
         // fails if anything outside a `*.test.ts` imports from there — so the
         // directory cannot quietly become a second product package.
         'src/test-support/**',
-        // MEASURED, not asserted, and the register carries the number: lifting this
-        // puts the file at 76.11% statements / 58.48% branches and drops `apps/api` from
-        // 93.95 to 91.52 statements and 84.71 to 79.42 branches — below the 93/80
-        // floors. The named gap is the runner lifecycle, which
-        // `runner-lifecycle.drizzle.test.ts` now covers, plus `getReadiness` and the
-        // `mapRuns` batch loader. `docs/quality/coverage-exclusions.md` row B4 has the
-        // per-method breakdown.
-        'src/execution/drizzle-execution-store.ts',
+        // The Postgres-backed realtime feed: the durable path has no unit coverage yet.
+        // `docs/quality/coverage-exclusions.md` (B4 / C6) says what would measure it.
         'src/infrastructure/drizzle-realtime-feed.ts',
-        'src/execution/index.ts',
         'dist/**',
       ],
     },

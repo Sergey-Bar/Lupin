@@ -8339,6 +8339,27 @@
       "summary": "The generic adapter writes `stdout.log` and `stderr.log` and uploads them as artifacts after the process exits (`generic-spawn.ts`), and the runner forwards only test events while a job runs (`runner-service.ts` onEvent). `RunEventTypeSchema` has no log event, so `GET /api/v1/events` cannot carry one, and a long suite shows nothing until it finishes.",
       "owner": "The realtime owner (`packages/shared-contracts/src/schemas/execution.ts`, `apps/api/src/routes/events.ts`).",
       "removalCondition": "A bounded `run.log` event type exists in `RunEventTypeSchema`, the runner batches redacted output lines into it while a job runs, and run detail appends them from the SSE stream, each proved by a test."
+    },
+    {
+      "summary": "Both stores built a retry by copying the original run's `externalId`. On PostgreSQL `runs_workspace_external_source_unique` holds `(workspace_id, source, external_id)` unique, so the insert failed with 23505 and the route answered 409 \"a row with that identity already exists\": the Retry button on any run submitted with an external id (a CI job id through `POST /api/v1/runs`) could never work on the durable store. The in-memory store has no such index, so every unit test of retry passed. Found by `store-parity-reads.test.ts`, the first suite to retry such a run on both stores.",
+      "id": "MNT-208",
+      "owner": "The execution store owner (`apps/api/src/execution/`).",
+      "provenance": "hand",
+      "wave": "LUPIN7-W3",
+      "title": "Retrying a run that carries an external id fails on PostgreSQL",
+      "confirmedOn": "2026-11-27",
+      "status": "fixed",
+      "confirmed": true,
+      "evidence": [
+        {
+          "asserts": "On both stores, a retry of a run submitted with an external id is written, names its original in `retryOfRunId`, carries no external id, and the original keeps its own.",
+          "path": "apps/api/src/execution/store-parity-reads.test.ts"
+        }
+      ],
+      "resolution": "A retry no longer inherits `externalId` in either store: the caller's id names the run they submitted, and the retry is linked by `retryOfRunId`. Nothing reads a run by its external id, so no lookup changes. Watched failing first: the Drizzle case of the new suite failed with 23505 on `runs_workspace_external_source_unique` before the change.",
+      "confirmedBy": "kilo:read-the-code",
+      "removalCondition": "A retry of a run with an external id succeeds on both stores, links to its original through `retryOfRunId`, and leaves the original's external id where it was.",
+      "band": "Major"
     }
   ]
 }

@@ -5,7 +5,7 @@
     "Regenerate with `pnpm findings:baseline` — deliberately, never as a side",
     "effect of a failing check."
   ],
-  "reviewedOn": "2026-11-26",
+  "reviewedOn": "2026-11-27",
   "statuses": {
     "P-18": "fixed",
     "P-71": "fixed",
@@ -349,6 +349,7 @@
     "MNT-204": "fixed",
     "MNT-205": "open",
     "MNT-206": "fixed",
-    "MNT-207": "open"
+    "MNT-207": "open",
+    "MNT-208": "fixed"
   }
 }

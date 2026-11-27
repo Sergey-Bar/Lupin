@@ -68,6 +68,10 @@
 
 ### Fixed
 
+- **Retrying a run submitted with an external id works on PostgreSQL (ledger MNT-208).** The
+  retry copied the caller's id, which PostgreSQL holds unique per workspace and source, so the
+  Retry button answered 409 for every such run. A retry now links to its run through
+  `retryOfRunId` and leaves the external id with the run it named.
 - **"Rerun failed tests" reruns only the failed tests (task 12, ledger MNT-206).** Since 4.1.0 the
   button stored the failed tests and the runner ignored them, so the whole suite ran again. A
   Playwright rerun now passes them to Playwright as `--test-list`, and a test that passes on the
