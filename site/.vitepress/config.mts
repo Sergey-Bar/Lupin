@@ -120,6 +120,7 @@ export default defineConfig({
         text: 'Get started',
         items: [
           { text: 'Start here · choose your goal', link: '/guide/' },
+          { text: 'Lupin in five minutes', link: '/guide/five-minutes' },
           { text: 'Install', link: '/guide/install' },
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'Sending results', link: '/guide/sending-results' },

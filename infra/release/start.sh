@@ -12,6 +12,7 @@
 #   ./start.sh backup [--keep N]   write the database, artifacts and secrets to backups/;
 #                                  --keep N then removes all but the newest N backups
 #   ./start.sh restore FOLDER      check a backup, then replace this install's data with it
+#   ./start.sh doctor              check this machine and this install, and name each fix
 #
 # Settings, read from the environment or from .env:
 #   LUPIN_PROFILE   solo (default: this machine, no login), startup, team or enterprise
@@ -31,7 +32,7 @@ say() { printf '%s\n' "$*"; }
 fail() { printf 'lupin: %s\n' "$*" >&2; exit 1; }
 
 usage() {
-  say "Usage: ./start.sh [--profile solo|startup|team|enterprise] [--remote cloudflare] | stop|status|logs|update [--version X]|uninstall [--purge]|lan-cert|backup [--keep N]|restore FOLDER"
+  say "Usage: ./start.sh [--profile solo|startup|team|enterprise] [--remote cloudflare] | stop|status|logs|update [--version X]|uninstall [--purge]|lan-cert|backup [--keep N]|restore FOLDER|doctor"
 }
 
 # Docker, running, with Compose v2 — each missing piece named, with what to do about it.
@@ -540,6 +541,51 @@ restore() {
   say "Restored $folder. Migrations newer than the backup ran on start."
 }
 
+# Checks this host and this install, one line each, and names the fix for anything wrong.
+# Changes nothing. Exits 1 when something needs fixing, so a script can run it first.
+doctor() {
+  problems=0
+  ok() { say "  ok    $1"; }
+  bad() { say "  FIX   $1"; say "        $2"; problems=$((problems + 1)); }
+  say "Checking this machine for Lupin..."
+  if ! command -v "$DOCKER" >/dev/null 2>&1; then
+    bad "Docker is not installed" "Install Docker Desktop or Docker Engine: https://docs.docker.com/get-docker/"
+  elif ! "$DOCKER" info >/dev/null 2>&1; then
+    bad "Docker is not running" "Start Docker Desktop (or the Docker service), then run this again."
+  elif ! "$DOCKER" compose version >/dev/null 2>&1; then
+    bad "Docker Compose v2 is missing" "Update Docker Desktop, or install the compose plugin."
+  else
+    ok "Docker and Compose v2"
+  fi
+  if [ -f .env ]; then ok ".env with this install's secrets"; else
+    bad "No .env yet" "Run ./start.sh once; it creates one with new random secrets."
+  fi
+  free_kb="$(df -Pk . 2>/dev/null | awk 'NR == 2 { print $4 }')"
+  case "$free_kb" in
+    ''|*[!0-9]*) ok "Disk space (could not be read here)" ;;
+    *) if [ "$free_kb" -lt 5242880 ]; then
+         bad "Less than 5 GB free here" "Free some space: images, the database and artifacts need it."
+       else ok "Disk space: $((free_kb / 1048576)) GB free"; fi ;;
+  esac
+  port="$(setting LUPIN_PORT 8080)"
+  if http_ok "http://127.0.0.1:$port/api/v1/ready"; then
+    ok "Lupin answers at http://127.0.0.1:$port"
+  else
+    bad "Lupin is not answering on port $port" "Run ./start.sh, or ./start.sh logs to see why it stopped."
+  fi
+  newest="$(find backups -mindepth 1 -maxdepth 1 -type d -name 'lupin-[0-9]*T[0-9]*Z' 2>/dev/null | sort | tail -n 1)"
+  if [ -z "$newest" ]; then
+    bad "No backup yet" "Run ./start.sh backup, and schedule it (see Run it for an organisation)."
+  elif [ -n "$(find "$newest" -maxdepth 0 -mtime +7 2>/dev/null)" ]; then
+    bad "The newest backup is over a week old ($newest)" "Run ./start.sh backup."
+  else
+    ok "Backup: $newest"
+  fi
+  if [ "$problems" -eq 0 ]; then say "All good."; return 0; fi
+  say "$problems thing(s) to fix, each with what to do above."
+  return 1
+}
+
 uninstall() {
   require_docker
   [ -f .env ] || : > .env
@@ -566,6 +612,7 @@ case "$command" in
   lan-cert) lan_cert ;;
   backup) backup "$@" ;;
   restore) restore "$@" ;;
+  doctor) doctor ;;
   -h|--help|help) usage ;;
   *) usage; exit 2 ;;
 esac

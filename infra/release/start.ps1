@@ -8,6 +8,7 @@
 #   .\start.cmd logs                 follow the logs
 #   .\start.cmd update [--version X] move to the latest (or a given) release; data is kept
 #   .\start.cmd uninstall [--purge]  remove the containers; --purge also deletes all data
+#   .\start.cmd doctor               check this machine and this install, and name each fix
 #   .\start.cmd backup [--keep N]    write the database, artifacts and secrets to backups\;
 #                                    --keep N then removes all but the newest N backups
 #   .\start.cmd restore FOLDER       check a backup, then replace this install's data with it
@@ -39,7 +40,7 @@ function Fail([string]$Message) {
 }
 
 function Show-Usage {
-  Write-Output 'Usage: .\start.cmd [--profile solo|startup|team|enterprise] [--remote cloudflare] | stop|status|logs|update [--version X]|uninstall [--purge]|lan-cert|backup [--keep N]|restore FOLDER'
+  Write-Output 'Usage: .\start.cmd [--profile solo|startup|team|enterprise] [--remote cloudflare] | stop|status|logs|update [--version X]|uninstall [--purge]|lan-cert|backup [--keep N]|restore FOLDER|doctor'
 }
 
 # Docker, running, with Compose v2 - each missing piece named, with what to do about it.
@@ -594,6 +595,57 @@ function Restore-Lupin([string[]]$Rest) {
   Write-Output "Restored $given. Migrations newer than the backup ran on start."
 }
 
+# Checks this host and this install, one line each, and names the fix for anything wrong.
+# Changes nothing. Exits 1 when something needs fixing, so a script can run it first.
+function Test-Lupin {
+  $problems = 0
+  function Ok([string]$What) { Write-Output "  ok    $What" }
+  function Bad([string]$What, [string]$Fix) {
+    Write-Output "  FIX   $What"
+    Write-Output "        $Fix"
+    $script:doctorProblems += 1
+  }
+  $script:doctorProblems = 0
+  Write-Output 'Checking this machine for Lupin...'
+  if (-not (Get-Command $Docker -ErrorAction SilentlyContinue)) {
+    Bad 'Docker is not installed' 'Install Docker Desktop: https://docs.docker.com/get-docker/'
+  } else {
+    & $Docker info *> $null
+    if ($LASTEXITCODE -ne 0) {
+      Bad 'Docker is not running' 'Start Docker Desktop, then run this again.'
+    } else {
+      & $Docker compose version *> $null
+      if ($LASTEXITCODE -ne 0) { Bad 'Docker Compose v2 is missing' 'Update Docker Desktop.' }
+      else { Ok 'Docker and Compose v2' }
+    }
+  }
+  if (Test-Path -LiteralPath $EnvFile) { Ok ".env with this install's secrets" }
+  else { Bad 'No .env yet' 'Run .\start.cmd once; it creates one with new random secrets.' }
+  try {
+    $drive = (Get-Item -LiteralPath $PSScriptRoot).PSDrive
+    $freeGb = [math]::Floor($drive.Free / 1GB)
+    if ($freeGb -lt 5) { Bad 'Less than 5 GB free here' 'Free some space: images, the database and artifacts need it.' }
+    else { Ok "Disk space: $freeGb GB free" }
+  } catch { Ok 'Disk space (could not be read here)' }
+  $port = Get-Setting 'LUPIN_PORT' '8080'
+  $answers = $false
+  try {
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:$port/api/v1/ready" -UseBasicParsing -TimeoutSec 5
+    $answers = $response.StatusCode -eq 200
+  } catch { }
+  if ($answers) { Ok "Lupin answers at http://127.0.0.1:$port" }
+  else { Bad "Lupin is not answering on port $port" "Run .\start.cmd, or .\start.cmd logs to see why it stopped." }
+  $newest = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'backups') -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match '^lupin-\d+T\d+Z$' } | Sort-Object Name | Select-Object -Last 1
+  if ($null -eq $newest) { Bad 'No backup yet' 'Run .\start.cmd backup, and schedule it.' }
+  elseif ($newest.LastWriteTime -lt (Get-Date).AddDays(-7)) { Bad "The newest backup is over a week old ($($newest.Name))" 'Run .\start.cmd backup.' }
+  else { Ok "Backup: backups\$($newest.Name)" }
+  $problems = $script:doctorProblems
+  if ($problems -eq 0) { Write-Output 'All good.'; return }
+  Write-Output "$problems thing(s) to fix, each with what to do above."
+  exit 1
+}
+
 function Uninstall-Lupin([string[]]$Rest) {
   Assert-Docker
   if (-not (Test-Path -LiteralPath $EnvFile)) { [System.IO.File]::WriteAllText($EnvFile, '') }
@@ -620,6 +672,7 @@ switch ($command) {
   'lan-cert' { New-LanCertificate }
   'backup' { Backup-Lupin $rest }
   'restore' { Restore-Lupin $rest }
+  'doctor' { Test-Lupin }
   { $_ -in 'help', '-h', '--help' } { Show-Usage }
   default { Show-Usage; exit 2 }
 }

@@ -49,6 +49,10 @@
   failing, or runs arrive that no quality gate judges, each with one fix. Home lists them under
   "what needs you" beside failing runs. Backup age is left to the start scripts, which can see
   the backups.
+- **`start doctor`, and Lupin in five minutes (task 19).** `./start.sh doctor` and
+  `.\start.cmd doctor` check Docker, `.env`, disk space, whether Lupin answers and how old the
+  newest backup is, one line each with the fix, and change nothing. A new guide goes from the
+  download to a first result in five steps, each with how you know it worked.
 
 ### Fixed
 
