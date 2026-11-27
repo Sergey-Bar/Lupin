@@ -88,6 +88,28 @@ async function openHome(page: Page, projectId: string): Promise<void> {
   await signInAndVisit(page, '/');
 }
 
+/**
+ * Waits for the answer as long as the task's budget allows, no longer, and on a miss records
+ * what the page showed instead, so a red run says what the person saw.
+ */
+async function answerWithin(
+  task: string,
+  page: Page,
+  answer: ReturnType<Page['locator']>,
+  budget: Budget,
+): Promise<void> {
+  try {
+    await expect(answer).toBeVisible({ timeout: budget.ms });
+  } catch (caught) {
+    const main = await page
+      .locator('main')
+      .innerText()
+      .catch(() => '<no main>');
+    saveEvidence('usability', `${task}.missed.json`, { task, url: page.url(), main });
+    throw caught;
+  }
+}
+
 test.describe('the questions a QA person opens Lupin to answer', () => {
   let project: TempProject | undefined;
   test.afterEach(async ({ request }) => {
@@ -109,7 +131,7 @@ test.describe('the questions a QA person opens Lupin to answer', () => {
       .getByRole('region', { name: 'Page content' })
       .getByRole('heading', { level: 2, name: /^(Ready|Caution|No-go|Not measured)$/u })
       .first();
-    await expect(verdict).toBeVisible();
+    await answerWithin('can-we-ship', page, verdict, { actions: 0, ms: 8_000 });
     hold('can-we-ship', person, { actions: 0, ms: 8_000 });
   });
 
@@ -124,7 +146,7 @@ test.describe('the questions a QA person opens Lupin to answer', () => {
     const person = new Person(page);
     await openHome(page, project.id);
     const pulse = page.getByRole('region', { name: 'Quality pulse' });
-    await expect(pulse).toBeVisible();
+    await answerWithin('better-or-worse', page, pulse, { actions: 0, ms: 8_000 });
     // The answer is one of four words, never a blank or a number left to interpret.
     await expect(pulse).toContainText(/^(Better|Worse|Steady|Unknown): /u);
     await expect(pulse).toContainText('against the');

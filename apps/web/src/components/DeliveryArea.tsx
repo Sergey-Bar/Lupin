@@ -1,5 +1,5 @@
 import React from 'react';
-import { Hero } from '@lupin/ui';
+import { Hero, LoadingState } from '@lupin/ui';
 import type { GithubPullItem } from '@lupin/shared-contracts';
 import { AreaPage, type AreaItem } from './AreaPage.js';
 import { areaHero } from '../lib/hero.js';
@@ -108,20 +108,23 @@ export function DeliveryArea({
         </nav>
       }
       verdict={verdict}
-      {...(pulls.status === 'ready' && pulls.value.items.length > 0
-        ? {
-            hero: <DeliveryHero items={items} open={pulls.value.items.length} verdict={verdict} />,
-          }
-        : {})}
+      {...(pulls.status === 'loading'
+        ? // Said once, as a status, in place of a verdict and a list that have nothing to say yet.
+          { hero: <LoadingState label="the open pull requests" /> }
+        : pulls.status === 'ready' && pulls.value.items.length > 0
+          ? {
+              hero: (
+                <DeliveryHero items={items} open={pulls.value.items.length} verdict={verdict} />
+              ),
+            }
+          : {})}
       items={items}
       navigate={navigate}
       clear={
         // Only a read that succeeded can say nothing needs you; a failed or pending one cannot.
         pulls.status === 'ready'
           ? 'No pull request needs you.'
-          : pulls.status === 'loading'
-            ? 'Checking…'
-            : 'Lupin will check again when you reload.'
+          : 'Lupin will check again when you reload.'
       }
       details={details}
     />

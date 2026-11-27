@@ -31,6 +31,14 @@ const pull = {
 } as unknown as GithubPullItem;
 
 describe('DeliveryArea', () => {
+  it('says it is reading while the pull requests load, once and as a status', () => {
+    const listPulls = vi.fn(() => new Promise<{ items: GithubPullItem[] }>(() => undefined));
+    render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Loading the open pull requests');
+    // No placeholder box pretending to be a result while nothing has been read.
+    expect(screen.queryByText('Checking…')).toBeNull();
+  });
+
   it('links to every Delivery page, so none of them is only reachable through a menu', async () => {
     const listPulls = vi.fn(async () => ({ items: [pull], nextCursor: null }));
     render(<DeliveryArea listPulls={listPulls} details={<p>full list</p>} navigate={vi.fn()} />);
