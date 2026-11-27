@@ -61,6 +61,10 @@
   says whether the chosen project got better or worse than the week before and the sign that
   decided it, with what also improved beside a "worse", and "unknown" when there is not enough
   to compare.
+- **Usability as timed tasks (task 18).** `tests/e2e/usability/tasks.spec.ts` asks four
+  questions a QA person opens Lupin for (can we ship, which way is quality going, why did my
+  branch fail, quarantine a broken test) and fails when one takes more clicks or longer than
+  its budget. Each run records what it observed under `test-results/evidence/usability/`.
 
 ### Fixed
 
