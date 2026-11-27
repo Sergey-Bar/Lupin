@@ -55,9 +55,12 @@ RUN node node_modules/@playwright/test/cli.js install --with-deps chromium firef
 # The spool and the job workspaces, created here owned by `node` so the named volumes the
 # compose file mounts on them start owned by `node` too (Docker copies a mount point's owner
 # into a new volume). The root filesystem is read-only in the stack, so these are the places
-# the runner writes. A separate layer, so changing it does not reinstall the browsers.
+# the runner writes. A separate layer, so changing it does not reinstall the browsers. The spool
+# is 0700 because `EncryptedSpool` refuses a directory another account can read, and Docker
+# copies the mount point's mode into the volume as well as its owner.
 RUN mkdir -p /var/lib/lupin/spool /var/lib/lupin/work/home \
-  && chown -R node:node /var/lib/lupin/spool /var/lib/lupin/work
+  && chown -R node:node /var/lib/lupin/spool /var/lib/lupin/work \
+  && chmod 0700 /var/lib/lupin/spool
 ENV NODE_ENV=production
 # This image carries Playwright's browsers, Bruno and k6, so it advertises all of them; a runner started
 # anywhere else keeps the config default and never claims a job whose tool it lacks.
