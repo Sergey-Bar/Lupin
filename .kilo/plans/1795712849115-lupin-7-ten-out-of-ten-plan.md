@@ -117,3 +117,17 @@ moves the tier.
 ## Progress
 
 Recorded per task in the commit that completes it; `pnpm scorecard` is the current reading.
+
+Reading on 2026-11-27: infra 10, integrations 10, backend 9, frontend 8, ux 8, setup 10.
+
+- **Done:** tasks 1-19. Tasks 15 (pulse on Home), 17 (shared states, bundle budget) and 18
+  (timed usability tasks) closed this session, and the execution store left its coverage
+  exclusion, which found and fixed MNT-208.
+- **Blocked outside the code:** PostgreSQL 18 (DEP-5), Node 26 (RUNTIME-1), the ZAP scan
+  (BK-2), app mutation scores (MNT-205), Home's rendering ceiling (PERF-2). Each needs a run on
+  the reference install or a host carrying the tool.
+- **Open, and each a large change of its own:**
+  - `frontend.complexity`: a ceiling of 10 puts 133 functions in 108 files over it.
+  - `backend.no-mock-capability`: nine register rows are still `mock`.
+  - `ux.route-states`: UI-1 condition (b), a loading/empty/error/partial test per route.
+- **Task 20 not done:** the scorecard stays `pr-reporting` until it is all-pass.
