@@ -72,6 +72,7 @@ export * from './github.js';
 export * from './pagination.js';
 export * from './run-analysis.js';
 export * from './quality-pulse.js';
+export * from './self-checks.js';
 export * from './ai-code.js';
 export * from './agent-quality.js';
 export * from './issue-tracking.js';

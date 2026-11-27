@@ -9,7 +9,7 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                   |
 | ------------ | ----- | ------------------------------------------------------------------------- |
-| **real**     | 90    | implemented and exercised, with the stated qualification.                 |
+| **real**     | 91    | implemented and exercised, with the stated qualification.                 |
 | **mock**     | 9     | a route, response, or UI exists but does not provide the target behavior. |
 | **missing**  | 1     | no usable implementation exists in the target.                            |
 | **deferred** | 5     | intentionally outside the launch scope pending a separate decision.       |
@@ -21,6 +21,7 @@ its source, then run `pnpm site:generate`.
 | Capability                                                                                          | Status     |
 | --------------------------------------------------------------------------------------------------- | ---------- |
 | Prometheus metrics endpoint                                                                         | `real`     |
+| The install noticing its own faults                                                                 | `real`     |
 | The API's request traces over OTLP (enterprise)                                                     | `real`     |
 | Retry-safe create requests (`Idempotency-Key`)                                                      | `real`     |
 | Reporter lifecycle ingestion                                                                        | `real`     |

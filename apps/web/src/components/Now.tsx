@@ -9,7 +9,12 @@ import {
   Skeleton,
   StatusDot,
 } from '@lupin/ui';
-import type { DeliverySummary, GithubPullItem, Portfolio } from '@lupin/shared-contracts';
+import type {
+  DeliverySummary,
+  GithubPullItem,
+  Portfolio,
+  SelfCheckItemContract,
+} from '@lupin/shared-contracts';
 import type { Run } from '../lib/api.js';
 import { isNew, rankAttention, retryLabel, type AttentionItem } from '../lib/attention.js';
 import { ago } from '../lib/health-view.js';
@@ -31,6 +36,8 @@ export interface NowSources {
   deliveries: () => Promise<DeliverySummary[]>;
   /** Open pull requests; absent or failing (GitHub not connected) simply adds nothing. */
   pulls?: () => Promise<GithubPullItem[]>;
+  /** What the install noticed about itself; absent or failing adds nothing. */
+  selfChecks?: () => Promise<SelfCheckItemContract[]>;
   /**
    * One-click retry. `failed` runs only the tests that broke; `all` repeats the run. Absent,
    * the page offers only the manual action.
@@ -63,11 +70,13 @@ async function readAttention(sources: NowSources, now: Date): Promise<Ready> {
     settle(sources.deliveries),
   ]);
   const pulls = sources.pulls === undefined ? null : await settle(sources.pulls);
+  const selfChecks = sources.selfChecks === undefined ? null : await settle(sources.selfChecks);
   const ranked = rankAttention({
     runs: runs ?? [],
     portfolio,
     deliveries: deliveries ?? [],
     pulls: pulls ?? [],
+    selfChecks: selfChecks ?? [],
     now,
   });
   return {

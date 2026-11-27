@@ -65,6 +65,25 @@ export function metered<A extends ConnectorAdapter>(adapter: A): A {
   return Object.assign(Object.create(adapter) as A, wrapped);
 }
 
+/**
+ * What this process observed, for the self-checks: the newest heartbeat and reporter event,
+ * and each connector's calls and failures. `null` means none since the process started.
+ */
+export function operatorSnapshot(): {
+  lastHeartbeatAt: string | null;
+  lastReporterEventAt: string | null;
+  connectors: Record<string, { calls: number; failures: number }>;
+} {
+  const iso = (at: number | undefined) => (at === undefined ? null : new Date(at).toISOString());
+  return {
+    lastHeartbeatAt: iso(lastHeartbeatAt),
+    lastReporterEventAt: iso(lastReporterEventAt),
+    connectors: Object.fromEntries(
+      [...connectorCalls].map(([name, counts]) => [name, { ...counts }]),
+    ),
+  };
+}
+
 /** For tests: forget everything recorded. */
 export function resetOperatorMetrics(): void {
   lastHeartbeatAt = undefined;

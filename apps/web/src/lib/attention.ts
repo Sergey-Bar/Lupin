@@ -1,4 +1,9 @@
-import type { DeliverySummary, GithubPullItem, Portfolio } from '@lupin/shared-contracts';
+import type {
+  DeliverySummary,
+  GithubPullItem,
+  Portfolio,
+  SelfCheckItemContract,
+} from '@lupin/shared-contracts';
 import type { Run } from './api.js';
 import { RISK_WORD, pullRequestRiskPath, riskyPull } from './change-risk.js';
 
@@ -153,6 +158,11 @@ export interface AttentionInput {
   deliveries: readonly DeliverySummary[];
   /** Open pull requests, when GitHub is connected. */
   pulls?: readonly GithubPullItem[];
+  /**
+   * What the install noticed about itself (plan 1795712849115 task 16): a runner offline, results
+   * gone quiet, a connector failing. Already one fix each, so they rank beside everything else.
+   */
+  selfChecks?: readonly SelfCheckItemContract[];
   now: Date;
 }
 
@@ -163,6 +173,14 @@ export function rankAttention(input: AttentionInput): { items: AttentionItem[]; 
     ...portfolioItems(input.portfolio),
     ...deliveryItems(input.deliveries),
     ...pullItems(input.pulls ?? []),
+    ...(input.selfChecks ?? []).map((check) => ({
+      id: check.id,
+      severity: check.severity,
+      title: check.title,
+      detail: check.detail,
+      action: check.fix,
+      at: check.at,
+    })),
   ].sort((a, b) =>
     a.severity === b.severity ? b.at.localeCompare(a.at) : a.severity === 'bad' ? -1 : 1,
   );

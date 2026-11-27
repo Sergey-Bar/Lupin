@@ -44,6 +44,11 @@
   AI-written change over time (its change failure rate, revert rate and the coverage of its
   lines). One regression makes it "worse" whatever else improved, and the improvements are
   listed beside it; with nothing to compare it is "unknown", never "steady".
+- **The install notices its own faults (task 16).** `GET /api/v1/self-checks` says when a runner
+  is offline while work is queued, test results have gone quiet for two days, a connector keeps
+  failing, or runs arrive that no quality gate judges, each with one fix. Home lists them under
+  "what needs you" beside failing runs. Backup age is left to the start scripts, which can see
+  the backups.
 
 ### Fixed
 

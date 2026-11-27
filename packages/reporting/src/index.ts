@@ -12,6 +12,7 @@ export * from './diff-coverage.js';
 export * from './failure-clusters.js';
 export * from './run-analysis.js';
 export * from './quality-pulse.js';
+export * from './self-checks.js';
 export * from './flake-cost.js';
 export * from './shard-plan.js';
 export * from './dora.js';

@@ -1,3 +1,4 @@
+import { resetOperatorMetrics } from '../observability/operator-metrics.js';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1731,5 +1732,31 @@ describe('a run’s tests and artifacts carry the run’s own workspace', () => 
     expect(await h.otherStore.listArtifacts(h.otherWorkspaceId, seeded.runId)).toEqual([]);
     expect(await h.otherStore.getArtifact(seeded.artifactId, h.otherWorkspaceId)).toBeNull();
     expect(await h.store.getArtifact(seeded.artifactId, h.workspaceId)).not.toBeNull();
+  });
+});
+
+describe('GET /api/v1/self-checks (plan 1795712849115 task 16)', () => {
+  it('is quiet on a fresh install, and says a runner is missing once work is queued', async () => {
+    resetOperatorMetrics();
+    const h = await workspaceHarness();
+    const quiet = (await (await h.app.request('/api/v1/self-checks')).json()) as {
+      items: Array<{ id: string; fix: { to: string } }>;
+    };
+    expect(quiet.items).toEqual([]);
+
+    const created = await h.app.request('/api/v1/runs', {
+      method: 'POST',
+      headers: { ...JSON_HEADERS, 'idempotency-key': 'self-check-run' },
+      body: JSON.stringify({ projectId: h.projectId, requiredCapabilities: ['playwright'] }),
+    });
+    expect(created.status).toBe(202);
+    const noticed = (await (await h.app.request('/api/v1/self-checks')).json()) as {
+      items: Array<{ id: string; title: string; fix: { to: string } }>;
+    };
+    expect(noticed.items[0]).toMatchObject({
+      id: 'self-runner-offline',
+      title: 'No runner has connected',
+      fix: { to: '/dashboard/runner' },
+    });
   });
 });

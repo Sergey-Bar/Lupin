@@ -2001,6 +2001,14 @@
         "responses": { "default": { "description": "Defined by the route handler." } }
       }
     },
+    "/api/v1/self-checks": {
+      "get": {
+        "operationId": "getApiV1SelfChecks",
+        "tags": ["self-checks"],
+        "x-source": "apps/api/src/routes/execution/self-checks.routes.ts",
+        "responses": { "default": { "description": "Defined by the route handler." } }
+      }
+    },
     "/api/v1/settings": {
       "get": {
         "operationId": "getApiV1Settings",
