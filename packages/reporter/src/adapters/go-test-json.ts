@@ -56,57 +56,89 @@ function testOf(run: Running, rawStatus: string, elapsed: unknown, log: string):
   };
 }
 
+/** Reads test2json events in order, keeping what each running test has logged so far. */
+class GoEventReader {
+  readonly running = new Map<string, Running>();
+  readonly packageLog = new Map<string, string>();
+  readonly tests: TestInput[] = [];
+  readonly errors: { message: string }[] = [];
+  events = 0;
+
+  /** One line of output; a line that is not a JSON object is skipped, as test2json's consumers do. */
+  line(line: string): void {
+    if (line.trim() === '') return;
+    let event: ReturnType<typeof record>;
+    try {
+      event = record(JSON.parse(line) as unknown);
+    } catch {
+      // `go test -json` interleaves the odd non-JSON line (a build tool's own output).
+      return;
+    }
+    if (event === null) return;
+    this.events += 1;
+    const action = textOf(event['Action']);
+    const pkg = textOf(event['Package']);
+    const name = textOf(event['Test']);
+    const output = typeof event['Output'] === 'string' ? event['Output'] : '';
+    if (name === '') this.packageEvent(action, pkg, output);
+    else this.testEvent(event, action, pkg, name, output);
+  }
+
+  /** A package's own output, and a package that failed with no test in it (a build error). */
+  private packageEvent(action: string, pkg: string, output: string): void {
+    if (action === 'output') this.packageLog.set(pkg, `${this.packageLog.get(pkg) ?? ''}${output}`);
+    if (action !== 'fail' || [...this.running.values()].some((run) => run.pkg === pkg)) return;
+    if (this.tests.some((test) => test.file === relativePath(pkg))) return;
+    this.errors.push({ message: `${pkg}: ${(this.packageLog.get(pkg) ?? '').trim()}` });
+  }
+
+  private testEvent(
+    event: Record<string, unknown>,
+    action: string,
+    pkg: string,
+    name: string,
+    output: string,
+  ): void {
+    const id = key(pkg, name);
+    if (action === 'run') {
+      const time = textOf(event['Time']);
+      this.running.set(id, { pkg, name, log: '', ...(time === '' ? {} : { startedAt: time }) });
+      return;
+    }
+    if (action === 'output') {
+      const run = this.running.get(id);
+      if (run !== undefined) run.log += output;
+      return;
+    }
+    if (!TERMINAL.has(action)) return;
+    const run = this.running.get(id) ?? { pkg, name, log: '' };
+    this.running.delete(id);
+    this.tests.push(testOf(run, action, event['Elapsed'], run.log));
+  }
+
+  /** A test that started and never ended is a failure, with its package's output as the reason. */
+  unfinished(): void {
+    for (const run of this.running.values()) {
+      const why =
+        (this.packageLog.get(run.pkg) ?? '').trim() || 'the test started and never finished';
+      this.tests.push(testOf(run, 'fail', undefined, `${run.log}${why}`));
+    }
+  }
+}
+
 export const goTestJsonAdapter: ProducerAdapter = {
   mediaType: 'application/vnd.go-test+json',
   parse(input, context) {
-    const lines = new TextDecoder().decode(input).split(/\r?\n/u);
-    const running = new Map<string, Running>();
-    const packageLog = new Map<string, string>();
-    const tests: TestInput[] = [];
-    const errors: { message: string }[] = [];
-    let events = 0;
-    for (const line of lines) {
-      if (line.trim() === '') continue;
-      let event: ReturnType<typeof record>;
-      try {
-        event = record(JSON.parse(line) as unknown);
-      } catch {
-        // `go test -json` interleaves the odd non-JSON line (a build tool's own output);
-        // skipping it is what `test2json`'s own consumers do.
-        continue;
-      }
-      if (event === null) continue;
-      events += 1;
-      const action = textOf(event['Action']);
-      const pkg = textOf(event['Package']);
-      const name = textOf(event['Test']);
-      const output = typeof event['Output'] === 'string' ? event['Output'] : '';
-      if (name === '') {
-        if (action === 'output') packageLog.set(pkg, `${packageLog.get(pkg) ?? ''}${output}`);
-        if (action === 'fail' && ![...running.values()].some((run) => run.pkg === pkg)) {
-          const hadTests = tests.some((test) => test.file === relativePath(pkg));
-          if (!hadTests) errors.push({ message: `${pkg}: ${(packageLog.get(pkg) ?? '').trim()}` });
-        }
-        continue;
-      }
-      const id = key(pkg, name);
-      if (action === 'run') {
-        const time = textOf(event['Time']);
-        running.set(id, { pkg, name, log: '', ...(time === '' ? {} : { startedAt: time }) });
-      } else if (action === 'output') {
-        const run = running.get(id);
-        if (run !== undefined) run.log += output;
-      } else if (TERMINAL.has(action)) {
-        const run = running.get(id) ?? { pkg, name, log: '' };
-        running.delete(id);
-        tests.push(testOf(run, action, event['Elapsed'], run.log));
-      }
-    }
-    if (events === 0) throw new Error(`${LABEL} has no JSON events`);
-    for (const run of running.values()) {
-      const why = (packageLog.get(run.pkg) ?? '').trim() || 'the test started and never finished';
-      tests.push(testOf(run, 'fail', undefined, `${run.log}${why}`));
-    }
-    return testResultsRun(tests, 'go', 'packages/reporter go-test-json', context, errors);
+    const reader = new GoEventReader();
+    for (const line of new TextDecoder().decode(input).split(/\r?\n/u)) reader.line(line);
+    if (reader.events === 0) throw new Error(`${LABEL} has no JSON events`);
+    reader.unfinished();
+    return testResultsRun(
+      reader.tests,
+      'go',
+      'packages/reporter go-test-json',
+      context,
+      reader.errors,
+    );
   },
 };

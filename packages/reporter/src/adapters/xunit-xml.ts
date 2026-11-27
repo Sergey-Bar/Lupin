@@ -1,6 +1,12 @@
 import type { ProducerAdapter } from '../adapter.js';
 import { relativePath, statusOf, testResultsRun, type TestInput } from './test-results-json.js';
-import { childrenNamed, descendantsNamed, parseXmlTree, textAt } from './xml-tree.js';
+import {
+  childrenNamed,
+  descendantsNamed,
+  parseXmlTree,
+  textAt,
+  type XmlElement,
+} from './xml-tree.js';
 
 /**
  * xUnit.net v2 XML (`dotnet test --logger "xunit"`, or the console runner's `-xml`)
@@ -15,55 +21,70 @@ import { childrenNamed, descendantsNamed, parseXmlTree, textAt } from './xml-tre
 
 const LABEL = 'xUnit.net report';
 
+/** The assemblies a report holds: a root `<assemblies>`, a bare `<assembly>`, or none. */
+function assembliesOf(root: XmlElement): XmlElement[] | null {
+  if (root.name === 'assemblies') return childrenNamed(root, 'assembly');
+  return root.name === 'assembly' ? [root] : null;
+}
+
+/** The assembly's file name, without the build directory it was run from. */
+function fileOf(assembly: XmlElement): string {
+  const file = (assembly.attributes['name'] ?? '').replaceAll('\\', '/').split('/').at(-1) ?? '';
+  return relativePath(file === '' ? 'unknown.dll' : file);
+}
+
+/** Seconds as a duration, when the report gave a usable number. */
+function durationOf(raw: string | undefined): { durationMs?: number } {
+  const seconds = Number(raw);
+  return Number.isFinite(seconds) && seconds >= 0 ? { durationMs: Math.round(seconds * 1000) } : {};
+}
+
+function testOf(test: XmlElement, file: string): TestInput | null {
+  const title = (test.attributes['name'] ?? '').trim();
+  if (title === '') return null;
+  const rawStatus = (test.attributes['result'] ?? '').trim();
+  const type = (test.attributes['type'] ?? '').trim();
+  const message = [
+    textAt(test, ['failure', 'message']),
+    textAt(test, ['failure', 'stack-trace']),
+    textAt(test, ['reason']),
+  ]
+    .filter((part) => part !== '')
+    .join('\n');
+  return {
+    file,
+    describePath: type === '' ? [] : type.split('.'),
+    title,
+    attempts: [
+      {
+        rawStatus,
+        status: statusOf('xunit', rawStatus),
+        ...durationOf(test.attributes['time']),
+        message,
+      },
+    ],
+  };
+}
+
+function errorOf(error: XmlElement): { message: string } {
+  const name = error.attributes['name'] ?? error.attributes['type'] ?? 'error';
+  return { message: `${name}: ${textAt(error, ['failure', 'message'])}` };
+}
+
 export const xunitXmlAdapter: ProducerAdapter = {
   mediaType: 'application/vnd.xunit+xml',
   parse(input, context) {
-    const root = parseXmlTree(input, LABEL);
-    const assemblies =
-      root.name === 'assemblies'
-        ? childrenNamed(root, 'assembly')
-        : root.name === 'assembly'
-          ? [root]
-          : null;
+    const assemblies = assembliesOf(parseXmlTree(input, LABEL));
     if (assemblies === null) throw new Error(`${LABEL} has no <assemblies> root element`);
     const tests: TestInput[] = [];
     const errors: { message: string }[] = [];
     for (const assembly of assemblies) {
-      const file =
-        (assembly.attributes['name'] ?? '').replaceAll('\\', '/').split('/').at(-1) ?? '';
+      const file = fileOf(assembly);
       for (const test of descendantsNamed(assembly, 'test')) {
-        const title = (test.attributes['name'] ?? '').trim();
-        if (title === '') continue;
-        const rawStatus = (test.attributes['result'] ?? '').trim();
-        const seconds = Number(test.attributes['time']);
-        const type = (test.attributes['type'] ?? '').trim();
-        const message = [
-          textAt(test, ['failure', 'message']),
-          textAt(test, ['failure', 'stack-trace']),
-          textAt(test, ['reason']),
-        ]
-          .filter((part) => part !== '')
-          .join('\n');
-        tests.push({
-          file: relativePath(file === '' ? 'unknown.dll' : file),
-          describePath: type === '' ? [] : type.split('.'),
-          title,
-          attempts: [
-            {
-              rawStatus,
-              status: statusOf('xunit', rawStatus),
-              ...(Number.isFinite(seconds) && seconds >= 0
-                ? { durationMs: Math.round(seconds * 1000) }
-                : {}),
-              message,
-            },
-          ],
-        });
+        const read = testOf(test, file);
+        if (read !== null) tests.push(read);
       }
-      for (const error of descendantsNamed(assembly, 'error')) {
-        const name = error.attributes['name'] ?? error.attributes['type'] ?? 'error';
-        errors.push({ message: `${name}: ${textAt(error, ['failure', 'message'])}` });
-      }
+      errors.push(...descendantsNamed(assembly, 'error').map(errorOf));
     }
     return testResultsRun(tests, 'xunit', 'packages/reporter xunit-xml', context, errors);
   },

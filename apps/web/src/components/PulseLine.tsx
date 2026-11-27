@@ -10,6 +10,17 @@ const DOT: Record<PulseDirection, DotStatus> = {
   unknown: 'unknown',
 };
 
+/** The pulse on Home, or nothing when the page was given no pulse to read. */
+export function HomePulse({
+  source,
+  projectId,
+}: {
+  source: React.ComponentProps<typeof PulseLine>['load'] | undefined;
+  projectId: string | undefined;
+}): React.ReactElement | null {
+  return source === undefined ? null : <PulseLine load={source} projectId={projectId} />;
+}
+
 /**
  * The quality pulse on Home (plan 1795712849115 task 15): did this project's quality get better
  * or worse since the window before, and the one sign that decided it.

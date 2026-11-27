@@ -34,7 +34,7 @@ import { ReadFailed } from './ReadFailed.js';
 import { RiskSection } from './CockpitRisks.js';
 import { HomeSignoff, type SignoffSource } from './ReleaseSignoff.js';
 import { DailyBars } from './DailyBars.js';
-import { PulseLine } from './PulseLine.js';
+import { HomePulse, PulseLine } from './PulseLine.js';
 
 /**
  * The cockpit: is the product better or worse than it was, and why.
@@ -153,9 +153,7 @@ export function CockpitPage({
             navigate={navigate}
           />
         )}
-        {sources.pulse === undefined ? null : (
-          <PulseLine load={sources.pulse} projectId={projectId} />
-        )}
+        <HomePulse source={sources.pulse} projectId={projectId} />
         <HomeSignoff source={sources.signoff} projectId={projectId} />
         {view === 'release' ? null : (
           <AttentionSection

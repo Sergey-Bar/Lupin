@@ -18,6 +18,51 @@ import { childNamed, parseXmlTree, textAt, type XmlElement } from './xml-tree.js
 
 const LABEL = 'NUnit 3 report';
 
+/** Seconds as a duration, when the report gave a usable number. */
+function durationOf(raw: string | undefined): { durationMs?: number } {
+  const seconds = Number(raw);
+  return Number.isFinite(seconds) && seconds >= 0 ? { durationMs: Math.round(seconds * 1000) } : {};
+}
+
+function caseOf(child: XmlElement, assembly: string, path: readonly string[]): TestInput | null {
+  const title = (child.attributes['name'] ?? '').trim();
+  if (title === '') return null;
+  const rawStatus = (child.attributes['result'] ?? '').trim();
+  const started = Date.parse(child.attributes['start-time'] ?? '');
+  const message = [
+    textAt(child, ['failure', 'message']),
+    textAt(child, ['failure', 'stack-trace']),
+    textAt(child, ['reason', 'message']),
+  ]
+    .filter((part) => part !== '')
+    .join('\n');
+  return {
+    file: relativePath(assembly === '' ? 'unknown.dll' : assembly),
+    describePath: [...path],
+    title,
+    attempts: [
+      {
+        rawStatus,
+        status: statusOf('nunit', rawStatus),
+        ...durationOf(child.attributes['duration']),
+        ...(Number.isFinite(started) ? { startedAt: new Date(started).toISOString() } : {}),
+        message,
+      },
+    ],
+  };
+}
+
+/** A suite resets the file when it is an assembly, and otherwise adds its name to the path. */
+function suiteScope(
+  suite: XmlElement,
+  assembly: string,
+  path: readonly string[],
+): { assembly: string; path: readonly string[] } {
+  const name = (suite.attributes['name'] ?? '').trim();
+  if ((suite.attributes['type'] ?? '') === 'Assembly') return { assembly: name, path: [] };
+  return { assembly, path: name === '' ? path : [...path, name] };
+}
+
 function casesUnder(
   node: XmlElement,
   assembly: string,
@@ -26,39 +71,11 @@ function casesUnder(
 ): void {
   for (const child of node.children) {
     if (child.name === 'test-suite') {
-      const type = child.attributes['type'] ?? '';
-      const name = (child.attributes['name'] ?? '').trim();
-      if (type === 'Assembly') casesUnder(child, name, [], out);
-      else casesUnder(child, assembly, name === '' ? path : [...path, name], out);
+      const scope = suiteScope(child, assembly, path);
+      casesUnder(child, scope.assembly, scope.path, out);
     } else if (child.name === 'test-case') {
-      const title = (child.attributes['name'] ?? '').trim();
-      if (title === '') continue;
-      const rawStatus = (child.attributes['result'] ?? '').trim();
-      const started = Date.parse(child.attributes['start-time'] ?? '');
-      const seconds = Number(child.attributes['duration']);
-      const message = [
-        textAt(child, ['failure', 'message']),
-        textAt(child, ['failure', 'stack-trace']),
-        textAt(child, ['reason', 'message']),
-      ]
-        .filter((part) => part !== '')
-        .join('\n');
-      out.push({
-        file: relativePath(assembly === '' ? 'unknown.dll' : assembly),
-        describePath: [...path],
-        title,
-        attempts: [
-          {
-            rawStatus,
-            status: statusOf('nunit', rawStatus),
-            ...(Number.isFinite(seconds) && seconds >= 0
-              ? { durationMs: Math.round(seconds * 1000) }
-              : {}),
-            ...(Number.isFinite(started) ? { startedAt: new Date(started).toISOString() } : {}),
-            message,
-          },
-        ],
-      });
+      const read = caseOf(child, assembly, path);
+      if (read !== null) out.push(read);
     }
   }
 }
