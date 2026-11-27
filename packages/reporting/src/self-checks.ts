@@ -138,6 +138,8 @@ function ungated(facts: SelfCheckFacts): SelfCheckItem[] {
   ];
 }
 
+const SEVERITY_RANK: Record<SelfCheckItem['severity'], number> = { bad: 0, caution: 1 };
+
 /** Every check, worst first. */
 export function selfChecks(facts: SelfCheckFacts): SelfCheckItem[] {
   return [
@@ -146,5 +148,5 @@ export function selfChecks(facts: SelfCheckFacts): SelfCheckItem[] {
     ...failingConnectors(facts),
     ...ungated(facts),
     ...staleBackup(facts),
-  ].sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'bad' ? -1 : 1));
+  ].sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
 }

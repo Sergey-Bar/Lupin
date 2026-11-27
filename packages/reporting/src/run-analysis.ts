@@ -42,7 +42,8 @@ const ref = (test: AnalysedTest) => ({ key: test.key, title: test.title });
 
 /** Code points that end or hide a line: C0 and C1 controls, DEL, and the two Unicode breaks. */
 function isControl(char: string): boolean {
-  const code = char.codePointAt(0) ?? 0;
+  // A UTF-16 unit is enough: every code point tested below is in the Basic Multilingual Plane.
+  const code = char.charCodeAt(0);
   return code < 0x20 || (code >= 0x7f && code <= 0x9f) || code === 0x2028 || code === 0x2029;
 }
 

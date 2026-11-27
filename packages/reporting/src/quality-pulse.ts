@@ -176,6 +176,8 @@ interface Scored {
   vital: PulseVital;
   weight: number;
   order: number;
+  /** What moved, in words; null when the sign could not be compared. */
+  move: { vital: PulseVitalId; text: string } | null;
 }
 
 function confidenceOf(input: PulseInput, compared: number): QualityPulse['confidence'] {
@@ -202,6 +204,7 @@ export function qualityPulse(input: PulseInput): QualityPulse {
     return {
       spec,
       order,
+      move: delta === null ? null : { vital: spec.id, text: phrase(spec, delta) },
       // A gate that changed verdict is categorical news and outranks any numeric move.
       weight:
         delta === null
@@ -236,10 +239,7 @@ export function qualityPulse(input: PulseInput): QualityPulse {
   else direction = 'unknown';
 
   const lead = direction === 'worse' ? worse[0] : direction === 'better' ? better[0] : undefined;
-  const cause =
-    lead === undefined || lead.vital.delta === null
-      ? null
-      : { vital: lead.spec.id, text: phrase(lead.spec, lead.vital.delta) };
+  const cause = lead?.move ?? null;
   const reason =
     cause !== null
       ? cause.text
@@ -256,10 +256,8 @@ export function qualityPulse(input: PulseInput): QualityPulse {
     cause,
     sentence: `${WORD[direction]}: ${reason}.`,
     vitals: scored.map((entry) => entry.vital),
-    alsoMoved: others.flatMap((entry) =>
-      entry.vital.delta === null
-        ? []
-        : [{ vital: entry.spec.id, text: phrase(entry.spec, entry.vital.delta) }],
-    ),
+    alsoMoved: others
+      .map((entry) => entry.move)
+      .filter((move): move is NonNullable<Scored['move']> => move !== null),
   };
 }

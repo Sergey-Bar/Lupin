@@ -69,4 +69,20 @@ describe('selfChecks', () => {
     });
     expect(items.map((item) => item.severity)).toEqual(['bad', 'caution']);
   });
+
+  it('keeps the bad one first among several cautions', () => {
+    const items = selfChecks({
+      now,
+      lastResultAt: ago(3 * DAY),
+      lastBackupAt: null,
+      recentRuns: { total: 5, gated: 0 },
+      lastHeartbeatAt: ago(60 * MIN),
+      queuedJobs: 1,
+    });
+    expect(items.map((item) => item.severity)).toEqual(['bad', 'caution', 'caution', 'caution']);
+  });
+
+  it('says nothing about a time it cannot read, rather than inventing an age', () => {
+    expect(selfChecks({ now, lastResultAt: 'not a date', lastBackupAt: 'yesterday' })).toEqual([]);
+  });
 });

@@ -70,7 +70,10 @@ describe('PULSE-2: missing evidence is never good', () => {
   });
 
   it('the property harness can fail: a pulse that called missing evidence steady is caught', () => {
-    const wrong = { ...qualityPulse(emptyInput()), direction: 'steady' as const };
+    const wrong: ReturnType<typeof qualityPulse> = {
+      ...qualityPulse(emptyInput()),
+      direction: 'steady',
+    };
     const comparable = wrong.vitals.some((vital) => vital.direction !== 'unknown');
     expect(!comparable && wrong.direction !== 'unknown').toBe(true);
   });

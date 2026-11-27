@@ -29315,6 +29315,59 @@
         "required": ["targetUrl"],
         "additionalProperties": false
       },
+      "SelfCheckItemSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "severity": { "type": "string", "enum": ["bad", "caution"] },
+          "title": { "type": "string", "minLength": 1 },
+          "detail": { "type": "string" },
+          "fix": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string", "minLength": 1 },
+              "to": { "type": "string", "format": "starts_with", "pattern": "^\\/.*" }
+            },
+            "required": ["label", "to"],
+            "additionalProperties": false
+          },
+          "at": { "type": "string" }
+        },
+        "required": ["id", "severity", "title", "detail", "fix", "at"],
+        "additionalProperties": false
+      },
+      "SelfChecksSchema": {
+        "type": "object",
+        "properties": {
+          "evaluatedAt": { "type": "string" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "severity": { "type": "string", "enum": ["bad", "caution"] },
+                "title": { "type": "string", "minLength": 1 },
+                "detail": { "type": "string" },
+                "fix": {
+                  "type": "object",
+                  "properties": {
+                    "label": { "type": "string", "minLength": 1 },
+                    "to": { "type": "string", "format": "starts_with", "pattern": "^\\/.*" }
+                  },
+                  "required": ["label", "to"],
+                  "additionalProperties": false
+                },
+                "at": { "type": "string" }
+              },
+              "required": ["id", "severity", "title", "detail", "fix", "at"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["evaluatedAt", "items"],
+        "additionalProperties": false
+      },
       "ServiceHealthStatusSchema": {
         "type": "object",
         "properties": {

@@ -1161,9 +1161,12 @@ describe('GET /api/v1/projects/:id/pulse (plan 1795712849115 task 14)', () => {
   const migratedPulse = migrated;
 
   /** A store whose finished runs are given, so both windows hold verdicts. */
-  function storeOf(runs: unknown[]) {
+  function storeOf(runs: unknown[], asked: string[] = []) {
     return {
-      listRuns: async () => ({ runs, hasMore: false }),
+      listRuns: async (workspaceId: string) => {
+        asked.push(workspaceId);
+        return { runs, hasMore: false };
+      },
     } as unknown as InMemoryExecutionStore;
   }
 
@@ -1249,9 +1252,14 @@ describe('GET /api/v1/projects/:id/pulse (plan 1795712849115 task 14)', () => {
         // Another project's failure is not this project's news.
         finished('someone-else', '2026-10-19T11:00:00.000Z', 'failed', ['x', 'y', 'z', 'w']),
       ];
+      const asked: string[] = [];
       const pulse = QualityPulseSchema.parse(
-        await (await app(db, storeOf(runs)).request(`/api/v1/projects/${id}/pulse?days=7`)).json(),
+        await (
+          await app(db, storeOf(runs, asked)).request(`/api/v1/projects/${id}/pulse?days=7`)
+        ).json(),
       );
+      // The runs are read for this workspace and no other.
+      expect(new Set(asked)).toEqual(new Set(['ws-1']));
       expect(pulse.direction).toBe('worse');
       // A 50-point fall is a hundred times its noise; three new failing tests are three.
       expect(pulse.cause).toEqual({ vital: 'pass-rate', text: 'Pass rate fell 50.0 pts' });
