@@ -57,6 +57,10 @@
   and `ErrorState` in `@lupin/ui` give every page the same wording, live region and retry
   action. `pnpm bundle:budget` fails when the built web bundle grows more than 15% past its
   recorded size, in total or for any one script.
+- **Home says which way quality is going (task 15).** Under the release verdict, one line
+  says whether the chosen project got better or worse than the week before and the sign that
+  decided it, with what also improved beside a "worse", and "unknown" when there is not enough
+  to compare.
 
 ### Fixed
 

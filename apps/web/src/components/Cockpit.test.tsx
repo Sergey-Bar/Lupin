@@ -342,6 +342,38 @@ describe('the home page, as one focus', () => {
     expect(screen.queryByRole('group', { name: 'Compare with' })).toBeNull();
     expect(focus.closest('[data-testid="cockpit-page"]')).not.toBeNull();
   });
+
+  it('says under the verdict whether quality got better or worse, for the chosen project', async () => {
+    const pulse = vi.fn(async (projectId: string | undefined) => ({
+      projectId: projectId ?? '',
+      evaluatedAt: NOW.toISOString(),
+      windowDays: 7,
+      direction: 'worse' as const,
+      confidence: 'high' as const,
+      cause: { vital: 'pass-rate' as const, text: 'Pass rate fell 50.0 pts' },
+      sentence: 'Worse: Pass rate fell 50.0 pts.',
+      vitals: [],
+      alsoMoved: [],
+    }));
+    render(
+      <CockpitPage
+        sources={{ ...sources(), pulse }}
+        navigate={() => undefined}
+        projectId="p1"
+        now={() => NOW}
+      />,
+    );
+    expect(await screen.findByTestId('pulse-line')).toHaveTextContent(
+      'Worse: Pass rate fell 50.0 pts.',
+    );
+    expect(pulse).toHaveBeenCalledWith('p1');
+  });
+
+  it('draws no pulse line when the page has no pulse to read', async () => {
+    showHome();
+    await screen.findByTestId('now-page');
+    expect(screen.queryByTestId('pulse-line')).toBeNull();
+  });
 });
 describe('pace against quality', () => {
   it('loads after the headline and carries every number in a table', async () => {
