@@ -1,0 +1,11 @@
+{
+  "$comment": "Gzipped size of the web bundle (scripts and stylesheets). Ceilings are the reading plus 15%; raise them with `node scripts/bundle-budget.mjs --write`, deliberately.",
+  "measuredOn": "2026-11-27",
+  "observed": {
+    "totalKb": 585,
+    "largestKb": 268,
+    "largest": "assets/index-exUfDWba.js"
+  },
+  "totalKb": 673,
+  "largestKb": 309
+}

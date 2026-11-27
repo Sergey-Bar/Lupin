@@ -79,6 +79,7 @@
     "test:render": "pr-blocking",
     "status:10": "pr-blocking",
     "scorecard": "pr-reporting",
+    "bundle:budget": "pr-blocking",
     "review:pr": "pr-reporting",
     "site:doctor": "pr-reporting",
     "compose:config": "pr-blocking",

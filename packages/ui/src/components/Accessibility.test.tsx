@@ -36,6 +36,8 @@ import {
   DefinitionListTerm,
 } from './DefinitionList/DefinitionList.js';
 import { EmptyState } from './EmptyState/EmptyState.js';
+import { ErrorState } from './ErrorState/ErrorState.js';
+import { LoadingState } from './LoadingState/LoadingState.js';
 import { Grid } from './Grid/Grid.js';
 import { Input } from './Input/Input.js';
 import { Label } from './Label/Label.js';
@@ -196,6 +198,18 @@ const CASES: ReadonlyArray<{ name: string; element: ReactElement }> = [
       </Drawer>
     ),
   },
+  {
+    name: 'ErrorState',
+    element: (
+      <ErrorState
+        title="Could not load the runs"
+        description="The server did not answer. Try again in a moment."
+        detail="HTTP 502"
+        action={<Button>Try again</Button>}
+      />
+    ),
+  },
+  { name: 'LoadingState', element: <LoadingState label="runs" /> },
   {
     name: 'EmptyState',
     element: (
@@ -447,7 +461,7 @@ describe('axe sweep over every shipped component', () => {
   it('covers every component directory that ships a component', () => {
     const shipped = shippedComponentNames();
     const covered = CASES.map((testCase) => testCase.name).sort();
-    expect(shipped.length).toBe(40);
+    expect(shipped.length).toBe(42);
     // Guards the case list below: a missing or extra entry fails here, with the
     // diff, rather than as a silently smaller sweep.
     expect(covered).toEqual(shipped);

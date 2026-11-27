@@ -523,6 +523,9 @@ jobs:
       # is the thing that changes — the command does not.
       - name: Rendering budget
         run: pnpm test:render
+      # The bundle test:render just built, gzipped, against docs/quality/bundle-budget.json.
+      - name: Bundle size budget
+        run: pnpm bundle:budget
 
   security:
     name: Security and license audit

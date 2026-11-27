@@ -3,6 +3,8 @@ export * from './components/Input/Input.js';
 export * from './components/Select/Select.js';
 export * from './components/Toggle/Toggle.js';
 export * from './components/EmptyState/EmptyState.js';
+export * from './components/ErrorState/ErrorState.js';
+export * from './components/LoadingState/LoadingState.js';
 export * from './lib/utils.js';
 export * from './lib/use-sliding-indicator.js';
 /*

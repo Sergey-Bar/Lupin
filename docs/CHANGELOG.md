@@ -53,6 +53,10 @@
   `.\start.cmd doctor` check Docker, `.env`, disk space, whether Lupin answers and how old the
   newest backup is, one line each with the fix, and change nothing. A new guide goes from the
   download to a first result in five steps, each with how you know it worked.
+- **One way to say "loading" and "that failed", and a bundle budget (task 17).** `LoadingState`
+  and `ErrorState` in `@lupin/ui` give every page the same wording, live region and retry
+  action. `pnpm bundle:budget` fails when the built web bundle grows more than 15% past its
+  recorded size, in total or for any one script.
 
 ### Fixed
 
