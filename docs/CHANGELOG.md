@@ -6,6 +6,9 @@
 
 ### Added
 
+- **The complexity ceiling is 10.** No new function may be more complex than 10. The 124 existing
+  functions at 11 or 12 are recorded in `docs/quality/complexity-baseline.json` and are worked down
+  from there; none may get worse and no file may gain one.
 - **The scorecard (plan task 1).** `pnpm scorecard` scores infra, integrations, backend,
   frontend, UX and setup out of ten from `docs/quality/scorecard.json`. The rubric holds
   criteria only; every verdict is derived from the baseline, ledger, register or budget that
