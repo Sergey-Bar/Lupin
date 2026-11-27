@@ -2,7 +2,32 @@ import { createServer, request, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { EventEmitter } from 'node:events';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Lifecycle, closeHttpServer, installShutdownHandlers } from './lifecycle.js';
+import {
+  Lifecycle,
+  closeHttpServer,
+  installShutdownHandlers,
+  keepIdleSockets,
+} from './lifecycle.js';
+
+describe('idle keep-alive sockets', () => {
+  it('outlast a client or proxy that reuses them, so a reused socket is never reset under it', () => {
+    // Node closes an idle keep-alive socket after 5 s. A client that reuses it at that moment
+    // (Playwright's request context after a page load, a proxy pooling upstream connections)
+    // gets ECONNRESET for a request the server never saw.
+    const server = createServer();
+    expect(server.keepAliveTimeout).toBe(5_000);
+    keepIdleSockets(server);
+    expect(server.keepAliveTimeout).toBe(65_000);
+    // Node's own rule: the headers timeout must exceed the keep-alive timeout, or a slow client
+    // on a kept-alive socket is cut off mid-request.
+    expect(server.headersTimeout).toBeGreaterThan(server.keepAliveTimeout);
+  });
+
+  it('leaves a server that is not HTTP/1 alone, and an absent one', () => {
+    expect(() => keepIdleSockets({})).not.toThrow();
+    expect(() => keepIdleSockets(undefined)).not.toThrow();
+  });
+});
 
 describe('the process lifecycle', () => {
   it('closes what it was given in the reverse order it was given it', async () => {

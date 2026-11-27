@@ -160,7 +160,12 @@ import {
 } from './services/failure-cluster-store.js';
 import { readRollupTrend, refreshAllRollups } from './services/trend-rollup-store.js';
 import { sweepAllWorkspaces } from './services/retention-service.js';
-import { Lifecycle, closeHttpServer, installShutdownHandlers } from './bootstrap/lifecycle.js';
+import {
+  Lifecycle,
+  closeHttpServer,
+  installShutdownHandlers,
+  keepIdleSockets,
+} from './bootstrap/lifecycle.js';
 // T18: dashboard module — runs detail, tests listing, analytics, quarantine, quality gates
 import { createDashboardModule } from './modules/dashboard/index.js';
 import {
@@ -1851,6 +1856,7 @@ if (runtimeConfig.nodeEnv !== 'test') {
       console.info(`lupin-api listening on http://${runtimeConfig.host}:${info.port}`);
     },
   );
+  keepIdleSockets(server as unknown as Parameters<typeof keepIdleSockets>[0]);
   // Closed in the reverse of this order: the server stops taking requests, then the sweep stops,
   // and the pool goes last so nothing is mid-query when its connections are taken away.
   const lifecycle = new Lifecycle((name, error) => {
