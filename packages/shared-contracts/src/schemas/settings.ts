@@ -84,7 +84,7 @@ export const SETTINGS: readonly SettingDefinition[] = [
     envVar: 'KILO_GATEWAY_URL',
     secret: false,
     label: 'Gateway address',
-    help: 'The OpenAI-compatible gateway Lupin sends chat and test proposals to. Needs an API key too.',
+    help: 'The OpenAI-compatible gateway Lupin sends narration, briefings and test proposals to. Needs an API key too.',
     apply: 'live',
     schema: httpsOrHttpUrl,
   }),
@@ -111,6 +111,18 @@ export const SETTINGS: readonly SettingDefinition[] = [
     help: 'A local Ollama server to use instead of a gateway, so no prompt leaves this network.',
     apply: 'live',
     schema: httpsOrHttpUrl,
+  }),
+  define({
+    key: 'ai.model',
+    scope: 'install',
+    group: 'ai',
+    kind: 'text',
+    envVar: 'LUPIN_AI_MODEL',
+    secret: false,
+    label: 'Model',
+    help: 'The model Lupin uses for narration, briefings and test proposals, by its id at the provider. Empty uses the first model the provider lists.',
+    apply: 'live',
+    schema: z.string().trim().min(1).max(200),
   }),
   // Integrations
   define({

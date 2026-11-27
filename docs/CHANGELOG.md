@@ -6,6 +6,9 @@
 
 ### Added
 
+- **Choose the AI model.** Settings → AI provider has a Model field that suggests the models the
+  provider lists; narration, briefings and test proposals all use the one chosen, instead of
+  whichever the provider happened to list first. `LUPIN_AI_MODEL` sets it from the environment.
 - **The scorecard (plan task 1).** `pnpm scorecard` scores infra, integrations, backend,
   frontend, UX and setup out of ten from `docs/quality/scorecard.json`. The rubric holds
   criteria only; every verdict is derived from the baseline, ledger, register or budget that

@@ -204,6 +204,39 @@ describe('installation settings pages', () => {
     },
   );
 
+  it('offers the models the provider lists for the model field', async () => {
+    const listModelIds = vi.fn(async () => ['llama3.1:8b', 'qwen2.5-coder:7b']);
+    render(
+      <ToastProvider>
+        <AiSettingsPage health={health()} client={settingsClient({ listModelIds })} />
+      </ToastProvider>,
+    );
+    const field = await screen.findByLabelText('Model');
+    await waitFor(() => expect(listModelIds).toHaveBeenCalled());
+    const list = document.getElementById(field.getAttribute('list') ?? '');
+    await waitFor(() =>
+      expect([...(list?.querySelectorAll('option') ?? [])].map((option) => option.value)).toEqual([
+        'llama3.1:8b',
+        'qwen2.5-coder:7b',
+      ]),
+    );
+  });
+
+  it('draws the model field as plain text when the provider cannot be asked', async () => {
+    const listModelIds = vi.fn(async () => {
+      throw new Error('The configured model provider could not be reached');
+    });
+    render(
+      <ToastProvider>
+        <AiSettingsPage health={health()} client={settingsClient({ listModelIds })} />
+      </ToastProvider>,
+    );
+    const field = await screen.findByLabelText('Model');
+    await waitFor(() => expect(listModelIds).toHaveBeenCalled());
+    expect(field).toBeEnabled();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('says the provider powers what exists, and promises no chat', async () => {
     // No screen offers a chat (`automation.chat` is an API with no screen, and conversations are
     // `missing` in the capability register), so the
@@ -214,6 +247,8 @@ describe('installation settings pages', () => {
       </ToastProvider>,
     );
     const page = await screen.findByTestId('settings-ai');
+    // After the form is drawn: checked before it, the fields' own help was never read.
+    await screen.findByLabelText('Gateway address');
     expect(page).toHaveTextContent(/test proposals and evals/u);
     expect(page).not.toHaveTextContent(/chat/iu);
   });

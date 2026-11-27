@@ -16,6 +16,25 @@ const stub = (id: string): AiGateway => ({
 });
 
 describe('the live AI gateway', () => {
+  it('lists the saved model first, so every caller that takes the first model uses it', async () => {
+    const saved: Record<string, string> = { 'ai.ollamaBaseUrl': 'http://a:1' };
+    const two: AiGateway = {
+      ...stub('x'),
+      listModels: async () => [{ id: 'llama3.1:8b' }, { id: 'qwen2.5-coder:7b' }] as never,
+    };
+    const build = vi.fn(() => ({ kind: 'ollama' as const, gateway: two }));
+    const live = createLiveAiGateway(memorySettings(saved), { build });
+    const ids = async () => (await live.gateway.listModels()).map((model) => model.id);
+    expect(await ids()).toEqual(['llama3.1:8b', 'qwen2.5-coder:7b']);
+    saved['ai.model'] = 'qwen2.5-coder:7b';
+    expect(await ids()).toEqual(['qwen2.5-coder:7b', 'llama3.1:8b']);
+    // Choosing a model is not a new provider: the gateway is not rebuilt for it.
+    expect(build).toHaveBeenCalledTimes(1);
+    // A model the provider no longer offers is not invented; the provider's own order stands.
+    saved['ai.model'] = 'gone:1b';
+    expect(await ids()).toEqual(['llama3.1:8b', 'qwen2.5-coder:7b']);
+  });
+
   it('uses a provider saved after startup, without a restart', async () => {
     const saved: Record<string, string> = {};
     const build = vi.fn((env: Parameters<typeof resolveAiGateway>[0]) =>

@@ -92,7 +92,15 @@ export interface SettingsClient {
   identityDraft(values: Record<string, string | number | boolean>): Promise<IdentityDraft>;
   identityDraftStatus(id: string): Promise<IdentityDraftStatus>;
   identityApply(id: string): Promise<void>;
+  /**
+   * The ids of the models the configured provider lists, saved choice first, to suggest for the
+   * model setting. Optional so a screen that never asks needs no stub for it.
+   */
+  listModelIds?(): Promise<string[]>;
 }
+
+/** `GET /api/v1/chat/models`: only the id is read, so a provider's extra fields are its own. */
+const ModelListSchema = z.object({ models: z.array(z.object({ id: z.string().min(1) })) });
 
 export const IdentityDraftSchema = z.object({
   id: z.string(),
@@ -171,6 +179,8 @@ export function createSettingsClient(
 
   return {
     listSettings: async () => (await call('GET', '/api/v1/settings', SettingsListSchema)).settings,
+    listModelIds: async () =>
+      (await call('GET', '/api/v1/chat/models', ModelListSchema)).models.map((model) => model.id),
     putSetting: (name, value) =>
       call('PUT', `/api/v1/settings/${key(name)}`, SettingReadSchema, { value }),
     revertSetting: (name) => call('DELETE', `/api/v1/settings/${key(name)}`, SettingReadSchema),

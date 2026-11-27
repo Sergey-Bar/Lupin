@@ -9,7 +9,7 @@ truth for this page. A capability is not promoted because a page says it is.
 
 | Status       | Count | Meaning                                                                 |
 | ------------ | ----- | ----------------------------------------------------------------------- |
-| **real**     | 96    | implemented and exercised, with the stated qualification.               |
+| **real**     | 97    | implemented and exercised, with the stated qualification.               |
 | **missing**  | 5     | no usable implementation exists in the target.                          |
 | **deferred** | 6     | intentionally outside the launch scope pending a separate decision.     |
 | **obsolete** | 6     | retained only as historical residue and not part of the target product. |
@@ -113,7 +113,8 @@ its source, then run `pnpm site:generate`.
 | `api.run` through the execution pipeline                                                            | `real`     |
 | `load.run` through the execution pipeline                                                           | `real`     |
 | Dynamic Kilo and Ollama model catalog                                                               | `real`     |
-| Persisted model profiles and their approval                                                         | `missing`  |
+| Choosing the model Lupin uses                                                                       | `real`     |
+| Model profiles and their approval                                                                   | `missing`  |
 | GitHub, Jira, and Slack execution                                                                   | `real`     |
 | Version-encrypted vault storage                                                                     | `real`     |
 | Read-only MCP server over Streamable HTTP, and a stdio proxy for editors                            | `real`     |
