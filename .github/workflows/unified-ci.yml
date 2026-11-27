@@ -179,7 +179,10 @@ jobs:
     name: Unit and coverage
     needs: quality
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # The unit tests alone read 19.0, 22.9 and 28.2 min on the last three green runs (main's own
+    # push at 29.4 min in all), and a run at 29.2 min was cancelled at the 30-min ceiling with
+    # nothing failing. A ceiling the suite cannot finish inside is a red check that says nothing.
+    timeout-minutes: 45
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
