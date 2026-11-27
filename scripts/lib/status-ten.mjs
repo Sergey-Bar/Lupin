@@ -442,8 +442,11 @@ function pointFour(ctx) {
     ),
     unchecked(
       'every route has loading, empty, error and partial states',
-      'no state-coverage matrix exists. Naming a matrix as the evidence would be asserting the thing ' +
-        'that is missing; the artefact to build is the matrix itself.',
+      needsRunThen(
+        'pnpm test:e2e',
+        '`tests/e2e/accessibility/routes.spec.ts` forces each manifest route into the four states and ' +
+          'asserts each is said (`expectStateSaid`); deciding it needs a browser and a server.',
+      ),
     ),
   ];
 }

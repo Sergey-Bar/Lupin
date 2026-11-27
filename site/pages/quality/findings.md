@@ -11,9 +11,9 @@ its source, then run `pnpm site:generate`.
 
 | Status           | Rows |
 | ---------------- | ---- |
-| `debt`           | 11   |
+| `debt`           | 10   |
 | `false-positive` | 6    |
-| `fixed`          | 343  |
+| `fixed`          | 344  |
 | `open`           | 7    |
 
 ## Open (7)

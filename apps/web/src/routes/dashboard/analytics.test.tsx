@@ -18,6 +18,8 @@ describe('AnalyticsPage', () => {
 
     render(<AnalyticsPage api={mockApi} />);
     expect(screen.getByTestId('analytics-loading')).toBeInTheDocument();
+    // Said to a screen reader too, not only drawn.
+    expect(screen.getByRole('status')).toHaveTextContent('Loading analytics');
   });
 
   it('renders error state if API fails', async () => {
@@ -30,7 +32,10 @@ describe('AnalyticsPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('analytics-error')).toBeInTheDocument();
     });
-    expect(screen.getByText('Error Loading Analytics')).toBeInTheDocument();
+    // Announced, named, and with the reason kept for whoever needs it.
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Could not load the trends');
+    expect(alert).toHaveTextContent('Failed to fetch');
   });
 
   it('renders analytics data correctly', async () => {
@@ -162,7 +167,7 @@ describe('AnalyticsPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('analytics-empty')).toBeInTheDocument();
     });
-    expect(screen.getByText('No Data')).toBeInTheDocument();
+    expect(screen.getByText('No runs recorded yet')).toBeInTheDocument();
   });
 
   // --- Route callback coverage ---

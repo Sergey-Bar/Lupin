@@ -5,6 +5,8 @@ import { useAnalytics } from '../../hooks/useDashboard.js';
 import { useResource } from '../../hooks/useResource.js';
 import {
   EmptyState,
+  ErrorState,
+  LoadingState,
   Table,
   TableBody,
   TableCell,
@@ -57,9 +59,9 @@ export function AnalyticsPage({ api, qa }: { api?: ApiClient; qa?: QaClient }) {
 
   if (isLoading) {
     return (
-      <PageFrame data-testid="analytics-loading">
+      <PageFrame>
         <PageHeader title="Trends" />
-        <Quiet>Loading analytics...</Quiet>
+        <LoadingState data-testid="analytics-loading" label="analytics" />
       </PageFrame>
     );
   }
@@ -68,11 +70,11 @@ export function AnalyticsPage({ api, qa }: { api?: ApiClient; qa?: QaClient }) {
     return (
       <PageFrame>
         <PageHeader title="Trends" />
-        <EmptyState
-          headingLevel={2}
+        <ErrorState
           data-testid="analytics-error"
-          title="Error Loading Analytics"
-          description={error.message}
+          title="Could not load the trends"
+          description="Lupin did not answer with its run figures. Try again in a moment."
+          detail={error.message}
         />
       </PageFrame>
     );
@@ -85,8 +87,8 @@ export function AnalyticsPage({ api, qa }: { api?: ApiClient; qa?: QaClient }) {
         <EmptyState
           headingLevel={2}
           data-testid="analytics-empty"
-          title="No Data"
-          description="No analytics data available."
+          title="No runs recorded yet"
+          description="Trends appear once Lupin has received a test run."
         />
       </PageFrame>
     );

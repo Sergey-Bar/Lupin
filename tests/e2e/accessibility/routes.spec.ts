@@ -235,6 +235,72 @@ async function applyState(page: Page, state: State): Promise<void> {
 }
 
 /**
+ * The page said which state it is in (ledger UI-1, condition (b)).
+ *
+ * axe proves a state is legible; this proves it is *said*. A loading page shows a status, a busy
+ * region or a skeleton; a failed read says it could not load, in an alert or in words; an empty
+ * answer says there is nothing, or refuses the malformed body as a failure. No state may reach
+ * the crash boundary, because "Something went wrong" is the one screen that says nothing.
+ *
+ * The generated test names are the matrix: every manifest route under each of the four states,
+ * one test each, so it cannot drift from the routes.
+ */
+const LOADING =
+  '[role="status"], [aria-busy="true"], [data-testid*="loading"], [data-testid*="skeleton"], .animate-pulse';
+const FAILURE_WORDS = /could not|couldn.t|failed|unavailable|try again|went wrong/iu;
+const EMPTY_WORDS = /\bno \w+|nothing|all clear|none yet|not \w+ yet/iu;
+
+/**
+ * Routes whose page reads no data, so no API state can show on them: the device-pairing form,
+ * the appearance settings (kept in this browser), and test history before a test is named.
+ * Checked both ways below: a route listed here that starts showing a loading or failed state
+ * has begun reading data and must leave the list.
+ */
+const STATIC_ROUTES = new Set(['pair', 'settings-appearance', 'test-history']);
+
+async function expectStateSaid(
+  page: Page,
+  routeId: string,
+  state: State,
+  where: string,
+): Promise<void> {
+  const main = page.locator('main');
+  await expect(
+    main.getByText('Something went wrong'),
+    `${where} reached the crash boundary`,
+  ).toHaveCount(0);
+  if (state === 'partial') return;
+  const loading = main.locator(LOADING).filter({ visible: true });
+  const alerts = main.getByRole('alert').filter({ visible: true });
+  if (STATIC_ROUTES.has(routeId)) {
+    await expect(
+      loading,
+      `${where} is listed as reading no data but shows a loading state`,
+    ).toHaveCount(0);
+    await expect(alerts, `${where} is listed as reading no data but shows a failure`).toHaveCount(
+      0,
+    );
+    return;
+  }
+  if (state === 'loading') {
+    await expect(
+      loading.first(),
+      `${where} shows no loading state while its reads hang`,
+    ).toBeVisible();
+    return;
+  }
+  const said =
+    state === 'error'
+      ? FAILURE_WORDS
+      : new RegExp(`${EMPTY_WORDS.source}|${FAILURE_WORDS.source}`, 'iu');
+  await expect
+    .poll(async () => (await alerts.count()) > 0 || said.test(await main.innerText()), {
+      message: `${where} does not say it is ${state === 'error' ? 'failed' : 'empty'}`,
+    })
+    .toBe(true);
+}
+
+/**
  * * Why this project runs with `reducedMotion: 'reduce'`.* The project sets it in
  * `playwright.config.ts`, not here, and it is a measurement decision rather than a
  * styling one. `EmptyState`, `Skeleton` and the dialog carry `animate-fade-in`, and axe
@@ -284,6 +350,12 @@ test.describe('accessibility', () => {
           await applyState(page, state);
           await page.goto(`${WEB_BASE}${route.path}`);
           await expectRendered(page, `${route.path} with the API in the ${state} state`);
+          await expectStateSaid(
+            page,
+            route.id,
+            state,
+            `${route.path} with the API in the ${state} state`,
+          );
           await expectNoSeriousOrCritical(page, `${route.path} with the API in the ${state} state`);
         });
       }

@@ -68,6 +68,11 @@
 
 ### Fixed
 
+- **Every page says which state it is in (ledger UI-1).** The accessibility matrix now also
+  checks that each route, with the API slow, empty, failing or half-failing, shows a loading
+  status, says the read failed, or says there is nothing. It found Trends drawing a failure as a
+  plain card with no alert, and Delivery saying it was loading only as plain text; both now use
+  the shared `LoadingState` and `ErrorState`
 - **Retrying a run submitted with an external id works on PostgreSQL (ledger MNT-208).** The
   retry copied the caller's id, which PostgreSQL holds unique per workspace and source, so the
   Retry button answered 409 for every such run. A retry now links to its run through
